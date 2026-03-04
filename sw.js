@@ -8,7 +8,7 @@
      • Everything else                  → Network-first, cache fallback
    ══════════════════════════════════════════════════════════════════ */
 
-const CACHE_VERSION   = 'mm-v1.8.6';
+const CACHE_VERSION   = 'mm-v2.0.0';
 const SHELL_CACHE     = `${CACHE_VERSION}-shell`;
 const CDN_CACHE       = `${CACHE_VERSION}-cdn`;
 const FONT_CACHE      = `${CACHE_VERSION}-fonts`;
