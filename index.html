@@ -788,8 +788,17 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.10.0";
+const APP_VERSION="3.11.1";
 const CHANGELOG=[
+  {version:"3.11.0",date:"2026-03-07",title:"Scheduled Transactions — Month-wise Grouping with Collapse/Expand",changes:[
+    "Upcoming scheduled transactions are now sorted by next-due date (ascending) and grouped month-by-month instead of a flat card grid",
+    "Each month group has a collapsible header showing the month name + year, transaction count, total inflow (green) and outflow (red) for that month",
+    "Current month header is highlighted in gold with a THIS MONTH badge; future months use blue; past-due months use orange",
+    "Clicking any month header toggles its cards open or closed — chevron animates to indicate state",
+    "Expand All / Collapse All buttons in the section header let you open or close every month group at once",
+    "Due Now section remains at the top as a high-priority red alert, unchanged",
+    "Completed / Expired section remains at the bottom, unchanged",
+  ]},
   {version:"3.10.0",date:"2026-03-07",title:"Loan Amortization + EMI Transfer to Loan Accounts",changes:[
     "Loan cards now show a 📊 Amortization button — opens a full reducing-balance amortization schedule modal (Formula: EMI = P × r × (1+r)^n / ((1+r)^n − 1); monthly interest = balance × r/12; principal = EMI − interest)",
     "Amortization modal: summary strip showing outstanding, monthly EMI, total interest payable, total amount payable, EMIs remaining, and interest-to-total ratio; principal vs interest visual split bar",
@@ -10974,6 +10983,8 @@ const ScheduledSection=({state,dispatch})=>{
   const[showCompleted,setShowCompleted]=useState(false);
   const[addScOpen,setAddScOpen]=useState(false);
   const[copySc,setCopySc]=useState(null);
+  const[collapsedMonths,setCollapsedMonths]=useState({}); /* {"YYYY-MM": true} = collapsed */
+  const toggleMonth=m=>setCollapsedMonths(p=>({...p,[m]:!p[m]}));
 
   const allAccounts=[
     ...banks.map(b=>({...b,accType:"bank",accTypeLbl:"🏦"})),
@@ -10994,6 +11005,11 @@ const ScheduledSection=({state,dispatch})=>{
   const due=scheduled.filter(sc=>sc.status==="active"&&sc.nextDate&&sc.nextDate<=today);
   const active=scheduled.filter(sc=>sc.status==="active"&&sc.nextDate&&sc.nextDate>today);
   const completed=scheduled.filter(sc=>sc.status==="completed"||!sc.nextDate);
+
+  /* activeMonths must come AFTER active is defined */
+  const activeMonths=React.useMemo(()=>[...new Set(active.map(sc=>(sc.nextDate||"9999-12").substr(0,7)))].sort(),[active]);
+  const collapseAll=()=>setCollapsedMonths(Object.fromEntries(activeMonths.map(m=>[m,true])));
+  const expandAll=()=>setCollapsedMonths({});
 
   const executeOne=(sc)=>dispatch({type:"EXECUTE_SCHEDULED",sc});
 
@@ -11471,15 +11487,104 @@ const ScheduledSection=({state,dispatch})=>{
       )
     ),
 
-    /* ── Upcoming active */
-    active.length>0&&React.createElement("div",{style:{marginBottom:24}},
-      React.createElement("div",{style:{fontSize:12,color:"#06b6d4",fontWeight:700,textTransform:"uppercase",letterSpacing:.8,marginBottom:10}},
-        "📅 Upcoming ("+active.length+")"
-      ),
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))",gap:12}},
-        active.map(renderCard)
-      )
-    ),
+    /* ── Upcoming active — grouped by month, collapsible ── */
+    (()=>{
+      if(!active.length)return null;
+      /* group by YYYY-MM of nextDate, sorted ascending */
+      const grouped={};
+      [...active].sort((a,b)=>(a.nextDate||"").localeCompare(b.nextDate||"")).forEach(sc=>{
+        const mk=(sc.nextDate||"9999-12").substr(0,7);
+        if(!grouped[mk])grouped[mk]=[];
+        grouped[mk].push(sc);
+      });
+      const sortedMks=Object.keys(grouped).sort();
+
+      const MONTH_FULL=["January","February","March","April","May","June","July","August","September","October","November","December"];
+      const mkLabel=mk=>{
+        const[y,m]=mk.split("-");
+        return MONTH_FULL[parseInt(m)-1]+" "+y;
+      };
+      const nowMk=TODAY().substr(0,7);
+
+      return React.createElement("div",{style:{marginBottom:24}},
+        /* Section title + expand/collapse all controls */
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:12,flexWrap:"wrap"}},
+          React.createElement("div",{style:{fontSize:12,color:"#06b6d4",fontWeight:700,textTransform:"uppercase",letterSpacing:.8}},
+            "📅 Upcoming ("+active.length+")"
+          ),
+          React.createElement("div",{style:{display:"flex",gap:6,marginLeft:"auto"}},[
+            React.createElement("button",{key:"exp",onClick:expandAll,
+              style:{padding:"4px 11px",borderRadius:7,border:"1px solid var(--border)",background:"var(--bg4)",
+                color:"var(--text4)",cursor:"pointer",fontSize:11,fontFamily:"'DM Sans',sans-serif",fontWeight:500}},
+              "Expand All"),
+            React.createElement("button",{key:"col",onClick:collapseAll,
+              style:{padding:"4px 11px",borderRadius:7,border:"1px solid var(--border)",background:"var(--bg4)",
+                color:"var(--text4)",cursor:"pointer",fontSize:11,fontFamily:"'DM Sans',sans-serif",fontWeight:500}},
+              "Collapse All")
+          ])
+        ),
+        /* Month groups */
+        sortedMks.map(mk=>{
+          const items=grouped[mk];
+          const isCollapsed=!!collapsedMonths[mk];
+          const isCurrentMonth=mk===nowMk;
+          const isFutureMonth=mk>nowMk;
+          const totalOut=items.filter(s=>s.ledgerType!=="credit").reduce((s,sc)=>s+sc.amount,0);
+          const totalIn=items.filter(s=>s.ledgerType==="credit").reduce((s,sc)=>s+sc.amount,0);
+          const accentCol=isCurrentMonth?"var(--accent)":isFutureMonth?"#06b6d4":"#fb923c";
+          return React.createElement("div",{key:mk,style:{marginBottom:10}},
+            /* Month header — clickable to toggle */
+            React.createElement("button",{
+              onClick:()=>toggleMonth(mk),
+              className:"nb",
+              style:{
+                display:"flex",alignItems:"center",width:"100%",gap:10,
+                padding:"11px 16px",borderRadius:isCollapsed?10:"10px 10px 0 0",
+                border:"1px solid var(--border2)",
+                background:isCollapsed?"var(--bg4)":isCurrentMonth?"linear-gradient(90deg,var(--accentbg),var(--bg4))":"var(--bg4)",
+                cursor:"pointer",textAlign:"left",transition:"all .15s",
+                borderBottom:isCollapsed?"1px solid var(--border2)":"1px solid var(--border)"
+              }
+            },
+              /* Chevron */
+              React.createElement("span",{style:{fontSize:11,color:accentCol,flexShrink:0,transition:"transform .2s",
+                display:"inline-block",transform:isCollapsed?"rotate(-90deg)":"rotate(0deg)"}},
+                "▼"),
+              /* Month label + current badge */
+              React.createElement("span",{style:{fontSize:13,fontWeight:700,color:accentCol,fontFamily:"'Sora',sans-serif"}},
+                mkLabel(mk)),
+              isCurrentMonth&&React.createElement("span",{style:{
+                fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:8,
+                background:"var(--accentbg)",color:"var(--accent)",border:"1px solid rgba(240,165,0,.3)",
+                marginLeft:2
+              }},"THIS MONTH"),
+              /* Count pill */
+              React.createElement("span",{style:{
+                fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:10,
+                background:isCurrentMonth?"var(--accentbg)":"var(--bg5)",
+                color:accentCol,border:"1px solid var(--border2)",flexShrink:0
+              }},items.length+" transaction"+(items.length>1?"s":"")),
+              /* Totals */
+              React.createElement("div",{style:{marginLeft:"auto",display:"flex",gap:10,flexShrink:0}},
+                totalIn>0&&React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"#22c55e",fontFamily:"'Sora',sans-serif"}},"+"+INR(totalIn)),
+                totalOut>0&&React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"#ef4444",fontFamily:"'Sora',sans-serif"}},"-"+INR(totalOut))
+              )
+            ),
+            /* Cards grid — hidden when collapsed */
+            !isCollapsed&&React.createElement("div",{style:{
+              padding:"14px",
+              border:"1px solid var(--border2)",borderTop:"none",
+              borderRadius:"0 0 10px 10px",
+              background:"var(--bg3)"
+            }},
+              React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))",gap:12}},
+                items.map(renderCard)
+              )
+            )
+          );
+        })
+      );
+    })(),
 
     /* ── Empty state (no active at all) */
     !scheduled.length&&React.createElement("div",{style:{textAlign:"center",padding:"60px 20px",color:"var(--text6)"}},
