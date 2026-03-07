@@ -7,7 +7,7 @@
 <title>₹ Money Manager — Personal Finance India</title>
 
 <!-- ── PWA / Android TWA ──────────────────────────────────────── -->
-<link rel="manifest" href="https://apphosting-vh.github.io/moneyxv01/manifest.json"/>
+<link rel="manifest" href="manifest.json"/>
 
 <!-- Theme colour — matches Midnight Blue bg; Android uses this for status bar -->
 <meta name="theme-color" content="#05080f" media="(prefers-color-scheme: dark)"/>
@@ -35,7 +35,7 @@
   window.__swReg = null;
 
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('https://apphosting-vh.github.io/moneyxv01/sw.js', { scope: './' })
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
       .then(function(reg){
         window.__swReg = reg;
         console.log('[SW] Registered, scope:', reg.scope);
@@ -734,6 +734,7 @@ const INIT=()=>({
     {id:"l3",name:"Personal Loan",bank:"Bajaj Finance",type:"Personal",principal:200000,outstanding:85000,emi:8500,rate:13.5,startDate:"2023-10-01",endDate:"2025-10-01"},
   ],
   notes:[],
+  goals:[],
 });
 
 /* Blank slate -- no sample data. Used by Reset All to produce a genuinely empty app */
@@ -764,6 +765,7 @@ const EMPTY_STATE=()=>({
   re:[],
   loans:[],
   notes:[],
+  goals:[],
 });
 
 const THEMES=[
@@ -786,8 +788,42 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.7.6";
+const APP_VERSION="3.10.0";
 const CHANGELOG=[
+  {version:"3.10.0",date:"2026-03-07",title:"Loan Amortization + EMI Transfer to Loan Accounts",changes:[
+    "Loan cards now show a 📊 Amortization button — opens a full reducing-balance amortization schedule modal (Formula: EMI = P × r × (1+r)^n / ((1+r)^n − 1); monthly interest = balance × r/12; principal = EMI − interest)",
+    "Amortization modal: summary strip showing outstanding, monthly EMI, total interest payable, total amount payable, EMIs remaining, and interest-to-total ratio; principal vs interest visual split bar",
+    "Amortization schedule table: paginated (24 rows/page) with Month, EMI, Interest, Principal, Balance columns and a totals footer row per page",
+    "Each loan card now shows Next Interest and Next Principal (first row of amortization) and EMIs Remaining inline on the card",
+    "Add Loan form now includes Tenure (months) field; EMI is auto-calculated using the standard formula when Principal + Rate + Tenure are entered, shown as a live hint with the formula",
+    "New 💳 Pay EMI button on each loan card — opens a transfer modal: select source bank/cash/card account, enter amount (pre-filled with EMI), enter date and description",
+    "EMI payment creates a full double-entry transfer: source account is debited (transaction added) and loan outstanding balance is reduced by the EMI amount",
+    "TRANSFER_TX reducer extended to handle tgtType=loan — credits the loan by reducing its outstanding balance",
+    "Loan accounts (all loans) added to the Transfer target dropdown in Bank, Card, and Cash transaction forms — user can type a transfer with any bank/cash as source and a loan as target",
+    "LoanSection now accepts allBanks, allCards, cash props so Pay EMI modal can list all funding sources",
+  ]},
+  {version:"3.9.0",date:"2026-03-07",title:"GST & TDS Report + Billing Cycle Fixes + Bug Fixes",changes:[
+    "New report: GST & TDS (Reports → 🧾 GST & TDS) — analyses all transactions tagged with GST or TDS rates",
+    "GST Inclusive formula (Rule 35): Base = Amount ÷ (1 + Rate/100); GST = Amount − Base — e.g. ₹100 @ 18% incl → Base ₹84.75, GST ₹15.25",
+    "GST Exclusive formula: Base = Amount; GST = Base × Rate/100 — e.g. ₹100 @ 18% excl → GST ₹18.00, Total ₹118.00",
+    "TDS back-calculation formula: Gross = Net × 100/(100 − Rate%); TDS = Gross − Net — derives gross and deducted TDS from the net amount recorded",
+    "GST report Snapshot: donut + animated bars by slab (5%/12%/18%/28%), CGST & SGST split per slab, Inclusive vs Exclusive panel showing formula, TDS by section bars, monthly GST & TDS trend grid",
+    "GST report Detailed: full transaction table with Date, Description, Account, Total Amount, GST Type badge, Base Amount, GST Amount, CGST, SGST, TDS Amount, TDS Section columns plus totals footer",
+    "Filters in GST report: All GST / Inclusive only / Exclusive only / TDS Only toggle + date range from the shared date filter",
+    "Fixed: Edit Credit Card modal in Settings was missing Billing Cycle Day and Payment Due Day fields — both fields now present, pre-filled from saved values, saved correctly on update",
+    "Fixed: Credit card billing cycle due date calculation was always adding an extra month — new logic: if dueDay > billingDay then due falls in the SAME month as next statement; if dueDay ≤ billingDay then due falls in the NEXT month",
+    "Fixed: ReferenceError 'filterTags is not defined' in TxLedger — orphaned tag-filter line was referencing a state variable never declared in TxLedger scope, causing blank screen on Banks, Cards, Cash tabs",
+    "Fixed: TypeError in Settings → Data & Backup — first CHANGELOG entry used key 'v' instead of 'version' and had no 'changes' array, crashing the renderer",
+  ]},
+  {version:"3.8.0",date:"2026-03-07",title:"Goals, Insights Panel, GST/TDS Tagging, Tag System, Subscription Tracker, Recurring Detection, CC Billing Cycle",changes:[
+    "Goals section: set financial targets with target amount, deadline and current savings; add funds incrementally with progress bar and days-left countdown",
+    "Insights Panel: category spending analysis, top payees summary, and month-over-month comparison charts",
+    "GST/TDS Tagging: record GST rate and type (inclusive/exclusive) and TDS rate/section on any transaction; displayed as badges in the ledger",
+    "Tag System: free-text comma-separated tags on transactions; tag badges shown in ledger rows; tag filter in Unified Ledger",
+    "Subscription Tracker: identify and monitor recurring payments from transaction history",
+    "Recurring Detection: auto-detect repeated transactions and suggest scheduling them",
+    "Credit Card Billing Cycle: track statement date and due date per card with payment reminders",
+  ]},
   {version:"3.7.6",date:"2026-03-07",title:"Bug fixes — Calculator (5) + Scheduled Transactions (3)",changes:[
     "Bug 1 fixed — Calculator subtraction: safeEval now replaces Unicode minus − (U+2212) with ASCII hyphen before eval; previously subtraction always threw 'Error'",
     "Bug 2 fixed — Calculator display: pressDigit now sets display to the full accumulated expression segment (ne) instead of just the single digit pressed (d); typing 1-2-3 now shows 123 not 3",
@@ -1509,6 +1545,9 @@ const reducer=(s,a)=>{
       else if(tgtType==="card")
         // paying TO a card = bill payment: reduces outstanding
         ns={...ns,cards:ns.cards.map(c=>c.id===tgtId?{...c,outstanding:Math.max(0,c.outstanding-tx.amount),transactions:[...c.transactions,{...creditTx,desc:tx.desc||"Card Payment"}]}:c)};
+      else if(tgtType==="loan")
+        // paying TO a loan = EMI payment: reduces outstanding
+        ns={...ns,loans:ns.loans.map(l=>l.id===tgtId?{...l,outstanding:Math.max(0,l.outstanding-tx.amount)}:l)};
       return ns;
     }
     case"ADD_PAYEE":return{...s,payees:[...s.payees,a.p]};
@@ -1573,6 +1612,10 @@ const reducer=(s,a)=>{
       }
       return s;
     }
+    case"ADD_GOAL":return{...s,goals:[...(s.goals||[]),{...a.p,id:uid(),createdAt:new Date().toISOString()}]};
+    case"EDIT_GOAL":return{...s,goals:(s.goals||[]).map(g=>g.id===a.p.id?{...g,...a.p}:g)};
+    case"DEL_GOAL":return{...s,goals:(s.goals||[]).filter(g=>g.id!==a.id)};
+    case"ADD_GOAL_FUNDS":return{...s,goals:(s.goals||[]).map(g=>g.id===a.id?{...g,savedAmount:Math.min(g.targetAmount,(g.savedAmount||0)+a.amount)}:g)};
     case"ADD_NOTE":return{...s,notes:[...( s.notes||[]),{...a.p,id:uid(),createdAt:new Date().toISOString()}]};
     case"EDIT_NOTE":return{...s,notes:(s.notes||[]).map(n=>n.id===a.p.id?{...n,...a.p,updatedAt:new Date().toISOString()}:n)};
     case"DEL_NOTE":return{...s,notes:(s.notes||[]).filter(n=>n.id!==a.id)};
@@ -2578,8 +2621,10 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onNew,onImport,onMassU
             React.createElement("div",{style:{fontSize:12,color:"var(--text2)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
               tx.desc||"—"
             ),
-            tx.tags&&React.createElement("div",{style:{display:"flex",gap:3,marginTop:1,flexWrap:"wrap"}},
-              tx.tags.split(",").filter(Boolean).map((tag,i)=>React.createElement("span",{key:i,style:{fontSize:9,color:"#a78bfa",background:"rgba(167,139,250,.12)",borderRadius:8,padding:"1px 5px"}},tag.trim()))
+            (tx.tags||tx.gstRate>0||tx.tdsRate>0)&&React.createElement("div",{style:{display:"flex",gap:3,marginTop:1,flexWrap:"wrap"}},
+              ...(tx.tags||"").split(",").filter(Boolean).map((tag,i)=>React.createElement("span",{key:"tg"+i,style:{fontSize:9,color:"#a78bfa",background:"rgba(167,139,250,.12)",borderRadius:8,padding:"1px 5px"}},"#"+tag.trim())),
+              tx.gstRate>0&&React.createElement("span",{key:"gst",style:{fontSize:9,color:"#06b6d4",background:"rgba(6,182,212,.12)",borderRadius:8,padding:"1px 5px",fontWeight:600}},"GST "+tx.gstRate+"%"),
+              tx.tdsRate>0&&React.createElement("span",{key:"tds",style:{fontSize:9,color:"#f0a500",background:"rgba(240,165,0,.12)",borderRadius:8,padding:"1px 5px",fontWeight:600}},"TDS "+tx.tdsRate+"%")
             )
           ),
           /* ── Payee inline combobox ── */
@@ -3088,6 +3133,7 @@ const CatCombobox=({value,onChange,categories,placeholder="Search categories…"
 /* ── TX EDIT MODAL ─────────────────────────────────────────────────────── */
 const TxEditModal=({tx,categories,payees,txTypes,onSave,onClose})=>{
   const[f,setF]=useState({...tx,amount:String(tx.amount)});
+  const[showTax,setShowTax]=useState(!!(tx.gstRate&&+tx.gstRate>0)||!!(tx.tdsRate&&+tx.tdsRate>0));
   const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
   const lbl={display:"block",color:"var(--text5)",fontSize:11,textTransform:"uppercase",letterSpacing:.5,marginBottom:5};
   const F=(label,children,sx={})=>React.createElement("div",{style:{marginBottom:12,...sx}},
@@ -3120,7 +3166,41 @@ const TxEditModal=({tx,categories,payees,txTypes,onSave,onClose})=>{
       placeholder:"-- Uncategorised --"
     })),
     F("Description",React.createElement("input",{className:"inp",value:f.desc||"",onChange:set("desc"),placeholder:"Brief description…"})),
-    F("Tags",React.createElement("input",{className:"inp",value:f.tags||"",onChange:set("tags"),placeholder:"comma separated"})),
+    React.createElement("div",{style:{marginBottom:12}},
+      React.createElement("label",{style:lbl},"Tags"),
+      React.createElement(TagInput,{value:f.tags||"",onChange:v=>setF(p=>({...p,tags:v}))})
+    ),
+    React.createElement("div",{style:{marginBottom:12,padding:"10px 13px",borderRadius:10,border:"1px solid "+(showTax?"var(--accent)":"var(--border2)"),background:showTax?"var(--accentbg2)":"var(--bg4)",transition:"all .2s"}},
+      React.createElement("label",{style:{display:"flex",alignItems:"center",gap:8,cursor:"pointer",userSelect:"none",marginBottom:showTax?12:0}},
+        React.createElement("input",{type:"checkbox",checked:showTax,onChange:e=>setShowTax(e.target.checked),style:{width:14,height:14,accentColor:"var(--accent)",cursor:"pointer",flexShrink:0}}),
+        React.createElement("span",{style:{fontSize:13,fontWeight:500,color:showTax?"var(--accent)":"var(--text4)"}},"🧾 GST / TDS Tagging"),
+        !showTax&&React.createElement("span",{style:{fontSize:11,color:"var(--text6)"}},"(optional)")
+      ),
+      showTax&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
+        React.createElement("div",null,
+          React.createElement("label",{style:lbl},"GST Rate"),
+          React.createElement("select",{className:"inp",value:f.gstRate||"0",onChange:set("gstRate"),style:{fontSize:13}},
+            React.createElement("option",{value:"0"},"None (0%)"),
+            ["5","12","18","28"].map(r=>React.createElement("option",{key:r,value:r},r+"%"))
+          )
+        ),
+        React.createElement("div",null,
+          React.createElement("label",{style:lbl},"GST Type"),
+          React.createElement("select",{className:"inp",value:f.gstType||"inclusive",onChange:set("gstType"),style:{fontSize:13}},
+            React.createElement("option",{value:"inclusive"},"Inclusive in Amount"),
+            React.createElement("option",{value:"exclusive"},"Exclusive (Add on top)")
+          )
+        ),
+        React.createElement("div",null,
+          React.createElement("label",{style:lbl},"TDS %"),
+          React.createElement("input",{className:"inp",type:"number",placeholder:"e.g. 10",value:f.tdsRate||"",onChange:set("tdsRate"),style:{fontSize:13}})
+        ),
+        React.createElement("div",null,
+          React.createElement("label",{style:lbl},"TDS Section"),
+          React.createElement("input",{className:"inp",placeholder:"e.g. 194J, 194C",value:f.tdsSec||"",onChange:set("tdsSec"),style:{fontSize:13}})
+        )
+      )
+    ),
     React.createElement("div",{style:{marginBottom:12}},
       React.createElement("label",{style:lbl},"Status"),
       React.createElement("div",{style:{display:"flex",gap:5,flexWrap:"wrap"}},
@@ -3314,8 +3394,9 @@ const TxRow=({tx})=>{
 /* ── NEW TRANSACTION MODAL ─────────────────────────────────────────────── */
 const TxModal=({onAdd,onClose,categories,payees,txTypes,allAccounts,currentAccountId,dispatch,state})=>{
   const flatC=flatCats(categories);
-  const EMPTY={date:TODAY(),txType:txTypes[0],amount:"",payee:"",desc:"",cat:flatC[0]||"Income",tags:"",status:"Reconciled",txNum:"",notes:"",srcId:currentAccountId||"",tgtId:"",isScheduled:false,schedFreq:"monthly",schedEnd:""};
+  const EMPTY={date:TODAY(),txType:txTypes[0],amount:"",payee:"",desc:"",cat:flatC[0]||"Income",tags:"",status:"Reconciled",txNum:"",notes:"",srcId:currentAccountId||"",tgtId:"",isScheduled:false,schedFreq:"monthly",schedEnd:"",gstRate:"0",gstType:"inclusive",tdsRate:"",tdsSec:""};
   const[f,setF]=useState(EMPTY);
+  const[showTax,setShowTax]=useState(false);
   const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
   const isTransfer=f.txType==="Transfer";
 
@@ -3447,7 +3528,41 @@ const TxModal=({onAdd,onClose,categories,payees,txTypes,allAccounts,currentAccou
     F("Payee",React.createElement(PayeeCombobox,{value:f.payee,onChange:val=>setF(p=>({...p,payee:val})),payees,placeholder:"Search or type payee…"})),
     F("Category",React.createElement(CatSelect)),
     F("Description",React.createElement("input",{className:"inp",placeholder:"Brief description…",value:f.desc,onChange:set("desc")})),
-    F("Tags",React.createElement("input",{className:"inp",placeholder:"e.g. business, reimbursable",value:f.tags,onChange:set("tags")})),
+    React.createElement("div",{style:{marginBottom:12}},
+      React.createElement("label",{style:lbl},"Tags"),
+      React.createElement(TagInput,{value:f.tags,onChange:v=>setF(p=>({...p,tags:v}))})
+    ),
+    React.createElement("div",{style:{marginBottom:12,padding:"10px 13px",borderRadius:10,border:"1px solid "+(showTax?"var(--accent)":"var(--border2)"),background:showTax?"var(--accentbg2)":"var(--bg4)",transition:"all .2s"}},
+      React.createElement("label",{style:{display:"flex",alignItems:"center",gap:8,cursor:"pointer",userSelect:"none",marginBottom:showTax?12:0}},
+        React.createElement("input",{type:"checkbox",checked:showTax,onChange:e=>setShowTax(e.target.checked),style:{width:14,height:14,accentColor:"var(--accent)",cursor:"pointer",flexShrink:0}}),
+        React.createElement("span",{style:{fontSize:13,fontWeight:500,color:showTax?"var(--accent)":"var(--text4)"}},"🧾 GST / TDS Tagging"),
+        !showTax&&React.createElement("span",{style:{fontSize:11,color:"var(--text6)"}},"(optional)")
+      ),
+      showTax&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
+        React.createElement("div",null,
+          React.createElement("label",{style:lbl},"GST Rate"),
+          React.createElement("select",{className:"inp",value:f.gstRate,onChange:set("gstRate"),style:{fontSize:13}},
+            React.createElement("option",{value:"0"},"None (0%)"),
+            ["5","12","18","28"].map(r=>React.createElement("option",{key:r,value:r},r+"%"))
+          )
+        ),
+        React.createElement("div",null,
+          React.createElement("label",{style:lbl},"GST Type"),
+          React.createElement("select",{className:"inp",value:f.gstType,onChange:set("gstType"),style:{fontSize:13}},
+            React.createElement("option",{value:"inclusive"},"Inclusive in Amount"),
+            React.createElement("option",{value:"exclusive"},"Exclusive (Add on top)")
+          )
+        ),
+        React.createElement("div",null,
+          React.createElement("label",{style:lbl},"TDS %"),
+          React.createElement("input",{className:"inp",type:"number",placeholder:"e.g. 10",value:f.tdsRate,onChange:set("tdsRate"),style:{fontSize:13}})
+        ),
+        React.createElement("div",null,
+          React.createElement("label",{style:lbl},"TDS Section"),
+          React.createElement("input",{className:"inp",placeholder:"e.g. 194J, 194C",value:f.tdsSec,onChange:set("tdsSec"),style:{fontSize:13}})
+        )
+      )
+    ),
     !f.isScheduled&&React.createElement("div",{style:{marginBottom:12}},
       React.createElement("label",{style:lbl},"Status"),
       React.createElement("div",{style:{display:"flex",gap:5,flexWrap:"wrap"}},
@@ -4137,7 +4252,7 @@ const Dashboard=({data,isMobile})=>{
 };
 
 /* ── BANK SECTION ─ master-detail inline layout ──────────────────────── */
-const BankSection=({banks,dispatch,categories,payees,allBanks,allCards=[],cash,isMobile})=>{
+const BankSection=({banks,dispatch,categories,payees,allBanks,allCards=[],cash,loans=[],isMobile})=>{
   const[sel,setSel]=useState(banks[0]?.id||null);
   const[addOpen,setAddOpen]=useState(false);
   const[f,setF]=useState({name:"",bank:"HDFC Bank",type:"Savings",balance:"",notes:""});
@@ -4260,7 +4375,8 @@ const BankSection=({banks,dispatch,categories,payees,allBanks,allCards=[],cash,i
         allAccounts:[
           ...allBanks.map(b=>({...b,accType:"bank",accTypeLbl:"🏦"})),
           {id:"__cash__",...cash,name:"Cash",accType:"cash",accTypeLbl:"💵"},
-          ...allCards.map(c=>({...c,accType:"card",accTypeLbl:"💳"}))
+          ...allCards.map(c=>({...c,accType:"card",accTypeLbl:"💳"})),
+          ...loans.map(l=>({...l,accType:"loan",accTypeLbl:"🏠",name:l.name+" (Loan)"}))
         ],
         openBalance:selD?(selD.balance-selD.transactions.reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0)):0,
         dispatch,state:{banks:allBanks,cards:allCards,cash},
@@ -4292,14 +4408,14 @@ const BankSection=({banks,dispatch,categories,payees,allBanks,allCards=[],cash,i
 };
 
 /* ── CARD SECTION ─ master-detail inline layout ──────────────────────── */
-const CardSection=({cards,dispatch,categories,payees,allBanks,allCards=[],cash,isMobile})=>{
+const CardSection=({cards,dispatch,categories,payees,allBanks,allCards=[],cash,loans=[],isMobile})=>{
   const[sel,setSel]=useState(cards[0]?.id||null);
   const[addOpen,setAddOpen]=useState(false);
-  const[f,setF]=useState({name:"",bank:"",cardNumber:"",limit:"",outstanding:"",notes:""});
+  const[f,setF]=useState({name:"",bank:"",cardNumber:"",limit:"",outstanding:"",notes:"",billingDay:"",dueDay:""});
   const[noteEdit,setNoteEdit]=useState(null);
   const[mobileView,setMobileView]=useState("list");
   const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
-  const save=()=>{if(!f.name||!f.limit)return;const id=uid();dispatch({type:"ADD_CARD",p:{id,transactions:[],...f,limit:+f.limit,outstanding:+(f.outstanding||0)}});setF({name:"",bank:"",cardNumber:"",limit:"",outstanding:"",notes:""});setSel(id);setAddOpen(false);};
+  const save=()=>{if(!f.name||!f.limit)return;const id=uid();dispatch({type:"ADD_CARD",p:{id,transactions:[],...f,limit:+f.limit,outstanding:+(f.outstanding||0),billingDay:+(f.billingDay||0)||null,dueDay:+(f.dueDay||0)||null}});setF({name:"",bank:"",cardNumber:"",limit:"",outstanding:"",notes:"",billingDay:"",dueDay:""});setSel(id);setAddOpen(false);};
   const selD=cards.find(c=>c.id===sel);
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",height:"100%"}},
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}},
@@ -4342,6 +4458,38 @@ const CardSection=({cards,dispatch,categories,payees,allBanks,allCards=[],cash,i
               React.createElement("span",null,used.toFixed(1)+"% used"),
               React.createElement("span",null,"Avail: "+INR(c.limit-c.outstanding))
             ),
+            c.billingDay&&(()=>{
+              const now=new Date();const bd=c.billingDay;const dd=c.dueDay;
+              /* Cycle start: last statement date (billingDay that has already passed) */
+              const cycleStart=new Date(now.getFullYear(),now.getMonth(),bd);
+              if(now.getDate()<bd)cycleStart.setMonth(cycleStart.getMonth()-1);
+              /* Cycle end: day before next statement */
+              const cycleEnd=new Date(cycleStart);cycleEnd.setMonth(cycleEnd.getMonth()+1);cycleEnd.setDate(cycleEnd.getDate()-1);
+              /* Next statement date = cycleStart + 1 month */
+              const nextStatement=new Date(cycleStart);nextStatement.setMonth(nextStatement.getMonth()+1);
+              /* Due date:
+                 dueDay > billingDay  -> same month as statement  (e.g. bill=5, due=25 -> Apr 5 stmt, Apr 25 due)
+                 dueDay <= billingDay -> next month after statement (e.g. bill=18, due=8 -> Mar 18 stmt, Apr 8 due) */
+              const dueDate=dd?(dd>bd
+                ?new Date(nextStatement.getFullYear(),nextStatement.getMonth(),dd)
+                :new Date(nextStatement.getFullYear(),nextStatement.getMonth()+1,dd)
+              ):null;
+              const daysUntilDue=dueDate?Math.ceil((dueDate-now)/(86400000)):null;
+              const fmtD=d=>`${d.getDate()}/${d.getMonth()+1}`;
+              const cycleSpend=c.transactions.filter(t=>t.type==="debit"&&t.date>=cycleStart.toISOString().split("T")[0]&&t.date<=cycleEnd.toISOString().split("T")[0]).reduce((s,t)=>s+t.amount,0);
+              return React.createElement("div",{style:{marginTop:8,padding:"7px 9px",borderRadius:8,background:"var(--bg5)",border:"1px solid var(--border2)",fontSize:10}},
+                React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:3}},
+                  React.createElement("span",{style:{color:"var(--text5)"}},"Cycle: "+fmtD(cycleStart)+" – "+fmtD(cycleEnd)),
+                  React.createElement("span",{style:{color:"var(--accent)",fontWeight:600}},"Spent: "+INR(cycleSpend))
+                ),
+                dueDate&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5}},
+                  React.createElement("span",{style:{color:daysUntilDue!==null&&daysUntilDue<=5?"#ef4444":daysUntilDue!==null&&daysUntilDue<=10?"#fb923c":"#22c55e",fontWeight:600}},
+                    daysUntilDue!==null&&daysUntilDue<0?"Overdue!":daysUntilDue===0?"Due Today!":daysUntilDue===1?"Due Tomorrow":"Due in "+daysUntilDue+" days"
+                  ),
+                  React.createElement("span",{style:{color:"var(--text6)"}},"("+fmtD(dueDate)+")")
+                )
+              );
+            })(),
             /* Note anchor */
             noteEdit&&noteEdit.id===c.id
               ? React.createElement("div",{style:{marginTop:10},onClick:e=>e.stopPropagation()},
@@ -4380,7 +4528,8 @@ const CardSection=({cards,dispatch,categories,payees,allBanks,allCards=[],cash,i
         allAccounts:[
           ...allBanks.map(b=>({...b,accType:"bank",accTypeLbl:"🏦"})),
           {id:"__cash__",...cash,name:"Cash",accType:"cash",accTypeLbl:"💵"},
-          ...allCards.map(c=>({...c,accType:"card",accTypeLbl:"💳"}))
+          ...allCards.map(c=>({...c,accType:"card",accTypeLbl:"💳"})),
+          ...loans.map(l=>({...l,accType:"loan",accTypeLbl:"🏠",name:l.name+" (Loan)"}))
         ],
         openBalance:selD?(selD.limit-selD.outstanding-selD.transactions.reduce((s,t)=>s+(t.type==="debit"?-t.amount:t.amount),0)):0,
         dispatch,state:{banks:allBanks,cards:allCards,cash},
@@ -4405,6 +4554,10 @@ const CardSection=({cards,dispatch,categories,payees,allBanks,allCards=[],cash,i
         React.createElement(Field,{label:"Credit Limit (₹)"},React.createElement("input",{className:"inp",type:"number",placeholder:"500000",value:f.limit,onChange:set("limit")})),
         React.createElement(Field,{label:"Outstanding (₹)"},React.createElement("input",{className:"inp",type:"number",placeholder:"0",value:f.outstanding,onChange:set("outstanding")}))
       ),
+      React.createElement("div",{className:"grid-2col"},
+        React.createElement(Field,{label:"Billing Cycle Day"},React.createElement("input",{className:"inp",type:"number",min:1,max:28,placeholder:"e.g. 5 (5th of each month)",value:f.billingDay,onChange:set("billingDay")})),
+        React.createElement(Field,{label:"Payment Due Day"},React.createElement("input",{className:"inp",type:"number",min:1,max:31,placeholder:"e.g. 25 (25th of month)",value:f.dueDay,onChange:set("dueDay")}))
+      ),
       React.createElement(Field,{label:"Notes (optional)"},React.createElement("textarea",{className:"inp",placeholder:"Card number (last 4), due date, reward program, contact…",value:f.notes,onChange:set("notes"),style:{resize:"vertical",minHeight:72,lineHeight:1.6,fontSize:13}})),
       React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,marginTop:4}},React.createElement(Btn,{onClick:save,sx:{flex:"1 1 120px",justifyContent:"center"}},"Add Card"),React.createElement(Btn,{v:"secondary",onClick:()=>setAddOpen(false),sx:{justifyContent:"center",minWidth:70}},"Cancel"))
     )
@@ -4412,7 +4565,7 @@ const CardSection=({cards,dispatch,categories,payees,allBanks,allCards=[],cash,i
 };
 
 /* ── CASH SECTION ────────────────────────────────────────────────────────── */
-const CashSection=({cash,dispatch,categories,payees,allBanks,allCards=[],isMobile})=>{
+const CashSection=({cash,dispatch,categories,payees,allBanks,allCards=[],loans=[],isMobile})=>{
   const[addCashOpen,setAddCashOpen]=useState(false);
   const inc=cash.transactions.filter(t=>t.type==="credit").reduce((s,t)=>s+t.amount,0);
   const exp=cash.transactions.filter(t=>t.type==="debit").reduce((s,t)=>s+t.amount,0);
@@ -4448,7 +4601,7 @@ const CashSection=({cash,dispatch,categories,payees,allBanks,allCards=[],isMobil
           accType:"cash",
           categories,payees,
           txTypes:TX_TYPES_CASH,
-          allAccounts:[...allBanks.map(b=>({...b,accType:"bank",accTypeLbl:"🏦"})),{id:"__cash__",...cash,name:"Cash",accType:"cash",accTypeLbl:"💵"},...allCards.map(c=>({...c,accType:"card",accTypeLbl:"💳"}))],
+          allAccounts:[...allBanks.map(b=>({...b,accType:"bank",accTypeLbl:"🏦"})),{id:"__cash__",...cash,name:"Cash",accType:"cash",accTypeLbl:"💵"},...allCards.map(c=>({...c,accType:"card",accTypeLbl:"💳"})),...loans.map(l=>({...l,accType:"loan",accTypeLbl:"🏠",name:l.name+" (Loan)"}))],
           currentAccountId:"__cash__",
           onNew:()=>setAddCashOpen(true),
           onEdit:(updated,old)=>dispatch({type:"EDIT_CASH_TX",tx:updated,old}),
@@ -4466,7 +4619,7 @@ const CashSection=({cash,dispatch,categories,payees,allBanks,allCards=[],isMobil
           },
           onClose:()=>setAddCashOpen(false),
           categories,payees,txTypes:TX_TYPES_CASH,
-          allAccounts:[...allBanks.map(b=>({...b,accType:"bank",accTypeLbl:"🏦"})),{id:"__cash__",...cash,name:"Cash",accType:"cash",accTypeLbl:"💵"},...allCards.map(c=>({...c,accType:"card",accTypeLbl:"💳"}))],
+          allAccounts:[...allBanks.map(b=>({...b,accType:"bank",accTypeLbl:"🏦"})),{id:"__cash__",...cash,name:"Cash",accType:"cash",accTypeLbl:"💵"},...allCards.map(c=>({...c,accType:"card",accTypeLbl:"💳"})),...loans.map(l=>({...l,accType:"loan",accTypeLbl:"🏠",name:l.name+" (Loan)"}))],
           currentAccountId:"__cash__",
           dispatch,state:{banks:allBanks,cards:allCards,cash}
         })
@@ -5844,53 +5997,395 @@ const InvestSection=({mf,shares,fd,re=[],dispatch,defaultTab="mf"})=>{
 };
 
 /* ── LOANS ────────────────────────────────────────────────────────────────── */
-const LoanSection=({loans,dispatch,isMobile})=>{
+
+/* Amortization helper — reducing-balance method (monthly compounding)
+   Formula: EMI = P × r × (1+r)^n / ((1+r)^n − 1)
+   Each row: Interest = balance × r, Principal = EMI − Interest, Balance -= Principal */
+const calcAmortization=(principal,annualRate,emi)=>{
+  const r=annualRate/12/100;
+  if(!r||!emi||!principal)return[];
+  const schedule=[];
+  let bal=principal;
+  let month=0;
+  while(bal>0.5&&month<600){
+    month++;
+    const interest=Math.round(bal*r*100)/100;
+    const principal_part=Math.min(Math.round((emi-interest)*100)/100,bal);
+    const actualEmi=Math.round((interest+principal_part)*100)/100;
+    bal=Math.round((bal-principal_part)*100)/100;
+    schedule.push({month,emi:actualEmi,interest,principal:principal_part,balance:Math.max(0,bal)});
+    if(bal<=0)break;
+  }
+  return schedule;
+};
+
+/* Calculate EMI from P, r%, n months */
+const calcEmi=(p,annualRate,months)=>{
+  const r=annualRate/12/100;
+  if(!r)return p/months;
+  return p*r*Math.pow(1+r,months)/(Math.pow(1+r,months)-1);
+};
+
+/* Amortization schedule modal */
+const AmortizationModal=({loan,onClose})=>{
+  const[viewFrom,setViewFrom]=useState(0); /* pagination: start index */
+  const PAGE=24;
+  const r=loan.rate/12/100;
+
+  /* Derive remaining months from outstanding+rate+EMI (or fall back to startDate→endDate) */
+  const remainMonths=(()=>{
+    if(loan.emi>0&&loan.outstanding>0&&loan.rate>0){
+      /* n = -log(1 - P*r/EMI) / log(1+r) */
+      const x=1-(loan.outstanding*r/loan.emi);
+      if(x>0)return Math.ceil(-Math.log(x)/Math.log(1+r));
+    }
+    if(loan.startDate&&loan.endDate){
+      const s=new Date(loan.startDate),e=new Date(loan.endDate);
+      return Math.max(1,Math.round((e-s)/(1000*60*60*24*30.44)));
+    }
+    return 0;
+  })();
+
+  /* Full schedule from outstanding balance */
+  const schedule=calcAmortization(loan.outstanding,loan.rate,loan.emi);
+  const totalInterest=schedule.reduce((s,r)=>s+r.interest,0);
+  const totalPaid=schedule.reduce((s,r)=>s+r.emi,0);
+  const page=schedule.slice(viewFrom,viewFrom+PAGE);
+
+  const thS={padding:"8px 10px",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,background:"var(--bg4)",borderBottom:"1px solid var(--border)",textAlign:"right"};
+  const tdS=(col,bold)=>({padding:"8px 10px",fontSize:11,borderBottom:"1px solid var(--border2)",textAlign:"right",color:col||"var(--text3)",fontWeight:bold?700:400,fontFamily:bold?"'Sora',sans-serif":"inherit"});
+
+  return React.createElement(Modal,{title:"📊 Amortization Schedule — "+loan.name,onClose,w:720},
+    /* Summary cards */
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:10,marginBottom:16}},
+      React.createElement("div",{style:{padding:"10px 12px",borderRadius:9,background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.2)"}},
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginBottom:4}},"Outstanding"),
+        React.createElement("div",{style:{fontSize:15,fontWeight:700,color:"#ef4444",fontFamily:"'Sora',sans-serif"}},INR(loan.outstanding))
+      ),
+      React.createElement("div",{style:{padding:"10px 12px",borderRadius:9,background:"rgba(251,146,60,.08)",border:"1px solid rgba(251,146,60,.2)"}},
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginBottom:4}},"Monthly EMI"),
+        React.createElement("div",{style:{fontSize:15,fontWeight:700,color:"#fb923c",fontFamily:"'Sora',sans-serif"}},INR(loan.emi))
+      ),
+      React.createElement("div",{style:{padding:"10px 12px",borderRadius:9,background:"rgba(167,139,250,.08)",border:"1px solid rgba(167,139,250,.2)"}},
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginBottom:4}},"Total Interest"),
+        React.createElement("div",{style:{fontSize:15,fontWeight:700,color:"#a78bfa",fontFamily:"'Sora',sans-serif"}},INR(Math.round(totalInterest)))
+      ),
+      React.createElement("div",{style:{padding:"10px 12px",borderRadius:9,background:"var(--accentbg)",border:"1px solid rgba(240,165,0,.2)"}},
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginBottom:4}},"Total Payable"),
+        React.createElement("div",{style:{fontSize:15,fontWeight:700,color:"var(--accent)",fontFamily:"'Sora',sans-serif"}},INR(Math.round(totalPaid)))
+      ),
+      React.createElement("div",{style:{padding:"10px 12px",borderRadius:9,background:"rgba(34,197,94,.08)",border:"1px solid rgba(34,197,94,.2)"}},
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginBottom:4}},"EMIs Remaining"),
+        React.createElement("div",{style:{fontSize:15,fontWeight:700,color:"#22c55e",fontFamily:"'Sora',sans-serif"}},schedule.length)
+      ),
+      React.createElement("div",{style:{padding:"10px 12px",borderRadius:9,background:"rgba(6,182,212,.08)",border:"1px solid rgba(6,182,212,.2)"}},
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginBottom:4}},"Interest Ratio"),
+        React.createElement("div",{style:{fontSize:15,fontWeight:700,color:"#06b6d4",fontFamily:"'Sora',sans-serif"}},totalPaid>0?((totalInterest/totalPaid)*100).toFixed(1)+"%":"—")
+      )
+    ),
+    /* Interest vs Principal visual bar */
+    React.createElement("div",{style:{marginBottom:16,padding:"10px 14px",borderRadius:9,background:"var(--bg4)",border:"1px solid var(--border2)"}},
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--text5)",marginBottom:6}},
+        React.createElement("span",null,"Principal: ",React.createElement("strong",{style:{color:"#22c55e"}},INR(loan.outstanding))),
+        React.createElement("span",null,"Interest: ",React.createElement("strong",{style:{color:"#a78bfa"}},INR(Math.round(totalInterest)))),
+        React.createElement("span",null,"Total: ",React.createElement("strong",{style:{color:"var(--accent)"}},INR(Math.round(totalPaid))))
+      ),
+      totalPaid>0&&React.createElement("div",{style:{height:8,borderRadius:4,background:"var(--bg5)",overflow:"hidden",display:"flex"}},
+        React.createElement("div",{style:{width:((loan.outstanding/totalPaid)*100)+"%",height:"100%",background:"#22c55e",borderRadius:"4px 0 0 4px"}}),
+        React.createElement("div",{style:{flex:1,height:"100%",background:"#a78bfa",borderRadius:"0 4px 4px 0"}})
+      )
+    ),
+    /* Schedule table */
+    schedule.length===0
+      ? React.createElement("div",{style:{textAlign:"center",padding:"20px",color:"var(--text5)",fontSize:13}},"Cannot calculate schedule — please ensure EMI, Rate and Outstanding are all set.")
+      : React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:8}},
+            "Showing months "+(viewFrom+1)+"–"+Math.min(viewFrom+PAGE,schedule.length)+" of "+schedule.length
+          ),
+          React.createElement("div",{style:{overflowX:"auto",borderRadius:9,border:"1px solid var(--border)",overflow:"hidden"}},
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"60px 100px 100px 110px 110px",minWidth:480}},
+              /* Header */
+              React.createElement("div",{style:{...thS,textAlign:"left",paddingLeft:14}},
+                "Month"),
+              React.createElement("div",{style:thS},"EMI"),
+              React.createElement("div",{style:{...thS,color:"#a78bfa"}},"Interest"),
+              React.createElement("div",{style:{...thS,color:"#22c55e"}},"Principal"),
+              React.createElement("div",{style:{...thS,color:"#ef4444"}},"Balance"),
+              /* Rows */
+              ...page.flatMap((row,i)=>[
+                React.createElement("div",{key:"m"+row.month,style:{...tdS(),textAlign:"left",paddingLeft:14,background:i%2?"var(--bg4)":"transparent",fontWeight:600,color:"var(--text4)"}},row.month),
+                React.createElement("div",{key:"e"+row.month,style:{...tdS("var(--text3)"),background:i%2?"var(--bg4)":"transparent"}},INR(row.emi)),
+                React.createElement("div",{key:"i"+row.month,style:{...tdS("#a78bfa"),background:i%2?"var(--bg4)":"transparent"}},INR(row.interest)),
+                React.createElement("div",{key:"p"+row.month,style:{...tdS("#22c55e",true),background:i%2?"var(--bg4)":"transparent"}},INR(row.principal)),
+                React.createElement("div",{key:"b"+row.month,style:{...tdS(row.balance<=0?"#22c55e":"#ef4444",true),background:i%2?"var(--bg4)":"transparent"}},row.balance<=0?"✓ Paid":INR(row.balance))
+              ]),
+              /* Totals footer */
+              React.createElement("div",{style:{gridColumn:"1/6",display:"grid",gridTemplateColumns:"60px 100px 100px 110px 110px",borderTop:"2px solid var(--border)",background:"var(--bg4)"}},
+                React.createElement("div",{style:{...thS,textAlign:"left",paddingLeft:14,color:"var(--text3)"}},"Total"),
+                React.createElement("div",{style:{...thS,color:"var(--accent)"}},INR(Math.round(page.reduce((s,r)=>s+r.emi,0)))),
+                React.createElement("div",{style:{...thS,color:"#a78bfa"}},INR(Math.round(page.reduce((s,r)=>s+r.interest,0)))),
+                React.createElement("div",{style:{...thS,color:"#22c55e"}},INR(Math.round(page.reduce((s,r)=>s+r.principal,0)))),
+                React.createElement("div",{style:thS},"")
+              )
+            )
+          ),
+          /* Pagination */
+          React.createElement("div",{style:{display:"flex",gap:8,marginTop:10,justifyContent:"center"}},
+            React.createElement("button",{onClick:()=>setViewFrom(Math.max(0,viewFrom-PAGE)),disabled:viewFrom===0,
+              style:{padding:"5px 14px",borderRadius:7,border:"1px solid var(--border)",background:"var(--bg4)",color:viewFrom===0?"var(--text6)":"var(--text3)",cursor:viewFrom===0?"default":"pointer",fontSize:12}},"← Prev"),
+            React.createElement("span",{style:{fontSize:11,color:"var(--text5)",alignSelf:"center"}},"Page "+(Math.floor(viewFrom/PAGE)+1)+" / "+Math.ceil(schedule.length/PAGE)),
+            React.createElement("button",{onClick:()=>setViewFrom(Math.min(schedule.length-1,viewFrom+PAGE)),disabled:viewFrom+PAGE>=schedule.length,
+              style:{padding:"5px 14px",borderRadius:7,border:"1px solid var(--border)",background:"var(--bg4)",color:viewFrom+PAGE>=schedule.length?"var(--text6)":"var(--text3)",cursor:viewFrom+PAGE>=schedule.length?"default":"pointer",fontSize:12}},"Next →")
+          )
+        )
+  );
+};
+
+/* EMI Payment modal — transfer from bank/cash to loan */
+const EmiPayModal=({loan,allBanks,allCards,cash,dispatch,onClose})=>{
+  const allAccounts=[
+    ...allBanks.map(b=>({...b,accType:"bank",accTypeLbl:"🏦"})),
+    {id:"__cash__",...cash,name:"Cash",accType:"cash",accTypeLbl:"💵"},
+    ...allCards.map(c=>({...c,accType:"card",accTypeLbl:"💳"})),
+  ];
+  const[srcId,setSrcId]=useState(allBanks.length?allBanks[0].id:"__cash__");
+  const[amount,setAmount]=useState(loan.emi?String(loan.emi):"");
+  const[date,setDate]=useState(TODAY());
+  const[desc,setDesc]=useState("EMI – "+loan.name);
+  const[cat,setCat]=useState("Payment::Loan EMI");
+
+  const srcAcc=allAccounts.find(a=>a.id===srcId)||{};
+  const canSave=srcId&&+amount>0;
+
+  const save=()=>{
+    if(!canSave)return;
+    const tx={date,amount:+amount,desc,cat,payee:loan.bank,type:"debit",id:uid(),tags:"",status:"Reconciled"};
+    dispatch({type:"TRANSFER_TX",srcType:srcAcc.accType,srcId,tgtType:"loan",tgtId:loan.id,tx});
+    onClose();
+  };
+
+  return React.createElement(Modal,{title:"💳 Pay EMI — "+loan.name,onClose,w:420},
+    /* Info strip */
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}},
+      React.createElement("div",{style:{padding:"9px 11px",borderRadius:8,background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.2)"}},
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginBottom:3}},"Outstanding"),
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"#ef4444",fontFamily:"'Sora',sans-serif"}},INR(loan.outstanding))
+      ),
+      React.createElement("div",{style:{padding:"9px 11px",borderRadius:8,background:"rgba(251,146,60,.08)",border:"1px solid rgba(251,146,60,.2)"}},
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginBottom:3}},"Monthly EMI"),
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"#fb923c",fontFamily:"'Sora',sans-serif"}},INR(loan.emi))
+      ),
+      React.createElement("div",{style:{padding:"9px 11px",borderRadius:8,background:"rgba(167,139,250,.08)",border:"1px solid rgba(167,139,250,.2)"}},
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginBottom:3}},"Rate p.a."),
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"#a78bfa",fontFamily:"'Sora',sans-serif"}},loan.rate+"%")
+      )
+    ),
+    React.createElement(Field,{label:"From Account (Source — will be debited)"},
+      React.createElement("select",{className:"inp",value:srcId,onChange:e=>setSrcId(e.target.value)},
+        allAccounts.map(a=>React.createElement("option",{key:a.id,value:a.id},a.accTypeLbl+" "+a.name+(a.balance!=null?" · "+INR(a.balance):"")))
+      )
+    ),
+    React.createElement("div",{style:{padding:"6px 10px",borderRadius:7,background:"var(--accentbg2)",border:"1px solid var(--border2)",fontSize:11,color:"var(--text4)",marginBottom:12}},
+      "→ Loan account ",React.createElement("strong",{style:{color:"var(--accent)"}},loan.name)," will be credited and outstanding balance reduced by the EMI amount."
+    ),
+    React.createElement("div",{className:"grid-2col"},
+      React.createElement(Field,{label:"EMI Amount (₹)"},
+        React.createElement("input",{className:"inp",type:"number",value:amount,onChange:e=>setAmount(e.target.value),placeholder:"Enter EMI amount"})
+      ),
+      React.createElement(Field,{label:"Date"},
+        React.createElement("input",{className:"inp",type:"date",value:date,onChange:e=>setDate(e.target.value)})
+      )
+    ),
+    React.createElement(Field,{label:"Description"},
+      React.createElement("input",{className:"inp",value:desc,onChange:e=>setDesc(e.target.value)})
+    ),
+    React.createElement("div",{style:{display:"flex",gap:8,marginTop:4}},
+      React.createElement(Btn,{onClick:save,disabled:!canSave,sx:{flex:"1 1 auto",justifyContent:"center"}},"Pay EMI"),
+      React.createElement(Btn,{v:"secondary",onClick:onClose,sx:{justifyContent:"center",minWidth:70}},"Cancel")
+    )
+  );
+};
+
+const LoanSection=({loans,dispatch,allBanks=[],allCards=[],cash,isMobile})=>{
   const[open,setOpen]=useState(false);
-  const[f,setF]=useState({name:"",bank:"",type:"Home",principal:"",outstanding:"",emi:"",rate:"",startDate:TODAY(),endDate:""});
+  const[amortLoan,setAmortLoan]=useState(null);   /* loan to show amortization for */
+  const[emiLoan,setEmiLoan]=useState(null);         /* loan to pay EMI for */
+  const[f,setF]=useState({name:"",bank:"",type:"Home",principal:"",outstanding:"",emi:"",rate:"",tenure:"",startDate:TODAY(),endDate:""});
   const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
   const LC={Home:"#06b6d4",Vehicle:"#a78bfa",Personal:"#fb923c",Education:"#22c55e",Business:"var(--accent)",Other:"var(--text3)"};
   const tot=loans.reduce((s,l)=>s+l.outstanding,0);
-  const emi=loans.reduce((s,l)=>s+l.emi,0);
-  const save=()=>{if(!f.name||!f.bank||!f.outstanding)return;dispatch({type:"ADD_LOAN",p:{id:uid(),...f,principal:+f.principal,outstanding:+f.outstanding,emi:+f.emi,rate:+f.rate}});setF({name:"",bank:"",type:"Home",principal:"",outstanding:"",emi:"",rate:"",startDate:TODAY(),endDate:""});setOpen(false);};
+  const totalEmi=loans.reduce((s,l)=>s+l.emi,0);
+
+  /* Auto-calculate EMI when principal + rate + tenure are filled */
+  const autoEmi=(()=>{
+    const p=+f.principal,r=+f.rate,n=+f.tenure;
+    if(p>0&&r>0&&n>0)return Math.round(calcEmi(p,r,n)*100)/100;
+    return null;
+  })();
+
+  const save=()=>{
+    if(!f.name||!f.bank||!f.outstanding)return;
+    const emiVal=+f.emi||(autoEmi||0);
+    dispatch({type:"ADD_LOAN",p:{id:uid(),...f,principal:+f.principal,outstanding:+f.outstanding,emi:emiVal,rate:+f.rate,tenure:+f.tenure||null}});
+    setF({name:"",bank:"",type:"Home",principal:"",outstanding:"",emi:"",rate:"",tenure:"",startDate:TODAY(),endDate:""});
+    setOpen(false);
+  };
+
   return React.createElement("div",{className:"fu"},
+    /* Header */
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
-      React.createElement("div",null,React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:700,color:"var(--text)"}},"Loan Accounts"),React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},"Outstanding: ",React.createElement("span",{style:{color:"#ef4444",fontWeight:600}},INR(tot))," · Monthly EMI: ",React.createElement("span",{style:{color:"#fb923c",fontWeight:600}},INR(emi)))),
+      React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:700,color:"var(--text)"}},"Loan Accounts"),
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},
+          "Outstanding: ",React.createElement("span",{style:{color:"#ef4444",fontWeight:600}},INR(tot)),
+          " · Monthly EMI: ",React.createElement("span",{style:{color:"#fb923c",fontWeight:600}},INR(totalEmi))
+        )
+      ),
       React.createElement(Btn,{onClick:()=>setOpen(true)},"+ Add Loan")
     ),
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(285px,1fr))",gap:14}},
+
+    /* Loan cards */
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(310px,1fr))",gap:14}},
       loans.map(l=>{
-        const pp=((l.principal-l.outstanding)/l.principal*100),col=LC[l.type]||"var(--text3)";
-        return React.createElement(Card,{key:l.id},
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}},React.createElement("div",null,React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text)"}},l.name),React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginTop:2}},l.bank)),React.createElement(Badge,{ch:l.type,col})),
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}},
-            React.createElement("div",null,React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},"Outstanding"),React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#ef4444"}},INR(l.outstanding))),
-            React.createElement("div",null,React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},"Principal"),React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text4)"}},INR(l.principal))),
-            React.createElement("div",null,React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},"EMI / Month"),React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"#fb923c"}},INR(l.emi))),
-            React.createElement("div",null,React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},"Rate"),React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"#a78bfa"}},l.rate+"% p.a."))
+        const pp=l.principal>0?((l.principal-l.outstanding)/l.principal*100):0;
+        const col=LC[l.type]||"var(--text3)";
+        const amortSch=calcAmortization(l.outstanding,l.rate,l.emi);
+        const nextInterest=amortSch.length>0?amortSch[0].interest:null;
+        const nextPrincipal=amortSch.length>0?amortSch[0].principal:null;
+        return React.createElement(Card,{key:l.id,sx:{position:"relative"}},
+          /* Card header */
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}},
+            React.createElement("div",null,
+              React.createElement("div",{style:{fontSize:15,fontWeight:700,color:"var(--text)"}},l.name),
+              React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginTop:2}},l.bank)
+            ),
+            React.createElement(Badge,{ch:l.type,col})
           ),
-          React.createElement("div",null,
-            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--text5)",marginBottom:5}},React.createElement("span",null,"Repayment Progress"),React.createElement("span",null,pp.toFixed(1)+"% paid")),
-            React.createElement("div",{style:{background:"var(--bg5)",borderRadius:4,height:8,overflow:"hidden"}},React.createElement("div",{style:{width:pp+"%",height:"100%",background:"linear-gradient(90deg,"+col+","+col+"99)",borderRadius:4,transition:"width .6s"}}))
+          /* Stats grid */
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}},
+            React.createElement("div",null,
+              React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:2}},"Outstanding"),
+              React.createElement("div",{style:{fontSize:19,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#ef4444"}},INR(l.outstanding))
+            ),
+            React.createElement("div",null,
+              React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:2}},"Principal"),
+              React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text4)"}},INR(l.principal))
+            ),
+            React.createElement("div",null,
+              React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:2}},"EMI / Month"),
+              React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"#fb923c"}},INR(l.emi))
+            ),
+            React.createElement("div",null,
+              React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:2}},"Rate"),
+              React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"#a78bfa"}},l.rate+"% p.a.")
+            )
           ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--text6)",marginTop:10}},React.createElement("span",null,"Start: "+l.startDate),React.createElement("span",null,"End: "+l.endDate))
+          /* Next EMI breakdown (from amortization) */
+          nextInterest!=null&&React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12}},
+            React.createElement("div",{style:{flex:1,padding:"7px 10px",borderRadius:8,background:"rgba(167,139,250,.08)",border:"1px solid rgba(167,139,250,.2)",textAlign:"center"}},
+              React.createElement("div",{style:{fontSize:9,color:"#a78bfa",textTransform:"uppercase",letterSpacing:.4,marginBottom:2}},"Next Interest"),
+              React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"#a78bfa",fontFamily:"'Sora',sans-serif"}},INR(nextInterest))
+            ),
+            React.createElement("div",{style:{flex:1,padding:"7px 10px",borderRadius:8,background:"rgba(34,197,94,.08)",border:"1px solid rgba(34,197,94,.2)",textAlign:"center"}},
+              React.createElement("div",{style:{fontSize:9,color:"#22c55e",textTransform:"uppercase",letterSpacing:.4,marginBottom:2}},"Next Principal"),
+              React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"#22c55e",fontFamily:"'Sora',sans-serif"}},INR(nextPrincipal))
+            ),
+            React.createElement("div",{style:{flex:1,padding:"7px 10px",borderRadius:8,background:"var(--accentbg)",border:"1px solid rgba(240,165,0,.2)",textAlign:"center"}},
+              React.createElement("div",{style:{fontSize:9,color:"var(--accent)",textTransform:"uppercase",letterSpacing:.4,marginBottom:2}},"EMIs Left"),
+              React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--accent)",fontFamily:"'Sora',sans-serif"}},amortSch.length)
+            )
+          ),
+          /* Progress bar */
+          React.createElement("div",{style:{marginBottom:12}},
+            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text5)",marginBottom:4}},
+              React.createElement("span",null,"Repayment Progress"),
+              React.createElement("span",null,pp.toFixed(1)+"% paid")
+            ),
+            React.createElement("div",{style:{background:"var(--bg5)",borderRadius:4,height:7,overflow:"hidden"}},
+              React.createElement("div",{style:{width:pp+"%",height:"100%",background:"linear-gradient(90deg,"+col+","+col+"99)",borderRadius:4,transition:"width .6s"}})
+            )
+          ),
+          /* Dates */
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",marginBottom:12}},
+            React.createElement("span",null,"Start: "+l.startDate),
+            React.createElement("span",null,"End: "+l.endDate)
+          ),
+          /* Action buttons */
+          React.createElement("div",{style:{display:"flex",gap:7,flexWrap:"wrap"}},
+            React.createElement("button",{
+              onClick:()=>setEmiLoan(l),
+              style:{flex:1,minWidth:80,padding:"7px 10px",borderRadius:8,border:"1px solid rgba(34,197,94,.4)",
+                background:"rgba(34,197,94,.08)",color:"#22c55e",cursor:"pointer",
+                fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:600,
+                display:"flex",alignItems:"center",justifyContent:"center",gap:5}
+            },"💳 Pay EMI"),
+            React.createElement("button",{
+              onClick:()=>setAmortLoan(l),
+              style:{flex:1,minWidth:80,padding:"7px 10px",borderRadius:8,border:"1px solid rgba(167,139,250,.4)",
+                background:"rgba(167,139,250,.08)",color:"#a78bfa",cursor:"pointer",
+                fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:600,
+                display:"flex",alignItems:"center",justifyContent:"center",gap:5}
+            },"📊 Amortization")
+          )
         );
       }),
       !loans.length&&React.createElement(Empty,{icon:"🎉",text:"No loans -- you're debt free!"})
     ),
-    open&&React.createElement(Modal,{title:"Add Loan Account",onClose:()=>setOpen(false),w:480},
-      React.createElement(Field,{label:"Loan Name"},React.createElement("input",{className:"inp",placeholder:"e.g. Home Loan",value:f.name,onChange:set("name")})),
-      React.createElement("div",{className:"grid-2col"},
-        React.createElement(Field,{label:"Bank / Lender"},React.createElement("input",{className:"inp",placeholder:"e.g. HDFC Bank",value:f.bank,onChange:set("bank")})),
-        React.createElement(Field,{label:"Loan Type"},React.createElement("select",{className:"inp",value:f.type,onChange:set("type")},["Home","Vehicle","Personal","Education","Business","Other"].map(t=>React.createElement("option",{key:t},t)))),
-        React.createElement(Field,{label:"Principal (₹)"},React.createElement("input",{className:"inp",type:"number",placeholder:"0",value:f.principal,onChange:set("principal")})),
-        React.createElement(Field,{label:"Outstanding (₹)"},React.createElement("input",{className:"inp",type:"number",placeholder:"0",value:f.outstanding,onChange:set("outstanding")})),
-        React.createElement(Field,{label:"EMI (₹/month)"},React.createElement("input",{className:"inp",type:"number",placeholder:"0",value:f.emi,onChange:set("emi")})),
-        React.createElement(Field,{label:"Rate (%)"},React.createElement("input",{className:"inp",type:"number",placeholder:"8.5",value:f.rate,onChange:set("rate")})),
-        React.createElement(Field,{label:"Start Date"},React.createElement("input",{className:"inp",type:"date",value:f.startDate,onChange:set("startDate")})),
-        React.createElement(Field,{label:"End Date"},React.createElement("input",{className:"inp",type:"date",value:f.endDate,onChange:set("endDate")}))
+
+    /* Add Loan modal */
+    open&&React.createElement(Modal,{title:"Add Loan Account",onClose:()=>setOpen(false),w:500},
+      React.createElement(Field,{label:"Loan Name"},
+        React.createElement("input",{className:"inp",placeholder:"e.g. Home Loan – HDFC",value:f.name,onChange:set("name")})
       ),
-      React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,marginTop:4}},React.createElement(Btn,{onClick:save,sx:{flex:"1 1 auto",justifyContent:"center"}},"Add Loan"),React.createElement(Btn,{v:"secondary",onClick:()=>setOpen(false)},"Cancel"))
-    )
+      React.createElement("div",{className:"grid-2col"},
+        React.createElement(Field,{label:"Bank / Lender"},
+          React.createElement("input",{className:"inp",placeholder:"e.g. HDFC Bank",value:f.bank,onChange:set("bank")})
+        ),
+        React.createElement(Field,{label:"Loan Type"},
+          React.createElement("select",{className:"inp",value:f.type,onChange:set("type")},
+            ["Home","Vehicle","Personal","Education","Business","Other"].map(t=>React.createElement("option",{key:t},t))
+          )
+        ),
+        React.createElement(Field,{label:"Principal (₹)"},
+          React.createElement("input",{className:"inp",type:"number",placeholder:"e.g. 5000000",value:f.principal,onChange:set("principal")})
+        ),
+        React.createElement(Field,{label:"Outstanding (₹)"},
+          React.createElement("input",{className:"inp",type:"number",placeholder:"Current balance",value:f.outstanding,onChange:set("outstanding")})
+        ),
+        React.createElement(Field,{label:"Interest Rate (% p.a.)"},
+          React.createElement("input",{className:"inp",type:"number",placeholder:"e.g. 8.5",step:"0.01",value:f.rate,onChange:set("rate")})
+        ),
+        React.createElement(Field,{label:"Tenure (months)"},
+          React.createElement("input",{className:"inp",type:"number",placeholder:"e.g. 240",value:f.tenure,onChange:set("tenure")})
+        )
+      ),
+      /* Auto-EMI hint */
+      autoEmi&&React.createElement("div",{style:{padding:"9px 12px",borderRadius:8,background:"var(--accentbg)",border:"1px solid rgba(240,165,0,.3)",fontSize:12,color:"var(--accent)",marginBottom:10}},
+        "📐 Calculated EMI: ",React.createElement("strong",null,INR(autoEmi)),
+        " (Formula: P × r × (1+r)ⁿ / ((1+r)ⁿ − 1))"
+      ),
+      React.createElement("div",{className:"grid-2col"},
+        React.createElement(Field,{label:"EMI (₹/month) — leave blank to use calculated"},
+          React.createElement("input",{className:"inp",type:"number",placeholder:autoEmi?INR(autoEmi):"Enter or calculate above",value:f.emi,onChange:set("emi")})
+        ),
+        React.createElement(Field,{label:"Start Date"},
+          React.createElement("input",{className:"inp",type:"date",value:f.startDate,onChange:set("startDate")})
+        ),
+        React.createElement(Field,{label:"End Date"},
+          React.createElement("input",{className:"inp",type:"date",value:f.endDate,onChange:set("endDate")})
+        )
+      ),
+      React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,marginTop:4}},
+        React.createElement(Btn,{onClick:save,sx:{flex:"1 1 auto",justifyContent:"center"}},"Add Loan"),
+        React.createElement(Btn,{v:"secondary",onClick:()=>setOpen(false)},"Cancel")
+      )
+    ),
+
+    /* Amortization modal */
+    amortLoan&&React.createElement(AmortizationModal,{loan:amortLoan,onClose:()=>setAmortLoan(null)}),
+
+    /* EMI Pay modal */
+    emiLoan&&React.createElement(EmiPayModal,{loan:emiLoan,allBanks,allCards,cash:cash||{balance:0,transactions:[]},dispatch,onClose:()=>setEmiLoan(null)})
   );
 };
 
@@ -8835,6 +9330,347 @@ ${table(
   );
 };
 
+/* ══════════════════════════════════════════════════════════════════════════
+   GST & TDS REPORT
+   Formulas (official GST India / Rule 35):
+   ► Inclusive: Base = Amount ÷ (1 + rate/100)   GST = Amount − Base
+   ► Exclusive: Base = Amount                      GST = Base × rate/100
+   ► TDS (from net received/paid):
+       Gross = Net × 100/(100 − rate%)             TDS = Gross − Net
+   ══════════════════════════════════════════════════════════════════════════ */
+const RptGstTds=({data,from,to})=>{
+  const[view,setView]=useState("snapshot");
+  const[gstTypeFilter,setGstTypeFilter]=useState("all"); /* all | inclusive | exclusive */
+  const[tdsOnly,setTdsOnly]=useState(false);
+
+  /* ── Collect all transactions with GST or TDS tags ── */
+  const allTx=[
+    ...data.banks.flatMap(b=>b.transactions.map(t=>({...t,_src:b.name}))),
+    ...data.cards.flatMap(c=>c.transactions.map(t=>({...t,_src:c.name}))),
+    ...data.cash.transactions.map(t=>({...t,_src:"Cash"})),
+  ];
+
+  const inRange=tx=>(!from||tx.date>=from)&&(!to||tx.date<=to);
+  const taxedTx=allTx.filter(tx=>inRange(tx)&&(+tx.gstRate>0||+tx.tdsRate>0));
+
+  /* ── GST Calculation ── */
+  const calcGst=(amount,rate,type)=>{
+    const r=+rate||0;
+    const a=+amount||0;
+    if(r<=0)return{base:a,gst:0,cgst:0,sgst:0};
+    let base,gst;
+    if(type==="exclusive"){
+      /* Exclusive: amount IS the base; GST added on top */
+      base=a;
+      gst=a*r/100;
+    }else{
+      /* Inclusive (default): GST already in amount — Rule 35 proportionate method */
+      base=a/(1+r/100);
+      gst=a-base;
+    }
+    return{base:Math.round(base*100)/100,gst:Math.round(gst*100)/100,cgst:Math.round(gst/2*100)/100,sgst:Math.round(gst/2*100)/100};
+  };
+
+  /* ── TDS Calculation (from net amount paid/received) ── */
+  const calcTds=(amount,rate)=>{
+    const r=+rate||0;
+    const a=+amount||0;
+    if(r<=0||r>=100)return{gross:a,tds:0};
+    const gross=a*100/(100-r);
+    const tds=gross-a;
+    return{gross:Math.round(gross*100)/100,tds:Math.round(tds*100)/100};
+  };
+
+  /* ── Enrich each transaction with computed values ── */
+  const rows=taxedTx.map(tx=>{
+    const g=+tx.gstRate>0?calcGst(tx.amount,tx.gstRate,tx.gstType||"inclusive"):{base:+tx.amount,gst:0,cgst:0,sgst:0};
+    const t=+tx.tdsRate>0?calcTds(tx.amount,tx.tdsRate):{gross:+tx.amount,tds:0};
+    return{...tx,_base:g.base,_gst:g.gst,_cgst:g.cgst,_sgst:g.sgst,_gross:t.gross,_tds:t.tds};
+  });
+
+  /* ── Apply sub-filters ── */
+  const visRows=rows.filter(r=>{
+    if(tdsOnly&&!(+r.tdsRate>0))return false;
+    if(gstTypeFilter!=="all"&&+r.gstRate>0&&(r.gstType||"inclusive")!==gstTypeFilter)return false;
+    return true;
+  });
+
+  /* ── Summary totals ── */
+  const totGst=rows.reduce((s,r)=>s+r._gst,0);
+  const totBase=rows.filter(r=>+r.gstRate>0).reduce((s,r)=>s+r._base,0);
+  const totCgst=rows.reduce((s,r)=>s+r._cgst,0);
+  const totTds=rows.reduce((s,r)=>s+r._tds,0);
+  const totGross=rows.filter(r=>+r.tdsRate>0).reduce((s,r)=>s+r._gross,0);
+  const gstCount=rows.filter(r=>+r.gstRate>0).length;
+  const tdsCount=rows.filter(r=>+r.tdsRate>0).length;
+
+  /* ── GST by rate breakdown ── */
+  const byRate={};
+  rows.filter(r=>+r.gstRate>0).forEach(r=>{
+    const k=r.gstRate+"%";
+    if(!byRate[k])byRate[k]={rate:+r.gstRate,count:0,base:0,gst:0,cgst:0,sgst:0};
+    byRate[k].count++;byRate[k].base+=r._base;byRate[k].gst+=r._gst;byRate[k].cgst+=r._cgst;byRate[k].sgst+=r._sgst;
+  });
+  const rateRows=Object.values(byRate).sort((a,b)=>a.rate-b.rate);
+
+  /* ── TDS by section breakdown ── */
+  const bySec={};
+  rows.filter(r=>+r.tdsRate>0).forEach(r=>{
+    const k=(r.tdsSec||"No Section")+"|"+r.tdsRate+"%";
+    if(!bySec[k])bySec[k]={sec:r.tdsSec||"No Section",rate:+r.tdsRate,count:0,gross:0,tds:0};
+    bySec[k].count++;bySec[k].gross+=r._gross;bySec[k].tds+=r._tds;
+  });
+  const secRows=Object.values(bySec).sort((a,b)=>b.tds-a.tds);
+
+  /* ── Monthly trend ── */
+  const monthlyGst={};const monthlyTds={};
+  rows.forEach(r=>{
+    const m=r.date.substr(0,7);
+    if(!monthlyGst[m])monthlyGst[m]=0;
+    if(!monthlyTds[m])monthlyTds[m]=0;
+    monthlyGst[m]+=r._gst;
+    monthlyTds[m]+=r._tds;
+  });
+  const months=Object.keys({...monthlyGst,...monthlyTds}).sort();
+
+  /* ── GST rate palette ── */
+  const RATE_COL={"5%":"#22c55e","12%":"#06b6d4","18%":"#f0a500","28%":"#ef4444"};
+  const getRateCol=rate=>RATE_COL[rate+"%"]||"#a78bfa";
+
+  const tbH={padding:"9px 12px",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,background:"var(--bg4)",borderBottom:"1px solid var(--border)"};
+  const tbD=(col)=>({padding:"9px 12px",fontSize:12,color:col||"var(--text2)",borderBottom:"1px solid var(--border2)",verticalAlign:"middle"});
+
+  if(rows.length===0)return React.createElement("div",{className:"fu"},
+    React.createElement(RptHeader,{title:"GST & TDS",desc:"Tax breakdown for all GST and TDS tagged transactions",icon:"🧾"}),
+    React.createElement(Empty,{icon:"🧾",text:"No GST or TDS tagged transactions in the selected period. Tag transactions with GST/TDS rates via the transaction editor."})
+  );
+
+  return React.createElement("div",{className:"fu"},
+    React.createElement(RptHeader,{title:"GST & TDS Report",desc:"Breaks down GST (inclusive/exclusive) and TDS deducted across all accounts for the selected period",icon:"🧾"}),
+
+    /* ── Ctrl bar ── */
+    React.createElement(RptCtrlBar,null,
+      React.createElement("div",{style:{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}},
+        React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600}})
+        ,["all","inclusive","exclusive"].map(t=>React.createElement("button",{key:t,
+          onClick:()=>setGstTypeFilter(t),
+          style:{padding:"5px 12px",borderRadius:20,border:"1px solid "+(gstTypeFilter===t?"var(--accent)":"var(--border)"),
+            background:gstTypeFilter===t?"var(--accentbg)":"transparent",
+            color:gstTypeFilter===t?"var(--accent)":"var(--text4)",
+            cursor:"pointer",fontSize:11,fontFamily:"'DM Sans',sans-serif",fontWeight:gstTypeFilter===t?700:400}
+        },t==="all"?"All GST":t==="inclusive"?"Inclusive":"Exclusive")),
+        React.createElement("span",{style:{fontSize:11,color:"var(--text6)",margin:"0 4px"}},"│"),
+        React.createElement("button",{
+          onClick:()=>setTdsOnly(v=>!v),
+          style:{padding:"5px 12px",borderRadius:20,border:"1px solid "+(tdsOnly?"#a78bfa":"var(--border)"),
+            background:tdsOnly?"rgba(167,139,250,.12)":"transparent",
+            color:tdsOnly?"#a78bfa":"var(--text4)",
+            cursor:"pointer",fontSize:11,fontFamily:"'DM Sans',sans-serif",fontWeight:tdsOnly?700:400}
+        },"TDS Only"),
+        React.createElement("span",{style:{fontSize:11,color:"var(--text5)",marginLeft:6}},"· "+visRows.length+" transactions")
+      ),
+      React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{views:VIEWS_2,value:view,onChange:setView}))
+    ),
+
+    /* ── Stat cards ── */
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement(StatCard,{label:"Total GST Paid",val:INR(totGst),col:"var(--accent)",icon:"🏛",sub:gstCount+" transactions"}),
+      React.createElement(StatCard,{label:"Total Base Amount",val:INR(totBase),col:"#06b6d4",icon:"💰",sub:"Pre-GST value"}),
+      React.createElement(StatCard,{label:"CGST + SGST",val:INR(totCgst)+" + "+INR(totCgst),col:"#22c55e",icon:"⚖",sub:"Equal split (intra-state)"}),
+      React.createElement(StatCard,{label:"Total TDS Deducted",val:INR(totTds),col:"#a78bfa",icon:"✂",sub:tdsCount+" transactions · Gross "+INR(totGross)})
+    ),
+
+    /* ── SNAPSHOT ── */
+    view==="snapshot"&&React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:14}},
+
+      /* GST by rate */
+      gstCount>0&&React.createElement(Card,null,
+        React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)",marginBottom:14,textTransform:"uppercase",letterSpacing:.5}},"GST Breakdown by Rate"),
+        React.createElement("div",{style:{display:"flex",gap:20,alignItems:"flex-start",flexWrap:"wrap"}},
+          /* Donut */
+          React.createElement("div",{style:{flexShrink:0}},
+            React.createElement(DonutChart,{data:rateRows.map(r=>({label:r.rate+"%",value:r.gst,color:getRateCol(r.rate)})),size:150})
+          ),
+          /* Rate breakdown bars */
+          React.createElement("div",{style:{flex:1,minWidth:240}},
+            rateRows.map(r=>{
+              const col=getRateCol(r.rate);
+              const pct=totGst>0?(r.gst/totGst*100).toFixed(1):0;
+              return React.createElement("div",{key:r.rate,style:{marginBottom:12}},
+                React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}},
+                  React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+                    React.createElement("span",{style:{width:10,height:10,borderRadius:"50%",background:col,display:"inline-block"}}),
+                    React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text2)"}},"GST @ "+r.rate+"%"),
+                    React.createElement("span",{style:{fontSize:10,color:"var(--text6)",background:"var(--bg5)",borderRadius:8,padding:"1px 6px"}},r.count+" txns")
+                  ),
+                  React.createElement("div",{style:{textAlign:"right"}},
+                    React.createElement("div",{style:{fontSize:13,fontWeight:700,color:col,fontFamily:"'Sora',sans-serif"}},INR(r.gst)),
+                    React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"Base: "+INR(r.base))
+                  )
+                ),
+                React.createElement("div",{style:{height:6,borderRadius:3,background:"var(--bg5)",overflow:"hidden"}},
+                  React.createElement("div",{style:{height:"100%",borderRadius:3,background:col,width:pct+"%",transition:"width 1s ease"}})
+                ),
+                React.createElement("div",{style:{display:"flex",gap:16,marginTop:4}},
+                  React.createElement("span",{style:{fontSize:10,color:"var(--text6)"}},"CGST: "+INR(r.cgst)),
+                  React.createElement("span",{style:{fontSize:10,color:"var(--text6)"}},"SGST: "+INR(r.sgst)),
+                  React.createElement("span",{style:{fontSize:10,color:"var(--text5)",marginLeft:"auto"}},"Share: "+pct+"%")
+                )
+              );
+            })
+          )
+        )
+      ),
+
+      /* GST Type split */
+      gstCount>0&&React.createElement(Card,null,
+        React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)",marginBottom:12,textTransform:"uppercase",letterSpacing:.5}},"Inclusive vs Exclusive Split"),
+        (()=>{
+          const inc=rows.filter(r=>+r.gstRate>0&&(r.gstType||"inclusive")==="inclusive");
+          const exc=rows.filter(r=>+r.gstRate>0&&r.gstType==="exclusive");
+          const incGst=inc.reduce((s,r)=>s+r._gst,0);
+          const excGst=exc.reduce((s,r)=>s+r._gst,0);
+          return React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
+            React.createElement("div",{style:{padding:"12px 14px",borderRadius:10,background:"var(--accentbg2)",border:"1px solid var(--border2)"}},
+              React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:6}},"Inclusive (GST within amount)"),
+              React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginBottom:8,lineHeight:1.5}},"Formula: Base = Amount ÷ (1 + Rate/100) · GST = Amount − Base"),
+              React.createElement("div",{style:{fontSize:18,fontWeight:700,color:"var(--accent)",fontFamily:"'Sora',sans-serif"}},INR(incGst)),
+              React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},inc.length+" transactions · Base: "+INR(inc.reduce((s,r)=>s+r._base,0)))
+            ),
+            React.createElement("div",{style:{padding:"12px 14px",borderRadius:10,background:"rgba(6,182,212,.06)",border:"1px solid var(--border2)"}},
+              React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:6}},"Exclusive (GST added on top)"),
+              React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginBottom:8,lineHeight:1.5}},"Formula: GST = Base × Rate/100 · Total = Base + GST"),
+              React.createElement("div",{style:{fontSize:18,fontWeight:700,color:"#06b6d4",fontFamily:"'Sora',sans-serif"}},INR(excGst)),
+              React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},exc.length+" transactions · Base: "+INR(exc.reduce((s,r)=>s+r._base,0)))
+            )
+          );
+        })()
+      ),
+
+      /* TDS by section */
+      tdsCount>0&&React.createElement(Card,null,
+        React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)",marginBottom:12,textTransform:"uppercase",letterSpacing:.5}},"TDS by Section"),
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginBottom:10,padding:"6px 10px",background:"var(--bg4)",borderRadius:7,border:"1px solid var(--border2)"}},
+          "Formula: Gross = Net × 100 ÷ (100 − TDS%) · TDS = Gross − Net  (back-calculated from net payment recorded)"
+        ),
+        secRows.map(s=>{
+          const pct=totTds>0?(s.tds/totTds*100).toFixed(1):0;
+          return React.createElement("div",{key:s.sec+s.rate,style:{marginBottom:12}},
+            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}},
+              React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+                React.createElement("span",{style:{width:10,height:10,borderRadius:"50%",background:"#a78bfa",display:"inline-block"}}),
+                React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text2)"}},s.sec),
+                React.createElement("span",{style:{fontSize:10,color:"var(--text6)",background:"var(--bg5)",borderRadius:8,padding:"1px 6px"}},s.rate+"%"),
+                React.createElement("span",{style:{fontSize:10,color:"var(--text6)",background:"var(--bg5)",borderRadius:8,padding:"1px 6px"}},s.count+" txns")
+              ),
+              React.createElement("div",{style:{textAlign:"right"}},
+                React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"#a78bfa",fontFamily:"'Sora',sans-serif"}},INR(s.tds)),
+                React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"Gross: "+INR(s.gross))
+              )
+            ),
+            React.createElement("div",{style:{height:6,borderRadius:3,background:"var(--bg5)",overflow:"hidden"}},
+              React.createElement("div",{style:{height:"100%",borderRadius:3,background:"#a78bfa",width:pct+"%",transition:"width 1s ease"}})
+            )
+          );
+        })
+      ),
+
+      /* Monthly GST + TDS trend */
+      months.length>0&&React.createElement(Card,null,
+        React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)",marginBottom:12,textTransform:"uppercase",letterSpacing:.5}},"Monthly GST & TDS Trend"),
+        React.createElement("div",{style:{overflowX:"auto"}},
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"120px "+months.map(()=>"88px").join(" "),minWidth:300,borderBottom:"1px solid var(--border)",background:"var(--bg4)"}},
+            React.createElement("div",{style:{...tbH}},""),
+            ...months.map(m=>React.createElement("div",{key:m,style:{...tbH,textAlign:"right"}},MONTH_NAMES[parseInt(m.slice(5))-1]+"'"+m.slice(2,4)))
+          ),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"120px "+months.map(()=>"88px").join(" "),borderBottom:"1px solid var(--border2)"}},
+            React.createElement("div",{style:{padding:"9px 12px",fontSize:11,fontWeight:600,color:"var(--accent)"}},React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:"var(--accent)",display:"inline-block",marginRight:5}}),"GST"),
+            ...months.map(m=>React.createElement("div",{key:m,style:{...tbD("var(--accent)"),textAlign:"right",fontWeight:600}},monthlyGst[m]>0?INR(monthlyGst[m]):"—"))
+          ),
+          tdsCount>0&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"120px "+months.map(()=>"88px").join(" ")}},
+            React.createElement("div",{style:{padding:"9px 12px",fontSize:11,fontWeight:600,color:"#a78bfa"}},React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:"#a78bfa",display:"inline-block",marginRight:5}}),"TDS"),
+            ...months.map(m=>React.createElement("div",{key:m,style:{...tbD("#a78bfa"),textAlign:"right",fontWeight:600}},monthlyTds[m]>0?INR(monthlyTds[m]):"—"))
+          )
+        )
+      )
+    ),
+
+    /* ── DETAILED TABLE ── */
+    view==="detailed"&&React.createElement("div",null,
+      React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
+        React.createElement("div",{style:{
+          display:"grid",
+          gridTemplateColumns:"90px 1fr 110px 90px 80px 100px 100px 90px 90px 90px 80px",
+          minWidth:1000,
+          background:"var(--bg4)",borderBottom:"2px solid var(--border)"
+        }},
+          React.createElement("div",{style:{...tbH}},"Date"),
+          React.createElement("div",{style:{...tbH}},"Description"),
+          React.createElement("div",{style:{...tbH}},"Account"),
+          React.createElement("div",{style:{...tbH,textAlign:"right"}},"Total Amt"),
+          React.createElement("div",{style:{...tbH,textAlign:"center"}},"GST Type"),
+          React.createElement("div",{style:{...tbH,textAlign:"right",color:"var(--accent)"}},"Base Amt"),
+          React.createElement("div",{style:{...tbH,textAlign:"right",color:"var(--accent)"}},"GST Amt"),
+          React.createElement("div",{style:{...tbH,textAlign:"right"}},"CGST"),
+          React.createElement("div",{style:{...tbH,textAlign:"right"}},"SGST"),
+          React.createElement("div",{style:{...tbH,textAlign:"right",color:"#a78bfa"}},"TDS Amt"),
+          React.createElement("div",{style:{...tbH}},"TDS Sec")
+        ),
+        visRows.length===0&&React.createElement("div",{style:{padding:"30px 20px",textAlign:"center",color:"var(--text5)",fontSize:13}},"No transactions match current filter"),
+        visRows.sort((a,b)=>b.date.localeCompare(a.date)).map((r,i)=>{
+          const hasGst=+r.gstRate>0;
+          const hasTds=+r.tdsRate>0;
+          const gType=r.gstType||"inclusive";
+          return React.createElement("div",{key:r.id,className:"tr",style:{
+            display:"grid",
+            gridTemplateColumns:"90px 1fr 110px 90px 80px 100px 100px 90px 90px 90px 80px",
+            minWidth:1000,
+            background:i%2===0?"transparent":"rgba(255,255,255,.015)",
+            borderBottom:"1px solid var(--border2)",alignItems:"center"
+          }},
+            React.createElement("div",{style:{...tbD(),fontSize:11,fontFamily:"'Sora',sans-serif"}},r.date.split("-").reverse().join("-")),
+            React.createElement("div",{style:{...tbD(),minWidth:0}},
+              React.createElement("div",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:12,fontWeight:600,color:"var(--text2)"}},r.desc||r.payee||"—"),
+              r.payee&&r.desc&&React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},r.payee)
+            ),
+            React.createElement("div",{style:{...tbD(),fontSize:10,color:"var(--text4)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},r._src||""),
+            React.createElement("div",{style:{...tbD(),textAlign:"right",fontSize:12,fontWeight:600,fontFamily:"'Sora',sans-serif"}},INR(r.amount)),
+            React.createElement("div",{style:{...tbD(),textAlign:"center"}},
+              hasGst?React.createElement("span",{style:{
+                fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:8,
+                background:gType==="inclusive"?"var(--accentbg)":"rgba(6,182,212,.12)",
+                color:gType==="inclusive"?"var(--accent)":"#06b6d4",
+                border:"1px solid "+(gType==="inclusive"?"var(--accent)30":"rgba(6,182,212,.3)")
+              }},gType==="inclusive"?"Incl "+r.gstRate+"%":"Excl "+r.gstRate+"%"):"—"
+            ),
+            React.createElement("div",{style:{...tbD("var(--accent)"),textAlign:"right",fontWeight:600,fontFamily:"'Sora',sans-serif"}},hasGst?INR(r._base):"—"),
+            React.createElement("div",{style:{...tbD("var(--accent)"),textAlign:"right",fontWeight:700,fontFamily:"'Sora',sans-serif"}},hasGst?INR(r._gst):"—"),
+            React.createElement("div",{style:{...tbD(),textAlign:"right",fontSize:11,color:"var(--text4)"}},hasGst?INR(r._cgst):"—"),
+            React.createElement("div",{style:{...tbD(),textAlign:"right",fontSize:11,color:"var(--text4)"}},hasGst?INR(r._sgst):"—"),
+            React.createElement("div",{style:{...tbD("#a78bfa"),textAlign:"right",fontWeight:hasTds?700:400,fontFamily:hasTds?"'Sora',sans-serif":"inherit"}},hasTds?INR(r._tds):"—"),
+            React.createElement("div",{style:{...tbD(),fontSize:10,color:"var(--text5)"}},hasTds?(r.tdsSec||"—"):"—")
+          );
+        }),
+        /* Totals footer */
+        visRows.length>0&&React.createElement("div",{style:{
+          display:"grid",
+          gridTemplateColumns:"90px 1fr 110px 90px 80px 100px 100px 90px 90px 90px 80px",
+          minWidth:1000,
+          background:"var(--bg4)",borderTop:"2px solid var(--border)"
+        }},
+          React.createElement("div",{style:{padding:"10px 12px",gridColumn:"1/5",fontSize:12,fontWeight:700,color:"var(--text3)"}},"Totals ("+visRows.length+" rows)"),
+          React.createElement("div",{style:{padding:"10px 12px",textAlign:"right",fontSize:12,fontWeight:700,color:"var(--accent)"}}),
+          React.createElement("div",{style:{padding:"10px 12px",textAlign:"right",fontSize:13,fontWeight:800,color:"var(--accent)",fontFamily:"'Sora',sans-serif"}},INR(visRows.reduce((s,r)=>s+r._gst,0))),
+          React.createElement("div",{style:{padding:"10px 12px",textAlign:"right",fontSize:12,fontWeight:700,color:"var(--text4)"}},INR(visRows.reduce((s,r)=>s+r._cgst,0))),
+          React.createElement("div",{style:{padding:"10px 12px",textAlign:"right",fontSize:12,fontWeight:700,color:"var(--text4)"}},INR(visRows.reduce((s,r)=>s+r._sgst,0))),
+          React.createElement("div",{style:{padding:"10px 12px",textAlign:"right",fontSize:13,fontWeight:800,color:"#a78bfa",fontFamily:"'Sora',sans-serif"}},INR(visRows.reduce((s,r)=>s+r._tds,0))),
+          React.createElement("div",{style:{padding:"10px 12px"}})
+        )
+      )
+    )
+  );
+};
+
 const REPORT_TREE=[
   {id:"cashflow",      label:"Cash Flow",                icon:"💰"},
   {id:"classification",label:"Classification Breakdown", icon:"🏷"},
@@ -8852,6 +9688,7 @@ const REPORT_TREE=[
   {id:"reconciliation",label:"Reconciliation",           icon:"✅"},
   {id:"usage",         label:"My Usage",                 icon:"📱"},
   {id:"summary",       label:"Summary of Accounts",      icon:"🗂"},
+  {id:"gsttds",        label:"GST & TDS",                 icon:"🧾"},
 ];
 
 const ReportsSection=({data,isMobile})=>{
@@ -8925,6 +9762,7 @@ const ReportsSection=({data,isMobile})=>{
       case"investments":     return React.createElement(RptInvestments,props);
       case"reconciliation":  return React.createElement(RptReconciliation,props);
       case"networth":        return React.createElement(RptNetWorth,props);
+      case"gsttds":          return React.createElement(RptGstTds,props);
       default:               return React.createElement(RptCashFlow,props);
     }
   };
@@ -9011,7 +9849,7 @@ const SettingsSection=({state,dispatch,themeId,setTheme,onResetAll,isMobile})=>{
 
   // ── Card Edit Modal
   const CardEditModal=({c,onClose})=>{
-    const[f,setF]=useState({name:c.name,bank:c.bank,cardNumber:c.cardNumber||"",limit:String(c.limit),outstanding:String(c.outstanding),notes:c.notes||""});
+    const[f,setF]=useState({name:c.name,bank:c.bank,cardNumber:c.cardNumber||"",limit:String(c.limit),outstanding:String(c.outstanding),billingDay:c.billingDay?String(c.billingDay):"",dueDay:c.dueDay?String(c.dueDay):"",notes:c.notes||""});
     const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
     return React.createElement(Modal,{title:"Edit Credit Card",onClose,w:420},
       React.createElement(Field,{label:"Card Name"},React.createElement("input",{className:"inp",value:f.name,onChange:set("name")})),
@@ -9021,9 +9859,13 @@ const SettingsSection=({state,dispatch,themeId,setTheme,onResetAll,isMobile})=>{
         React.createElement(Field,{label:"Credit Limit (₹)"},React.createElement("input",{className:"inp",type:"number",value:f.limit,onChange:set("limit")})),
         React.createElement(Field,{label:"Outstanding (₹)"},React.createElement("input",{className:"inp",type:"number",value:f.outstanding,onChange:set("outstanding")}))
       ),
+      React.createElement("div",{className:"grid-2col"},
+        React.createElement(Field,{label:"Billing Cycle Day"},React.createElement("input",{className:"inp",type:"number",min:1,max:28,placeholder:"e.g. 5 (5th of each month)",value:f.billingDay,onChange:set("billingDay")})),
+        React.createElement(Field,{label:"Payment Due Day"},React.createElement("input",{className:"inp",type:"number",min:1,max:31,placeholder:"e.g. 25 (25th of month)",value:f.dueDay,onChange:set("dueDay")}))
+      ),
       React.createElement(Field,{label:"Notes"},React.createElement("textarea",{className:"inp",value:f.notes,onChange:set("notes"),placeholder:"Due date, reward program, contact…",style:{resize:"vertical",minHeight:72,lineHeight:1.6,fontSize:13}})),
       React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,marginTop:4}},
-        React.createElement(Btn,{onClick:()=>{dispatch({type:"EDIT_CARD",p:{id:c.id,name:f.name,bank:f.bank,cardNumber:f.cardNumber,limit:+f.limit,outstanding:+f.outstanding,notes:f.notes}});onClose();},sx:{flex:"1 1 120px",justifyContent:"center"}},"Save Changes"),
+        React.createElement(Btn,{onClick:()=>{dispatch({type:"EDIT_CARD",p:{id:c.id,name:f.name,bank:f.bank,cardNumber:f.cardNumber,limit:+f.limit,outstanding:+f.outstanding,billingDay:+(f.billingDay||0)||null,dueDay:+(f.dueDay||0)||null,notes:f.notes}});onClose();},sx:{flex:"1 1 120px",justifyContent:"center"}},"Save Changes"),
         React.createElement(Btn,{v:"secondary",onClick:onClose,sx:{justifyContent:"center",minWidth:70}},"Cancel")
       )
     );
@@ -10698,6 +11540,7 @@ const loadState=()=>{
       scheduled:(parsed.scheduled||def.scheduled||[]),
       re:(parsed.re||def.re||[]),
       notes:(parsed.notes||def.notes||[]),
+      goals:(parsed.goals||def.goals||[]),
     };
   }catch(e){console.warn("Failed to load state:",e);return null;}
 };
@@ -10716,7 +11559,7 @@ const saveTheme=(id)=>{
 };
 
 /* ── HASH ROUTING ─────────────────────────────────────────────────────────── */
-const VALID_TABS=["dashboard","banks","cards","cash","inv_dash","inv_mf","inv_shares","inv_fd","inv_re","loans","scheduled","notes","calculator","reports","settings"];
+const VALID_TABS=["dashboard","banks","cards","cash","inv_dash","inv_mf","inv_shares","inv_fd","inv_re","loans","scheduled","notes","calculator","reports","settings","goals","insights"];
 
 const getTabFromHash=()=>{
   const h=window.location.hash.replace("#/","").replace("#","").toLowerCase();
@@ -10774,6 +11617,8 @@ const NavIcon=({id,size=16})=>{
     case"reports":     return React.createElement("svg",s,React.createElement("rect",{x:2,y:1.5,width:12,height:13,rx:1.5}),React.createElement("line",{x1:5,y1:5.5,x2:11,y2:5.5}),React.createElement("line",{x1:5,y1:8,x2:11,y2:8}),React.createElement("line",{x1:5,y1:10.5,x2:8.5,y2:10.5}));
     case"settings":        return React.createElement("svg",s,React.createElement("circle",{cx:8,cy:8,r:2.4}),React.createElement("path",{d:"M8 1.5v1.3M8 13.2v1.3M1.5 8h1.3M13.2 8h1.3M3.55 3.55l.92.92M11.53 11.53l.92.92M3.55 12.45l.92-.92M11.53 4.47l.92-.92"}));
     case"unified_ledger": return React.createElement("svg",s,React.createElement("rect",{x:1.5,y:2,width:13,height:2.5,rx:.7}),React.createElement("rect",{x:1.5,y:6.6,width:13,height:2.5,rx:.7}),React.createElement("rect",{x:1.5,y:11.2,width:13,height:2.5,rx:.7}),React.createElement("line",{x1:3.5,y1:3.25,x2:12.5,y2:3.25,strokeWidth:.8,stroke:"var(--bg)"}),React.createElement("line",{x1:3.5,y1:7.85,x2:12.5,y2:7.85,strokeWidth:.8,stroke:"var(--bg)"}),React.createElement("line",{x1:3.5,y1:12.45,x2:10,y2:12.45,strokeWidth:.8,stroke:"var(--bg)"}));
+    case"goals": return React.createElement("svg",s,React.createElement("circle",{cx:8,cy:8,r:6}),React.createElement("circle",{cx:8,cy:8,r:3.5}),React.createElement("line",{x1:8,y1:1.5,x2:8,y2:4.5}),React.createElement("line",{x1:8,y1:11.5,x2:8,y2:14.5}),React.createElement("line",{x1:1.5,y1:8,x2:4.5,y2:8}),React.createElement("line",{x1:11.5,y1:8,x2:14.5,y2:8}));
+    case"insights": return React.createElement("svg",s,React.createElement("rect",{x:1.5,y:9,width:2.8,height:5.5,rx:.6}),React.createElement("rect",{x:6.6,y:5.5,width:2.8,height:9,rx:.6}),React.createElement("rect",{x:11.7,y:2,width:2.8,height:12.5,rx:.6}),React.createElement("polyline",{points:"2.9,8.5 8,5 13.1,1.5",strokeDasharray:"2,1.5"}));
     default:              return React.createElement("svg",s,React.createElement("circle",{cx:8,cy:8,r:5}));
   }
 };
@@ -10813,9 +11658,10 @@ const UnifiedLedgerSection=({banks,cards,cash,categories,payees,isMobile})=>{
   const[dateFrom,setDateFrom]=useState("");
   const[dateTo,setDateTo]=useState("");
   const[filterType,setFilterType]=useState("all");
+  const[filterTags,setFilterTags]=useState(new Set());
 
-  const clearFilters=()=>{setFilterAccounts(new Set());setAccSearch("");setFilterCats(new Set());setCatSearch("");setFilterPayees(new Set());setPayeeSearch("");setDateFrom("");setDateTo("");setFilterType("all");};
-  const activeFilterCount=(filterAccounts.size>0?1:0)+(filterCats.size>0?1:0)+(filterPayees.size>0?1:0)+((dateFrom||dateTo)?1:0)+(filterType!=="all"?1:0);
+  const clearFilters=()=>{setFilterAccounts(new Set());setAccSearch("");setFilterCats(new Set());setCatSearch("");setFilterPayees(new Set());setPayeeSearch("");setDateFrom("");setDateTo("");setFilterType("all");setFilterTags(new Set());};
+  const activeFilterCount=(filterAccounts.size>0?1:0)+(filterCats.size>0?1:0)+(filterPayees.size>0?1:0)+((dateFrom||dateTo)?1:0)+(filterType!=="all"?1:0)+(filterTags.size>0?1:0);
 
   /* ── Category options (main + sub) from all transactions ── */
   const txCatOptions=React.useMemo(()=>{
@@ -10833,6 +11679,13 @@ const UnifiedLedgerSection=({banks,cards,cash,categories,payees,isMobile})=>{
     if(!q)return txCatOptions;
     return txCatOptions.filter(c=>{const main=catMainName(c).toLowerCase();const sub=c.includes("::")?c.split("::")[1].toLowerCase():"";return main.includes(q)||sub.includes(q);});
   },[txCatOptions,catSearch]);
+
+  /* ── Tag options extracted from all transactions ── */
+  const txTagOptions=React.useMemo(()=>{
+    const freq={};
+    allTxns.forEach(tx=>{(tx.tags||"").split(",").map(t=>t.trim()).filter(Boolean).forEach(t=>{freq[t]=(freq[t]||0)+1;});});
+    return Object.keys(freq).sort((a,b)=>freq[b]-freq[a]);
+  },[allTxns]);
 
   /* ── Payee options sorted by frequency ── */
   const txPayeeOptions=React.useMemo(()=>{
@@ -10878,6 +11731,7 @@ const UnifiedLedgerSection=({banks,cards,cash,categories,payees,isMobile})=>{
     if(dateTo&&tx.date>dateTo)return false;
     if(filterType==="debit"&&tx.type!=="debit")return false;
     if(filterType==="credit"&&tx.type!=="credit")return false;
+    if(filterTags.size>0){const txTags=(tx.tags||"").split(",").map(t=>t.trim()).filter(Boolean);if(!Array.from(filterTags).every(ft=>txTags.includes(ft)))return false;}
     return true;
   });
 
@@ -11022,7 +11876,23 @@ const UnifiedLedgerSection=({banks,cards,cash,categories,payees,isMobile})=>{
       )
     ),
 
-    /* ROW 5: Type + summary + Clear All */
+    /* ROW 5: Tags filter */
+    txTagOptions.length>0&&React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+      React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}},
+        React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.6}},"🏷 Tags"),
+        filterTags.size>0&&React.createElement("button",{onClick:()=>setFilterTags(new Set()),style:{fontSize:10,color:"var(--text5)",background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",padding:0,textDecoration:"underline"}},"clear")
+      ),
+      React.createElement("div",{style:{display:"flex",gap:4,flexWrap:"wrap",maxHeight:70,overflowY:"auto"}},
+        txTagOptions.map(tag=>{
+          const active=filterTags.has(tag);
+          return React.createElement("button",{key:tag,onClick:()=>setFilterTags(prev=>{const n=new Set(prev);n.has(tag)?n.delete(tag):n.add(tag);return n;}),
+            style:{padding:"3px 10px",borderRadius:20,cursor:"pointer",border:"1px solid "+(active?"#a78bfa88":"var(--border)"),background:active?"rgba(167,139,250,.18)":"transparent",color:active?"#a78bfa":"var(--text5)",fontSize:11,fontWeight:active?600:400,fontFamily:"'DM Sans',sans-serif",transition:"all .15s",whiteSpace:"nowrap"}
+          },"#"+tag+(active?"  ✕":""));
+        })
+      )
+    ),
+
+    /* ROW 6: Type + summary + Clear All */
     React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}},
       React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.6,marginRight:2}},"💳 Type"),
       ["all","debit","credit"].map(t=>React.createElement("button",{key:t,onClick:()=>setFilterType(t),style:chipStyle(filterType===t,t==="credit"?"#22c55e":t==="debit"?"#ef4444":"var(--accent)")},t==="all"?"All":t==="debit"?"Withdrawals / Debits":"Deposits / Credits")),
@@ -11277,6 +12147,525 @@ const UnifiedLedgerSection=({banks,cards,cash,categories,payees,isMobile})=>{
   );
 };
 
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TAG INPUT — chip-based tag entry with keyboard support
+   ══════════════════════════════════════════════════════════════════════════ */
+const TagInput=({value="",onChange})=>{
+  const[inp,setInp]=useState("");
+  const tags=(value||"").split(",").map(t=>t.trim()).filter(Boolean);
+  const addTag=t=>{const s=t.trim().replace(/^#+/,"");if(!s||tags.includes(s))return;onChange([...tags,s].join(", "));setInp("");};
+  const removeTag=i=>onChange(tags.filter((_,j)=>j!==i).join(", "));
+  const handleKey=e=>{
+    if((e.key===","||e.key==="Enter")&&inp.trim()){e.preventDefault();addTag(inp);}
+    else if(e.key==="Backspace"&&!inp&&tags.length){removeTag(tags.length-1);}
+  };
+  return React.createElement("div",{
+    style:{background:"var(--inp-bg)",border:"1px solid var(--border)",borderRadius:8,padding:"5px 10px",
+      minHeight:38,display:"flex",flexWrap:"wrap",gap:5,alignItems:"center",cursor:"text",
+      transition:"border-color .2s"},
+    onClick:e=>{const input=e.currentTarget.querySelector("input");if(input)input.focus();}
+  },
+    tags.map((tag,i)=>React.createElement("span",{key:i,
+      style:{display:"inline-flex",alignItems:"center",gap:4,background:"rgba(167,139,250,.15)",
+        color:"#a78bfa",border:"1px solid rgba(167,139,250,.3)",borderRadius:12,
+        padding:"2px 8px",fontSize:11,fontWeight:500,lineHeight:1.4}},
+      React.createElement("span",null,"#"+tag),
+      React.createElement("button",{onClick:e=>{e.stopPropagation();removeTag(i);},
+        style:{background:"none",border:"none",color:"#a78bfa",cursor:"pointer",
+          fontSize:14,lineHeight:1,padding:"0 0 1px 2px",fontFamily:"'DM Sans',sans-serif",opacity:.7}},"×")
+    )),
+    React.createElement("input",{
+      value:inp,
+      onChange:e=>setInp(e.target.value),
+      onKeyDown:handleKey,
+      onBlur:()=>{if(inp.trim())addTag(inp);},
+      placeholder:tags.length?"Add tag…":"e.g. business, travel, tax",
+      style:{background:"none",border:"none",outline:"none",color:"var(--text)",
+        fontFamily:"'DM Sans',sans-serif",fontSize:13,minWidth:80,flex:1,padding:"2px 0"}
+    })
+  );
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
+   GOALS SECTION — financial goals with progress tracking
+   ══════════════════════════════════════════════════════════════════════════ */
+const GOAL_ICONS=["🎯","🏠","✈️","🚗","💻","🎓","💊","💍","🏖️","🎸","📱","🏋️","🎁","💰","🛡️","🏫"];
+const GOAL_COLORS=["#06b6d4","#22c55e","#f0a500","#a78bfa","#fb923c","#f472b6","#60a5fa","#34d399"];
+
+const GoalsSection=({goals,dispatch,isMobile})=>{
+  const[addOpen,setAddOpen]=useState(false);
+  const[editGoal,setEditGoal]=useState(null);
+  const[fundsGoal,setFundsGoal]=useState(null);
+  const[delGoal,setDelGoal]=useState(null);
+  const EMPTY_GOAL={title:"",icon:"🎯",targetAmount:"",savedAmount:"",targetDate:"",color:"#06b6d4",notes:""};
+  const[gf,setGf]=useState(EMPTY_GOAL);
+  const[fundsAmt,setFundsAmt]=useState("");
+  const gset=k=>e=>setGf(p=>({...p,[k]:e.target.value}));
+
+  const totalTarget=goals.reduce((s,g)=>s+(+g.targetAmount||0),0);
+  const totalSaved=goals.reduce((s,g)=>s+(+g.savedAmount||0),0);
+  const onTrack=goals.filter(g=>{if(!g.targetDate)return true;const days=Math.ceil((new Date(g.targetDate)-new Date())/86400000);const pct=(+g.savedAmount||0)/(+g.targetAmount||1)*100;return pct>=(100-days/365*100);}).length;
+
+  const saveGoal=()=>{
+    if(!gf.title||!gf.targetAmount)return;
+    if(editGoal){dispatch({type:"EDIT_GOAL",p:{...editGoal,...gf,targetAmount:+gf.targetAmount,savedAmount:+gf.savedAmount||0}});setEditGoal(null);}
+    else{dispatch({type:"ADD_GOAL",p:{...gf,targetAmount:+gf.targetAmount,savedAmount:+gf.savedAmount||0}});}
+    setGf(EMPTY_GOAL);setAddOpen(false);
+  };
+
+  const openEdit=g=>{setEditGoal(g);setGf({title:g.title,icon:g.icon||"🎯",targetAmount:String(g.targetAmount),savedAmount:String(g.savedAmount||0),targetDate:g.targetDate||"",color:g.color||"#06b6d4",notes:g.notes||""});setAddOpen(true);};
+
+  const lbl={display:"block",color:"var(--text5)",fontSize:11,textTransform:"uppercase",letterSpacing:.5,marginBottom:5};
+
+  const GoalModal=React.createElement(Modal,{title:editGoal?"Edit Goal":"New Financial Goal",onClose:()=>{setAddOpen(false);setEditGoal(null);setGf(EMPTY_GOAL);},w:500},
+    React.createElement("div",{style:{display:"flex",gap:12,marginBottom:12,alignItems:"flex-start"}},
+      React.createElement("div",{style:{flex:1}},
+        React.createElement("label",{style:lbl},"Goal Title *"),
+        React.createElement("input",{className:"inp",placeholder:"e.g. Emergency Fund, Hawaii Trip",value:gf.title,onChange:gset("title")})
+      ),
+      React.createElement("div",{style:{flexShrink:0}},
+        React.createElement("label",{style:lbl},"Icon"),
+        React.createElement("select",{className:"inp",value:gf.icon,onChange:gset("icon"),style:{fontSize:22,textAlign:"center",width:56,padding:"5px 4px"}},
+          GOAL_ICONS.map(ic=>React.createElement("option",{key:ic,value:ic},ic))
+        )
+      )
+    ),
+    React.createElement("div",{className:"grid-2col"},
+      React.createElement("div",null,
+        React.createElement("label",{style:lbl},"Target Amount (₹) *"),
+        React.createElement("input",{className:"inp",type:"number",placeholder:"500000",value:gf.targetAmount,onChange:gset("targetAmount")})
+      ),
+      React.createElement("div",null,
+        React.createElement("label",{style:lbl},"Already Saved (₹)"),
+        React.createElement("input",{className:"inp",type:"number",placeholder:"0",value:gf.savedAmount,onChange:gset("savedAmount")})
+      ),
+      React.createElement("div",null,
+        React.createElement("label",{style:lbl},"Target Date"),
+        React.createElement("input",{className:"inp",type:"date",value:gf.targetDate,onChange:gset("targetDate")})
+      ),
+      React.createElement("div",null,
+        React.createElement("label",{style:lbl},"Color"),
+        React.createElement("div",{style:{display:"flex",gap:5,flexWrap:"wrap",paddingTop:4}},
+          GOAL_COLORS.map(col=>React.createElement("button",{key:col,onClick:()=>setGf(p=>({...p,color:col})),
+            style:{width:22,height:22,borderRadius:"50%",background:col,border:gf.color===col?"3px solid var(--text)":"2px solid transparent",cursor:"pointer"}}))
+        )
+      )
+    ),
+    React.createElement("div",{style:{marginBottom:14,marginTop:4}},
+      React.createElement("label",{style:lbl},"Notes"),
+      React.createElement("textarea",{className:"inp",placeholder:"Milestone notes, strategy, reminders…",value:gf.notes,onChange:gset("notes"),style:{resize:"vertical",minHeight:56,fontSize:13,lineHeight:1.5}})
+    ),
+    React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,paddingTop:12,borderTop:"1px solid var(--border)"}},
+      React.createElement(Btn,{onClick:saveGoal,disabled:!gf.title||!gf.targetAmount,sx:{flex:"1 1 120px",justifyContent:"center"}},editGoal?"Save Changes":"Create Goal"),
+      React.createElement(Btn,{v:"secondary",onClick:()=>{setAddOpen(false);setEditGoal(null);setGf(EMPTY_GOAL);},sx:{justifyContent:"center",minWidth:70}},"Cancel")
+    )
+  );
+
+  const FundsModal=fundsGoal&&React.createElement(Modal,{title:"💰 Add Funds to Goal",onClose:()=>{setFundsGoal(null);setFundsAmt("");},w:380},
+    React.createElement("div",{style:{textAlign:"center",padding:"10px 0 18px"}},
+      React.createElement("div",{style:{fontSize:36,marginBottom:6}},fundsGoal.icon||"🎯"),
+      React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text)"}},fundsGoal.title),
+      React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginTop:3}},
+        INR(fundsGoal.savedAmount||0)+" of "+INR(fundsGoal.targetAmount)+" saved"
+      ),
+      React.createElement("div",{style:{marginTop:10,background:"var(--bg5)",borderRadius:3,height:6,overflow:"hidden"}},
+        React.createElement("div",{style:{width:Math.min(100,(fundsGoal.savedAmount||0)/(fundsGoal.targetAmount||1)*100)+"%",height:"100%",background:fundsGoal.color||"var(--accent)",borderRadius:3,transition:"width .5s"}})
+      )
+    ),
+    React.createElement("div",{style:{marginBottom:16}},
+      React.createElement("label",{style:lbl},"Amount to Add (₹)"),
+      React.createElement("input",{className:"inp",type:"number",autoFocus:true,placeholder:"Enter amount",value:fundsAmt,onChange:e=>setFundsAmt(e.target.value),style:{fontSize:18,fontWeight:700,fontFamily:"'Sora',sans-serif"}})
+    ),
+    React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
+      React.createElement(Btn,{onClick:()=>{if(!fundsAmt||+fundsAmt<=0)return;dispatch({type:"ADD_GOAL_FUNDS",id:fundsGoal.id,amount:+fundsAmt});setFundsGoal(null);setFundsAmt("");},disabled:!fundsAmt||+fundsAmt<=0,sx:{flex:"1 1 120px",justifyContent:"center"}},"Add Funds"),
+      React.createElement(Btn,{v:"secondary",onClick:()=>{setFundsGoal(null);setFundsAmt("");},sx:{justifyContent:"center",minWidth:70}},"Cancel")
+    )
+  );
+
+  const DelModal=delGoal&&React.createElement(ConfirmModal,{
+    msg:`Delete goal "${delGoal.title}"? This cannot be undone.`,
+    onConfirm:()=>{dispatch({type:"DEL_GOAL",id:delGoal.id});setDelGoal(null);},
+    onCancel:()=>setDelGoal(null)
+  });
+
+  return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",height:"100%",overflowY:"auto"}},
+    React.createElement("div",{style:{marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}},
+      React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,color:"var(--text)"}},"Financial Goals"),
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},"Track your savings targets and financial milestones")
+      ),
+      React.createElement(Btn,{onClick:()=>{setEditGoal(null);setGf(EMPTY_GOAL);setAddOpen(true);}},"+ New Goal")
+    ),
+    /* Summary strip */
+    goals.length>0&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"1fr 1fr 1fr",gap:12,marginBottom:20}},
+      React.createElement(StatCard,{label:"Total Target",val:INR(totalTarget),icon:"🎯",col:"var(--accent)"}),
+      React.createElement(StatCard,{label:"Total Saved",val:INR(totalSaved),sub:((totalSaved/Math.max(totalTarget,1))*100).toFixed(1)+"% overall progress",icon:"💰",col:"#22c55e"}),
+      React.createElement(StatCard,{label:"Active Goals",val:goals.length+" goals",sub:onTrack+" on track",icon:"📊",col:"#06b6d4"})
+    ),
+    /* Goals grid */
+    goals.length===0
+      ?React.createElement("div",{style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,color:"var(--text6)"}},
+          React.createElement("div",{style:{fontSize:52}},"🎯"),
+          React.createElement("div",{style:{fontSize:16,fontWeight:600}},"No goals yet"),
+          React.createElement("div",{style:{fontSize:13,textAlign:"center",maxWidth:280,lineHeight:1.5}},"Set financial goals to track your progress towards major purchases, savings targets, or milestones."),
+          React.createElement(Btn,{onClick:()=>setAddOpen(true),sx:{marginTop:8}},"+ Create Your First Goal")
+        )
+      :React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(auto-fill,minmax(290px,1fr))",gap:16,paddingBottom:20}},
+          goals.map(g=>{
+            const pct=Math.min(100,(+g.savedAmount||0)/(+g.targetAmount||1)*100);
+            const remaining=Math.max(0,(+g.targetAmount||0)-(+g.savedAmount||0));
+            const daysLeft=g.targetDate?Math.ceil((new Date(g.targetDate)-new Date())/86400000):null;
+            const col=g.color||"var(--accent)";
+            const overdue=daysLeft!==null&&daysLeft<0;
+            const done=pct>=100;
+            return React.createElement("div",{key:g.id,style:{background:"var(--card)",border:"1px solid "+(done?"rgba(34,197,94,.4)":"var(--border)"),borderRadius:16,padding:18,display:"flex",flexDirection:"column",gap:10,transition:"border-color .2s,box-shadow .2s"},
+              className:"db-card"},
+              /* Header */
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
+                  React.createElement("div",{style:{width:42,height:42,borderRadius:12,background:col+"20",border:"1px solid "+col+"40",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}},g.icon||"🎯"),
+                  React.createElement("div",null,
+                    React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",lineHeight:1.2}},g.title),
+                    g.targetDate&&React.createElement("div",{style:{fontSize:11,color:overdue?"#ef4444":daysLeft<30?"#fb923c":"var(--text5)",marginTop:2}},
+                      done?"✅ Goal achieved!":overdue?"⚠ Overdue by "+Math.abs(daysLeft)+" days":daysLeft===0?"Due today":daysLeft+" days left"
+                    )
+                  )
+                ),
+                done&&React.createElement("span",{style:{fontSize:20}},"🏆")
+              ),
+              /* Progress bar */
+              React.createElement("div",null,
+                React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:5}},
+                  React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Progress"),
+                  React.createElement("span",{style:{fontSize:12,fontWeight:700,color:col}},pct.toFixed(1)+"%")
+                ),
+                React.createElement("div",{style:{background:"var(--bg5)",borderRadius:4,height:8,overflow:"hidden"}},
+                  React.createElement("div",{style:{width:pct+"%",height:"100%",background:col,borderRadius:4,transition:"width .5s cubic-bezier(.22,1,.36,1)"}})
+                )
+              ),
+              /* Amounts */
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
+                React.createElement("div",null,
+                  React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"Saved"),
+                  React.createElement("div",{style:{fontSize:16,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#22c55e"}},INR(+g.savedAmount||0))
+                ),
+                React.createElement("div",{style:{textAlign:"center"}},
+                  React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"Remaining"),
+                  React.createElement("div",{style:{fontSize:14,fontFamily:"'Sora',sans-serif",fontWeight:600,color:remaining>0?"#ef4444":"#22c55e"}},INR(remaining))
+                ),
+                React.createElement("div",{style:{textAlign:"right"}},
+                  React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"Target"),
+                  React.createElement("div",{style:{fontSize:14,fontFamily:"'Sora',sans-serif",fontWeight:600,color:"var(--text4)"}},INR(+g.targetAmount||0))
+                )
+              ),
+              g.notes&&React.createElement("div",{style:{fontSize:11,color:"var(--text5)",background:"var(--bg5)",borderRadius:8,padding:"6px 10px",lineHeight:1.5,fontStyle:"italic"}},g.notes),
+              /* Actions */
+              React.createElement("div",{style:{display:"flex",gap:7,borderTop:"1px solid var(--border2)",paddingTop:10}},
+                !done&&React.createElement(Btn,{v:"success",sz:"sm",onClick:()=>{setFundsGoal(g);setFundsAmt("");}},"+  Add Funds"),
+                React.createElement(Btn,{v:"secondary",sz:"sm",onClick:()=>openEdit(g)},"✏ Edit"),
+                React.createElement(Btn,{v:"danger",sz:"sm",onClick:()=>setDelGoal(g)},"✕")
+              )
+            );
+          })
+        ),
+    addOpen&&GoalModal,
+    FundsModal,
+    DelModal
+  );
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
+   INSIGHTS SECTION — Spend Comparison, Recurring, Subscriptions
+   ══════════════════════════════════════════════════════════════════════════ */
+const SUBSCRIPTION_KEYWORDS=["netflix","spotify","prime","hotstar","youtube","apple music","google one","disney+","zee5","voot","sonyliv","swiggy one","zomato pro","notion","dropbox","icloud","microsoft 365","office 365","adobe","canva","linkedin","udemy","coursera","mxplayer","jiocinema","tata play","tataplay"];
+
+const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile})=>{
+  const[stab,setStab]=useState("spend");
+  const[schedConfirm,setSchedConfirm]=useState(null);
+  const allAccounts=React.useMemo(()=>[
+    ...banks.map(b=>({...b,accType:"bank",accTypeLbl:"🏦"})),
+    {id:"__cash__",...cash,name:"Cash",accType:"cash",accTypeLbl:"💵"},
+    ...cards.map(c=>({...c,accType:"card",accTypeLbl:"💳"}))
+  ],[banks,cards,cash]);
+
+  const allTxns=React.useMemo(()=>{
+    const out=[];
+    banks.forEach(b=>b.transactions.forEach(tx=>out.push({...tx,_src:b.name})));
+    cards.forEach(c=>c.transactions.forEach(tx=>out.push({...tx,_src:c.name})));
+    (cash.transactions||[]).forEach(tx=>out.push({...tx,_src:"Cash"}));
+    return out;
+  },[banks,cards,cash]);
+
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,"0");
+  const fmt=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const thisStart=fmt(new Date(now.getFullYear(),now.getMonth(),1));
+  const thisEnd=fmt(new Date(now.getFullYear(),now.getMonth()+1,0));
+  const lastStart=fmt(new Date(now.getFullYear(),now.getMonth()-1,1));
+  const lastEnd=fmt(new Date(now.getFullYear(),now.getMonth(),0));
+
+  const MONTH_NAMES=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const thisMonthName=MONTH_NAMES[now.getMonth()];
+  const lastMonthName=MONTH_NAMES[(now.getMonth()-1+12)%12];
+
+  /* ── SPEND COMPARISON ── */
+  const spendData=React.useMemo(()=>{
+    const thisMap={},lastMap={};
+    allTxns.filter(t=>t.type==="debit").forEach(t=>{
+      const m=catMainName(t.cat||"Others");
+      if(t.date>=thisStart&&t.date<=thisEnd) thisMap[m]=(thisMap[m]||0)+t.amount;
+      if(t.date>=lastStart&&t.date<=lastEnd) lastMap[m]=(lastMap[m]||0)+t.amount;
+    });
+    const cats=new Set([...Object.keys(thisMap),...Object.keys(lastMap)]);
+    return Array.from(cats).map(cat=>({
+      cat,
+      last:lastMap[cat]||0,
+      curr:thisMap[cat]||0,
+      delta:(thisMap[cat]||0)-(lastMap[cat]||0),
+      pct:lastMap[cat]?((((thisMap[cat]||0)-(lastMap[cat]||0))/lastMap[cat])*100):null
+    })).sort((a,b)=>b.curr-a.curr);
+  },[allTxns,thisStart,thisEnd,lastStart,lastEnd]);
+
+  /* ── RECURRING DETECTION ── */
+  const recurringData=React.useMemo(()=>{
+    const cutoff=fmt(new Date(now.getFullYear(),now.getMonth()-3,now.getDate()));
+    const recent=allTxns.filter(t=>t.type==="debit"&&t.date>=cutoff&&(t.payee||t.desc));
+    const groups={};
+    recent.forEach(t=>{const key=(t.payee||t.desc||"").trim().toLowerCase().slice(0,30);if(key)groups[key]=(groups[key]||[]).concat(t);});
+    const detected=[];
+    Object.entries(groups).forEach(([key,txs])=>{
+      if(txs.length<2)return;
+      const sorted=txs.slice().sort((a,b)=>a.date.localeCompare(b.date));
+      const intervals=[];
+      for(let i=1;i<sorted.length;i++)intervals.push(Math.round((new Date(sorted[i].date)-new Date(sorted[i-1].date))/86400000));
+      if(!intervals.length)return;
+      const avgInterval=intervals.reduce((s,x)=>s+x,0)/intervals.length;
+      let freq="";
+      if(avgInterval>=25&&avgInterval<=38)freq="Monthly";
+      else if(avgInterval>=6&&avgInterval<=10)freq="Weekly";
+      else if(avgInterval>=85&&avgInterval<=100)freq="Quarterly";
+      else if(avgInterval>=350&&avgInterval<=380)freq="Yearly";
+      if(!freq)return;
+      const avgAmt=sorted.reduce((s,t)=>s+t.amount,0)/sorted.length;
+      const last=sorted[sorted.length-1];
+      const name=(last.payee||last.desc||key).slice(0,40);
+      detected.push({key,name,freq,avgAmt,count:sorted.length,lastDate:last.date,lastCat:last.cat,accType:(last._src||""),txs:sorted});
+    });
+    return detected.sort((a,b)=>b.avgAmt-a.avgAmt);
+  },[allTxns]);
+
+  /* ── SUBSCRIPTION TRACKER ── */
+  const subscriptionData=React.useMemo(()=>{
+    const candidates={};
+    allTxns.forEach(t=>{
+      if(t.type!=="debit")return;
+      const text=((t.payee||"")+" "+(t.desc||"")).toLowerCase();
+      let matchedService=null;
+      for(const kw of SUBSCRIPTION_KEYWORDS){if(text.includes(kw)){matchedService=kw;break;}}
+      const isOTTCat=(t.cat||"").toLowerCase().includes("ott")||(t.cat||"").toLowerCase().includes("streaming");
+      if(!matchedService&&!isOTTCat)return;
+      const key=matchedService||(t.payee||t.desc||"subscription").toLowerCase().slice(0,20);
+      if(!candidates[key]||t.date>candidates[key].lastDate){
+        candidates[key]={key,name:t.payee||t.desc||matchedService||"Subscription",amount:t.amount,lastDate:t.date,cat:t.cat,isOTT:isOTTCat};
+      }
+    });
+    return Object.values(candidates).sort((a,b)=>b.amount-a.amount);
+  },[allTxns]);
+
+  const totalSubBurn=subscriptionData.reduce((s,sub)=>s+sub.amount,0);
+
+  const STABS=[{id:"spend",label:"📊 Spend Comparison"},{id:"recurring",label:"🔄 Recurring"},{id:"subscriptions",label:"📺 Subscriptions"}];
+  const tabBtn=(id)=>({
+    padding:"7px 14px",borderRadius:8,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",
+    fontSize:12,fontWeight:stab===id?600:400,border:"none",
+    background:stab===id?"var(--accentbg)":"transparent",
+    color:stab===id?"var(--accent)":"var(--text5)",
+    transition:"all .15s",whiteSpace:"nowrap"
+  });
+
+  const SpendTab=React.createElement("div",{style:{paddingBottom:20}},
+    spendData.length===0
+      ?React.createElement(Empty,{icon:"📊",text:"No transaction data yet for comparison"})
+      :React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:8}},
+            React.createElement("div",{style:{fontSize:13,color:"var(--text4)"}},"Category-wise spend: ",React.createElement("strong",null,lastMonthName)," vs ",React.createElement("strong",{style:{color:"var(--accent)"}},thisMonthName)),
+            React.createElement("div",{style:{fontSize:12,color:"var(--text5)"}},spendData.length+" categories")
+          ),
+          /* Summary chips */
+          (()=>{
+            const biggest=spendData.filter(d=>d.delta>0).sort((a,b)=>b.delta-a.delta)[0];
+            const dropped=spendData.filter(d=>d.delta<0).sort((a,b)=>a.delta-b.delta)[0];
+            return React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}},
+              biggest&&React.createElement("div",{style:{padding:"8px 14px",borderRadius:10,background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.2)",fontSize:12,color:"#ef4444"}},
+                "📈 Biggest increase: "+biggest.cat+" (+"+INR(biggest.delta)+")"
+              ),
+              dropped&&React.createElement("div",{style:{padding:"8px 14px",borderRadius:10,background:"rgba(34,197,94,.08)",border:"1px solid rgba(34,197,94,.2)",fontSize:12,color:"#22c55e"}},
+                "📉 Biggest drop: "+dropped.cat+" ("+INR(dropped.delta)+")"
+              )
+            );
+          })(),
+          React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,overflow:"hidden"}},
+            /* Header */
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 110px 110px 90px",gap:0,padding:"8px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg4)"}},
+              React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5}},"Category"),
+              React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,textAlign:"right"}},lastMonthName),
+              React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--accent)",textTransform:"uppercase",letterSpacing:.5,textAlign:"right"}},thisMonthName),
+              React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,textAlign:"right"}},"Change")
+            ),
+            spendData.map((row,i)=>{
+              const col=catColor(categories,row.cat)||"#8ba0c0";
+              const maxAmt=Math.max(...spendData.map(r=>Math.max(r.last,r.curr)),1);
+              return React.createElement("div",{key:row.cat,style:{padding:"10px 16px",borderBottom:i<spendData.length-1?"1px solid var(--border2)":"none",background:i%2===0?"transparent":"var(--bg5)"}},
+                React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 110px 110px 90px",gap:0,alignItems:"center",marginBottom:5}},
+                  React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+                    React.createElement("span",{style:{width:10,height:10,borderRadius:"50%",background:col,flexShrink:0,display:"inline-block"}}),
+                    React.createElement("span",{style:{fontSize:13,color:"var(--text3)",fontWeight:500}},row.cat)
+                  ),
+                  React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"var(--text5)",fontFamily:"'Sora',sans-serif"}},row.last>0?INR(row.last):"—"),
+                  React.createElement("div",{style:{textAlign:"right",fontSize:13,color:"var(--text3)",fontWeight:600,fontFamily:"'Sora',sans-serif"}},row.curr>0?INR(row.curr):"—"),
+                  React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:row.delta>0?"#ef4444":row.delta<0?"#22c55e":"var(--text5)"}},
+                    row.delta===0?"—":(row.delta>0?"+":"")+INR(row.delta)
+                  )
+                ),
+                /* Dual progress bars */
+                React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:2,paddingLeft:18}},
+                  React.createElement("div",{style:{background:"var(--bg5)",borderRadius:2,height:3,overflow:"hidden"}},
+                    React.createElement("div",{style:{width:(row.last/maxAmt*100)+"%",height:"100%",background:"var(--text6)",borderRadius:2}})
+                  ),
+                  React.createElement("div",{style:{background:"var(--bg5)",borderRadius:2,height:4,overflow:"hidden"}},
+                    React.createElement("div",{style:{width:(row.curr/maxAmt*100)+"%",height:"100%",background:col,borderRadius:2}})
+                  )
+                )
+              );
+            }),
+            /* Totals row */
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 110px 110px 90px",gap:0,padding:"10px 16px",borderTop:"2px solid var(--border)",background:"var(--bg4)"}},
+              React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)"}},"Total"),
+              React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"var(--text3)"}},INR(spendData.reduce((s,r)=>s+r.last,0))),
+              React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"var(--accent)"}},INR(spendData.reduce((s,r)=>s+r.curr,0))),
+              React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:(spendData.reduce((s,r)=>s+r.delta,0))>0?"#ef4444":"#22c55e"}},
+                (()=>{const d=spendData.reduce((s,r)=>s+r.delta,0);return(d>0?"+":"")+INR(d);})()
+              )
+            )
+          )
+        )
+  );
+
+  const RecurringTab=React.createElement("div",{style:{paddingBottom:20}},
+    recurringData.length===0
+      ?React.createElement(Empty,{icon:"🔄",text:"No recurring patterns detected in last 90 days"})
+      :React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{fontSize:13,color:"var(--text4)",marginBottom:14}},
+            recurringData.length+" recurring pattern"+(recurringData.length>1?"s":"")+" detected in the last 90 days"
+          ),
+          React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
+            recurringData.map((r,i)=>{
+              const freqCol=r.freq==="Monthly"?"#06b6d4":r.freq==="Weekly"?"#22c55e":r.freq==="Quarterly"?"#a78bfa":"#f0a500";
+              return React.createElement("div",{key:r.key,style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}},
+                React.createElement("div",{style:{flex:1,minWidth:160}},
+                  React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text)",marginBottom:2}},r.name),
+                  React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
+                    React.createElement("span",{style:{fontSize:11,padding:"2px 8px",borderRadius:10,background:freqCol+"18",color:freqCol,border:"1px solid "+freqCol+"40",fontWeight:600}},r.freq),
+                    React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"×"+r.count+" in 90 days"),
+                    React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Last: "+r.lastDate.split("-").reverse().join("-"))
+                  )
+                ),
+                React.createElement("div",{style:{textAlign:"right",flexShrink:0}},
+                  React.createElement("div",{style:{fontSize:16,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#ef4444"}},INR(r.avgAmt)),
+                  React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},"avg per occurrence")
+                ),
+                React.createElement("div",{style:{flexShrink:0}},
+                  React.createElement(Btn,{v:"secondary",sz:"sm",onClick:()=>setSchedConfirm(r)},"🗓 Schedule")
+                )
+              );
+            })
+          )
+        ),
+    schedConfirm&&React.createElement(Modal,{title:"🗓 Create Scheduled Transaction",onClose:()=>setSchedConfirm(null),w:420},
+      React.createElement("div",{style:{background:"var(--accentbg2)",borderRadius:10,padding:"12px 14px",marginBottom:16,border:"1px solid var(--border)"}},
+        React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text)",marginBottom:4}},schedConfirm.name),
+        React.createElement("div",{style:{fontSize:12,color:"var(--text5)"}},"Avg "+INR(schedConfirm.avgAmt)+" · "+schedConfirm.freq+" · Last: "+schedConfirm.lastDate)
+      ),
+      React.createElement("div",{style:{fontSize:13,color:"var(--text4)",marginBottom:16,lineHeight:1.6}},
+        "This will create a scheduled transaction for ",React.createElement("strong",null,schedConfirm.name)," with amount ",
+        React.createElement("strong",{style:{color:"var(--accent)"}},INR(schedConfirm.avgAmt)),
+        " recurring ",React.createElement("strong",null,schedConfirm.freq.toLowerCase()),". You can manage it in the Scheduled tab."
+      ),
+      React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
+        React.createElement(Btn,{onClick:()=>{
+          const acc=allAccounts[0]||{id:"",accType:"bank"};
+          dispatch({type:"ADD_SCHEDULED",p:{
+            desc:schedConfirm.name,amount:Math.round(schedConfirm.avgAmt),
+            frequency:schedConfirm.freq.toLowerCase(),nextDate:TODAY(),status:"active",lastExecuted:null,endDate:null,
+            cat:schedConfirm.lastCat||"Others",payee:schedConfirm.name,
+            ledgerType:"debit",accType:acc.accType,accId:acc.id,
+            isTransfer:false,srcId:"",tgtId:"",tags:""
+          }});
+          setSchedConfirm(null);
+        },sx:{flex:"1 1 120px",justifyContent:"center"}},"✓ Create Scheduled"),
+        React.createElement(Btn,{v:"secondary",onClick:()=>setSchedConfirm(null),sx:{justifyContent:"center",minWidth:70}},"Cancel")
+      )
+    )
+  );
+
+  const SubsTab=React.createElement("div",{style:{paddingBottom:20}},
+    subscriptionData.length===0
+      ?React.createElement(Empty,{icon:"📺",text:"No subscription patterns detected. Transactions with streaming/OTT keywords will appear here."})
+      :React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+            React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 16px",flex:"1 1 160px"}},
+              React.createElement("div",{style:{fontSize:11,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Monthly Subscription Burn"),
+              React.createElement("div",{style:{fontSize:24,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#ef4444"}},INR(totalSubBurn))
+            ),
+            React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 16px",flex:"1 1 100px"}},
+              React.createElement("div",{style:{fontSize:11,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Services Detected"),
+              React.createElement("div",{style:{fontSize:24,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--accent)"}},subscriptionData.length)
+            ),
+            React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 16px",flex:"1 1 120px"}},
+              React.createElement("div",{style:{fontSize:11,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Annual Estimate"),
+              React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#f0a500"}},INR(totalSubBurn*12))
+            )
+          ),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(auto-fill,minmax(260px,1fr))",gap:12}},
+            subscriptionData.map((sub,i)=>{
+              const daysAgo=Math.floor((new Date()-new Date(sub.lastDate))/86400000);
+              const active=daysAgo<=45;
+              return React.createElement("div",{key:sub.key,style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px",display:"flex",alignItems:"center",gap:12}},
+                React.createElement("div",{style:{width:44,height:44,borderRadius:12,background:"var(--accentbg2)",border:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}},"📺"),
+                React.createElement("div",{style:{flex:1,minWidth:0}},
+                  React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},sub.name),
+                  React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},
+                    sub.cat?sub.cat:"Subscription",
+                    " · ",daysAgo===0?"Today":daysAgo===1?"Yesterday":daysAgo+" days ago"
+                  ),
+                  React.createElement("span",{style:{fontSize:10,padding:"1px 7px",borderRadius:8,background:active?"rgba(34,197,94,.12)":"rgba(239,68,68,.1)",color:active?"#22c55e":"#ef4444",fontWeight:600,border:"1px solid "+(active?"rgba(34,197,94,.3)":"rgba(239,68,68,.25)")}},active?"● Active":"○ Inactive")
+                ),
+                React.createElement("div",{style:{textAlign:"right",flexShrink:0}},
+                  React.createElement("div",{style:{fontSize:16,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#ef4444"}},INR(sub.amount)),
+                  React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"last charge")
+                )
+              );
+            })
+          )
+        )
+  );
+
+  return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",height:"100%",overflowY:"auto"}},
+    React.createElement("div",{style:{marginBottom:16}},
+      React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,color:"var(--text)"}},"Insights"),
+      React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},"Spend comparison, recurring patterns and subscriptions")
+    ),
+    /* Sub-tab nav */
+    React.createElement("div",{style:{display:"flex",gap:6,marginBottom:18,flexWrap:"wrap",background:"var(--bg4)",borderRadius:10,padding:4,alignSelf:"flex-start"}},
+      STABS.map(t=>React.createElement("button",{key:t.id,onClick:()=>setStab(t.id),style:tabBtn(t.id)},t.label))
+    ),
+    stab==="spend"&&SpendTab,
+    stab==="recurring"&&RecurringTab,
+    stab==="subscriptions"&&SubsTab
+  );
+};
+
 const NAV=[
   {id:"dashboard", label:"Dashboard"},
   {id:"banks",     label:"Bank Accounts"},
@@ -11292,6 +12681,8 @@ const NAV=[
   {id:"inv_fd",    label:"Fixed Deposits"},
   {id:"inv_re",    label:"Real Estate"},
   {id:"__sep_more__",label:"MORE",section:"header"},
+  {id:"goals",      label:"Financial Goals"},
+  {id:"insights",   label:"Insights"},
   {id:"notes",     label:"Notes"},
   {id:"calculator",label:"Calculator"},
   {id:"reports",   label:"Reports"},
@@ -11551,15 +12942,17 @@ function App(){
       }
     },
       tab==="dashboard"&&React.createElement(Dashboard,{data:state,isMobile}),
-      tab==="banks"&&React.createElement(BankSection,{banks:state.banks,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,cash:state.cash,isMobile}),
-      tab==="cards"&&React.createElement(CardSection,{cards:state.cards,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,cash:state.cash,isMobile}),
-      tab==="cash"&&React.createElement(CashSection,{cash:state.cash,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,isMobile}),
+      tab==="banks"&&React.createElement(BankSection,{banks:state.banks,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,cash:state.cash,loans:state.loans||[],isMobile}),
+      tab==="cards"&&React.createElement(CardSection,{cards:state.cards,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,cash:state.cash,loans:state.loans||[],isMobile}),
+      tab==="cash"&&React.createElement(CashSection,{cash:state.cash,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,loans:state.loans||[],isMobile}),
       tab==="inv_dash"&&React.createElement(InvestDashboard,{mf:state.mf,shares:state.shares,fd:state.fd,re:state.re||[],dispatch,isMobile}),
       tab==="inv_mf"&&React.createElement(InvestSection,{mf:state.mf,shares:state.shares,fd:state.fd,re:state.re||[],dispatch,defaultTab:"mf",isMobile}),
       tab==="inv_shares"&&React.createElement(InvestSection,{mf:state.mf,shares:state.shares,fd:state.fd,re:state.re||[],dispatch,defaultTab:"shares",isMobile}),
       tab==="inv_fd"&&React.createElement(InvestSection,{mf:state.mf,shares:state.shares,fd:state.fd,re:state.re||[],dispatch,defaultTab:"fd",isMobile}),
       tab==="inv_re"&&React.createElement(InvestSection,{mf:state.mf,shares:state.shares,fd:state.fd,re:state.re||[],dispatch,defaultTab:"re",isMobile}),
-      tab==="loans"&&React.createElement(LoanSection,{loans:state.loans,dispatch,isMobile}),
+      tab==="loans"&&React.createElement(LoanSection,{loans:state.loans,dispatch,allBanks:state.banks,allCards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees,isMobile}),
+      tab==="goals"&&React.createElement(GoalsSection,{goals:state.goals||[],dispatch,isMobile}),
+      tab==="insights"&&React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile}),
       tab==="notes"&&React.createElement(NotesSection,{notes:state.notes||[],dispatch}),
       tab==="calculator"&&React.createElement(CalculatorSection,null),
       tab==="scheduled"&&React.createElement(ScheduledSection,{state,dispatch}),
