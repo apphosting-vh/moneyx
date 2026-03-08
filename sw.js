@@ -37,7 +37,7 @@
    Pattern: mm-v{app-version}-{deploy-counter}
    e.g.  mm-v2.0.1-1  →  mm-v2.0.2-1  →  mm-v2.0.2-2
    ─────────────────────────────────────────────────────────────────────── */
-const CACHE_NAME = 'mm-v3.11.1-3';
+const CACHE_NAME = 'mm-v3.11.6';
 
 /* ── 2. PRECACHE URLS ──────────────────────────────────────────────────────
    These are fetched and stored during the install phase so the app can
