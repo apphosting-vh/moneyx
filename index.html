@@ -1067,10 +1067,16 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.17.3";
+const APP_VERSION="3.17.4";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.17.4",date:"2026-03-09",title:"Fix: FSA auto-save file incompatible with Backup & Restore",changes:[
+    "Root cause: fsaWriteFile was calling JSON.stringify(state) directly, writing the raw state object. The Backup & Restore importer expects { version, exportedAt, summary, data:{…state} } — the same envelope the manual backup download produces. Loading the FSA file via Settings → Data & Backup → Restore failed with 'Invalid backup file — missing data field' because payload.data was undefined.",
+    "Fix: fsaWriteFile now writes the identical envelope format as the manual backup: { version:8, exportedAt, autoSave:true, summary:{bankAccounts, bankTxns, cardAccounts, cardTxns, cashTxns, loans, mf, shares, fd, categories, payees, scheduled, notes}, data:{...state} }. The FSA file is now 100% compatible with Settings → Data & Backup → Restore.",
+    "Fix: fsaReadFile now unwraps the envelope — it returns parsed.data (new format) or parsed directly (legacy raw-state written by v3.17.0–3.17.2). Both old and new FSA files load correctly via the 'Load from Existing File' button in Settings → File Storage.",
+    "The summary block in the FSA file also shows accurate counts (banks, transactions, investments, etc.) matching the manual backup, making the file human-readable and auditable.",
+  ]},
   {version:"3.17.3",date:"2026-03-09",title:"Fix: FSA auto-save silently failing on Android Chrome",changes:[
     "Root cause: Android Chrome 120+ exposes window.showSaveFilePicker in the JS environment, so the old fsaSupported() check (typeof showSaveFilePicker === 'function') returned true on Android. But FileSystemFileHandle.createWritable() for local files is not supported on Android — Chrome only permits OPFS (sandboxed private storage) writes there. Every write attempt threw NotAllowedError, was caught silently, and returned false. The floating re-grant card also appeared on Android, but tapping it couldn't fix anything because the underlying API doesn't work.",
     "Fix: fsaSupported() now checks three things: (1) showSaveFilePicker exists, (2) FileSystemFileHandle.prototype.createWritable exists (the actual write API), and (3) the device is not mobile — using navigator.userAgentData.mobile (modern UA client hints) with a fallback to navigator.userAgent string matching Android/iPhone/iPad/iPod/IEMobile/Opera Mini.",
@@ -13705,11 +13711,41 @@ const fsaVerifyPermission=async(handle)=>{
   return r==="granted";
 };
 
-/* ── File read / write ── */
+/* ── File read / write ──
+   The file is written in the SAME envelope format as the manual backup:
+     { version, exportedAt, autoSave:true, summary:{…}, data:{…state} }
+   This means the file can be imported directly via Settings → Data & Backup
+   → Restore without any conversion. fsaReadFile unwraps the envelope and
+   returns raw state so callers get the same shape either way. */
 const fsaWriteFile=async(handle,data)=>{
   try{
+    const payload={
+      version:8,
+      exportedAt:new Date().toISOString(),
+      autoSave:true,
+      summary:{
+        bankAccounts:(data.banks||[]).length,
+        bankTxns:(data.banks||[]).reduce((s,b)=>s+(b.transactions||[]).length,0),
+        cardAccounts:(data.cards||[]).length,
+        cardTxns:(data.cards||[]).reduce((s,c)=>s+(c.transactions||[]).length,0),
+        cashTxns:((data.cash||{}).transactions||[]).length,
+        loans:(data.loans||[]).length,
+        mf:(data.mf||[]).length,
+        shares:(data.shares||[]).length,
+        fd:(data.fd||[]).length,
+        categories:(data.categories||[]).length,
+        payees:(data.payees||[]).length,
+        scheduled:(data.scheduled||[]).length,
+        notes:(data.notes||[]).length,
+      },
+      data:{
+        ...data,
+        notes:data.notes||[],
+        scheduled:data.scheduled||[],
+      }
+    };
     const writable=await handle.createWritable();
-    await writable.write(JSON.stringify(data,null,2));
+    await writable.write(JSON.stringify(payload,null,2));
     await writable.close();
     return true;
   }catch(e){console.warn("[FSA] Write failed:",e);return false;}
@@ -13718,7 +13754,12 @@ const fsaReadFile=async(handle)=>{
   try{
     const file=await handle.getFile();
     const text=await file.text();
-    return JSON.parse(text);
+    const parsed=JSON.parse(text);
+    /* Support both the new envelope format { data:{…} } and the legacy
+       raw-state format written by v3.17.0–3.17.2 */
+    if(parsed&&parsed.data&&parsed.data.banks)return parsed.data;
+    if(parsed&&parsed.banks)return parsed; // legacy raw state
+    return null;
   }catch(e){console.warn("[FSA] Read failed:",e);return null;}
 };
 
