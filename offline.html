@@ -1067,10 +1067,21 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.17.1";
+const APP_VERSION="3.17.2";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.17.2",date:"2026-03-09",title:"Fix: FSA auto-save not writing to file",changes:[
+    "Root cause 1: usePersistentReducer's save effect only fires when React state changes. On launch, the async IDB handle-read completed after the effect already ran (with ready=false), so the first write was silently skipped — and never retried until the user made a transaction.",
+    "Root cause 2: doFsaGrant (floating card) and handleGrantPerm (Settings) both set window.__fsa.ready=true but never triggered a write, because state hadn't changed. Data was silently not written until the next user action.",
+    "Root cause 3: fsa:write-failed was never dispatched — write failures were silent console.warn only.",
+    "Fix: Added stateRef inside usePersistentReducer (kept in sync on every render) and exposed window.__fsa.writeNow() on mount. This lets any grant-point call an immediate write with current state without needing a state-change cycle.",
+    "Fix: doFsaGrant now awaits window.__fsa.writeNow() immediately after permission is obtained — file is written on the same click that grants permission.",
+    "Fix: handleGrantPerm (Settings panel) also calls writeNow() and shows whether the write succeeded.",
+    "Fix: App mount useEffect calls writeNow() (deferred 50ms for mount order safety) when IDB shows permission already granted — catches the same-session refresh case.",
+    "Fix: FSAStoragePanel mount useEffect also calls writeNow() for the same reason.",
+    "Fix: Both fsaWriteFile call-sites now dispatch fsa:write-failed on failure so the UI can react visibly.",
+  ]},
   {version:"3.17.1",date:"2026-03-09",title:"File Storage — Floating Re-grant Permission Card",changes:[
     "New floating card appears bottom-right on every screen/tab when a connected file handle exists but browser permission has lapsed (every new browser session)",
     "Card shows 📁 icon with pulsing amber glow (fsaPulse keyframe animation) and gentle icon rock animation (fsaIconSpin) to draw attention without being disruptive",
@@ -11545,6 +11556,8 @@ const FSAStoragePanel=({state,dispatch})=>{
         if(perm==="granted"){
           window.__fsa.handle=h;window.__fsa.filename=h.name;window.__fsa.ready=true;
           setConnected(true);setFilename(h.name);
+          // Immediate write in case App-level check already ran and set ready
+          setTimeout(()=>{ if(window.__fsa.writeNow) window.__fsa.writeNow(); },50);
         }else{
           /* Handle found but needs user gesture to grant permission */
           window.__fsa.handle=h;window.__fsa.filename=h.name;window.__fsa.ready=false;
@@ -11614,8 +11627,10 @@ const FSAStoragePanel=({state,dispatch})=>{
     const granted=await fsaVerifyPermission(window.__fsa.handle);
     if(granted){
       window.__fsa.ready=true;
+      // Write current state immediately — don't wait for next state change
+      const ok=window.__fsa.writeNow?await window.__fsa.writeNow():false;
       setPermNeeded(false);setConnected(true);
-      say("✓ Permission granted — auto-save is now active.");
+      say(ok?"✓ Permission granted — data saved to "+window.__fsa.filename:"✓ Permission granted — save queued (make any change to trigger).");
     }else say("Permission was denied.",false);
     setBusy(false);
   };
@@ -13827,19 +13842,32 @@ const useRouting=()=>{
 const usePersistentReducer=(reducer,init)=>{
   const[state,rawDispatch]=useReducer(reducer,null,()=>loadState()||init());
   const dispatch=React.useCallback((action)=>{rawDispatch(action);},[]);
+  /* stateRef: live pointer so writeNow() can access current state without
+     waiting for a state-change to re-trigger the debounced effect */
+  const stateRef=React.useRef(state);
+  /* Expose writeNow on the FSA singleton so every grant-point can call it
+     immediately after permission is obtained, even with no state change */
+  React.useEffect(()=>{
+    window.__fsa.writeNow=async()=>{
+      if(!window.__fsa.handle||!window.__fsa.ready)return false;
+      const ok=await fsaWriteFile(window.__fsa.handle,stateRef.current);
+      if(ok){window.__fsa.lastSaved=new Date();window.dispatchEvent(new CustomEvent("fsa:saved"));}
+      else{window.dispatchEvent(new CustomEvent("fsa:write-failed"));}
+      return ok;
+    };
+  },[]); // mount-only — stateRef always points to latest value
   // Save to localStorage (and FSA file if connected) whenever state changes (debounced)
   const timerRef=React.useRef(null);
   React.useEffect(()=>{
+    stateRef.current=state; // keep ref in sync on every render
     if(timerRef.current)clearTimeout(timerRef.current);
     timerRef.current=setTimeout(()=>{
       saveState(state);
       /* Also write to FSA file if connected and has permission */
       if(window.__fsa&&window.__fsa.handle&&window.__fsa.ready){
         fsaWriteFile(window.__fsa.handle,state).then(ok=>{
-          if(ok){
-            window.__fsa.lastSaved=new Date();
-            window.dispatchEvent(new CustomEvent("fsa:saved"));
-          }
+          if(ok){window.__fsa.lastSaved=new Date();window.dispatchEvent(new CustomEvent("fsa:saved"));}
+          else{window.dispatchEvent(new CustomEvent("fsa:write-failed"));}
         });
       }
     },400);
@@ -17216,8 +17244,11 @@ function App(){
         if(!h)return;
         const perm=await fsaQueryPermission(h);
         if(perm==="granted"){
-          // Permission already granted (rare — e.g. page refresh within same session)
+          // Permission already granted — set ready and do an immediate write
           window.__fsa.handle=h;window.__fsa.filename=h.name;window.__fsa.ready=true;
+          // writeNow may not be registered yet (usePersistentReducer mounts
+          // at the same time), so defer one tick to be safe
+          setTimeout(()=>{ if(window.__fsa.writeNow) window.__fsa.writeNow(); },50);
         }else{
           // Handle found but needs a user gesture to re-grant
           window.__fsa.handle=h;window.__fsa.filename=h.name;window.__fsa.ready=false;
@@ -17237,6 +17268,8 @@ function App(){
     const granted=await fsaVerifyPermission(window.__fsa.handle);
     if(granted){
       window.__fsa.ready=true;
+      // Write current state to file immediately — don't wait for next state change
+      if(window.__fsa.writeNow) await window.__fsa.writeNow();
       // Notify FSAStoragePanel (and any other listener) that permission is active
       window.dispatchEvent(new CustomEvent("fsa:permission-granted"));
       setFsaGranted(true);
