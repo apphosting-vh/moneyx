@@ -989,6 +989,7 @@ const INIT=()=>({
   ],
   notes:[],
   goals:[],
+  nwSnapshots:{},
   insightPrefs:{
     currentAge:"",retirementAge:45,
     fireMode:"auto",manualFireNumber:"",
@@ -1067,10 +1068,86 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.18.0";
+const APP_VERSION="3.20.3";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.20.3",date:"2026-03-10",title:"Fix — Missing comma caused blank screen after snapshot floater",changes:["Fixed SyntaxError: missing comma after the data table closing paren made the snapshot reminder floater an unreachable bare expression outside the return statement — added the comma so it is correctly a child of the outer div."]},
+
+  {version:"3.20.2",date:"2026-03-10",title:"Net Worth — Breakdown Hero Card + Snapshot Reminder Floater",changes:[
+    "New: Net Worth Breakdown hero card — replaces the simple Assets/Liabilities two-number row with a full grid of constituent tiles: Bank Balances, Cash, Mutual Funds, Stocks, Fixed Deposits, Real Estate (assets) and Credit Card Debt, Loan Balances (liabilities). Each tile shows the ₹ value, % of total assets, and % of Net Worth, with a subtle proportional background fill so the heaviest constituents visually stand out.",
+    "New: Snapshot Reminder floater — a sticky bottom-right card appears whenever no snapshot has been saved in the last 30 days (or ever). It shows how many days since the last snapshot and has a 'Record Now' button that opens the snapshot modal directly, plus a 'Later' button to dismiss for the session.",
+    "Floater is session-dismissed only (state, not localStorage) — it will reappear on next visit if the gap is still >30 days.",
+  ]},
+  {version:"3.20.1",date:"2026-03-10",title:"Net Worth — Fixed X-Axis Label Overlap + Month-End Snapshot System",changes:[
+    "Fix: X-axis labels on both the NW Trend chart and Growth Bars chart were overlapping/smudging when showing 24 months of data. Both charts now compute a dynamic step size (ceil(n/10)) and only render evenly-spaced labels — first, last, and every Nth point — keeping max 10 labels regardless of data density.",
+    "New: Month-End Snapshot system — users can record the current net worth as a pinned baseline for any month using the 📸 Record Snapshot button. Snapshots capture live MF NAV and share prices on that exact day, which transaction-flow reconstruction cannot do.",
+    "Snapshot data stored in state.nwSnapshots ({YYYY-MM: nwValue}) — persisted in localStorage, survives page reload.",
+    "NW history calculation priority: when a snapshot exists for a month it is used directly as the NW value; the backward-walk reconstruction resets to that anchor and continues backward from there, making past estimates more accurate the more snapshots you have.",
+    "Green dots on the trend chart mark months with a saved snapshot (accurate) vs small dots for flow-estimated months.",
+    "Source column in the data table shows 📸 for snapshot months and ~ (tilde) for estimated months.",
+    "Snapshot modal: shows current NW breakdown, warns if overwriting existing snapshot, lists all saved snapshots with individual Remove buttons.",
+    "Info pill below hero card guides users: no snapshots = orange tip to start recording; snapshots present = green confirmation of how many are saved.",
+    "SET_NW_SNAPSHOT and DEL_NW_SNAPSHOT reducer cases added. nwSnapshots field added to EMPTY_STATE and loadState merge.",
+  ]},
+  {version:"3.20.0",date:"2026-03-10",title:"Net Worth Section — Complete Redesign (Historical NW & Growth Focus)",changes:[
+    "Complete redesign of the Net Worth tab in Insights — removed all the clutter (FIRE, milestones, debt payoff, allocation donut, contributors, projections) and replaced with a focused historical view",
+    "Two views: Monthly and Yearly — switched via a tab pill at the top",
+    "Monthly view: reconstructs up to 24 months of net worth history using a backward walk from current NW through all transaction net-flows",
+    "Yearly view: groups monthly data by year, uses the last month of each year as the year-end NW reading",
+    "NW Trend chart: full-width SVG line chart (reuses SvgLine) showing net worth over time for the selected period",
+    "Growth Bars chart: custom SVG bar chart with green bars for months/years where NW grew and red bars where it fell; zero-line in the middle; labels below",
+    "Summary stat strip: Best period (highest absolute growth), Worst period (biggest drop), Periods tracked — updates dynamically when switching Monthly/Yearly",
+    "Data table: Period | Net Worth | Change ₹ | Growth % | Trend mini-bar — most recent period first; zebra-stripe rows; responsive (hides Growth% and Trend columns on mobile)",
+    "Hero card at top: Current NW, Total Assets, Total Liabilities, and total growth over the shown period",
+    "All previous syntax issues resolved; component paren-balanced and audit-clean",
+  ]},
+  {version:"3.19.5",date:"2026-03-10",title:"Bug Fix — Blank Screen SyntaxError in NetWorthInsightTab (Unbalanced Parentheses)",changes:[
+    "Fixed: Uncaught SyntaxError 'Unexpected token' at Babel line 14793:2 — the closing ); of NetWorthInsightTab was unreachable because the component's paren count was off by -1",
+    "Root cause: in the Top Contributors map(), the percentage span (line 15574) ended with )) instead of ) — the extra ) prematurely closed the textAlign:right wrapper div, pushing the progress bar row outside the per-contributor React.createElement div",
+    "Cascade effect: the orphaned ) on line 15575 (intended to close textAlign div) instead closed the flex row; every subsequent paren in the component was one level off; the final ); was parsed as a bare statement terminator rather than closing the return expression",
+    "Fix: removed the extra ) from line 15574 so the textAlign div correctly closes on line 15575 as intended, restoring the per-contributor structure: [flex row] + [progress bar] as two children of the same wrapper div",
+    "Verification: paren-balance tracer confirms contributors section correctly reaches p=0 after its ); and the entire NetWorthInsightTab return closes cleanly at line 15684",
+    "Full dual-class syntax audit re-run: 0 unclosed style strings, 0 ternary-no-else bugs remaining",
+  ]},
+  {version:"3.19.4",date:"2026-03-10",title:"Bug Fix — Third Blank Screen SyntaxError (Asset Allocation %) + Comprehensive Syntax Audit",changes:[
+    "Fixed: Uncaught SyntaxError at Babel line 14674 — ternary with no else branch in the Insights asset allocation card's percentage span: totalAssets>0?(c.val/totalAssets*100).toFixed(1)+\"%\" was missing the :\"\\\"\\\"\\ else clause",
+    "Root cause: incomplete ternary expression used directly as a React.createElement children argument — Babel expects a complete ternary (cond?a:b) or a non-ternary value; an unresolved ? with no : is a parse error",
+    "Comprehensive dual-class syntax audit performed across all 17,700+ lines of the Babel script block:",
+    "  Audit class 1 — Unclosed style strings: regex scan for CSS value strings not closed before }} — 0 instances found",
+    "  Audit class 2 — Ternary-no-else: ? vs : balance counter applied to every React.createElement children argument — 0 instances found after this fix",
+    "Audit used a ternary-balance parser that correctly ignores optional-chaining (?.), skips string literal contents, and counts only unmatched ? marks — preventing the false positives seen in a simpler grep-based scan",
+    "Three total syntax bugs existed in the original file; all are now resolved (v3.19.2, v3.19.3, v3.19.4)",
+  ]},
+  {version:"3.19.3",date:"2026-03-10",title:"Bug Fix — Second Blank Screen SyntaxError (Debt Payoff Card) + Full Style Audit",changes:[
+    "Fixed: second Uncaught SyntaxError at Babel line 14530:103 — missing closing quote on color:\"var(--text6) in the Debt Payoff card's 'Avg monthly repayment' span inside InsightsSection",
+    "Root cause: same class of bug as v3.19.2 — a style object property value string left unclosed before }}, causing Babel to attempt to parse the following string literal as a style key",
+    "Full file audit performed: Python regex scan of every React.createElement line for the pattern :\"<value>}} (CSS string value not terminated before style object closes) — confirmed zero remaining instances after this fix",
+    "Two bugs of this type existed in total (FIRE card fixed in 3.19.2, Debt Payoff card fixed here); no further instances found in the entire 18,600-line file",
+  ]},
+  {version:"3.19.2",date:"2026-03-10",title:"Bug Fix — Blank Screen on Load (FIRE Card SyntaxError)",changes:[
+    "Fixed: Uncaught SyntaxError — Unexpected character '₹' at Babel script line 14502:70 causing a complete blank screen on app load",
+    "Root cause: missing closing double-quote in the style object on the FIRE progress card's '₹ X to go' span — {color:\"var(--text5)}} instead of {color:\"var(--text5)\"}}",
+    "Fix: added the missing closing quote so the style object is properly terminated before the element's children argument",
+    "No logic, layout, or data changes — purely a punctuation fix",
+  ]},
+  {version:"3.19.1",date:"2026-03-10",title:"Investment Dashboard — Correct Portfolio Value Calculation (RE Excluded)",changes:[
+    "Fix: Total Portfolio Value in the Investment Dashboard hero card now correctly shows MF + Shares + Fixed Deposits only. Real Estate is excluded from portfolio value, invested cost, P&L, and P&L%.",
+    "Fix: totalInvested (cost basis) now = MF avg-cost + Shares buy-cost + FD principal. reCost is no longer included, so the P&L pill and return% reflect liquid investment performance only.",
+    "Fix: Allocation donut now labelled 'Liquid Asset Allocation' and contains only MF, Shares, FD. Percentages are computed against liquid total, not diluted by RE.",
+    "Real Estate is shown as a separate '🔒 Illiquid' stat in both the hero card (conditionally, only when RE exists) and below the donut legend with an 'Excl. from portfolio' note. Its own unrealised gain/loss is displayed independently.",
+    "Rule applied consistently: MF, Shares, FD = liquid investments counted in portfolio. Real Estate = illiquid, tracked separately. This distinction is now enforced in every calculation in InvestDashboard.",
+  ]},
+  {version:"3.19.0",date:"2026-03-10",title:"Net Worth Dashboard — Moved to Insights with Full Enhancement Suite",changes:[
+    "Moved: Net Worth Trend removed from Reports section and added as '💎 Net Worth' tab in Insights — where it belongs alongside FIRE, Emergency, and Savings Trend analytics.",
+    "Fixed: Real Estate was excluded from the old report's net worth calculation (a known inconsistency vs the Excel export). RE is now correctly included in all asset totals, the donut, contributors, and trend reconstruction.",
+    "New hero panel: giant net worth figure with MoM % change badge (▲/▼ vs prior month) and annualised CAGR (e.g. 'CAGR 18.4%/yr') derived from the 12-month backward-walk series.",
+    "Four sub-tabs — Overview, Trend, Breakdown, Projections — each focused on a different dimension of net worth intelligence.",
+    "Overview tab: Best Month / Worst Month KPI cards (₹ amount + month label); Liquid vs Illiquid split progress bar (Banks+Cash vs Investments+RE); FIRE progress bar (% of FIRE number with ₹ remaining); Debt Payoff Estimate (months and projected date based on avg monthly repayments from Payment-category transactions); Next Milestone card with progress bar and estimated date.",
+    "Trend tab: 12-month net worth line chart with best/worst month callout chips; Asset vs Liability dual-line chart (assets=green solid, liabilities=red dashed — uses existing SvgLine color2 prop); Monthly savings rate bar chart with target reference line (green bars = at/above target, red = below); detailed month-by-month table with Net Worth, Monthly Δ, and Savings Rate columns.",
+    "Breakdown tab: SVG asset allocation donut (6 slices: Banks, Cash, MF, Shares, FD, Real Estate) with net worth centred inside; Top Contributors list (all individual accounts/investments ranked by value with animated fill bars and % of total assets); Liabilities breakdown (Credit Cards vs Loans with % share).",
+    "Projections tab: 12-month forward projection chart (dashed line continuation of the historical series, based on avg of last 3 months net flow); Milestone Tracker — progress bars for ₹1L, ₹2.5L, ₹5L, ₹10L, ₹25L, ₹50L milestones with ✅ achieved or estimated months remaining; FIRE Projection Detail — FIRE target, amount still needed, estimated years to FIRE at current pace, full progress bar.",
+  ]},
   {version:"3.18.0",date:"2026-03-10",title:"Bulk Delete Transactions in Ledger",changes:[
     "New '🗑 Delete' button appears in the multi-select bulk action toolbar whenever one or more transactions are checked — sits alongside the existing Categorize, Mark Reconciled, Mark Unreconciled, and Mark Void bulk actions.",
     "Clicking '🗑 Delete' opens a BulkDelModal confirmation dialog: shows a ⚠️ warning banner with the count and the net balance/outstanding impact of removing the selected transactions (e.g. 'Balance will change by −₹12,500').",
@@ -2318,6 +2395,8 @@ const reducer=(s,a)=>{
       return s;
     }
     case"SET_INSIGHT_PREFS":return{...s,insightPrefs:{...s.insightPrefs,...a.p}};
+    case"SET_NW_SNAPSHOT":return{...s,nwSnapshots:{...(s.nwSnapshots||{}),[a.month]:a.nw}};
+    case"DEL_NW_SNAPSHOT":{const snaps={...(s.nwSnapshots||{})};delete snaps[a.month];return{...s,nwSnapshots:snaps};}
     case"ADD_GOAL":return{...s,goals:[...(s.goals||[]),{...a.p,id:uid(),createdAt:new Date().toISOString()}]};
     case"EDIT_GOAL":return{...s,goals:(s.goals||[]).map(g=>g.id===a.p.id?{...g,...a.p}:g)};
     case"DEL_GOAL":return{...s,goals:(s.goals||[]).filter(g=>g.id!==a.id)};
@@ -6038,18 +6117,18 @@ const InvestDashboard=({mf,shares,fd,re=[],dispatch,isMobile})=>{
   },0);
   const reCost  = re.reduce((s,r)=>s+r.acquisitionCost,0);
   const reVal   = re.reduce((s,r)=>s+(r.currentValue||r.acquisitionCost),0);
-  const totalInvested = mfCost+shCost+fdPrinc+reCost;
-  const totalCurrent  = mfVal+shVal+fdPrinc+reVal;
+  /* ── Liquid portfolio = MF + Shares + FD only (RE is illiquid, excluded) ── */
+  const totalInvested = mfCost+shCost+fdPrinc;   /* liquid cost basis */
+  const totalCurrent  = mfVal+shVal+fdPrinc;     /* liquid portfolio value */
   const totalPnL      = totalCurrent-totalInvested;
   const pnlPct        = totalInvested>0?((totalPnL/totalInvested)*100):0;
 
-  /* ── Allocation donut ── */
+  /* ── Allocation donut — liquid investments only (RE is illiquid, shown separately) ── */
   const allocData=[
     {name:"Mutual Funds",  value:mfVal,   col:"#6d28d9"},
     {name:"Shares",        value:shVal,   col:"#16a34a"},
     {name:"Fixed Deposits",value:fdPrinc, col:"#b45309"},
-    {name:"Real Estate",   value:reVal,   col:"#c2410c"},
-  ].filter(a=>a.val!==0||a.value>0);
+  ].filter(a=>a.value>0);
   const allocTotal=allocData.reduce((s,a)=>s+a.value,0);
 
   /* ── Top gainers/losers from shares ── */
@@ -6236,6 +6315,7 @@ const InvestDashboard=({mf,shares,fd,re=[],dispatch,isMobile})=>{
       React.createElement("div",{style:{display:"flex",gap:40,flexWrap:"wrap",alignItems:"flex-end"}},
         React.createElement("div",null,
           React.createElement("div",{style:{fontSize:11,color:"var(--text5)",textTransform:"uppercase",letterSpacing:1.2,marginBottom:6}},"Total Portfolio Value"),
+          React.createElement("div",{style:{fontSize:13,color:"var(--text6)",marginBottom:4}},"Liquid investments · MF + Shares + FD"),
           React.createElement("div",{style:{fontSize:36,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--accent)"}},INR(totalCurrent)),
           React.createElement("div",{style:{display:"flex",gap:6,alignItems:"center",marginTop:8,flexWrap:"wrap"}},
             React.createElement("span",{style:{
@@ -6258,6 +6338,16 @@ const InvestDashboard=({mf,shares,fd,re=[],dispatch,isMobile})=>{
           React.createElement("div",null,
             React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.8,marginBottom:3}},"Total FD Interest"),
             React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#16a34a"}},"+"+INR(fdMat-fdPrinc))
+          ),
+          reVal>0&&React.createElement("div",null,
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5,marginBottom:3}},
+              React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.8}},"Real Estate"),
+              React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"1px 5px",borderRadius:6,background:"rgba(109,40,217,.12)",color:"#6d28d9",border:"1px solid rgba(109,40,217,.25)"}}, "🔒 Illiquid")
+            ),
+            React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#c2410c"}},INR(reVal)),
+            reVal!==reCost&&React.createElement("div",{style:{fontSize:11,color:reVal>=reCost?"#16a34a":"#ef4444",fontWeight:600}},
+              (reVal>=reCost?"▲ ":"▼ ")+INR(Math.abs(reVal-reCost))+" unrealised"
+            )
           )
         )
       )
@@ -6275,7 +6365,7 @@ const InvestDashboard=({mf,shares,fd,re=[],dispatch,isMobile})=>{
     React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"280px 1fr",gap:14,marginBottom:14}},
       /* Allocation donut */
       React.createElement(Card,null,
-        React.createElement(SecHead,{title:"Asset Allocation"}),
+        React.createElement(SecHead,{title:"Liquid Asset Allocation"}),
         React.createElement(DonutChart,{data:allocData,size:160}),
         React.createElement("div",{style:{marginTop:14}},
           allocData.filter(a=>a.value>0).map((a,i)=>React.createElement("div",{key:a.name,style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
@@ -6287,7 +6377,20 @@ const InvestDashboard=({mf,shares,fd,re=[],dispatch,isMobile})=>{
               React.createElement("div",{style:{fontSize:12,fontWeight:700,color:a.col}},INR(a.value)),
               React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},allocTotal>0?((a.value/allocTotal)*100).toFixed(1)+"%":"--")
             )
-          ))
+          )),
+          reVal>0&&React.createElement("div",{style:{marginTop:10,paddingTop:10,borderTop:"1px dashed var(--border2)"}},
+            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
+              React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7}},
+                React.createElement("span",{style:{width:9,height:9,borderRadius:"50%",background:"#c2410c",display:"inline-block"}}),
+                React.createElement("span",{style:{fontSize:12,color:"var(--text3)"}},"Real Estate"),
+                React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"1px 5px",borderRadius:6,background:"rgba(109,40,217,.1)",color:"#6d28d9",border:"1px solid rgba(109,40,217,.2)"}}, "🔒 Illiquid")
+              ),
+              React.createElement("div",{style:{textAlign:"right"}},
+                React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"#c2410c"}},INR(reVal)),
+                React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"Excl. from portfolio")
+              )
+            )
+          )
         )
       ),
       /* MF performance table */
@@ -11358,7 +11461,6 @@ const REPORT_TREE=[
   ]},
   {id:"incvsexp",      label:"Income vs Expenses",       icon:"⚖"},
   {id:"investments",   label:"Investment Portfolio",     icon:"📈"},
-  {id:"networth",      label:"Net Worth Trend",          icon:"📊"},
   {id:"forecast",      label:"Forecast",                 icon:"🔮"},
   {id:"payees",        label:"Payees",                   icon:"👤"},
   {id:"reconciliation",label:"Reconciliation",           icon:"✅"},
@@ -11439,13 +11541,12 @@ const ReportsSection=({data,isMobile,onJumpToLedger})=>{
       case"summary":         return React.createElement(RptSummary,props);
       case"investments":     return React.createElement(RptInvestments,props);
       case"reconciliation":  return React.createElement(RptReconciliation,props);
-      case"networth":        return React.createElement(RptNetWorth,props);
       case"gsttds":          return React.createElement(RptGstTds,props);
       default:               return React.createElement(RptCashFlow,props);
     }
   };
 
-  const noDate=["forecast","summary","investments","networth"];
+  const noDate=["forecast","summary","investments"];
 
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:isMobile?"column":"row",gap:0,height:"100%"}},
     isMobile&&React.createElement("div",{style:{marginBottom:10}},
@@ -13927,6 +14028,7 @@ const loadState=()=>{
       re:(parsed.re||def.re||[]),
       notes:(parsed.notes||def.notes||[]),
       goals:(parsed.goals||def.goals||[]),
+      nwSnapshots:(parsed.nwSnapshots||def.nwSnapshots||{}),
     };
   }catch(e){console.warn("Failed to load state:",e);return null;}
 };
@@ -15099,7 +15201,541 @@ const FOOD_DELIVERY_KW=["swiggy","zomato","dunzo","blinkit","zepto","instamart",
 const FOOD_GROCERY_KW=["bigbasket","dmart","reliance fresh","more supermarket","spencers","grofers","jiomart","kirana","provisions","vegetables","fruits","grocery","supermarket","hypermarket"];
 const FOOD_DINING_KW=["restaurant","cafe","dhaba","hotel food","biryani house","dine","food court","bakery","sweets","mithai","mess","canteen","tiffin"];
 
-const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,shares,fd,re,loans,prefs,onJumpToLedger})=>{
+/* ══════════════════════════════════════════════════════════════════════════
+   NET WORTH INSIGHT TAB v2 — Snapshot-based history + fixed x-axis labels
+   ══════════════════════════════════════════════════════════════════════════ */
+const NetWorthInsightTab=({banks,cards,cash,mf,shares,fd,re,loans,categories,prefs,isMobile,dispatch,nwSnapshots})=>{
+  const[view,setView]=React.useState("monthly");
+  const[showSnapshotModal,setShowSnapshotModal]=React.useState(false);
+  const MONTH_NAMES=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const fmtL=v=>{if(Math.abs(v)>=10000000)return(v/10000000).toFixed(2)+" Cr";if(Math.abs(v)>=100000)return(v/100000).toFixed(2)+" L";if(Math.abs(v)>=1000)return(v/1000).toFixed(1)+"K";return Math.round(v).toString();};
+  const signPct=(v)=>(v==null?"—":(v>=0?"+":"")+v.toFixed(1)+"%");
+
+  /* ── Current snapshot ── */
+  const bankBal=banks.reduce((s,b)=>s+b.balance,0);
+  const cashBal=cash.balance;
+  const mfVal=mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
+  const sharesVal=shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
+  const fdVal=fd.reduce((s,f)=>s+f.amount,0);
+  const reVal=(re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
+  const cDebt=cards.reduce((s,c)=>s+c.outstanding,0);
+  const lDebt=loans.reduce((s,l)=>s+l.outstanding,0);
+  const totalAssets=bankBal+cashBal+mfVal+sharesVal+fdVal+reVal;
+  const totalLiab=cDebt+lDebt;
+  const curNW=totalAssets-totalLiab;
+
+  /* ── Current month key ── */
+  const now=new Date();
+  const currentMonth=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
+  const snapshots=nwSnapshots||{};
+
+  /* ── All transactions ── */
+  const allTx=React.useMemo(()=>[
+    ...banks.flatMap(b=>b.transactions),
+    ...cards.flatMap(c=>c.transactions),
+    ...(cash.transactions||[])
+  ],[banks,cards,cash]);
+
+  /* ── Monthly net-flow map ── */
+  const byMonth=React.useMemo(()=>{
+    const m={};
+    allTx.forEach(t=>{
+      const key=t.date.substr(0,7);
+      const ct=catClassType(categories,t.cat||"Others");
+      if(!m[key])m[key]={net:0,income:0,expense:0};
+      if(ct==="Income"){m[key].net+=t.amount;m[key].income+=t.amount;}
+      else if(ct!=="Transfer"){m[key].net-=t.amount;m[key].expense+=t.amount;}
+    });
+    return m;
+  },[allTx,categories]);
+
+  /* ══════════════════════════════════════════════════════════════════════
+     MONTHLY NW POINTS
+     Priority: use saved snapshots where available (accurate month-end
+     values that capture live MF NAV / share prices on that day).
+     Fall back to backward-walk reconstruction from current NW for months
+     without a snapshot. Snapshots anchor the reconstruction, so the
+     backward walk resets to the snapshot value whenever one is found.
+     ══════════════════════════════════════════════════════════════════════ */
+  const monthPoints=React.useMemo(()=>{
+    const sorted=Object.keys(byMonth).sort().slice(-24);
+    if(!sorted.length)return[];
+
+    /* Build points from newest to oldest */
+    let runNW=curNW;
+    const rawReversed=[...sorted].reverse().map(m=>{
+      /* If there's a saved snapshot for this month, use it and reset the run */
+      if(snapshots[m]!==undefined){
+        runNW=snapshots[m];
+      }
+      const nw=runNW;
+      runNW-=byMonth[m].net;
+      return{
+        label:MONTH_NAMES[parseInt(m.slice(5))-1]+"'"+m.slice(2,4),
+        month:m,nw,
+        hasSnapshot:snapshots[m]!==undefined,
+        income:byMonth[m].income,
+        expense:byMonth[m].expense,
+        net:byMonth[m].net
+      };
+    });
+    const raw=rawReversed.reverse();
+    return raw.map((p,i)=>{
+      const change=i>0?p.nw-raw[i-1].nw:null;
+      const pct=(change!==null&&raw[i-1].nw!==0)?(change/Math.abs(raw[i-1].nw)*100):null;
+      return{...p,change,pct};
+    });
+  },[byMonth,curNW,snapshots]);
+
+  /* ── Yearly NW points ── */
+  const yearPoints=React.useMemo(()=>{
+    const byYear={};
+    monthPoints.forEach(p=>{
+      const yr=p.month.slice(0,4);
+      byYear[yr]=p;
+    });
+    const years=Object.keys(byYear).sort();
+    return years.map((yr,i)=>{
+      const p=byYear[yr];
+      const prev=i>0?byYear[years[i-1]]:null;
+      const change=prev!==null?p.nw-prev.nw:null;
+      const pct=(change!==null&&prev!==null&&prev.nw!==0)?(change/Math.abs(prev.nw)*100):null;
+      return{label:yr,year:yr,nw:p.nw,change,pct,hasSnapshot:p.hasSnapshot};
+    });
+  },[monthPoints]);
+
+  const activePoints=view==="monthly"?monthPoints:yearPoints;
+  const growthPoints=activePoints.filter(p=>p.change!==null);
+  const bestPt=growthPoints.length?growthPoints.reduce((b,p)=>p.change>b.change?p:b,growthPoints[0]):null;
+  const worstPt=growthPoints.length?growthPoints.reduce((b,p)=>p.change<b.change?p:b,growthPoints[0]):null;
+  const totalGrowth=activePoints.length>=2?activePoints[activePoints.length-1].nw-activePoints[0].nw:null;
+  const totalGrowthPct=(totalGrowth!==null&&activePoints[0].nw!==0)?(totalGrowth/Math.abs(activePoints[0].nw)*100):null;
+  const snapshotCount=Object.keys(snapshots).length;
+
+  /* ── Snapshot reminder: check if any snapshot exists in last 30 days ── */
+  const[reminderDismissed,setReminderDismissed]=React.useState(false);
+  const lastSnapshotDate=React.useMemo(()=>{
+    const keys=Object.keys(snapshots).sort();
+    if(!keys.length)return null;
+    const last=keys[keys.length-1];
+    const yr=parseInt(last.slice(0,4)),mo=parseInt(last.slice(5));
+    return new Date(yr,mo,0); /* day 0 = last day of prev month = last day of target month */
+  },[snapshots]);
+  const daysSinceSnapshot=lastSnapshotDate?Math.floor((now-lastSnapshotDate)/(1000*60*60*24)):null;
+  const showReminder=!reminderDismissed&&(daysSinceSnapshot===null||daysSinceSnapshot>30);
+
+  /* ── Save/delete snapshot helpers ── */
+  const saveSnapshot=()=>{
+    dispatch({type:"SET_NW_SNAPSHOT",month:currentMonth,nw:curNW});
+    setShowSnapshotModal(false);
+  };
+  const deleteSnapshot=(month)=>dispatch({type:"DEL_NW_SNAPSHOT",month});
+
+  /* ── Card wrapper ── */
+  const C=({children,sx})=>React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"16px 18px",marginBottom:14,...(sx||{})}},children);
+
+  /* ── Tab button ── */
+  const tBtn=id=>({
+    padding:"8px 20px",borderRadius:8,cursor:"pointer",border:"none",
+    fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:view===id?700:400,
+    background:view===id?"var(--accentbg)":"transparent",
+    color:view===id?"var(--accent)":"var(--text5)",
+    transition:"all .15s"
+  });
+
+  /* ══════════════════════════════════════════════════════════════════════
+     NW LINE CHART — custom SVG, skips labels when too many data points
+     Shows max MAX_LABELS evenly-spaced x-axis labels to avoid smudging
+     ══════════════════════════════════════════════════════════════════════ */
+  const NwLineChart=({pts,h=200})=>{
+    if(!pts||pts.length<2)return React.createElement("div",{style:{textAlign:"center",padding:24,fontSize:12,color:"var(--text6)"}},"Not enough data — add transactions to see your trend");
+    const W=500,padL=8,padR=8,padT=14,padB=28;
+    const vals=pts.map(p=>p.nw);
+    const mn=Math.min(...vals),mx=Math.max(...vals);
+    const range=mx-mn||1;
+    const xStep=(W-padL-padR)/(pts.length-1);
+    const yF=(v)=>padT+(h-padT-padB)*(1-(v-mn)/range);
+    const MAX_LABELS=10;
+    const step=Math.ceil(pts.length/MAX_LABELS);
+    const polyPts=pts.map((p,i)=>(padL+i*xStep)+","+(yF(p.nw))).join(" ");
+    const fillPts=padL+","+h+" "+polyPts+" "+(padL+(pts.length-1)*xStep)+","+h;
+    const accent="var(--accent)";
+    return React.createElement("svg",{width:"100%",viewBox:"0 0 "+W+" "+h,style:{display:"block"}},
+      React.createElement("defs",null,
+        React.createElement("linearGradient",{id:"nwlg",x1:"0",y1:"0",x2:"0",y2:"1"},
+          React.createElement("stop",{offset:"0%",stopColor:accent,stopOpacity:.22}),
+          React.createElement("stop",{offset:"100%",stopColor:accent,stopOpacity:.02})
+        )
+      ),
+      React.createElement("polygon",{points:fillPts,fill:"url(#nwlg)"}),
+      React.createElement("polyline",{points:polyPts,fill:"none",stroke:accent,strokeWidth:2,strokeLinejoin:"round"}),
+      pts.map((p,i)=>{
+        const cx=padL+i*xStep;
+        const cy=yF(p.nw);
+        const showLabel=i===0||i===pts.length-1||(i%step===0);
+        return React.createElement("g",{key:i},
+          p.hasSnapshot
+            ?React.createElement("circle",{cx,cy,r:4,fill:"#16a34a",stroke:"#fff",strokeWidth:1.5})
+            :React.createElement("circle",{cx,cy,r:2.5,fill:accent}),
+          showLabel&&React.createElement("text",{
+            x:cx,y:h-4,textAnchor:"middle",
+            fill:"var(--text5)",fontSize:8,fontFamily:"'DM Sans',sans-serif"
+          },p.label)
+        );
+      })
+    );
+  };
+
+  /* ══════════════════════════════════════════════════════════════════════
+     GROWTH BARS CHART — fixed label density, max MAX_LABELS shown
+     ══════════════════════════════════════════════════════════════════════ */
+  const GrowthBars=({pts})=>{
+    const gPts=pts.filter(p=>p.change!==null);
+    if(!gPts||gPts.length<1)return React.createElement("div",{style:{textAlign:"center",padding:24,fontSize:12,color:"var(--text6)"}},"Not enough data to show growth");
+    const W=500,H=100,padL=24,padR=8,padT=8,padB=24;
+    const maxAbs=Math.max(...gPts.map(p=>Math.abs(p.change)),1);
+    const totalW=W-padL-padR;
+    const bW=Math.max(3,Math.min(26,totalW/gPts.length-4));
+    const xStep=totalW/Math.max(gPts.length-1,1);
+    const midY=padT+(H-padT-padB)/2;
+    const barMaxH=(H-padT-padB)/2-4;
+    const MAX_LABELS=10;
+    const lStep=Math.ceil(gPts.length/MAX_LABELS);
+    return React.createElement("svg",{width:"100%",viewBox:"0 0 "+W+" "+H,style:{display:"block"}},
+      React.createElement("line",{x1:padL,y1:midY,x2:W-padR,y2:midY,stroke:"var(--border)",strokeWidth:1}),
+      React.createElement("text",{x:padL-4,y:midY-5,textAnchor:"end",fill:"#16a34a",fontSize:8,fontWeight:700},"+"),
+      React.createElement("text",{x:padL-4,y:midY+11,textAnchor:"end",fill:"#ef4444",fontSize:8,fontWeight:700},"−"),
+      gPts.map((p,i)=>{
+        const cx=gPts.length===1?padL+totalW/2:padL+i*xStep;
+        const x=cx-bW/2;
+        const bh=Math.max(2,(Math.abs(p.change)/maxAbs)*barMaxH);
+        const isPos=p.change>=0;
+        const y=isPos?midY-bh:midY;
+        const showLabel=i===0||i===gPts.length-1||(i%lStep===0);
+        return React.createElement("g",{key:i},
+          React.createElement("rect",{x,y,width:bW,height:bh,rx:2,
+            fill:isPos?"#16a34a":"#ef4444",opacity:0.82}),
+          showLabel&&React.createElement("text",{
+            x:cx,y:H-2,textAnchor:"middle",
+            fill:"var(--text5)",fontSize:8,fontFamily:"'DM Sans',sans-serif"
+          },p.label)
+        );
+      })
+    );
+  };
+
+  return React.createElement("div",{className:"fu"},
+
+    /* ── Page header ── */
+    React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10,marginBottom:16}},
+      React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:20,fontWeight:800,color:"var(--text)",marginBottom:3}},"💎 Net Worth History"),
+        React.createElement("p",{style:{fontSize:12,color:"var(--text5)",margin:0}},"Month-end snapshots + historical growth — monthly & yearly")
+      ),
+      React.createElement("button",{
+        onClick:()=>setShowSnapshotModal(true),
+        style:{
+          padding:"8px 14px",borderRadius:9,border:"1px solid #16a34a",
+          background:"rgba(22,163,74,.09)",color:"#16a34a",cursor:"pointer",
+          fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:600,
+          display:"flex",alignItems:"center",gap:6,flexShrink:0
+        }
+      },"📸 Record Snapshot"+(snapshotCount>0?" ("+snapshotCount+")":""))
+    ),
+
+    /* ── Snapshot Modal ── */
+    showSnapshotModal&&React.createElement("div",{
+      onClick:()=>setShowSnapshotModal(false),
+      style:{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.7)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center"}
+    },
+      React.createElement("div",{
+        onClick:e=>e.stopPropagation(),
+        style:{background:"var(--modal-bg)",border:"1px solid var(--border)",borderRadius:14,padding:"22px 24px",maxWidth:420,width:"90%"}
+      },
+        React.createElement("div",{style:{fontSize:15,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif",marginBottom:8}},"📸 Record Month-End Snapshot"),
+        React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginBottom:16,lineHeight:1.7}},
+          "Capture today's net worth as the ",React.createElement("strong",null,MONTH_NAMES[now.getMonth()]+" "+now.getFullYear())," baseline. ",
+          "Use this on the last day of the month to get an accurate reading that includes live MF NAV and share prices."
+        ),
+        React.createElement("div",{style:{background:"var(--bg4)",borderRadius:10,padding:"12px 16px",marginBottom:16,border:"1px solid var(--border)"}},
+          React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.6,marginBottom:4}},"Net Worth to be saved"),
+          React.createElement("div",{style:{fontSize:24,fontFamily:"'Sora',sans-serif",fontWeight:800,color:curNW>=0?"var(--accent)":"#ef4444"}},INR(curNW)),
+          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:4}},
+            "Assets "+INR(totalAssets)+" − Liabilities "+INR(totalLiab)
+          )
+        ),
+        snapshots[currentMonth]!==undefined&&React.createElement("div",{style:{fontSize:12,color:"#b45309",background:"rgba(180,83,9,.08)",border:"1px solid rgba(180,83,9,.25)",borderRadius:8,padding:"8px 12px",marginBottom:12}},
+          "⚠ A snapshot already exists for this month ("+INR(snapshots[currentMonth])+"). Saving will overwrite it."
+        ),
+        React.createElement("div",{style:{display:"flex",gap:10}},
+          React.createElement("button",{onClick:saveSnapshot,style:{flex:1,padding:"10px",borderRadius:9,border:"none",background:"#16a34a",color:"#fff",fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:700,cursor:"pointer"}},"💾 Save Snapshot"),
+          React.createElement("button",{onClick:()=>setShowSnapshotModal(false),style:{padding:"10px 16px",borderRadius:9,border:"1px solid var(--border)",background:"transparent",color:"var(--text5)",fontFamily:"'DM Sans',sans-serif",fontSize:13,cursor:"pointer"}},"Cancel")
+        ),
+        /* Existing snapshots */
+        snapshotCount>0&&React.createElement("div",{style:{marginTop:18,borderTop:"1px solid var(--border2)",paddingTop:14}},
+          React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:10}},"Saved Snapshots"),
+          Object.keys(snapshots).sort().reverse().map(m=>{
+            const yr=m.slice(0,4),mo=parseInt(m.slice(5))-1;
+            return React.createElement("div",{key:m,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:"1px solid var(--border2)"}},
+              React.createElement("div",null,
+                React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text3)"}},(MONTH_NAMES[mo]+" "+yr)),
+                React.createElement("span",{style:{fontSize:11,color:"#16a34a",marginLeft:8}},INR(snapshots[m]))
+              ),
+              React.createElement("button",{onClick:()=>deleteSnapshot(m),style:{background:"none",border:"none",color:"#ef4444",cursor:"pointer",fontSize:12,fontFamily:"'DM Sans',sans-serif",padding:"2px 6px"}},"✕ Remove")
+            );
+          })
+        )
+      )
+    ),
+
+    /* ── Hero card: NW total + full breakdown ── */
+    React.createElement("div",{style:{background:"var(--networth-bg)",border:"1px solid var(--border)",borderRadius:16,padding:"18px 20px",marginBottom:16}},
+
+      /* Top row: NW number + Assets/Liabilities totals */
+      React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:16,alignItems:"flex-start",marginBottom:18}},
+        React.createElement("div",{style:{flex:1,minWidth:180}},
+          React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,marginBottom:3}},"Current Net Worth"),
+          React.createElement("div",{style:{fontSize:isMobile?26:36,fontFamily:"'Sora',sans-serif",fontWeight:800,color:curNW>=0?"var(--accent)":"#ef4444",lineHeight:1}},INR(curNW)),
+          totalGrowth!==null&&React.createElement("div",{style:{marginTop:6,fontSize:12,color:totalGrowth>=0?"#16a34a":"#ef4444",fontWeight:600}},
+            (totalGrowth>=0?"▲ ":"▼ ")+fmtL(Math.abs(totalGrowth))+" ("+signPct(totalGrowthPct)+") over shown period"
+          )
+        ),
+        React.createElement("div",{style:{display:"flex",gap:18,flexWrap:"wrap",paddingTop:4}},
+          React.createElement("div",{style:{textAlign:"center"}},
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}},"Total Assets"),
+            React.createElement("div",{style:{fontSize:15,fontWeight:700,color:"#16a34a",fontFamily:"'Sora',sans-serif"}},INR(totalAssets))
+          ),
+          React.createElement("div",{style:{width:1,height:36,background:"var(--border)"}}),
+          React.createElement("div",{style:{textAlign:"center"}},
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}},"Liabilities"),
+            React.createElement("div",{style:{fontSize:15,fontWeight:700,color:"#ef4444",fontFamily:"'Sora',sans-serif"}},INR(totalLiab))
+          )
+        )
+      ),
+
+      /* Divider */
+      React.createElement("div",{style:{height:1,background:"var(--border2)",marginBottom:14}}),
+
+      /* Breakdown label */
+      React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.6,marginBottom:11}},"📊 Constituents & Weightage"),
+
+      /* Asset tiles */
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(3,1fr)",gap:"7px",marginBottom:totalLiab>0?10:0}},
+        [
+          {icon:"🏦",label:"Bank Balances",  val:bankBal,   col:"#0ea5e9"},
+          {icon:"💵",label:"Cash",            val:cashBal,   col:"#22c55e"},
+          {icon:"📈",label:"Mutual Funds",    val:mfVal,     col:"#a78bfa"},
+          {icon:"📉",label:"Stocks",          val:sharesVal, col:"#f59e0b"},
+          {icon:"🏛",label:"Fixed Deposits",  val:fdVal,     col:"#06b6d4"},
+          {icon:"🏠",label:"Real Estate",     val:reVal,     col:"#f97316"},
+        ].filter(r=>r.val>0).map(r=>{
+          const pct=totalAssets>0?(r.val/totalAssets*100):0;
+          const nwPct=curNW!==0?(r.val/Math.abs(curNW)*100):0;
+          return React.createElement("div",{key:r.label,style:{
+            background:"var(--bg4)",borderRadius:10,padding:"10px 12px",
+            border:"1px solid var(--border2)",position:"relative",overflow:"hidden"
+          }},
+            React.createElement("div",{style:{position:"absolute",top:0,left:0,bottom:0,width:pct+"%",background:r.col,opacity:.06,pointerEvents:"none"}}),
+            React.createElement("div",{style:{position:"relative"}},
+              React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5,marginBottom:5}},
+                React.createElement("span",{style:{fontSize:13}},r.icon),
+                React.createElement("span",{style:{fontSize:10,color:"var(--text5)",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},r.label)
+              ),
+              React.createElement("div",{style:{fontSize:13,fontWeight:800,color:r.col,fontFamily:"'Sora',sans-serif",marginBottom:4}},INR(r.val)),
+              React.createElement("div",{style:{display:"flex",gap:8}},
+                React.createElement("span",{style:{fontSize:10,color:"var(--text6)",background:"var(--bg5)",borderRadius:5,padding:"1px 6px"}},pct.toFixed(1)+"% of assets"),
+                React.createElement("span",{style:{fontSize:10,color:"var(--text6)",background:"var(--bg5)",borderRadius:5,padding:"1px 6px"}},nwPct.toFixed(1)+"% of NW")
+              )
+            )
+          );
+        })
+      ),
+
+      /* Liability tiles (only when there's debt) */
+      totalLiab>0&&React.createElement("div",null,
+        React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"#ef4444",textTransform:"uppercase",letterSpacing:.6,marginBottom:8,marginTop:4}},"💳 Liabilities"),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:"7px"}},
+          [
+            {icon:"💳",label:"Credit Card Debt", val:cDebt, col:"#ef4444"},
+            {icon:"🏦",label:"Loan Balances",    val:lDebt, col:"#f97316"},
+          ].filter(r=>r.val>0).map(r=>{
+            const pct=totalLiab>0?(r.val/totalLiab*100):0;
+            return React.createElement("div",{key:r.label,style:{
+              background:"rgba(239,68,68,.04)",borderRadius:10,padding:"10px 12px",
+              border:"1px solid rgba(239,68,68,.18)",position:"relative",overflow:"hidden"
+            }},
+              React.createElement("div",{style:{position:"absolute",top:0,left:0,bottom:0,width:pct+"%",background:r.col,opacity:.07,pointerEvents:"none"}}),
+              React.createElement("div",{style:{position:"relative"}},
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5,marginBottom:5}},
+                  React.createElement("span",{style:{fontSize:13}},r.icon),
+                  React.createElement("span",{style:{fontSize:10,color:"var(--text5)",fontWeight:500}},r.label)
+                ),
+                React.createElement("div",{style:{fontSize:13,fontWeight:800,color:r.col,fontFamily:"'Sora',sans-serif",marginBottom:4}},INR(r.val)),
+                React.createElement("div",{style:{fontSize:10,color:"var(--text6)",background:"var(--bg5)",borderRadius:5,padding:"1px 6px",display:"inline-block"}},pct.toFixed(1)+"% of liabilities")
+              )
+            );
+          })
+        )
+      )
+    ),
+    /* ── Snapshot info pill ── */
+    React.createElement("div",{style:{
+      display:"flex",alignItems:"center",gap:8,padding:"8px 14px",borderRadius:9,
+      background:snapshotCount>0?"rgba(22,163,74,.07)":"rgba(180,83,9,.07)",
+      border:"1px solid "+(snapshotCount>0?"rgba(22,163,74,.25)":"rgba(180,83,9,.25)"),
+      marginBottom:14,fontSize:12,color:snapshotCount>0?"#15803d":"#92400e"
+    }},
+      React.createElement("span",{style:{fontSize:14}},snapshotCount>0?"📸":"💡"),
+      snapshotCount>0
+        ?React.createElement("span",null,React.createElement("strong",null,snapshotCount+" month-end snapshot"+(snapshotCount>1?"s":""))," saved — green dots on the chart mark accurate readings. Unlabelled months use flow-based estimates.")
+        :React.createElement("span",null,"No snapshots saved yet. Click ",React.createElement("strong",null,"Record Snapshot")," on the last day of each month to capture accurate NW (includes live MF NAV & share prices).")
+    ),
+
+    /* ── View tabs ── */
+    React.createElement("div",{style:{display:"flex",gap:4,marginBottom:16,background:"var(--bg4)",borderRadius:10,padding:4,width:"fit-content"}},
+      React.createElement("button",{onClick:()=>setView("monthly"),style:tBtn("monthly")},"📅 Monthly"),
+      React.createElement("button",{onClick:()=>setView("yearly"),style:tBtn("yearly")},"📆 Yearly")
+    ),
+
+    /* ── Stat strip ── */
+    growthPoints.length>0&&React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}},
+      React.createElement("div",{style:{flex:"1 1 140px",background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 16px"}},
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.6,marginBottom:4}},view==="monthly"?"Best Month":"Best Year"),
+        bestPt&&React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#16a34a"}},"+"+fmtL(bestPt.change)),
+        bestPt&&React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},bestPt.label+(bestPt.pct!==null?" · "+signPct(bestPt.pct):""))
+      ),
+      React.createElement("div",{style:{flex:"1 1 140px",background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 16px"}},
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.6,marginBottom:4}},view==="monthly"?"Worst Month":"Worst Year"),
+        worstPt&&React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:800,color:worstPt.change<0?"#ef4444":"#16a34a"}},fmtL(worstPt.change)),
+        worstPt&&React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},worstPt.label+(worstPt.pct!==null?" · "+signPct(worstPt.pct):""))
+      ),
+      React.createElement("div",{style:{flex:"1 1 140px",background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 16px"}},
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.6,marginBottom:4}},"Periods Tracked"),
+        React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--accent)"}},activePoints.length),
+        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},view==="monthly"?"months":"years")
+      )
+    ),
+
+    /* ── NW Trend Chart ── */
+    React.createElement(C,{sx:{marginBottom:14}},
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:6}},
+        React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)"}},
+          view==="monthly"?"📈 Monthly Net Worth Trend":"📈 Yearly Net Worth Trend"
+        ),
+        snapshotCount>0&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"var(--text5)"}},
+          React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:"#16a34a",display:"inline-block",border:"2px solid #fff",boxShadow:"0 0 0 1.5px #16a34a"}}),
+          React.createElement("span",null,"= snapshot (accurate)")
+        )
+      ),
+      React.createElement(NwLineChart,{pts:activePoints,h:200})
+    ),
+
+    /* ── Growth Bars Chart ── */
+    React.createElement(C,{sx:{marginBottom:14}},
+      React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)",marginBottom:4}},
+        view==="monthly"?"📊 Month-on-Month Growth":"📊 Year-on-Year Growth"
+      ),
+      React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:10}},
+        "Green = NW grew  ·  Red = NW fell"
+      ),
+      React.createElement(GrowthBars,{pts:activePoints})
+    ),
+
+    /* ── Data Table ── */
+    React.createElement(C,{sx:{padding:0,overflow:"hidden"}},
+      React.createElement("div",{style:{
+        display:"grid",
+        gridTemplateColumns:isMobile?"0.9fr 1.2fr 1.1fr":"0.7fr 1.3fr 1.1fr 1fr 0.5fr 0.8fr",
+        padding:"9px 16px",borderBottom:"1px solid var(--border)",
+        fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.5,
+        background:"var(--bg4)"
+      }},
+        React.createElement("div",null,view==="monthly"?"Month":"Year"),
+        React.createElement("div",{style:{textAlign:"right"}},"Net Worth"),
+        React.createElement("div",{style:{textAlign:"right"}},"Change ₹"),
+        React.createElement("div",{style:{textAlign:"right"}},"Growth %"),
+        !isMobile&&React.createElement("div",{style:{textAlign:"center"}},"Source"),
+        !isMobile&&React.createElement("div",{style:{textAlign:"right"}},"Trend")
+      ),
+      activePoints.slice().reverse().map((p,i)=>{
+        const chgCol=p.change===null?"var(--text5)":p.change>=0?"#16a34a":"#ef4444";
+        const maxAbsChg=growthPoints.length?Math.max(...growthPoints.map(g=>Math.abs(g.change)),1):1;
+        const trendW=p.change!==null?Math.min(100,Math.abs(p.change)/maxAbsChg*100):0;
+        return React.createElement("div",{key:p.label,style:{
+          display:"grid",
+          gridTemplateColumns:isMobile?"0.9fr 1.2fr 1.1fr":"0.7fr 1.3fr 1.1fr 1fr 0.5fr 0.8fr",
+          padding:"10px 16px",borderBottom:"1px solid var(--border2)",
+          background:i%2===0?"transparent":"var(--bg4)"
+        }},
+          React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},p.label),
+          React.createElement("div",{style:{fontSize:12,fontWeight:700,color:p.nw>=0?"var(--accent)":"#ef4444",fontFamily:"'Sora',sans-serif",textAlign:"right"}},INR(p.nw)),
+          React.createElement("div",{style:{fontSize:12,fontWeight:600,color:chgCol,textAlign:"right",fontFamily:"'Sora',sans-serif"}},
+            p.change===null?"—":((p.change>=0?"+":"")+fmtL(p.change))
+          ),
+          React.createElement("div",{style:{fontSize:12,fontWeight:600,color:chgCol,textAlign:"right"}},
+            p.pct===null?"—":signPct(p.pct)
+          ),
+          !isMobile&&React.createElement("div",{style:{textAlign:"center",fontSize:11}},
+            p.hasSnapshot
+              ?React.createElement("span",{title:"Month-end snapshot",style:{color:"#16a34a",fontWeight:700}},"📸")
+              :React.createElement("span",{title:"Flow-based estimate",style:{color:"var(--text6)"}},"~")
+          ),
+          !isMobile&&React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"flex-end"}},
+            p.change!==null&&React.createElement("div",{style:{
+              width:trendW+"%",maxWidth:80,height:5,borderRadius:3,
+              background:p.change>=0?"#16a34a":"#ef4444",
+              minWidth:p.change!==0?3:0,opacity:.75
+            }})
+          )
+        );
+      })
+    ),
+
+    /* ── Snapshot reminder floater ── */
+    showReminder&&React.createElement("div",{style:{
+      position:"fixed",bottom:80,right:16,zIndex:999,
+      maxWidth:isMobile?300:360,
+      background:"var(--modal-bg)",
+      border:"2px solid #f59e0b",
+      borderRadius:16,
+      boxShadow:"0 8px 32px rgba(0,0,0,.22)",
+      padding:"14px 16px",
+      animation:"slideUp .3s ease"
+    }},
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:8}},
+        React.createElement("div",{style:{display:"flex",gap:9,alignItems:"flex-start"}},
+          React.createElement("span",{style:{fontSize:22,lineHeight:1}},"📸"),
+          React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text)",marginBottom:2}},"Snapshot Reminder"),
+            React.createElement("div",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.5}},
+              daysSinceSnapshot===null
+                ?"You've never saved a net worth snapshot. Capture today for accurate MF & stock NAV values."
+                :"Last snapshot was "+daysSinceSnapshot+" days ago. Record a new one to keep your history accurate."
+            )
+          )
+        ),
+        React.createElement("button",{
+          onClick:()=>setReminderDismissed(true),
+          style:{background:"none",border:"none",color:"var(--text5)",cursor:"pointer",fontSize:18,lineHeight:1,padding:"0 2px",flexShrink:0}
+        },"×")
+      ),
+      React.createElement("div",{style:{display:"flex",gap:8,marginTop:4}},
+        React.createElement("button",{
+          onClick:()=>{setShowSnapshotModal(true);setReminderDismissed(true);},
+          style:{flex:1,padding:"8px",borderRadius:9,border:"none",background:"#f59e0b",color:"#fff",fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:700,cursor:"pointer"}
+        },"📸 Record Now"),
+        React.createElement("button",{
+          onClick:()=>setReminderDismissed(true),
+          style:{padding:"8px 12px",borderRadius:9,border:"1px solid var(--border)",background:"transparent",color:"var(--text5)",fontFamily:"'DM Sans',sans-serif",fontSize:12,cursor:"pointer"}
+        },"Later")
+      )
+    )
+  );
+};
+
+
+
+const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,shares,fd,re,loans,prefs,onJumpToLedger,nwSnapshots})=>{
   const P=prefs||{};
   const[stab,setStab]=useState("pulse");
   const[schedConfirm,setSchedConfirm]=useState(null);
@@ -16896,6 +17532,7 @@ const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,s
     {id:"fire",          label:"🏖 FIRE"},
     {id:"emergency",     label:"🚨 Emergency"},
     {id:"savingstrend",  label:"📐 Savings Trend"},
+    {id:"networth",      label:"💎 Net Worth"},
     {id:"calculators",   label:"🧮 Calculators"},
   ];
 
@@ -16921,6 +17558,7 @@ const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,s
     stab==="fire"          &&FireTab,
     stab==="emergency"     &&EmergencyTab,
     stab==="savingstrend"  &&SavingsTrendTab,
+    stab==="networth"      &&React.createElement(NetWorthInsightTab,{banks,cards,cash,mf,shares,fd,re:re||[],loans,categories,prefs:P,isMobile,dispatch,nwSnapshots:nwSnapshots||{}}),
     stab==="calculators"   &&React.createElement(InsightCalculators,{isMobile})
   );
 };
@@ -18014,7 +18652,7 @@ function App(){
       tab==="inv_re"&&React.createElement(InvestSection,{mf:state.mf,shares:state.shares,fd:state.fd,re:state.re||[],dispatch,defaultTab:"re",isMobile}),
       tab==="loans"&&React.createElement(LoanSection,{loans:state.loans,dispatch,allBanks:state.banks,allCards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees,isMobile}),
       tab==="goals"&&React.createElement(GoalsSection,{goals:state.goals||[],dispatch,isMobile}),
-      tab==="insights"&&React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs,onJumpToLedger}),
+      tab==="insights"&&React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs,onJumpToLedger,nwSnapshots:state.nwSnapshots||{}}),
       tab==="notes"&&React.createElement(NotesSection,{notes:state.notes||[],dispatch}),
       tab==="calculator"&&React.createElement(CalculatorSection,null),
       tab==="scheduled"&&React.createElement(ScheduledSection,{state,dispatch}),
