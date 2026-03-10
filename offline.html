@@ -1067,10 +1067,56 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.17.2";
+const APP_VERSION="3.17.8";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.17.8",date:"2026-03-10",title:"Fix: DD-MM-YYYY swap during Excel import — root cause found and fixed",changes:[
+    "Root cause identified: cellDates:true in XL.read() instructed SheetJS to convert each date cell's Excel serial into a JS Date object BEFORE our code ever saw the string '10-02-2026'. The serial encodes what Excel's locale decided the date was when it was typed — if Excel (US locale or auto-detected) read '10-02-2026' as October 2, the serial is for October 2. Our parseDate never received the original text; it received a Date object for October 2 and correctly stored 2026-10-02, which displayed as '02-10-2026'. No amount of string-parsing logic in parseDate could fix this because the string was never seen.",
+    "Fix: Changed all three XL.read() calls to {cellDates:false, cellText:true} — SheetJS no longer converts date cells to Date objects. Changed all three sheet_to_json() calls to {raw:false} — SheetJS now returns each cell's FORMATTED DISPLAY TEXT (the 'w' property) exactly as it appears in Excel. A date cell showing '10-02-2026' now arrives at parseDate as the string '10-02-2026', which Branch E correctly parses as day=10, month=02.",
+    "Added Branch C in parseDate: handles the edge case where a date cell has 'General' number format. With raw:false, SheetJS formats such cells as the serial number string (e.g. '46063'). Branch C detects 4–6 digit numeric strings in the plausible serial range and converts them via the same serial arithmetic as Branch B.",
+    "parseDate Branch A (JS Date object) retained as a safety fallback for any direct programmatic callers that pass Date objects. It is no longer triggered by the Excel import path.",
+    "Amount/number cells: raw:false returns formatted strings like '1,234.56' or '₹12,345'. parseAmt already strips all non-numeric characters so this is handled correctly.",
+  ]},
+  {version:"3.17.7",date:"2026-03-10",title:"Enforce DD-MM-YYYY strictly: import hardening + display consistency",changes:[
+    "parseDate re-hardened: ALL two-number date strings treated as DD-MM-YYYY, zero exceptions. The swap logic (if month>12 swap day/month) removed — it was silently mis-interpreting ambiguous bank statement dates. If month>12 after strict DD-first parsing the date is rejected (returns today) rather than swapped.",
+    "Native Date() fallback now only activates for strings containing a letter (e.g. 'January 15 2025'). Purely numeric strings (e.g. '01/15/2025') are never passed to new Date(), eliminating the last path where a browser could interpret them in US MM/DD order.",
+    "Serial-number branch: Math.round changed to Math.floor — prevents off-by-one for cells with a time component (46095.989 for '15-Mar-2026 23:45' previously rounded to 46096 = next day). +12 h UTC offset applied before getUTC extraction for DST safety.",
+    "Date-object branch (SheetJS cellDates:true): +12 h UTC offset added before getUTCFullYear/Month/Date extraction for DST safety.",
+    "Separator back-reference in Branch D: both separators must now be the same character so mixed-separator strings like '01/15.2025' are rejected rather than mis-parsed.",
+    "Added dmyFmt() display helper (converts yyyy-mm-dd → DD-MM-YYYY) used app-wide instead of scattered .split('-').reverse().join('-') chains.",
+    "Fixed 5 locations showing raw ISO yyyy-mm-dd to the user: import preview date column, mass-categorise list, reports snapshot detail row, reports detailed-table date column, notes date badge.",
+    "Import UI: Date column hint now reads 'Transaction date — expected format: DD-MM-YYYY'.",
+  ]},
+  {version:"3.17.6",date:"2026-03-10",title:"Fix: Excel import date mismatch (timezone off-by-one)",changes:[
+    "Root cause 1 (critical): Excel serial number conversion used new Date(ms).toISOString().split('T')[0]. toISOString() always returns UTC. For IST (UTC+5:30) and any UTC+ timezone, a midnight Excel date (e.g. Jan 15 2025 00:00 UTC) appears as 2025-01-14T18:30:00Z in UTC, so every imported date was one day behind. All Indian users were affected.",
+    "Root cause 2: The fallback path for string dates — new Date(s).toISOString().split('T')[0] — had the same UTC timezone bug, shifting dates parsed from text like '15 Jan 2025' back by one day.",
+    "Root cause 3: XL.read() was called with {cellDates:false, raw:false} but sheet_to_json was called with {raw:true}. These are contradictory — raw:false on the workbook formats values, but raw:true on sheet_to_json ignores that and fetches raw cell values. With cellDates:false, date cells always stayed as serial integers and never became Date objects. The parseDate function had no instanceof Date branch so even if Date objects were produced they would fall through to TODAY().",
+    "Fix: All three XL.read() calls (bank/card import, MF import, FD import) now use {cellDates:true} — SheetJS converts date cells to UTC Date objects before they reach application code.",
+    "Fix: parseDate() rewritten with 5 clearly documented branches: (A) JS Date object via getUTCFullYear/Month/Date — no timezone shift; (B) Excel serial number via getUTC* after Unix epoch conversion — no toISOString(); (C) yyyy-mm-dd string passthrough; (D) dd/mm/yyyy and dd-mm-yyyy Indian bank format with a sanity swap if month field exceeds 12; (E) free-text date fallback via new Date(s) read with getUTC* methods.",
+    "Fix: Removed the dead mm/dd/yyyy (mdy) regex branch — it was unreachable because the dd/mm/yyyy (dmy) regex matched slash-separated dates first. Added a month>12 sanity check in the dmy branch instead to gracefully handle swapped fields.",
+    "Affected imports: Settings → Banks → any bank → Import Transactions; Cards; Cash; Investments → FD import.",
+  ]},
+  {version:"3.17.5",date:"2026-03-10",title:"Insights → Budget: Jump-in to Unified Ledger from category rows",changes:[
+    "All category rows in the 6-month monthly cards and the 3-year yearly cards in Insights → Budget tab are now clickable jump-in links to the Unified Ledger, identical to how jump-in works in the Reports section.",
+    "Clicking a category row jumps to All Transactions pre-filtered to that category + the exact date range of the card (e.g. 'Food · Mar 2026' filters to Food, 2026-03-01 → 2026-03-31; 'Shopping · 2025' filters to Shopping, 2025-01-01 → 2025-12-31).",
+    "Investment category rows (📈 Investments section) also support jump-in with the same date-scoped filter.",
+    "Visual affordances: each clickable row shows an ↗ accent icon next to the category name, the row gains a subtle accentbg hover highlight on mouse-over, and cursor changes to pointer.",
+    "Filter label in Unified Ledger shows 'Category · Period' (e.g. 'Food · Mar 2026') matching the active banner already used by Reports jump-ins.",
+    "Implementation: budgetTrackData useMemo now includes dateFrom/dateTo on each month and year object; BudgetCatRow gains an optional onJump prop; BudgetMonthCard and BudgetYearCard accept onJumpToLedger + dateFrom + dateTo and wire per-row callbacks; InsightsSection receives onJumpToLedger from App via the same prop channel as ReportsSection.",
+  ]},
+  {version:"3.17.4",date:"2026-03-09",title:"Fix: FSA auto-save file incompatible with Backup & Restore",changes:[
+    "Root cause: fsaWriteFile was calling JSON.stringify(state) directly, writing the raw state object. The Backup & Restore importer expects { version, exportedAt, summary, data:{…state} } — the same envelope the manual backup download produces. Loading the FSA file via Settings → Data & Backup → Restore failed with 'Invalid backup file — missing data field' because payload.data was undefined.",
+    "Fix: fsaWriteFile now writes the identical envelope format as the manual backup: { version:8, exportedAt, autoSave:true, summary:{bankAccounts, bankTxns, cardAccounts, cardTxns, cashTxns, loans, mf, shares, fd, categories, payees, scheduled, notes}, data:{...state} }. The FSA file is now 100% compatible with Settings → Data & Backup → Restore.",
+    "Fix: fsaReadFile now unwraps the envelope — it returns parsed.data (new format) or parsed directly (legacy raw-state written by v3.17.0–3.17.2). Both old and new FSA files load correctly via the 'Load from Existing File' button in Settings → File Storage.",
+    "The summary block in the FSA file also shows accurate counts (banks, transactions, investments, etc.) matching the manual backup, making the file human-readable and auditable.",
+  ]},
+  {version:"3.17.3",date:"2026-03-09",title:"Fix: FSA auto-save silently failing on Android Chrome",changes:[
+    "Root cause: Android Chrome 120+ exposes window.showSaveFilePicker in the JS environment, so the old fsaSupported() check (typeof showSaveFilePicker === 'function') returned true on Android. But FileSystemFileHandle.createWritable() for local files is not supported on Android — Chrome only permits OPFS (sandboxed private storage) writes there. Every write attempt threw NotAllowedError, was caught silently, and returned false. The floating re-grant card also appeared on Android, but tapping it couldn't fix anything because the underlying API doesn't work.",
+    "Fix: fsaSupported() now checks three things: (1) showSaveFilePicker exists, (2) FileSystemFileHandle.prototype.createWritable exists (the actual write API), and (3) the device is not mobile — using navigator.userAgentData.mobile (modern UA client hints) with a fallback to navigator.userAgent string matching Android/iPhone/iPad/iPod/IEMobile/Opera Mini.",
+    "On Android/iOS: fsaSupported() returns false → FSA mount effect exits immediately → no handle IDB lookup → no floating re-grant card → no write attempts. LocalStorage auto-save continues to work normally and is unaffected.",
+    "Settings → File Storage: badge now distinguishes three states: ✅ supported (desktop Chrome/Edge), 📱 mobile (amber, explains desktop-only limitation), ❌ unsupported browser (red). Mobile users see a clear explanation rather than a confusing broken-looking panel.",
+  ]},
   {version:"3.17.2",date:"2026-03-09",title:"Fix: FSA auto-save not writing to file",changes:[
     "Root cause 1: usePersistentReducer's save effect only fires when React state changes. On launch, the async IDB handle-read completed after the effect already ran (with ready=false), so the first write was silently skipped — and never retried until the user made a transaction.",
     "Root cause 2: doFsaGrant (floating card) and handleGrantPerm (Settings) both set window.__fsa.ready=true but never triggered a write, because state hadn't changed. Data was silently not written until the next user action.",
@@ -2313,36 +2359,134 @@ const detectCol=(headers,aliases)=>{
   return "";
 };
 
+/* ── parseDate ──────────────────────────────────────────────────────────────
+   Canonical date parser.  App ALWAYS uses DD-MM-YYYY for Excel imports and
+   all user-facing inputs.  Internally dates are stored as yyyy-mm-dd strings.
+
+   CRITICAL DESIGN NOTE — why we do NOT use cellDates:true with SheetJS:
+   When cellDates:true, SheetJS converts a date cell's serial number into a
+   JS Date object.  The serial encodes what EXCEL decided the date was — if
+   Excel (US locale) interpreted "10-02-2026" as October 2, the serial is for
+   October 2 and we get October 2 no matter what we do here.  We lose the
+   original text.  Instead we use raw:false in sheet_to_json so SheetJS
+   returns the cell's FORMATTED TEXT exactly as it appears in Excel
+   (e.g. "10-02-2026"), which we then parse with strict DD-first logic.
+
+   Priority order for parseDate:
+     A. JS Date object — safety branch; kept for any caller that passes one
+     B. Excel serial integer — numeric cell value (General-format date cells)
+     C. Numeric string that looks like a serial (e.g. "46063")
+     D. yyyy-mm-dd passthrough (already canonical)
+     E. DD-MM-YYYY / DD/MM/YYYY / DD.MM.YYYY — STRICT day-first, always
+     F. DD-MMM-YYYY / DD-Mon-YY (e.g. 15-Jan-2026, 01 Apr 25)
+     G. Text with month name — native Date() last resort (letter-containing only)
+
+   MM-DD-YYYY is NEVER interpreted.  If "03/05/2025" appears, day=03, month=05.
+   ────────────────────────────────────────────────────────────────────────── */
 const parseDate=(raw)=>{
-  if(!raw)return TODAY();
-  // Excel serial date number
+  if(raw===null||raw===undefined||raw==="")return TODAY();
+
+  /* ── A: JS Date object (safety branch) ─────────────────────────────────
+     +12 h before UTC extraction prevents DST or half-hour timezone edge
+     cases from pushing the UTC date to the wrong calendar day. */
+  if(raw instanceof Date){
+    if(isNaN(raw.getTime()))return TODAY();
+    const safe=new Date(raw.getTime()+43200000);
+    const yr=safe.getUTCFullYear();
+    const mo=String(safe.getUTCMonth()+1).padStart(2,"0");
+    const da=String(safe.getUTCDate()).padStart(2,"0");
+    return `${yr}-${mo}-${da}`;
+  }
+
+  /* ── B: Excel serial integer ────────────────────────────────────────────
+     25569 = days from Excel's 1900-epoch to Unix epoch.
+     Math.floor strips any time-of-day fractional part. */
   if(typeof raw==="number"){
-    const d=new Date(Math.round((raw-25569)*86400*1000));
-    return d.toISOString().split("T")[0];
+    const ms=(Math.floor(raw)-25569)*86400000+43200000;
+    const dt=new Date(ms);
+    if(isNaN(dt.getTime()))return TODAY();
+    const yr=dt.getUTCFullYear();
+    const mo=String(dt.getUTCMonth()+1).padStart(2,"0");
+    const da=String(dt.getUTCDate()).padStart(2,"0");
+    return `${yr}-${mo}-${da}`;
   }
+
   const s=raw.toString().trim();
-  // dd-mm-yyyy or dd/mm/yyyy
-  const dmy=s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
-  if(dmy){
-    const [,d,m,y]=dmy;
-    const yr=y.length===2?"20"+y:y;
-    return `${yr}-${m.padStart(2,"0")}-${d.padStart(2,"0")}`;
+  if(!s)return TODAY();
+
+  /* ── C: Numeric string that looks like an Excel serial ──────────────────
+     Happens when a date cell has "General" number format — sheet_to_json
+     raw:false formats it as the serial number string instead of a date. */
+  if(/^\d{4,6}(\.\d+)?$/.test(s)){
+    const serial=parseFloat(s);
+    if(serial>1&&serial<200000){
+      const ms=(Math.floor(serial)-25569)*86400000+43200000;
+      const dt=new Date(ms);
+      if(!isNaN(dt.getTime())){
+        const yr=dt.getUTCFullYear();
+        const mo=String(dt.getUTCMonth()+1).padStart(2,"0");
+        const da=String(dt.getUTCDate()).padStart(2,"0");
+        return `${yr}-${mo}-${da}`;
+      }
+    }
   }
-  // yyyy-mm-dd
+
+  /* ── D: Already in canonical yyyy-mm-dd form ─────────────────────────── */
   if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
-  // mm/dd/yyyy
-  const mdy=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
-  if(mdy){
-    const[,m,d,y]=mdy;
-    const yr=y.length===2?"20"+y:y;
-    return `${yr}-${m.padStart(2,"0")}-${d.padStart(2,"0")}`;
+
+  /* ── E: DD-MM-YYYY / DD/MM/YYYY / DD.MM.YYYY — strict DD-first ──────────
+     Back-reference \2 enforces both separators are the same character so
+     mixed-separator strings like "01/15.2025" do not match.
+     Day is ALWAYS the first number — no swapping, no MM-DD interpretation.
+     A month value outside 1–12 means the date is malformed; return today. */
+  const dmyM=s.match(/^(\d{1,2})([\-\/\.])(\d{1,2})\2(\d{2,4})$/);
+  if(dmyM){
+    const[,dd,,mm,yyyy]=dmyM;
+    const yr=yyyy.length===2?"20"+yyyy:yyyy;
+    const dayN=parseInt(dd,10),monN=parseInt(mm,10);
+    if(dayN<1||dayN>31||monN<1||monN>12)return TODAY();
+    return `${yr}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
   }
-  // Try native parse as fallback
-  try{
-    const dt=new Date(s);
-    if(!isNaN(dt))return dt.toISOString().split("T")[0];
-  }catch{}
+
+  /* ── F: DD-MMM-YYYY / DD MMM YYYY / DD-MMM-YY (e.g. 15-Jan-2026) ───────
+     Handles 3-letter and up-to-9-letter month names. */
+  const MNAME={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+  const dmonM=s.match(/^(\d{1,2})[\-\/\.\s]+([A-Za-z]{3,9})[\-\/\.\s]+(\d{2,4})$/);
+  if(dmonM){
+    const mn=MNAME[dmonM[2].toLowerCase().slice(0,3)];
+    if(mn){
+      const yr=dmonM[3].length===2?"20"+dmonM[3]:dmonM[3];
+      return `${yr}-${String(mn).padStart(2,"0")}-${dmonM[1].padStart(2,"0")}`;
+    }
+  }
+
+  /* ── G: Text with month name — native Date() last resort ────────────────
+     Only for strings that contain a letter (e.g. "January 15, 2025").
+     Purely numeric strings are NEVER passed here to prevent US-locale
+     MM/DD misinterpretation by the browser engine. */
+  if(/[A-Za-z]/.test(s)){
+    try{
+      const dt=new Date(s);
+      if(!isNaN(dt.getTime())){
+        const safe=new Date(dt.getTime()+43200000);
+        const yr=safe.getUTCFullYear();
+        const mo=String(safe.getUTCMonth()+1).padStart(2,"0");
+        const da=String(safe.getUTCDate()).padStart(2,"0");
+        return `${yr}-${mo}-${da}`;
+      }
+    }catch{}
+  }
+
   return TODAY();
+};
+
+/* ── dmyFmt ─────────────────────────────────────────────────────────────────
+   Display helper: converts internal yyyy-mm-dd → DD-MM-YYYY for all UI.
+   Falls back to the raw string if it isn't in canonical form. */
+const dmyFmt=d=>{
+  if(!d)return"";
+  if(/^\d{4}-\d{2}-\d{2}$/.test(d))return d.split("-").reverse().join("-");
+  return d;
 };
 
 const parseAmt=(raw)=>{
@@ -2366,7 +2510,7 @@ const ImportTxModal=({onImport,onClose,categories,accType="bank"})=>{
   const flatC=flatCats(categories);
 
   const fieldDefs=[
-    {key:"date",   label:"Date *",     required:true,  hint:"Transaction date"},
+    {key:"date",   label:"Date *",     required:true,  hint:"Transaction date — expected format: DD-MM-YYYY"},
     {key:"debit",  label:"Debit/Out",  required:false, hint:"Withdrawal / expense amount"},
     {key:"credit", label:"Credit/In",  required:false, hint:"Deposit / income amount"},
     {key:"amount", label:"Amount",     required:false, hint:"Single amount column (use if no separate debit/credit)"},
@@ -2391,12 +2535,12 @@ const ImportTxModal=({onImport,onClose,categories,accType="bank"})=>{
         const XL=window.XLSX;
         let wb;
         if(file.name.toLowerCase().endsWith(".csv")){
-          wb=XL.read(data,{type:"string",raw:false});
+          wb=XL.read(data,{type:"string"});
         }else{
-          wb=XL.read(data,{type:"array",cellDates:false,raw:false});
+          wb=XL.read(data,{type:"array",cellDates:false,cellText:true});
         }
         const ws=wb.Sheets[wb.SheetNames[0]];
-        const jsonRows=XL.utils.sheet_to_json(ws,{header:1,defval:"",raw:true});
+        const jsonRows=XL.utils.sheet_to_json(ws,{header:1,defval:"",raw:false});
         // Find header row -- first row with >2 non-empty cells
         let hdrIdx=0;
         for(let i=0;i<Math.min(10,jsonRows.length);i++){
@@ -2643,7 +2787,7 @@ const ImportTxModal=({onImport,onClose,categories,accType="bank"})=>{
         React.createElement("div",{style:{display:"grid",gridTemplateColumns:"100px 1fr 80px 80px 80px",padding:"7px 10px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:11,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4}},"Date","Description","Type","Amount","Category"),
         React.createElement("div",{style:{maxHeight:260,overflowY:"auto"}},
           preview.txns.map(tx=>React.createElement("div",{key:tx.id,className:"tr",style:{display:"grid",gridTemplateColumns:"100px 1fr 80px 80px 80px",padding:"8px 10px",borderBottom:"1px solid var(--border2)",alignItems:"center"}},
-            React.createElement("div",{style:{fontSize:11,color:"var(--text4)",fontFamily:"'Sora',sans-serif"}},tx.date),
+            React.createElement("div",{style:{fontSize:11,color:"var(--text4)",fontFamily:"'Sora',sans-serif"}},dmyFmt(tx.date)),
             React.createElement("div",{style:{fontSize:12,color:"var(--text2)",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
               tx.desc||(tx.payee||"--"),
               tx.payee&&tx.desc&&React.createElement("span",{style:{fontSize:10,color:"var(--text6)",marginLeft:6}},"↳ "+tx.payee)
@@ -2947,7 +3091,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onNew,onImport,onMassU
             ),
             /* Row 2: date + badges */
             React.createElement("div",{style:{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}},
-              React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},tx.date.split("-").reverse().join("-")),
+              React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},dmyFmt(tx.date)),
               tx.cat&&React.createElement("span",{style:{fontSize:10,color:catCol,background:catCol+"18",borderRadius:10,padding:"1px 7px",fontWeight:500}},catDisplayName(tx.cat)),
               tx.status&&tx.status!=="Unreconciled"&&React.createElement("span",{style:{fontSize:10,color:STATUS_C[tx.status],background:STATUS_C[tx.status]+"22",borderRadius:10,padding:"1px 7px"}},(STATUS_ICON[tx.status]||"")+" "+tx.status),
               tx.tags&&tx.tags.split(",").filter(Boolean).map((tag,i)=>React.createElement("span",{key:i,style:{fontSize:10,color:"#6d28d9",background:"rgba(109,40,217,.12)",borderRadius:10,padding:"1px 6px"}},tag.trim()))
@@ -3289,7 +3433,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onNew,onImport,onMassU
           React.createElement("div",{style:{padding:"4px 4px",fontSize:12,color:"var(--text5)",fontFamily:"'Sora',sans-serif"}},globalIdx),
           /* Date */
           React.createElement("div",{style:{padding:"4px 4px",fontSize:12,color:"var(--text3)",whiteSpace:"nowrap"}},
-            tx.date.split("-").reverse().join("-")
+            dmyFmt(tx.date)
           ),
           /* Number */
           React.createElement("div",{style:{padding:"4px 4px",fontSize:10,color:"var(--text6)",fontFamily:"'Sora',sans-serif",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},tx.txNum||""),
@@ -4025,7 +4169,7 @@ const BulkCatModal=({selectedIds,transactions,categories,payees,onApply,onClose}
                 t.desc||(t.payee||"—")
               ),
               React.createElement("div",{style:{display:"flex",gap:6,marginTop:2,alignItems:"center",flexWrap:"wrap"}},
-                React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},t.date),
+                React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},dmyFmt(t.date)),
                 t.cat&&React.createElement("span",{style:{
                   fontSize:10,color:catCol,background:catCol+"18",
                   borderRadius:8,padding:"1px 6px",fontWeight:500
@@ -4091,7 +4235,7 @@ const TxRow=({tx})=>{
       )
     ),
     React.createElement("div",{style:{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",marginLeft:19}},
-      React.createElement("span",{style:{fontSize:10,color:"var(--text6)"}},tx.date),
+      React.createElement("span",{style:{fontSize:10,color:"var(--text6)"}},dmyFmt(tx.date)),
       tx.cat&&React.createElement("span",{style:{fontSize:10,color:CAT_C[catMainName(tx.cat)]||"var(--text3)",background:(CAT_C[catMainName(tx.cat)]||"var(--text3)")+"18",borderRadius:10,padding:"1px 7px"}},catDisplayName(tx.cat)),
       tx.status&&React.createElement("span",{style:{fontSize:10,color:statusCol,background:statusCol+"18",borderRadius:10,padding:"1px 7px",fontWeight:600}},STATUS_ICON[tx.status]+" "+tx.status),
       tx.txNum&&React.createElement("span",{style:{fontSize:10,color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},"#"+tx.txNum)
@@ -4652,7 +4796,7 @@ const Dashboard=({data,isMobile})=>{
               React.createElement("span",{style:{color:"#ef4444",fontWeight:600}},"↓ "+INR(mExp))
             ),
             lastTx&&React.createElement("div",{style:{fontSize:8,color:"var(--text6)",marginTop:1}},
-              "Last: "+lastTx.date.split("-").reverse().join("-"))
+              "Last: "+dmyFmt(lastTx.date))
           );
         }),
         /* Credit cards */
@@ -4851,7 +4995,7 @@ const Dashboard=({data,isMobile})=>{
               /* Date + amount */
               React.createElement("div",{style:{textAlign:"right",flexShrink:0,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}},
                 React.createElement("div",{style:{fontSize:13,fontWeight:700,color:isCredit?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif"}},(isCredit?"+":"−")+INR(tx.amount)),
-                React.createElement("div",{style:{fontSize:9,color:"var(--text6)"}},tx.date.split("-").reverse().join("-"))
+                React.createElement("div",{style:{fontSize:9,color:"var(--text6)"}},dmyFmt(tx.date))
               )
             );
           })
@@ -4947,7 +5091,7 @@ const Dashboard=({data,isMobile})=>{
                   React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},sc.desc||"Scheduled"),
                   React.createElement("div",{style:{display:"flex",gap:6,marginTop:3,alignItems:"center",flexWrap:"wrap"}},
                     React.createElement("span",{style:{fontSize:9,fontWeight:700,color:uc,background:uc+"18",borderRadius:6,padding:"1px 6px"}},lbl),
-                    React.createElement("span",{style:{fontSize:9,color:"var(--text5)"}},sc.nextDate.split("-").reverse().join("-")),
+                    React.createElement("span",{style:{fontSize:9,color:"var(--text5)"}},dmyFmt(sc.nextDate)),
                     sc.frequency&&React.createElement("span",{style:{fontSize:9,color:"var(--text6)",background:"var(--bg5)",borderRadius:5,padding:"1px 5px",textTransform:"capitalize"}},sc.frequency)
                   )
                 ),
@@ -5412,9 +5556,9 @@ const ImportMFModal=({onImport,onClose})=>{
         const XL=window.XLSX;
         const wb=file.name.toLowerCase().endsWith(".csv")
           ?XL.read(ev.target.result,{type:"string"})
-          :XL.read(ev.target.result,{type:"array",cellDates:false,raw:false});
+          :XL.read(ev.target.result,{type:"array",cellDates:false,cellText:true});
         const ws=wb.Sheets[wb.SheetNames[0]];
-        const all=XL.utils.sheet_to_json(ws,{header:1,defval:"",raw:true});
+        const all=XL.utils.sheet_to_json(ws,{header:1,defval:"",raw:false});
         let hi=0;for(let i=0;i<Math.min(8,all.length);i++){if(all[i].filter(c=>c!=="").length>=2){hi=i;break;}}
         const hdrs=all[hi].map(h=>(h??"")+""
         );
@@ -5552,9 +5696,9 @@ const ImportFDModal=({onImport,onClose})=>{
         const XL=window.XLSX;
         const wb=file.name.toLowerCase().endsWith(".csv")
           ?XL.read(ev.target.result,{type:"string"})
-          :XL.read(ev.target.result,{type:"array",cellDates:false,raw:false});
+          :XL.read(ev.target.result,{type:"array",cellDates:false,cellText:true});
         const ws=wb.Sheets[wb.SheetNames[0]];
-        const all=XL.utils.sheet_to_json(ws,{header:1,defval:"",raw:true});
+        const all=XL.utils.sheet_to_json(ws,{header:1,defval:"",raw:false});
         let hi=0;for(let i=0;i<Math.min(8,all.length);i++){if(all[i].filter(c=>c!=="").length>=2){hi=i;break;}}
         const hdrs=all[hi].map(h=>(h??"")+""
         );
@@ -9922,7 +10066,7 @@ const RptReconciliation=({data,from,to})=>{
                 React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text2)"}},t.desc||t.payee||"--"),
                 React.createElement("span",{style:{fontSize:10,color:STATUS_C[st]||"var(--text5)",background:(STATUS_C[st]||"#8ba0c0")+"1a",border:"1px solid "+(STATUS_C[st]||"#8ba0c0")+"33",borderRadius:8,padding:"1px 6px",fontWeight:600}},STATUS_ICON[st]+" "+st)
               ),
-              React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},t.date+" · "+t.accName+" · "+(t.cat||"--"))
+              React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},dmyFmt(t.date)+" · "+t.accName+" · "+(t.cat||"--"))
             ),
             React.createElement("div",{style:{fontSize:13,fontWeight:700,color:t.type==="credit"?"#16a34a":"#ef4444"}},(t.type==="credit"?"+":"-")+INR(t.amount))
           );
@@ -9936,7 +10080,7 @@ const RptReconciliation=({data,from,to})=>{
         const st=t.status||"Unreconciled";
         return React.createElement("div",{key:t.id,className:"tr",style:{display:"grid",gridTemplateColumns:"1fr 100px 1fr 80px 80px",padding:"9px 14px",borderBottom:"1px solid var(--border2)"}},
           React.createElement("div",{style:{fontSize:12,color:"var(--text2)",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.desc||t.payee||"--"),
-          React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},t.date),
+          React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},dmyFmt(t.date)),
           React.createElement("div",{style:{fontSize:11,color:"var(--text4)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.accName),
           React.createElement("div",{style:{fontSize:12,fontWeight:600,color:t.type==="credit"?"#16a34a":"#ef4444",textAlign:"right"}},(t.type==="credit"?"+":"-")+INR(t.amount)),
           React.createElement("div",null,React.createElement("span",{style:{fontSize:9,color:STATUS_C[st]||"var(--text5)",background:(STATUS_C[st]||"#8ba0c0")+"1a",border:"1px solid "+(STATUS_C[st]||"#8ba0c0")+"33",borderRadius:8,padding:"1px 5px",fontWeight:700,whiteSpace:"nowrap"}},STATUS_ICON[st]+" "+st))
@@ -10965,7 +11109,7 @@ const RptGstTds=({data,from,to})=>{
             background:i%2===0?"transparent":"rgba(255,255,255,.015)",
             borderBottom:"1px solid var(--border2)",alignItems:"center"
           }},
-            React.createElement("div",{style:{...tbD(),fontSize:11,fontFamily:"'Sora',sans-serif"}},r.date.split("-").reverse().join("-")),
+            React.createElement("div",{style:{...tbD(),fontSize:11,fontFamily:"'Sora',sans-serif"}},dmyFmt(r.date)),
             React.createElement("div",{style:{...tbD(),minWidth:0}},
               React.createElement("div",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:12,fontWeight:600,color:"var(--text2)"}},r.desc||r.payee||"—"),
               r.payee&&r.desc&&React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},r.payee)
@@ -11649,6 +11793,8 @@ const FSAStoragePanel=({state,dispatch})=>{
   };
 
   const supported=fsaSupported();
+  /* Distinguish between mobile (API exists but not usable) vs truly unsupported */
+  const isMobileDevice=/Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent)||(navigator.userAgentData?.mobile===true);
 
   return React.createElement("div",{className:"fu"},
 
@@ -11662,16 +11808,20 @@ const FSAStoragePanel=({state,dispatch})=>{
     React.createElement("div",{style:{
       display:"flex",alignItems:"center",gap:10,marginBottom:20,
       padding:"10px 14px",borderRadius:10,
-      background:supported?"rgba(22,163,74,.07)":"rgba(239,68,68,.07)",
-      border:"1px solid "+(supported?"rgba(22,163,74,.2)":"rgba(239,68,68,.2)"),
+      background:supported?"rgba(22,163,74,.07)":isMobileDevice?"rgba(234,179,8,.07)":"rgba(239,68,68,.07)",
+      border:"1px solid "+(supported?"rgba(22,163,74,.2)":isMobileDevice?"rgba(234,179,8,.3)":"rgba(239,68,68,.2)"),
     }},
-      React.createElement("span",{style:{fontSize:18}},supported?"✅":"❌"),
+      React.createElement("span",{style:{fontSize:18}},supported?"✅":isMobileDevice?"📱":"❌"),
       React.createElement("div",null,
-        React.createElement("div",{style:{fontSize:13,fontWeight:600,color:supported?"#16a34a":"#ef4444"}},
-          supported?"File System Access API — Supported":"Not supported in this browser"),
+        React.createElement("div",{style:{fontSize:13,fontWeight:600,color:supported?"#16a34a":isMobileDevice?"#b45309":"#ef4444"}},
+          supported?"File System Access API — Supported"
+          :isMobileDevice?"Not available on mobile / Android"
+          :"Not supported in this browser"),
         React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},
           supported
             ?"Chrome / Edge on desktop — you can save to any folder on your PC."
+            :isMobileDevice
+            ?"File write access is desktop-only. Your data auto-saves to browser storage here."
             :"Please open this app in Chrome or Edge on a desktop/laptop.")
       )
     ),
@@ -12851,7 +13001,7 @@ const NotesSection=({notes=[],dispatch})=>{
               /* Meta row */
               React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center",marginBottom:n.body?10:12,flexWrap:"wrap"}},
                 React.createElement("span",{style:{fontSize:11,color:"var(--text6)",background:"var(--bg5)",padding:"2px 8px",borderRadius:8}},
-                  "📅 "+n.date
+                  "📅 "+dmyFmt(n.date)
                 ),
                 n.updatedAt&&React.createElement("span",{style:{fontSize:10,color:"var(--text7)"}},
                   "edited "+n.updatedAt.split("T")[0]
@@ -13622,8 +13772,23 @@ const FSA_IDB_NAME ="mm_fsa_db";
 const FSA_IDB_STORE="handles";
 const FSA_IDB_KEY  ="saveFileHandle";
 
-/* Is the API available in this browser? */
-const fsaSupported=()=>typeof window.showSaveFilePicker==="function";
+/* Is the API available AND usable in this browser?
+   showSaveFilePicker exists on Android Chrome 120+ but createWritable() for
+   local files is NOT supported there (only OPFS works on Android).
+   We gate on desktop explicitly:
+     1. showSaveFilePicker must exist
+     2. FileSystemFileHandle.createWritable must exist (actual write API)
+     3. Must not be a mobile device (userAgentData.mobile or UA string fallback)
+   This ensures Android/iOS users never hit the FSA code-path and get silent
+   write failures. They fall through to the localStorage-only path cleanly. */
+const fsaSupported=()=>{
+  if(typeof window.showSaveFilePicker!=="function")return false;
+  if(typeof FileSystemFileHandle==="undefined"||typeof FileSystemFileHandle.prototype.createWritable!=="function")return false;
+  // Prefer modern UA client hints; fall back to userAgent string
+  if(navigator.userAgentData&&typeof navigator.userAgentData.mobile==="boolean")
+    return !navigator.userAgentData.mobile;
+  return !/Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
 
 /* ── IndexedDB wrappers — file handles survive page reloads when stored here ── */
 const _fsaDbOpen=()=>new Promise((res,rej)=>{
@@ -13678,11 +13843,41 @@ const fsaVerifyPermission=async(handle)=>{
   return r==="granted";
 };
 
-/* ── File read / write ── */
+/* ── File read / write ──
+   The file is written in the SAME envelope format as the manual backup:
+     { version, exportedAt, autoSave:true, summary:{…}, data:{…state} }
+   This means the file can be imported directly via Settings → Data & Backup
+   → Restore without any conversion. fsaReadFile unwraps the envelope and
+   returns raw state so callers get the same shape either way. */
 const fsaWriteFile=async(handle,data)=>{
   try{
+    const payload={
+      version:8,
+      exportedAt:new Date().toISOString(),
+      autoSave:true,
+      summary:{
+        bankAccounts:(data.banks||[]).length,
+        bankTxns:(data.banks||[]).reduce((s,b)=>s+(b.transactions||[]).length,0),
+        cardAccounts:(data.cards||[]).length,
+        cardTxns:(data.cards||[]).reduce((s,c)=>s+(c.transactions||[]).length,0),
+        cashTxns:((data.cash||{}).transactions||[]).length,
+        loans:(data.loans||[]).length,
+        mf:(data.mf||[]).length,
+        shares:(data.shares||[]).length,
+        fd:(data.fd||[]).length,
+        categories:(data.categories||[]).length,
+        payees:(data.payees||[]).length,
+        scheduled:(data.scheduled||[]).length,
+        notes:(data.notes||[]).length,
+      },
+      data:{
+        ...data,
+        notes:data.notes||[],
+        scheduled:data.scheduled||[],
+      }
+    };
     const writable=await handle.createWritable();
-    await writable.write(JSON.stringify(data,null,2));
+    await writable.write(JSON.stringify(payload,null,2));
     await writable.close();
     return true;
   }catch(e){console.warn("[FSA] Write failed:",e);return false;}
@@ -13691,7 +13886,12 @@ const fsaReadFile=async(handle)=>{
   try{
     const file=await handle.getFile();
     const text=await file.text();
-    return JSON.parse(text);
+    const parsed=JSON.parse(text);
+    /* Support both the new envelope format { data:{…} } and the legacy
+       raw-state format written by v3.17.0–3.17.2 */
+    if(parsed&&parsed.data&&parsed.data.banks)return parsed.data;
+    if(parsed&&parsed.banks)return parsed; // legacy raw state
+    return null;
   }catch(e){console.warn("[FSA] Read failed:",e);return null;}
 };
 
@@ -14301,7 +14501,7 @@ const UnifiedLedgerSection=({banks,cards,cash,categories,payees,isMobile,initial
               React.createElement("div",{style:{flex:1,minWidth:0}},
                 React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},tx.desc||"—"),
                 React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2,display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}},
-                  React.createElement("span",null,tx.date.split("-").reverse().join("-")),
+                  React.createElement("span",null,dmyFmt(tx.date)),
                   React.createElement("span",{style:{color:accCol,fontWeight:600}},tx._accTypeLbl+" "+tx._accName),
                   tx.payee&&React.createElement("span",null,"· "+tx.payee)
                 )
@@ -14383,7 +14583,7 @@ const UnifiedLedgerSection=({banks,cards,cash,categories,payees,isMobile,initial
               /* SN */
               React.createElement("div",{style:{padding:"7px 4px",fontSize:12,color:"var(--text5)",fontFamily:"'Sora',sans-serif"}},globalIdx),
               /* Date */
-              React.createElement("div",{style:{padding:"7px 4px",fontSize:12,color:"var(--text3)",whiteSpace:"nowrap"}},tx.date.split("-").reverse().join("-")),
+              React.createElement("div",{style:{padding:"7px 4px",fontSize:12,color:"var(--text3)",whiteSpace:"nowrap"}},dmyFmt(tx.date)),
               /* Account */
               React.createElement("div",{style:{padding:"7px 4px",minWidth:0,overflow:"hidden"}},
                 React.createElement("div",{style:{fontSize:11,fontWeight:600,color:accCol,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:4}},
@@ -14706,7 +14906,7 @@ const FOOD_DELIVERY_KW=["swiggy","zomato","dunzo","blinkit","zepto","instamart",
 const FOOD_GROCERY_KW=["bigbasket","dmart","reliance fresh","more supermarket","spencers","grofers","jiomart","kirana","provisions","vegetables","fruits","grocery","supermarket","hypermarket"];
 const FOOD_DINING_KW=["restaurant","cafe","dhaba","hotel food","biryani house","dine","food court","bakery","sweets","mithai","mess","canteen","tiffin"];
 
-const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,shares,fd,re,loans,prefs})=>{
+const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,shares,fd,re,loans,prefs,onJumpToLedger})=>{
   const P=prefs||{};
   const[stab,setStab]=useState("pulse");
   const[schedConfirm,setSchedConfirm]=useState(null);
@@ -14943,7 +15143,7 @@ const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,s
       const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
       const mName=MONTH_NAMES[(now.getMonth()-i+12)%12];
       const mYear=new Date(now.getFullYear(),now.getMonth()-i,1).getFullYear();
-      months.push({...buildMonthData(mS,mE),mName,mYear,isCurrent:i===0});
+      months.push({...buildMonthData(mS,mE),mName,mYear,isCurrent:i===0,dateFrom:mS,dateTo:mE});
     }
     /* Last 3 years */
     const buildYearData=(yr)=>{
@@ -14975,7 +15175,7 @@ const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,s
       const actualInvest=invCatRows.reduce((s,r)=>s+r.actual,0);
       const plannedInvest=invCatRows.reduce((s,r)=>s+r.planned,0);
       const monthsElapsed=isCurrent?now.getMonth()+1:12;
-      return {year:yr,isCurrent,catRows,totalPlanned,totalActual,income,invCatRows,actualInvest,plannedInvest,monthsElapsed};
+      return {year:yr,isCurrent,catRows,totalPlanned,totalActual,income,invCatRows,actualInvest,plannedInvest,monthsElapsed,dateFrom:yS,dateTo:yE};
     };
     const years=[buildYearData(now.getFullYear()-2),buildYearData(now.getFullYear()-1),buildYearData(now.getFullYear())];
     return {hasBudgets,months,years};
@@ -15374,7 +15574,7 @@ const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,s
 
   /* ══ 7. BUDGET WATERFALL TAB ══ */
   /* ── BUDGET PLANNED vs ACTUAL HELPERS ── */
-  const BudgetCatRow=({cat,planned,actual,invertLogic})=>{
+  const BudgetCatRow=({cat,planned,actual,invertLogic,onJump})=>{
     const catObj=categories.find(c=>c.name===cat);
     const col=catObj?.color||CAT_C[cat]||"#8ba0c0";
     const hasPlan=planned>0;
@@ -15387,11 +15587,19 @@ const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,s
     const plannedPct=(planned/maxVal)*100;
     const actualPct=Math.min((actual/maxVal)*100,100);
     const remaining=planned-actual;
-    return React.createElement("div",{style:{marginBottom:10}},
+    return React.createElement("div",{
+      style:{marginBottom:10,cursor:onJump?"pointer":"default",borderRadius:6,
+        padding:"2px 4px",margin:"0 -4px 10px",
+        transition:"background .15s"},
+      onClick:onJump||undefined,
+      onMouseEnter:onJump?e=>{e.currentTarget.style.background="var(--accentbg)";}:undefined,
+      onMouseLeave:onJump?e=>{e.currentTarget.style.background="transparent";}:undefined,
+    },
       React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}},
-        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5,flex:1,minWidth:0}},
           React.createElement("span",{style:{width:7,height:7,borderRadius:"50%",background:col,flexShrink:0,display:"inline-block"}}),
-          React.createElement("span",{style:{fontSize:11,color:"var(--text3)",fontWeight:500}},cat)
+          React.createElement("span",{style:{fontSize:11,color:"var(--text3)",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},cat),
+          onJump&&React.createElement("span",{style:{fontSize:11,color:"var(--accent)",marginLeft:2,fontWeight:700,flexShrink:0}},"↗")
         ),
         React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5,flexShrink:0}},
           React.createElement("span",{style:{fontSize:11,fontFamily:"'Sora',sans-serif",fontWeight:700,color:col}},INR(actual)),
@@ -15413,7 +15621,7 @@ const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,s
     );
   };
 
-  const BudgetMonthCard=({mName,mYear,catRows,totalPlanned,totalActual,income,isCurrent,actualInvest,plannedInvest,invCatRows})=>{
+  const BudgetMonthCard=({mName,mYear,catRows,totalPlanned,totalActual,income,isCurrent,actualInvest,plannedInvest,invCatRows,onJumpToLedger,dateFrom,dateTo})=>{
     const isOverAll=totalPlanned>0&&totalActual>totalPlanned;
     const hasAnyPlan=totalPlanned>0;
     const variance=totalActual-totalPlanned;
@@ -15467,7 +15675,8 @@ const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,s
       catRows.length===0
         ?React.createElement("div",{style:{padding:"14px",fontSize:12,color:"var(--text5)",textAlign:"center"}},"No spending data this month")
         :React.createElement("div",{style:{padding:"10px 14px 4px"}},
-            catRows.map(r=>React.createElement(BudgetCatRow,{key:r.cat,cat:r.cat,planned:r.planned,actual:r.actual}))
+            catRows.map(r=>React.createElement(BudgetCatRow,{key:r.cat,cat:r.cat,planned:r.planned,actual:r.actual,
+              onJump:onJumpToLedger?()=>onJumpToLedger({cats:new Set([r.cat]),payees:new Set(),dateFrom,dateTo,label:r.cat+" · "+mName+" "+mYear}):undefined}))
           ),
       /* Investment section */
       hasInvest&&React.createElement("div",{style:{padding:"8px 14px 6px",borderTop:"1px solid var(--border2)",background:"rgba(109,40,217,.03)"}},
@@ -15479,7 +15688,8 @@ const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,s
           )
         ),
         invCatRows.length>0&&React.createElement("div",null,
-          invCatRows.map(r=>React.createElement(BudgetCatRow,{key:r.cat,cat:r.cat,planned:r.planned,actual:r.actual,invertLogic:true}))
+          invCatRows.map(r=>React.createElement(BudgetCatRow,{key:r.cat,cat:r.cat,planned:r.planned,actual:r.actual,invertLogic:true,
+            onJump:onJumpToLedger?()=>onJumpToLedger({cats:new Set([r.cat]),payees:new Set(),dateFrom,dateTo,label:r.cat+" · "+mName+" "+mYear}):undefined}))
         )
       ),
       /* Footer */
@@ -15497,7 +15707,7 @@ const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,s
     );
   };
 
-  const BudgetYearCard=({year,isCurrent,catRows,totalPlanned,totalActual,income,invCatRows,actualInvest,plannedInvest,monthsElapsed})=>{
+  const BudgetYearCard=({year,isCurrent,catRows,totalPlanned,totalActual,income,invCatRows,actualInvest,plannedInvest,monthsElapsed,onJumpToLedger,dateFrom,dateTo})=>{
     const hasAnyPlan=totalPlanned>0;
     const isOver=hasAnyPlan&&totalActual>totalPlanned;
     const variance=totalActual-totalPlanned;
@@ -15575,7 +15785,8 @@ const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,s
       catRows.length===0
         ?React.createElement("div",{style:{padding:"12px 16px",fontSize:12,color:"var(--text5)",textAlign:"center"}},"No spending data")
         :React.createElement("div",{style:{padding:"10px 16px 4px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 16px"}},
-            catRows.map(r=>React.createElement(BudgetCatRow,{key:r.cat,cat:r.cat,planned:r.planned,actual:r.actual}))
+            catRows.map(r=>React.createElement(BudgetCatRow,{key:r.cat,cat:r.cat,planned:r.planned,actual:r.actual,
+              onJump:onJumpToLedger?()=>onJumpToLedger({cats:new Set([r.cat]),payees:new Set(),dateFrom,dateTo,label:r.cat+" · "+year}):undefined}))
           ),
       /* ── Investment section ── */
       hasInvest&&React.createElement("div",{style:{padding:"8px 16px 6px",borderTop:"1px solid var(--border2)",background:"rgba(109,40,217,.03)"}},
@@ -15590,7 +15801,8 @@ const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,s
           }},invShort?"↓"+INR(plannedInvest-actualInvest)+" short":"✓ On track")
         ),
         invCatRows.length>0&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 16px"}},
-          invCatRows.map(r=>React.createElement(BudgetCatRow,{key:r.cat,cat:r.cat,planned:r.planned,actual:r.actual,invertLogic:true}))
+          invCatRows.map(r=>React.createElement(BudgetCatRow,{key:r.cat,cat:r.cat,planned:r.planned,actual:r.actual,invertLogic:true,
+            onJump:onJumpToLedger?()=>onJumpToLedger({cats:new Set([r.cat]),payees:new Set(),dateFrom,dateTo,label:r.cat+" · "+year}):undefined}))
         )
       ),
       /* ── Footer ── */
@@ -15668,7 +15880,8 @@ const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,s
                 key:m.mName+m.mYear,mName:m.mName,mYear:m.mYear,
                 catRows:m.catRows,totalPlanned:m.totalPlanned,totalActual:m.totalActual,
                 income:m.income,isCurrent:m.isCurrent,
-                actualInvest:m.actualInvest,plannedInvest:m.plannedInvest,invCatRows:m.invCatRows
+                actualInvest:m.actualInvest,plannedInvest:m.plannedInvest,invCatRows:m.invCatRows,
+                dateFrom:m.dateFrom,dateTo:m.dateTo,onJumpToLedger
               }))
             ),
             /* Yearly summary — last 3 years */
@@ -15679,7 +15892,8 @@ const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,s
                 catRows:y.catRows,totalPlanned:y.totalPlanned,totalActual:y.totalActual,
                 income:y.income,invCatRows:y.invCatRows,
                 actualInvest:y.actualInvest,plannedInvest:y.plannedInvest,
-                monthsElapsed:y.monthsElapsed
+                monthsElapsed:y.monthsElapsed,
+                dateFrom:y.dateFrom,dateTo:y.dateTo,onJumpToLedger
               }))
             )
     )
@@ -15701,7 +15915,7 @@ const InsightsSection=({banks,cards,cash,categories,dispatch,isMobile,goals,mf,s
                 React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
                   React.createElement("span",{style:{fontSize:11,padding:"2px 8px",borderRadius:10,background:fc+"18",color:fc,border:"1px solid "+fc+"40",fontWeight:600}},r.freq),
                   React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"×"+r.count+" in 90 days"),
-                  React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Last: "+r.lastDate.split("-").reverse().join("-"))
+                  React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Last: "+dmyFmt(r.lastDate))
                 )
               ),
               React.createElement("div",{style:{textAlign:"right",flexShrink:0}},
@@ -17607,7 +17821,7 @@ function App(){
       tab==="inv_re"&&React.createElement(InvestSection,{mf:state.mf,shares:state.shares,fd:state.fd,re:state.re||[],dispatch,defaultTab:"re",isMobile}),
       tab==="loans"&&React.createElement(LoanSection,{loans:state.loans,dispatch,allBanks:state.banks,allCards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees,isMobile}),
       tab==="goals"&&React.createElement(GoalsSection,{goals:state.goals||[],dispatch,isMobile}),
-      tab==="insights"&&React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs}),
+      tab==="insights"&&React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs,onJumpToLedger}),
       tab==="notes"&&React.createElement(NotesSection,{notes:state.notes||[],dispatch}),
       tab==="calculator"&&React.createElement(CalculatorSection,null),
       tab==="scheduled"&&React.createElement(ScheduledSection,{state,dispatch}),
