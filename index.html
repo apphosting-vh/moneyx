@@ -1198,7 +1198,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.22.4";
+const APP_VERSION="3.22.8";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
@@ -1340,6 +1340,25 @@ const CHANGELOG=[
     "Trend tab: 12-month net worth line chart with best/worst month callout chips; Asset vs Liability dual-line chart (assets=green solid, liabilities=red dashed — uses existing SvgLine color2 prop); Monthly savings rate bar chart with target reference line (green bars = at/above target, red = below); detailed month-by-month table with Net Worth, Monthly Δ, and Savings Rate columns.",
     "Breakdown tab: SVG asset allocation donut (6 slices: Banks, Cash, MF, Shares, FD, Real Estate) with net worth centred inside; Top Contributors list (all individual accounts/investments ranked by value with animated fill bars and % of total assets); Liabilities breakdown (Credit Cards vs Loans with % share).",
     "Projections tab: 12-month forward projection chart (dashed line continuation of the historical series, based on avg of last 3 months net flow); Milestone Tracker — progress bars for ₹1L, ₹2.5L, ₹5L, ₹10L, ₹25L, ₹50L milestones with ✅ achieved or estimated months remaining; FIRE Projection Detail — FIRE target, amount still needed, estimated years to FIRE at current pace, full progress bar.",
+  ]},
+  {version:"3.22.8",date:"2026-03-11",title:"Budget Year Cards: Collapse by Default + Single Column Layout",changes:[
+    "Last 3 Years cards now collapse/expand like month cards: current year open by default, prior years collapsed.",
+    "Year card header is fully clickable (cursor pointer) with a rotating chevron to toggle expand/collapse.",
+    "KPI strip, progress bar, category rows, investment section, and footer are all hidden when the card is collapsed.",
+    "Year cards grid changed from 3-column (repeat(3,1fr)) to a single column so all three cards stack vertically.",
+    "Section sub-label updated to mention the click-to-expand behaviour.",
+  ]},
+  {version:"3.22.7",date:"2026-03-11",title:"Budget: Current Month Card Pinned to Top, Past Months in Descending Order",changes:[
+    "Current month card is now always first in the Planned vs Actual grid.",
+    "Past 11 month cards follow in descending order: most recent first, oldest last.",
+    "Loop direction changed to i=0->11 so current month is pushed first.",
+  ]},
+  {version:"3.22.6",date:"2026-03-11",title:"Budget: 12-Month Cards and Collapse by Default",changes:[
+    "Planned vs Actual section now shows last 12 monthly cards (up from 6).",
+    "Month cards are collapsed by default except the current month.",
+    "Each card header has a toggle chevron to expand or collapse independently.",
+    "Section sub-label updated to 'Last 12 Months'.",
+    "budgetTrackData useMemo loop changed from i=5->0 to i=11->0.",
   ]},
   {version:"3.18.0",date:"2026-03-10",title:"Bulk Delete Transactions in Ledger",changes:[
     "New '🗑 Delete' button appears in the multi-select bulk action toolbar whenever one or more transactions are checked — sits alongside the existing Categorize, Mark Reconciled, Mark Unreconciled, and Mark Void bulk actions.",
@@ -16228,9 +16247,9 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       const plannedInvest=invCatRows.reduce((s,r)=>s+r.planned,0);
       return {catRows,totalPlanned,totalActual,income,actualInvest,plannedInvest,invCatRows};
     };
-    /* 6 monthly cards */
+    /* 12 monthly cards — current month first, then descending (most recent → oldest) */
     const months=[];
-    for(let i=5;i>=0;i--){
+    for(let i=0;i<=11;i++){
       const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
       const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
       const mName=MONTH_NAMES[(now.getMonth()-i+12)%12];
@@ -16714,6 +16733,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
   };
 
   const BudgetMonthCard=({mName,mYear,catRows,totalPlanned,totalActual,income,isCurrent,actualInvest,plannedInvest,invCatRows,onJumpToLedger,dateFrom,dateTo})=>{
+    const [collapsed,setCollapsed]=React.useState(!isCurrent);
     const isOverAll=totalPlanned>0&&totalActual>totalPlanned;
     const hasAnyPlan=totalPlanned>0;
     const variance=totalActual-totalPlanned;
@@ -16722,21 +16742,27 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     const invOnTrack=plannedInvest>0&&actualInvest>=plannedInvest;
     const invShort=plannedInvest>0&&actualInvest<plannedInvest;
     return React.createElement(Card2,{sx:{padding:0,overflow:"hidden"}},
-      /* Header */
-      React.createElement("div",{style:{padding:"10px 14px",background:"var(--card2)",borderBottom:"1px solid var(--border)"}},
-        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}},
+      /* Header — always visible, click to toggle */
+      React.createElement("div",{
+        style:{padding:"10px 14px",background:"var(--card2)",borderBottom:collapsed?"none":"1px solid var(--border)",cursor:"pointer",userSelect:"none"},
+        onClick:()=>setCollapsed(c=>!c)
+      },
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:collapsed?0:6}},
           React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7}},
             React.createElement("div",{style:{fontSize:14,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"var(--text)"}},mName+" "+mYear),
             isCurrent&&React.createElement("span",{style:{fontSize:9,padding:"1px 6px",borderRadius:7,background:"var(--accentbg)",color:"var(--accent)",fontWeight:700,border:"1px solid var(--accent)30"}},"Now")
           ),
-          hasAnyPlan&&React.createElement("span",{style:{
-            fontSize:10,fontWeight:700,padding:"2px 9px",borderRadius:8,
-            background:isOverAll?"rgba(239,68,68,.1)":"rgba(22,163,74,.1)",
-            color:isOverAll?"#ef4444":"#16a34a",
-            border:"1px solid "+(isOverAll?"rgba(239,68,68,.25)":"rgba(22,163,74,.25)")
-          }},isOverAll?"⚠ Over Budget":"✓ On Track")
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7}},
+            hasAnyPlan&&React.createElement("span",{style:{
+              fontSize:10,fontWeight:700,padding:"2px 9px",borderRadius:8,
+              background:isOverAll?"rgba(239,68,68,.1)":"rgba(22,163,74,.1)",
+              color:isOverAll?"#ef4444":"#16a34a",
+              border:"1px solid "+(isOverAll?"rgba(239,68,68,.25)":"rgba(22,163,74,.25)")
+            }},isOverAll?"⚠ Over":"✓ OK"),
+            React.createElement("span",{style:{fontSize:13,color:"var(--text5)",lineHeight:1,transition:"transform .2s",display:"inline-block",transform:collapsed?"rotate(0deg)":"rotate(180deg)"}},collapsed?"▼":"▼")
+          )
         ),
-        React.createElement("div",{style:{display:"flex",gap:16,flexWrap:"wrap"}},
+        !collapsed&&React.createElement("div",{style:{display:"flex",gap:16,flexWrap:"wrap",marginTop:6}},
           hasAnyPlan&&React.createElement("div",null,
             React.createElement("div",{style:{fontSize:9,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:1}},"Planned"),
             React.createElement("div",{style:{fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"var(--text4)"}},INR(totalPlanned))
@@ -16749,7 +16775,6 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
             React.createElement("div",{style:{fontSize:9,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:1}},variance>0?"Over":"Saved"),
             React.createElement("div",{style:{fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:700,color:variance>0?"#ef4444":"#16a34a"}},INR(Math.abs(variance)))
           ),
-          /* Investment summary pill in header */
           hasInvest&&React.createElement("div",{style:{marginLeft:"auto"}},
             React.createElement("div",{style:{fontSize:9,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:1}},"Invested"),
             React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
@@ -16763,43 +16788,47 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
           )
         )
       ),
-      /* Expense category rows */
-      catRows.length===0
-        ?React.createElement("div",{style:{padding:"14px",fontSize:12,color:"var(--text5)",textAlign:"center"}},"No spending data this month")
-        :React.createElement("div",{style:{padding:"10px 14px 4px"}},
-            catRows.map(r=>React.createElement(BudgetCatRow,{key:r.cat,cat:r.cat,planned:r.planned,actual:r.actual,
-              onJump:onJumpToLedger?()=>onJumpToLedger({cats:new Set([r.cat]),payees:new Set(),dateFrom,dateTo,label:r.cat+" · "+mName+" "+mYear}):undefined}))
+      /* Body — hidden when collapsed */
+      !collapsed&&React.createElement(React.Fragment,null,
+        /* Expense category rows */
+        catRows.length===0
+          ?React.createElement("div",{style:{padding:"14px",fontSize:12,color:"var(--text5)",textAlign:"center"}},"No spending data this month")
+          :React.createElement("div",{style:{padding:"10px 14px 4px"}},
+              catRows.map(r=>React.createElement(BudgetCatRow,{key:r.cat,cat:r.cat,planned:r.planned,actual:r.actual,
+                onJump:onJumpToLedger?()=>onJumpToLedger({cats:new Set([r.cat]),payees:new Set(),dateFrom,dateTo,label:r.cat+" · "+mName+" "+mYear}):undefined}))
+            ),
+        /* Investment section */
+        hasInvest&&React.createElement("div",{style:{padding:"8px 14px 6px",borderTop:"1px solid var(--border2)",background:"rgba(109,40,217,.03)"}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:invCatRows.length>0?8:0}},
+            React.createElement("span",{style:{fontSize:10,fontWeight:700,color:"#6d28d9",textTransform:"uppercase",letterSpacing:.5}},"📈 Investments"),
+            React.createElement("span",{style:{fontSize:11,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#6d28d9"}},INR(actualInvest)),
+            plannedInvest>0&&React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},
+              "of "+INR(plannedInvest)+" planned"+(income>0?" · "+(actualInvest/income*100).toFixed(0)+"% of income":"")
+            )
           ),
-      /* Investment section */
-      hasInvest&&React.createElement("div",{style:{padding:"8px 14px 6px",borderTop:"1px solid var(--border2)",background:"rgba(109,40,217,.03)"}},
-        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:invCatRows.length>0?8:0}},
-          React.createElement("span",{style:{fontSize:10,fontWeight:700,color:"#6d28d9",textTransform:"uppercase",letterSpacing:.5}},"📈 Investments"),
-          React.createElement("span",{style:{fontSize:11,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#6d28d9"}},INR(actualInvest)),
-          plannedInvest>0&&React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},
-            "of "+INR(plannedInvest)+" planned"+(income>0?" · "+(actualInvest/income*100).toFixed(0)+"% of income":"")
+          invCatRows.length>0&&React.createElement("div",null,
+            invCatRows.map(r=>React.createElement(BudgetCatRow,{key:r.cat,cat:r.cat,planned:r.planned,actual:r.actual,invertLogic:true,
+              onJump:onJumpToLedger?()=>onJumpToLedger({cats:new Set([r.cat]),payees:new Set(),dateFrom,dateTo,label:r.cat+" · "+mName+" "+mYear}):undefined}))
           )
         ),
-        invCatRows.length>0&&React.createElement("div",null,
-          invCatRows.map(r=>React.createElement(BudgetCatRow,{key:r.cat,cat:r.cat,planned:r.planned,actual:r.actual,invertLogic:true,
-            onJump:onJumpToLedger?()=>onJumpToLedger({cats:new Set([r.cat]),payees:new Set(),dateFrom,dateTo,label:r.cat+" · "+mName+" "+mYear}):undefined}))
-        )
-      ),
-      /* Footer */
-      income>0&&React.createElement("div",{style:{padding:"7px 14px",borderTop:"1px solid var(--border2)",background:"var(--bg4)",display:"flex",gap:14,flexWrap:"wrap",alignItems:"center"}},
-        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
-          React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"Income"),
-          React.createElement("span",{style:{fontSize:11,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#16a34a"}},INR(income))
-        ),
-        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
-          React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"Net"),
-          React.createElement("span",{style:{fontSize:11,fontFamily:"'Sora',sans-serif",fontWeight:700,color:savings>=0?"#16a34a":"#ef4444"}},INR(savings)),
-          income>0&&React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"("+Math.abs(savings/income*100).toFixed(0)+"%)")
+        /* Footer */
+        income>0&&React.createElement("div",{style:{padding:"7px 14px",borderTop:"1px solid var(--border2)",background:"var(--bg4)",display:"flex",gap:14,flexWrap:"wrap",alignItems:"center"}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
+            React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"Income"),
+            React.createElement("span",{style:{fontSize:11,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#16a34a"}},INR(income))
+          ),
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
+            React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"Net"),
+            React.createElement("span",{style:{fontSize:11,fontFamily:"'Sora',sans-serif",fontWeight:700,color:savings>=0?"#16a34a":"#ef4444"}},INR(savings)),
+            income>0&&React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"("+Math.abs(savings/income*100).toFixed(0)+"%)")
+          )
         )
       )
     );
   };
 
   const BudgetYearCard=({year,isCurrent,catRows,totalPlanned,totalActual,income,invCatRows,actualInvest,plannedInvest,monthsElapsed,onJumpToLedger,dateFrom,dateTo})=>{
+    const [collapsed,setCollapsed]=React.useState(!isCurrent);
     const hasAnyPlan=totalPlanned>0;
     const isOver=hasAnyPlan&&totalActual>totalPlanned;
     const variance=totalActual-totalPlanned;
@@ -16809,104 +16838,114 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     const pctUsed=totalPlanned>0?Math.min(totalActual/totalPlanned*100,100):0;
     const maxBar=Math.max(totalPlanned,totalActual,1);
     return React.createElement(Card2,{sx:{padding:0,overflow:"hidden"}},
-      /* ── Header ── */
-      React.createElement("div",{style:{padding:"12px 16px",background:"var(--card2)",borderBottom:"1px solid var(--border)"}},
-        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
+      /* ── Header — always visible, click to toggle ── */
+      React.createElement("div",{
+        style:{padding:"12px 16px",background:"var(--card2)",borderBottom:collapsed?"none":"1px solid var(--border)",cursor:"pointer",userSelect:"none"},
+        onClick:()=>setCollapsed(c=>!c)
+      },
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
           React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
             React.createElement("div",{style:{fontSize:16,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text)"}},String(year)),
             isCurrent&&React.createElement("span",{style:{fontSize:9,padding:"1px 7px",borderRadius:7,background:"var(--accentbg)",color:"var(--accent)",fontWeight:700,border:"1px solid var(--accent)30"}},"Current"),
             !isCurrent&&React.createElement("span",{style:{fontSize:9,padding:"1px 7px",borderRadius:7,background:"var(--bg4)",color:"var(--text5)",fontWeight:600,border:"1px solid var(--border2)"}},"Full Year")
           ),
-          hasAnyPlan&&React.createElement("span",{style:{
-            fontSize:10,fontWeight:700,padding:"2px 9px",borderRadius:8,
-            background:isOver?"rgba(239,68,68,.1)":"rgba(22,163,74,.1)",
-            color:isOver?"#ef4444":"#16a34a",
-            border:"1px solid "+(isOver?"rgba(239,68,68,.25)":"rgba(22,163,74,.25)")
-          }},isOver?"⚠ Over Budget":"✓ On Track")
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+            hasAnyPlan&&React.createElement("span",{style:{
+              fontSize:10,fontWeight:700,padding:"2px 9px",borderRadius:8,
+              background:isOver?"rgba(239,68,68,.1)":"rgba(22,163,74,.1)",
+              color:isOver?"#ef4444":"#16a34a",
+              border:"1px solid "+(isOver?"rgba(239,68,68,.25)":"rgba(22,163,74,.25)")
+            }},isOver?"⚠ Over":"✓ OK"),
+            React.createElement("span",{style:{fontSize:13,color:"var(--text5)",display:"inline-block",transition:"transform .2s",transform:collapsed?"rotate(0deg)":"rotate(180deg)"}},"▼")
+          )
         ),
-        /* KPI row */
-        React.createElement("div",{style:{display:"flex",gap:16,flexWrap:"wrap",marginBottom:hasAnyPlan?10:0}},
+        /* KPI strip + progress bar — hidden when collapsed */
+        !collapsed&&React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{display:"flex",gap:16,flexWrap:"wrap",marginTop:8,marginBottom:hasAnyPlan?10:0}},
+            hasAnyPlan&&React.createElement("div",null,
+              React.createElement("div",{style:{fontSize:9,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:1}},isCurrent?"Annual Plan":"Planned"),
+              React.createElement("div",{style:{fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"var(--text4)"}},INR(totalPlanned))
+            ),
+            React.createElement("div",null,
+              React.createElement("div",{style:{fontSize:9,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:1}},isCurrent?"Actual YTD":"Actual"),
+              React.createElement("div",{style:{fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:700,color:isOver?"#ef4444":"var(--text2)"}},INR(totalActual))
+            ),
+            hasAnyPlan&&variance!==0&&React.createElement("div",null,
+              React.createElement("div",{style:{fontSize:9,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:1}},variance>0?"Over":"Under"),
+              React.createElement("div",{style:{fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:700,color:variance>0?"#ef4444":"#16a34a"}},INR(Math.abs(variance)))
+            ),
+            isCurrent&&React.createElement("div",null,
+              React.createElement("div",{style:{fontSize:9,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:1}},"Months"),
+              React.createElement("div",{style:{fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"var(--accent)"}},monthsElapsed+" / 12")
+            ),
+            hasInvest&&React.createElement("div",{style:{marginLeft:"auto"}},
+              React.createElement("div",{style:{fontSize:9,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:1}},"Invested"),
+              React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
+                React.createElement("span",{style:{fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#6d28d9"}},INR(actualInvest)),
+                plannedInvest>0&&React.createElement("span",{style:{
+                  fontSize:9,padding:"1px 5px",borderRadius:6,fontWeight:700,
+                  background:invShort?"rgba(239,68,68,.1)":"rgba(109,40,217,.12)",
+                  color:invShort?"#ef4444":"#6d28d9"
+                }},invShort?"↓"+INR(plannedInvest-actualInvest)+" short":"✓ On track")
+              )
+            )
+          ),
           hasAnyPlan&&React.createElement("div",null,
-            React.createElement("div",{style:{fontSize:9,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:1}},isCurrent?"Annual Plan":"Planned"),
-            React.createElement("div",{style:{fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"var(--text4)"}},INR(totalPlanned))
-          ),
-          React.createElement("div",null,
-            React.createElement("div",{style:{fontSize:9,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:1}},isCurrent?"Actual YTD":"Actual"),
-            React.createElement("div",{style:{fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:700,color:isOver?"#ef4444":"var(--text2)"}},INR(totalActual))
-          ),
-          hasAnyPlan&&variance!==0&&React.createElement("div",null,
-            React.createElement("div",{style:{fontSize:9,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:1}},variance>0?"Over":"Under"),
-            React.createElement("div",{style:{fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:700,color:variance>0?"#ef4444":"#16a34a"}},INR(Math.abs(variance)))
-          ),
-          isCurrent&&React.createElement("div",null,
-            React.createElement("div",{style:{fontSize:9,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:1}},"Months"),
-            React.createElement("div",{style:{fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"var(--accent)"}},monthsElapsed+" / 12")
-          ),
-          hasInvest&&React.createElement("div",{style:{marginLeft:"auto"}},
-            React.createElement("div",{style:{fontSize:9,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:1}},"Invested"),
-            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
-              React.createElement("span",{style:{fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#6d28d9"}},INR(actualInvest)),
-              plannedInvest>0&&React.createElement("span",{style:{
-                fontSize:9,padding:"1px 5px",borderRadius:6,fontWeight:700,
-                background:invShort?"rgba(239,68,68,.1)":"rgba(109,40,217,.12)",
-                color:invShort?"#ef4444":"#6d28d9"
-              }},invShort?"↓"+INR(plannedInvest-actualInvest)+" short":"✓ On track")
+            React.createElement("div",{style:{position:"relative",height:8,borderRadius:4,background:"var(--bg5)",overflow:"visible",marginBottom:3}},
+              React.createElement("div",{style:{
+                position:"absolute",left:0,top:0,height:"100%",borderRadius:4,
+                width:Math.min(totalActual/maxBar*100,100)+"%",
+                background:isOver?"#ef4444":"#16a34a",opacity:.8
+              }}),
+              totalPlanned<maxBar&&React.createElement("div",{style:{
+                position:"absolute",left:(totalPlanned/maxBar*100)+"%",
+                top:-2,height:"calc(100% + 4px)",width:"2px",background:"var(--accent)",borderRadius:1
+              }})
+            ),
+            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:9,color:"var(--text5)"}},
+              React.createElement("span",null,pctUsed.toFixed(0)+"% of annual budget used"),
+              income>0&&React.createElement("span",null,"Savings rate: "+(income>0?Math.max(0,savings/income*100).toFixed(0):0)+"%")
             )
           )
-        ),
-        /* Progress bar */
-        hasAnyPlan&&React.createElement("div",null,
-          React.createElement("div",{style:{position:"relative",height:8,borderRadius:4,background:"var(--bg5)",overflow:"visible",marginBottom:3}},
-            React.createElement("div",{style:{
-              position:"absolute",left:0,top:0,height:"100%",borderRadius:4,
-              width:Math.min(totalActual/maxBar*100,100)+"%",
-              background:isOver?"#ef4444":"#16a34a",opacity:.8
-            }}),
-            totalPlanned<maxBar&&React.createElement("div",{style:{
-              position:"absolute",left:(totalPlanned/maxBar*100)+"%",
-              top:-2,height:"calc(100% + 4px)",width:"2px",background:"var(--accent)",borderRadius:1
-            }})
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:9,color:"var(--text5)"}},
-            React.createElement("span",null,pctUsed.toFixed(0)+"% of annual budget used"),
-            income>0&&React.createElement("span",null,"Savings rate: "+(income>0?Math.max(0,savings/income*100).toFixed(0):0)+"%")
-          )
         )
       ),
-      /* ── Expense category rows ── */
-      catRows.length===0
-        ?React.createElement("div",{style:{padding:"12px 16px",fontSize:12,color:"var(--text5)",textAlign:"center"}},"No spending data")
-        :React.createElement("div",{style:{padding:"10px 16px 4px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 16px"}},
-            catRows.map(r=>React.createElement(BudgetCatRow,{key:r.cat,cat:r.cat,planned:r.planned,actual:r.actual,
+      /* ── Body — hidden when collapsed ── */
+      !collapsed&&React.createElement(React.Fragment,null,
+        /* Expense category rows */
+        catRows.length===0
+          ?React.createElement("div",{style:{padding:"12px 16px",fontSize:12,color:"var(--text5)",textAlign:"center"}},"No spending data")
+          :React.createElement("div",{style:{padding:"10px 16px 4px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 16px"}},
+              catRows.map(r=>React.createElement(BudgetCatRow,{key:r.cat,cat:r.cat,planned:r.planned,actual:r.actual,
+                onJump:onJumpToLedger?()=>onJumpToLedger({cats:new Set([r.cat]),payees:new Set(),dateFrom,dateTo,label:r.cat+" · "+year}):undefined}))
+            ),
+        /* Investment section */
+        hasInvest&&React.createElement("div",{style:{padding:"8px 16px 6px",borderTop:"1px solid var(--border2)",background:"rgba(109,40,217,.03)"}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:invCatRows.length>0?8:0,flexWrap:"wrap"}},
+            React.createElement("span",{style:{fontSize:10,fontWeight:700,color:"#6d28d9",textTransform:"uppercase",letterSpacing:.5}},"📈 Investments"),
+            React.createElement("span",{style:{fontSize:12,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#6d28d9"}},INR(actualInvest)),
+            plannedInvest>0&&React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"of "+INR(plannedInvest)+" planned"+(income>0?" · "+(actualInvest/income*100).toFixed(0)+"% of income":"")),
+            plannedInvest>0&&React.createElement("span",{style:{
+              fontSize:9,padding:"1px 6px",borderRadius:6,fontWeight:700,
+              background:invShort?"rgba(239,68,68,.1)":"rgba(109,40,217,.12)",
+              color:invShort?"#ef4444":"#6d28d9"
+            }},invShort?"↓"+INR(plannedInvest-actualInvest)+" short":"✓ On track")
+          ),
+          invCatRows.length>0&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 16px"}},
+            invCatRows.map(r=>React.createElement(BudgetCatRow,{key:r.cat,cat:r.cat,planned:r.planned,actual:r.actual,invertLogic:true,
               onJump:onJumpToLedger?()=>onJumpToLedger({cats:new Set([r.cat]),payees:new Set(),dateFrom,dateTo,label:r.cat+" · "+year}):undefined}))
+          )
+        ),
+        /* Footer */
+        income>0&&React.createElement("div",{style:{padding:"7px 16px",borderTop:"1px solid var(--border2)",background:"var(--bg4)",display:"flex",gap:16,flexWrap:"wrap",alignItems:"center"}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
+            React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},isCurrent?"Income YTD":"Total Income"),
+            React.createElement("span",{style:{fontSize:11,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#16a34a"}},INR(income))
           ),
-      /* ── Investment section ── */
-      hasInvest&&React.createElement("div",{style:{padding:"8px 16px 6px",borderTop:"1px solid var(--border2)",background:"rgba(109,40,217,.03)"}},
-        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:invCatRows.length>0?8:0,flexWrap:"wrap"}},
-          React.createElement("span",{style:{fontSize:10,fontWeight:700,color:"#6d28d9",textTransform:"uppercase",letterSpacing:.5}},"📈 Investments"),
-          React.createElement("span",{style:{fontSize:12,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#6d28d9"}},INR(actualInvest)),
-          plannedInvest>0&&React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"of "+INR(plannedInvest)+" planned"+(income>0?" · "+(actualInvest/income*100).toFixed(0)+"% of income":"")),
-          plannedInvest>0&&React.createElement("span",{style:{
-            fontSize:9,padding:"1px 6px",borderRadius:6,fontWeight:700,
-            background:invShort?"rgba(239,68,68,.1)":"rgba(109,40,217,.12)",
-            color:invShort?"#ef4444":"#6d28d9"
-          }},invShort?"↓"+INR(plannedInvest-actualInvest)+" short":"✓ On track")
-        ),
-        invCatRows.length>0&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 16px"}},
-          invCatRows.map(r=>React.createElement(BudgetCatRow,{key:r.cat,cat:r.cat,planned:r.planned,actual:r.actual,invertLogic:true,
-            onJump:onJumpToLedger?()=>onJumpToLedger({cats:new Set([r.cat]),payees:new Set(),dateFrom,dateTo,label:r.cat+" · "+year}):undefined}))
-        )
-      ),
-      /* ── Footer ── */
-      income>0&&React.createElement("div",{style:{padding:"7px 16px",borderTop:"1px solid var(--border2)",background:"var(--bg4)",display:"flex",gap:16,flexWrap:"wrap",alignItems:"center"}},
-        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
-          React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},isCurrent?"Income YTD":"Total Income"),
-          React.createElement("span",{style:{fontSize:11,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#16a34a"}},INR(income))
-        ),
-        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
-          React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"Net Savings"),
-          React.createElement("span",{style:{fontSize:11,fontFamily:"'Sora',sans-serif",fontWeight:700,color:savings>=0?"#16a34a":"#ef4444"}},INR(savings)),
-          income>0&&React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"("+Math.abs(savings/income*100).toFixed(0)+"%)")
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
+            React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"Net Savings"),
+            React.createElement("span",{style:{fontSize:11,fontFamily:"'Sora',sans-serif",fontWeight:700,color:savings>=0?"#16a34a":"#ef4444"}},INR(savings)),
+            income>0&&React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"("+Math.abs(savings/income*100).toFixed(0)+"%)")
+          )
         )
       )
     );
@@ -16962,12 +17001,12 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
         ?React.createElement(Card2,{sx:{textAlign:"center",padding:"28px 20px"}},
             React.createElement("div",{style:{fontSize:32,marginBottom:10}},"📋"),
             React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text3)",marginBottom:6}},"No budget plans configured"),
-            React.createElement("div",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.7,maxWidth:360,margin:"0 auto"}},"Go to ",React.createElement("strong",null,"Settings → Insights Config → Budget Planning")," to set monthly targets per category. Once set, you'll see 6-month and yearly planned vs actual cards here.")
+            React.createElement("div",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.7,maxWidth:360,margin:"0 auto"}},"Go to ",React.createElement("strong",null,"Settings → Insights Config → Budget Planning")," to set monthly targets per category. Once set, you'll see 12-month and yearly planned vs actual cards here.")
           )
         :React.createElement(React.Fragment,null,
             /* 6-month grid */
-            React.createElement(SHead,{t:"Last 6 Months",s:"Each card shows planned targets vs actual spend for that month"}),
-            React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(2,1fr)",gap:12,marginBottom:22}},
+            React.createElement(SHead,{t:"Last 12 Months",s:"Each card shows planned targets vs actual spend · click any card to expand or collapse"}),
+            React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:12,marginBottom:22}},
               budgetTrackData.months.map(m=>React.createElement(BudgetMonthCard,{
                 key:m.mName+m.mYear,mName:m.mName,mYear:m.mYear,
                 catRows:m.catRows,totalPlanned:m.totalPlanned,totalActual:m.totalActual,
@@ -16977,8 +17016,8 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
               }))
             ),
             /* Yearly summary — last 3 years */
-            React.createElement(SHead,{t:"Last 3 Years",s:"Annual budget (monthly plan × 12) vs actual spend · current year shows YTD"}),
-            React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(3,1fr)",gap:12}},
+            React.createElement(SHead,{t:"Last 3 Years",s:"Annual budget (monthly plan x 12) vs actual spend · current year shown expanded · click to expand or collapse"}),
+            React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:12}},
               budgetTrackData.years.map(y=>React.createElement(BudgetYearCard,{
                 key:y.year,year:y.year,isCurrent:y.isCurrent,
                 catRows:y.catRows,totalPlanned:y.totalPlanned,totalActual:y.totalActual,
