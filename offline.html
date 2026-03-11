@@ -1198,10 +1198,18 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.22.3";
+const APP_VERSION="3.22.4";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.22.4",date:"2026-03-11",title:"FSA — Launch-time File Storage Status Modal & Success Toast",changes:[
+    "New: FSA Warning Modal — on app launch (desktop only, fsaSupported() = true), the app now checks the IDB file handle and shows a centered dialog if file storage is not connected. Covers two cases: (a) no handle ever configured — 'File Storage Not Connected', with an 'Open Settings' button that navigates directly to Settings → Data & Backup; (b) handle exists but browser permission lapsed — 'File Storage Permission Needed', with a 'Re-grant Permission' button that calls doFsaGrant() inline. Both cases share a 'Dismiss' button and a 'Don't remind me again' checkbox that persists to localStorage (mm_fsa_no_warn). The modal has a semi-transparent blurred backdrop; clicking the backdrop also dismisses it.",
+    "New: FSA Success Toast — when the app launches and the IDB handle already has 'granted' permission (file is connected and ready), a green slide-in toast appears bottom-right confirming 'File storage connected' with the filename shown. Auto-dismisses after 4 seconds; also has a manual × close button.",
+    "FSA useEffect expanded: now covers all three launch states — (1) no handle → warning modal unless suppressed, (2) handle + granted → success toast + auto-dismiss timer, (3) handle + lapsed → setFsaPermNeeded (existing FsaPermCard) + warning modal unless suppressed.",
+    "doFsaGrant updated: on successful re-grant, also dismisses the warning modal (fsaLaunchModal) if it was open, so the dialog clears immediately when permission is restored from the modal's Re-grant button.",
+    "onSaved handler updated: clears the warning modal when a successful FSA write fires, covering the case where permission was restored via a different path (e.g. FsaPermCard corner button).",
+    "Desktop-only: all three new UI elements are gated behind !isMobile so mobile users (who can't use FSA) never see them.",
+  ]},
   {version:"3.22.3",date:"2026-03-11",title:"Fix — Blank Screen SyntaxError from React.memo Unclosed Parentheses (v3.22.2)",changes:[
     "Root cause: wrapping 16 components with React.memo(({...}) => { ... }) requires the closing to be }); not }; — the extra ( opened by React.memo( was never closed.",
     "v3.22.2 correctly changed all 16 opening lines from const X=({...})=>{ to const X=React.memo(({...})=>{ but left all 16 closings as }; — Babel saw the bare }; as ending the arrow function, leaving React.memo( unresolved, which cascaded into a parse error at the next const statement.",
@@ -18610,28 +18618,63 @@ function App(){
   const[fsaPermNeeded,setFsaPermNeeded]=useState(false);
   const[fsaGranting,setFsaGranting]=useState(false);
   const[fsaGranted,setFsaGranted]=useState(false);  // brief success flash
+
+  /* ── FSA Launch-status modals ──────────────────────────────────────────────
+     fsaLaunchModal: null | "warning" | "success"
+       "warning" — FSA supported but not configured, or handle found but
+                   permission lapsed; urges user to connect before entering data.
+       "success" — handle found AND permission already granted; brief confirmation
+                   toast that auto-dismisses after 4 s.
+     fsaNoWarn — persisted flag; user ticked "Don't remind me again" on warning.
+     ─────────────────────────────────────────────────────────────────────────── */
+  const[fsaLaunchModal,setFsaLaunchModal]=useState(null);
+  const[fsaNoWarn,setFsaNoWarn]=useState(()=>{
+    try{return !!localStorage.getItem("mm_fsa_no_warn");}catch{return false;}
+  });
+  const dismissFsaWarn=(permanent)=>{
+    if(permanent){
+      try{localStorage.setItem("mm_fsa_no_warn","1");}catch{}
+      setFsaNoWarn(true);
+    }
+    setFsaLaunchModal(null);
+  };
+
   React.useEffect(()=>{
     if(!fsaSupported())return;
     (async()=>{
       try{
         const h=await fsaGetHandle();
-        if(!h)return;
+        if(!h){
+          /* Never configured — show warning unless user suppressed it */
+          const suppressed=!!localStorage.getItem("mm_fsa_no_warn");
+          if(!suppressed)setFsaLaunchModal("warning");
+          return;
+        }
         const perm=await fsaQueryPermission(h);
         if(perm==="granted"){
-          // Permission already granted — set ready and do an immediate write
+          /* Already connected — set ready, write immediately, show success toast */
           window.__fsa.handle=h;window.__fsa.filename=h.name;window.__fsa.ready=true;
-          // writeNow may not be registered yet (usePersistentReducer mounts
-          // at the same time), so defer one tick to be safe
           setTimeout(()=>{ if(window.__fsa.writeNow) window.__fsa.writeNow(); },50);
+          setFsaLaunchModal("success");
+          /* Auto-dismiss success toast after 4 s */
+          setTimeout(()=>setFsaLaunchModal(m=>m==="success"?null:m),4000);
         }else{
-          // Handle found but needs a user gesture to re-grant
+          /* Handle found but needs user gesture to re-grant */
           window.__fsa.handle=h;window.__fsa.filename=h.name;window.__fsa.ready=false;
           setFsaPermNeeded(true);
+          /* Also show warning modal so user is not just relying on the corner card */
+          const suppressed=!!localStorage.getItem("mm_fsa_no_warn");
+          if(!suppressed)setFsaLaunchModal("warning");
         }
       }catch{}
     })();
-    // Also clear the card when a successful save fires (means permission was granted elsewhere)
-    const onSaved=()=>{setFsaPermNeeded(false);setFsaGranted(false);};
+    /* Clear modals/cards when a successful save fires */
+    const onSaved=()=>{
+      setFsaPermNeeded(false);
+      setFsaGranted(false);
+      /* If warning was showing because of lapsed permission, dismiss it now */
+      setFsaLaunchModal(m=>m==="warning"?null:m);
+    };
     window.addEventListener("fsa:saved",onSaved);
     return()=>window.removeEventListener("fsa:saved",onSaved);
   },[]);
@@ -18647,6 +18690,8 @@ function App(){
       // Notify FSAStoragePanel (and any other listener) that permission is active
       window.dispatchEvent(new CustomEvent("fsa:permission-granted"));
       setFsaGranted(true);
+      // Dismiss warning modal if it was open
+      setFsaLaunchModal(m=>m==="warning"?null:m);
       // Small delay so user sees the ✓ tick before card dismisses
       setTimeout(()=>{setFsaPermNeeded(false);setFsaGranted(false);},1400);
     }
@@ -18668,6 +18713,201 @@ function App(){
       window.location.reload(true);
     }
   };
+  /* ── FSA Launch Warning Modal ───────────────────────────────────────────────
+     Shown on desktop when FSA is supported but not configured (no IDB handle),
+     or when a handle exists but browser permission has lapsed and not yet re-
+     granted. Urges the user to connect file storage before entering data.
+     "Don't remind me again" persists to localStorage (mm_fsa_no_warn).
+     ─────────────────────────────────────────────────────────────────────────── */
+  const[fsaWarnCheck,setFsaWarnCheck]=useState(false); // "don't remind" checkbox
+  const FsaLaunchWarning=(!isMobile&&fsaLaunchModal==="warning")&&React.createElement(React.Fragment,null,
+    /* Backdrop */
+    React.createElement("div",{
+      style:{position:"fixed",inset:0,background:"rgba(0,0,0,.55)",zIndex:10000,
+             animation:"fadeUp .2s ease forwards",backdropFilter:"blur(2px)"},
+      onClick:()=>dismissFsaWarn(fsaWarnCheck),
+    }),
+    /* Dialog card */
+    React.createElement("div",{style:{
+      position:"fixed",top:"50%",left:"50%",
+      transform:"translate(-50%,-50%)",
+      zIndex:10001,
+      width:"min(460px,90vw)",
+      background:"linear-gradient(160deg,#12110e,#1a1710)",
+      border:"1.5px solid rgba(251,146,60,.5)",
+      borderRadius:20,
+      padding:"28px 28px 24px",
+      boxShadow:"0 24px 64px rgba(0,0,0,.7),0 0 0 1px rgba(251,146,60,.1)",
+      animation:"fsaSlideIn .35s cubic-bezier(.22,1,.36,1) forwards",
+      fontFamily:"'DM Sans',sans-serif",
+    }},
+      /* Top row: icon + close button */
+      React.createElement("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:20}},
+        /* Icon bubble */
+        React.createElement("div",{style:{
+          width:52,height:52,borderRadius:14,flexShrink:0,
+          background:"rgba(251,146,60,.14)",
+          border:"1px solid rgba(251,146,60,.35)",
+          display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,
+        }},"📂"),
+        /* × close */
+        React.createElement("button",{
+          onClick:()=>dismissFsaWarn(fsaWarnCheck),
+          title:"Dismiss",
+          style:{background:"transparent",border:"none",cursor:"pointer",
+                 color:"rgba(255,255,255,.3)",fontSize:22,lineHeight:1,
+                 padding:"2px 6px",borderRadius:6,transition:"color .15s"},
+          onMouseEnter:e=>{e.currentTarget.style.color="rgba(255,255,255,.7)";},
+          onMouseLeave:e=>{e.currentTarget.style.color="rgba(255,255,255,.3)";},
+        },"×")
+      ),
+      /* Title */
+      React.createElement("div",{style:{
+        fontFamily:"'Sora',sans-serif",fontSize:17,fontWeight:800,
+        color:"#fb923c",marginBottom:8,lineHeight:1.25,
+      }},
+        fsaPermNeeded
+          ?"File Storage Permission Needed"
+          :"File Storage Not Connected"
+      ),
+      /* Description */
+      React.createElement("div",{style:{fontSize:13,color:"rgba(255,255,255,.65)",lineHeight:1.75,marginBottom:20}},
+        fsaPermNeeded
+          ?React.createElement(React.Fragment,null,
+              "A local save file was previously set up (",
+              React.createElement("span",{style:{color:"#fb923c",fontWeight:600}}),
+              React.createElement("strong",{style:{color:"rgba(255,255,255,.85)"}},(window.__fsa&&window.__fsa.filename)||"unknown file"),
+              "), but the browser has not yet been granted write permission for this session.",
+              React.createElement("br",null),
+              React.createElement("br",null),
+              "Click ",React.createElement("strong",{style:{color:"rgba(255,255,255,.85)"}},"Re-grant Permission"),
+              " below, or open Settings → Data & Backup to reconnect."
+            )
+          :React.createElement(React.Fragment,null,
+              "Your data is currently saved ",React.createElement("strong",{style:{color:"rgba(255,255,255,.85)"}},"only in browser storage"),
+              ". If the browser cache is cleared, your data could be lost.",
+              React.createElement("br",null),
+              React.createElement("br",null),
+              "Set up a local file backup in ",
+              React.createElement("strong",{style:{color:"rgba(255,255,255,.85)"}},"Settings → Data & Backup"),
+              " before entering important financial data."
+            )
+      ),
+      /* Divider */
+      React.createElement("div",{style:{height:1,background:"rgba(255,255,255,.08)",marginBottom:18}}),
+      /* Buttons row */
+      React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
+        /* Primary action */
+        fsaPermNeeded
+          ?React.createElement("button",{
+              onClick:()=>{dismissFsaWarn(fsaWarnCheck);doFsaGrant();},
+              style:{
+                flex:"1 1 180px",padding:"10px 16px",borderRadius:10,border:"none",
+                background:"linear-gradient(135deg,#c2410c,#fb923c)",
+                color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",
+                fontFamily:"'DM Sans',sans-serif",transition:"opacity .15s",
+              },
+              onMouseEnter:e=>{e.currentTarget.style.opacity=".85";},
+              onMouseLeave:e=>{e.currentTarget.style.opacity="1";},
+            },"🔓 Re-grant Permission")
+          :React.createElement("button",{
+              onClick:()=>{dismissFsaWarn(fsaWarnCheck);setTab("settings");},
+              style:{
+                flex:"1 1 180px",padding:"10px 16px",borderRadius:10,border:"none",
+                background:"linear-gradient(135deg,#0369a1,#0284c7)",
+                color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",
+                fontFamily:"'DM Sans',sans-serif",transition:"opacity .15s",
+              },
+              onMouseEnter:e=>{e.currentTarget.style.opacity=".85";},
+              onMouseLeave:e=>{e.currentTarget.style.opacity="1";},
+            },"⚙ Open Settings"),
+        /* Dismiss */
+        React.createElement("button",{
+          onClick:()=>dismissFsaWarn(fsaWarnCheck),
+          style:{
+            flex:"1 1 100px",padding:"10px 16px",borderRadius:10,
+            border:"1px solid rgba(255,255,255,.12)",
+            background:"rgba(255,255,255,.05)",
+            color:"rgba(255,255,255,.6)",fontSize:13,fontWeight:500,
+            cursor:"pointer",fontFamily:"'DM Sans',sans-serif",transition:"all .15s",
+          },
+          onMouseEnter:e=>{e.currentTarget.style.background="rgba(255,255,255,.1)";e.currentTarget.style.color="rgba(255,255,255,.9)";},
+          onMouseLeave:e=>{e.currentTarget.style.background="rgba(255,255,255,.05)";e.currentTarget.style.color="rgba(255,255,255,.6)";},
+        },"Dismiss")
+      ),
+      /* Don't remind me */
+      React.createElement("label",{style:{
+        display:"flex",alignItems:"center",gap:8,marginTop:14,cursor:"pointer",
+        fontSize:12,color:"rgba(255,255,255,.35)",userSelect:"none",
+      }},
+        React.createElement("input",{
+          type:"checkbox",checked:fsaWarnCheck,
+          onChange:e=>setFsaWarnCheck(e.target.checked),
+          style:{width:14,height:14,accentColor:"#fb923c",cursor:"pointer"},
+        }),
+        "Don't remind me again"
+      )
+    )
+  );
+
+  /* ── FSA Launch Success Toast ───────────────────────────────────────────────
+     Shown for 4 s when the app launches and the FSA file handle already has
+     "granted" permission — confirms to the user that auto-save is active.
+     Slides in from bottom-right, auto-dismisses, also has a manual × close.
+     ─────────────────────────────────────────────────────────────────────────── */
+  const FsaLaunchSuccess=(!isMobile&&fsaLaunchModal==="success")&&React.createElement("div",{
+    style:{
+      position:"fixed",
+      bottom:"24px",right:"18px",
+      zIndex:9998,
+      animation:"fsaSlideIn .4s cubic-bezier(.22,1,.36,1) forwards",
+      userSelect:"none",
+    }
+  },
+    React.createElement("div",{style:{
+      background:"linear-gradient(135deg,#0f2318,#091a10)",
+      border:"1.5px solid rgba(34,197,94,.55)",
+      borderRadius:16,padding:"14px 16px",
+      display:"flex",alignItems:"center",gap:12,
+      minWidth:260,maxWidth:320,
+      boxShadow:"0 8px 32px rgba(0,0,0,.45)",
+      fontFamily:"'DM Sans',sans-serif",
+    }},
+      /* Icon */
+      React.createElement("div",{style:{
+        width:40,height:40,borderRadius:11,flexShrink:0,
+        background:"rgba(34,197,94,.16)",
+        border:"1px solid rgba(34,197,94,.32)",
+        display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,
+      }},"✅"),
+      /* Text */
+      React.createElement("div",{style:{flex:1,minWidth:0}},
+        React.createElement("div",{style:{
+          fontSize:13,fontWeight:700,color:"#4ade80",
+          fontFamily:"'Sora',sans-serif",lineHeight:1.3,marginBottom:3,
+        }},"File storage connected"),
+        React.createElement("div",{style:{
+          fontSize:11,color:"rgba(255,255,255,.45)",
+          overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+        }},
+          "Auto-saving to "+(window.__fsa&&window.__fsa.filename||"file")
+        )
+      ),
+      /* Close */
+      React.createElement("button",{
+        onClick:()=>setFsaLaunchModal(null),
+        title:"Dismiss",
+        style:{
+          background:"transparent",border:"none",cursor:"pointer",
+          color:"rgba(255,255,255,.25)",fontSize:18,lineHeight:1,
+          padding:"2px 4px",flexShrink:0,transition:"color .15s",
+        },
+        onMouseEnter:e=>{e.currentTarget.style.color="rgba(255,255,255,.65)";},
+        onMouseLeave:e=>{e.currentTarget.style.color="rgba(255,255,255,.25)";},
+      },"×")
+    )
+  );
+
   /* ── FSA Re-grant Permission floating card ─────────────────────────────
      Appears bottom-right whenever a file handle exists but write permission
      has lapsed (every new browser session). One click re-grants and dismisses.
@@ -18992,6 +19232,8 @@ function App(){
     )
   ),
     FsaPermCard,
+    FsaLaunchWarning,
+    FsaLaunchSuccess,
     UpdateBanner
   );
 }
