@@ -822,6 +822,35 @@ textarea.inp{resize:vertical}
 .tb-btn{padding:5px 12px;border-radius:7px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;transition:all .15s;white-space:nowrap}
 .tb-btn:disabled{opacity:.38;cursor:not-allowed}
 
+/* ── Vivid primary action buttons (Add Account / Add Card / + New etc.) ── */
+.btn-primary{
+  background:linear-gradient(130deg,#0369a1 0%,#0ea5e9 45%,#38bdf8 100%)!important;
+  color:#fff!important;
+  border:none!important;
+  box-shadow:0 2px 12px rgba(14,165,233,.45),0 1px 3px rgba(0,0,0,.25)!important;
+  font-weight:600!important;
+}
+.btn-primary:hover{
+  background:linear-gradient(130deg,#0284c7 0%,#38bdf8 50%,#7dd3fc 100%)!important;
+  box-shadow:0 4px 20px rgba(14,165,233,.6),0 1px 4px rgba(0,0,0,.3)!important;
+  transform:translateY(-1px) scale(1.02);
+}
+.btn-primary:active{transform:translateY(0) scale(.98);box-shadow:0 1px 6px rgba(14,165,233,.4)!important;}
+
+/* ── Toolbar + New button (accent-coloured, vivid) ── */
+.btn-new{
+  background:linear-gradient(130deg,var(--accent) 0%,var(--accent2) 100%)!important;
+  color:#fff!important;
+  border:none!important;
+  box-shadow:0 2px 10px color-mix(in srgb,var(--accent) 50%,transparent)!important;
+  font-weight:600!important;
+}
+.btn-new:hover{
+  box-shadow:0 3px 16px color-mix(in srgb,var(--accent) 65%,transparent)!important;
+  transform:translateY(-1px) scale(1.03);
+}
+.btn-new:active{transform:translateY(0) scale(.98);}
+
 /* ── RESPONSIVE SIDEBAR ── */
 /* Sidebar collapse toggle */
 .nav-collapse-btn{
@@ -1346,7 +1375,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.23.9";
+const APP_VERSION="3.24.1";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
@@ -1488,6 +1517,17 @@ const CHANGELOG=[
     "Trend tab: 12-month net worth line chart with best/worst month callout chips; Asset vs Liability dual-line chart (assets=green solid, liabilities=red dashed — uses existing SvgLine color2 prop); Monthly savings rate bar chart with target reference line (green bars = at/above target, red = below); detailed month-by-month table with Net Worth, Monthly Δ, and Savings Rate columns.",
     "Breakdown tab: SVG asset allocation donut (6 slices: Banks, Cash, MF, Shares, FD, Real Estate) with net worth centred inside; Top Contributors list (all individual accounts/investments ranked by value with animated fill bars and % of total assets); Liabilities breakdown (Credit Cards vs Loans with % share).",
     "Projections tab: 12-month forward projection chart (dashed line continuation of the historical series, based on avg of last 3 months net flow); Milestone Tracker — progress bars for ₹1L, ₹2.5L, ₹5L, ₹10L, ₹25L, ₹50L milestones with ✅ achieved or estimated months remaining; FIRE Projection Detail — FIRE target, amount still needed, estimated years to FIRE at current pace, full progress bar.",
+  ]},
+  {version:"3.24.1",date:"2026-03-13",title:"Buttons: removed travelling shine animation",changes:[
+    "Removed the diagonal shine sweep animation from btn-primary and btn-new.",
+    "Cleaned up unused btn-shine keyframe and position:relative/overflow:hidden on both classes.",
+    "Gradient, glow shadow, and hover/active effects retained.",
+  ]},
+  {version:"3.24.0",date:"2026-03-13",title:"Vivid Add / New buttons",changes:[
+    "btn-primary CSS class: Add Account, Add Card, Add Loan, New Goal and all Btn primary-variant buttons now render with a bright sky-blue gradient, white text, coloured glow shadow, and a travelling shine shimmer animation.",
+    "btn-new CSS class: the + New transaction toolbar button (desktop and mobile) now uses the accent gradient, white text, glow shadow, and the same shine animation.",
+    "Both classes add hover lift (translateY -1px, scale 1.02-1.03) and active press-down (scale .98) for tactile feedback.",
+    "Btn component updated: primary variant now outputs white text instead of black, matching the new vivid background.",
   ]},
   {version:"3.23.9",date:"2026-03-13",title:"Loading splash: removed portfolio ticker",changes:[
     "Removed the rolling portfolio ticker (sample value + percentage badge) from the loading splash screen.",
@@ -2949,8 +2989,9 @@ const SvgBar=({data,h=155})=>{
 /* ── SHARED UI ───────────────────────────────────────────────────────────── */
 const Btn=({children,onClick,v="primary",sz="md",disabled,sx={}})=>{
   const S={sm:{padding:"6px 13px",fontSize:12},md:{padding:"9px 17px",fontSize:14}};
-  const V={primary:{background:"linear-gradient(135deg,var(--accent),var(--accent2))",color:"#000"},secondary:{background:"var(--bg3)",border:"1px solid var(--border)",color:"var(--text3)"},success:{background:"rgba(22,163,74,.13)",border:"1px solid rgba(22,163,74,.35)",color:"#16a34a"},danger:{background:"rgba(239,68,68,.12)",border:"1px solid rgba(239,68,68,.3)",color:"#ef4444"}};
-  return React.createElement("button",{onClick,disabled,style:{display:"inline-flex",alignItems:"center",gap:6,border:"none",borderRadius:8,cursor:disabled?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:500,transition:"all .2s",opacity:disabled?.5:1,...S[sz],...V[v],...sx}},children);
+  const V={primary:{background:"linear-gradient(130deg,#0369a1 0%,#0ea5e9 45%,#38bdf8 100%)",color:"#fff"},secondary:{background:"var(--bg3)",border:"1px solid var(--border)",color:"var(--text3)"},success:{background:"rgba(22,163,74,.13)",border:"1px solid rgba(22,163,74,.35)",color:"#16a34a"},danger:{background:"rgba(239,68,68,.12)",border:"1px solid rgba(239,68,68,.3)",color:"#ef4444"}};
+  const cls=v==="primary"?"btn-primary":v==="secondary"?"":"";
+  return React.createElement("button",{onClick,disabled,className:cls,style:{display:"inline-flex",alignItems:"center",gap:6,border:"none",borderRadius:8,cursor:disabled?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:600,transition:"all .2s",opacity:disabled?.5:1,...S[sz],...V[v],...sx}},children);
 };
 const Badge=({ch,col="var(--accent)"})=>React.createElement("span",{style:{background:`${col}1a`,color:col,border:`1px solid ${col}35`,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600,whiteSpace:"nowrap"}},ch);
 const Card=({children,sx={},cn=""})=>React.createElement("div",{className:cn,style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,padding:20,...sx}},children);
@@ -3704,11 +3745,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onNew,onImport,onMassU
     return React.createElement("div",{style:{display:"flex",flexDirection:"column",flex:1,minHeight:0,borderRadius:12,border:"1px solid var(--border)",overflow:"hidden",background:"var(--bg3)"}},
       /* Mobile toolbar */
       React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,padding:"8px 10px",borderBottom:"1px solid var(--border)",background:"var(--bg4)",flexShrink:0,flexWrap:"wrap"}},
-        React.createElement("button",{onClick:onNew,style:tbBtn("var(--accent)","var(--accentbg)")},"+ New"),
-        selId&&React.createElement("button",{onClick:()=>setEditTx(transactions.find(t=>t.id===selId)),style:tbBtn("#1d4ed8","rgba(29,78,216,.12)")},"✏ Edit"),
-        selId&&React.createElement("button",{onClick:()=>setConfirmDel(transactions.find(t=>t.id===selId)),style:tbBtn("#ef4444","rgba(239,68,68,.12)")},"✕ Del"),
-        React.createElement("div",{style:{flex:1}}),
-        React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},filtered.length+" txns"),
+        React.createElement("button",{onClick:onNew,className:"btn-new",style:tbBtn("var(--accent)","var(--accentbg)")},"+ New"),
         React.createElement("button",{onClick:()=>handleSort(sortKey,sortDir==="asc"?"desc":"asc"),style:{...tbBtn("var(--text4)","var(--bg3)"),minWidth:"auto"}},
           (sortDir==="desc"?"↓ ":"↑ ")+({date:"Date",desc_col:"Desc",payee:"Payee",cat:"Category",out:"Out",in:"In",balance:"Balance"}[sortKey]||"Date")
         ),
@@ -4290,7 +4327,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onNew,onImport,onMassU
             React.createElement("div",{style:{flex:1}})
           )
         :React.createElement(React.Fragment,null,
-            React.createElement("button",{onClick:onNew,style:tbBtn("var(--accent)","var(--accentbg)")},"+ New"),
+            React.createElement("button",{onClick:onNew,className:"btn-new",style:tbBtn("var(--accent)","var(--accentbg)")},"+ New"),
             React.createElement("button",{onClick:()=>selTx&&setEditTx(selTx),disabled:!selTx,style:tbBtn("#1d4ed8","rgba(29,78,216,.12)",!selTx)},"✏ Edit"),
             React.createElement("button",{onClick:()=>selTx&&onDuplicate(selTx),disabled:!selTx,style:tbBtn("#6d28d9","rgba(109,40,217,.12)",!selTx)},"⧉ Duplicate"),
             React.createElement("button",{onClick:()=>selTx&&setConfirmDel(selTx),disabled:!selTx,style:tbBtn("#ef4444","rgba(239,68,68,.12)",!selTx)},"✕ Delete"),
