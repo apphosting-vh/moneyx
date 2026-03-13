@@ -1245,7 +1245,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.23.5";
+const APP_VERSION="3.23.7";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
@@ -1387,6 +1387,23 @@ const CHANGELOG=[
     "Trend tab: 12-month net worth line chart with best/worst month callout chips; Asset vs Liability dual-line chart (assets=green solid, liabilities=red dashed — uses existing SvgLine color2 prop); Monthly savings rate bar chart with target reference line (green bars = at/above target, red = below); detailed month-by-month table with Net Worth, Monthly Δ, and Savings Rate columns.",
     "Breakdown tab: SVG asset allocation donut (6 slices: Banks, Cash, MF, Shares, FD, Real Estate) with net worth centred inside; Top Contributors list (all individual accounts/investments ranked by value with animated fill bars and % of total assets); Liabilities breakdown (Credit Cards vs Loans with % share).",
     "Projections tab: 12-month forward projection chart (dashed line continuation of the historical series, based on avg of last 3 months net flow); Milestone Tracker — progress bars for ₹1L, ₹2.5L, ₹5L, ₹10L, ₹25L, ₹50L milestones with ✅ achieved or estimated months remaining; FIRE Projection Detail — FIRE target, amount still needed, estimated years to FIRE at current pace, full progress bar.",
+  ]},
+  {version:"3.23.7",date:"2026-03-13",title:"Unified Ledger: click column headers to sort",changes:[
+    "sortKey state added to UnifiedLedgerSection alongside existing sortDir.",
+    "Clickable sort columns: Date, Account, Description, Payee, Category, Out, In.",
+    "Clicking an already-active column header toggles asc/desc; clicking a new column sets it as sort key with a sensible default direction.",
+    "Active sort column highlighted in accent colour with filled triangle indicator; inactive columns show faint double-arrow hint.",
+    "SN column click resets to default date-desc order.",
+    "Mobile: sort button added to the toolbar showing active column name and direction.",
+  ]},
+  {version:"3.23.6",date:"2026-03-13",title:"Transaction Ledger: click column headers to sort",changes:[
+    "sortKey state added alongside sortDir -- ledger now sorts by any column, not just date.",
+    "Clickable columns: Date, Description, Payee, Category, Out (debit), In (credit), Balance.",
+    "Clicking an already-active column header toggles direction (asc/desc); clicking a new column sets it as the sort key and defaults to ascending (desc for amounts/balance).",
+    "Active sort column shows a filled triangle (filled-up/filled-down); inactive columns show a faint double-arrow hint on hover.",
+    "SN column click resets to default date-desc order.",
+    "Balance column always uses chronological running balance; sort by Balance re-orders displayed rows by their running balance value.",
+    "Mobile toolbar sort button now shows the active sort column name and direction instead of just Date.",
   ]},
   {version:"3.23.5",date:"2026-03-12",title:"Fix: Share price refresh stuck in fetching state in PWA mode",changes:[
     "Root cause: r.text() body-read was not covered by the AbortController timeout -- a proxy could return HTTP 200 headers then stall the body, hanging the await r.text() call indefinitely while the 8s abort had already cleared. With 18 sequential attempts this appeared permanently stuck.",
@@ -3359,6 +3376,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onNew,onImport,onMassU
   const[selectedIds,setSelectedIds]=useState(new Set());
   const[search,setSearch]=useState("");
   const[sortDir,setSortDir]=useState("desc");
+  const[sortKey,setSortKey]=useState("date"); /* date|desc_col|payee|cat|out|in|balance */
   const[editTx,setEditTx]=useState(null);
   const[confirmDel,setConfirmDel]=useState(null);
   const[importOpen,setImportOpen]=useState(false);
@@ -3488,10 +3506,47 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onNew,onImport,onMassU
     const n=new Set(prev);n.has(name)?n.delete(name):n.add(name);return n;
   });
 
+  // compute running balance for each row (from open balance forward in date order — always chronological)
+  const chronological=[...transactions].sort((a,b)=>a.date.localeCompare(b.date));
+  const balMap={};
+  let running=openBalance||0;
+  for(const tx of chronological){
+    running+=(tx.type==="credit"?tx.amount:-tx.amount);
+    balMap[tx.id]=running;
+  }
+
   // sort & multi-filter
+  /* ── Sort helper: click a header to set key; click same key to flip dir ── */
+  const handleSort=(key,defaultDir="asc")=>{
+    if(sortKey===key){setSortDir(d=>d==="asc"?"desc":"asc");}
+    else{setSortKey(key);setSortDir(defaultDir);}
+  };
+
   const sorted=[...transactions].sort((a,b)=>{
-    const dc=a.date.localeCompare(b.date);
-    return sortDir==="desc"?-dc:dc;
+    let cmp=0;
+    if(sortKey==="date"){
+      cmp=a.date.localeCompare(b.date);
+    } else if(sortKey==="desc_col"){
+      cmp=(a.desc||"").localeCompare(b.desc||"");
+    } else if(sortKey==="payee"){
+      cmp=(a.payee||"").localeCompare(b.payee||"");
+    } else if(sortKey==="cat"){
+      cmp=(a.cat||"").localeCompare(b.cat||"");
+    } else if(sortKey==="out"){
+      const aAmt=a.type==="debit"?a.amount:0;
+      const bAmt=b.type==="debit"?b.amount:0;
+      cmp=aAmt-bAmt;
+    } else if(sortKey==="in"){
+      const aAmt=a.type==="credit"?a.amount:0;
+      const bAmt=b.type==="credit"?b.amount:0;
+      cmp=aAmt-bAmt;
+    } else if(sortKey==="balance"){
+      /* balMap is keyed by id — sort by running balance value */
+      cmp=(balMap[a.id]||0)-(balMap[b.id]||0);
+    } else {
+      cmp=a.date.localeCompare(b.date);
+    }
+    return sortDir==="desc"?-cmp:cmp;
   });
   const filtered=sorted.filter(tx=>{
     /* Jump isolation mode — show ONLY the target transaction */
@@ -3516,15 +3571,6 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onNew,onImport,onMassU
     return true;
   });
 
-  // compute running balance for each row (from open balance forward in date order)
-  const chronological=[...transactions].sort((a,b)=>a.date.localeCompare(b.date));
-  const balMap={};
-  let running=openBalance||0;
-  for(const tx of chronological){
-    running+=(tx.type==="credit"?tx.amount:-tx.amount);
-    balMap[tx.id]=running;
-  }
-
   const selTx=transactions.find(t=>t.id===selId);
   const allFilteredIds=filtered.map(t=>t.id);
   const allFilteredSelected=allFilteredIds.length>0&&allFilteredIds.every(id=>selectedIds.has(id));
@@ -3548,7 +3594,9 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onNew,onImport,onMassU
         selId&&React.createElement("button",{onClick:()=>setConfirmDel(transactions.find(t=>t.id===selId)),style:tbBtn("#ef4444","rgba(239,68,68,.12)")},"✕ Del"),
         React.createElement("div",{style:{flex:1}}),
         React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},filtered.length+" txns"),
-        React.createElement("button",{onClick:()=>setSortDir(d=>d==="desc"?"asc":"desc"),style:{...tbBtn("var(--text4)","var(--bg3)"),minWidth:"auto"}},sortDir==="desc"?"↓ Date":"↑ Date"),
+        React.createElement("button",{onClick:()=>handleSort(sortKey,sortDir==="asc"?"desc":"asc"),style:{...tbBtn("var(--text4)","var(--bg3)"),minWidth:"auto"}},
+          (sortDir==="desc"?"↓ ":"↑ ")+({date:"Date",desc_col:"Desc",payee:"Payee",cat:"Category",out:"Out",in:"In",balance:"Balance"}[sortKey]||"Date")
+        ),
         React.createElement("button",{
           onClick:()=>setShowFilters(f=>!f),
           style:{...tbBtn(activeFilterCount>0?"var(--accent)":"var(--text4)",activeFilterCount>0?"var(--accentbg)":"var(--bg3)"),minWidth:"auto",position:"relative"}
@@ -3896,28 +3944,87 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onNew,onImport,onMassU
       ),
       /* Reconcile */
       React.createElement("div",{style:{padding:"9px 4px"}}),
-      /* SN */
-      React.createElement("div",{style:{padding:"9px 4px",cursor:"pointer"},onClick:()=>setSortDir(d=>d==="desc"?"asc":"desc")},"SN"),
+      /* SN — click to reset to default date-desc */
+      React.createElement("div",{
+        style:{padding:"9px 4px",cursor:"pointer",color:sortKey==="date"?"var(--accent)":"var(--text5)"},
+        onClick:()=>{setSortKey("date");setSortDir("desc");},
+        title:"Reset to default sort (newest first)"
+      },"SN"),
       /* Date */
-      React.createElement("div",{style:{padding:"9px 4px",cursor:"pointer",display:"flex",alignItems:"center",gap:4},onClick:()=>setSortDir(d=>d==="desc"?"asc":"desc")},
-        "Date",React.createElement("span",null,sortDir==="desc"?"▼":"▲")
-      ),
+      (()=>{const active=sortKey==="date";return React.createElement("div",{
+        style:{padding:"9px 4px",cursor:"pointer",display:"flex",alignItems:"center",gap:4,
+          color:active?"var(--accent)":"var(--text5)",
+          background:active?"var(--accentbg2)":"transparent",borderRadius:4,transition:"background .12s"},
+        onClick:()=>handleSort("date","desc"),title:"Sort by Date"
+      },
+        "Date",
+        React.createElement("span",{style:{fontSize:10,opacity:active?1:.35}},
+          active?(sortDir==="desc"?"▼":"▲"):"⇅")
+      );})(),
       /* Number */
       React.createElement("div",{style:{padding:"9px 4px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},"Number"),
       /* Status */
       React.createElement("div",{style:{padding:"9px 4px",textAlign:"center"}},"Status"),
       /* Description */
-      React.createElement("div",{style:{padding:"9px 4px"}},"Description"),
+      (()=>{const active=sortKey==="desc_col";return React.createElement("div",{
+        style:{padding:"9px 4px",cursor:"pointer",display:"flex",alignItems:"center",gap:4,
+          color:active?"var(--accent)":"var(--text5)",
+          background:active?"var(--accentbg2)":"transparent",borderRadius:4,transition:"background .12s"},
+        onClick:()=>handleSort("desc_col","asc"),title:"Sort by Description"
+      },
+        "Description",
+        React.createElement("span",{style:{fontSize:10,opacity:active?1:.35}},active?(sortDir==="desc"?"▼":"▲"):"⇅")
+      );})(),
       /* Payee */
-      React.createElement("div",{style:{padding:"9px 4px"}},"Payee"),
+      (()=>{const active=sortKey==="payee";return React.createElement("div",{
+        style:{padding:"9px 4px",cursor:"pointer",display:"flex",alignItems:"center",gap:4,
+          color:active?"var(--accent)":"var(--text5)",
+          background:active?"var(--accentbg2)":"transparent",borderRadius:4,transition:"background .12s"},
+        onClick:()=>handleSort("payee","asc"),title:"Sort by Payee"
+      },
+        "Payee",
+        React.createElement("span",{style:{fontSize:10,opacity:active?1:.35}},active?(sortDir==="desc"?"▼":"▲"):"⇅")
+      );})(),
       /* Category */
-      React.createElement("div",{style:{padding:"9px 4px"}},"Category"),
+      (()=>{const active=sortKey==="cat";return React.createElement("div",{
+        style:{padding:"9px 4px",cursor:"pointer",display:"flex",alignItems:"center",gap:4,
+          color:active?"var(--accent)":"var(--text5)",
+          background:active?"var(--accentbg2)":"transparent",borderRadius:4,transition:"background .12s"},
+        onClick:()=>handleSort("cat","asc"),title:"Sort by Category"
+      },
+        "Category",
+        React.createElement("span",{style:{fontSize:10,opacity:active?1:.35}},active?(sortDir==="desc"?"▼":"▲"):"⇅")
+      );})(),
       /* Out */
-      React.createElement("div",{style:{padding:"9px 4px",textAlign:"right",color:"#ef4444"}},"Out"),
+      (()=>{const active=sortKey==="out";return React.createElement("div",{
+        style:{padding:"9px 4px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"flex-end",gap:4,
+          color:active?"#ef4444":"var(--text5)",
+          background:active?"rgba(239,68,68,.07)":"transparent",borderRadius:4,transition:"background .12s"},
+        onClick:()=>handleSort("out","desc"),title:"Sort by Debit amount"
+      },
+        React.createElement("span",{style:{fontSize:10,opacity:active?1:.35}},active?(sortDir==="desc"?"▼":"▲"):"⇅"),
+        "Out"
+      );})(),
       /* In */
-      React.createElement("div",{style:{padding:"9px 4px",textAlign:"right",color:"#16a34a"}},"In"),
+      (()=>{const active=sortKey==="in";return React.createElement("div",{
+        style:{padding:"9px 4px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"flex-end",gap:4,
+          color:active?"#16a34a":"var(--text5)",
+          background:active?"rgba(22,163,74,.07)":"transparent",borderRadius:4,transition:"background .12s"},
+        onClick:()=>handleSort("in","desc"),title:"Sort by Credit amount"
+      },
+        React.createElement("span",{style:{fontSize:10,opacity:active?1:.35}},active?(sortDir==="desc"?"▼":"▲"):"⇅"),
+        "In"
+      );})(),
       /* Balance */
-      React.createElement("div",{style:{padding:"9px 4px",textAlign:"right",color:accentColor}},"Balance")
+      (()=>{const active=sortKey==="balance";return React.createElement("div",{
+        style:{padding:"9px 4px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"flex-end",gap:4,
+          color:active?accentColor:"var(--text5)",
+          background:active?"var(--accentbg2)":"transparent",borderRadius:4,transition:"background .12s"},
+        onClick:()=>handleSort("balance","desc"),title:"Sort by running Balance"
+      },
+        React.createElement("span",{style:{fontSize:10,opacity:active?1:.35}},active?(sortDir==="desc"?"▼":"▲"):"⇅"),
+        "Balance"
+      );})()
     ),
     /* ── Table body rows — direct children of the min-width wrapper ── */
       filtered.length===0&&React.createElement("div",{style:{textAlign:"center",padding:"36px 20px",color:"var(--text6)"}},
@@ -15047,6 +15154,11 @@ const UnifiedLedgerSection=React.memo(({banks,cards,cash,categories,payees,isMob
   /* ── Filter states — all declared before any reference ── */
   const[search,setSearch]=useState("");
   const[sortDir,setSortDir]=useState("desc");
+  const[sortKey,setSortKey]=useState("date"); /* date|account|desc_col|payee|cat|out|in */
+  const handleSortU=(key,defaultDir="asc")=>{
+    if(sortKey===key){setSortDir(d=>d==="asc"?"desc":"asc");}
+    else{setSortKey(key);setSortDir(defaultDir);}
+  };
   const[showFilters,setShowFilters]=useState(false);
   const[filterAccounts,setFilterAccounts]=useState(new Set());
   const[accSearch,setAccSearch]=useState("");
@@ -15122,7 +15234,18 @@ const UnifiedLedgerSection=React.memo(({banks,cards,cash,categories,payees,isMob
   };
 
   /* ── Sort then filter ── */
-  const sorted=[...allTxns].sort((a,b)=>{const dc=a.date.localeCompare(b.date);return sortDir==="desc"?-dc:dc;});
+  const sorted=[...allTxns].sort((a,b)=>{
+    let cmp=0;
+    if(sortKey==="date")          cmp=a.date.localeCompare(b.date);
+    else if(sortKey==="account")  cmp=(a._accName||"").localeCompare(b._accName||"");
+    else if(sortKey==="desc_col") cmp=(a.desc||"").localeCompare(b.desc||"");
+    else if(sortKey==="payee")    cmp=(a.payee||"").localeCompare(b.payee||"");
+    else if(sortKey==="cat")      cmp=(a.cat||"").localeCompare(b.cat||"");
+    else if(sortKey==="out"){const aA=a.type==="debit"?a.amount:0;const bA=b.type==="debit"?b.amount:0;cmp=aA-bA;}
+    else if(sortKey==="in"){const aA=a.type==="credit"?a.amount:0;const bA=b.type==="credit"?b.amount:0;cmp=aA-bA;}
+    else cmp=a.date.localeCompare(b.date);
+    return sortDir==="desc"?-cmp:cmp;
+  });
   const filtered=sorted.filter(tx=>{
     if(search){const q=search.toLowerCase();const hit=(tx.desc||"").toLowerCase().includes(q)||(tx.payee||"").toLowerCase().includes(q)||(tx.cat||"").toLowerCase().includes(q)||(tx._accName||"").toLowerCase().includes(q)||(tx._accBank||"").toLowerCase().includes(q)||String(tx.amount).includes(q);if(!hit)return false;}
     if(filterAccounts.size>0&&!filterAccounts.has(tx._accId))return false;
@@ -15400,7 +15523,11 @@ const UnifiedLedgerSection=React.memo(({banks,cards,cash,categories,payees,isMob
           React.createElement("span",{style:{position:"absolute",left:9,top:"50%",transform:"translateY(-50%)",color:"var(--text5)",fontSize:13,pointerEvents:"none"}},"🔍"),
           React.createElement("input",{value:search,onChange:e=>setSearch(e.target.value),placeholder:"Search all transactions…",style:{width:"100%",background:"var(--inp-bg)",border:"1px solid var(--border)",borderRadius:8,color:"var(--text)",fontFamily:"'DM Sans',sans-serif",fontSize:12,padding:"7px 10px 7px 28px",outline:"none",boxSizing:"border-box"}})
         ),
-        React.createElement("button",{onClick:()=>setShowFilters(f=>!f),style:tbBtn(activeFilterCount>0?"var(--accent)":"var(--text4)",showFilters?"var(--accentbg2)":activeFilterCount>0?"var(--accentbg)":"transparent")},showFilters?"▲ Hide":"⚡ Filter"+(activeFilterCount>0?" ("+activeFilterCount+")":""))
+        React.createElement("button",{onClick:()=>setShowFilters(f=>!f),style:tbBtn(activeFilterCount>0?"var(--accent)":"var(--text4)",showFilters?"var(--accentbg2)":activeFilterCount>0?"var(--accentbg)":"transparent")},showFilters?"▲ Hide":"⚡ Filter"+(activeFilterCount>0?" ("+activeFilterCount+")":"")),
+        React.createElement("button",{
+          onClick:()=>handleSortU(sortKey,sortDir==="asc"?"desc":"asc"),
+          style:{...tbBtn("var(--text4)","var(--bg3)"),minWidth:"auto"}
+        },(sortDir==="desc"?"↓ ":"↑ ")+({date:"Date",account:"Account",desc_col:"Desc",payee:"Payee",cat:"Category",out:"Out",in:"In"}[sortKey]||"Date"))
       ),
       showFilters&&FilterPanel,
       HeroCard,
@@ -15477,14 +15604,62 @@ const UnifiedLedgerSection=React.memo(({banks,cards,cash,categories,payees,isMob
         React.createElement("div",{style:{minWidth:MINW}},
           /* Sticky column header */
           React.createElement("div",{className:"ldg-table-hdr",style:{display:"grid",gridTemplateColumns:COLS,position:"sticky",top:0,zIndex:3,minWidth:MINW,background:"var(--bg4)",borderBottom:"2px solid var(--border)",fontSize:11,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,userSelect:"none"}},
-            React.createElement("div",{style:{padding:"9px 4px",cursor:"pointer"},onClick:()=>setSortDir(d=>d==="desc"?"asc":"desc")},"SN"),
-            React.createElement("div",{style:{padding:"9px 4px",cursor:"pointer",display:"flex",alignItems:"center",gap:4},onClick:()=>setSortDir(d=>d==="desc"?"asc":"desc")},"Date",React.createElement("span",null,sortDir==="desc"?"▼":"▲")),
-            React.createElement("div",{style:{padding:"9px 4px"}},"Account"),
-            React.createElement("div",{style:{padding:"9px 4px"}},"Description"),
-            React.createElement("div",{style:{padding:"9px 4px"}},"Payee"),
-            React.createElement("div",{style:{padding:"9px 4px"}},"Category"),
-            React.createElement("div",{style:{padding:"9px 4px",textAlign:"right",color:"#ef4444"}},"Out"),
-            React.createElement("div",{style:{padding:"9px 4px",textAlign:"right",color:"#16a34a"}},"In"),
+            /* SN — click resets to date-desc */
+            React.createElement("div",{
+              style:{padding:"9px 4px",cursor:"pointer",color:sortKey==="date"?"var(--accent)":"var(--text5)"},
+              onClick:()=>{setSortKey("date");setSortDir("desc");},
+              title:"Reset to default sort (newest first)"
+            },"SN"),
+            /* Date */
+            (()=>{const active=sortKey==="date";return React.createElement("div",{
+              style:{padding:"9px 4px",cursor:"pointer",display:"flex",alignItems:"center",gap:4,
+                color:active?"var(--accent)":"var(--text5)",
+                background:active?"var(--accentbg2)":"transparent",borderRadius:4,transition:"background .12s"},
+              onClick:()=>handleSortU("date","desc"),title:"Sort by Date"
+            },"Date",React.createElement("span",{style:{fontSize:10,opacity:active?1:.35}},active?(sortDir==="desc"?"▼":"▲"):"⇅"));})(),
+            /* Account */
+            (()=>{const active=sortKey==="account";return React.createElement("div",{
+              style:{padding:"9px 4px",cursor:"pointer",display:"flex",alignItems:"center",gap:4,
+                color:active?"var(--accent)":"var(--text5)",
+                background:active?"var(--accentbg2)":"transparent",borderRadius:4,transition:"background .12s"},
+              onClick:()=>handleSortU("account","asc"),title:"Sort by Account"
+            },"Account",React.createElement("span",{style:{fontSize:10,opacity:active?1:.35}},active?(sortDir==="desc"?"▼":"▲"):"⇅"));})(),
+            /* Description */
+            (()=>{const active=sortKey==="desc_col";return React.createElement("div",{
+              style:{padding:"9px 4px",cursor:"pointer",display:"flex",alignItems:"center",gap:4,
+                color:active?"var(--accent)":"var(--text5)",
+                background:active?"var(--accentbg2)":"transparent",borderRadius:4,transition:"background .12s"},
+              onClick:()=>handleSortU("desc_col","asc"),title:"Sort by Description"
+            },"Description",React.createElement("span",{style:{fontSize:10,opacity:active?1:.35}},active?(sortDir==="desc"?"▼":"▲"):"⇅"));})(),
+            /* Payee */
+            (()=>{const active=sortKey==="payee";return React.createElement("div",{
+              style:{padding:"9px 4px",cursor:"pointer",display:"flex",alignItems:"center",gap:4,
+                color:active?"var(--accent)":"var(--text5)",
+                background:active?"var(--accentbg2)":"transparent",borderRadius:4,transition:"background .12s"},
+              onClick:()=>handleSortU("payee","asc"),title:"Sort by Payee"
+            },"Payee",React.createElement("span",{style:{fontSize:10,opacity:active?1:.35}},active?(sortDir==="desc"?"▼":"▲"):"⇅"));})(),
+            /* Category */
+            (()=>{const active=sortKey==="cat";return React.createElement("div",{
+              style:{padding:"9px 4px",cursor:"pointer",display:"flex",alignItems:"center",gap:4,
+                color:active?"var(--accent)":"var(--text5)",
+                background:active?"var(--accentbg2)":"transparent",borderRadius:4,transition:"background .12s"},
+              onClick:()=>handleSortU("cat","asc"),title:"Sort by Category"
+            },"Category",React.createElement("span",{style:{fontSize:10,opacity:active?1:.35}},active?(sortDir==="desc"?"▼":"▲"):"⇅"));})(),
+            /* Out */
+            (()=>{const active=sortKey==="out";return React.createElement("div",{
+              style:{padding:"9px 4px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"flex-end",gap:4,
+                color:active?"#ef4444":"var(--text5)",
+                background:active?"rgba(239,68,68,.07)":"transparent",borderRadius:4,transition:"background .12s"},
+              onClick:()=>handleSortU("out","desc"),title:"Sort by Debit amount"
+            },React.createElement("span",{style:{fontSize:10,opacity:active?1:.35}},active?(sortDir==="desc"?"▼":"▲"):"⇅"),"Out");})(),
+            /* In */
+            (()=>{const active=sortKey==="in";return React.createElement("div",{
+              style:{padding:"9px 4px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"flex-end",gap:4,
+                color:active?"#16a34a":"var(--text5)",
+                background:active?"rgba(22,163,74,.07)":"transparent",borderRadius:4,transition:"background .12s"},
+              onClick:()=>handleSortU("in","desc"),title:"Sort by Credit amount"
+            },React.createElement("span",{style:{fontSize:10,opacity:active?1:.35}},active?(sortDir==="desc"?"▼":"▲"):"⇅"),"In");})(),
+            /* View — non-sortable */
             React.createElement("div",{style:{padding:"9px 4px",textAlign:"center",color:"var(--accent)",fontSize:10}},"View")
           ),
           /* Empty state */
