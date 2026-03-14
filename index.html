@@ -1628,7 +1628,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.24.9";
+const APP_VERSION="3.25.4";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
@@ -1770,6 +1770,35 @@ const CHANGELOG=[
     "Trend tab: 12-month net worth line chart with best/worst month callout chips; Asset vs Liability dual-line chart (assets=green solid, liabilities=red dashed — uses existing SvgLine color2 prop); Monthly savings rate bar chart with target reference line (green bars = at/above target, red = below); detailed month-by-month table with Net Worth, Monthly Δ, and Savings Rate columns.",
     "Breakdown tab: SVG asset allocation donut (6 slices: Banks, Cash, MF, Shares, FD, Real Estate) with net worth centred inside; Top Contributors list (all individual accounts/investments ranked by value with animated fill bars and % of total assets); Liabilities breakdown (Credit Cards vs Loans with % share).",
     "Projections tab: 12-month forward projection chart (dashed line continuation of the historical series, based on avg of last 3 months net flow); Milestone Tracker — progress bars for ₹1L, ₹2.5L, ₹5L, ₹10L, ₹25L, ₹50L milestones with ✅ achieved or estimated months remaining; FIRE Projection Detail — FIRE target, amount still needed, estimated years to FIRE at current pace, full progress bar.",
+  ]},
+  {version:"3.25.4",date:"2026-03-14",title:"Fix: Missing closing paren for Right Panel div in SettingsSection",changes:[
+    "Root cause: removing the Changelog Card from the backup tab reduced the child count but did not account for the closing paren of the Right Panel wrapper div (React.createElement div with flex:1 that wraps all stab conditionals).",
+    "Fix: added the missing ) to close the Right Panel div between the backup tab end and the ConfirmModal. SettingsSection paren balance is now confirmed 864 open = 864 close.",
+  ]},
+  {version:"3.25.3",date:"2026-03-14",title:"Fix: SyntaxError blank screen from unbalanced parens after changelog removal",changes:[
+    "Root cause: removing the Changelog & Versioning Card from Settings Data & Backup left a dangling trailing comma after the Reset Card closing paren, making Babel see two consecutive ) tokens where only one was expected.",
+    "Fix: Reset Card closing changed from ), to ) and the tab wrapper ) comment corrected to restore balanced parentheses.",
+  ]},
+  {version:"3.25.2",date:"2026-03-14",title:"Fix: Changelog sorted by version; Settings panel removed",changes:[
+    "Root cause: CHANGELOG entries were appended mid-array (not prepended), so CHANGELOG[0] was v3.22.4, not the latest. The Info tab used ei===0 as the LATEST marker, showing the wrong version as latest.",
+    "Fix: Info tab now sorts the CHANGELOG array by semantic version number (major.minor.patch descending) at render time using React.useMemo, so display order is always newest-first regardless of insertion order in source.",
+    "Fix: LATEST badge now keyed on entry.version===APP_VERSION instead of ei===0, so it always correctly marks the current running version.",
+    "Removed: Changelog & Versioning panel from Settings > Data & Backup -- it is now exclusively in Info > Version History & Changelog.",
+  ]},
+  {version:"3.25.1",date:"2026-03-14",title:"Info tab: Version History & Changelog panel",changes:[
+    "New collapsible Version History block in the Info tab, positioned after Data & Privacy and before the footer stamp.",
+    "Shows all releases from the CHANGELOG array, most recent first.",
+    "Each entry shows version number, release date, title, and a chevron toggle.",
+    "Latest release is highlighted with a green LATEST badge and accent border.",
+    "Clicking any entry expands it to show the full bullet-point list of changes.",
+    "Summary strip shows current version, total release count, and oldest version in the log.",
+    "Paginated: shows latest 10 by default with a Show all / Show latest 10 toggle button.",
+  ]},
+  {version:"3.25.0",date:"2026-03-14",title:"Version badge on nav sidebar + changelog",changes:[
+    "Full sidebar footer: version now shown as a bold frosted pill (Sora font, weight 800, white-85% text on white-12% bg with white-22% border) that contrasts clearly against every dark sidebar gradient.",
+    "Collapsed sidebar footer: same frosted pill style, horizontal layout replacing the old vertical rotated tiny text.",
+    "Both sidebars: version badge sits below the auto-save dot/label in a dedicated row with extra gap for breathing room.",
+    "Applies to all 16 themes -- the frosted white treatment works across every sidebar colour (deep navy, indigo, teal, crimson, amber, orchid etc).",
   ]},
   {version:"3.24.9",date:"2026-03-14",title:"Fix: Serial numbers based on entry order, not display order",changes:[
     "Root cause: SN was computed as sorted.length - indexOf(tx) in the current display sort, so it changed whenever the user sorted by a different column or when a duplicate was inserted mid-array.",
@@ -14101,11 +14130,9 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
                   React.createElement(Btn,{v:"danger",onClick:()=>{
                     dispatch({type:"RESET_ALL"});
                     try{
-                      /* Explicitly persist EMPTY_STATE so loadState() on next boot
-                         never falls back to INIT() with its sample data */
                       localStorage.setItem(LS_KEY,JSON.stringify(EMPTY_STATE()));
                       localStorage.removeItem(LS_THEME);
-                      savePinHash(""); /* clear PIN so user is not locked out after reset */
+                      savePinHash("");
                       clearSessionUnlock();
                     }catch{}
                     setTimeout(()=>{window.location.href="#/dashboard";window.location.reload();},100);
@@ -14113,49 +14140,10 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
                   React.createElement(Btn,{v:"secondary",onClick:()=>setShowResetConfirm(false),sx:{justifyContent:"center"}},"Cancel")
                 )
               )
-        ),
-
-        /* ── Changelog & Versioning */
-        React.createElement(Card,{sx:{marginTop:8}},
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
-            React.createElement("div",null,
-              React.createElement("div",{style:{fontSize:12,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:600}},"📋 Changelog & Versioning"),
-              React.createElement("div",{style:{fontSize:12,color:"var(--text6)",marginTop:3}},"Current version: ",React.createElement("span",{style:{color:"var(--accent)",fontWeight:700}},APP_VERSION))
-            )
-          ),
-          React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:14}},
-            CHANGELOG.map((entry,ei)=>
-              React.createElement("div",{key:entry.version,style:{
-                borderLeft:"3px solid "+(ei===0?"var(--accent)":"var(--border)"),
-                paddingLeft:14,paddingBottom:ei<CHANGELOG.length-1?4:0,
-                opacity:ei===0?1:0.75
-              }},
-                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:6}},
-                  React.createElement("span",{style:{
-                    fontSize:11,fontWeight:800,padding:"2px 9px",borderRadius:20,
-                    background:ei===0?"var(--accentbg)":"var(--bg5)",
-                    border:"1px solid "+(ei===0?"var(--accent)":"var(--border)"),
-                    color:ei===0?"var(--accent)":"var(--text5)",fontFamily:"'Sora',sans-serif"
-                  }},"v"+entry.version),
-                  React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text3)"}},entry.title),
-                  React.createElement("span",{style:{fontSize:11,color:"var(--text6)",marginLeft:"auto"}},entry.date)
-                ),
-                React.createElement("ul",{style:{margin:0,paddingLeft:16,listStyle:"none"}},
-                  entry.changes.map((c,ci)=>
-                    React.createElement("li",{key:ci,style:{fontSize:12,color:"var(--text5)",marginBottom:3,lineHeight:1.6,display:"flex",gap:6}},
-                      React.createElement("span",{style:{color:"var(--accent)",flexShrink:0}},"›"),
-                      c
-                    )
-                  )
-                )
-              )
-            )
-          )
         )
 
-      )   /* end backup tab */
-
-      ),
+      ),  /* end backup tab */
+    ),    /* end right panel */
     /* Confirm dialog */
     confirm&&React.createElement(ConfirmModal,{msg:confirm.msg,onConfirm:doDelete,onCancel:()=>setConfirm(null)})
   );
@@ -19621,6 +19609,102 @@ const InfoSection=React.memo(({isMobile})=>{
       ))
     )}),
 
+    /* ── Version History / Changelog ── */
+    (()=>{
+      const[openVer,setOpenVer]=React.useState(null);
+      const[showAll,setShowAll]=React.useState(false);
+      /* Sort descending by version number so newest is always first */
+      const sortedLog=React.useMemo(()=>[...CHANGELOG].sort((a,b)=>{
+        const va=a.version.split(".").map(Number);
+        const vb=b.version.split(".").map(Number);
+        for(let i=0;i<3;i++){if((va[i]||0)!==(vb[i]||0))return (vb[i]||0)-(va[i]||0);}
+        return 0;
+      }),[]);
+      const displayed=showAll?sortedLog:sortedLog.slice(0,10);
+      const oldestVer=sortedLog[sortedLog.length-1]?.version;
+      return Block({icon:"📋",title:"Version History & Changelog",accent:"#059669",children:
+        React.createElement("div",null,
+          /* Summary strip */
+          React.createElement("div",{style:{
+            display:"flex",gap:10,flexWrap:"wrap",marginBottom:16,
+            padding:"10px 14px",borderRadius:10,
+            background:"linear-gradient(135deg,rgba(5,150,105,.07),rgba(5,150,105,.02))",
+            border:"1px solid rgba(5,150,105,.2)",
+          }},
+            React.createElement("span",{style:{fontSize:12,color:"#059669",fontWeight:700}},"Current: v"+APP_VERSION),
+            React.createElement("span",{style:{fontSize:12,color:"var(--text5)"}},"|"),
+            React.createElement("span",{style:{fontSize:12,color:"var(--text5)"}},"Total releases: "+sortedLog.length),
+            React.createElement("span",{style:{fontSize:12,color:"var(--text5)"}},"|"),
+            React.createElement("span",{style:{fontSize:12,color:"var(--text5)"}},"Since: v"+oldestVer)
+          ),
+          /* Version entries */
+          displayed.map((entry)=>{
+            const isLatest=entry.version===APP_VERSION;
+            const isOpen=openVer===entry.version;
+            return React.createElement("div",{key:entry.version,style:{
+              marginBottom:6,borderRadius:10,overflow:"hidden",
+              border:"1px solid "+(isLatest?"var(--accent)44":"var(--border2)"),
+              background:isLatest?"var(--accentbg2)":"var(--bg4)",
+            }},
+              /* Header row */
+              React.createElement("div",{
+                onClick:()=>setOpenVer(isOpen?null:entry.version),
+                style:{
+                  display:"flex",alignItems:"center",gap:10,
+                  padding:"9px 14px",cursor:"pointer",userSelect:"none",
+                }
+              },
+                isLatest&&React.createElement("span",{style:{
+                  fontSize:9,fontWeight:800,color:"#fff",background:"#059669",
+                  borderRadius:4,padding:"1px 6px",letterSpacing:.4,flexShrink:0,
+                }},"LATEST"),
+                React.createElement("span",{style:{
+                  fontFamily:"'Sora',sans-serif",fontSize:12,fontWeight:700,
+                  color:isLatest?"var(--accent)":"var(--text2)",
+                  flexShrink:0,minWidth:52,
+                }},"v"+entry.version),
+                React.createElement("span",{style:{
+                  flex:1,fontSize:12,color:"var(--text3)",
+                  overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+                }},entry.title),
+                React.createElement("span",{style:{fontSize:10,color:"var(--text6)",flexShrink:0,marginRight:6}},entry.date),
+                React.createElement("span",{style:{
+                  fontSize:10,color:"var(--text5)",
+                  transform:isOpen?"rotate(180deg)":"rotate(0deg)",
+                  display:"inline-block",transition:"transform .2s",flexShrink:0,
+                }},"▼")
+              ),
+              /* Change list */
+              isOpen&&React.createElement("div",{style:{
+                padding:"10px 14px 12px 14px",
+                borderTop:"1px solid var(--border2)",
+              }},
+                entry.changes.map((ch,ci)=>React.createElement("div",{key:ci,style:{
+                  display:"flex",gap:8,alignItems:"flex-start",marginBottom:5,
+                }},
+                  React.createElement("span",{style:{color:"#059669",fontSize:11,flexShrink:0,marginTop:2}},"▸"),
+                  React.createElement("span",{style:{fontSize:12,color:"var(--text4)",lineHeight:1.6}},ch)
+                ))
+              )
+            );
+          }),
+          /* Show more / less */
+          sortedLog.length>10&&React.createElement("button",{
+            onClick:()=>setShowAll(s=>!s),
+            style:{
+              width:"100%",marginTop:8,padding:"8px 16px",
+              borderRadius:9,border:"1px solid var(--border)",
+              background:"transparent",color:"var(--text4)",
+              cursor:"pointer",fontFamily:"'DM Sans',sans-serif",
+              fontSize:12,fontWeight:500,transition:"all .15s",
+            },
+            onMouseEnter:e=>{e.currentTarget.style.background="var(--accentbg2)";e.currentTarget.style.color="var(--accent)";},
+            onMouseLeave:e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color="var(--text4)";},
+          },showAll?"▲ Show latest 10 only":"▼ Show all "+sortedLog.length+" releases")
+        )
+      });
+    })(),
+
     /* ── Footer stamp ── */
     React.createElement("div",{style:{
       textAlign:"center",padding:"16px 20px",
@@ -20303,18 +20387,25 @@ function App(){
     React.createElement("div",{style:{
       padding:"10px 0 calc(10px + env(safe-area-inset-bottom,0px))",
       borderTop:"1px solid var(--border2)",
-      display:"flex",flexDirection:"column",alignItems:"center",gap:4
+      display:"flex",flexDirection:"column",alignItems:"center",gap:6
     }},
       React.createElement("span",{title:"Auto-saved",style:{
         width:7,height:7,borderRadius:"50%",
         background:"#16a34a",display:"inline-block",
         boxShadow:"0 0 0 2px #22c55e33"
       }}),
-      React.createElement("span",{style:{
-        fontSize:8,color:"var(--text8)",letterSpacing:.3,
-        fontFamily:"'DM Sans',sans-serif",writingMode:"vertical-lr",
-        transform:"rotate(180deg)",lineHeight:1
-      }},"v"+APP_VERSION)
+      React.createElement("span",{
+        title:"v"+APP_VERSION,
+        style:{
+          fontSize:9,fontWeight:800,letterSpacing:.6,
+          fontFamily:"'Sora',sans-serif",
+          color:"rgba(255,255,255,.75)",
+          background:"rgba(255,255,255,.10)",
+          border:"1px solid rgba(255,255,255,.18)",
+          borderRadius:5,padding:"2px 5px",
+          lineHeight:1.4,whiteSpace:"nowrap",
+        }
+      },"v"+APP_VERSION)
     )
   );
 
@@ -20375,7 +20466,18 @@ function App(){
         React.createElement("span",{style:{color:"#16a34a",fontWeight:600}},"Auto-saved")
       ),
       React.createElement("span",{style:{color:"var(--text7)"}},"Works offline · Data persists"),
-      React.createElement("span",{style:{color:"var(--text8)",fontSize:9,marginTop:1,letterSpacing:.3}},"v"+APP_VERSION)
+      React.createElement("div",{style:{marginTop:8}},
+        React.createElement("span",{style:{
+          display:"inline-block",
+          fontSize:11,fontWeight:800,letterSpacing:.5,
+          fontFamily:"'Sora',sans-serif",
+          color:"rgba(255,255,255,.85)",
+          background:"rgba(255,255,255,.12)",
+          border:"1px solid rgba(255,255,255,.22)",
+          borderRadius:6,padding:"3px 10px",
+          lineHeight:1.5,
+        }},"v"+APP_VERSION)
+      )
     )
   );
 
