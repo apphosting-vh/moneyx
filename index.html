@@ -1628,7 +1628,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.25.4";
+const APP_VERSION="3.25.6";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
@@ -1770,6 +1770,22 @@ const CHANGELOG=[
     "Trend tab: 12-month net worth line chart with best/worst month callout chips; Asset vs Liability dual-line chart (assets=green solid, liabilities=red dashed — uses existing SvgLine color2 prop); Monthly savings rate bar chart with target reference line (green bars = at/above target, red = below); detailed month-by-month table with Net Worth, Monthly Δ, and Savings Rate columns.",
     "Breakdown tab: SVG asset allocation donut (6 slices: Banks, Cash, MF, Shares, FD, Real Estate) with net worth centred inside; Top Contributors list (all individual accounts/investments ranked by value with animated fill bars and % of total assets); Liabilities breakdown (Credit Cards vs Loans with % share).",
     "Projections tab: 12-month forward projection chart (dashed line continuation of the historical series, based on avg of last 3 months net flow); Milestone Tracker — progress bars for ₹1L, ₹2.5L, ₹5L, ₹10L, ₹25L, ₹50L milestones with ✅ achieved or estimated months remaining; FIRE Projection Detail — FIRE target, amount still needed, estimated years to FIRE at current pace, full progress bar.",
+  ]},
+  {version:"3.25.6",date:"2026-03-14",title:"Ledger: latest same-day transaction sorts to top row",changes:[
+    "Root cause: date-desc sort had no tiebreaker, so same-date transactions stayed in array insertion order -- first added stayed at top.",
+    "Fix: when sortKey is date (default), _sn is used as a secondary sort key (desc). Higher _sn = later entry = higher in the list.",
+    "Result: if 5 transactions are added on the same day, the 5th (highest _sn) appears at row 1, the 4th at row 2, and so on.",
+    "Applied to both TxLedger and UnifiedLedger sort logic.",
+    "Other sort columns (Description, Payee, Category, Out, In, Balance) are unaffected.",
+  ]},
+  {version:"3.25.5",date:"2026-03-14",title:"Serial numbers: permanent, stored at creation time",changes:[
+    "Root cause: SN was computed at render time from _addedAt sort order -- fragile for rapid additions, imports, and existing data without timestamps.",
+    "Fix: nextSn(txs) helper added to reducer -- returns max(_sn)+1 across all transactions in an account.",
+    "ADD_BANK_TX, ADD_CARD_TX, ADD_CASH_TX: new transactions get _sn = nextSn(existing) stamped permanently in the reducer at the moment of creation.",
+    "DUP_BANK_TX, DUP_CARD_TX, DUP_CASH_TX: duplicates also get _sn = nextSn(existing) so they always continue the sequence, never reuse or skip numbers.",
+    "Display (TxLedger): reads tx._sn directly when present. Legacy transactions without _sn are ranked after max(_sn) using _addedAt order as tiebreaker.",
+    "UnifiedLedger: same hybrid logic per-account.",
+    "SN is now fully persistent -- survives re-sorts, page reloads, and theme changes unchanged.",
   ]},
   {version:"3.25.4",date:"2026-03-14",title:"Fix: Missing closing paren for Right Panel div in SettingsSection",changes:[
     "Root cause: removing the Changelog Card from the backup tab reduced the child count but did not account for the closing paren of the Right Panel wrapper div (React.createElement div with flex:1 that wraps all stab conditionals).",
@@ -2909,9 +2925,11 @@ const calcFDMaturity=(principal,ratePercent,startDate,maturityDate)=>{
 };
 
 const reducer=(s,a)=>{
+  /* Returns max(_sn) + 1 across all transactions in an array — used to assign a permanent SN at creation time */
+  const nextSn=txs=>txs.reduce((m,t)=>Math.max(m,t._sn||0),0)+1;
   switch(a.type){
     case"ADD_BANK":return{...s,banks:[...s.banks,a.p]};
-    case"ADD_BANK_TX":return{...s,banks:s.banks.map(b=>b.id===a.id?{...b,transactions:[...b.transactions,a.tx]}:b)};
+    case"ADD_BANK_TX":{const b=s.banks.find(b=>b.id===a.id);const sn=b?nextSn(b.transactions):1;return{...s,banks:s.banks.map(b=>b.id===a.id?{...b,transactions:[...b.transactions,{...a.tx,_sn:sn}]}:b)};}
     case"UPD_BANK_BAL":return{...s,banks:s.banks.map(b=>b.id===a.id?{...b,balance:b.balance+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount)}:b)};
     case"EDIT_BANK_TX":return{...s,banks:s.banks.map(b=>b.id===a.accId?{...b,
       balance:b.balance-(a.old.type==="credit"?a.old.amount:-a.old.amount)+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount),
@@ -2919,9 +2937,7 @@ const reducer=(s,a)=>{
     case"DEL_BANK_TX":return{...s,banks:s.banks.map(b=>b.id===a.accId?{...b,
       balance:b.balance-(a.tx.type==="credit"?a.tx.amount:-a.tx.amount),
       transactions:b.transactions.filter(t=>t.id!==a.tx.id)}:b)};
-    case"DUP_BANK_TX":return{...s,banks:s.banks.map(b=>b.id===a.accId?{...b,
-      balance:b.balance+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount),
-      transactions:[...b.transactions,{...a.tx,id:uid(),_addedAt:new Date().toISOString()}]}:b)};
+    case"DUP_BANK_TX":return{...s,banks:s.banks.map(b=>{if(b.id!==a.accId)return b;const sn=nextSn(b.transactions);return{...b,balance:b.balance+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount),transactions:[...b.transactions,{...a.tx,id:uid(),_sn:sn,_addedAt:new Date().toISOString()}]};})};
     /* Bulk delete: ids is a Set of tx IDs; balance adjusted atomically */
     case"MASS_DEL_BANK_TX":return{...s,banks:s.banks.map(b=>{
       if(b.id!==a.accId)return b;
@@ -2945,7 +2961,7 @@ const reducer=(s,a)=>{
     case"EDIT_BANK":return{...s,banks:s.banks.map(b=>b.id===a.p.id?{...b,...a.p}:b)};
     case"DEL_BANK":return{...s,banks:s.banks.filter(b=>b.id!==a.id)};
     case"ADD_CARD":return{...s,cards:[...s.cards,a.p]};
-    case"ADD_CARD_TX":return{...s,cards:s.cards.map(c=>c.id===a.id?{...c,transactions:[...c.transactions,a.tx]}:c)};
+    case"ADD_CARD_TX":{const c=s.cards.find(c=>c.id===a.id);const sn=c?nextSn(c.transactions):1;return{...s,cards:s.cards.map(c=>c.id===a.id?{...c,transactions:[...c.transactions,{...a.tx,_sn:sn}]}:c)};}
     case"UPD_CARD_BAL":return{...s,cards:s.cards.map(c=>c.id===a.id?{...c,outstanding:c.outstanding+(a.tx.type==="debit"?a.tx.amount:-a.tx.amount)}:c)};
     case"EDIT_CARD_TX":return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,
       outstanding:c.outstanding-(a.old.type==="debit"?a.old.amount:-a.old.amount)+(a.tx.type==="debit"?a.tx.amount:-a.tx.amount),
@@ -2953,12 +2969,10 @@ const reducer=(s,a)=>{
     case"DEL_CARD_TX":return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,
       outstanding:c.outstanding-(a.tx.type==="debit"?a.tx.amount:-a.tx.amount),
       transactions:c.transactions.filter(t=>t.id!==a.tx.id)}:c)};
-    case"DUP_CARD_TX":return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,
-      outstanding:c.outstanding+(a.tx.type==="debit"?a.tx.amount:-a.tx.amount),
-      transactions:[...c.transactions,{...a.tx,id:uid(),_addedAt:new Date().toISOString()}]}:c)};
+    case"DUP_CARD_TX":return{...s,cards:s.cards.map(c=>{if(c.id!==a.accId)return c;const sn=nextSn(c.transactions);return{...c,outstanding:c.outstanding+(a.tx.type==="debit"?a.tx.amount:-a.tx.amount),transactions:[...c.transactions,{...a.tx,id:uid(),_sn:sn,_addedAt:new Date().toISOString()}]};})};
     case"EDIT_CARD":return{...s,cards:s.cards.map(c=>c.id===a.p.id?{...c,...a.p}:c)};
     case"DEL_CARD":return{...s,cards:s.cards.filter(c=>c.id!==a.id)};
-    case"ADD_CASH_TX":return{...s,cash:{balance:s.cash.balance+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount),transactions:[...s.cash.transactions,a.tx]}};
+    case"ADD_CASH_TX":{const sn=nextSn(s.cash.transactions);return{...s,cash:{balance:s.cash.balance+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount),transactions:[...s.cash.transactions,{...a.tx,_sn:sn}]}};}
     case"SET_CASH_BAL":return{...s,cash:{...s.cash,balance:a.val}};
     case"EDIT_CASH_TX":return{...s,cash:{...s.cash,
       balance:s.cash.balance-(a.old.type==="credit"?a.old.amount:-a.old.amount)+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount),
@@ -2966,9 +2980,7 @@ const reducer=(s,a)=>{
     case"DEL_CASH_TX":return{...s,cash:{...s.cash,
       balance:s.cash.balance-(a.tx.type==="credit"?a.tx.amount:-a.tx.amount),
       transactions:s.cash.transactions.filter(t=>t.id!==a.tx.id)}};
-    case"DUP_CASH_TX":return{...s,cash:{...s.cash,
-      balance:s.cash.balance+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount),
-      transactions:[...s.cash.transactions,{...a.tx,id:uid(),_addedAt:new Date().toISOString()}]}};
+    case"DUP_CASH_TX":{const sn=nextSn(s.cash.transactions);return{...s,cash:{...s.cash,balance:s.cash.balance+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount),transactions:[...s.cash.transactions,{...a.tx,id:uid(),_sn:sn,_addedAt:new Date().toISOString()}]}};}
     case"ADD_MF":return{...s,mf:[...s.mf,a.p]};
     case"EDIT_MF":return{...s,mf:s.mf.map(m=>m.id===a.p.id?{...m,...a.p}:m)};
     case"UPD_MF_NAV":return{...s,mf:a.p};
@@ -4012,12 +4024,19 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onNew,onImport,onMassU
     balMap[tx.id]=running;
   }
 
-  // SN is based on entry order (_addedAt timestamp), not display sort order
-  // Latest-added transaction always gets the highest SN regardless of date
+  // SN: use stored _sn if present (assigned at creation time), fallback to _addedAt order for legacy transactions
   const snMap={};
-  [...transactions]
-    .sort((a,b)=>(a._addedAt||a.id).localeCompare(b._addedAt||b.id))
-    .forEach((tx,i)=>{snMap[tx.id]=i+1;});
+  const hasSn=transactions.some(t=>t._sn!=null);
+  if(hasSn){
+    // Mix of new (_sn) and legacy (no _sn) — assign legacy ones after the max existing _sn
+    const maxSn=transactions.reduce((m,t)=>Math.max(m,t._sn||0),0);
+    const legacy=[...transactions].filter(t=>t._sn==null).sort((a,b)=>(a._addedAt||a.id).localeCompare(b._addedAt||b.id));
+    transactions.forEach(t=>{snMap[t.id]=t._sn||0;});
+    legacy.forEach((t,i)=>{snMap[t.id]=maxSn+i+1;});
+  }else{
+    // All legacy — rank by _addedAt ascending
+    [...transactions].sort((a,b)=>(a._addedAt||a.id).localeCompare(b._addedAt||b.id)).forEach((t,i)=>{snMap[t.id]=i+1;});
+  }
 
   // sort & multi-filter
   /* ── Sort helper: click a header to set key; click same key to flip dir ── */
@@ -4030,6 +4049,8 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onNew,onImport,onMassU
     let cmp=0;
     if(sortKey==="date"){
       cmp=a.date.localeCompare(b.date);
+      /* tiebreaker: within same date, latest-added (_sn desc) comes first */
+      if(cmp===0) cmp=(snMap[a.id]||0)-(snMap[b.id]||0);
     } else if(sortKey==="desc_col"){
       cmp=(a.desc||"").localeCompare(b.desc||"");
     } else if(sortKey==="payee"){
@@ -4049,6 +4070,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onNew,onImport,onMassU
       cmp=(balMap[a.id]||0)-(balMap[b.id]||0);
     } else {
       cmp=a.date.localeCompare(b.date);
+      if(cmp===0) cmp=(snMap[a.id]||0)-(snMap[b.id]||0);
     }
     return sortDir==="desc"?-cmp:cmp;
   });
@@ -15732,14 +15754,17 @@ const UnifiedLedgerSection=React.memo(({banks,cards,cash,categories,payees,isMob
   /* ── Sort then filter ── */
   const sorted=[...allTxns].sort((a,b)=>{
     let cmp=0;
-    if(sortKey==="date")          cmp=a.date.localeCompare(b.date);
+    if(sortKey==="date"){
+      cmp=a.date.localeCompare(b.date);
+      if(cmp===0) cmp=(a._sn||0)-(b._sn||0);
+    }
     else if(sortKey==="account")  cmp=(a._accName||"").localeCompare(b._accName||"");
     else if(sortKey==="desc_col") cmp=(a.desc||"").localeCompare(b.desc||"");
     else if(sortKey==="payee")    cmp=(a.payee||"").localeCompare(b.payee||"");
     else if(sortKey==="cat")      cmp=(a.cat||"").localeCompare(b.cat||"");
     else if(sortKey==="out"){const aA=a.type==="debit"?a.amount:0;const bA=b.type==="debit"?b.amount:0;cmp=aA-bA;}
     else if(sortKey==="in"){const aA=a.type==="credit"?a.amount:0;const bA=b.type==="credit"?b.amount:0;cmp=aA-bA;}
-    else cmp=a.date.localeCompare(b.date);
+    else{cmp=a.date.localeCompare(b.date);if(cmp===0)cmp=(a._sn||0)-(b._sn||0);}
     return sortDir==="desc"?-cmp:cmp;
   });
   const filtered=sorted.filter(tx=>{
@@ -15758,13 +15783,20 @@ const UnifiedLedgerSection=React.memo(({banks,cards,cash,categories,payees,isMob
   const totalIn =filtered.filter(t=>t.type==="credit").reduce((s,t)=>s+t.amount,0);
   const totalOut=filtered.filter(t=>t.type==="debit" ).reduce((s,t)=>s+t.amount,0);
 
-  /* SN per account: rank each tx by _addedAt within its own account */
+  /* SN per account: use stored _sn if present, fallback to _addedAt for legacy */
   const unifiedSnMap={};
   const txsByAcc={};
   allTxns.forEach(tx=>{const k=tx._accId;(txsByAcc[k]=txsByAcc[k]||[]).push(tx);});
   Object.values(txsByAcc).forEach(txs=>{
-    [...txs].sort((a,b)=>(a._addedAt||a.id).localeCompare(b._addedAt||b.id))
-      .forEach((tx,i)=>{unifiedSnMap[tx._accId+"__"+tx.id]=i+1;});
+    const hasSn=txs.some(t=>t._sn!=null);
+    if(hasSn){
+      const maxSn=txs.reduce((m,t)=>Math.max(m,t._sn||0),0);
+      const legacy=[...txs].filter(t=>t._sn==null).sort((a,b)=>(a._addedAt||a.id).localeCompare(b._addedAt||b.id));
+      txs.forEach(t=>{unifiedSnMap[t._accId+"__"+t.id]=t._sn||0;});
+      legacy.forEach((t,i)=>{unifiedSnMap[t._accId+"__"+t.id]=maxSn+i+1;});
+    }else{
+      [...txs].sort((a,b)=>(a._addedAt||a.id).localeCompare(b._addedAt||b.id)).forEach((tx,i)=>{unifiedSnMap[tx._accId+"__"+tx.id]=i+1;});
+    }
   });
 
   /* ── Most recent transaction date across ALL accounts (ignores active filters) ── */
