@@ -1628,7 +1628,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.24.7";
+const APP_VERSION="3.24.8";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
@@ -1770,6 +1770,15 @@ const CHANGELOG=[
     "Trend tab: 12-month net worth line chart with best/worst month callout chips; Asset vs Liability dual-line chart (assets=green solid, liabilities=red dashed — uses existing SvgLine color2 prop); Monthly savings rate bar chart with target reference line (green bars = at/above target, red = below); detailed month-by-month table with Net Worth, Monthly Δ, and Savings Rate columns.",
     "Breakdown tab: SVG asset allocation donut (6 slices: Banks, Cash, MF, Shares, FD, Real Estate) with net worth centred inside; Top Contributors list (all individual accounts/investments ranked by value with animated fill bars and % of total assets); Liabilities breakdown (Credit Cards vs Loans with % share).",
     "Projections tab: 12-month forward projection chart (dashed line continuation of the historical series, based on avg of last 3 months net flow); Milestone Tracker — progress bars for ₹1L, ₹2.5L, ₹5L, ₹10L, ₹25L, ₹50L milestones with ✅ achieved or estimated months remaining; FIRE Projection Detail — FIRE target, amount still needed, estimated years to FIRE at current pace, full progress bar.",
+  ]},
+  {version:"3.24.8",date:"2026-03-13",title:"Credit Cards: reorder accounts",changes:[
+    "REORDER_CARDS reducer action added -- identical pattern to REORDER_BANKS.",
+    "reorderMode state and moveCard(idx,dir) helper added to CardSection.",
+    "Reorder button (⇅ Reorder / Done Reordering) appears in the top bar when there are 2 or more cards, next to + Add Card.",
+    "In reorder mode: card border highlights in accent colour, clicking a card no longer selects it, cursor changes to default.",
+    "Each card shows ▲ Up and ▼ Down arrow buttons to move cards; first card Up and last card Down are disabled.",
+    "Current position badge (#1, #2 ...) shown on each card during reorder mode.",
+    "Order persisted to state via REORDER_CARDS dispatch -- survives page reload.",
   ]},
   {version:"3.24.7",date:"2026-03-13",title:"7 new rainbow-inspired light themes",changes:[
     "Crimson (Red): vivid rose-red #f43f5e accent, blush bg #fff1f2, deep crimson sidebar #881337.",
@@ -2895,6 +2904,7 @@ const reducer=(s,a)=>{
       return{...s,cash:{...s.cash,balance:s.cash.balance-netDelta,transactions:s.cash.transactions.filter(t=>!a.ids.has(t.id))}};
     }
     case"REORDER_BANKS":{const bs=[...s.banks];const[mv]=bs.splice(a.from,1);bs.splice(a.to,0,mv);return{...s,banks:bs};}
+    case"REORDER_CARDS":{const cs=[...s.cards];const[mv]=cs.splice(a.from,1);cs.splice(a.to,0,mv);return{...s,cards:cs};}
     case"EDIT_BANK":return{...s,banks:s.banks.map(b=>b.id===a.p.id?{...b,...a.p}:b)};
     case"DEL_BANK":return{...s,banks:s.banks.filter(b=>b.id!==a.id)};
     case"ADD_CARD":return{...s,cards:[...s.cards,a.p]};
@@ -6457,6 +6467,7 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
   const[addOpen,setAddOpen]=useState(false);
   const[f,setF]=useState({name:"",bank:"",cardNumber:"",limit:"",outstanding:"",notes:"",billingDay:"",dueDay:""});
   const[noteEdit,setNoteEdit]=useState(null);
+  const[reorderMode,setReorderMode]=useState(false);
   const[mobileView,setMobileView]=useState("list");
   /* local jump — captures txId+serial before App clears txJump */
   const[localJump,setLocalJump]=useState({txId:null,serial:0});
@@ -6470,6 +6481,7 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
   },[jumpAccId,jumpTxId,jumpSerial]);
   const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
   const save=()=>{if(!f.name||!f.limit)return;const id=uid();dispatch({type:"ADD_CARD",p:{id,transactions:[],...f,limit:+f.limit,outstanding:+(f.outstanding||0),billingDay:+(f.billingDay||0)||null,dueDay:+(f.dueDay||0)||null}});setF({name:"",bank:"",cardNumber:"",limit:"",outstanding:"",notes:"",billingDay:"",dueDay:""});setSel(id);setAddOpen(false);};
+  const moveCard=(idx,dir)=>{const to=idx+dir;if(to<0||to>=cards.length)return;dispatch({type:"REORDER_CARDS",from:idx,to});};
   const selD=cards.find(c=>c.id===sel);
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",height:"100%"}},
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}},
@@ -6480,20 +6492,54 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
           !(isMobile&&mobileView==="detail")&&React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},"Outstanding: ",React.createElement("span",{style:{color:"#c2410c",fontWeight:600}},INR(cards.reduce((s,c)=>s+c.outstanding,0))))
         )
       ),
-      !(isMobile&&mobileView==="detail")&&React.createElement(Btn,{onClick:()=>setAddOpen(true)},"+ Add Card")
+      !(isMobile&&mobileView==="detail")&&React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center"}},
+        cards.length>1&&React.createElement("button",{
+          onClick:()=>setReorderMode(r=>!r),
+          style:{
+            padding:"7px 14px",borderRadius:9,border:"1px solid "+(reorderMode?"var(--accent)":"var(--border)"),
+            background:reorderMode?"var(--accentbg2)":"transparent",
+            color:reorderMode?"var(--accent)":"var(--text4)",
+            cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"'DM Sans',sans-serif",
+            display:"flex",alignItems:"center",gap:6,transition:"all .2s"
+          }
+        },
+          React.createElement("span",null,reorderMode?"✓ Done Reordering":"⇅ Reorder")
+        ),
+        React.createElement(Btn,{onClick:()=>setAddOpen(true)},"+ Add Card")
+      )
     ),
     React.createElement("div",{style:{display:"flex",gap:16,flex:1,minHeight:0}},
       (!isMobile||mobileView==="list")&&React.createElement("div",{style:{width:isMobile?"100%":280,minWidth:isMobile?"auto":280,display:"flex",flexDirection:"column",gap:12,overflowY:"auto",paddingRight:isMobile?0:4}},
-        cards.map(c=>{
+        cards.map((c,cIdx)=>{
           const used=c.outstanding/c.limit*100;
           const bc=used>80?"#ef4444":used>50?"#c2410c":"#16a34a";
-          return React.createElement("div",{key:c.id,className:"accard"+(sel===c.id?" active":""),onClick:()=>{setSel(c.id);if(isMobile)setMobileView("detail");},style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,padding:16,cursor:"pointer"}},
+          return React.createElement("div",{key:c.id,className:"accard"+(sel===c.id?" active":""),onClick:()=>{if(!reorderMode){setSel(c.id);if(isMobile)setMobileView("detail");}},style:{background:"var(--card)",border:"1px solid "+(reorderMode?"var(--accent)55":"var(--border)"),borderRadius:14,padding:16,cursor:reorderMode?"default":"pointer",transition:"border-color .2s"}},
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:8}},
-              React.createElement("div",null,
-                React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text)"}},c.name),
-                React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},c.bank)
+              React.createElement("div",{style:{display:"flex",alignItems:"flex-start",gap:8,flex:1,minWidth:0}},
+                /* Up/down arrows — reorder mode only */
+                reorderMode&&React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:2,flexShrink:0,marginTop:2},onClick:e=>e.stopPropagation()},
+                  React.createElement("button",{
+                    onClick:e=>{e.stopPropagation();moveCard(cIdx,-1);},
+                    disabled:cIdx===0,
+                    title:"Move up",
+                    style:{width:22,height:22,borderRadius:5,border:"1px solid var(--border)",background:cIdx===0?"transparent":"var(--accentbg2)",color:cIdx===0?"var(--text6)":"var(--accent)",cursor:cIdx===0?"not-allowed":"pointer",fontSize:12,lineHeight:1,fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",padding:0}
+                  },"▲"),
+                  React.createElement("button",{
+                    onClick:e=>{e.stopPropagation();moveCard(cIdx,+1);},
+                    disabled:cIdx===cards.length-1,
+                    title:"Move down",
+                    style:{width:22,height:22,borderRadius:5,border:"1px solid var(--border)",background:cIdx===cards.length-1?"transparent":"var(--accentbg2)",color:cIdx===cards.length-1?"var(--text6)":"var(--accent)",cursor:cIdx===cards.length-1?"not-allowed":"pointer",fontSize:12,lineHeight:1,fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",padding:0}
+                  },"▼")
+                ),
+                React.createElement("div",{style:{minWidth:0,flex:1}},
+                  React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text)"}},c.name),
+                  React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},c.bank)
+                )
               ),
-              React.createElement("span",{style:{fontSize:22}},"💳")
+              !reorderMode&&React.createElement("span",{style:{fontSize:22}},"💳"),
+              reorderMode&&React.createElement("div",{style:{fontSize:10,color:"var(--accent)",fontWeight:700,padding:"2px 7px",borderRadius:8,background:"var(--accentbg2)",border:"1px solid var(--accent)55",flexShrink:0}},
+                "#"+(cIdx+1)
+              )
             ),
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
               React.createElement("div",null,
