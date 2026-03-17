@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════════════
-   ₹ Money Manager — Service Worker  v3.26.0
+   ₹ Money Manager — Service Worker  v3.28.1
    ══════════════════════════════════════════════════════════════════════════
 
    CRITICAL FIX (v3.23.3): Cross-origin requests (live price / NAV API calls)
@@ -13,7 +13,7 @@
    • Same-origin assets     → cache-first, fallback to network
    ══════════════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'mm-v3-26-0';
+const CACHE_NAME = 'mm-v3-28-1';
 
 /* Assets to precache on install */
 const PRECACHE_URLS = [
