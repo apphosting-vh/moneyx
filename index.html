@@ -1726,10 +1726,21 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.27.3";
+const APP_VERSION="3.27.4";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.27.4",date:"2026-03-17",title:"Mutual Fund Chart Enhancement — Cost Basis Line & Dynamic Green/Red Colors",changes:[
+    "Added cost of acquisition reference line (amber dashed) to the MF Portfolio Value History chart, matching the Share chart design.",
+    "Dynamic green/red coloring: Chart area above the cost line is filled with green gradient (gain), area below is filled with red gradient (loss).",
+    "Chart line color dynamically changes based on current portfolio position: green when above cost, red when below cost.",
+    "Data point dots also use dynamic colors: green dots for values above cost, red dots for values below cost.",
+    "Legend added below chart title showing portfolio value line (green/red) and cost of acquisition line (amber dashed) with total cost amount.",
+    "All hover tooltips and crosshairs now use the dynamic green/red color scheme instead of static purple.",
+    "SVG clipping paths ensure clean separation at the cost basis line for professional gradient rendering.",
+    "Cost basis calculation: mfCoANow = sum of (units × avgNav) for all funds, ensuring accurate acquisition cost tracking.",
+    "Backward compatible: Chart continues to use purple gradient if costBasis is not provided or is zero.",
+  ]},
   {version:"3.27.3",date:"2026-03-17",title:"Fix — Share History Chart Caching & Display Issues",changes:[
     "Fixed: Share holding value chart no longer shows 'History Unavailable' and correctly displays historical data from the date of share acquisition every time.",
     "New: Historical price data is now cached in state.historyCache with timestamps, preventing redundant API calls when switching tabs.",
@@ -7667,8 +7678,8 @@ const InvestDashboard=React.memo(({mf,shares,fd,re=[],dispatch,isMobile,eodNavs=
   );
 });
 
-/* ── MF Portfolio History Chart with hover tooltip ─────────────────────── */
-const MFHistoryChart=({chartPts,h=180,color="#6d28d9"})=>{
+/* ── MF Portfolio History Chart with hover tooltip + cost basis line + dynamic colors ─────────────────────── */
+const MFHistoryChart=({chartPts,h=180,color="#6d28d9",costBasis=0})=>{
   const[hoverIdx,setHoverIdx]=React.useState(null);
   const svgRef=React.useRef(null);
   if(!chartPts||chartPts.length<2)return React.createElement("div",{style:{textAlign:"center",padding:30,fontSize:12,color:"var(--text6)"}},"Not enough data");
@@ -7682,15 +7693,30 @@ const MFHistoryChart=({chartPts,h=180,color="#6d28d9"})=>{
   const W=520,padL=58,padR=16,padT=14,padB=28;
   const chartW=W-padL-padR,chartH=h-padT-padB;
   const vals=chartPts.map(d=>d.value);
-  const mn=Math.min(...vals),mx=Math.max(...vals,1);
+  /* Include cost basis in min/max calculation if provided */
+  const allVals=costBasis>0?[...vals,costBasis]:vals;
+  const rawMn=Math.min(...allVals),rawMx=Math.max(...allVals,1);
+  /* Add 4% padding above and below so lines never clip at edges */
+  const pad4=(rawMx-rawMn)*0.04;
+  const mn=rawMn-pad4,mx=rawMx+pad4;
   const range=mx-mn||1;
   const xStep=chartW/(chartPts.length-1);
   const yFn=v=>padT+chartH*(1-(v-mn)/range);
   const pts=chartPts.map((d,i)=>`${padL+i*xStep},${yFn(d.value)}`).join(" ");
   const polyFill=`${padL},${padT+chartH} ${pts} ${padL+(chartPts.length-1)*xStep},${padT+chartH}`;
+  const yCostBasis=costBasis>0?yFn(costBasis):null;
 
   /* Y-axis gridline values: min, mid, max */
-  const yTicks=[mn, mn+range*0.5, mx];
+  const yTicks=[rawMn, rawMn+(rawMx-rawMn)*0.5, rawMx];
+  /* Gradient IDs and clip paths for dynamic coloring */
+  const greenGradId="mflg_green";
+  const redGradId="mflg_red";
+  const clipAboveId="mflg_clipAbove";
+  const clipBelowId="mflg_clipBelow";
+  /* Determine if portfolio is in gain or loss */
+  const latestValue=chartPts[chartPts.length-1].value;
+  const isGain=costBasis>0?latestValue>=costBasis:true;
+  const lineColor=costBasis>0?(isGain?"#16a34a":"#ef4444"):color;
 
   const handleMouseMove=e=>{
     const svg=svgRef.current;
@@ -7722,9 +7748,27 @@ const MFHistoryChart=({chartPts,h=180,color="#6d28d9"})=>{
     onMouseLeave:()=>setHoverIdx(null),
   },
     React.createElement("defs",null,
+      /* Green gradient for gains (above cost) */
+      React.createElement("linearGradient",{id:greenGradId,x1:"0",y1:"0",x2:"0",y2:"1"},
+        React.createElement("stop",{offset:"0%",stopColor:"#16a34a",stopOpacity:.28}),
+        React.createElement("stop",{offset:"100%",stopColor:"#16a34a",stopOpacity:.02})
+      ),
+      /* Red gradient for losses (below cost) */
+      React.createElement("linearGradient",{id:redGradId,x1:"0",y1:"0",x2:"0",y2:"1"},
+        React.createElement("stop",{offset:"0%",stopColor:"#ef4444",stopOpacity:.28}),
+        React.createElement("stop",{offset:"100%",stopColor:"#ef4444",stopOpacity:.02})
+      ),
+      /* Purple gradient fallback (when no cost basis) */
       React.createElement("linearGradient",{id:"mflg2",x1:"0",y1:"0",x2:"0",y2:"1"},
         React.createElement("stop",{offset:"0%",stopColor:color,stopOpacity:.3}),
         React.createElement("stop",{offset:"100%",stopColor:color,stopOpacity:.02})
+      ),
+      /* Clipping paths for above/below cost line */
+      yCostBasis!==null&&React.createElement("clipPath",{id:clipAboveId},
+        React.createElement("rect",{x:0,y:0,width:W,height:yCostBasis})
+      ),
+      yCostBasis!==null&&React.createElement("clipPath",{id:clipBelowId},
+        React.createElement("rect",{x:0,y:yCostBasis,width:W,height:h-yCostBasis})
       )
     ),
 
@@ -7740,16 +7784,32 @@ const MFHistoryChart=({chartPts,h=180,color="#6d28d9"})=>{
       );
     }),
 
-    /* Gradient fill */
-    React.createElement("polygon",{points:polyFill,fill:"url(#mflg2)"}),
-    /* Line */
-    React.createElement("polyline",{points:pts,fill:"none",stroke:color,strokeWidth:2,strokeLinejoin:"round",strokeLinecap:"round"}),
+    /* Cost basis reference line (amber dashed) - only if costBasis provided */
+    yCostBasis!==null&&React.createElement("line",{
+      x1:padL,y1:yCostBasis,x2:W-padR,y2:yCostBasis,
+      stroke:"#f59e0b",strokeWidth:1.8,strokeDasharray:"6,4",opacity:.8
+    }),
+    yCostBasis!==null&&React.createElement("text",{
+      x:W-padR+4,y:yCostBasis+4,
+      fill:"#f59e0b",fontSize:9,fontWeight:700,textAnchor:"start"
+    },"Cost"),
+
+    /* Gradient fills with dynamic coloring */
+    costBasis>0
+      ?React.createElement(React.Fragment,null,
+        React.createElement("polygon",{points:polyFill,fill:"url(#"+greenGradId+")",clipPath:"url(#"+clipAboveId+")"}),
+        React.createElement("polygon",{points:polyFill,fill:"url(#"+redGradId+")",clipPath:"url(#"+clipBelowId+")"})
+      )
+      :React.createElement("polygon",{points:polyFill,fill:"url(#mflg2)"}),
+    /* Line with dynamic color */
+    React.createElement("polyline",{points:pts,fill:"none",stroke:lineColor,strokeWidth:2,strokeLinejoin:"round",strokeLinecap:"round"}),
     /* Baseline */
     React.createElement("line",{x1:padL,y1:padT+chartH,x2:W-padR,y2:padT+chartH,stroke:"var(--border)",strokeWidth:1}),
 
-    /* Data point dots (non-hovered) */
+    /* Data point dots (non-hovered) with dynamic colors */
     chartPts.map((d,i)=>i===hoverIdx?null:React.createElement("circle",{key:"dot"+i,
-      cx:padL+i*xStep,cy:yFn(d.value),r:2.2,fill:color,opacity:.65
+      cx:padL+i*xStep,cy:yFn(d.value),r:2.2,
+      fill:costBasis>0?(d.value>=costBasis?"#16a34a":"#ef4444"):color,opacity:.65
     })),
 
     /* X-axis labels */
@@ -7765,23 +7825,23 @@ const MFHistoryChart=({chartPts,h=180,color="#6d28d9"})=>{
     hoverIdx!==null&&React.createElement("g",null,
       /* Vertical crosshair */
       React.createElement("line",{x1:hx,y1:padT,x2:hx,y2:padT+chartH,
-        stroke:color,strokeWidth:1.2,strokeDasharray:"4,3",opacity:.55}),
+        stroke:lineColor,strokeWidth:1.2,strokeDasharray:"4,3",opacity:.55}),
       /* Outer glow ring */
-      React.createElement("circle",{cx:hx,cy:hy,r:9,fill:color,opacity:.12}),
+      React.createElement("circle",{cx:hx,cy:hy,r:9,fill:lineColor,opacity:.12}),
       /* White background dot */
-      React.createElement("circle",{cx:hx,cy:hy,r:6,fill:"white",stroke:color,strokeWidth:2.5}),
+      React.createElement("circle",{cx:hx,cy:hy,r:6,fill:"white",stroke:lineColor,strokeWidth:2.5}),
       /* Inner filled dot */
-      React.createElement("circle",{cx:hx,cy:hy,r:3,fill:color}),
+      React.createElement("circle",{cx:hx,cy:hy,r:3,fill:lineColor}),
 
       /* Tooltip shadow rect (blurred) */
       React.createElement("rect",{x:tipX+2,y:tipY+3,width:tipW,height:tipH,
         rx:8,fill:"rgba(0,0,0,.18)",style:{filter:"blur(4px)"}}),
       /* Tooltip background */
       React.createElement("rect",{x:tipX,y:tipY,width:tipW,height:tipH,
-        rx:8,fill:"var(--modal-bg)",stroke:color,strokeWidth:1.5}),
+        rx:8,fill:"var(--modal-bg)",stroke:lineColor,strokeWidth:1.5}),
       /* Top accent bar */
-      React.createElement("rect",{x:tipX,y:tipY,width:tipW,height:4,rx:8,fill:color}),
-      React.createElement("rect",{x:tipX,y:tipY+2,width:tipW,height:4,fill:color}),
+      React.createElement("rect",{x:tipX,y:tipY,width:tipW,height:4,rx:8,fill:lineColor}),
+      React.createElement("rect",{x:tipX,y:tipY+2,width:tipW,height:4,fill:lineColor}),
 
       /* Date line */
       React.createElement("text",{x:tipX+12,y:tipY+20,
@@ -7790,7 +7850,7 @@ const MFHistoryChart=({chartPts,h=180,color="#6d28d9"})=>{
 
       /* Value line — large and bold */
       React.createElement("text",{x:tipX+12,y:tipY+42,
-        fill:color,fontSize:15,fontWeight:800,
+        fill:lineColor,fontSize:15,fontWeight:800,
         fontFamily:"'Sora',sans-serif"
       },INRfmt(hp.value))
     )
@@ -8409,7 +8469,20 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],dispatch,defaultTab="mf",eod
               React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},"📈 Portfolio Value History"),
               React.createElement("div",{style:{fontSize:10,color:"var(--text6)"}},chartPts.length+" data points · last 90 days · hover to see value")
             ),
-            React.createElement(MFHistoryChart,{chartPts,h:180,color:"#6d28d9"})
+            /* Legend */
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:16,marginBottom:8,fontSize:12,color:"var(--text6)"}},
+              React.createElement("span",{style:{display:"flex",alignItems:"center",gap:5}},
+                React.createElement("span",{style:{display:"inline-block",width:24,height:3,
+                  background:overallGain>=0?"#16a34a":"#ef4444",borderRadius:2,verticalAlign:"middle"}}),
+                "Portfolio value"
+              ),
+              React.createElement("span",{style:{display:"flex",alignItems:"center",gap:5}},
+                React.createElement("span",{style:{display:"inline-block",width:24,height:0,
+                  borderTop:"3px dashed #f59e0b",verticalAlign:"middle"}}),
+                "Cost of acquisition ("+INR(mfCoANow)+")"
+              )
+            ),
+            React.createElement(MFHistoryChart,{chartPts,h:180,color:"#6d28d9",costBasis:mfCoANow})
           )
         );
       })(),
