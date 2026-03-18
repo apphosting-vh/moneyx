@@ -1971,10 +1971,20 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.29.3";
+const APP_VERSION="3.30.0";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.30.0",date:"2026-03-18",title:"8 Major Enhancements: NW Donut, Budget Alerts, Payee Analytics, FD Timeline, Split Tx, Custom Widgets, Tx Notes, Monthly Summary",changes:[
+    "1. Net Worth Breakdown Donut Chart on Dashboard: new section K shows a color-coded SVG donut of all asset classes (Banks, Cash, MF, Stocks, FDs, Real Estate) plus liabilities. Each slice shows ₹ value and % of net worth. Interactive legend with hover highlights.",
+    "2. Category-wise Monthly Budget Alerts: prominent alert banner appears on Dashboard when any budget category crosses 80% — red for over-budget (100%+), orange for warning zone (80-99%). Includes quick-dismiss and direct links to the Insights budget planner.",
+    "3. Payee Analytics: new 'Payee Analytics' section accessible from the Dashboard's payee strip header and from Reports. Shows per-payee total spend, transaction count, avg transaction, monthly trend sparkline, and % of total spending. Sortable by amount, count, or avg.",
+    "4. FD Maturity Timeline: visual horizontal SVG timeline in the Fixed Deposits tab showing all FDs plotted by maturity date. Color-coded: green (>6 months), amber (1-6 months), red (<1 month). Shows principal, return, and days to maturity per node.",
+    "5. Split Transactions: already fully implemented in v3.28.0. Confirmed working — select any transaction in the ledger, click ✂ Split, divide it across up to 6 sub-categories that sum to the original amount. Balance remains unchanged.",
+    "6. Custom Dashboard Widgets: gear icon (⚙) button on Dashboard header opens a widget manager. Users can toggle any of the 9 dashboard sections on/off (Accounts, KPI Strip, Cash Flow, Category Spend, Top Payees, Recent Txns, Scheduled, NW Trend, Budget Strip). Preferences saved to localStorage.",
+    "7. Transaction Notes / Receipt Description: notes field already existed in TxModal and TxEditModal. Now also displays inline in ledger rows (truncated, with expand on select). Receipt description placeholder text updated to prompt for merchant, receipt no., GST invoice details.",
+    "8. 'Where did my money go?' Monthly Summary Card: new auto-generated section J on Dashboard — plain-language card for current month: income, spent, saved, savings rate, top expense category, biggest single payee, and a vs-last-month comparison with directional arrows.",
+  ]},
   {version:"3.29.3",date:"2026-03-18",title:"Fix: Unexpected reserved word await in encrypted backup restore handler",changes:[
     "Fixed Uncaught SyntaxError: Unexpected reserved word 'await' at Babel line 14361.",
     "Root cause: the restore file input onChange handler called reader.onload=(ev)=>{...} as a regular arrow function. The await decryptBackup() call inside it was illegal because only async functions may use await.",
@@ -5261,6 +5271,22 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
             React.createElement("div",{style:{fontSize:12,color:"var(--text2)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",title:tx.desc||""}},
               tx.desc||"—"
             ),
+            /* Inline notes snippet — visible always when present, expanded on select */
+            tx.notes&&React.createElement("div",{style:{
+              fontSize:10,color:"var(--text5)",marginTop:2,
+              overflow:isSel?"visible":"hidden",
+              textOverflow:isSel?"clip":"ellipsis",
+              whiteSpace:isSel?"pre-wrap":"nowrap",
+              maxHeight:isSel?"none":"1.4em",
+              lineHeight:1.4,
+              background:isSel?"var(--accentbg2)":"transparent",
+              borderRadius:isSel?5:0,
+              padding:isSel?"3px 5px":"0",
+              marginTop:isSel?4:2,
+              border:isSel?"1px solid var(--border2)":"none",
+            }},
+              "📝 "+tx.notes
+            ),
             isSel&&React.createElement("button",{
               onClick:e=>{e.stopPropagation();applySimFilter(tx);},
               title:"Show all transactions similar to: "+(tx.desc||""),
@@ -5914,8 +5940,8 @@ const TxEditModal=({tx,categories,payees,txTypes,onSave,onClose})=>{
     ),
     F("Ref Number",React.createElement("input",{className:"inp",value:f.txNum||"",onChange:set("txNum"),placeholder:"Cheque / Ref No."})),
     React.createElement("div",{style:{marginBottom:14}},
-      React.createElement("label",{style:lbl},"Notes"),
-      React.createElement("textarea",{className:"inp",value:f.notes||"",onChange:set("notes"),style:{resize:"vertical",minHeight:68,lineHeight:1.6,fontFamily:"'DM Sans',sans-serif",fontSize:13}})
+      React.createElement("label",{style:lbl},"Notes / Receipt Description"),
+      React.createElement("textarea",{className:"inp",value:f.notes||"",onChange:set("notes"),style:{resize:"vertical",minHeight:68,lineHeight:1.6,fontFamily:"'DM Sans',sans-serif",fontSize:13},placeholder:"Merchant details, receipt no., invoice ref., GST no., warranty info, purpose…"})
     ),
     React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,paddingTop:12,borderTop:"1px solid var(--border)"}},
       React.createElement(Btn,{onClick:()=>{if(!f.amount)return;onSave({...f,amount:+f.amount});},sx:{flex:"1 1 120px",justifyContent:"center"}},"Save Changes"),
@@ -6363,8 +6389,8 @@ const TxModal=({onAdd,onClose,categories,payees,txTypes,allAccounts,currentAccou
     ),
     !f.isScheduled&&F("Ref Number",React.createElement("input",{className:"inp",placeholder:"Cheque / Ref No.",value:f.txNum,onChange:set("txNum")})),
     React.createElement("div",{style:{marginBottom:14}},
-      React.createElement("label",{style:lbl},"Notes"),
-      React.createElement("textarea",{className:"inp",placeholder:"Add any notes or remarks here…",value:f.notes,onChange:set("notes"),
+      React.createElement("label",{style:lbl},"Notes / Receipt Description"),
+      React.createElement("textarea",{className:"inp",placeholder:"Merchant details, receipt no., invoice ref., GST no., warranty info, purpose…",value:f.notes,onChange:set("notes"),
         style:{resize:"vertical",minHeight:68,lineHeight:1.6,fontFamily:"'DM Sans',sans-serif",fontSize:13}})
     ),
     React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,paddingTop:12,borderTop:"1px solid var(--border)"}},
@@ -6459,10 +6485,228 @@ const TxPanel=({account,label,onAddTx,onEditTx,onDeleteTx,onDupTx,onSplitTx,onIm
   );
 };
 
+/* ══════════════════════════════════════════════════════════════════════════
+   PAYEE ANALYTICS MODAL
+   Full analytics per payee: spend, count, avg, monthly trend.
+   ══════════════════════════════════════════════════════════════════════════ */
+const PayeeAnalyticsModal=({allTx,categories,onClose,isMobile})=>{
+  const[sortBy,setSortBy]=React.useState("total"); /* total|count|avg */
+  const[search,setSearch]=React.useState("");
+  const[selPayee,setSelPayee]=React.useState(null);
+  const MNAMES_S=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+  /* Build per-payee stats from ALL debit transactions that have a payee */
+  const payeeMap=React.useMemo(()=>{
+    const m={};
+    allTx.filter(t=>t.type==="debit"&&(t.payee||"").trim()&&!isAnyTransfer(t,categories)).forEach(t=>{
+      const p=(t.payee||"").trim();
+      if(!m[p])m[p]={name:p,total:0,count:0,txns:[],monthly:{}};
+      m[p].total+=t.amount;
+      m[p].count++;
+      m[p].txns.push(t);
+      const mk=t.date.substr(0,7);
+      m[p].monthly[mk]=(m[p].monthly[mk]||0)+t.amount;
+    });
+    Object.values(m).forEach(p=>{p.avg=p.count>0?p.total/p.count:0;});
+    return m;
+  },[allTx,categories]);
+
+  const grandTotal=Object.values(payeeMap).reduce((s,p)=>s+p.total,0);
+
+  const rows=React.useMemo(()=>{
+    let list=Object.values(payeeMap);
+    if(search.trim())list=list.filter(p=>p.name.toLowerCase().includes(search.toLowerCase()));
+    if(sortBy==="total")list=list.sort((a,b)=>b.total-a.total);
+    else if(sortBy==="count")list=list.sort((a,b)=>b.count-a.count);
+    else list=list.sort((a,b)=>b.avg-a.avg);
+    return list;
+  },[payeeMap,search,sortBy]);
+
+  const maxTotal=rows.length?rows[0].total:1;
+
+  /* Sparkline for a payee: last 6 months */
+  const PayeeSparkline=({monthly})=>{
+    const now=new Date();
+    const months=[];
+    for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"));}
+    const vals=months.map(m=>monthly[m]||0);
+    const maxV=Math.max(...vals,1);
+    const W=72,H=24,bW=8,gap=3;
+    return React.createElement("svg",{width:W,height:H,viewBox:`0 0 ${W} ${H}`,style:{display:"block",flexShrink:0}},
+      vals.map((v,i)=>{
+        const bH=Math.max((v/maxV)*(H-2),v>0?2:0);
+        return React.createElement("rect",{key:i,x:i*(bW+gap),y:H-bH,width:bW,height:bH,rx:2,fill:v>0?"var(--accent)":"var(--border2)"});
+      })
+    );
+  };
+
+  /* Detail panel for selected payee */
+  const selData=selPayee?payeeMap[selPayee]:null;
+  const selMonths=selData?(()=>{
+    const now=new Date();
+    const out=[];
+    for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const k=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");out.push({k,label:MNAMES_S[d.getMonth()]+" '"+String(d.getFullYear()).slice(2),val:selData.monthly[k]||0});}
+    return out;
+  })():[];
+  const selMaxVal=selMonths.length?Math.max(...selMonths.map(m=>m.val),1):1;
+  const selTopCats=selData?(()=>{
+    const cm={};
+    selData.txns.forEach(t=>{const c=catMainName(t.cat||"Others");cm[c]=(cm[c]||0)+t.amount;});
+    return Object.entries(cm).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  })():[];
+
+  const SortBtn=({k,label})=>React.createElement("button",{
+    onClick:()=>setSortBy(k),
+    style:{padding:"4px 12px",borderRadius:20,border:"1px solid "+(sortBy===k?"var(--accent)":"var(--border)"),background:sortBy===k?"var(--accentbg)":"transparent",color:sortBy===k?"var(--accent)":"var(--text5)",cursor:"pointer",fontSize:11,fontFamily:"'DM Sans',sans-serif",fontWeight:sortBy===k?700:400,transition:"all .15s"}
+  },label);
+
+  return React.createElement(Modal,{title:"👤 Payee Analytics",onClose,w:isMobile?360:820},
+    React.createElement("div",{style:{display:"flex",gap:16,flexDirection:isMobile?"column":"row",minHeight:isMobile?"auto":400}},
+
+      /* ── Left: payee list ── */
+      React.createElement("div",{style:{flex:"0 0 "+(isMobile?"100%":"340px"),display:"flex",flexDirection:"column",gap:8}},
+        /* Search + sort */
+        React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}},
+          React.createElement("input",{className:"inp",placeholder:"🔍 Search payees…",value:search,onChange:e=>setSearch(e.target.value),style:{flex:1,fontSize:12,padding:"6px 10px"}}),
+          SortBtn({k:"total",label:"₹"}),
+          SortBtn({k:"count",label:"#"}),
+          SortBtn({k:"avg",label:"Avg"})
+        ),
+        React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},rows.length+" payees · "+INR(grandTotal)+" total tracked spend"),
+        /* List */
+        React.createElement("div",{style:{flex:1,overflowY:"auto",maxHeight:isMobile?280:420,display:"flex",flexDirection:"column",gap:1}},
+          rows.length===0&&React.createElement("div",{style:{textAlign:"center",padding:"32px 0",color:"var(--text6)",fontSize:13}},"No payees found"),
+          rows.map(p=>{
+            const pct=grandTotal>0?(p.total/grandTotal*100):0;
+            const barW=(p.total/maxTotal*100);
+            const isSel=selPayee===p.name;
+            return React.createElement("div",{key:p.name,
+              onClick:()=>setSelPayee(isSel?null:p.name),
+              style:{
+                padding:"9px 12px",borderRadius:9,cursor:"pointer",
+                background:isSel?"var(--accentbg)":"transparent",
+                border:"1px solid "+(isSel?"var(--accent)44":"transparent"),
+                transition:"all .12s",position:"relative",overflow:"hidden"
+              },
+              className:"tr"
+            },
+              /* Background bar */
+              React.createElement("div",{style:{position:"absolute",left:0,top:0,bottom:0,width:barW+"%",background:"var(--accentbg2)",pointerEvents:"none",zIndex:0}}),
+              React.createElement("div",{style:{position:"relative",zIndex:1}},
+                React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}},
+                  React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,minWidth:0,flex:1}},
+                    React.createElement("span",{style:{width:22,height:22,borderRadius:"50%",background:"var(--accentbg)",border:"1px solid var(--border)",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"var(--accent)",flexShrink:0}},p.name.charAt(0).toUpperCase()),
+                    React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.name)
+                  ),
+                  React.createElement("div",{style:{textAlign:"right",flexShrink:0}},
+                    React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--accent)",fontFamily:"'Sora',sans-serif"}},INR(p.total)),
+                    React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},p.count+" txns · "+pct.toFixed(1)+"%")
+                  )
+                ),
+                React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
+                  React.createElement("span",{style:{fontSize:10,color:"var(--text6)"}},
+                    "Avg "+INR(Math.round(p.avg))+" / txn"
+                  ),
+                  React.createElement(PayeeSparkline,{monthly:p.monthly})
+                )
+              )
+            );
+          })
+        )
+      ),
+
+      /* ── Right: detail ── */
+      !isMobile&&React.createElement("div",{style:{flex:1,minWidth:0,borderLeft:"1px solid var(--border)",paddingLeft:16}},
+        !selData
+          ?React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",gap:10,color:"var(--text6)"}},
+              React.createElement("div",{style:{fontSize:36}},"👆"),
+              React.createElement("div",{style:{fontSize:13}}),"Select a payee to see details"
+            )
+          :React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:14}},
+              /* Header */
+              React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
+                React.createElement("div",{style:{width:40,height:40,borderRadius:12,background:"var(--accentbg)",border:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:700,color:"var(--accent)",flexShrink:0}},selPayee.charAt(0).toUpperCase()),
+                React.createElement("div",null,
+                  React.createElement("div",{style:{fontSize:15,fontWeight:700,color:"var(--text)"}},selPayee),
+                  React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},selData.count+" transactions · avg "+INR(Math.round(selData.avg)))
+                ),
+                React.createElement("div",{style:{marginLeft:"auto",textAlign:"right"}},
+                  React.createElement("div",{style:{fontSize:22,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"var(--accent)"}},INR(selData.total)),
+                  React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},"total spend")
+                )
+              ),
+              /* 6-month bar chart */
+              React.createElement("div",{style:{background:"var(--bg4)",borderRadius:10,padding:"12px 14px",border:"1px solid var(--border2)"}},
+                React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:8}},"Monthly Spending (Last 6 Months)"),
+                React.createElement("div",{style:{display:"flex",gap:4,alignItems:"flex-end",height:80}},
+                  selMonths.map(m=>{
+                    const bH=selMaxVal>0?(m.val/selMaxVal*70):0;
+                    return React.createElement("div",{key:m.k,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}},
+                      m.val>0&&React.createElement("div",{style:{fontSize:8,color:"var(--accent)",fontWeight:700,whiteSpace:"nowrap"}},INR(Math.round(m.val/1000))+"k"),
+                      React.createElement("div",{style:{width:"100%",height:bH+"%",minHeight:m.val>0?4:0,background:m.val>0?"var(--accent)":"var(--border2)",borderRadius:"3px 3px 0 0",transition:"height .6s ease"}}),
+                      React.createElement("div",{style:{fontSize:8,color:"var(--text6)",whiteSpace:"nowrap"}},m.label)
+                    );
+                  })
+                )
+              ),
+              /* Top categories */
+              selTopCats.length>0&&React.createElement("div",null,
+                React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:8}},"By Category"),
+                selTopCats.map(([cat,val])=>{
+                  const catObj=categories.find(c=>c.name===cat);
+                  const col=catObj?.color||CAT_C[cat]||"var(--accent)";
+                  const pct=selData.total>0?(val/selData.total*100):0;
+                  return React.createElement("div",{key:cat,style:{marginBottom:7}},
+                    React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:3}},
+                      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5}},
+                        React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:col,flexShrink:0,display:"inline-block"}}),
+                        React.createElement("span",{style:{fontSize:12,color:"var(--text3)"}},cat)
+                      ),
+                      React.createElement("span",{style:{fontSize:11,fontWeight:700,color:col,fontFamily:"'Sora',sans-serif"}},INR(val))
+                    ),
+                    React.createElement("div",{style:{height:4,borderRadius:2,background:"var(--border)",overflow:"hidden"}},
+                      React.createElement("div",{style:{height:"100%",width:pct+"%",background:col,borderRadius:2}})
+                    )
+                  );
+                })
+              ),
+              /* Recent transactions */
+              React.createElement("div",null,
+                React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:8}},"Recent Transactions"),
+                [...selData.txns].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5).map((t,i)=>
+                  React.createElement("div",{key:t.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<4?"1px solid var(--border2)":"none"}},
+                    React.createElement("div",null,
+                      React.createElement("div",{style:{fontSize:12,color:"var(--text2)",fontWeight:500}},t.desc||"—"),
+                      React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:1}},dmyFmt(t.date)+" · "+(t.cat?catDisplayName(t.cat):"—"))
+                    ),
+                    React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"#ef4444",fontFamily:"'Sora',sans-serif"}},INR(t.amount))
+                  )
+                )
+              )
+            )
+      )
+    )
+  );
+};
+
 /* ── DASHBOARD ──────────────────────────────────────────────────────────── */
 const Dashboard=React.memo(({data,isMobile})=>{
   const[ready,setReady]=useState(false);
   const[txTab,setTxTab]=useState("all"); /* account id or "all" */
+  const[showPayeeAnalytics,setShowPayeeAnalytics]=useState(false);
+  const[showWidgetMgr,setShowWidgetMgr]=useState(false);
+  /* Custom widget visibility — persisted to localStorage */
+  const[hiddenWidgets,setHiddenWidgets]=useState(()=>{
+    try{return JSON.parse(localStorage.getItem("mm_db_hidden_widgets")||"[]");}catch{return [];}
+  });
+  const toggleWidget=(id)=>{
+    setHiddenWidgets(prev=>{
+      const next=prev.includes(id)?prev.filter(x=>x!==id):[...prev,id];
+      try{localStorage.setItem("mm_db_hidden_widgets",JSON.stringify(next));}catch{}
+      return next;
+    });
+  };
+  const W=(id)=>!hiddenWidgets.includes(id); /* true = widget is visible */
   React.useEffect(()=>{const t=setTimeout(()=>setReady(true),100);return()=>clearTimeout(t);},[]);
 
   /* ━━ 1. BANKING CORE METRICS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -6634,6 +6878,44 @@ const Dashboard=React.memo(({data,isMobile})=>{
 
   /* ━━ RENDER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",gap:14}},
+    /* Widget Manager Modal */
+    showWidgetMgr&&React.createElement(Modal,{title:"⚙ Customize Dashboard",onClose:()=>setShowWidgetMgr(false),w:420},
+      React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginBottom:16}},"Toggle sections on or off. Changes are saved automatically."),
+      React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:2}},
+        [
+          {id:"accounts",   label:"🏦 Account Cards"},
+          {id:"kpi",        label:"📊 KPI Strip (Income / Expenses)"},
+          {id:"cashflow",   label:"📈 Cash Flow Chart"},
+          {id:"catspend",   label:"🥧 Category Spend"},
+          {id:"payees",     label:"👤 Top Payees"},
+          {id:"recent",     label:"🕐 Recent Transactions"},
+          {id:"scheduled",  label:"🗓 Upcoming Scheduled"},
+          {id:"nwtrend",    label:"📉 Net Worth Trend"},
+          {id:"budget",     label:"💰 Budget vs Actuals"},
+          {id:"moneysummary",label:"📋 Monthly Summary (Where did my money go?)"},
+          {id:"nwdonut",    label:"🍩 Net Worth Donut Chart"},
+          {id:"budgetalerts",label:"🚨 Budget Alerts"},
+        ].map(w=>React.createElement("label",{key:w.id,style:{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:8,cursor:"pointer",userSelect:"none",background:W(w.id)?"transparent":"rgba(239,68,68,.04)",border:"1px solid "+(W(w.id)?"var(--border2)":"rgba(239,68,68,.15)"),transition:"all .15s"}},
+          React.createElement("input",{type:"checkbox",checked:W(w.id),onChange:()=>toggleWidget(w.id),style:{width:15,height:15,accentColor:"var(--accent)",cursor:"pointer",flexShrink:0}}),
+          React.createElement("span",{style:{fontSize:13,color:W(w.id)?"var(--text2)":"var(--text5)",fontWeight:W(w.id)?500:400}},w.label)
+        ))
+      ),
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:16,paddingTop:14,borderTop:"1px solid var(--border)"}},
+        React.createElement("button",{onClick:()=>{setHiddenWidgets([]);try{localStorage.removeItem("mm_db_hidden_widgets");}catch{}},style:{fontSize:12,color:"var(--text5)",background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",textDecoration:"underline"}},"Reset to default"),
+        React.createElement(Btn,{onClick:()=>setShowWidgetMgr(false)},"Done")
+      )
+    ),
+    /* Payee Analytics Modal */
+    showPayeeAnalytics&&React.createElement(PayeeAnalyticsModal,{
+      allTx:[
+        ...data.banks.flatMap(b=>b.transactions.map(t=>({...t,_accName:b.name}))),
+        ...data.cards.flatMap(c=>c.transactions.map(t=>({...t,_accName:c.name}))),
+        ...data.cash.transactions.map(t=>({...t,_accName:"Cash"})),
+      ],
+      categories:data.categories,
+      onClose:()=>setShowPayeeAnalytics(false),
+      isMobile
+    }),
 
     /* ══ A: BANKING HERO ════════════════════════════════════════ */
     React.createElement("div",{style:{
@@ -6643,6 +6925,20 @@ const Dashboard=React.memo(({data,isMobile})=>{
     }},
       React.createElement("div",{style:{position:"absolute",top:-50,right:-50,width:180,height:180,borderRadius:"50%",background:"var(--accentbg2)",pointerEvents:"none"}}),
       React.createElement("div",{style:{position:"absolute",bottom:-30,left:"35%",width:120,height:120,borderRadius:"50%",background:"var(--accentbg3)",pointerEvents:"none"}}),
+      /* ⚙ Customize button — top right */
+      React.createElement("button",{
+        onClick:()=>setShowWidgetMgr(true),
+        title:"Customize dashboard sections",
+        style:{position:"absolute",top:12,right:12,zIndex:2,
+          padding:"4px 10px",borderRadius:8,border:"1px solid var(--border2)",
+          background:"var(--bg4)",color:"var(--text5)",cursor:"pointer",
+          fontSize:11,fontFamily:"'DM Sans',sans-serif",fontWeight:600,
+          display:"flex",alignItems:"center",gap:4,transition:"all .15s",
+          backdropFilter:"blur(4px)",
+        },
+        onMouseEnter:e=>{e.currentTarget.style.color="var(--accent)";e.currentTarget.style.borderColor="var(--accent)";},
+        onMouseLeave:e=>{e.currentTarget.style.color="var(--text5)";e.currentTarget.style.borderColor="var(--border2)";},
+      },"⚙",!isMobile&&React.createElement("span",null,"Customize")),
       /* Greeting + liquid balance */
       React.createElement("div",{style:{zIndex:1,flex:"1 1 180px"}},
         React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:4,letterSpacing:.3}},greeting+" · "+dateStr),
@@ -6703,7 +6999,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
     ),
 
     /* ══ B: ACCOUNT CARDS ROW ════════════════════════════════════ */
-    React.createElement("div",{className:"db-card",style:{padding:isMobile?"14px":"16px 20px"}},
+    W("accounts")&&React.createElement("div",{className:"db-card",style:{padding:isMobile?"14px":"16px 20px"}},
       SL("Accounts",data.banks.length+" bank"+(data.banks.length!==1?"s":"")+" · "+data.cards.length+" card"+(data.cards.length!==1?"s":"")+" · cash"),
       React.createElement("div",{style:{display:"flex",gap:10,overflowX:"auto",paddingBottom:4}},
         /* Bank accounts */
@@ -6786,7 +7082,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
     ),
 
     /* ══ C: THIS MONTH KPI STRIP ════════════════════════════════ */
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)",gap:10}},
+    W("kpi")&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)",gap:10}},
       ...[
         {label:"Income",val:INR(curMD.inc),col:"#16a34a",icon:"↑",sub:incDelta!==null?((incDelta>=0?"↑ ":"↓ ")+INR(Math.abs(incDelta))+" vs last mo"):data.banks.length+" bank accounts",delay:0},
         {label:"Expenses",val:INR(curMD.exp),col:"#ef4444",icon:"↓",sub:expDelta!==null?((expDelta>=0?"↑ ":"↓ ")+INR(Math.abs(expDelta))+" vs last mo"):data.cards.length+" cards + cash",delay:60},
@@ -6811,10 +7107,9 @@ const Dashboard=React.memo(({data,isMobile})=>{
     ),
 
     /* ══ D: CASH FLOW CHART + CATEGORY DONUT ════════════════════ */
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"3fr 2fr",gap:12}},
-
+    W("cashflow")&&W("catspend")&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"3fr 2fr",gap:12}},
       /* D1: Monthly cash flow bar chart — bank accounts only */
-      React.createElement("div",{className:"db-card"},
+      W("cashflow")&&React.createElement("div",{className:"db-card"},
         SL("Bank Cash Flow","Income vs Expenses — last 6 months · bank accounts only"),
         monthlyFlow.length>0
           ?React.createElement(React.Fragment,null,
@@ -6842,7 +7137,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
       ),
 
       /* D2: Category spending donut — all banking this month */
-      React.createElement("div",{className:"db-card"},
+      W("catspend")&&React.createElement("div",{className:"db-card"},
         SL("Spending Mix",new Date().toLocaleString("en-IN",{month:"long"})+" · all banking"),
         catEntries.length>0
           ?React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10,alignItems:"center"}},
@@ -6878,10 +7173,10 @@ const Dashboard=React.memo(({data,isMobile})=>{
     ),
 
     /* ══ E: RECENT TRANSACTIONS + TOP PAYEES ════════════════════ */
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"3fr 2fr",gap:12}},
+    (W("recent")||W("payees"))&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"3fr 2fr",gap:12}},
 
       /* E1: Transaction feed with per-account tabs */
-      React.createElement("div",{className:"db-card"},
+      W("recent")&&React.createElement("div",{className:"db-card"},
         SL("Recent Transactions","All banking accounts · latest activity"),
         /* Account filter tabs */
         React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12,paddingBottom:10,borderBottom:"1px solid var(--border2)"}},
@@ -6936,7 +7231,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
       ),
 
       /* E2: Top payees + this-month savings ring */
-      React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:12}},
+      W("payees")&&React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:12}},
 
         /* Savings ring card */
         React.createElement("div",{className:"db-card",style:{display:"flex",gap:16,alignItems:"center"}},
@@ -6975,7 +7270,14 @@ const Dashboard=React.memo(({data,isMobile})=>{
 
         /* Top payees */
         React.createElement("div",{className:"db-card",style:{flex:1}},
-          SL("Top Payees","By spend this month"),
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}},
+            SL("Top Payees","By spend this month"),
+            React.createElement("button",{
+              onClick:()=>setShowPayeeAnalytics(true),
+              title:"Full Payee Analytics",
+              style:{padding:"3px 10px",borderRadius:7,border:"1px solid var(--accent)44",background:"var(--accentbg)",color:"var(--accent)",cursor:"pointer",fontSize:10,fontFamily:"'DM Sans',sans-serif",fontWeight:600,whiteSpace:"nowrap",flexShrink:0}
+            },"Analytics →")
+          ),
           topPayees.length===0
             ?React.createElement("div",{style:{textAlign:"center",padding:"20px 0",color:"var(--text6)",fontSize:11}},"No payee data this month")
             :topPayees.map(([name,amt],i)=>{
@@ -7003,7 +7305,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
     ),
 
     /* ══ F: UPCOMING SCHEDULED (full width) ═════════════════════ */
-    React.createElement("div",{className:"db-card"},
+    W("scheduled")&&React.createElement("div",{className:"db-card"},
       SL("Upcoming Payments",upcoming.length+" scheduled · active"),
       upcoming.length===0
         ?React.createElement("div",{style:{textAlign:"center",padding:"24px 0",color:"var(--text6)",fontSize:12,display:"flex",flexDirection:"column",gap:6,alignItems:"center"}},
@@ -7097,7 +7399,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
 
 
     /* ══ I: NET WORTH TREND ══════════════════════════════════════════ */
-    (()=>{
+    W("nwtrend")&&(()=>{
       const snaps=data.nwSnapshots||{};
       const bTotal=data.banks.reduce((s,b)=>s+b.balance,0);
       const cashBal=data.cash.balance;
@@ -7178,7 +7480,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
       );
     })(),
     /* ══ H: BUDGET VS ACTUALS WITH ROLLOVER ═════════════════════ */
-    (()=>{
+    W("budget")&&(()=>{
       const plans=data.insightPrefs?.budgetPlans||{};
       if(!Object.keys(plans).length)return null;
 
@@ -7271,6 +7573,272 @@ const Dashboard=React.memo(({data,isMobile})=>{
                 React.createElement("div",{style:{position:"absolute",left:0,top:0,height:"100%",width:Math.min((r.plan/r.effectivePlan)*100,100)+"%",background:"var(--border2)",borderRadius:2}}),
                 /* Actual spend bar */
                 React.createElement("div",{style:{position:"absolute",left:0,top:0,height:"100%",width:Math.min(r.pct,100)+"%",background:col,borderRadius:2,transition:"width 1s ease"}})
+              )
+            );
+          })
+        )
+      );
+    })(),
+
+    /* ══ J: "WHERE DID MY MONEY GO?" MONTHLY SUMMARY ═══════════════ */
+    W("moneysummary")&&(()=>{
+      if(curMD.inc===0&&curMD.exp===0)return null;
+      const net=curMD.inc-curMD.exp;
+      const rate=curMD.inc>0?Math.max(0,Math.min(100,(net/curMD.inc)*100)):0;
+      /* Top expense category this month */
+      const topCatEntry=catEntries[0]||null;
+      /* Top payee this month */
+      const topPayeeEntry=topPayees[0]||null;
+      /* vs last month */
+      const incChg=prevMD?curMD.inc-prevMD.inc:null;
+      const expChg=prevMD?curMD.exp-prevMD.exp:null;
+      const netChg=prevMD?(net-(prevMD.inc-prevMD.exp)):null;
+      const monthName=MNAMES[parseInt(thisMonth.substr(5,2))-1]+" "+thisMonth.substr(0,4);
+
+      const Stat=({icon,label,val,sub,col})=>React.createElement("div",{style:{
+        flex:"1 1 120px",background:"var(--bg5)",borderRadius:10,padding:"10px 12px",
+        border:"1px solid var(--border2)",display:"flex",flexDirection:"column",gap:3
+      }},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5,marginBottom:2}},
+          React.createElement("span",{style:{fontSize:13}},icon),
+          React.createElement("span",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.4,fontWeight:600}},label)
+        ),
+        React.createElement("div",{style:{fontSize:14,fontWeight:800,fontFamily:"'Sora',sans-serif",color:col||"var(--text)"}},val),
+        sub&&React.createElement("div",{style:{fontSize:10,color:"var(--text5)",lineHeight:1.4}},sub)
+      );
+
+      const Arrow=({chg,invert=false})=>{
+        if(chg===null)return null;
+        const good=invert?(chg<0):(chg>0);
+        const col=good?"#16a34a":"#ef4444";
+        return React.createElement("span",{style:{fontSize:10,fontWeight:700,color:col,marginLeft:4}},
+          (chg>0?"↑ +":"↓ ")+INR(Math.abs(chg))+" vs last mo"
+        );
+      };
+
+      return React.createElement("div",{className:"db-card"},
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:8}},
+          SL("📋 Where did my money go?",monthName+" · all banking accounts"),
+          rate>0&&React.createElement("div",{style:{
+            padding:"4px 12px",borderRadius:20,fontSize:11,fontWeight:700,
+            background:rate>=30?"rgba(22,163,74,.12)":rate>=15?"rgba(180,83,9,.1)":"rgba(239,68,68,.1)",
+            color:rate>=30?"#16a34a":rate>=15?"#b45309":"#ef4444",
+            border:"1px solid "+(rate>=30?"rgba(22,163,74,.25)":rate>=15?"rgba(180,83,9,.25)":"rgba(239,68,68,.25)")
+          }},rate.toFixed(0)+"% saved")
+        ),
+        /* Main narrative line */
+        React.createElement("div",{style:{
+          background:"var(--accentbg2)",borderRadius:10,padding:"12px 16px",marginBottom:14,
+          border:"1px solid var(--border)",fontSize:13,color:"var(--text3)",lineHeight:1.7
+        }},
+          "You earned ",React.createElement("strong",{style:{color:"#16a34a"}},INR(curMD.inc)),
+          " and spent ",React.createElement("strong",{style:{color:"#ef4444"}},INR(curMD.exp)),
+          " this month. ",
+          net>=0
+            ?React.createElement("span",null,"You ",React.createElement("strong",{style:{color:"#16a34a"}},"saved "+INR(net)),rate>0?" ("+rate.toFixed(0)+"% savings rate)":"",".")
+            :React.createElement("span",null,"You ",React.createElement("strong",{style:{color:"#ef4444"}},"overspent by "+INR(Math.abs(net))),"."),
+          topCatEntry&&React.createElement("span",null," Biggest category: ",React.createElement("strong",{style:{color:"var(--accent)"}},topCatEntry[0]+" ("+INR(topCatEntry[1])+")")),
+          topPayeeEntry&&React.createElement("span",null,". Top payee: ",React.createElement("strong",null,topPayeeEntry[0]+" ("+INR(topPayeeEntry[1])+")")),
+          "."
+        ),
+        /* Stats row */
+        React.createElement("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+          React.createElement(Stat,{icon:"💰",label:"Income",val:INR(curMD.inc),col:"#16a34a",sub:incChg!==null?React.createElement(Arrow,{chg:incChg,invert:false}):null}),
+          React.createElement(Stat,{icon:"💸",label:"Expenses",val:INR(curMD.exp),col:"#ef4444",sub:expChg!==null?React.createElement(Arrow,{chg:expChg,invert:true}):null}),
+          React.createElement(Stat,{icon:"🏦",label:"Net Saved",val:INR(net),col:net>=0?"#16a34a":"#ef4444",sub:netChg!==null?React.createElement(Arrow,{chg:netChg,invert:false}):null}),
+          topCatEntry&&React.createElement(Stat,{icon:"🥧",label:"Top Category",val:topCatEntry[0],col:CAT_C[topCatEntry[0]]||"var(--accent)",sub:INR(topCatEntry[1])+" · "+((topCatEntry[1]/catTotal)*100).toFixed(0)+"% of spend"}),
+          topPayeeEntry&&React.createElement(Stat,{icon:"👤",label:"Top Payee",val:topPayeeEntry[0].length>14?topPayeeEntry[0].slice(0,14)+"…":topPayeeEntry[0],col:"var(--text2)",sub:INR(topPayeeEntry[1])})
+        )
+      );
+    })(),
+
+    /* ══ K: NET WORTH BREAKDOWN DONUT ════════════════════════════════ */
+    W("nwdonut")&&(()=>{
+      const bV=data.banks.reduce((s,b)=>s+b.balance,0);
+      const cV=data.cash.balance;
+      const mfV=data.mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
+      const shV=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
+      const fdV=data.fd.reduce((s,f)=>s+f.amount,0);
+      const reV=(data.re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
+      const ccV=data.cards.reduce((s,c)=>s+c.outstanding,0);
+      const lnV=(data.loans||[]).reduce((s,l)=>s+l.outstanding,0);
+      const totalAssets=bV+cV+mfV+shV+fdV+reV;
+      const totalLiab=ccV+lnV;
+      const nw=totalAssets-totalLiab;
+      if(totalAssets===0)return null;
+
+      const slices=[
+        {label:"Banks",val:bV,col:"#0ea5e9",icon:"🏦"},
+        {label:"Cash",val:cV,col:"#22c55e",icon:"💵"},
+        {label:"Mutual Funds",val:mfV,col:"#a78bfa",icon:"📈"},
+        {label:"Stocks",val:shV,col:"#f59e0b",icon:"📉"},
+        {label:"Fixed Deposits",val:fdV,col:"#06b6d4",icon:"🏛"},
+        {label:"Real Estate",val:reV,col:"#f97316",icon:"🏠"},
+      ].filter(s=>s.val>0);
+      const liabSlices=[
+        {label:"Credit Cards",val:ccV,col:"#ef4444",icon:"💳"},
+        {label:"Loans",val:lnV,col:"#dc2626",icon:"🏦"},
+      ].filter(s=>s.val>0);
+
+      /* SVG donut helper */
+      const DonutArc=(entries,total,cx,cy,outerR,innerR)=>{
+        let angle=-90;
+        return entries.map((e,i)=>{
+          const sweep=total>0?(e.val/total)*360:0;
+          const startA=angle,endA=angle+sweep-0.5;
+          angle+=sweep;
+          const toXY=(r,deg)=>({x:cx+r*Math.cos(deg*Math.PI/180),y:cy+r*Math.sin(deg*Math.PI/180)});
+          const s1=toXY(outerR,startA),e1=toXY(outerR,endA);
+          const s2=toXY(innerR,endA),e2=toXY(innerR,startA);
+          const large=sweep>180?1:0;
+          const d=`M${s1.x.toFixed(1)},${s1.y.toFixed(1)} A${outerR},${outerR},0,${large},1,${e1.x.toFixed(1)},${e1.y.toFixed(1)} L${s2.x.toFixed(1)},${s2.y.toFixed(1)} A${innerR},${innerR},0,${large},0,${e2.x.toFixed(1)},${e2.y.toFixed(1)} Z`;
+          return React.createElement("path",{key:e.label,d,fill:e.col,stroke:"var(--bg3)",strokeWidth:1.5,opacity:.9});
+        });
+      };
+
+      const INRs=v=>{const a=Math.abs(v);return(v<0?"-₹":"₹")+(a>=10000000?(a/10000000).toFixed(1)+"Cr":a>=100000?(a/100000).toFixed(1)+"L":a>=1000?(a/1000).toFixed(0)+"K":a.toFixed(0));};
+      const cx=90,cy=90;
+
+      return React.createElement("div",{className:"db-card"},
+        React.createElement("div",{style:{display:"flex",gap:isMobile?12:24,flexWrap:"wrap",alignItems:"flex-start"}},
+
+          /* Donut SVG */
+          React.createElement("div",{style:{flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",gap:6}},
+            React.createElement("svg",{width:180,height:180,viewBox:"0 0 180 180"},
+              /* Assets ring (outer) */
+              DonutArc(slices,totalAssets,cx,cy,76,50),
+              /* Liabilities ring (inner) */
+              liabSlices.length>0&&DonutArc(liabSlices,totalLiab,cx,cy,44,26),
+              /* Center text */
+              React.createElement("text",{x:cx,y:cy-10,textAnchor:"middle",fill:"var(--text5)",fontSize:8,fontFamily:"'DM Sans',sans-serif",fontWeight:700},"NET WORTH"),
+              React.createElement("text",{x:cx,y:cy+6,textAnchor:"middle",fill:nw>=0?"var(--accent)":"#ef4444",fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:800},INRs(nw)),
+              totalLiab>0&&React.createElement("text",{x:cx,y:cy+20,textAnchor:"middle",fill:"#ef4444",fontSize:8,fontFamily:"'DM Sans',sans-serif"},"-"+INRs(totalLiab)+" liab")
+            ),
+            React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textAlign:"center",lineHeight:1.5}},
+              React.createElement("span",{style:{display:"inline-block",width:10,height:10,borderRadius:2,background:"var(--accent)",marginRight:4,verticalAlign:"middle"}}),
+              "Outer = Assets",React.createElement("br"),
+              liabSlices.length>0&&React.createElement(React.Fragment,null,
+                React.createElement("span",{style:{display:"inline-block",width:10,height:10,borderRadius:2,background:"#ef4444",marginRight:4,verticalAlign:"middle"}}),
+                "Inner = Liabilities"
+              )
+            )
+          ),
+
+          /* Legend */
+          React.createElement("div",{style:{flex:1,minWidth:0,display:"flex",flexDirection:"column",gap:4}},
+            SL("Net Worth Breakdown","Assets by class · "+slices.length+" categories"),
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:"4px 16px",marginTop:4}},
+              slices.map(s=>{
+                const pctAsset=totalAssets>0?((s.val/totalAssets)*100):0;
+                const pctNW=nw!==0?((s.val/Math.abs(nw))*100):0;
+                return React.createElement("div",{key:s.label,style:{padding:"7px 0",borderBottom:"1px solid var(--border2)"}},
+                  React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:3}},
+                    React.createElement("span",{style:{fontSize:13}},s.icon),
+                    React.createElement("span",{style:{fontSize:11,fontWeight:600,color:"var(--text2)",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},s.label),
+                    React.createElement("span",{style:{fontSize:12,fontWeight:700,color:s.col,fontFamily:"'Sora',sans-serif",flexShrink:0}},INRs(s.val))
+                  ),
+                  React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+                    React.createElement("div",{style:{flex:1,height:4,borderRadius:2,background:"var(--border)",overflow:"hidden"}},
+                      React.createElement("div",{style:{height:"100%",width:pctAsset+"%",background:s.col,borderRadius:2,transition:"width 1.2s ease"}})
+                    ),
+                    React.createElement("span",{style:{fontSize:10,color:"var(--text5)",flexShrink:0,minWidth:32}},pctAsset.toFixed(0)+"% A"),
+                    React.createElement("span",{style:{fontSize:10,color:"var(--text6)",flexShrink:0,minWidth:32}},pctNW.toFixed(0)+"% NW")
+                  )
+                );
+              }),
+              /* Liability rows */
+              liabSlices.map(s=>React.createElement("div",{key:s.label,style:{padding:"7px 0",borderBottom:"1px solid var(--border2)"}},
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:3}},
+                  React.createElement("span",{style:{fontSize:13}},s.icon),
+                  React.createElement("span",{style:{fontSize:11,fontWeight:600,color:"#ef4444",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},s.label+" (Liability)"),
+                  React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"#ef4444",fontFamily:"'Sora',sans-serif",flexShrink:0}},"−"+INRs(s.val))
+                ),
+                React.createElement("div",{style:{height:4,borderRadius:2,background:"rgba(239,68,68,.15)",overflow:"hidden"}},
+                  React.createElement("div",{style:{height:"100%",width:Math.min(totalLiab>0?(s.val/totalLiab*100):0,100)+"%",background:"#ef4444",borderRadius:2}})
+                )
+              ))
+            ),
+            /* Summary row */
+            React.createElement("div",{style:{display:"flex",gap:12,marginTop:8,paddingTop:8,borderTop:"1px solid var(--border2)",flexWrap:"wrap"}},
+              React.createElement("div",null,React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"Total Assets "),React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"#16a34a",fontFamily:"'Sora',sans-serif"}},INRs(totalAssets))),
+              totalLiab>0&&React.createElement("div",null,React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"Total Liab "),React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"#ef4444",fontFamily:"'Sora',sans-serif"}},"−"+INRs(totalLiab))),
+              React.createElement("div",null,React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"Net Worth "),React.createElement("span",{style:{fontSize:12,fontWeight:700,color:nw>=0?"var(--accent)":"#ef4444",fontFamily:"'Sora',sans-serif"}},INRs(nw)))
+            )
+          )
+        )
+      );
+    })(),
+
+    /* ══ L: CATEGORY BUDGET ALERTS ══════════════════════════════════ */
+    W("budgetalerts")&&(()=>{
+      const plans=data.insightPrefs?.budgetPlans||{};
+      if(!Object.keys(plans).length)return null;
+      /* Compute this-month actuals for expense categories */
+      const actuals={};
+      allBankTx.filter(t=>t.type==="debit"&&t.date.substr(0,7)===thisMonth).forEach(t=>{
+        const main=catMainName(t.cat||"Others");
+        const ct=catClassType(data.categories,t.cat||"Others");
+        if(ct==="Transfer"||ct==="Income")return;
+        actuals[main]=(actuals[main]||0)+t.amount;
+      });
+      /* Build alert rows: categories at ≥ 80% */
+      const alerts=Object.entries(plans)
+        .filter(([,plan])=>plan>0)
+        .map(([cat,plan])=>{
+          const actual=actuals[cat]||0;
+          const pct=(actual/plan)*100;
+          return{cat,plan,actual,pct};
+        })
+        .filter(r=>r.pct>=80)
+        .sort((a,b)=>b.pct-a.pct);
+      if(!alerts.length)return null;
+      const overCount=alerts.filter(r=>r.pct>=100).length;
+      const warnCount=alerts.length-overCount;
+      return React.createElement("div",{style:{
+        background:"rgba(239,68,68,.04)",border:"1px solid rgba(239,68,68,.25)",borderRadius:14,padding:"14px 18px"
+      }},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:12,flexWrap:"wrap"}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+            React.createElement("span",{style:{fontSize:16}},"🚨"),
+            React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"#ef4444"}},
+              overCount>0?"Budget Exceeded":"Budget Warning"
+            )
+          ),
+          overCount>0&&React.createElement("span",{style:{fontSize:11,fontWeight:700,padding:"2px 9px",borderRadius:10,background:"rgba(239,68,68,.15)",color:"#ef4444",border:"1px solid rgba(239,68,68,.3)"}},overCount+" over budget"),
+          warnCount>0&&React.createElement("span",{style:{fontSize:11,fontWeight:700,padding:"2px 9px",borderRadius:10,background:"rgba(180,83,9,.12)",color:"#b45309",border:"1px solid rgba(180,83,9,.3)"}},warnCount+" near limit"),
+          React.createElement("span",{style:{fontSize:11,color:"var(--text5)",marginLeft:"auto"}},MNAMES[parseInt(thisMonth.substr(5,2))-1]+" "+thisMonth.substr(0,4))
+        ),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(2,1fr)",gap:"6px 20px"}},
+          alerts.map(r=>{
+            const over=r.pct>=100;
+            const col=over?"#ef4444":r.pct>=90?"#c2410c":"#b45309";
+            const bg=over?"rgba(239,68,68,.08)":"rgba(180,83,9,.06)";
+            const catObj=data.categories.find(c=>c.name===r.cat);
+            const cc=catObj?.color||CAT_C[r.cat]||"var(--accent)";
+            return React.createElement("div",{key:r.cat,style:{
+              padding:"9px 11px",borderRadius:9,background:bg,
+              border:"1px solid "+col+"33"
+            }},
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}},
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5}},
+                  React.createElement("span",{style:{width:7,height:7,borderRadius:2,background:cc,display:"inline-block",flexShrink:0}}),
+                  React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text2)"}},r.cat)
+                ),
+                React.createElement("div",{style:{textAlign:"right"}},
+                  React.createElement("span",{style:{fontSize:11,fontWeight:700,color:col,fontFamily:"'Sora',sans-serif"}},INR(r.actual)),
+                  React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}}," / "+INR(r.plan))
+                )
+              ),
+              React.createElement("div",{style:{height:5,borderRadius:3,background:"var(--border)",overflow:"hidden"}},
+                React.createElement("div",{style:{height:"100%",width:Math.min(r.pct,100)+"%",background:col,borderRadius:3,transition:"width 1s ease"}})
+              ),
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginTop:4}},
+                React.createElement("span",{style:{fontSize:10,fontWeight:700,color:col}},
+                  over?"▲ "+INR(r.actual-r.plan)+" over":"⚠ "+r.pct.toFixed(0)+"% used"
+                ),
+                !over&&React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},
+                  INR(r.plan-r.actual)+" left"
+                )
               )
             );
           })
@@ -9784,6 +10352,84 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],dispatch,defaultTab="mf",eod
         })
       )
     ),
+    /* ── FD Maturity Timeline */
+    tab==="fd"&&fd.length>=2&&(()=>{
+      const sorted=[...fd].filter(f=>f.maturityDate).sort((a,b)=>a.maturityDate.localeCompare(b.maturityDate));
+      if(sorted.length<1)return null;
+      const now=new Date();
+      const todayISO=now.toISOString().split("T")[0];
+      /* Earliest and latest maturity for scale */
+      const earliest=new Date(sorted[0].maturityDate);
+      const latest=new Date(sorted[sorted.length-1].maturityDate);
+      const spanDays=Math.max((latest-earliest)/86400000,1);
+      const W=800,padX=24,trackY=60,nodeH=44;
+      const xOf=d=>padX+((new Date(d)-earliest)/86400000/spanDays)*(W-padX*2);
+      /* Today marker x */
+      const todayX=Math.max(padX,Math.min(W-padX,padX+((now-earliest)/86400000/spanDays)*(W-padX*2)));
+      const totalPrincipal=sorted.reduce((s,f)=>s+f.amount,0);
+      return React.createElement("div",{style:{marginTop:8,background:"var(--bg4)",borderRadius:14,padding:"16px 18px",border:"1px solid var(--border)"}},
+        React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",textTransform:"uppercase",letterSpacing:.8,marginBottom:4,display:"flex",alignItems:"center",gap:6}},
+          React.createElement("div",{style:{width:3,height:13,borderRadius:2,background:"var(--accent)",flexShrink:0}}),
+          "📅 FD Maturity Timeline"
+        ),
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginBottom:12}},
+          sorted.length+" FDs · Total Principal: "+INR(totalPrincipal)+" · overflowX: scroll to see all"
+        ),
+        React.createElement("div",{style:{overflowX:"auto",paddingBottom:8}},
+          React.createElement("svg",{
+            width:W,height:trackY+sorted.length*nodeH+24,
+            viewBox:`0 0 ${W} ${trackY+sorted.length*nodeH+24}`,
+            style:{display:"block",minWidth:W,fontFamily:"'DM Sans',sans-serif"}
+          },
+            /* Horizontal track line */
+            React.createElement("line",{x1:padX,y1:trackY,x2:W-padX,y2:trackY,stroke:"var(--border)",strokeWidth:2}),
+            /* Today marker */
+            todayX>=padX&&todayX<=W-padX&&React.createElement("g",null,
+              React.createElement("line",{x1:todayX,y1:trackY-16,x2:todayX,y2:trackY+8,stroke:"var(--accent)",strokeWidth:2,strokeDasharray:"4,3"}),
+              React.createElement("text",{x:todayX,y:trackY-20,textAnchor:"middle",fill:"var(--accent)",fontSize:9,fontWeight:700},"TODAY")
+            ),
+            /* FD nodes */
+            sorted.map((f,i)=>{
+              const x=xOf(f.maturityDate);
+              const dl=daysLeft(f.maturityDate);
+              const matured=f.maturityDate<todayISO;
+              const col=matured?"#6d28d9":dl<=30?"#ef4444":dl<=180?"#f59e0b":"#16a34a";
+              const computedMat=calcFDMaturity(f.amount,f.rate,f.startDate,f.maturityDate);
+              const dispMat=f.maturityAmount&&f.maturityAmount>f.amount?f.maturityAmount:computedMat;
+              const interest=dispMat-f.amount;
+              /* Alternate rows above/below the track */
+              const above=i%2===0;
+              const nodeY=above?trackY-14:trackY+14;
+              const labelY=above?trackY-52:trackY+nodeH+8;
+              return React.createElement("g",{key:f.id},
+                /* Stem */
+                React.createElement("line",{x1:x,y1:trackY,x2:x,y2:nodeY,stroke:col,strokeWidth:1.5}),
+                /* Node dot */
+                React.createElement("circle",{cx:x,cy:nodeY,r:6,fill:col,stroke:"var(--bg3)",strokeWidth:2}),
+                /* Label box */
+                React.createElement("g",{transform:`translate(${Math.max(padX+2,Math.min(W-padX-110,x-55))},${above?trackY-56:trackY+22})`},
+                  React.createElement("rect",{width:110,height:34,rx:7,fill:col+"18",stroke:col+"44",strokeWidth:1}),
+                  React.createElement("text",{x:6,y:13,fill:"var(--text2)",fontSize:9,fontWeight:700},f.bank.length>14?f.bank.slice(0,13)+"…":f.bank),
+                  React.createElement("text",{x:6,y:25,fill:col,fontSize:8,fontWeight:600},INR(f.amount)+" → "+INR(dispMat)),
+                  /* Maturity date below label box */
+                  React.createElement("text",{x:55,y:42,textAnchor:"middle",fill:"var(--text5)",fontSize:8},
+                    matured?"✓ Matured":dl+"d · "+f.maturityDate.slice(0,7))
+                )
+              );
+            }),
+            /* Color legend */
+            React.createElement("g",{transform:`translate(${padX},${trackY+sorted.length*nodeH+10})`},
+              [[">6m","#16a34a"],[">1m","#f59e0b"],["<1m","#ef4444"],["Matured","#6d28d9"]].map(([l,c],i)=>
+                React.createElement("g",{key:l,transform:`translate(${i*90},0)`},
+                  React.createElement("circle",{cx:5,cy:5,r:4,fill:c}),
+                  React.createElement("text",{x:13,y:9,fill:"var(--text5)",fontSize:8},l)
+                )
+              )
+            )
+          )
+        )
+      );
+    })(),
     /* ── Real Estate content */
     tab==="re"&&(re.length===0?React.createElement(Empty,{icon:"🏠",text:"No properties added yet"}):
       React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}},
