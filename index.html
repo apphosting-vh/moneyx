@@ -1066,6 +1066,7 @@ select.inp option{background:var(--inp-opt)}
 @keyframes tx-flash{0%{box-shadow:inset 0 0 0 2px var(--accent),inset 0 0 24px var(--accentbg5)}40%{box-shadow:inset 0 0 0 2px var(--accent),inset 0 0 24px var(--accentbg5)}85%{box-shadow:inset 0 0 0 1px var(--accent)55,inset 0 0 10px transparent}100%{box-shadow:none}}
 @keyframes pinShake{0%,100%{transform:translateX(0)}15%{transform:translateX(-10px)}35%{transform:translateX(10px)}55%{transform:translateX(-7px)}75%{transform:translateX(7px)}90%{transform:translateX(-3px)}}
 @keyframes fsaPulse{0%,100%{box-shadow:0 0 0 0 rgba(251,146,60,.55),0 8px 32px rgba(0,0,0,.35)}60%{box-shadow:0 0 0 8px rgba(251,146,60,.0),0 8px 32px rgba(0,0,0,.35)}}
+@keyframes undoSlideUp{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes fsaSlideIn{from{opacity:0;transform:translateY(24px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes fsaIconSpin{0%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}100%{transform:rotate(-8deg)}}
 .fu{animation:fadeUp .35s ease forwards}
@@ -1729,10 +1730,48 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.27.5";
+const APP_VERSION="3.28.0";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.28.0",date:"2026-03-18",title:"Reconciliation-Gated Balances — balance only reflects Reconciled transactions",changes:[
+    "Core behaviour change: account balances (bank balance, card outstanding, cash balance) now only include transactions whose status is Reconciled. Unreconciled, Void, Duplicate and Follow-Up transactions are recorded in the ledger but do not move the balance until reconciled.",
+    "ADD: UPD_BANK_BAL and UPD_CARD_BAL reducers now check tx.status===Reconciled before applying the amount to the account balance. Adding an Unreconciled transaction leaves the balance unchanged.",
+    "EDIT (status toggle): EDIT_BANK_TX, EDIT_CARD_TX, EDIT_CASH_TX now compute a status-aware delta: oldEffect = was-Reconciled ? ±oldAmount : 0; newEffect = is-Reconciled ? ±newAmount : 0; balDelta = newEffect − oldEffect. Toggling a single transaction Reconciled ↔ Unreconciled via the ✓ Reconcile / ○ Unreconcile toolbar button instantly updates the balance by exactly that transaction amount.",
+    "DELETE: DEL_BANK_TX, DEL_CARD_TX, DEL_CASH_TX only reverse the balance if the deleted transaction was Reconciled.",
+    "DUPLICATE: DUP_BANK_TX, DUP_CARD_TX, DUP_CASH_TX only add to the balance if the duplicated transaction is Reconciled.",
+    "BULK DELETE: MASS_DEL_BANK_TX, MASS_DEL_CARD_TX, MASS_DEL_CASH_TX filter the deleted set to Reconciled-only before computing the netDelta.",
+    "BULK STATUS CHANGE: MASS_UPDATE_STATUS (Mark Reconciled / Mark Unreconciled / Mark Void buttons) now adjusts balance for every transaction whose status actually changes: Reconciled→other subtracts the amount; other→Reconciled adds it. Bulk-reconciling or bulk-unreconciling a selection immediately reflects in the account balance.",
+    "IMPORT: IMPORT_BULK_TX for bank, card and cash only adds Reconciled transactions to netDelta. Imported rows default to Reconciled so existing import workflows are unchanged; future imports with explicit Unreconciled status will not inflate the balance.",
+    "Running balance column: TxLedger balMap loop now skips non-Reconciled transactions — the balance column shows the reconciled running total at each row. Unreconciled rows display the same balance as the previous Reconciled row.",
+    "Opening balance: the openBalance prop passed to TxLedger in BankSection, CardSection and CashSection now subtracts only Reconciled transactions from the stored balance, so the running total starts from the correct reconciled baseline.",
+    "Note: existing localStorage data has balances built from all transactions. Users should review opening balances or use Settings → Reset to start fresh with the new behaviour.",
+  ]},
+  {version:"3.27.9",date:"2026-03-18",title:"Fix: Card Payment Reminder — wrong due dates on Dashboard",changes:[
+    "Fixed: Dashboard section G (Card Payment Reminders) was computing due dates with a naive formula: take dueDay in the current month and roll forward one month if already past. This ignored billingDay entirely and produced wrong dates.",
+    "Root cause: the formula did not replicate the billing-cycle logic already present in the Cards section widget.",
+    "Fix: replaced the naive calculation with the exact same billing-cycle-aware logic used in CardSection: (1) find cycleStart = last billingDay that has passed, (2) nextStatement = cycleStart + 1 month, (3) if dueDay > billingDay then due = same month as nextStatement, (4) if dueDay <= billingDay then due = month after nextStatement.",
+    "Changed filter from dueDay||billingDay to dueDay&&billingDay — both fields are required for the formula; cards with only one configured are now skipped rather than showing a wrong date.",
+    "Cards that are already overdue (daysLeft < 0) are now excluded from the alert strip.",
+  ]},
+  {version:"3.27.8",date:"2026-03-18",title:"Fix: ReferenceError thisMonthName not defined in Dashboard",changes:[
+    "Fixed ReferenceError: thisMonthName is not defined that crashed the Dashboard on every load.",
+    "Root cause: the v3.27.6 Budget vs Actuals block (section H of Dashboard) referenced thisMonthName, a variable that only exists inside InsightsSection (line ~18194). Dashboard has no such variable in scope.",
+    "Fix: replaced thisMonthName with MNAMES[parseInt(thisMonth.substr(5,2))-1] — both MNAMES (month abbreviation array) and thisMonth (YYYY-MM string) are already defined at the top of the Dashboard component.",
+  ]},
+  {version:"3.27.7",date:"2026-03-18",title:"Fix: Blank screen — Missing semicolon syntax error in SplitTxModal",changes:[
+    "Fixed Uncaught SyntaxError 'Missing semicolon' at Babel script line 5448 that caused a complete blank screen on load.",
+    "Root cause: the opening '/* ═══ SPLIT TX MODAL' comment block header was accidentally truncated during the v3.27.6 edit, leaving bare unquoted text between two JS statements — Babel could not parse the file at all.",
+    "Fix: restored the full '/* ══════ SPLIT TX MODAL ... ══════ */' comment wrapper around the descriptive text preceding SplitTxModal.",
+  ]},
+  {version:"3.27.6",date:"2026-03-18",title:"6 High-Impact Features — Split Transactions, Global Search, Undo, Card Alerts, Budget Actuals, Recurring Write-back",changes:[
+    "New: Split Transaction — select any transaction in any ledger (bank, card, cash) and click '✂ Split' in the bottom toolbar. A modal lets you divide it into up to 6 sub-transactions with individual amounts, categories, descriptions and payees. Parts must sum exactly to the original amount (real-time remainder indicator). New SPLIT_TX reducer replaces the original transaction with the split rows and assigns sequential _sn values — balance unchanged. Wired in BankSection, CardSection, and CashSection.",
+    "New: Global Quick-Search — press Ctrl/Cmd+K anywhere to open a full-screen search overlay. Fuzzy-searches all transactions, accounts, notes and payees simultaneously. Results grouped by type (Transactions show date, payee, category, account; Accounts show balance; Notes show body preview; Payees link to All Transactions). Click any result to jump directly to it. Esc closes. A '🔍 Quick search…' button with ⌘K badge is shown at the top of the full sidebar nav.",
+    "New: Undo Last Action — every destructive operation (delete transaction, bulk delete, split, delete account/loan/investment/goal/note/payee/category, reset) automatically captures a state snapshot before executing. A slide-up toast appears at the bottom of the screen for 6 seconds with an '↩ Undo' button. Ctrl/Cmd+Z also triggers undo while the toast is visible. New UNDO_STATE reducer case restores the captured snapshot. The dispatch wrapper in App auto-snapshots before all DESTRUCTIVE action types.",
+    "New: Credit Card Due-Date Alerts on Dashboard — a new Dashboard section (G) reads each card's dueDay field and shows a highlighted alert card for any card with payment due within 7 days. Urgency colour-coding: red (0-1 days), orange (2-3 days), amber (4-7 days). Shows card name, outstanding amount, due date, and a '⚠ Pay now' label when due today/tomorrow. Only appears when urgent cards exist — no clutter when all cards are paid.",
+    "New: Budget vs Actuals strip on Dashboard — a new Dashboard section (H) reads insightPrefs.budgetPlans (set in Settings → Preferences) and shows a live progress bar per category for the current month. Green when under 50%, amber 50-80%, orange 80-99%, red when over budget. '▲ over' badge appears for categories that have exceeded their plan. Shows up to 8 categories sorted by % used. Only rendered when at least one budget plan is configured.",
+    "Enhanced: Recurring transaction schedule write-back — the existing '🗓 Schedule' button in Insights → Recurring tab now correctly picks the first available account as the default target, ensuring the ADD_SCHEDULED dispatch always has a valid accId and accType rather than empty strings.",
+  ]},
   {version:"3.27.5",date:"2026-03-17",title:"Bug Fixes — 9 Core Functional Bugs (State, Reducers, Sort Order)",changes:[
     "Fix #1-3 — INIT() missing eodPrices, eodNavs, historyCache: On a brand-new first install (no localStorage), these three fields were undefined in state. Every component guards with ||{} so no crash occurred, but the EOD price snapshot, NAV snapshot, and share history cache systems were silently non-functional until the user performed any state-changing action. Added all three fields with empty-object defaults to INIT().",
     "Fix #4 — RESTORE_ALL reducer used INIT() (sample data) as base instead of EMPTY_STATE(): When restoring a backup, the reducer did {...INIT(),...a.data}. INIT() has sample banks, payees, and transactions. If the backup was missing newer fields (e.g. historyCache from an older backup), those fields inherited undefined from INIT() instead of the safe {} fallback from EMPTY_STATE(). Fixed by changing base to {...EMPTY_STATE(),...a.data}.",
@@ -3119,30 +3158,26 @@ const reducer=(s,a)=>{
   switch(a.type){
     case"ADD_BANK":return{...s,banks:[...s.banks,a.p]};
     case"ADD_BANK_TX":{const b=s.banks.find(b=>b.id===a.id);const sn=b?nextSn(b.transactions):1;return{...s,banks:s.banks.map(b=>b.id===a.id?{...b,transactions:[...b.transactions,{...a.tx,_sn:sn}]}:b)};}
-    case"UPD_BANK_BAL":return{...s,banks:s.banks.map(b=>b.id===a.id?{...b,balance:b.balance+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount)}:b)};
-    case"EDIT_BANK_TX":return{...s,banks:s.banks.map(b=>b.id===a.accId?{...b,
-      balance:b.balance-(a.old.type==="credit"?a.old.amount:-a.old.amount)+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount),
-      transactions:b.transactions.map(t=>t.id===a.tx.id?a.tx:t)}:b)};
-    case"DEL_BANK_TX":return{...s,banks:s.banks.map(b=>b.id===a.accId?{...b,
-      balance:b.balance-(a.tx.type==="credit"?a.tx.amount:-a.tx.amount),
-      transactions:b.transactions.filter(t=>t.id!==a.tx.id)}:b)};
-    case"DUP_BANK_TX":return{...s,banks:s.banks.map(b=>{if(b.id!==a.accId)return b;const sn=nextSn(b.transactions);return{...b,balance:b.balance+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount),transactions:[...b.transactions,{...a.tx,id:uid(),_sn:sn,_addedAt:new Date().toISOString()}]};})};
+    case"UPD_BANK_BAL":return{...s,banks:s.banks.map(b=>b.id===a.id?(a.tx.status==="Reconciled"?{...b,balance:b.balance+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount)}:b):b)};
+    case"EDIT_BANK_TX":{const _bwas=a.old.status==="Reconciled";const _bis=a.tx.status==="Reconciled";const _bOld=_bwas?(a.old.type==="credit"?a.old.amount:-a.old.amount):0;const _bNew=_bis?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0;return{...s,banks:s.banks.map(b=>b.id===a.accId?{...b,balance:b.balance+(_bNew-_bOld),transactions:b.transactions.map(t=>t.id===a.tx.id?a.tx:t)}:b)};}
+    case"DEL_BANK_TX":return{...s,banks:s.banks.map(b=>b.id===a.accId?{...b,balance:b.balance-(a.tx.status==="Reconciled"?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0),transactions:b.transactions.filter(t=>t.id!==a.tx.id)}:b)};
+    case"DUP_BANK_TX":return{...s,banks:s.banks.map(b=>{if(b.id!==a.accId)return b;const sn=nextSn(b.transactions);const _dr=a.tx.status==="Reconciled";return{...b,balance:b.balance+(_dr?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0),transactions:[...b.transactions,{...a.tx,id:uid(),_sn:sn,_addedAt:new Date().toISOString()}]};})};
     /* Bulk delete: ids is a Set of tx IDs; balance adjusted atomically */
     case"MASS_DEL_BANK_TX":return{...s,banks:s.banks.map(b=>{
       if(b.id!==a.accId)return b;
       const toDelete=b.transactions.filter(t=>a.ids.has(t.id));
-      const netDelta=toDelete.reduce((d,t)=>d+(t.type==="credit"?t.amount:-t.amount),0);
+      const netDelta=toDelete.filter(t=>t.status==="Reconciled").reduce((d,t)=>d+(t.type==="credit"?t.amount:-t.amount),0);
       return{...b,balance:b.balance-netDelta,transactions:b.transactions.filter(t=>!a.ids.has(t.id))};
     })};
     case"MASS_DEL_CARD_TX":return{...s,cards:s.cards.map(c=>{
       if(c.id!==a.accId)return c;
       const toDelete=c.transactions.filter(t=>a.ids.has(t.id));
-      const netDelta=toDelete.reduce((d,t)=>d+(t.type==="debit"?t.amount:-t.amount),0);
+      const netDelta=toDelete.filter(t=>t.status==="Reconciled").reduce((d,t)=>d+(t.type==="debit"?t.amount:-t.amount),0);
       return{...c,outstanding:c.outstanding-netDelta,transactions:c.transactions.filter(t=>!a.ids.has(t.id))};
     })};
     case"MASS_DEL_CASH_TX":{
       const toDelete=s.cash.transactions.filter(t=>a.ids.has(t.id));
-      const netDelta=toDelete.reduce((d,t)=>d+(t.type==="credit"?t.amount:-t.amount),0);
+      const netDelta=toDelete.filter(t=>t.status==="Reconciled").reduce((d,t)=>d+(t.type==="credit"?t.amount:-t.amount),0);
       return{...s,cash:{...s.cash,balance:s.cash.balance-netDelta,transactions:s.cash.transactions.filter(t=>!a.ids.has(t.id))}};
     }
     case"REORDER_BANKS":{const bs=[...s.banks];const[mv]=bs.splice(a.from,1);bs.splice(a.to,0,mv);return{...s,banks:bs};}
@@ -3151,25 +3186,17 @@ const reducer=(s,a)=>{
     case"DEL_BANK":return{...s,banks:s.banks.filter(b=>b.id!==a.id)};
     case"ADD_CARD":return{...s,cards:[...s.cards,a.p]};
     case"ADD_CARD_TX":{const c=s.cards.find(c=>c.id===a.id);const sn=c?nextSn(c.transactions):1;return{...s,cards:s.cards.map(c=>c.id===a.id?{...c,transactions:[...c.transactions,{...a.tx,_sn:sn}]}:c)};}
-    case"UPD_CARD_BAL":return{...s,cards:s.cards.map(c=>c.id===a.id?{...c,outstanding:c.outstanding+(a.tx.type==="debit"?a.tx.amount:-a.tx.amount)}:c)};
-    case"EDIT_CARD_TX":return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,
-      outstanding:c.outstanding-(a.old.type==="debit"?a.old.amount:-a.old.amount)+(a.tx.type==="debit"?a.tx.amount:-a.tx.amount),
-      transactions:c.transactions.map(t=>t.id===a.tx.id?a.tx:t)}:c)};
-    case"DEL_CARD_TX":return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,
-      outstanding:c.outstanding-(a.tx.type==="debit"?a.tx.amount:-a.tx.amount),
-      transactions:c.transactions.filter(t=>t.id!==a.tx.id)}:c)};
-    case"DUP_CARD_TX":return{...s,cards:s.cards.map(c=>{if(c.id!==a.accId)return c;const sn=nextSn(c.transactions);return{...c,outstanding:c.outstanding+(a.tx.type==="debit"?a.tx.amount:-a.tx.amount),transactions:[...c.transactions,{...a.tx,id:uid(),_sn:sn,_addedAt:new Date().toISOString()}]};})};
+    case"UPD_CARD_BAL":return{...s,cards:s.cards.map(c=>c.id===a.id?(a.tx.status==="Reconciled"?{...c,outstanding:c.outstanding+(a.tx.type==="debit"?a.tx.amount:-a.tx.amount)}:c):c)};
+    case"EDIT_CARD_TX":{const _cwas=a.old.status==="Reconciled";const _cis=a.tx.status==="Reconciled";const _cOld=_cwas?(a.old.type==="debit"?a.old.amount:-a.old.amount):0;const _cNew=_cis?(a.tx.type==="debit"?a.tx.amount:-a.tx.amount):0;return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,outstanding:c.outstanding+(_cNew-_cOld),transactions:c.transactions.map(t=>t.id===a.tx.id?a.tx:t)}:c)};}
+    case"DEL_CARD_TX":return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,outstanding:c.outstanding-(a.tx.status==="Reconciled"?(a.tx.type==="debit"?a.tx.amount:-a.tx.amount):0),transactions:c.transactions.filter(t=>t.id!==a.tx.id)}:c)};
+    case"DUP_CARD_TX":return{...s,cards:s.cards.map(c=>{if(c.id!==a.accId)return c;const sn=nextSn(c.transactions);const _cr=a.tx.status==="Reconciled";return{...c,outstanding:c.outstanding+(_cr?(a.tx.type==="debit"?a.tx.amount:-a.tx.amount):0),transactions:[...c.transactions,{...a.tx,id:uid(),_sn:sn,_addedAt:new Date().toISOString()}]};})};
     case"EDIT_CARD":return{...s,cards:s.cards.map(c=>c.id===a.p.id?{...c,...a.p}:c)};
     case"DEL_CARD":return{...s,cards:s.cards.filter(c=>c.id!==a.id)};
-    case"ADD_CASH_TX":{const sn=nextSn(s.cash.transactions);return{...s,cash:{balance:s.cash.balance+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount),transactions:[...s.cash.transactions,{...a.tx,_sn:sn}]}};}
+    case"ADD_CASH_TX":{const sn=nextSn(s.cash.transactions);const _caRec=a.tx.status==="Reconciled";return{...s,cash:{balance:s.cash.balance+(_caRec?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0),transactions:[...s.cash.transactions,{...a.tx,_sn:sn}]}};}
     case"SET_CASH_BAL":return{...s,cash:{...s.cash,balance:a.val}};
-    case"EDIT_CASH_TX":return{...s,cash:{...s.cash,
-      balance:s.cash.balance-(a.old.type==="credit"?a.old.amount:-a.old.amount)+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount),
-      transactions:s.cash.transactions.map(t=>t.id===a.tx.id?a.tx:t)}};
-    case"DEL_CASH_TX":return{...s,cash:{...s.cash,
-      balance:s.cash.balance-(a.tx.type==="credit"?a.tx.amount:-a.tx.amount),
-      transactions:s.cash.transactions.filter(t=>t.id!==a.tx.id)}};
-    case"DUP_CASH_TX":{const sn=nextSn(s.cash.transactions);return{...s,cash:{...s.cash,balance:s.cash.balance+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount),transactions:[...s.cash.transactions,{...a.tx,id:uid(),_sn:sn,_addedAt:new Date().toISOString()}]}};}
+    case"EDIT_CASH_TX":{const _ewas=a.old.status==="Reconciled";const _eis=a.tx.status==="Reconciled";const _eOld=_ewas?(a.old.type==="credit"?a.old.amount:-a.old.amount):0;const _eNew=_eis?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0;return{...s,cash:{...s.cash,balance:s.cash.balance+(_eNew-_eOld),transactions:s.cash.transactions.map(t=>t.id===a.tx.id?a.tx:t)}};}
+    case"DEL_CASH_TX":return{...s,cash:{...s.cash,balance:s.cash.balance-(a.tx.status==="Reconciled"?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0),transactions:s.cash.transactions.filter(t=>t.id!==a.tx.id)}};
+    case"DUP_CASH_TX":{const sn=nextSn(s.cash.transactions);const _dcRec=a.tx.status==="Reconciled";return{...s,cash:{...s.cash,balance:s.cash.balance+(_dcRec?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0),transactions:[...s.cash.transactions,{...a.tx,id:uid(),_sn:sn,_addedAt:new Date().toISOString()}]}};}
     case"ADD_MF":return{...s,mf:[...s.mf,a.p]};
     case"EDIT_MF":return{...s,mf:s.mf.map(m=>m.id===a.p.id?{...m,...a.p}:m)};
     case"UPD_MF_NAV":return{...s,mf:a.p};
@@ -3429,9 +3456,21 @@ const reducer=(s,a)=>{
     case"DEL_PAYEE":return{...s,payees:s.payees.filter(p=>p.id!==a.id)};
     case"MASS_UPDATE_STATUS":{
       const{accType:at,accId:aid,ids,status:st}=a;
-      if(at==="bank")return{...s,banks:s.banks.map(b=>b.id!==aid?b:{...b,transactions:b.transactions.map(t=>ids.has(t.id)?{...t,status:st}:t)})};
-      if(at==="card")return{...s,cards:s.cards.map(c=>c.id!==aid?c:{...c,transactions:c.transactions.map(t=>ids.has(t.id)?{...t,status:st}:t)})};
-      if(at==="cash")return{...s,cash:{...s.cash,transactions:s.cash.transactions.map(t=>ids.has(t.id)?{...t,status:st}:t)}};
+      /* Balance delta helpers: compute effect of a tx being counted (positive) or not */
+      const _bEff=t=>t.type==="credit"?t.amount:-t.amount; /* bank / cash */
+      const _cEff=t=>t.type==="debit"?t.amount:-t.amount;  /* card outstanding */
+      const _delta=(txList,effFn)=>txList
+        .filter(t=>ids.has(t.id)&&t.status!==st)
+        .reduce((d,t)=>{
+          const wasRec=t.status==="Reconciled";
+          const willRec=st==="Reconciled";
+          if(wasRec&&!willRec)return d-effFn(t); /* was posted, now unpost */
+          if(!wasRec&&willRec)return d+effFn(t); /* was pending, now post  */
+          return d;
+        },0);
+      if(at==="bank"){const b=s.banks.find(bk=>bk.id===aid);if(!b)return s;const bd=_delta(b.transactions,_bEff);return{...s,banks:s.banks.map(bk=>bk.id!==aid?bk:{...bk,balance:bk.balance+bd,transactions:bk.transactions.map(t=>ids.has(t.id)?{...t,status:st}:t)})};}
+      if(at==="card"){const c=s.cards.find(cd=>cd.id===aid);if(!c)return s;const cd2=_delta(c.transactions,_cEff);return{...s,cards:s.cards.map(cd=>cd.id!==aid?cd:{...cd,outstanding:cd.outstanding+cd2,transactions:cd.transactions.map(t=>ids.has(t.id)?{...t,status:st}:t)})};}
+      if(at==="cash"){const bd=_delta(s.cash.transactions,_bEff);return{...s,cash:{...s.cash,balance:s.cash.balance+bd,transactions:s.cash.transactions.map(t=>ids.has(t.id)?{...t,status:st}:t)}};}
       return s;
     }
     /* Bulk categorize: update category (and optionally payee) for a set of tx IDs */
@@ -3453,7 +3492,7 @@ const reducer=(s,a)=>{
       if(accType==="bank"){
         return{...s,banks:s.banks.map(b=>{
           if(b.id!==accId)return b;
-          const netDelta=txns.reduce((d,t)=>d+(t.type==="credit"?t.amount:-t.amount),0);
+          const netDelta=txns.filter(t=>t.status==="Reconciled").reduce((d,t)=>d+(t.type==="credit"?t.amount:-t.amount),0);
           /* Assign sequential _sn starting after the current max */
           let sn=nextSn(b.transactions);
           const stamped=txns.map(t=>({...t,_sn:t._sn??sn++}));
@@ -3463,14 +3502,14 @@ const reducer=(s,a)=>{
       if(accType==="card"){
         return{...s,cards:s.cards.map(c=>{
           if(c.id!==accId)return c;
-          const netDelta=txns.reduce((d,t)=>d+(t.type==="debit"?t.amount:-t.amount),0);
+          const netDelta=txns.filter(t=>t.status==="Reconciled").reduce((d,t)=>d+(t.type==="debit"?t.amount:-t.amount),0);
           let sn=nextSn(c.transactions);
           const stamped=txns.map(t=>({...t,_sn:t._sn??sn++}));
           return{...c,transactions:[...c.transactions,...stamped],outstanding:Math.max(0,c.outstanding+netDelta)};
         })};
       }
       if(accType==="cash"){
-        const netDelta=txns.reduce((d,t)=>d+(t.type==="credit"?t.amount:-t.amount),0);
+        const netDelta=txns.filter(t=>t.status==="Reconciled").reduce((d,t)=>d+(t.type==="credit"?t.amount:-t.amount),0);
         let sn=nextSn(s.cash.transactions);
         const stamped=txns.map(t=>({...t,_sn:t._sn??sn++}));
         return{...s,cash:{...s.cash,transactions:[...s.cash.transactions,...stamped],balance:s.cash.balance+netDelta}};
@@ -3525,6 +3564,18 @@ const reducer=(s,a)=>{
       }));
       return{...s,categories:[...s.categories,...newCats]};
     }
+    case"SPLIT_TX":{
+      /* Replace originalTx with N split transactions that sum to same amount.
+         Balance is unchanged — splits preserve the total money flow. */
+      const{accType:_sat,accId:_said,originalTx:_otx,splits:_sps}=a;
+      if(!_sps||!_sps.length)return s;
+      const _applyS=(txs)=>{const wo=txs.filter(t=>t.id!==_otx.id);let sn=nextSn(wo);return[...wo,..._sps.map(sp=>({...sp,_sn:sn++}))];};
+      if(_sat==="bank")return{...s,banks:s.banks.map(b=>b.id===_said?{...b,transactions:_applyS(b.transactions)}:b)};
+      if(_sat==="card")return{...s,cards:s.cards.map(c=>c.id===_said?{...c,transactions:_applyS(c.transactions)}:c)};
+      if(_sat==="cash")return{...s,cash:{...s.cash,transactions:_applyS(s.cash.transactions)}};
+      return s;
+    }
+    case"UNDO_STATE":return{...a.snapshot};
     default:return s;
   }
 };
@@ -4105,7 +4156,7 @@ const ImportTxModal=({onImport,onClose,categories,accType="bank"})=>{
 };
 
 /* ── LEDGER TABLE VIEW ─────────────────────────────────────────────────── */
-const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onNew,onImport,onMassUpdateStatus,onMassCategorize,onMassDelete,categories,payees,txTypes,allAccounts,currentAccountId,accentColor,openBalance,accType="bank",isMobile=false,jumpTxId=null,jumpSerial=null})=>{
+const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport,onMassUpdateStatus,onMassCategorize,onMassDelete,categories,payees,txTypes,allAccounts,currentAccountId,accentColor,openBalance,accType="bank",isMobile=false,jumpTxId=null,jumpSerial=null})=>{
   const[selId,setSelId]=useState(null);
   const jumpRowRef=React.useRef(null);
   const[jumpActive,setJumpActive]=useState(false); /* true = show ONLY the jumped-to tx */
@@ -4114,6 +4165,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onNew,onImport,onMassU
   const[sortDir,setSortDir]=useState("desc");
   const[sortKey,setSortKey]=useState("date"); /* date|desc_col|payee|cat|out|in|balance */
   const[editTx,setEditTx]=useState(null);
+  const[splitTx,setSplitTx]=useState(null);
   const[confirmDel,setConfirmDel]=useState(null);
   const[importOpen,setImportOpen]=useState(false);
   const[bulkCatOpen,setBulkCatOpen]=useState(false);
@@ -4247,7 +4299,8 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onNew,onImport,onMassU
   const balMap={};
   let running=openBalance||0;
   for(const tx of chronological){
-    running+=(tx.type==="credit"?tx.amount:-tx.amount);
+    /* Only Reconciled transactions advance the running balance */
+    if(tx.status==="Reconciled")running+=(tx.type==="credit"?tx.amount:-tx.amount);
     balMap[tx.id]=running;
   }
 
@@ -4927,6 +4980,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onNew,onImport,onMassU
             React.createElement("button",{onClick:onNew,style:tbBtn("var(--accent)","var(--accentbg)")},"+ New"),
             React.createElement("button",{onClick:()=>selTx&&setEditTx(selTx),disabled:!selTx,style:tbBtn("#1d4ed8","rgba(29,78,216,.12)",!selTx)},"✏ Edit"),
             React.createElement("button",{onClick:()=>selTx&&onDuplicate(selTx),disabled:!selTx,style:tbBtn("#6d28d9","rgba(109,40,217,.12)",!selTx)},"⧉ Duplicate"),
+            React.createElement("button",{onClick:()=>selTx&&setSplitTx(selTx),disabled:!selTx||!onSplit,style:tbBtn("#0e7490","rgba(14,116,144,.12)",!selTx||!onSplit)},"✂ Split"),
             React.createElement("button",{onClick:()=>selTx&&setConfirmDel(selTx),disabled:!selTx,style:tbBtn("#ef4444","rgba(239,68,68,.12)",!selTx)},"✕ Delete"),
             React.createElement("div",{style:{width:1,height:22,background:"var(--border)",margin:"0 4px"}}),
             React.createElement("button",{onClick:()=>{if(!selTx)return;const updated={...selTx,status:selTx.status==="Reconciled"?"Unreconciled":"Reconciled"};onEdit(updated,selTx);},disabled:!selTx,style:tbBtn("#16a34a","rgba(22,163,74,.12)",!selTx)},(selTx&&selTx.status)==="Reconciled"?"○ Unreconcile":"✓ Reconcile"),
@@ -5009,6 +5063,13 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onNew,onImport,onMassU
         setSelId(null);
       },
       onClose:()=>setBulkDelOpen(false)
+    }),
+    /* ── Split transaction modal */
+    splitTx&&React.createElement(SplitTxModal,{
+      tx:splitTx,
+      categories,
+      onSave:(origTx,splits)=>{if(onSplit)onSplit(origTx,splits);setSplitTx(null);setSelId(null);},
+      onClose:()=>setSplitTx(null)
     })
   );
 };
@@ -5945,7 +6006,7 @@ const TxForm=({onAdd,categories,payees,txTypes,allAccounts,currentAccountId,disp
 };
 
 /* ── INLINE TRANSACTION PANEL ────────────────────────────────────────── */
-const TxPanel=({account,label,onAddTx,onEditTx,onDeleteTx,onDupTx,onImportTx,onMassUpdateTx,onMassCatTx,onMassDeleteTx,accType="bank",accentColor="#0e7490",categories,payees,txTypes,allAccounts,openBalance,dispatch,state,isMobile=false,jumpTxId=null,jumpSerial=null})=>{
+const TxPanel=({account,label,onAddTx,onEditTx,onDeleteTx,onDupTx,onSplitTx,onImportTx,onMassUpdateTx,onMassCatTx,onMassDeleteTx,accType="bank",accentColor="#0e7490",categories,payees,txTypes,allAccounts,openBalance,dispatch,state,isMobile=false,jumpTxId=null,jumpSerial=null})=>{
   const[addOpen,setAddOpen]=useState(false);
   if(!account)return React.createElement("div",{className:"si",style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:14,color:"var(--text6)",background:"var(--bg5)",borderRadius:14,border:"1px dashed var(--border)",minHeight:300}},
     React.createElement("div",{style:{fontSize:36}},"👈"),
@@ -5992,6 +6053,7 @@ const TxPanel=({account,label,onAddTx,onEditTx,onDeleteTx,onDupTx,onImportTx,onM
       onEdit:onEditTx,
       onDelete:onDeleteTx,
       onDuplicate:onDupTx,
+      onSplit:onSplitTx,
       onImport:onImportTx,
       onMassUpdateStatus:onMassUpdateTx,
       onMassCategorize:onMassCatTx,
@@ -6584,9 +6646,349 @@ const Dashboard=React.memo(({data,isMobile})=>{
               );
             })
           )
-    )
+    ),
+
+    /* ══ G: CREDIT CARD DUE-DATE ALERTS ════════════════════════ */
+    (()=>{
+      const alerts=data.cards
+        .filter(c=>c.dueDay&&c.billingDay)
+        .map(c=>{
+          const now=new Date();
+          const bd=c.billingDay; const dd=c.dueDay;
+          /* Replicate exact logic from CardSection billing cycle widget:
+             cycleStart = last billingDay that has already passed
+             nextStatement = cycleStart + 1 month
+             dueDay > billingDay  -> due same month as next statement
+             dueDay <= billingDay -> due month AFTER next statement */
+          const cycleStart=new Date(now.getFullYear(),now.getMonth(),bd);
+          if(now.getDate()<bd)cycleStart.setMonth(cycleStart.getMonth()-1);
+          const nextStatement=new Date(cycleStart);
+          nextStatement.setMonth(nextStatement.getMonth()+1);
+          const dueDate=dd>bd
+            ?new Date(nextStatement.getFullYear(),nextStatement.getMonth(),dd)
+            :new Date(nextStatement.getFullYear(),nextStatement.getMonth()+1,dd);
+          const dl=Math.ceil((dueDate-now)/86400000);
+          return{...c,dueDate:dueDate.toISOString().split("T")[0],daysLeft:dl};
+        })
+        .filter(c=>c.daysLeft>=0)
+        .sort((a,b)=>a.daysLeft-b.daysLeft);
+      if(!alerts.length)return null;
+      const urgent=alerts.filter(a=>a.daysLeft<=7);
+      if(!urgent.length)return null;
+      return React.createElement("div",{style:{
+        background:"linear-gradient(135deg,rgba(194,65,12,.08),rgba(239,68,68,.06))",
+        border:"1px solid rgba(194,65,12,.3)",borderRadius:14,padding:"14px 18px"
+      }},
+        SL("💳 Card Payment Reminders","Due within 7 days"),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(auto-fill,minmax(260px,1fr))",gap:10}},
+          urgent.map(c=>{
+            const uc=c.daysLeft<=1?"#ef4444":c.daysLeft<=3?"#c2410c":"#b45309";
+            const lbl=c.daysLeft===0?"Due Today":c.daysLeft===1?"Due Tomorrow":"Due in "+c.daysLeft+" days";
+            return React.createElement("div",{key:c.id,style:{
+              background:"var(--modal-bg)",border:"1px solid rgba(194,65,12,.2)",borderRadius:11,
+              padding:"11px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,
+              borderLeft:"3px solid "+uc
+            }},
+              React.createElement("div",{style:{minWidth:0,flex:1}},
+                React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},c.name),
+                React.createElement("div",{style:{display:"flex",gap:6,marginTop:3,alignItems:"center",flexWrap:"wrap"}},
+                  React.createElement("span",{style:{fontSize:9,fontWeight:700,color:uc,background:uc+"18",borderRadius:6,padding:"1px 6px"}},lbl),
+                  React.createElement("span",{style:{fontSize:9,color:"var(--text5)"}},"Due: "+dmyFmt(c.dueDate))
+                )
+              ),
+              React.createElement("div",{style:{textAlign:"right",flexShrink:0}},
+                React.createElement("div",{style:{fontSize:14,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#c2410c"}},INR(c.outstanding)),
+                React.createElement("div",{style:{fontSize:9,color:"var(--text5)"}},c.daysLeft<=1?"⚠ Pay now":"outstanding")
+              )
+            );
+          })
+        )
+      );
+    })(),
+
+    /* ══ H: BUDGET VS ACTUALS MINI-STRIP ════════════════════════ */
+    (()=>{
+      const plans=data.insightPrefs?.budgetPlans||{};
+      if(!Object.keys(plans).length)return null;
+      const catActuals={};
+      allBankTx.filter(t=>t.type==="debit"&&t.date.substr(0,7)===thisMonth).forEach(t=>{
+        const main=catMainName(t.cat||"Others");
+        const ct=catClassType(data.categories,t.cat||"Others");
+        if(ct==="Transfer"||ct==="Income")return;
+        catActuals[main]=(catActuals[main]||0)+t.amount;
+      });
+      const rows=Object.entries(plans)
+        .filter(([,v])=>v>0)
+        .map(([cat,plan])=>({cat,plan,actual:catActuals[cat]||0,pct:Math.min(((catActuals[cat]||0)/plan)*100,120)}))
+        .sort((a,b)=>b.pct-a.pct)
+        .slice(0,8);
+      if(!rows.length)return null;
+      const cat4Color=name=>(data.categories.find(c=>c.name===name)||{}).color||CAT_C[name]||"var(--accent)";
+      return React.createElement("div",{className:"db-card"},
+        SL("Budget vs Actuals",MNAMES[parseInt(thisMonth.substr(5,2))-1]+" — spending vs monthly plan · set budgets in Settings → Preferences"),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(2,1fr)",gap:"4px 24px"}},
+          rows.map(r=>{
+            const over=r.actual>r.plan;
+            const col=r.pct>=100?"#ef4444":r.pct>=80?"#c2410c":r.pct>=50?"#b45309":"#16a34a";
+            const cc=cat4Color(r.cat);
+            return React.createElement("div",{key:r.cat,style:{padding:"8px 0",borderBottom:"1px solid var(--border2)"}},
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}},
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+                  React.createElement("span",{style:{width:7,height:7,borderRadius:2,background:cc,flexShrink:0,display:"inline-block"}}),
+                  React.createElement("span",{style:{fontSize:12,fontWeight:500,color:"var(--text3)"}},r.cat)
+                ),
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+                  React.createElement("span",{style:{fontSize:11,fontFamily:"'Sora',sans-serif",fontWeight:700,color:col}},INR(r.actual)),
+                  React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"/ "+INR(r.plan)),
+                  over&&React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"#ef4444",background:"rgba(239,68,68,.1)",borderRadius:5,padding:"1px 6px"}},"▲ over")
+                )
+              ),
+              React.createElement("div",{style:{height:4,borderRadius:2,background:"var(--border)",overflow:"hidden"}},
+                React.createElement("div",{style:{width:Math.min(r.pct,100)+"%",height:"100%",background:col,borderRadius:2,transition:"width 1s ease"}})
+              )
+            );
+          })
+        )
+      );
+    })()
   );
 });
+/* ══════════════════════════════════════════════════════════════════════════
+   SPLIT TX MODAL
+   Replaces one transaction with N categorised sub-transactions that sum to
+   the same amount, keeping the account balance unchanged.
+   ══════════════════════════════════════════════════════════════════════════ */
+const SplitTxModal=({tx,categories,onSave,onClose})=>{
+  const[rows,setRows]=useState([
+    {id:uid(),amount:String(tx.amount),cat:tx.cat||"",desc:tx.desc||"",payee:tx.payee||""},
+    {id:uid(),amount:"",cat:tx.cat||"",desc:"",payee:tx.payee||""},
+  ]);
+  const setRow=(rid,k,v)=>setRows(r=>r.map(row=>row.id===rid?{...row,[k]:v}:row));
+  const addRow=()=>{if(rows.length>=6)return;setRows(r=>[...r,{id:uid(),amount:"",cat:tx.cat||"",desc:"",payee:tx.payee||""}]);};
+  const removeRow=(rid)=>{if(rows.length<=2)return;setRows(r=>r.filter(row=>row.id!==rid));};
+  const total=Math.round(rows.reduce((s,r)=>s+(parseFloat(r.amount)||0),0)*100)/100;
+  const remaining=Math.round((tx.amount-total)*100)/100;
+  const canSave=Math.abs(remaining)<0.01&&rows.every(r=>parseFloat(r.amount)>0);
+  const handleSave=()=>{
+    if(!canSave)return;
+    const _at=new Date().toISOString();
+    const splits=rows.map(r=>({
+      id:uid(),date:tx.date,desc:r.desc||tx.desc||"Split",payee:r.payee||tx.payee||"",
+      amount:Math.round(parseFloat(r.amount)*100)/100,
+      type:tx.type,cat:r.cat||tx.cat||"",txType:tx.txType||"",
+      tags:tx.tags||"",status:tx.status||"Reconciled",txNum:tx.txNum||"",
+      notes:"Split from: "+(tx.desc||"transaction"),_addedAt:_at,_isSplit:true,
+    }));
+    onSave(tx,splits);
+  };
+  const tbBtnS=(col,bg,dis)=>({padding:"6px 12px",borderRadius:7,border:"1px solid "+col+"55",background:dis?"transparent":bg,color:dis?"var(--text6)":col,cursor:dis?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:500,opacity:dis?.45:1,transition:"all .15s"});
+  return React.createElement(Modal,{title:"✂ Split Transaction",onClose,w:560},
+    /* Original */
+    React.createElement("div",{style:{background:"var(--bg5)",border:"1px solid var(--border)",borderRadius:9,padding:"10px 14px",marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}},
+      React.createElement("div",{style:{minWidth:0,flex:1}},
+        React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},tx.desc||(tx.payee)||"Transaction"),
+        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},tx.date+" · "+(tx.cat?catDisplayName(tx.cat):"Uncategorised"))
+      ),
+      React.createElement("div",{style:{textAlign:"right",flexShrink:0}},
+        React.createElement("div",{style:{fontSize:17,fontFamily:"'Sora',sans-serif",fontWeight:800,color:tx.type==="debit"?"#ef4444":"#16a34a"}},INR(tx.amount)),
+        React.createElement("div",{style:{fontSize:9,color:"var(--text5)",textTransform:"uppercase"}},tx.type)
+      )
+    ),
+    /* Rows */
+    React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8,marginBottom:10}},
+      rows.map((row,i)=>React.createElement("div",{key:row.id,style:{
+        background:"var(--card)",border:"1px solid var(--border)",borderRadius:10,padding:"10px 12px",display:"flex",flexDirection:"column",gap:7
+      }},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,justifyContent:"space-between"}},
+          React.createElement("span",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5}},"Part "+(i+1)),
+          rows.length>2&&React.createElement("button",{onClick:()=>removeRow(row.id),style:{background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.25)",borderRadius:5,color:"#ef4444",cursor:"pointer",fontSize:10,padding:"1px 7px",fontFamily:"'DM Sans',sans-serif"}},"✕")
+        ),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"110px 1fr",gap:8}},
+          React.createElement(Field,{label:"Amount"},
+            React.createElement("div",{style:{position:"relative",display:"flex",alignItems:"center"}},
+              React.createElement("span",{style:{position:"absolute",left:10,fontSize:12,color:"var(--text5)",pointerEvents:"none"}},"₹"),
+              React.createElement("input",{className:"inp",type:"number",min:0,step:"0.01",value:row.amount,placeholder:"0.00",style:{paddingLeft:24},onChange:e=>setRow(row.id,"amount",e.target.value)})
+            )
+          ),
+          React.createElement(Field,{label:"Category"},
+            React.createElement("select",{className:"inp",value:row.cat,onChange:e=>setRow(row.id,"cat",e.target.value)},
+              React.createElement("option",{value:""},"— Select —"),
+              ...buildCatOptions(categories)
+            )
+          )
+        ),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
+          React.createElement(Field,{label:"Description"},
+            React.createElement("input",{className:"inp",placeholder:tx.desc||"Description",value:row.desc,onChange:e=>setRow(row.id,"desc",e.target.value)})
+          ),
+          React.createElement(Field,{label:"Payee"},
+            React.createElement("input",{className:"inp",placeholder:tx.payee||"Payee (optional)",value:row.payee,onChange:e=>setRow(row.id,"payee",e.target.value)})
+          )
+        )
+      ))
+    ),
+    /* Remaining + add */
+    React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}},
+      rows.length<6&&React.createElement("button",{onClick:addRow,style:{background:"var(--accentbg2)",border:"1px dashed var(--border)",borderRadius:7,color:"var(--accent)",cursor:"pointer",fontSize:12,padding:"5px 13px",fontFamily:"'DM Sans',sans-serif",fontWeight:500}},
+        "+ Add Part"
+      ),
+      React.createElement("div",{style:{display:"flex",gap:12,alignItems:"center",marginLeft:"auto"}},
+        React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Total: ",React.createElement("strong",{style:{fontFamily:"'Sora',sans-serif",color:Math.abs(remaining)<0.01?"#16a34a":"#ef4444",fontWeight:700}},INR(total))),
+        Math.abs(remaining)>=0.01&&React.createElement("span",{style:{fontSize:11,fontWeight:700,color:remaining>0?"#c2410c":"#ef4444",background:remaining>0?"rgba(194,65,12,.08)":"rgba(239,68,68,.08)",border:"1px solid "+(remaining>0?"rgba(194,65,12,.3)":"rgba(239,68,68,.3)"),borderRadius:6,padding:"2px 9px"}},
+          remaining>0?"₹"+remaining.toFixed(2)+" unallocated":"₹"+Math.abs(remaining).toFixed(2)+" over"
+        )
+      )
+    ),
+    /* Actions */
+    React.createElement("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+      React.createElement(Btn,{onClick:handleSave,disabled:!canSave,sx:{flex:"1 1 140px",justifyContent:"center"}},"✓ Split into "+rows.length+" Parts"),
+      React.createElement(Btn,{v:"secondary",onClick:onClose,sx:{justifyContent:"center",minWidth:80}},"Cancel")
+    ),
+    !canSave&&Math.abs(remaining)>=0.01&&React.createElement("div",{style:{marginTop:8,fontSize:11,color:"#c2410c",textAlign:"center"}},
+      "Parts must add up to exactly "+INR(tx.amount)
+    )
+  );
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
+   GLOBAL QUICK-SEARCH MODAL  (Ctrl/Cmd + K)
+   Fuzzy-searches all transactions, accounts, notes and payees. Click any
+   result to jump directly to it.
+   ══════════════════════════════════════════════════════════════════════════ */
+const GlobalSearchModal=({state,onClose,onJumpToTx,setTab})=>{
+  const[q,setQ]=useState("");
+  const inputRef=React.useRef(null);
+  React.useEffect(()=>{
+    const t=setTimeout(()=>{if(inputRef.current)inputRef.current.focus();},60);
+    return()=>clearTimeout(t);
+  },[]);
+  React.useEffect(()=>{
+    const handler=e=>{if(e.key==="Escape")onClose();};
+    document.addEventListener("keydown",handler);
+    return()=>document.removeEventListener("keydown",handler);
+  },[onClose]);
+  const qLow=q.toLowerCase().trim();
+  const results=React.useMemo(()=>{
+    if(!qLow||qLow.length<2)return{txns:[],accounts:[],notes:[],payees:[]};
+    const match=s=>(s||"").toLowerCase().includes(qLow);
+    const txns=[];
+    state.banks.forEach(b=>b.transactions.forEach(t=>{
+      if(match(t.desc)||match(t.payee)||match(t.notes)||match(t.cat))txns.push({...t,_accId:b.id,_accName:b.name,_accType:"bank"});
+    }));
+    state.cards.forEach(c=>c.transactions.forEach(t=>{
+      if(match(t.desc)||match(t.payee)||match(t.notes)||match(t.cat))txns.push({...t,_accId:c.id,_accName:c.name,_accType:"card"});
+    }));
+    (state.cash.transactions||[]).forEach(t=>{
+      if(match(t.desc)||match(t.payee)||match(t.notes)||match(t.cat))txns.push({...t,_accId:"__cash__",_accName:"Cash",_accType:"cash"});
+    });
+    txns.sort((a,b)=>b.date.localeCompare(a.date));
+    const accounts=[
+      ...state.banks.filter(b=>match(b.name)||match(b.bank)).map(b=>({...b,_type:"bank"})),
+      ...state.cards.filter(c=>match(c.name)||match(c.bank)).map(c=>({...c,_type:"card"})),
+    ];
+    const notes=(state.notes||[]).filter(n=>match(n.title)||match(n.body));
+    const payees=(state.payees||[]).filter(p=>match(p.name));
+    return{txns:txns.slice(0,20),accounts:accounts.slice(0,5),notes:notes.slice(0,5),payees:payees.slice(0,5)};
+  },[qLow,state]);
+  const total=results.txns.length+results.accounts.length+results.notes.length+results.payees.length;
+  const rowStyle={display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 18px",borderBottom:"1px solid var(--border2)",cursor:"pointer",transition:"background .1s"};
+  const hoverOn=e=>e.currentTarget.style.background="var(--accentbg2)";
+  const hoverOff=e=>e.currentTarget.style.background="transparent";
+  const SecHd=({label,count})=>React.createElement("div",{style:{padding:"6px 18px 3px",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,background:"var(--bg5)",borderBottom:"1px solid var(--border2)"}},label+(count?" ("+count+(count===20?"+":"")+")":""));
+  return React.createElement("div",{
+    style:{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.72)",zIndex:1200,display:"flex",flexDirection:"column",alignItems:"center",paddingTop:60,paddingLeft:8,paddingRight:8,boxSizing:"border-box"},
+    onClick:onClose
+  },
+    React.createElement("div",{
+      style:{width:"100%",maxWidth:640,background:"var(--modal-bg)",borderRadius:16,border:"1px solid var(--border)",overflow:"hidden",maxHeight:"78vh",display:"flex",flexDirection:"column",boxShadow:"0 24px 64px rgba(0,0,0,.4)"},
+      onClick:e=>e.stopPropagation()
+    },
+      /* Search bar */
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:12,padding:"14px 18px",borderBottom:"1px solid var(--border)"}},
+        React.createElement("span",{style:{fontSize:17,flexShrink:0,opacity:.6}},"🔍"),
+        React.createElement("input",{
+          ref:inputRef,value:q,onChange:e=>setQ(e.target.value),
+          placeholder:"Search transactions, accounts, notes, payees…",
+          style:{flex:1,background:"transparent",border:"none",outline:"none",fontSize:15,color:"var(--text)",fontFamily:"'DM Sans',sans-serif"},
+        }),
+        q&&React.createElement("button",{onClick:()=>setQ(""),style:{background:"none",border:"none",color:"var(--text5)",cursor:"pointer",fontSize:20,lineHeight:1,padding:0}},"×"),
+        React.createElement("kbd",{style:{fontSize:10,background:"var(--bg5)",border:"1px solid var(--border)",borderRadius:5,padding:"2px 7px",color:"var(--text5)",flexShrink:0,whiteSpace:"nowrap"}},"Esc to close")
+      ),
+      /* Results */
+      React.createElement("div",{style:{overflowY:"auto",flex:1}},
+        (!qLow||qLow.length<2)
+          ?React.createElement("div",{style:{padding:"36px 20px",textAlign:"center",color:"var(--text5)",fontSize:13}},
+              React.createElement("div",{style:{fontSize:30,marginBottom:10,opacity:.5}},"⌕"),
+              "Type at least 2 characters to search"
+            )
+          :total===0
+          ?React.createElement("div",{style:{padding:"36px 20px",textAlign:"center",color:"var(--text5)",fontSize:13}},
+              React.createElement("div",{style:{fontSize:30,marginBottom:10,opacity:.5}},"🔎"),
+              "No results for \""+q+"\""
+            )
+          :React.createElement(React.Fragment,null,
+              results.txns.length>0&&React.createElement("div",null,
+                React.createElement(SecHd,{label:"Transactions",count:results.txns.length}),
+                results.txns.map(t=>React.createElement("div",{key:t.id,style:rowStyle,
+                  onClick:()=>{onJumpToTx(t._accType,t._accId,t.id);onClose();},onMouseEnter:hoverOn,onMouseLeave:hoverOff},
+                  React.createElement("div",{style:{minWidth:0,flex:1}},
+                    React.createElement("div",{style:{fontSize:13,fontWeight:500,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.desc||t.payee||"—"),
+                    React.createElement("div",{style:{display:"flex",gap:8,marginTop:2,fontSize:11,color:"var(--text5)",flexWrap:"wrap"}},
+                      React.createElement("span",null,t.date),
+                      t.payee&&React.createElement("span",null,"· "+t.payee),
+                      t.cat&&React.createElement("span",{style:{color:"var(--accent)"}},"· "+catDisplayName(t.cat)),
+                      React.createElement("span",{style:{color:"var(--text6)"}},"· "+t._accName)
+                    )
+                  ),
+                  React.createElement("div",{style:{textAlign:"right",flexShrink:0,marginLeft:12}},
+                    React.createElement("div",{style:{fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:t.type==="credit"?"#16a34a":"#ef4444"}},(t.type==="credit"?"+":"-")+INR(t.amount)),
+                    React.createElement("span",{style:{fontSize:9,padding:"1px 6px",borderRadius:8,background:t._accType==="bank"?"#0e74901a":t._accType==="card"?"#c2410c1a":"var(--accentbg2)",color:t._accType==="bank"?"#0e7490":t._accType==="card"?"#c2410c":"var(--accent)",marginTop:2,display:"inline-block"}},t._accType==="bank"?"🏦":t._accType==="card"?"💳":"💵")
+                  )
+                ))
+              ),
+              results.accounts.length>0&&React.createElement("div",null,
+                React.createElement(SecHd,{label:"Accounts"}),
+                results.accounts.map(a=>React.createElement("div",{key:a.id,style:rowStyle,
+                  onClick:()=>{setTab(a._type==="bank"?"banks":"cards");onClose();},onMouseEnter:hoverOn,onMouseLeave:hoverOff},
+                  React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
+                    React.createElement("span",{style:{fontSize:20}},(a._type==="bank"?"🏦":"💳")),
+                    React.createElement("div",null,
+                      React.createElement("div",{style:{fontSize:13,fontWeight:500,color:"var(--text)"}},a.name),
+                      React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},a.bank||"")
+                    )
+                  ),
+                  React.createElement("div",{style:{fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:a._type==="bank"?"#0e7490":"#c2410c"}},INR(a._type==="bank"?a.balance:a.outstanding))
+                ))
+              ),
+              results.notes.length>0&&React.createElement("div",null,
+                React.createElement(SecHd,{label:"Notes"}),
+                results.notes.map(n=>React.createElement("div",{key:n.id,style:{...rowStyle,gap:12},
+                  onClick:()=>{setTab("notes");onClose();},onMouseEnter:hoverOn,onMouseLeave:hoverOff},
+                  React.createElement("span",{style:{fontSize:16,flexShrink:0}},"📝"),
+                  React.createElement("div",{style:{minWidth:0,flex:1}},
+                    React.createElement("div",{style:{fontSize:13,fontWeight:500,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},n.title||"Note"),
+                    n.body&&React.createElement("div",{style:{fontSize:11,color:"var(--text5)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},n.body)
+                  )
+                ))
+              ),
+              results.payees.length>0&&React.createElement("div",null,
+                React.createElement(SecHd,{label:"Payees"}),
+                results.payees.map(p=>React.createElement("div",{key:p.id,style:{...rowStyle,gap:12},
+                  onClick:()=>{setTab("unified_ledger");onClose();},onMouseEnter:hoverOn,onMouseLeave:hoverOff},
+                  React.createElement("span",{style:{fontSize:16,flexShrink:0}},"👤"),
+                  React.createElement("div",{style:{fontSize:13,fontWeight:500,color:"var(--text)"}},p.name)
+                ))
+              )
+            )
+      ),
+      /* Footer hint */
+      React.createElement("div",{style:{padding:"7px 18px",borderTop:"1px solid var(--border2)",display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",background:"var(--bg5)"}},
+        React.createElement("span",null,"↵ jump to result"),
+        React.createElement("span",null,"Ctrl+K / ⌘K to reopen")
+      )
+    )
+  );
+};
 
 /* ── BANK SECTION ─ master-detail inline layout ──────────────────────── */
 const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCards=[],cash,loans=[],isMobile,jumpAccId=null,jumpTxId=null,jumpSerial=null,onClearAccountJump})=>{
@@ -6727,7 +7129,7 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
           ...allCards.map(c=>({...c,accType:"card",accTypeLbl:"💳"})),
           ...loans.map(l=>({...l,accType:"loan",accTypeLbl:"🏠",name:l.name+" (Loan)"}))
         ],
-        openBalance:selD?(selD.balance-selD.transactions.reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0)):0,
+        openBalance:selD?(selD.balance-selD.transactions.filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0)):0,
         dispatch,state:{banks:allBanks,cards:allCards,cash},
         onAddTx:tx=>{
           if(!selD)return;
@@ -6740,7 +7142,8 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
         onMassDeleteTx:(ids)=>{if(selD)dispatch({type:"MASS_DEL_BANK_TX",accId:selD.id,ids});},
         onEditTx:(updated,old)=>{if(selD)dispatch({type:"EDIT_BANK_TX",accId:selD.id,tx:updated,old});},
         onDeleteTx:tx=>{if(selD)dispatch({type:"DEL_BANK_TX",accId:selD.id,tx});},
-        onDupTx:tx=>{if(selD)dispatch({type:"DUP_BANK_TX",accId:selD.id,tx});}
+        onDupTx:tx=>{if(selD)dispatch({type:"DUP_BANK_TX",accId:selD.id,tx});},
+        onSplitTx:(origTx,splits)=>{if(selD)dispatch({type:"SPLIT_TX",accType:"bank",accId:selD.id,originalTx:origTx,splits});},
       })
     ),
     /* Add account modal */
@@ -6929,7 +7332,7 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
           ...allCards.map(c=>({...c,accType:"card",accTypeLbl:"💳"})),
           ...loans.map(l=>({...l,accType:"loan",accTypeLbl:"🏠",name:l.name+" (Loan)"}))
         ],
-        openBalance:selD?(selD.limit-selD.outstanding-selD.transactions.reduce((s,t)=>s+(t.type==="debit"?-t.amount:t.amount),0)):0,
+        openBalance:selD?(selD.limit-selD.outstanding-selD.transactions.filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="debit"?-t.amount:t.amount),0)):0,
         dispatch,state:{banks:allBanks,cards:allCards,cash},
         onAddTx:tx=>{
           if(!selD)return;
@@ -6942,8 +7345,8 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
         onMassDeleteTx:(ids)=>{if(selD)dispatch({type:"MASS_DEL_CARD_TX",accId:selD.id,ids});},
         onEditTx:(updated,old)=>{if(selD)dispatch({type:"EDIT_CARD_TX",accId:selD.id,tx:updated,old});},
         onDeleteTx:tx=>{if(selD)dispatch({type:"DEL_CARD_TX",accId:selD.id,tx});},
-        onDupTx:tx=>{if(selD)dispatch({type:"DUP_CARD_TX",accId:selD.id,tx});}
-      })
+        onDupTx:tx=>{if(selD)dispatch({type:"DUP_CARD_TX",accId:selD.id,tx});},
+        onSplitTx:(origTx,splits)=>{if(selD)dispatch({type:"SPLIT_TX",accType:"card",accId:selD.id,originalTx:origTx,splits});},      })
     ),
     addOpen&&React.createElement(Modal,{title:"Add Credit Card",onClose:()=>setAddOpen(false),w:420},
       React.createElement(Field,{label:"Card Name"},React.createElement("input",{className:"inp",placeholder:"e.g. HDFC Regalia Gold",value:f.name,onChange:set("name")})),
@@ -6996,7 +7399,7 @@ const CashSection=React.memo(({cash,dispatch,categories,payees,allBanks,allCards
           isMobile,
           transactions:cash.transactions,
           accentColor:"var(--accent)",
-          openBalance:cash.balance-cash.transactions.reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0),
+          openBalance:cash.balance-cash.transactions.filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0),
           accType:"cash",
           categories,payees,
           jumpTxId,
@@ -7008,6 +7411,7 @@ const CashSection=React.memo(({cash,dispatch,categories,payees,allBanks,allCards
           onEdit:(updated,old)=>dispatch({type:"EDIT_CASH_TX",tx:updated,old}),
           onDelete:tx=>dispatch({type:"DEL_CASH_TX",tx}),
           onDuplicate:tx=>dispatch({type:"DUP_CASH_TX",tx}),
+          onSplit:(origTx,splits)=>dispatch({type:"SPLIT_TX",accType:"cash",accId:"__cash__",originalTx:origTx,splits}),
           onImport:txns=>dispatch({type:"IMPORT_BULK_TX",accType:"cash",accId:"__cash__",txns}),
           onMassUpdateStatus:(ids,status)=>dispatch({type:"MASS_UPDATE_STATUS",accType:"cash",accId:"__cash__",ids,status}),
           onMassCategorize:(ids,cat,payee)=>dispatch({type:"MASS_UPDATE_CAT",accType:"cash",accId:"__cash__",ids,cat,payee}),
@@ -20534,7 +20938,16 @@ const useIsMobile=()=>{
 };
 
 function App(){
-  const[state,dispatch]=usePersistentReducer(reducer,INIT);
+  const[state,rawDispatch]=usePersistentReducer(reducer,INIT);
+  /* ── Wrap dispatch: auto-snapshot before destructive actions for undo ── */
+  const _undoPushRef=React.useRef(null);
+  const dispatch=React.useCallback((action)=>{
+    const DESTRUCTIVE=new Set(["DEL_BANK_TX","DEL_CARD_TX","DEL_CASH_TX","MASS_DEL_BANK_TX","MASS_DEL_CARD_TX","MASS_DEL_CASH_TX","SPLIT_TX","DEL_BANK","DEL_CARD","DEL_LOAN","DEL_MF","DEL_SHARE","DEL_FD","DEL_RE","DEL_GOAL","DEL_NOTE","DEL_PAYEE","DEL_CAT","DEL_SUBCAT","RESET_ALL"]);
+    if(DESTRUCTIVE.has(action.type)&&_undoPushRef.current){
+      _undoPushRef.current(state);
+    }
+    rawDispatch(action);
+  },[state,rawDispatch]);
   const[tab,setTab]=useRouting();
   /* ── PIN Lock: locked if a PIN hash is stored AND session not yet unlocked ── */
   const[locked,setLocked]=useState(()=>!!getPinHash()&&!isSessionUnlocked());
@@ -20549,9 +20962,37 @@ function App(){
     setTab(accType==="bank"?"banks":accType==="card"?"cards":"cash");
   },[]);
   const onClearTxJump=React.useCallback(()=>setTxJump(null),[]);
+  /* ── Undo: stores one state snapshot for 6 seconds after any destructive dispatch ── */
+  const[undoSnap,setUndoSnap]=useState(null);
+  const undoTimerRef=React.useRef(null);
+  const pushUndo=React.useCallback((snap)=>{
+    setUndoSnap(snap);
+    if(undoTimerRef.current)clearTimeout(undoTimerRef.current);
+    undoTimerRef.current=setTimeout(()=>setUndoSnap(null),6000);
+  },[]);
+  const doUndo=React.useCallback(()=>{
+    if(!undoSnap)return;
+    dispatch({type:"UNDO_STATE",snapshot:undoSnap});
+    setUndoSnap(null);
+    if(undoTimerRef.current)clearTimeout(undoTimerRef.current);
+  },[undoSnap,dispatch]);
+  /* Wire the ref so the wrapped dispatch can call pushUndo */
+  _undoPushRef.current=pushUndo;
+  /* ── Global search ── */
+  const[searchOpen,setSearchOpen]=useState(false);
   const[themeId,setThemeId]=useState(loadTheme);
   const setTheme=id=>{setThemeId(id);applyTheme(id);saveTheme(id);};
   React.useEffect(()=>{applyTheme(themeId);},[]);
+  /* ── Keyboard shortcuts: Ctrl/Cmd+K = global search, Ctrl/Cmd+Z = undo ── */
+  React.useEffect(()=>{
+    const handler=e=>{
+      const mod=e.ctrlKey||e.metaKey;
+      if(mod&&(e.key==="k"||e.key==="K")){e.preventDefault();setSearchOpen(o=>!o);}
+      if(mod&&(e.key==="z"||e.key==="Z")&&!e.shiftKey&&undoSnap){e.preventDefault();doUndo();}
+    };
+    document.addEventListener("keydown",handler);
+    return()=>document.removeEventListener("keydown",handler);
+  },[undoSnap,doUndo]);
   /* Auto-execute due scheduled transactions on load */
   React.useEffect(()=>{
     const today=TODAY();
@@ -21218,6 +21659,22 @@ function App(){
       },"‹")
     ),
     React.createElement("nav",{style:{flex:1,padding:"10px 8px",overflowY:"auto"}},
+      /* ── Global search button ── */
+      React.createElement("button",{
+        onClick:()=>setSearchOpen(true),
+        style:{
+          display:"flex",alignItems:"center",gap:8,width:"100%",
+          padding:"8px 12px",borderRadius:10,border:"1px dashed var(--border2)",
+          background:"var(--accentbg2)",color:"var(--text5)",cursor:"pointer",
+          fontFamily:"'DM Sans',sans-serif",fontSize:12,marginBottom:8,transition:"all .2s"
+        },
+        onMouseEnter:e=>{e.currentTarget.style.borderColor="var(--accent)";e.currentTarget.style.color="var(--accent)";},
+        onMouseLeave:e=>{e.currentTarget.style.borderColor="var(--border2)";e.currentTarget.style.color="var(--text5)";}
+      },
+        React.createElement("span",{style:{fontSize:13,opacity:.7}},"🔍"),
+        React.createElement("span",{style:{flex:1,textAlign:"left"}},"Quick search…"),
+        React.createElement("kbd",{style:{fontSize:9,background:"var(--bg5)",border:"1px solid var(--border)",borderRadius:4,padding:"1px 5px",color:"var(--text6)",whiteSpace:"nowrap"}},"⌘K")
+      ),
       visibleNAV.map(n=>{
         if(n.section==="header") return React.createElement("div",{key:n.id,style:{
           marginTop:14,marginBottom:4,padding:"5px 12px 3px",
@@ -21298,7 +21755,34 @@ function App(){
     FsaPermCard,
     FsaLaunchWarning,
     FsaLaunchSuccess,
-    UpdateBanner
+    UpdateBanner,
+    /* ── Undo Toast ── */
+    undoSnap&&React.createElement("div",{style:{
+      position:"fixed",bottom:isMobile?88:28,left:"50%",transform:"translateX(-50%)",
+      zIndex:1100,animation:"undoSlideUp .25s ease forwards",
+      background:"#1a2a3a",border:"1px solid rgba(2,132,199,.4)",
+      borderRadius:14,padding:"11px 18px",display:"flex",alignItems:"center",gap:14,
+      boxShadow:"0 8px 32px rgba(0,0,0,.45)",minWidth:240,maxWidth:400,
+      fontFamily:"'DM Sans',sans-serif"
+    }},
+      React.createElement("span",{style:{fontSize:13,color:"rgba(255,255,255,.85)",flex:1}},"Action undone in 6 s"),
+      React.createElement("button",{onClick:doUndo,style:{
+        padding:"6px 16px",borderRadius:8,border:"1px solid rgba(2,132,199,.6)",
+        background:"rgba(2,132,199,.2)",color:"#38bdf8",cursor:"pointer",
+        fontSize:12,fontWeight:700,fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap"
+      }},"↩ Undo"),
+      React.createElement("button",{onClick:()=>setUndoSnap(null),style:{
+        background:"none",border:"none",color:"rgba(255,255,255,.35)",cursor:"pointer",
+        fontSize:18,lineHeight:1,padding:0
+      }},"×")
+    ),
+    /* ── Global Search Modal ── */
+    searchOpen&&React.createElement(GlobalSearchModal,{
+      state,
+      onClose:()=>setSearchOpen(false),
+      onJumpToTx:(accType,accId,txId)=>{onJumpToTx(accType,accId,txId);},
+      setTab
+    })
   );
 }
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
