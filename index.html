@@ -1971,10 +1971,18 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.31.0";
+const APP_VERSION="3.31.1";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.31.1",date:"2026-03-18",title:"Fix: StorageGauge showing wrong quota (10 GB from Quota API instead of 5 MB localStorage limit)",changes:[
+    "Bug: StorageGauge used navigator.storage.estimate() quota (~10 GB) as the denominator for the localStorage percentage bar. This caused the gauge to always show ~0.0% and the HEALTHY badge was meaningless.",
+    "Root cause: navigator.storage.estimate() returns the total ORIGIN storage quota — covering IndexedDB + Cache API + Service Worker caches + OPFS + localStorage combined. Chrome allocates ~60% of free disk space for this (e.g. 10 GB on a 16 GB machine). This number has no relationship to the localStorage-specific 5 MB limit.",
+    "Fix: localStorage gauge now always uses a hardcoded LS_QUOTA_BYTES = 5 * 1024 * 1024 (5 MB) as the denominator. This is the actual per-origin localStorage limit enforced by all major browsers.",
+    "The Quota API call (navigator.storage.estimate()) is still made and its value is displayed separately as informational context — 'Origin quota: X GB (IndexedDB + Cache + LS)' — so the user understands the bigger picture without it polluting the localStorage gauge.",
+    "Badge now reads 'LS Limit: 5 MB' (always accurate) instead of 'Quota API' or 'Estimated 5 MB'.",
+    "hasQuotaAPI flag is still set and used to decide whether to show the origin quota info line.",
+  ]},
   {version:"3.31.0",date:"2026-03-18",title:"localStorage Monitoring, Quota Guard & Cache Cleanup Tools",changes:[
     "1. Accurate storage measurement: getStorageStats() measures every MM localStorage key (mm_v7_state, mm_v7_theme, mm_v7_pin, mm_nav_col, mm_db_hidden_widgets, mm_fsa_no_warn, itr3_ay2627_v1) using UTF-16 byte counting (length × 2). Uses navigator.storage.estimate() Quota API when available; falls back to assumed 5 MB limit on older browsers.",
     "2. StorageGauge component in Settings → Data & Backup: replaces the bare 'X KB' text with a full visual gauge — colour-coded progress bar (green <60%, amber 60–85%, red >85%), used/quota figures, % used, source badge (Quota API / Estimated), per-key breakdown table showing each key's size and share.",
@@ -15830,10 +15838,10 @@ const StorageGauge=({dispatch})=>{
     };
   },[]);
 
-  const{usedBytes,quotaBytes,usedPct,hasQuotaAPI,cacheBreakdown=[]}=stats;
+  const{usedBytes,quotaBytes,usedPct,hasQuotaAPI,originQuota,cacheBreakdown=[]}=stats;
   const usedKB=(usedBytes/1024).toFixed(1);
-  const quotaKB=(quotaBytes/1024).toFixed(0);
-  const quotaMB=(quotaBytes/1024/1024).toFixed(1);
+  /* quotaBytes is always LS_QUOTA_BYTES (5 MB) */
+  const quotaMB=(quotaBytes/1024/1024).toFixed(0);
 
   /* Colour thresholds */
   const gaugeCol=usedPct>=95?"#ef4444":usedPct>=80?"#f97316":usedPct>=60?"#ca8a04":"#16a34a";
@@ -15875,19 +15883,28 @@ const StorageGauge=({dispatch})=>{
             background:gaugeBg,color:gaugeCol,border:"1px solid "+gaugeCol+"44"
           }},usedPct>=95?"CRITICAL":usedPct>=80?"WARNING":usedPct>=60?"MODERATE":"HEALTHY")
         ),
-        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:3}},
-          usedKB+" KB used of ",
-          React.createElement("span",{style:{fontWeight:600,color:"var(--text3)"}},quotaMB+" MB"),
-          hasQuotaAPI
-            ?React.createElement("span",{style:{marginLeft:5,fontSize:10,color:"var(--accent)",background:"var(--accentbg2)",border:"1px solid var(--accent)33",borderRadius:8,padding:"1px 6px"}},"Quota API")
-            :React.createElement("span",{style:{marginLeft:5,fontSize:10,color:"var(--text6)",background:"var(--bg5)",border:"1px solid var(--border2)",borderRadius:8,padding:"1px 6px"}},"Estimated 5 MB")
+        /* Primary line: used vs the actual 5 MB localStorage limit */
+        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:3,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}},
+          React.createElement("span",null,
+            usedKB+" KB used of ",
+            React.createElement("span",{style:{fontWeight:600,color:"var(--text3)"}},"5 MB"),
+            " localStorage limit"
+          ),
+          /* Fixed badge — always accurate */
+          React.createElement("span",{style:{fontSize:10,color:"var(--text6)",background:"var(--bg5)",border:"1px solid var(--border2)",borderRadius:8,padding:"1px 6px",whiteSpace:"nowrap"}},"LS Limit: 5 MB")
+        ),
+        /* Secondary line: origin quota from Quota API — informational only */
+        hasQuotaAPI&&originQuota&&React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},
+          "Origin quota (IndexedDB + Cache + LS combined): ",
+          React.createElement("span",{style:{fontWeight:600}},(originQuota/1024/1024/1024).toFixed(1)+" GB"),
+          " — ",React.createElement("span",{style:{fontStyle:"italic"}},"not the localStorage limit")
         )
       ),
       React.createElement("div",{style:{textAlign:"right"}},
         React.createElement("div",{style:{fontSize:22,fontWeight:800,fontFamily:"'Sora',sans-serif",color:gaugeCol}},
           usedPct.toFixed(1)+"%"
         ),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"of quota")
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"of 5 MB LS limit")
       )
     ),
 
@@ -15905,14 +15922,14 @@ const StorageGauge=({dispatch})=>{
       React.createElement("span",{style:{fontSize:16,flexShrink:0}},"🚨"),
       React.createElement("div",null,
         React.createElement("div",{style:{fontWeight:700,marginBottom:3}},"Storage Critical — saves may fail"),
-        "Your browser storage is almost full. Please free up space by clearing caches below or downloading a backup and resetting."
+        "Your localStorage is almost full (5 MB limit). Please free up space by clearing caches below or downloading a backup and resetting."
       )
     ),
     usedPct>=80&&usedPct<95&&React.createElement("div",{style:{background:"rgba(249,115,22,.08)",border:"1px solid rgba(249,115,22,.3)",borderRadius:10,padding:"10px 14px",marginBottom:14,fontSize:12,color:"#f97316",display:"flex",gap:8,alignItems:"flex-start"}},
       React.createElement("span",{style:{fontSize:16,flexShrink:0}},"⚠️"),
       React.createElement("div",null,
-        React.createElement("div",{style:{fontWeight:700,marginBottom:3}},"Storage running low"),
-        "You've used "+usedPct.toFixed(0)+"% of your browser storage quota. Consider clearing cached data or making a backup."
+        React.createElement("div",{style:{fontWeight:700,marginBottom:3}},"localStorage running low"),
+        "You've used "+usedPct.toFixed(0)+"% of the 5 MB localStorage limit. Consider clearing cached data or making a backup."
       )
     ),
 
@@ -15938,8 +15955,9 @@ const StorageGauge=({dispatch})=>{
                 item.label
               ),
               React.createElement("div",{style:{fontSize:11,fontWeight:600,color:item.isCache?"#ca8a04":"var(--text2)",whiteSpace:"nowrap"}},fmtBytes(item.bytes)),
+              /* Show % of the 5 MB LS limit, not % of this key's parent */
               React.createElement("div",{style:{width:60,height:4,background:"var(--border2)",borderRadius:99,overflow:"hidden"}},
-                React.createElement("div",{style:{width:(item.bytes/(stats.usedBytes||1)*100)+"%",height:"100%",background:item.isCache?"#ca8a04":"var(--accent)",borderRadius:99}})
+                React.createElement("div",{style:{width:Math.min(100,item.bytes/LS_QUOTA_BYTES*100)+"%",height:"100%",background:item.isCache?"#ca8a04":"var(--accent)",borderRadius:99}})
               )
             )
           )
@@ -17937,11 +17955,15 @@ const loadState=()=>{
    ══════════════════════════════════════════════════════════════════════════
    MM_LS_KEYS: every localStorage key this app writes.
    getStorageStats(): returns { usedBytes, quotaBytes, usedPct, keys[], hasQuotaAPI }
-     - usedBytes  = sum of (key.length + value.length) × 2  (JS strings are UTF-16)
-     - quotaBytes = from navigator.storage.estimate() when available, else 5 MB assumed
-     - keys[]     = [{key, label, bytes, isCache}] sorted descending by bytes
-   Note: navigator.storage.estimate() is async; the sync fallback is used for the
-   initial render; components that need live quota should call getStorageStatsAsync().
+     - usedBytes    = sum of (key.length + value.length) × 2  (JS strings are UTF-16)
+     - quotaBytes   = ALWAYS 5 MB — the actual per-origin localStorage limit that
+                      browsers enforce independently of the Quota API.
+     - usedPct      = usedBytes / 5 MB × 100
+     - originQuota  = from navigator.storage.estimate() — shown as INFO ONLY,
+                      NOT used as the gauge denominator. This covers IndexedDB +
+                      Cache API + SW caches + OPFS + LS combined (~60% of disk).
+                      It is orders of magnitude larger than the LS limit and would
+                      make the gauge always show ~0%.
    ══════════════════════════════════════════════════════════════════════════ */
 const MM_LS_KEYS=[
   {key:LS_KEY,         label:"App State (transactions, accounts, investments)"},
@@ -17952,6 +17974,10 @@ const MM_LS_KEYS=[
   {key:"mm_fsa_no_warn",       label:"FSA warning preference"},
   {key:"itr3_ay2627_v1",       label:"Tax Estimator (legacy key)"},
 ];
+
+/* The true localStorage limit — 5 MB, enforced per-origin by all major browsers
+   independently of navigator.storage.estimate() which covers the full origin quota. */
+const LS_QUOTA_BYTES = 5 * 1024 * 1024; /* 5,242,880 bytes */
 
 const _lsBytes=(key)=>{
   try{
@@ -17966,11 +17992,7 @@ const getStorageStats=()=>{
   /* Measure every MM key */
   const keys=MM_LS_KEYS.map(({key,label})=>{
     const bytes=_lsBytes(key);
-    const isCache=key===LS_KEY&&(()=>{
-      /* The main state contains cache sub-objects — report them separately */
-      return false;
-    })();
-    return{key,label,bytes,isCache};
+    return{key,label,bytes};
   }).sort((a,b)=>b.bytes-a.bytes);
 
   /* Also measure cache buckets inside LS_KEY by peeking at parsed state */
@@ -17993,24 +18015,27 @@ const getStorageStats=()=>{
   }catch{}
 
   const usedBytes=keys.reduce((s,k)=>s+k.bytes,0);
-  /* Sync: use 5 MB as safe assumed quota — async version updates this */
-  const quotaBytes=5*1024*1024;
-  const usedPct=quotaBytes>0?(usedBytes/quotaBytes)*100:0;
-  return{usedBytes,quotaBytes,usedPct,keys,cacheBreakdown,hasQuotaAPI:false};
+  /* IMPORTANT: always use the fixed 5 MB localStorage limit, NOT the Quota API value */
+  const quotaBytes=LS_QUOTA_BYTES;
+  const usedPct=usedBytes/quotaBytes*100;
+  return{usedBytes,quotaBytes,usedPct,keys,cacheBreakdown,hasQuotaAPI:false,originQuota:null};
 };
 
-/* Async version that uses the Quota API */
+/* Async version: fetches origin quota for INFO display only — does NOT change the gauge */
 const getStorageStatsAsync=async()=>{
   const sync=getStorageStats();
   try{
     if(navigator.storage&&navigator.storage.estimate){
       const{quota,usage}=await navigator.storage.estimate();
-      /* quota from the API is for ALL origin storage (IndexedDB + caches + LS).
-         LS is typically a subset; we report our measured LS usage against the
-         full origin quota as a conservative ceiling. */
-      const quotaBytes=quota||5*1024*1024;
-      const usedPct=quotaBytes>0?(sync.usedBytes/quotaBytes)*100:0;
-      return{...sync,quotaBytes,usedPct,hasQuotaAPI:true,browserUsage:usage||0};
+      /* quota = total origin quota (IndexedDB + Cache + LS, typically GBs).
+         We store it as originQuota for informational display ONLY.
+         quotaBytes (the gauge denominator) stays at the fixed 5 MB LS limit. */
+      return{
+        ...sync,
+        hasQuotaAPI:true,
+        originQuota:quota||null,    /* full origin quota in bytes — info only */
+        browserUsage:usage||0,      /* total origin usage in bytes — info only */
+      };
     }
   }catch{}
   return sync;
