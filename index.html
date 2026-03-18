@@ -1971,10 +1971,18 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.28.3";
+const APP_VERSION="3.28.4";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.28.4",date:"2026-03-18",title:"Fix: Share Holding Value History — Refresh button to force chart update",changes:[
+    "Added ⟳ Refresh button to the Holding Value History chart header (top-right, alongside the % change badge and day count).",
+    "Refresh button appears in all three states: full history chart, 30-day EOD fallback chart (when buyDate is set), and the fetch-failed error notice.",
+    "Clicking Refresh evicts the ticker's entry from historyCache (sets timestamp:0 via SET_HISTORY_CACHE dispatch) then increments a refreshKey counter which triggers the useEffect to re-run and fetch fresh data from the API — bypassing the 24-hour cache.",
+    "Button shows spinning ⟳ and 'Refreshing…' text while the fetch is in progress; disabled during loading to prevent duplicate requests.",
+    "Root cause of stale chart: the useEffect depended on historyCache, but if the cache had a valid entry (< 24h old) the effect returned early without re-fetching. The user had no way to force a refresh without closing and reopening the card.",
+    "30-day EOD fallback chart: Refresh button only shown when buyDate is set (those cards have a real history endpoint to hit); cards without a buy date only use EOD snapshots which are refreshed by the global Refresh Live Prices button.",
+  ]},
   {version:"3.28.3",date:"2026-03-18",title:"Tax Estimator: Tab Management, Nav order, full state/backup/restore/FSA integration",changes:[
     "Tab Management (Settings): Tax Estimator is now listed in the More group alongside Goals, Insights, Notes, Calculator, and Reports. It can be shown or hidden just like any other tab. Removed from ALWAYS_VISIBLE so it is fully user-controllable.",
     "Nav order: Tax Estimator moved to immediately after Insights in the sidebar More section (was placed after Settings before info, now logically grouped with analytical tools).",
@@ -8799,28 +8807,60 @@ const ShareHistoryPanel=({sh,eodPrices,historyCache={},dispatch})=>{
   const[histLoading,setHistLoading]=React.useState(false);
   /* null = no buyDate / not tried; [] = fetch done but empty/failed; [...] = success */
   const[histPts,setHistPts]=React.useState(null);
+  /* Incrementing this forces a cache-bypass refresh */
+  const[refreshKey,setRefreshKey]=React.useState(0);
 
   const tkr=(sh.ticker||"").trim().toUpperCase();
   const isGain=sh.currentPrice>=sh.buyPrice;
   const costBasisVal=sh.qty*sh.buyPrice;
   const safeId="shlg_"+(sh.id||"x").replace(/[^a-zA-Z0-9]/g,"_");
 
+  /* ── Refresh button: clears cached entry then triggers re-fetch ── */
+  const doRefresh=React.useCallback(()=>{
+    if(histLoading)return;
+    /* Evict this ticker from the cache so the effect fetches fresh */
+    if(dispatch&&tkr){
+      dispatch({type:"SET_HISTORY_CACHE",ticker:tkr,data:[],timestamp:0,fromDate:""});
+    }
+    setHistPts(null);
+    setRefreshKey(k=>k+1);
+  },[histLoading,dispatch,tkr]);
+
+  /* ── Shared refresh button element (used in both chart and error states) ── */
+  const RefreshBtn=React.createElement("button",{
+    onClick:doRefresh,
+    disabled:histLoading,
+    title:"Refresh chart data",
+    style:{
+      display:"inline-flex",alignItems:"center",gap:5,
+      padding:"4px 11px",borderRadius:7,border:"1px solid var(--accent)55",
+      background:"var(--accentbg2)",color:"var(--accent)",cursor:histLoading?"not-allowed":"pointer",
+      fontSize:11,fontWeight:600,fontFamily:"'DM Sans',sans-serif",
+      opacity:histLoading?0.5:1,transition:"all .15s",whiteSpace:"nowrap",flexShrink:0,
+    },
+    onMouseEnter:e=>{if(!histLoading){e.currentTarget.style.background="var(--accentbg)";e.currentTarget.style.borderColor="var(--accent)";}},
+    onMouseLeave:e=>{e.currentTarget.style.background="var(--accentbg2)";e.currentTarget.style.borderColor="var(--accent)55";},
+  },
+    React.createElement("span",{className:histLoading?"spinr":"",style:{fontSize:12,lineHeight:1}},histLoading?"⟳":"⟳"),
+    histLoading?"Refreshing…":"Refresh"
+  );
+
   React.useEffect(()=>{
     if(!tkr||!sh.buyDate){setHistPts(null);setHistLoading(false);return;}
-    
-    /* Check cache first */
+
+    /* Check cache first — bypassed when refreshKey changes (forced refresh) */
     const cached=historyCache[tkr];
     const now=Date.now();
     const cacheAge=cached?.timestamp?(now-cached.timestamp):Infinity;
-    const isCacheValid=cached&&cacheAge<(24*60*60*1000)&&cached.fromDate===sh.buyDate;
-    
+    /* Cache is valid for 24 h; a forced refresh sets timestamp:0 to bust it */
+    const isCacheValid=refreshKey===0&&cached&&cacheAge<(24*60*60*1000)&&cached.fromDate===sh.buyDate;
+
     if(isCacheValid&&cached.data&&cached.data.length>=2){
-      /* Use cached data */
       setHistPts(cached.data);
       setHistLoading(false);
       return;
     }
-    
+
     /* Fetch fresh data */
     let cancelled=false;
     setHistLoading(true);
@@ -8830,14 +8870,13 @@ const ShareHistoryPanel=({sh,eodPrices,historyCache={},dispatch})=>{
         if(cancelled)return;
         setHistPts(pts&&pts.length>=2?pts:[]);
         setHistLoading(false);
-        /* Cache the result */
         if(pts&&pts.length>=2&&dispatch){
           dispatch({type:"SET_HISTORY_CACHE",ticker:tkr,data:pts,timestamp:Date.now(),fromDate:sh.buyDate});
         }
       })
       .catch(()=>{if(!cancelled){setHistPts([]);setHistLoading(false);}});
     return()=>{cancelled=true;};
-  },[tkr,sh.buyDate,historyCache,dispatch]);
+  },[tkr,sh.buyDate,historyCache,dispatch,refreshKey]);
 
   /* ── 1. Loading ── */
   if(histLoading)return React.createElement("div",{style:{
@@ -8846,7 +8885,7 @@ const ShareHistoryPanel=({sh,eodPrices,historyCache={},dispatch})=>{
     display:"flex",alignItems:"center",gap:10
   }},
     React.createElement("span",{className:"spinr",style:{fontSize:16}},"⟳"),
-    React.createElement("span",{style:{fontSize:13,color:"var(--text5)"}},
+    React.createElement("span",{style:{fontSize:13,color:"var(--text5)",flex:1}},
       "Fetching price history since "+sh.buyDate+"…"
     )
   );
@@ -8864,7 +8903,7 @@ const ShareHistoryPanel=({sh,eodPrices,historyCache={},dispatch})=>{
     return React.createElement("div",{style:{marginTop:20,marginBottom:6,
       background:"var(--bg4)",borderRadius:14,padding:"20px 20px 14px",
       border:"1px solid var(--border2)"}},
-      /* Header */
+      /* Header row */
       React.createElement("div",{style:{display:"flex",alignItems:"center",flexWrap:"wrap",gap:8,marginBottom:10}},
         React.createElement("span",{style:{fontSize:14,fontWeight:700,color:"var(--text4)",
           textTransform:"uppercase",letterSpacing:.5}},"📈 Holding Value History"),
@@ -8879,7 +8918,8 @@ const ShareHistoryPanel=({sh,eodPrices,historyCache={},dispatch})=>{
             border:"1px solid "+(overallChg>=0?"rgba(22,163,74,.25)":"rgba(239,68,68,.25)"),
             color:chgCol
           }},(overallChg>=0?"▲ +":"▼ ")+Math.abs(overallChgPct)+"%"),
-          React.createElement("span",{style:{fontSize:12,color:"var(--text6)"}},chartPts.length+" days")
+          React.createElement("span",{style:{fontSize:12,color:"var(--text6)"}},chartPts.length+" days"),
+          RefreshBtn
         )
       ),
       /* Legend */
@@ -8904,7 +8944,7 @@ const ShareHistoryPanel=({sh,eodPrices,historyCache={},dispatch})=>{
 
   /* ── 3. Historical fetch failed (buyDate set but no data) ── */
   if(histPts!==null&&histPts.length===0&&sh.buyDate){
-    /* Show error then fall through to 30-day EOD below with a warning badge */
+    /* Show error with retry button — falls through to 30-day EOD below */
   }
 
   /* ── 4. Fallback: 30-day EOD snapshot ── */
@@ -8918,24 +8958,29 @@ const ShareHistoryPanel=({sh,eodPrices,historyCache={},dispatch})=>{
   /* Error notice when fetch failed and no EOD fallback either */
   if(pts30.length<2){
     if(sh.buyDate&&histPts!==null)return React.createElement("div",{style:{
-      marginTop:12,padding:"9px 14px",borderRadius:9,fontSize:12,
+      marginTop:12,padding:"10px 14px",borderRadius:9,fontSize:12,
       background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.18)",
-      color:"#ef4444"
-    }},"⚠ Could not fetch price history for "+sh.ticker+". Check your connection or try again later.");
+      color:"#ef4444",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"
+    }},
+      React.createElement("span",{style:{flex:1}},
+        "⚠ Could not fetch price history for "+sh.ticker+". Check your connection or try again."
+      ),
+      RefreshBtn
+    );
     return null;
   }
 
-  const latestVal=pts30[pts30.length-1].value;
-  const oldestVal=pts30[0].value;
-  const overallChg=latestVal-oldestVal;
-  const overallChgPct=oldestVal>0?((overallChg/oldestVal)*100).toFixed(2):"0.00";
-  const chgCol=overallChg>=0?"#16a34a":"#ef4444";
+  const latestVal30=pts30[pts30.length-1].value;
+  const oldestVal30=pts30[0].value;
+  const overallChg30=latestVal30-oldestVal30;
+  const overallChgPct30=oldestVal30>0?((overallChg30/oldestVal30)*100).toFixed(2):"0.00";
+  const chgCol30=overallChg30>=0?"#16a34a":"#ef4444";
 
   return React.createElement("div",{style:{marginTop:20,marginBottom:6,
     background:"var(--bg4)",borderRadius:14,padding:"20px 20px 14px",
     border:"1px solid var(--border2)"}},
     /* Header */
-    React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10}},
+    React.createElement("div",{style:{display:"flex",alignItems:"center",flexWrap:"wrap",gap:8,marginBottom:10}},
       React.createElement("span",{style:{fontSize:14,fontWeight:700,color:"var(--text4)",
         textTransform:"uppercase",letterSpacing:.5}},"📈 30-Day Holding Value"),
       sh.buyDate&&histPts!==null&&React.createElement("span",{style:{fontSize:10,
@@ -8943,11 +8988,12 @@ const ShareHistoryPanel=({sh,eodPrices,historyCache={},dispatch})=>{
         borderRadius:5,padding:"2px 7px"}},"history unavailable"),
       React.createElement("div",{style:{marginLeft:"auto",display:"flex",alignItems:"center",gap:8}},
         React.createElement("span",{style:{fontSize:12,padding:"3px 10px",borderRadius:8,fontWeight:700,
-          background:overallChg>=0?"rgba(22,163,74,.12)":"rgba(239,68,68,.12)",
-          border:"1px solid "+(overallChg>=0?"rgba(22,163,74,.25)":"rgba(239,68,68,.25)"),
-          color:chgCol
-        }},(overallChg>=0?"▲ +":"▼ ")+Math.abs(overallChgPct)+"%"),
-        React.createElement("span",{style:{fontSize:12,color:"var(--text6)"}},pts30.length+" days")
+          background:overallChg30>=0?"rgba(22,163,74,.12)":"rgba(239,68,68,.12)",
+          border:"1px solid "+(overallChg30>=0?"rgba(22,163,74,.25)":"rgba(239,68,68,.25)"),
+          color:chgCol30
+        }},(overallChg30>=0?"▲ +":"▼ ")+Math.abs(overallChgPct30)+"%"),
+        React.createElement("span",{style:{fontSize:12,color:"var(--text6)"}},pts30.length+" days"),
+        sh.buyDate&&RefreshBtn
       )
     ),
     /* Legend */
