@@ -1941,6 +1941,7 @@ const EMPTY_STATE=()=>({
   historyCache:{},
   hiddenTabs:[],
   taxData:null,
+  catRules:[],
   insightPrefs:{
     currentAge:"",retirementAge:45,
     fireMode:"auto",manualFireNumber:"",
@@ -1982,10 +1983,23 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.32.4";
+const APP_VERSION="3.32.6";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.32.6",date:"2026-03-19",title:"Fix — SyntaxError: malformed OAuth comment block",changes:[
+    "Root cause: the multi-line OAuth hash detection comment was incorrectly split into two parts — '/* ── OAuth hash detection: runs BEFORE React mounts. */' (prematurely closed) followed by bare text lines that Babel tried to parse as JavaScript statements, causing 'Missing semicolon' at the first word of the continuation text.",
+    "Fix: restored the comment as a single properly-opened and closed /* … */ block spanning all four lines.",
+  ]},
+  {version:"3.32.5",date:"2026-03-19",title:"Auto-Categorise Rules, Scheduled Month-End Bug Fix, Capital Gains Tracker",changes:[
+    "Feature — Auto-Categorise Rules: new Settings → 🤖 Auto-Categorise tab. User creates rules: match Description or Payee by Contains / Starts With / Exact against a keyword, then assign a category (and optionally overwrite the payee). Rules are ordered and applied first-match-wins. Applied automatically to every new transaction on add across banks, cards, and cash. '⚡ Apply to All Existing Transactions' button retroactively categorises the entire transaction history in one dispatch. Live test box lets users paste a description and see which category would be assigned before saving a rule. Reorder with ▲/▼ arrows. Edit and delete per rule.",
+    "Feature — Auto-Categorise state: catRules:[] added to EMPTY_STATE, INIT, loadState merge. Reducer cases: ADD_CAT_RULE, DEL_CAT_RULE, UPD_CAT_RULE, REORDER_CAT_RULES, APPLY_CAT_RULES_BULK. applyCatRule() helper runs in ADD_BANK_TX, ADD_CARD_TX, ADD_CASH_TX reducers.",
+    "Bug Fix — Scheduled transaction month-end drift: ADD_SCHEDULED now stores anchorDay (the original creation day, e.g. 31) alongside the entry. The advance() function inside EXECUTE_SCHEDULED now reads sc.anchorDay instead of deriving origDay from the current nextDate. Result: a monthly schedule set on the 31st now correctly produces Jan-31 → Feb-28/29 → Mar-31 → Apr-30 → May-31 (always max-day-of-month), instead of drifting down to 28 and staying there forever.",
+    "Feature — Capital Gains Tracker: computeCapitalGains(shares, mf) helper classifies every equity holding as STCG (held ≤12 months, 20% tax) or LTCG (held >12 months, 12.5% tax) per Budget 2024 / FY 2025-26 rates. Computes ₹1.25L LTCG exemption and taxable amount.",
+    "Feature — CapitalGainsCard component in Investment Dashboard: shows STCG, LTCG, and estimated total tax tiles; ₹1.25L exemption progress bar with overflow warning; '→ Pre-fill Tax Estimator' button dispatches SET_TAX_DATA with computed gains, confirming with a 4-second success badge.",
+    "Feature — Per-share capital gains badge in InvestSection Shares tab: each share card shows a STCG/LTCG pill with days held, applicable tax rate, and (for STCG) a countdown to LTCG eligibility.",
+    "Feature — Capital Gains stat card in InvestSection Shares stat row: fourth card showing estimated total tax when any gains exist.",
+  ]},
   {version:"3.32.4",date:"2026-03-19",title:"FD Timeline — responsive width, collision-free label placement",changes:[
     "Extracted FD Maturity Timeline from an inline IIFE into a standalone FDTimeline React component so it can use useRef and useEffect for ResizeObserver.",
     "ResizeObserver on the scrollable wrapper div: SVG canvas width dynamically matches the actual available container width on every resize (window resize, sidebar toggle, panel collapse). Falls back to a window.resize listener on browsers without ResizeObserver.",
@@ -3670,6 +3684,81 @@ const xirrSingleBuy=(invested,currentValue,buyDate)=>{
   return computeXIRR([-invested,currentValue],[buyDate,today]);
 };
 
+/* ══════════════════════════════════════════════════════════════════════════
+   CAPITAL GAINS COMPUTATION — Indian tax rules FY 2025-26 (Budget 2024)
+   Equity / equity-oriented MF:
+     STCG u/s 111A  — held ≤ 12 months → 20% flat
+     LTCG u/s 112A  — held > 12 months → 12.5% flat; ₹1.25L exemption p.a.
+   Takes the shares[] and mf[] arrays + today's date.
+   Returns { stcgGain, stcgLoss, ltcgGain, ltcgLoss, ltcgExempt, ltcgTaxable,
+             stcgTax, ltcgTax, totalTax, details[] }
+   "details" = one row per holding with classification.
+   ══════════════════════════════════════════════════════════════════════════ */
+const computeCapitalGains=(shares,mf)=>{
+  const today=TODAY();
+  const details=[];
+  let stcgGain=0,ltcgGain=0;
+
+  /* ── Equity shares ── */
+  shares.forEach(sh=>{
+    if(!sh.buyDate||!sh.currentPrice||!sh.buyPrice||!sh.qty)return;
+    const buyD=new Date(sh.buyDate+"T12:00:00");
+    const todD=new Date(today+"T12:00:00");
+    const daysHeld=Math.floor((todD-buyD)/86400000);
+    const isLT=daysHeld>365;
+    const cost=sh.qty*sh.buyPrice;
+    const curVal=sh.qty*sh.currentPrice;
+    const gain=curVal-cost;
+    if(gain>=0){if(isLT)ltcgGain+=gain;else stcgGain+=gain;}
+    details.push({id:sh.id,name:sh.company,ticker:sh.ticker,daysHeld,isLT,cost,curVal,gain,type:"Share"});
+  });
+
+  /* ── Equity-oriented MF (all MF treated as equity for simplicity;
+         user can exclude debt funds manually from the Tax Estimator) ── */
+  mf.forEach(m=>{
+    if(!m.startDate||!m.nav||!m.units||!m.avgNav)return;
+    const buyD=new Date(m.startDate+"T12:00:00");
+    const todD=new Date(today+"T12:00:00");
+    const daysHeld=Math.floor((todD-buyD)/86400000);
+    const isLT=daysHeld>365;
+    const cost=m.units*(m.avgNav||0);
+    const curVal=m.units*(m.nav||0);
+    const gain=curVal-cost;
+    if(gain>=0){if(isLT)ltcgGain+=gain;else stcgGain+=gain;}
+    details.push({id:m.id,name:m.name,ticker:m.schemeCode,daysHeld,isLT,cost,curVal,gain,type:"MF"});
+  });
+
+  const ltcgExempt=Math.min(125000,Math.max(0,ltcgGain));
+  const ltcgTaxable=Math.max(0,ltcgGain-ltcgExempt);
+  const stcgTax=stcgGain*0.20;
+  const ltcgTax=ltcgTaxable*0.125;
+  return{stcgGain,stcgLoss:0,ltcgGain,ltcgLoss:0,ltcgExempt,ltcgTaxable,stcgTax,ltcgTax,totalTax:stcgTax+ltcgTax,details};
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
+   AUTO-CAT RULE APPLICATION — applies a list of catRules to a single tx.
+   Returns {cat, payee} overrides or null (no match).
+   ══════════════════════════════════════════════════════════════════════════ */
+const applyCatRule=(rules,tx)=>{
+  if(!rules||!rules.length)return null;
+  for(const r of rules){
+    if(!r.keyword)continue;
+    const src=r.field==="payee"?(tx.payee||""):(tx.desc||"");
+    const hay=r.caseSensitive?src:src.toLowerCase();
+    const needle=r.caseSensitive?r.keyword:(r.keyword||"").toLowerCase();
+    let hit=false;
+    if(r.matchType==="contains")hit=hay.includes(needle);
+    else if(r.matchType==="startsWith")hit=hay.startsWith(needle);
+    else if(r.matchType==="exact")hit=hay===needle;
+    if(hit){
+      const out={cat:r.cat||(tx.cat||"Others")};
+      if(r.applyToPayee&&r.payeeValue)out.payee=r.payeeValue;
+      return out;
+    }
+  }
+  return null;
+};
+
 /* ── OAuth hash detection: runs BEFORE React mounts.
    When Google Drive OAuth redirects back to our app URL with #access_token=…
    in a popup window, this snippet extracts the token, posts it to the opener,
@@ -3693,7 +3782,7 @@ const reducer=(s,a)=>{
   const nextSn=txs=>txs.reduce((m,t)=>Math.max(m,t._sn||0),0)+1;
   switch(a.type){
     case"ADD_BANK":return{...s,banks:[...s.banks,a.p]};
-    case"ADD_BANK_TX":{const b=s.banks.find(b=>b.id===a.id);const sn=b?nextSn(b.transactions):1;return{...s,banks:s.banks.map(b=>b.id===a.id?{...b,transactions:[...b.transactions,{...a.tx,_sn:sn}]}:b)};}
+    case"ADD_BANK_TX":{const b=s.banks.find(b=>b.id===a.id);const sn=b?nextSn(b.transactions):1;const _acr=applyCatRule(s.catRules||[],a.tx);const _tx={...a.tx,...(_acr||{}),_sn:sn};return{...s,banks:s.banks.map(b=>b.id===a.id?{...b,transactions:[...b.transactions,_tx]}:b)};}
     case"UPD_BANK_BAL":return{...s,banks:s.banks.map(b=>b.id===a.id?(a.tx.status==="Reconciled"?{...b,balance:b.balance+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount)}:b):b)};
     case"EDIT_BANK_TX":{const _bwas=a.old.status==="Reconciled";const _bis=a.tx.status==="Reconciled";const _bOld=_bwas?(a.old.type==="credit"?a.old.amount:-a.old.amount):0;const _bNew=_bis?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0;return{...s,banks:s.banks.map(b=>b.id===a.accId?{...b,balance:b.balance+(_bNew-_bOld),transactions:b.transactions.map(t=>t.id===a.tx.id?a.tx:t)}:b)};}
     case"DEL_BANK_TX":return{...s,banks:s.banks.map(b=>b.id===a.accId?{...b,balance:b.balance-(a.tx.status==="Reconciled"?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0),transactions:b.transactions.filter(t=>t.id!==a.tx.id)}:b)};
@@ -3747,14 +3836,14 @@ const reducer=(s,a)=>{
       return{...s,cash:{...s.cash,balance:_cashRec}};
     }
     case"ADD_CARD":return{...s,cards:[...s.cards,a.p]};
-    case"ADD_CARD_TX":{const c=s.cards.find(c=>c.id===a.id);const sn=c?nextSn(c.transactions):1;return{...s,cards:s.cards.map(c=>c.id===a.id?{...c,transactions:[...c.transactions,{...a.tx,_sn:sn}]}:c)};}
+    case"ADD_CARD_TX":{const c=s.cards.find(c=>c.id===a.id);const sn=c?nextSn(c.transactions):1;const _acr2=applyCatRule(s.catRules||[],a.tx);const _tx2={...a.tx,...(_acr2||{}),_sn:sn};return{...s,cards:s.cards.map(c=>c.id===a.id?{...c,transactions:[...c.transactions,_tx2]}:c)};}
     case"UPD_CARD_BAL":return{...s,cards:s.cards.map(c=>c.id===a.id?(a.tx.status==="Reconciled"?{...c,outstanding:c.outstanding+(a.tx.type==="debit"?a.tx.amount:-a.tx.amount)}:c):c)};
     case"EDIT_CARD_TX":{const _cwas=a.old.status==="Reconciled";const _cis=a.tx.status==="Reconciled";const _cOld=_cwas?(a.old.type==="debit"?a.old.amount:-a.old.amount):0;const _cNew=_cis?(a.tx.type==="debit"?a.tx.amount:-a.tx.amount):0;return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,outstanding:c.outstanding+(_cNew-_cOld),transactions:c.transactions.map(t=>t.id===a.tx.id?a.tx:t)}:c)};}
     case"DEL_CARD_TX":return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,outstanding:c.outstanding-(a.tx.status==="Reconciled"?(a.tx.type==="debit"?a.tx.amount:-a.tx.amount):0),transactions:c.transactions.filter(t=>t.id!==a.tx.id)}:c)};
     case"DUP_CARD_TX":return{...s,cards:s.cards.map(c=>{if(c.id!==a.accId)return c;const sn=nextSn(c.transactions);const _cr=a.tx.status==="Reconciled";return{...c,outstanding:c.outstanding+(_cr?(a.tx.type==="debit"?a.tx.amount:-a.tx.amount):0),transactions:[...c.transactions,{...a.tx,id:uid(),_sn:sn,_addedAt:new Date().toISOString()}]};})};
     case"EDIT_CARD":return{...s,cards:s.cards.map(c=>c.id===a.p.id?{...c,...a.p}:c)};
     case"DEL_CARD":return{...s,cards:s.cards.filter(c=>c.id!==a.id)};
-    case"ADD_CASH_TX":{const sn=nextSn(s.cash.transactions);const _caRec=a.tx.status==="Reconciled";return{...s,cash:{balance:s.cash.balance+(_caRec?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0),transactions:[...s.cash.transactions,{...a.tx,_sn:sn}]}};}
+    case"ADD_CASH_TX":{const sn=nextSn(s.cash.transactions);const _caRec=a.tx.status==="Reconciled";const _acr3=applyCatRule(s.catRules||[],a.tx);const _tx3={...a.tx,...(_acr3||{}),_sn:sn};return{...s,cash:{balance:s.cash.balance+(_caRec?(_tx3.type==="credit"?_tx3.amount:-_tx3.amount):0),transactions:[...s.cash.transactions,_tx3]}};}
     case"SET_CASH_BAL":return{...s,cash:{...s.cash,balance:a.val}};
     case"EDIT_CASH_TX":{const _ewas=a.old.status==="Reconciled";const _eis=a.tx.status==="Reconciled";const _eOld=_ewas?(a.old.type==="credit"?a.old.amount:-a.old.amount):0;const _eNew=_eis?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0;return{...s,cash:{...s.cash,balance:s.cash.balance+(_eNew-_eOld),transactions:s.cash.transactions.map(t=>t.id===a.tx.id?a.tx:t)}};}
     case"DEL_CASH_TX":return{...s,cash:{...s.cash,balance:s.cash.balance-(a.tx.status==="Reconciled"?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0),transactions:s.cash.transactions.filter(t=>t.id!==a.tx.id)}};
@@ -3901,7 +3990,38 @@ const reducer=(s,a)=>{
         scheduled:(s.scheduled||[]).map(_updSubSched),
       };
     }
-    case"ADD_SCHEDULED":return{...s,scheduled:[...( s.scheduled||[]),{...a.p,id:uid()}]};
+    case"ADD_CAT_RULE":return{...s,catRules:[...(s.catRules||[]),{...a.p,id:uid()}]};
+    case"DEL_CAT_RULE":return{...s,catRules:(s.catRules||[]).filter(r=>r.id!==a.id)};
+    case"UPD_CAT_RULE":return{...s,catRules:(s.catRules||[]).map(r=>r.id===a.p.id?{...r,...a.p}:r)};
+    case"REORDER_CAT_RULES":return{...s,catRules:a.rules};
+    case"APPLY_CAT_RULES_BULK":{
+      /* Apply all rules to every existing transaction across banks/cards/cash */
+      const rules=s.catRules||[];
+      if(!rules.length)return s;
+      const applyFn=tx=>{
+        for(const r of rules){
+          const src=r.field==="payee"?(tx.payee||""):(tx.desc||"");
+          const hay=r.caseSensitive?src:src.toLowerCase();
+          const needle=r.caseSensitive?r.keyword:(r.keyword||"").toLowerCase();
+          let hit=false;
+          if(r.matchType==="contains")hit=hay.includes(needle);
+          else if(r.matchType==="startsWith")hit=hay.startsWith(needle);
+          else if(r.matchType==="exact")hit=hay===needle;
+          if(hit){
+            const newTx={...tx,cat:r.cat||(tx.cat||"Others")};
+            if(r.applyToPayee&&r.payeeValue)newTx.payee=r.payeeValue;
+            return newTx;
+          }
+        }
+        return tx;
+      };
+      return{...s,
+        banks:s.banks.map(b=>({...b,transactions:b.transactions.map(applyFn)})),
+        cards:s.cards.map(c=>({...c,transactions:c.transactions.map(applyFn)})),
+        cash:{...s.cash,transactions:s.cash.transactions.map(applyFn)},
+      };
+    }
+    case"ADD_SCHEDULED":return{...s,scheduled:[...(s.scheduled||[]),{...a.p,id:uid(),anchorDay:a.p.anchorDay||new Date((a.p.nextDate||TODAY())+"T12:00:00").getDate()}]};
     case"DEL_SCHEDULED":return{...s,scheduled:(s.scheduled||[]).filter(sc=>sc.id!==a.id)};
     case"EDIT_SCHEDULED":return{...s,scheduled:(s.scheduled||[]).map(sc=>sc.id===a.p.id?{...sc,...a.p}:sc)};
     case"EXECUTE_SCHEDULED":{
@@ -3946,15 +4066,17 @@ const reducer=(s,a)=>{
         else if(sc.accType==="cash") ns={...ns,cash:{...ns.cash,balance:ns.cash.balance+(tx.type==="credit"?tx.amount:-tx.amount),transactions:[...ns.cash.transactions,tx]}};
       }
 
-      /* Advance nextDate based on frequency */
+      /* Advance nextDate based on frequency — uses anchorDay (stored at creation)
+         so day-31 entries stay end-of-month and never drift down to day-28/29/30. */
       const advance=(d,freq)=>{
         const dt=new Date(d+"T12:00:00");
-        const origDay=dt.getDate();
+        /* anchorDay: the original creation day, e.g. 31 for "last day of month" */
+        const origDay=sc.anchorDay||dt.getDate();
         if(freq==="daily")     dt.setDate(dt.getDate()+1);
         else if(freq==="weekly")    dt.setDate(dt.getDate()+7);
         else if(freq==="monthly"){  dt.setDate(1);dt.setMonth(dt.getMonth()+1);dt.setDate(Math.min(origDay,new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate()));}
         else if(freq==="quarterly"){dt.setDate(1);dt.setMonth(dt.getMonth()+3);dt.setDate(Math.min(origDay,new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate()));}
-        else if(freq==="yearly")    dt.setFullYear(dt.getFullYear()+1);
+        else if(freq==="yearly")    {dt.setFullYear(dt.getFullYear()+1);dt.setDate(Math.min(origDay,new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate()));}
         return dt.toISOString().split("T")[0];
       };
       const isOnce=sc.frequency==="once";
@@ -9057,6 +9179,60 @@ const ImportFDModal=({onImport,onClose})=>{
 /* ══════════════════════════════════════════════════════════════════════════
    INVESTMENT DASHBOARD
    ══════════════════════════════════════════════════════════════════════════ */
+/* ── CapitalGainsCard — shown in InvestDashboard between XIRR strip and allocation row ── */
+const CapitalGainsCard=({shares,mf,dispatch})=>{
+  const cg=React.useMemo(()=>computeCapitalGains(shares,mf),[shares,mf]);
+  const[prefilled,setPrefilled]=useState(false);
+  if(!cg.details.length)return null;
+  const ltcgPct=Math.min(100,cg.ltcgGain>0?Math.round(cg.ltcgExempt/cg.ltcgGain*100):0);
+  const prefillTax=()=>{
+    dispatch({type:"SET_TAX_DATA",data:{regime:"new",
+      f:{stcgGain:Math.round(cg.stcgGain),stcgLoss:0,ltcgGain:Math.round(cg.ltcgGain),ltcgLoss:0,ltcgGF:0,
+         presumptive:0,savingsInt:0,depositInt:0,dividend:0,ded80C:0,ded80D:0,dedOther:0},
+      tdsRows:[],atRows:[]}});
+    setPrefilled(true);
+    setTimeout(()=>setPrefilled(false),4000);
+  };
+  return React.createElement(Card,{sx:{marginBottom:14,border:"1px solid rgba(79,70,229,.2)",background:"linear-gradient(135deg,var(--bg4),var(--bg5))"}},
+    React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,flexWrap:"wrap",gap:8}},
+      React.createElement("div",null,
+        React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#4f46e5",textTransform:"uppercase",letterSpacing:1,marginBottom:3}},"📊 Capital Gains · FY 2025-26"),
+        React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},cg.details.length+" holdings · Budget 2024 rates · STCG 20% / LTCG 12.5%")
+      ),
+      prefilled
+        ?React.createElement("div",{style:{fontSize:11,color:"#16a34a",fontWeight:600,padding:"6px 12px",borderRadius:8,background:"rgba(22,163,74,.09)",border:"1px solid rgba(22,163,74,.25)"}},"✓ Pre-filled! Open Tax Estimator tab.")
+        :React.createElement("button",{onClick:prefillTax,style:{fontSize:11,padding:"6px 12px",borderRadius:8,border:"1px solid rgba(79,70,229,.35)",background:"rgba(79,70,229,.1)",color:"#4f46e5",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:600,whiteSpace:"nowrap"}},"→ Pre-fill Tax Estimator")
+    ),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:9,marginBottom:cg.ltcgGain>0?12:0}},
+      React.createElement("div",{style:{background:"rgba(239,68,68,.08)",borderRadius:10,padding:"10px 13px",border:"1px solid rgba(239,68,68,.18)"}},
+        React.createElement("div",{style:{fontSize:10,color:"#ef4444",fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:3}},"STCG u/s 111A"),
+        React.createElement("div",{style:{fontSize:16,fontFamily:"'Sora',sans-serif",fontWeight:800,color:cg.stcgGain>0?"#ef4444":"var(--text3)"}},INR(Math.round(cg.stcgGain))),
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Tax @ 20%: "+INR(Math.round(cg.stcgTax)))
+      ),
+      React.createElement("div",{style:{background:"rgba(22,163,74,.08)",borderRadius:10,padding:"10px 13px",border:"1px solid rgba(22,163,74,.18)"}},
+        React.createElement("div",{style:{fontSize:10,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:3}},"LTCG u/s 112A"),
+        React.createElement("div",{style:{fontSize:16,fontFamily:"'Sora',sans-serif",fontWeight:800,color:cg.ltcgGain>0?"#16a34a":"var(--text3)"}},INR(Math.round(cg.ltcgGain))),
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Taxable: "+INR(Math.round(cg.ltcgTaxable))+" · Tax: "+INR(Math.round(cg.ltcgTax)))
+      ),
+      React.createElement("div",{style:{background:"var(--accentbg2)",borderRadius:10,padding:"10px 13px",border:"1px solid var(--border2)"}},
+        React.createElement("div",{style:{fontSize:10,color:"var(--accent)",fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:3}},"Estimated Tax"),
+        React.createElement("div",{style:{fontSize:16,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--accent)"}},INR(Math.round(cg.totalTax))),
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"STCG + LTCG combined")
+      )
+    ),
+    cg.ltcgGain>0&&React.createElement("div",null,
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text5)",marginBottom:4}},
+        React.createElement("span",null,"₹1.25L LTCG exemption used"),
+        React.createElement("span",{style:{fontWeight:600,color:ltcgPct>=100?"#ef4444":"#16a34a"}},INR(Math.round(cg.ltcgExempt))+" / ₹1,25,000 ("+ltcgPct+"%)")
+      ),
+      React.createElement("div",{style:{height:6,background:"var(--bg5)",borderRadius:3,overflow:"hidden"}},
+        React.createElement("div",{style:{height:"100%",width:ltcgPct+"%",background:ltcgPct>=100?"#ef4444":"#16a34a",borderRadius:3,transition:"width .5s"}})
+      ),
+      ltcgPct>=100&&React.createElement("div",{style:{fontSize:10,color:"#ef4444",marginTop:4,fontWeight:600}},"⚠ Exemption fully used — all further LTCG is taxable at 12.5%.")
+    )
+  );
+};
+
 const InvestDashboard=React.memo(({mf,shares,fd,re=[],dispatch,isMobile,eodPrices={},eodNavs={}})=>{
   /* ── Refresh state ── */
   const[refreshing,setRefreshing]=useState(false);
@@ -9352,6 +9528,9 @@ const InvestDashboard=React.memo(({mf,shares,fd,re=[],dispatch,isMobile,eodPrice
       ),
       React.createElement("div",{style:{fontSize:10,color:"var(--text6)",alignSelf:"flex-end",marginLeft:"auto",fontStyle:"italic"}},"Annualised returns via XIRR")
     ),
+
+    /* ── Capital Gains Summary card */
+    React.createElement(CapitalGainsCard,{shares,mf,dispatch}),
 
     /* ── Middle row: allocation + MF performance */
     React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"280px 1fr",gap:14,marginBottom:14}},
@@ -10426,7 +10605,8 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],dispatch,defaultTab="mf",eod
     tab==="shares"&&React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
       React.createElement(StatCard,{label:"Market Value",val:INR(shVal),sub:shares.length+" holdings",col:"#16a34a",icon:"📈"}),
       React.createElement(StatCard,{label:"Cost Basis",val:INR(shCost),sub:"Total invested",col:"#0e7490",icon:"💰"}),
-      React.createElement(StatCard,{label:"Total P&L",val:(shVal-shCost>=0?"+":"")+INR(shVal-shCost),sub:pct(shVal,shCost)+"% return",col:shVal>=shCost?"#16a34a":"#ef4444",icon:shVal>=shCost?"▲":"▼"})
+      React.createElement(StatCard,{label:"Total P&L",val:(shVal-shCost>=0?"+":"")+INR(shVal-shCost),sub:pct(shVal,shCost)+"% return",col:shVal>=shCost?"#16a34a":"#ef4444",icon:shVal>=shCost?"▲":"▼"}),
+      (()=>{const cg=computeCapitalGains(shares,[]);return(cg.stcgGain>0||cg.ltcgGain>0)?React.createElement(StatCard,{label:"Est. Capital Gains Tax",val:INR(Math.round(cg.totalTax)),sub:"STCG "+INR(Math.round(cg.stcgGain))+" · LTCG "+INR(Math.round(cg.ltcgGain)),col:"#4f46e5",icon:"📋"}):null;})()
     ),
     tab==="fd"&&React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
       React.createElement(StatCard,{label:"Value Today",val:INR(fdTodayTotal),sub:fdTodayTotal>fdTotal?"+"+INR(fdTodayTotal-fdTotal)+" accrued interest":"principal "+INR(fdTotal),col:"#b45309",icon:"📊"}),
@@ -10740,6 +10920,32 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],dispatch,defaultTab="mf",eod
                 (dayChgAbs!==null?" ("+(dayChgAbs>=0?"+":"")+Number(dayChgAbs).toFixed(2)+")"  :"")
               )
             ),
+            /* ── Capital Gains classification badge ── */
+            sh.buyDate&&(()=>{
+              const todayD=new Date();
+              const buyD=new Date(sh.buyDate+"T12:00:00");
+              const daysHeld=Math.floor((todayD-buyD)/86400000);
+              if(daysHeld<0)return null;
+              const isLT=daysHeld>365;
+              const gain=currentVal-costBasis;
+              const cgType=isLT?"LTCG":"STCG";
+              const taxRate=isLT?"12.5%":"20%";
+              const cgCol=isLT?"#16a34a":"#f59e0b";
+              const daysToLT=isLT?0:365-daysHeld;
+              return React.createElement("div",{style:{
+                display:"flex",alignItems:"center",justifyContent:"space-between",
+                padding:"6px 10px",borderRadius:7,marginBottom:8,
+                background:isLT?"rgba(22,163,74,.07)":"rgba(245,158,11,.07)",
+                border:"1px solid "+(isLT?"rgba(22,163,74,.2)":"rgba(245,158,11,.2)")
+              }},
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7}},
+                  React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:6,background:cgCol+"22",color:cgCol,border:"1px solid "+cgCol+"44"}},cgType),
+                  React.createElement("span",{style:{fontSize:11,color:"var(--text4)"}},"held "+daysHeld+" days · "+taxRate+" tax rate")
+                ),
+                !isLT&&daysToLT>0&&React.createElement("span",{style:{fontSize:10,color:"#f59e0b",fontWeight:600}},daysToLT+"d to LTCG"),
+                isLT&&gain>0&&React.createElement("span",{style:{fontSize:10,color:"#16a34a",fontWeight:600}},"LTCG: "+INR(Math.round(gain)))
+              );
+            })(),
             /* ── Holding value chart (full history or 30-day EOD fallback) ── */
             React.createElement(ShareHistoryPanel,{sh,eodPrices,historyCache,dispatch}),
             /* Note anchor */
@@ -16677,6 +16883,190 @@ const StorageGauge=({dispatch})=>{
   );
 };
 
+/* ══════════════════════════════════════════════════════════════════════════
+   AUTO-CATEGORISATION RULES PANEL
+   Shown inside Settings → Auto-Categorise tab.
+   Rules are applied in order (top = highest priority).
+   Rule schema: { id, keyword, field:"desc"|"payee",
+                  matchType:"contains"|"startsWith"|"exact",
+                  cat, applyToPayee:bool, payeeValue, caseSensitive:bool }
+   ══════════════════════════════════════════════════════════════════════════ */
+const CatRulesPanel=({state,dispatch})=>{
+  const{catRules=[],categories=[]}=state;
+  const[form,setForm]=useState({keyword:"",field:"desc",matchType:"contains",cat:"",applyToPayee:false,payeeValue:"",caseSensitive:false});
+  const[editId,setEditId]=useState(null);
+  const[bulkMsg,setBulkMsg]=useState("");
+  const[testInput,setTestInput]=useState("");
+
+  /* Flat category list for dropdown */
+  const catOpts=categories.flatMap(c=>[
+    {val:c.name,lbl:c.name},
+    ...(c.subs||[]).map(sc=>({val:c.name+"::"+sc.name,lbl:"  ↳ "+sc.name}))
+  ]);
+
+  const resetForm=()=>setForm({keyword:"",field:"desc",matchType:"contains",cat:"",applyToPayee:false,payeeValue:"",caseSensitive:false});
+
+  const saveRule=()=>{
+    if(!form.keyword.trim()||!form.cat)return;
+    if(editId){
+      dispatch({type:"UPD_CAT_RULE",p:{...form,id:editId,keyword:form.keyword.trim()}});
+      setEditId(null);
+    }else{
+      dispatch({type:"ADD_CAT_RULE",p:{...form,keyword:form.keyword.trim()}});
+    }
+    resetForm();
+  };
+
+  const startEdit=r=>{setEditId(r.id);setForm({keyword:r.keyword,field:r.field,matchType:r.matchType,cat:r.cat,applyToPayee:r.applyToPayee||false,payeeValue:r.payeeValue||"",caseSensitive:r.caseSensitive||false});};
+  const cancelEdit=()=>{setEditId(null);resetForm();};
+
+  const moveUp=i=>{if(i===0)return;const r=[...catRules];[r[i-1],r[i]]=[r[i],r[i-1]];dispatch({type:"REORDER_CAT_RULES",rules:r});};
+  const moveDown=i=>{if(i===catRules.length-1)return;const r=[...catRules];[r[i],r[i+1]]=[r[i+1],r[i]];dispatch({type:"REORDER_CAT_RULES",rules:r});};
+
+  const applyBulk=()=>{
+    dispatch({type:"APPLY_CAT_RULES_BULK"});
+    const all=state.banks.reduce((s,b)=>s+b.transactions.length,0)+state.cards.reduce((s,c)=>s+c.transactions.length,0)+state.cash.transactions.length;
+    setBulkMsg("✓ Rules applied to "+all+" existing transactions.");
+    setTimeout(()=>setBulkMsg(""),4000);
+  };
+
+  /* Live test — shows what category would be assigned */
+  const testResult=React.useMemo(()=>{
+    if(!testInput.trim())return null;
+    const fakeTx={desc:testInput,payee:testInput};
+    const hit=applyCatRule(catRules,fakeTx);
+    return hit?hit.cat:"No match — will use default category";
+  },[testInput,catRules]);
+
+  const inpSty={fontSize:12,padding:"7px 10px",borderRadius:8,border:"1px solid var(--border)",background:"var(--inp-bg)",color:"var(--text)",fontFamily:"'DM Sans',sans-serif",outline:"none"};
+  const selSty={...inpSty,cursor:"pointer"};
+
+  return React.createElement("div",{className:"fu"},
+    /* Header */
+    React.createElement("div",{style:{marginBottom:20}},
+      React.createElement("h3",{style:{fontFamily:"'Sora',sans-serif",fontSize:18,fontWeight:700,color:"var(--text)"}},"Auto-Categorise Rules"),
+      React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.6}},
+        "Rules run in order (top first) whenever a new transaction is added. They can also be applied to all existing transactions in bulk.")
+    ),
+
+    /* ── Add / Edit form ── */
+    React.createElement(Card,{sx:{marginBottom:14}},
+      React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",textTransform:"uppercase",letterSpacing:.7,marginBottom:12}},
+        editId?"✏ Edit Rule":"+ New Rule"),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}},
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:4}},"Match against"),
+          React.createElement("select",{style:{...selSty,width:"100%"},value:form.field,onChange:e=>setForm(p=>({...p,field:e.target.value}))},
+            React.createElement("option",{value:"desc"},"Description / note"),
+            React.createElement("option",{value:"payee"},"Payee name")
+          )
+        ),
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:4}},"Match type"),
+          React.createElement("select",{style:{...selSty,width:"100%"},value:form.matchType,onChange:e=>setForm(p=>({...p,matchType:e.target.value}))},
+            React.createElement("option",{value:"contains"},"Contains"),
+            React.createElement("option",{value:"startsWith"},"Starts with"),
+            React.createElement("option",{value:"exact"},"Exact match")
+          )
+        )
+      ),
+      React.createElement("div",{style:{marginBottom:10}},
+        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:4}},"Keyword to match"),
+        React.createElement("input",{style:{...inpSty,width:"100%"},placeholder:'e.g. SWIGGY, Zomato, HDFC BANK EMI…',value:form.keyword,onChange:e=>setForm(p=>({...p,keyword:e.target.value}))})
+      ),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}},
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:4}},"Assign category"),
+          React.createElement("select",{style:{...selSty,width:"100%"},value:form.cat,onChange:e=>setForm(p=>({...p,cat:e.target.value}))},
+            React.createElement("option",{value:""},"— choose category —"),
+            catOpts.map(o=>React.createElement("option",{key:o.val,value:o.val},o.lbl))
+          )
+        ),
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:4}},"Also set payee"),
+          React.createElement("input",{style:{...inpSty,width:"100%"},placeholder:"Leave blank to keep original",value:form.payeeValue,onChange:e=>setForm(p=>({...p,payeeValue:e.target.value,applyToPayee:!!e.target.value}))})
+        )
+      ),
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:14}},
+        React.createElement("label",{style:{display:"flex",alignItems:"center",gap:6,fontSize:12,color:"var(--text4)",cursor:"pointer"}},
+          React.createElement("input",{type:"checkbox",checked:form.caseSensitive,onChange:e=>setForm(p=>({...p,caseSensitive:e.target.checked}))}),
+          "Case-sensitive match"
+        )
+      ),
+      React.createElement("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+        React.createElement(Btn,{onClick:saveRule,disabled:!form.keyword.trim()||!form.cat},editId?"💾 Save Changes":"+ Add Rule"),
+        editId&&React.createElement(Btn,{v:"secondary",onClick:cancelEdit},"Cancel")
+      )
+    ),
+
+    /* ── Live test box ── */
+    React.createElement(Card,{sx:{marginBottom:14}},
+      React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",textTransform:"uppercase",letterSpacing:.7,marginBottom:8}},"🧪 Test a transaction"),
+      React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
+        React.createElement("input",{style:{...inpSty,flex:1,minWidth:180},placeholder:"Paste a transaction description or payee name…",value:testInput,onChange:e=>setTestInput(e.target.value)}),
+        testResult&&React.createElement("div",{style:{
+          fontSize:12,fontWeight:600,padding:"6px 12px",borderRadius:8,
+          background:testResult.startsWith("No match")?"var(--bg5)":"rgba(22,163,74,.09)",
+          border:"1px solid "+(testResult.startsWith("No match")?"var(--border2)":"rgba(22,163,74,.25)"),
+          color:testResult.startsWith("No match")?"var(--text5)":"#16a34a",
+          whiteSpace:"nowrap"
+        }},testResult.startsWith("No match")?"No match":"→ "+testResult)
+      )
+    ),
+
+    /* ── Rules list ── */
+    React.createElement(Card,{sx:{marginBottom:14}},
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:catRules.length?12:0}},
+        React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",textTransform:"uppercase",letterSpacing:.7}},
+          catRules.length+" rule"+(catRules.length!==1?"s":"")+" · applied in order"),
+        catRules.length>0&&React.createElement(Btn,{v:"success",sz:"sm",onClick:applyBulk},"⚡ Apply to All Existing Transactions")
+      ),
+      bulkMsg&&React.createElement("div",{style:{marginBottom:10,fontSize:12,color:"#16a34a",padding:"7px 12px",borderRadius:8,background:"rgba(22,163,74,.09)",border:"1px solid rgba(22,163,74,.25)"}},bulkMsg),
+      catRules.length===0
+        ?React.createElement("div",{style:{fontSize:13,color:"var(--text5)",fontStyle:"italic",padding:"12px 0"}},"No rules yet. Add your first rule above.")
+        :catRules.map((r,i)=>React.createElement("div",{key:r.id,style:{
+            display:"flex",alignItems:"center",gap:8,padding:"9px 12px",
+            borderBottom:"1px solid var(--border2)",
+            background:editId===r.id?"var(--accentbg2)":"transparent"
+          }},
+          /* Reorder */
+          React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:2,flexShrink:0}},
+            React.createElement("button",{onClick:()=>moveUp(i),disabled:i===0,style:{background:"none",border:"none",cursor:i===0?"default":"pointer",color:"var(--text5)",fontSize:10,lineHeight:1,padding:"1px 3px",opacity:i===0?.3:1}},"▲"),
+            React.createElement("button",{onClick:()=>moveDown(i),disabled:i===catRules.length-1,style:{background:"none",border:"none",cursor:i===catRules.length-1?"default":"pointer",color:"var(--text5)",fontSize:10,lineHeight:1,padding:"1px 3px",opacity:i===catRules.length-1?.3:1}},"▼")
+          ),
+          /* Priority badge */
+          React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:8,background:"var(--accentbg2)",color:"var(--accent)",minWidth:24,textAlign:"center",flexShrink:0}},"#"+(i+1)),
+          /* Rule description */
+          React.createElement("div",{style:{flex:1,minWidth:0}},
+            React.createElement("div",{style:{fontSize:12,color:"var(--text2)",fontWeight:600}},
+              React.createElement("span",{style:{color:"var(--text5)",fontWeight:400}},(r.field==="payee"?"Payee ":"Desc ")),
+              React.createElement("span",{style:{color:"var(--text3)"}},(r.matchType==="contains"?"contains":r.matchType==="startsWith"?"starts with":"equals")),
+              " ",
+              React.createElement("span",{style:{background:"var(--accentbg2)",color:"var(--accent)",padding:"0 5px",borderRadius:4,fontFamily:"monospace",fontSize:11}},r.keyword),
+              React.createElement("span",{style:{color:"var(--text5)",fontWeight:400}}," → "),
+              React.createElement("span",{style:{color:"var(--text2)",fontWeight:700}},r.cat)
+            ),
+            (r.payeeValue||r.caseSensitive)&&React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},
+              r.payeeValue?"Also sets payee: "+r.payeeValue:"",
+              r.caseSensitive?" · Case-sensitive":""
+            )
+          ),
+          /* Actions */
+          React.createElement("div",{style:{display:"flex",gap:6,flexShrink:0}},
+            React.createElement("button",{onClick:()=>startEdit(r),style:{fontSize:11,padding:"4px 9px",borderRadius:6,border:"1px solid rgba(29,78,216,.25)",background:"rgba(29,78,216,.08)",color:"#1d4ed8",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}},"✏"),
+            React.createElement("button",{onClick:()=>dispatch({type:"DEL_CAT_RULE",id:r.id}),style:{fontSize:11,padding:"4px 9px",borderRadius:6,border:"1px solid rgba(239,68,68,.25)",background:"rgba(239,68,68,.08)",color:"#ef4444",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}},"✕")
+          )
+        ))
+    ),
+
+    /* Help note */
+    React.createElement("div",{style:{fontSize:11,color:"var(--text5)",lineHeight:1.7,padding:"9px 12px",borderRadius:9,border:"1px solid var(--border2)",background:"var(--bg4)"}},
+      "💡 ",React.createElement("strong",null,"Tips:"),
+      " Rules run top-to-bottom — the first match wins. Use 'Contains' for partial matches (e.g. 'SWIGGY' catches 'SWIGGY ORDER #123'). Use 'Exact' for payees that are already standardised. Click '⚡ Apply to All' to retroactively categorise your entire transaction history."
+    )
+  );
+};
+
 const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,isMobile})=>{
   const[stab,setStab]=useState("appearance");
   const[confirm,setConfirm]=useState(null);
@@ -16797,6 +17187,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
   };
 
   const STABS=[
+    {id:"catRules",   label:"Auto-Categorise",icon:"🤖"},
     {id:"appearance",label:"Appearance",icon:"🎨"},
     {id:"security",  label:"Security",  icon:"🔐"},
     {id:"filestorage",label:"File Storage",icon:"📁"},
@@ -16842,6 +17233,9 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
 
     /* ── Right Panel */
     React.createElement("div",{style:{flex:1,overflowY:"auto",minWidth:0}},
+
+      /* ══ AUTO-CATEGORISE RULES ══ */
+      stab==="catRules"&&React.createElement(CatRulesPanel,{state,dispatch}),
 
       /* ══ SECURITY ══ */
       stab==="security"&&React.createElement(SecurityPanel,null),
@@ -18601,6 +18995,7 @@ const loadState=()=>{
       historyCache:(parsed.historyCache||{}),
       hiddenTabs:(parsed.hiddenTabs||[]),
       taxData:(parsed.taxData||null),
+      catRules:(parsed.catRules||[]),
     };
   }catch(e){console.warn("Failed to load state:",e);return null;}
 };
