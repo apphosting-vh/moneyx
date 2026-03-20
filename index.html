@@ -2034,10 +2034,27 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.32.15";
+const APP_VERSION="3.32.17";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.32.17",date:"2026-03-20",title:"Fix — Dashboard budget widgets incorrectly counted investments as expenses",changes:[
+    "Root cause: Both Dashboard budget widgets (H: Budget vs Actuals strip, L: Category Budget Alerts) computed expense actuals with if(ct==='Transfer'||ct==='Income')return — they excluded Transfers and Income but NOT Investment. Any SIP, stock purchase, or PPF debit tagged with an Investment category was silently included in the expense actual, inflating 'Spent This Month' totals and triggering false budget overrun warnings.",
+    "Fix — Budget vs Actuals strip (Widget H): getActuals() now adds ct==='Investment' to the exclusion guard. Investment-classified categories are also filtered out of the rows list so investment budget targets do not appear as expense progress bars with red/orange danger colours.",
+    "Fix — Category Budget Alerts (Widget L): expense actuals loop now excludes Investment. The alerts list filter now explicitly skips Investment, Transfer, and Income categories so SIP targets do not generate '🚨 Budget Exceeded' warnings.",
+    "Note: The Insights → Budget section (BudgetMonthCard / BudgetYearCard) already correctly separated investments into their own invCatRows with a dedicated '📈 Investments' section and green 'On track' styling — no change needed there.",
+  ]},
+  {version:"3.32.16",date:"2026-03-20",title:"Design — Investments are savings, not expenses, across all budgetary & report views",changes:[
+    "Philosophy: Investment transactions (MF SIPs, stock purchases, PPF/NPS contributions, etc.) are a form of saving and wealth-building. They should never be bucketed with discretionary expenses or reduce the 'Savings Rate' metric. This release separates investments into their own positively-framed column/row across every report and dashboard widget that previously conflated them with expenses.",
+    "Dashboard — Monthly Cash Flow chart (Section 3): Bank-only flowMap now has three buckets: inc/exp/inv. Investment transactions no longer fall through to the expense bucket. The SvgGroupBar chart gains a third purple 'Invested' bar alongside Income (green) and Expenses (red).",
+    "Dashboard — This-Month KPI ring card (Section 4): allFlowMap gains an inv bucket. curMD.exp no longer includes investments. The savings ring formula (inc−exp)/inc now correctly measures savings rate against pure expenses only. A new '📈 Invested' row in purple appears below Expenses when any investment activity exists this month. Net = inc−exp (spending only). invDelta tracks month-over-month change in investment amount.",
+    "Dashboard — Savings Rate: previously (inc−exp−inv)/inc treated investing as identical to spending. Now (inc−exp)/inc — a user who invests 30% of income and spends 50% correctly shows 50% savings rate, not 20%.",
+    "RptIncVsExp (Income vs Expenses report): v2 was exp+inv merged into a single 'Outflow' column. Now v2=exp only and v3=inv separately. The detailed table gains an 'Invested' column in purple. The bar chart gains a third purple bar. The 'Net Saved' stat card measures inc−exp only. Savings Rate sub-label clarifies '(excl. investments)'. Heatmap Net row uses inc−exp.",
+    "RptForecast: this report projects future bank balance, so investments do correctly reduce the balance (money leaves the account to go into portfolio). This is intentional. Fixed: now uses txCatDelta instead of raw t.amount, fixing direction for reversals. Stat card renamed from 'Avg Net / Month' to 'Avg Net Balance Δ' with sub-label 'after invest' to clarify the projection includes investment outflows. Report header description updated.",
+    "SvgGroupBar chart component: extended from 2-bar to optionally 3-bar. When data rows have a non-zero v3, a third purple bar is automatically rendered and a third legend entry added. Bar widths recalculate for 3-group layout. Fully backward-compatible: all existing callers with only v1/v2 continue unchanged.",
+    "All other reports (Monthly, Quarterly, Yearly, CashFlow, Summary, ClassificationBreakdown) already had Investment correctly separated into its own bucket — no changes needed there.",
+    "Insight/FIRE section already excluded Investment from expense calculations via INVEST_CATS — no changes needed.",
+  ]},
   {version:"3.32.15",date:"2026-03-20",title:"Bug Audit Round 3 — 4 bugs fixed: amortization, dashboard chart, account totals, double-execution",changes:[
     "Bug 1 (Functional) — calcAmortization produced corrupt data when EMI ≤ monthly interest: If a loan's EMI was set too low to cover even the first month's interest, principal_part = emi − interest became negative. The outstanding balance grew each month instead of reducing, and the while-loop ran to its 600-iteration cap producing 600 rows of nonsensical data. Fixed: a guard checks if emi ≤ firstInterest before entering the loop and returns an empty array immediately. A secondary break inside the loop stops if principal_part ever goes non-positive mid-schedule. Both the Loan card and the Amortization modal now render an explicit amber warning explaining the EMI is too low and showing the minimum amount needed.",
     "Bug 2 (Functional) — Dashboard Monthly Cash Flow chart and This-Month KPIs used unsigned t.amount instead of txCatDelta: Both the bank-only chart (Section 3) and the all-accounts KPI block (Section 4) accumulated t.amount directly — so a debit tagged as Income (income reversal) added to expenses instead of reducing income, and a credit tagged as Expense (refund) added to income instead of reducing expenses. This is the same class of bug fixed in Reports in v3.32.9 but Dashboard was not updated at that time. Both sections now use txCatDelta(t, ct) matching the Reports fix.",
@@ -7226,13 +7243,14 @@ const Dashboard=React.memo(({data,isMobile})=>{
     const ct=catClassType(data.categories,t.cat||"Others");
     if(ct==="Transfer")return;
     const k=t.date.substr(0,7);
-    if(!flowMap[k])flowMap[k]={inc:0,exp:0};
+    if(!flowMap[k])flowMap[k]={inc:0,exp:0,inv:0};
     const d=txCatDelta(t,ct);
     if(ct==="Income")flowMap[k].inc+=d;
+    else if(ct==="Investment")flowMap[k].inv+=d;
     else flowMap[k].exp+=d;
   });
   const monthlyFlow=Object.entries(flowMap).sort().slice(-6).map(([k,v])=>({
-    key:k,label:MNAMES[+k.slice(5)-1]+" '"+k.slice(2,4),inc:v.inc,exp:v.exp
+    key:k,label:MNAMES[+k.slice(5)-1]+" '"+k.slice(2,4),inc:v.inc,exp:v.exp,inv:v.inv||0
   }));
 
   /* ━━ 4. THIS MONTH from ALL banking sources ━━━━━━━━━━━━━━ */
@@ -7241,18 +7259,21 @@ const Dashboard=React.memo(({data,isMobile})=>{
     const ct=catClassType(data.categories,t.cat||"Others");
     if(ct==="Transfer")return;
     const k=t.date.substr(0,7);
-    if(!allFlowMap[k])allFlowMap[k]={inc:0,exp:0};
+    if(!allFlowMap[k])allFlowMap[k]={inc:0,exp:0,inv:0};
     const d=txCatDelta(t,ct);
     if(ct==="Income")allFlowMap[k].inc+=d;
+    else if(ct==="Investment")allFlowMap[k].inv+=d;
     else allFlowMap[k].exp+=d;
   });
-  const curMD    = allFlowMap[thisMonth]||{inc:0,exp:0};
+  const curMD    = allFlowMap[thisMonth]||{inc:0,exp:0,inv:0};
   const smKeys   = Object.keys(allFlowMap).sort();
   const prevKey  = smKeys.length>=2?smKeys[smKeys.length-2]:null;
   const prevMD   = prevKey&&prevKey!==thisMonth?allFlowMap[prevKey]:null;
+  /* Savings rate = (income - pure expenses) / income  — investments are savings, not expenses */
   const savingsRate = curMD.inc>0?Math.max(0,Math.min(100,((curMD.inc-curMD.exp)/curMD.inc)*100)):0;
   const incDelta = prevMD?curMD.inc-prevMD.inc:null;
   const expDelta = prevMD?curMD.exp-prevMD.exp:null;
+  const invDelta = prevMD?curMD.inv-prevMD.inv:null;
 
   /* ━━ 5. CATEGORY SPEND this month — all banking tx ━━━━━━━ */
   const catSpend={};
@@ -7755,6 +7776,12 @@ const Dashboard=React.memo(({data,isMobile})=>{
                 React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"#ef4444",fontFamily:"'Sora',sans-serif"}},INR(curMD.exp)),
                 DP(expDelta,true))
             ),
+            curMD.inv>0&&React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
+              React.createElement("span",{style:{fontSize:11,color:"#6d28d9"}},"📈 Invested"),
+              React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
+                React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"#6d28d9",fontFamily:"'Sora',sans-serif"}},INR(curMD.inv)),
+                DP(invDelta,false))
+            ),
             React.createElement("div",{style:{height:1,background:"var(--border2)"}}),
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
               React.createElement("span",{style:{fontSize:11,fontWeight:600,color:"var(--text3)"}},"Net"),
@@ -7985,7 +8012,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
         allBankTx.filter(t=>t.type==="debit"&&t.date.substr(0,7)===monthStr).forEach(t=>{
           const main=catMainName(t.cat||"Others");
           const ct=catClassType(data.categories,t.cat||"Others");
-          if(ct==="Transfer"||ct==="Income")return;
+          if(ct==="Transfer"||ct==="Income"||ct==="Investment")return;
           m[main]=(m[main]||0)+t.amount;
         });
         return m;
@@ -8002,7 +8029,12 @@ const Dashboard=React.memo(({data,isMobile})=>{
       const prevActuals=getActuals(prevMonth);
 
       const rows=Object.entries(plans)
-        .filter(([,v])=>v>0)
+        .filter(([cat,v])=>{
+          if(!v||v<=0)return false;
+          /* Only show expense/others categories in the budget strip — not investments */
+          const ct=catClassType(data.categories,cat);
+          return ct!=="Investment"&&ct!=="Transfer"&&ct!=="Income";
+        })
         .map(([cat,plan])=>{
           const actual=curActuals[cat]||0;
           const prevActual=prevActuals[cat]||0;
@@ -8275,17 +8307,21 @@ const Dashboard=React.memo(({data,isMobile})=>{
     W("budgetalerts")&&(()=>{
       const plans=data.insightPrefs?.budgetPlans||{};
       if(!Object.keys(plans).length)return null;
-      /* Compute this-month actuals for expense categories */
+      /* Compute this-month actuals for expense categories only (not investments) */
       const actuals={};
       allBankTx.filter(t=>t.type==="debit"&&t.date.substr(0,7)===thisMonth).forEach(t=>{
         const main=catMainName(t.cat||"Others");
         const ct=catClassType(data.categories,t.cat||"Others");
-        if(ct==="Transfer"||ct==="Income")return;
+        if(ct==="Transfer"||ct==="Income"||ct==="Investment")return;
         actuals[main]=(actuals[main]||0)+t.amount;
       });
-      /* Build alert rows: categories at ≥ 80% */
+      /* Build alert rows: expense categories at ≥ 80% (investment categories shown separately as positive) */
       const alerts=Object.entries(plans)
-        .filter(([,plan])=>plan>0)
+        .filter(([cat,plan])=>{
+          if(!plan||plan<=0)return false;
+          const ct=catClassType(data.categories,cat);
+          return ct!=="Investment"&&ct!=="Transfer"&&ct!=="Income";
+        })
         .map(([cat,plan])=>{
           const actual=actuals[cat]||0;
           const pct=(actual/plan)*100;
@@ -12462,20 +12498,24 @@ const SvgLine=({data,h=140,color="var(--accent)",color2=null})=>{
 };
 
 /* ── Grouped bar chart ─────────────────────────────────────────────────── */
-const SvgGroupBar=({data,h=160,color1="#16a34a",color2="#ef4444",label1="Income",label2="Expense"})=>{
+const SvgGroupBar=({data,h=160,color1="#16a34a",color2="#ef4444",color3="#6d28d9",label1="Income",label2="Expense",label3="Invested"})=>{
   if(!data||!data.length)return null;
+  const hasV3=data.some(d=>(d.v3||0)>0);
   const W=500,pad=36;
-  const maxV=Math.max(...data.flatMap(d=>[d.v1||0,d.v2||0]),1);
+  const maxV=Math.max(...data.flatMap(d=>[d.v1||0,d.v2||0,hasV3?(d.v3||0):0]),1);
   const gW=(W-pad*2)/data.length;
-  const bW=Math.min(18,gW/2-3);
+  const bCount=hasV3?3:2;
+  const bW=Math.min(15,gW/bCount-3);
   const barH=(v)=>Math.max(2,((v/maxV)*(h-pad-8)));
   return React.createElement("svg",{width:"100%",viewBox:`0 0 ${W} ${h+20}`,style:{display:"block"}},
     data.map((d,i)=>{
       const cx=pad+i*gW+gW/2;
-      const h1=barH(d.v1||0),h2=barH(d.v2||0);
+      const h1=barH(d.v1||0),h2=barH(d.v2||0),h3=hasV3?barH(d.v3||0):0;
+      const off=hasV3?bW+2:bW/2+1;
       return React.createElement("g",{key:i},
-        React.createElement("rect",{x:cx-bW-2,y:h-h1,width:bW,height:h1,rx:2,fill:color1,opacity:.85}),
-        React.createElement("rect",{x:cx+2,y:h-h2,width:bW,height:h2,rx:2,fill:color2,opacity:.85}),
+        React.createElement("rect",{x:cx-off-bW,y:h-h1,width:bW,height:h1,rx:2,fill:color1,opacity:.85}),
+        React.createElement("rect",{x:cx-off+bW/2,y:h-h2,width:bW,height:h2,rx:2,fill:color2,opacity:.85}),
+        hasV3&&React.createElement("rect",{x:cx+off-bW/2,y:h-h3,width:bW,height:h3,rx:2,fill:color3,opacity:.85}),
         React.createElement("text",{x:cx,y:h+14,textAnchor:"middle",fill:"var(--text5)",fontSize:9},d.label)
       );
     }),
@@ -12484,7 +12524,9 @@ const SvgGroupBar=({data,h=160,color1="#16a34a",color2="#ef4444",label1="Income"
       React.createElement("rect",{x:pad,y:2,width:8,height:8,rx:1,fill:color1}),
       React.createElement("text",{x:pad+11,y:10,fill:"var(--text4)",fontSize:9},label1),
       React.createElement("rect",{x:pad+60,y:2,width:8,height:8,rx:1,fill:color2}),
-      React.createElement("text",{x:pad+72,y:10,fill:"var(--text4)",fontSize:9},label2)
+      React.createElement("text",{x:pad+72,y:10,fill:"var(--text4)",fontSize:9},label2),
+      hasV3&&React.createElement("rect",{x:pad+120,y:2,width:8,height:8,rx:1,fill:color3}),
+      hasV3&&React.createElement("text",{x:pad+132,y:10,fill:"var(--text4)",fontSize:9},label3)
     )
   );
 };
@@ -14265,20 +14307,21 @@ const RptIncVsExp=({data,from,to})=>{
     else if(ct==="Investment")monthly[k].inv+=d;
     else monthly[k].exp+=d;
   });
-  const rows=Object.entries(monthly).sort().map(([k,v])=>({label:k.slice(5)+"/"+k.slice(2,4),v1:v.inc,v2:v.exp+v.inv,key:k,sav:v.inc>0?Math.max(0,v.inc-v.exp-v.inv)/v.inc:0}));
+  const rows=Object.entries(monthly).sort().map(([k,v])=>({label:k.slice(5)+"/"+k.slice(2,4),v1:v.inc,v2:v.exp,v3:v.inv,key:k,sav:v.inc>0?Math.max(0,(v.inc-v.exp)/v.inc):0}));
   const totInc=rows.reduce((s,r)=>s+r.v1,0);
   const totExp=rows.reduce((s,r)=>s+r.v2,0);
+  const totInv=rows.reduce((s,r)=>s+r.v3,0);
   const avgSav=rows.length?rows.reduce((s,r)=>s+r.sav,0)/rows.length:0;
   const months=Object.keys(monthly).sort();
-  /* heatmap: 3 metric rows */
+  /* heatmap: 4 metric rows — investments shown positively in purple */
   const hmRows=[
     {label:"💰 Income",col:"#16a34a",data:Object.fromEntries(months.map(m=>[m,monthly[m]?.inc||0]))},
     {label:"💸 Expenses",col:"#ef4444",data:Object.fromEntries(months.map(m=>[m,monthly[m]?.exp||0]))},
     {label:"📈 Invested",col:"#6d28d9",data:Object.fromEntries(months.map(m=>[m,monthly[m]?.inv||0]))},
-    {label:"≈ Net",col:"#0e7490",data:Object.fromEntries(months.map(m=>[m,Math.max(0,(monthly[m]?.inc||0)-(monthly[m]?.exp||0)-(monthly[m]?.inv||0))]))},
+    {label:"≈ Net",col:"#0e7490",data:Object.fromEntries(months.map(m=>[m,Math.max(0,(monthly[m]?.inc||0)-(monthly[m]?.exp||0))]))},
   ].filter(r=>Object.values(r.data).some(v=>v>0));
   return React.createElement("div",{className:"fu"},
-    React.createElement(RptHeader,{title:"Income vs Expenses",desc:"Monthly side-by-side comparison with savings rate",icon:"⚖"}),
+    React.createElement(RptHeader,{title:"Income vs Expenses",desc:"Monthly comparison — investments are savings, not expenses",icon:"⚖"}),
     React.createElement(RptCtrlBar,null,
       React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Account:"),
       React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
@@ -14286,20 +14329,22 @@ const RptIncVsExp=({data,from,to})=>{
     ),
     React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
       React.createElement(StatCard,{label:"Total Income",val:INR(totInc),col:"#16a34a",icon:"💰"}),
-      React.createElement(StatCard,{label:"Total Outflow",val:INR(totExp),col:"#ef4444",icon:"💸"}),
+      React.createElement(StatCard,{label:"Total Expenses",val:INR(totExp),col:"#ef4444",icon:"💸"}),
+      React.createElement(StatCard,{label:"Invested",val:INR(totInv),col:"#6d28d9",icon:"📈"}),
       React.createElement(StatCard,{label:"Net Saved",val:INR(totInc-totExp),col:(totInc-totExp)>=0?"#16a34a":"#ef4444",icon:"≈"}),
-      React.createElement(StatCard,{label:"Avg Savings Rate",val:(avgSav*100).toFixed(1)+"%",col:"#0e7490",icon:"📊"})
+      React.createElement(StatCard,{label:"Avg Savings Rate",val:(avgSav*100).toFixed(1)+"%",sub:"excl. investments",col:"#0e7490",icon:"📊"})
     ),
     view==="snapshot"&&React.createElement(Card,{sx:{marginBottom:14}},
       rows.length<2?React.createElement(Empty,{icon:"⚖",text:"Need at least 2 months of data"}):React.createElement(SvgGroupBar,{data:rows,h:160})
     ),
     view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},"Month","Income","Outflow","Net","Savings %"),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr 1fr",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},"Month","Income","Expenses","Invested","Net","Savings %"),
       rows.length===0&&React.createElement(Empty,{icon:"⚖",text:"No data in selected period"}),
-      rows.map(r=>React.createElement("div",{key:r.key,className:"tr",style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",padding:"10px 14px",borderBottom:"1px solid var(--border2)"}},
+      rows.map(r=>React.createElement("div",{key:r.key,className:"tr",style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr 1fr",padding:"10px 14px",borderBottom:"1px solid var(--border2)"}},
         React.createElement("div",{style:{fontSize:12,color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},r.key),
         React.createElement("div",{style:{fontSize:12,color:"#16a34a",fontWeight:600}},INR(r.v1)),
         React.createElement("div",{style:{fontSize:12,color:"#ef4444",fontWeight:600}},INR(r.v2)),
+        React.createElement("div",{style:{fontSize:12,color:"#6d28d9",fontWeight:600}},r.v3>0?INR(r.v3):"--"),
         React.createElement("div",{style:{fontSize:12,fontWeight:700,color:(r.v1-r.v2)>=0?"#16a34a":"#ef4444"}},INR(r.v1-r.v2)),
         React.createElement("div",{style:{fontSize:12,color:"#0e7490",fontWeight:600}},(r.sav*100).toFixed(1)+"%")
       ))
@@ -14319,15 +14364,16 @@ const RptForecast=({data})=>{
     const k=t.date.substr(0,7);
     const ct=catClassType(data.categories,t.cat||"Others");
     if(!monthly[k])monthly[k]={inc:0,exp:0,inv:0};
-    if(ct==="Income")monthly[k].inc+=t.amount;
-    else if(ct==="Investment")monthly[k].inv+=t.amount;
-    else if(ct==="Expense"||t.type==="debit")monthly[k].exp+=t.amount;
+    const d=txCatDelta(t,ct);
+    if(ct==="Income")monthly[k].inc+=d;
+    else if(ct==="Investment")monthly[k].inv+=d;
+    else monthly[k].exp+=d;
   });
   const hist=Object.entries(monthly).sort().slice(-6);
   const avgInc=hist.length?hist.reduce((s,[,v])=>s+v.inc,0)/hist.length:0;
   const avgExp=hist.length?hist.reduce((s,[,v])=>s+v.exp,0)/hist.length:0;
   const avgInv=hist.length?hist.reduce((s,[,v])=>s+v.inv,0)/hist.length:0;
-  const avgNet=avgInc-avgExp-avgInv;
+  const avgNet=avgInc-avgExp-avgInv; /* investments reduce bank balance even though they are savings */
   const curBal=data.banks.reduce((s,b)=>s+b.balance,0)+data.cash.balance;
   const forecast=Array.from({length:6},(_,i)=>{
     const d=new Date();d.setMonth(d.getMonth()+i+1);
@@ -14335,7 +14381,7 @@ const RptForecast=({data})=>{
     return{label:lbl,value:curBal+(i+1)*avgNet,value2:curBal+(i+1)*(avgNet*0.8)};
   });
   return React.createElement("div",{className:"fu"},
-    React.createElement(RptHeader,{title:"Forecast",desc:"6-month projected balance based on last 6 months average cash flow",icon:"🔮"}),
+    React.createElement(RptHeader,{title:"Forecast",desc:"6-month projected bank balance — investments reduce balance but grow your portfolio",icon:"🔮"}),
     React.createElement(RptCtrlBar,null,
       React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontSize:12}},"Based on last 6 months average"),
       React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{views:VIEWS_2,value:view,onChange:setView}))
@@ -14343,8 +14389,8 @@ const RptForecast=({data})=>{
     React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
       React.createElement(StatCard,{label:"Avg Monthly Income",val:INR(avgInc),col:"#16a34a",icon:"↑"}),
       React.createElement(StatCard,{label:"Avg Monthly Expense",val:INR(avgExp),col:"#ef4444",icon:"↓"}),
-      React.createElement(StatCard,{label:"Avg Investment",val:INR(avgInv),col:"#6d28d9",icon:"📈"}),
-      React.createElement(StatCard,{label:"Avg Net / Month",val:INR(avgNet),col:avgNet>=0?"#16a34a":"#ef4444",icon:"≈"})
+      React.createElement(StatCard,{label:"Avg Invested",val:INR(avgInv),col:"#6d28d9",icon:"📈"}),
+      React.createElement(StatCard,{label:"Avg Net Balance Δ",val:INR(avgNet),sub:"after invest",col:avgNet>=0?"#16a34a":"#ef4444",icon:"≈"})
     ),
     view==="snapshot"&&React.createElement(Card,{sx:{marginBottom:14}},
       React.createElement("div",{style:{fontSize:12,color:"var(--text4)",marginBottom:10}},"Optimistic (solid) vs conservative 80% scenario (dashed)"),
