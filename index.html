@@ -2034,10 +2034,19 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.32.13";
+const APP_VERSION="3.32.14";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.32.14",date:"2026-03-20",title:"Bug Audit Round 2 — 7 functional & display bugs fixed",changes:[
+    "Bug 1 (Functional) — Reconciliation report 'Flagged' stat included Void but snapshot list excluded Void: The flagged count (bySt.Duplicate + bySt['Follow Up'] + bySt.Void) was displayed as one stat card, but the snapshot list filtered out Void transactions with status!=='Void', causing the count to exceed the visible rows. Fixed: flagged stat now counts only Duplicate + Follow Up. Void gets its own separate stat card. The snapshot list now shows ALL non-Reconciled transactions including Void so every counted row is visible.",
+    "Bug 2 (Functional) — RptNetWorth back-projection included Void, Duplicate, and Unreconciled transactions: The Net Worth Trend allTx array was built from raw account data with no status filter. Void and Duplicate transactions were treated as real settled flows, distorting the month-by-month net-worth estimation. Fixed: allTx now filters .status==='Reconciled' and also applies isAnyTransfer() to exclude inter-account transfers from the projection.",
+    "Bug 3 (Display) — Reconciliation heatmap showed total transaction count not unreconciled density: The heatmap accumulated every transaction per account per month regardless of status — making it identical to a raw transaction volume chart. Fixed: heatmap now only counts non-Reconciled transactions per account per month. Hint text updated to describe what is actually shown.",
+    "Bug 4 (Functional) — TxModal accepted zero-amount transactions: The save guard was if(!f.amount) which only blocked empty string/null. A user typing '0' or '0.00' passed the check and created a zero-rupee transaction. Fixed: guard is now if(!f.amount || +f.amount <= 0).",
+    "Bug 5 (Display) — Category default payee stuck when switching categories: In TxModal CatSelect onChange, payee was updated with p.payee || dp — so once a default payee was auto-filled from the first category, switching to a second category kept the first category's default. Fixed: onChange now tracks prevDp (previous category default). Payee updates to new default only when current payee is blank OR exactly equals prevDp, never overwriting a user-typed value.",
+    "Bug 6 (Data) — RptNetWorth excluded Real Estate from curNW and asset breakdown: curNW formula had no reVal term. The Net Worth Trend report showed a lower net worth than Dashboard/Summary/Insights for users with real estate. Fixed: reVal added to curNW and to the assets[] breakdown with colour #f97316 matching the Dashboard donut.",
+    "Bug 7 (Data) — RptPayees included Transfer-tagged transactions inflating payee totals: allTx was built without isAnyTransfer(). ATM withdrawals, card payments, and inter-bank transfers appeared under payee names and inflated debit/credit totals. Fixed: added .filter(t=>!isAnyTransfer(t,data.categories)) matching all other reports.",
+  ]},
   {version:"3.32.13",date:"2026-03-20",title:"Bug Audit — 10 bugs fixed across reducer, state, reports, and UI",changes:[
     "Bug 1 (Functional) — DEL_CARD now cleans up orphaned Scheduled transactions: Deleting a credit card previously left any scheduled entries (EMI payments, subscriptions) whose accId/srcId/tgtId pointed at the deleted card still in the scheduled list. On next execution they would silently fail to find the account. DEL_CARD now filters scheduled[] identically to DEL_BANK.",
     "Bug 2 (Functional) — Unified Ledger re-jump applies new filter even when already on the tab: filterCats, filterPayees, dateFrom, dateTo were seeded via useState lazy initialisers (run only once at mount). If the user was already on the Unified Ledger tab and clicked a JumpBtn in Reports for a different category or date, setTab('unified_ledger') would not unmount the component, so the filters stayed stale. Replaced the empty-dep useEffect with a useEffect([initialFilter]) that calls setFilterCats/setFilterPayees/setDateFrom/setDateTo/setSearch imperatively whenever a new initialFilter reference arrives.",
@@ -6677,7 +6686,7 @@ const TxModal=({onAdd,onClose,categories,payees,txTypes,allAccounts,currentAccou
   const isTransfer=f.txType==="Transfer";
 
   const save=(andNew)=>{
-    if(!f.amount)return;
+    if(!f.amount||+f.amount<=0)return;
     if(f.isScheduled){
       if(isTransfer){if(!f.srcId||!f.tgtId||f.srcId===f.tgtId)return;}
       const ledger=isTransfer?"debit":typeToLedger(f.txType);
@@ -6719,7 +6728,16 @@ const TxModal=({onAdd,onClose,categories,payees,txTypes,allAccounts,currentAccou
   /* Category combobox — searchable, colour-dotted */
   const CatSelect=()=>React.createElement(CatCombobox,{
     value:f.cat,
-    onChange:val=>{const dp=getDefaultPayee(categories,val);setF(p=>({...p,cat:val,payee:p.payee||(dp||"")}));},
+    onChange:val=>{
+      const dp=getDefaultPayee(categories,val);
+      const prevDp=getDefaultPayee(categories,f.cat);
+      setF(p=>({...p,cat:val,
+        /* Update payee to new category default only when:
+           - payee is blank, OR
+           - payee is exactly the previous category's default (user hasn't customised it) */
+        payee:(p.payee===""||p.payee===prevDp)?(dp||""):p.payee
+      }));
+    },
     categories,
     placeholder:"-- Uncategorised --"
   });
@@ -14445,7 +14463,8 @@ const RptMyUsage=({data,from,to})=>{
 /* ══ 10. PAYEES ══════════════════════════════════════════════════════════════ */
 const RptPayees=({data,from,to,onJumpToLedger})=>{
   const[view,setView]=useState("snapshot");
-  const allTx=[...data.banks.flatMap(b=>b.transactions),...data.cards.flatMap(c=>c.transactions),...data.cash.transactions].filter(t=>t.date>=from&&t.date<=to);
+  const allTx=[...data.banks.flatMap(b=>b.transactions),...data.cards.flatMap(c=>c.transactions),...data.cash.transactions]
+    .filter(t=>t.date>=from&&t.date<=to&&!isAnyTransfer(t,data.categories));
   const byPayee={};
   allTx.forEach(t=>{
     const k=t.payee||t.desc||"Unknown";
@@ -14705,12 +14724,13 @@ const RptReconciliation=({data,from,to})=>{
   allTx.forEach(t=>{const st=t.status||"Unreconciled";if(bySt[st]!==undefined){bySt[st]++;byStAmt[st]+=t.amount;}});
   const total=allTx.length;
   const recPct=total>0?((bySt.Reconciled/total)*100).toFixed(1):0;
-  const flagged=bySt.Duplicate+bySt["Follow Up"]+bySt.Void;
+  const flagged=bySt.Duplicate+bySt["Follow Up"]; /* Void shown separately */
   /* heatmap: account × month (reconciled count) */
   const accNames=[...new Set(allTx.map(t=>t.accName))];
   const months=Object.keys(Object.fromEntries(allTx.map(t=>[t.date.substr(0,7),1]))).sort();
   const accGrid={};
   allTx.forEach(t=>{
+    if(t.status==="Reconciled")return; /* heatmap shows unreconciled density */
     const m=t.date.substr(0,7);
     if(!accGrid[t.accName])accGrid[t.accName]={};
     accGrid[t.accName][m]=(accGrid[t.accName][m]||0)+1;
@@ -14726,7 +14746,8 @@ const RptReconciliation=({data,from,to})=>{
       React.createElement(StatCard,{label:"Total Transactions",val:total,col:"var(--text3)",icon:"📋"}),
       React.createElement(StatCard,{label:"Reconciled",val:bySt.Reconciled+" ("+recPct+"%)",col:"#16a34a",icon:"✓"}),
       React.createElement(StatCard,{label:"Unreconciled",val:bySt.Unreconciled,col:"#b45309",icon:"○"}),
-      React.createElement(StatCard,{label:"Flagged",val:flagged,col:"#ef4444",icon:"⚠"})
+      React.createElement(StatCard,{label:"Flagged",val:flagged,sub:"Duplicate + Follow Up",col:"#ef4444",icon:"⚠"}),
+      bySt.Void>0&&React.createElement(StatCard,{label:"Void",val:bySt.Void,col:"#6a8898",icon:"∅"})
     ),
     view==="snapshot"&&React.createElement("div",null,
       React.createElement(Card,{sx:{marginBottom:14}},
@@ -14743,9 +14764,9 @@ const RptReconciliation=({data,from,to})=>{
         )
       ),
       React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-        React.createElement("div",{style:{padding:"10px 14px",borderBottom:"1px solid var(--border)",background:"var(--bg4)",fontSize:12,fontWeight:700,color:"var(--text3)"}},"Unreconciled & Flagged Transactions"),
-        allTx.filter(t=>t.status!=="Reconciled"&&t.status!=="Void").length===0&&React.createElement(Empty,{icon:"✅",text:"All transactions are reconciled!"}),
-        allTx.filter(t=>t.status!=="Reconciled"&&t.status!=="Void").sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30).map(t=>{
+        React.createElement("div",{style:{padding:"10px 14px",borderBottom:"1px solid var(--border)",background:"var(--bg4)",fontSize:12,fontWeight:700,color:"var(--text3)"}},"Unreconciled, Flagged & Void Transactions"),
+        allTx.filter(t=>t.status!=="Reconciled").length===0&&React.createElement(Empty,{icon:"✅",text:"All transactions are reconciled!"}),
+        allTx.filter(t=>t.status!=="Reconciled").sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30).map(t=>{
           const st=t.status||"Unreconciled";
           return React.createElement("div",{key:t.id,className:"tr",style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 14px",borderBottom:"1px solid var(--border2)"}},
             React.createElement("div",null,
@@ -14776,7 +14797,7 @@ const RptReconciliation=({data,from,to})=>{
     ),
     view==="heatmap"&&React.createElement("div",null,
       React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:10,padding:"6px 10px",background:"var(--bg4)",border:"1px solid var(--border2)",borderRadius:8}},
-        "🔥 Transaction count per account per month (all statuses). Darker = more activity."
+        "🔥 Unreconciled transaction count per account per month. Darker = more unreconciled activity. Zero = fully reconciled for that month."
       ),
       React.createElement(HeatGrid,{rows:hmRows,months,rowLabel:"Account"})
     )
@@ -14791,10 +14812,12 @@ const RptNetWorth=({data})=>{
   const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
   const mfVal=data.mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
   const fdVal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
+  const reVal=(data.re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
   const cDebt=data.cards.reduce((s,c)=>s+c.outstanding,0);
   const lDebt=data.loans.reduce((s,l)=>s+l.outstanding,0);
-  const curNW=bankBal+cashBal+shVal+mfVal+fdVal-cDebt-lDebt;
-  const allTx=[...data.banks.flatMap(b=>b.transactions),...data.cards.flatMap(c=>c.transactions),...data.cash.transactions];
+  const curNW=bankBal+cashBal+shVal+mfVal+fdVal+reVal-cDebt-lDebt;
+  const allTx=[...data.banks.flatMap(b=>b.transactions),...data.cards.flatMap(c=>c.transactions),...data.cash.transactions]
+    .filter(t=>t.status==="Reconciled"&&!isAnyTransfer(t,data.categories));
   const byMonth={};
   allTx.forEach(t=>{
     const m=t.date.substr(0,7);
@@ -14811,7 +14834,7 @@ const RptNetWorth=({data})=>{
     running-=byMonth[m];
     return{label,value:val};
   }).reverse();
-  const assets=[{name:"Bank Accounts",val:bankBal,col:"#0e7490"},{name:"Cash",val:cashBal,col:"#b45309"},{name:"Mutual Funds",val:mfVal,col:"#6d28d9"},{name:"Shares",val:shVal,col:"#16a34a"},{name:"Fixed Deposits",val:fdVal,col:"#c2410c"}].filter(a=>a.val>0);
+  const assets=[{name:"Bank Accounts",val:bankBal,col:"#0e7490"},{name:"Cash",val:cashBal,col:"#b45309"},{name:"Mutual Funds",val:mfVal,col:"#6d28d9"},{name:"Shares",val:shVal,col:"#16a34a"},{name:"Fixed Deposits",val:fdVal,col:"#c2410c"},{name:"Real Estate",val:reVal,col:"#f97316"}].filter(a=>a.val>0);
   const liabilities=[{name:"Credit Card Debt",val:cDebt,col:"#ef4444"},{name:"Loan Balances",val:lDebt,col:"#f97316"}].filter(l=>l.val>0);
   const totalAssets=assets.reduce((s,a)=>s+a.val,0);
   const totalLiab=liabilities.reduce((s,l)=>s+l.val,0);
