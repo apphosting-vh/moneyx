@@ -2036,10 +2036,25 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.32.18";
+const APP_VERSION="3.32.20";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.32.20",date:"2026-03-20",title:"Fix — yearlyBudgetPlans fully covered by all backup, restore, FSA, and cloud-backup modules",changes:[
+    "fsaWriteFile summary: added hasYearlyBudget flag (true when any yearlyBudgetPlans value > 0) so the FSA file is auditable.",
+    "fsaReadFile: insightPrefs is now deep-merged with EMPTY_STATE().insightPrefs on load — old FSA files that predate yearlyBudgetPlans restore cleanly with {} as the fallback instead of undefined.",
+    "Manual Restore (Choose Backup File) RESTORE_ALL dispatch: insightPrefs is deep-merged ({...EMPTY_STATE().insightPrefs,...(d.insightPrefs||{})}) so restoring a pre-v3.32.18 backup never wipes yearlyBudgetPlans to undefined.",
+    "Manual Backup Download (plain JSON) summary: added hasYearlyBudget flag.",
+    "Encrypted Backup summary: added hasYearlyBudget flag.",
+    "Cloud (Google Drive) Backup summary: added hasYearlyBudget flag.",
+    "All six data:{...state} / data:{...d} envelopes already carry insightPrefs.yearlyBudgetPlans via the spread — no data-block changes needed, only the summary flags and the restore deep-merge are new.",
+  ]},
+  {version:"3.32.19",date:"2026-03-20",title:"Cleanup — Remove Budget Waterfall card from Budget tab; keep only Planned vs Actual",changes:[
+    "Removed: the KPI row (Monthly Income, Total Expenses, Net Savings, Savings Rate) and the Budget Waterfall bar chart card that previously appeared at the top of the Budget tab.",
+    "The waterfallData useMemo is retained (still used by the Waterfall label on the tab button) but no longer rendered in the tab body.",
+    "The Planned vs Actual section — with its Monthly/Yearly toggle, 12-month cards, 3-year rollup, and direct yearly budget view — is now the sole content of the Budget tab.",
+    "The outer wrapper div no longer needs a top border or top margin since there is no waterfall section above it.",
+  ]},
   {version:"3.32.18",date:"2026-03-20",title:"Feature — Separate Yearly Budget Planning & dual Monthly/Yearly Budget views in Insights",changes:[
     "New insightPrefs field: yearlyBudgetPlans{} — a per-category yearly budget amount stored independently from the monthly budgetPlans. This lets users plan one-off or infrequent annual expenses (insurance premiums, travel, festivals, school fees, etc.) separately from month-on-month budgets.",
     "Settings → Insights Config: new '📅 Yearly Budget Planning' card section below the existing Monthly Budget Planning card. Per-category amount inputs, colour-coded dot, running total of yearly budget and a derived monthly average. Only expense + investment categories are shown.",
@@ -16859,7 +16874,7 @@ const CloudBackupPanel=({state})=>{
       if(!folderId){say("Could not access Drive folder. Token may have expired — please reconnect.",false);setBusy(false);return;}
       const payload={
         version:8,exportedAt:new Date().toISOString(),cloudBackup:true,
-        summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+b.transactions.length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+c.transactions.length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,hasTaxData:!!(state.taxData)},
+        summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+b.transactions.length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+c.transactions.length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,hasTaxData:!!(state.taxData),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0)},
         data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null}
       };
       const filename="money-manager-backup-"+new Date().toISOString().split("T")[0]+".json";
@@ -18094,7 +18109,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
                 if(pw!==pw2){alert("Passwords do not match.");return;}
                 try{
                   const payload={version:8,exportedAt:new Date().toISOString(),theme:"ocean",
-                    summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+b.transactions.length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+c.transactions.length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,hasTaxData:!!(state.taxData)},
+                    summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+b.transactions.length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+c.transactions.length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,hasTaxData:!!(state.taxData),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0)},
                     data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null}
                   };
                   const enc=await encryptBackup(payload,pw);
@@ -18132,6 +18147,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
                     eodDays:Object.keys(state.eodPrices||{}).length,
                     eodNavDays:Object.keys(state.eodNavs||{}).length,
                     hasTaxData:!!(state.taxData),
+                    hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),
                   },
                   data:{
                     ...state,
@@ -18204,6 +18220,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
                         eodNavs:d.eodNavs||{},
                         historyCache:d.historyCache||{},
                         taxData:d.taxData||null,
+                        insightPrefs:{...EMPTY_STATE().insightPrefs,...(d.insightPrefs||{})},
                       }});
                       if(payload.theme){saveTheme(payload.theme);}
                       const s=payload.summary;
@@ -19666,6 +19683,7 @@ const fsaWriteFile=async(handle,data)=>{
         notes:(data.notes||[]).length,
         nwSnapshots:Object.keys(data.nwSnapshots||{}).length,
         hasTaxData:!!(data.taxData),
+        hasYearlyBudget:Object.values((data.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),
       },
       data:{
         ...data,
@@ -19689,8 +19707,8 @@ const fsaReadFile=async(handle)=>{
     const parsed=JSON.parse(text);
     /* Support both the new envelope format { data:{…} } and the legacy
        raw-state format written by v3.17.0–3.17.2 */
-    if(parsed&&parsed.data&&parsed.data.banks)return{...parsed.data,nwSnapshots:parsed.data.nwSnapshots||{},historyCache:parsed.data.historyCache||{},taxData:parsed.data.taxData||null};
-    if(parsed&&parsed.banks)return{...parsed,nwSnapshots:parsed.nwSnapshots||{},historyCache:parsed.historyCache||{}}; // legacy raw state
+    if(parsed&&parsed.data&&parsed.data.banks)return{...parsed.data,nwSnapshots:parsed.data.nwSnapshots||{},historyCache:parsed.data.historyCache||{},taxData:parsed.data.taxData||null,insightPrefs:{...EMPTY_STATE().insightPrefs,...(parsed.data.insightPrefs||{})}};
+    if(parsed&&parsed.banks)return{...parsed,nwSnapshots:parsed.nwSnapshots||{},historyCache:parsed.historyCache||{},insightPrefs:{...EMPTY_STATE().insightPrefs,...(parsed.insightPrefs||{})}}; // legacy raw state
     return null;
   }catch(e){console.warn("[FSA] Read failed:",e);return null;}
 };
@@ -22037,52 +22055,9 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
   };
 
   const WaterfallTab=React.createElement("div",{style:{paddingBottom:20}},
-    /* ── Current-month waterfall (existing) ── */
-    waterfallData.income===0
-      ?React.createElement(Empty,{icon:"💰",text:"No income recorded this month. Add credit transactions to see your budget waterfall."})
-      :React.createElement(React.Fragment,null,
-        React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
-          React.createElement(KpiCard,{label:"Monthly Income",value:INR(Math.round(waterfallData.income)),col:"#16a34a",icon:"💰"}),
-          React.createElement(KpiCard,{label:"Total Expenses",value:INR(Math.round(waterfallData.total)),col:"#ef4444",icon:"💸"}),
-          React.createElement(KpiCard,{label:"Net Savings",value:INR(Math.round(waterfallData.savings)),col:waterfallData.savings>=0?"#16a34a":"#ef4444",icon:"🏦"}),
-          React.createElement(KpiCard,{label:"Savings Rate",value:Math.abs(waterfallData.savingsRate).toFixed(1)+"%",sub:waterfallData.savingsRate<0?"Over budget":waterfallData.savingsRate<10?"Below 20% target":waterfallData.savingsRate>=20?"Above 20% ✓":"Getting there",col:waterfallData.savingsRate>=20?"#16a34a":waterfallData.savingsRate>=10?"#b45309":"#ef4444",icon:"📊"})
-        ),
-        React.createElement(Card2,null,
-          React.createElement(SHead,{t:"Budget Waterfall — "+thisMonthName,s:"How your income flows through fixed → variable → discretionary spend"}),
-          (()=>{
-            const rows=[
-              {label:"Income",amount:waterfallData.income,color:"#16a34a",icon:"💰",sub:"total received"},
-              {label:"Fixed Costs",amount:waterfallData.fixed,color:"#0e7490",icon:"🏠",sub:"Housing, Insurance, EMIs"},
-              {label:"Variable",amount:waterfallData.variable,color:"#b45309",icon:"🛒",sub:"Food, Transport, Utilities"},
-              {label:"Discretionary",amount:waterfallData.disc,color:"#c2410c",icon:"🛍",sub:"Shopping, Entertainment, Travel"},
-              {label:"Other",amount:waterfallData.other,color:"#6d28d9",icon:"📦",sub:"Uncategorised expenses"},
-              {label:"Savings",amount:Math.max(waterfallData.savings,0),color:"#16a34a",icon:"🏦",sub:"What's left over"},
-            ];
-            const maxW=waterfallData.income||1;
-            return React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
-              rows.map((row,i)=>row.amount>0||i===0?React.createElement("div",{key:row.label},
-                React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4}},
-                  React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7,fontSize:13,color:"var(--text3)",fontWeight:500}},
-                    row.icon," ",row.label," ",React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:400}},row.sub)
-                  ),
-                  React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:14,color:row.color}},
-                    INR(Math.round(row.amount)),
-                    i>0&&row.amount>0&&React.createElement("span",{style:{fontSize:11,fontWeight:400,color:"var(--text5)",marginLeft:6}},"("+((row.amount/maxW)*100).toFixed(0)+"%)")
-                  )
-                ),
-                React.createElement("div",{style:{height:i===0?14:9,background:"var(--bg5)",borderRadius:4,overflow:"hidden"}},
-                  React.createElement("div",{style:{height:"100%",width:Math.min(row.amount/maxW*100,100)+"%",background:row.color,borderRadius:4,opacity:.85}})
-                )
-              ):null)
-            );
-          })()
-        )
-      ),
-
-    /* ── Planned vs Actual section ── */
-    React.createElement("div",{style:{marginTop:22,paddingTop:18,borderTop:"1.5px solid var(--border)"}},
-      React.createElement(SHead,{t:"📊 Planned vs Actual",s:"Set budgets in Settings → Insights Config → Budget Planning"}),
-      !(budgetTrackData.hasBudgets||budgetTrackData.hasYearlyBudgets)
+    /* ── Planned vs Actual ── */
+    React.createElement(SHead,{t:"📊 Planned vs Actual",s:"Set budgets in Settings → Insights Config → Budget Planning"}),
+    !(budgetTrackData.hasBudgets||budgetTrackData.hasYearlyBudgets)
         ?React.createElement(Card2,{sx:{textAlign:"center",padding:"28px 20px"}},
             React.createElement("div",{style:{fontSize:32,marginBottom:10}},"📋"),
             React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text3)",marginBottom:6}},"No budget plans configured"),
@@ -22164,7 +22139,6 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
                   )
             )
           )
-    )
   );
 
   /* ══ 9. SUBSCRIPTIONS TAB (original) ══ */
