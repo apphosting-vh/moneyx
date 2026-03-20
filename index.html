@@ -2034,10 +2034,32 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.32.8";
+const APP_VERSION="3.32.11";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.32.11",date:"2026-03-20",title:"Fix — Remove all description-pattern transfer detection; category tag is sole authority",changes:[
+    "Removed TRANSFER_DESC_PATTERNS array and isLikelyTransfer() function entirely. These heuristics matched keywords like NEFT, RTGS, IMPS, ATM, 'fund transfer', 'card bill' etc. in transaction descriptions and automatically excluded matching transactions from all reports — even when the user had explicitly categorised them as Expense, Income, or any other non-Transfer type.",
+    "The only criterion for treating a transaction as a transfer is now the category's classType === 'Transfer', checked by isTransferTx(). If the user tags a transaction as a Transfer category it is excluded from reports; if they tag it as anything else it is always included, regardless of what the description says.",
+    "isAnyTransfer() retained as a thin passthrough alias for isTransferTx() so all 7 call-sites (collectTx, Dashboard, Insights, Reports) require no changes.",
+    "Impact: Transactions with descriptions containing banking keywords (NEFT salary credits, RTGS vendor payments, IMPS receipts, ATM-fee debits, card-bill partial payments categorised as Expense, etc.) that the user has tagged as non-Transfer categories will now appear correctly in all Reports — Monthly, Quarterly, Yearly, Summary, Heatmap, Where Money Goes, Classification Breakdown, and Insights.",
+  ]},
+  {version:"3.32.10",date:"2026-03-20",title:"Critical Bug Fix — UPI transactions incorrectly excluded from all Reports",changes:[
+    "Root cause: TRANSFER_DESC_PATTERNS contained the regex /\\bupi\\b/i which matched any transaction whose description or payee included the word 'UPI' — i.e. virtually every merchant payment made in India (UPI-CC-..., UPI/DR/..., UPI/VYAVASAYA/... etc.). Because isLikelyTransfer() returned true for all such transactions, isAnyTransfer() marked them as inter-account transfers and collectTx() silently dropped them from every report. This caused drastically understated category totals across all Reports sections — Monthly, Quarterly, Yearly, Summary, Where Money Goes, Classification Breakdown, Heatmaps, and Snapshot.",
+    "Fix: Removed /\\bupi\\b/i from TRANSFER_DESC_PATTERNS. UPI (Unified Payments Interface) is a payment rail used for all types of merchant and person-to-person payments, not an indicator of an inter-account transfer. The correct signal for a transfer is the category field (classType='Transfer') which is already checked by isTransferTx(). Retained NEFT, RTGS, and IMPS patterns which are genuinely used for inter-bank fund transfers.",
+    "Impact: All report category totals (Snapshot, Detailed cards, Heatmaps) across Monthly, Quarterly, and Yearly views now correctly include UPI-tagged transactions. Food, Shopping, Transport, and other expense categories will reflect their true totals.",
+  ]},
+  {version:"3.32.9",date:"2026-03-20",title:"Bug Fix — Correct category totals in all Reports (Monthly, Quarterly, Yearly)",changes:[
+    "Root cause: Six report aggregation loops were accumulating t.amount (always positive, raw transaction amount) instead of txCatDelta(t, ct) (the signed, direction-aware helper). txCatDelta returns +amount for the natural direction of each classification (debits for Expense/Investment/Others, credits for Income) and −amount for reversals, so refunds correctly reduce expense totals and income reversals reduce income totals. Using t.amount inflated every category that had any refund or reversal, and misattributed credit-type expense reversals as income.",
+    "Fix — RptCashFlow (Cash Flow report): monthly inc/exp/inv/oth accumulation and the per-classification heatmap clsData loop both switched from t.amount to txCatDelta(t,ct). Also removed the legacy fallback branch (else if t.type==='credit' → inc) that double-counted unrecognised credits as income.",
+    "Fix — RptClassification (Classification Breakdown): byClass[ct].total, byClass[ct].cats[main], byClassSub, and grandTotal all switched to txCatDelta. grandTotal now sums signed deltas rather than raw amounts.",
+    "Fix — RptCatYearly (Categories — Yearly): two separate aggregation passes both fixed — periodAgg (inc/exp/inv/oth per FY) and periodCatGrid/periodSubGrid (per-category/sub-category per FY) — both switched to txCatDelta.",
+    "Fix — RptCatSummary (Categories — Summary): byClass, byClassSub, clsTotals, and grandTotal all switched to txCatDelta.",
+    "Fix — RptMoneyGoes (Where the Money Goes): byCat and bySubCat switched to txCatDelta. The expense-only pre-filter was already correct; the accumulation now uses the signed delta so debit-reversal credits reduce the displayed total rather than inflating it.",
+    "Fix — RptMoneyComes (Where the Money Comes From): byCat and bySubCat switched to txCatDelta. The income-only pre-filter was already correct; accumulation now uses txCatDelta('Income') so debit reversals of income (e.g. a returned salary payment) correctly subtract from the displayed total.",
+    "Fix — RptIncVsExp (Income vs Expenses): monthly inc/exp/inv accumulation switched to txCatDelta and the duplicated else-if fallback branches removed — Others-classified transactions now correctly land in exp rather than being silently dropped.",
+    "Not changed: RptForecast monthly totals (raw balance projection — unsigned amounts are correct), RptMyUsage account debit/credit split and weekday spend (intentionally unsigned), RptPayees debit/credit split (intentionally unsigned), RptCatMonthly and RptCatQuarterly (were already using txCatDelta correctly).",
+  ]},
   {version:"3.32.8",date:"2026-03-20",title:"Bug Fix — Heatmap FY grouping, MF day-change, budget rollover, tax form sync",changes:[
     "Fix #1 — Reports → Categories → Yearly → Heatmap now groups by Indian Financial Year (Apr–Mar) instead of calendar year: Replaced buildHeatRowsY (which keyed transactions by YYYY from t.date.substr(0,4)) with buildHeatRowsFY, which applies the same toFY() Apr-Mar logic used by the rest of RptCatYearly. Column keys now match the FY period keys so transactions dated Jan–Mar are attributed to the previous FY (e.g. Jan 2026 → FY 2025). Column labels continue to render as 'FY 2024-25' via getIndianFYLabel(). Hint text updated to explicitly say 'Apr–Mar'.",
     "Fix #2 — InvestDashboard MF day-change badge now compares D-1 vs D-2 (two completed trading days) instead of live value vs D-1: MF NAVs are published after market close, so comparing the live mfVal (which may not have moved yet today) against yesterday's NAV produced a misleading 'change' before it had occurred. The stat card now looks up _d1 (most recent EOD snapshot before today) and _d2 (the one before that) from eodNavs and computes the change between those two completed-day values — matching the logic already correctly used in the MF tab hero card. Sub-label updated from '% today' to '% prev day chg' to accurately describe the comparison.",
@@ -3587,30 +3609,28 @@ const catClassType=(cats,catValue)=>{const main=catMainName(catValue);const foun
    Used everywhere to exclude inter-account transfers from reports/dashboards. */
 const isTransferTx=(tx,cats)=>catClassType(cats,tx.cat||"")==="Transfer";
 
+/* ── txCatDelta — signed contribution of a transaction to its category total ──
+   Income categories : credits add (+), debits subtract (−) — net income received.
+   All other types   : debits add (+), credits subtract (−) — net money spent.
+   This ensures refunds reduce expense totals and income reversals reduce income
+   totals, rather than inflating both sides of the ledger. ── */
+const txCatDelta=(t,ct)=>
+  ct==="Income"
+    ?(t.type==="credit"?t.amount:-t.amount)
+    :(t.type==="debit"?t.amount:-t.amount);
+
 /* ── Second-pass transfer detector ─────────────────────────────────────────
    Catches inter-account transactions where the user forgot to tag the
    category as Transfer. Checks description + payee against common patterns.
    Used alongside isTransferTx() — a transaction is excluded from reports
    if EITHER function returns true.
    ─────────────────────────────────────────────────────────────────────── */
-const TRANSFER_DESC_PATTERNS=[
-  /\bneft\b/i,/\brtgs\b/i,/\bimps\b/i,/\bupi\b/i,
-  /\batm\s*(cash\s*)?(withdrawal|wthdrl|wdl|cdm)/i,
-  /\bcash\s*withdrawal/i,/\bself\s*transfer/i,
-  /\bfund\s*transfer/i,/\binter\s*bank/i,
-  /\baccount\s*transfer/i,/\btransfer\s*to/i,/\btransfer\s*from/i,
-  /\bcard\s*(bill|payment|pay)/i,
-  /\bcredit\s*card\s*(due|payment|bill)/i,
-  /\binward\s*transfer/i,/\boutward\s*transfer/i,
-  /\bsweep\s*(in|out)/i,
-];
-const isLikelyTransfer=(tx)=>{
-  if(!tx)return false;
-  const hay=((tx.desc||"")+" "+(tx.payee||"")).toLowerCase();
-  return TRANSFER_DESC_PATTERNS.some(re=>re.test(hay));
-};
-/* Combined guard: exclude from income/expense reporting if category=Transfer OR description pattern matches */
-const isAnyTransfer=(tx,cats)=>isTransferTx(tx,cats)||isLikelyTransfer(tx);
+/* Transfer detection: only transactions explicitly categorised with classType='Transfer'
+   are treated as transfers. Description-pattern heuristics have been intentionally removed —
+   UPI, NEFT, RTGS, IMPS etc. appear in merchant payment descriptions and falsely excluded
+   legitimate expense/income transactions from all reports.
+   isAnyTransfer is kept as a passthrough alias so all call-sites remain unchanged. */
+const isAnyTransfer=(tx,cats)=>isTransferTx(tx,cats);
 const CLASS_TYPES=["Income","Expense","Investment","Transfer","Others"];
 const CLASS_C={Income:"#16a34a",Expense:"#dc2626",Investment:"#6d28d9",Transfer:"#1d4ed8",Others:"#475569"};
 const CLASS_ICON={Income:"💰",Expense:"💸",Investment:"📈",Transfer:"🔄",Others:"🗂"};
@@ -12519,9 +12539,10 @@ const buildHeatRows=(allTx,months,categories,filterFn)=>{
   const grid={};
   (filterFn?allTx.filter(filterFn):allTx).forEach(t=>{
     const main=catMainName(t.cat||"Others");
+    const ct=catClassType(categories,t.cat||"Others");
     const m=t.date.substr(0,7);
     if(!grid[main])grid[main]={};
-    grid[main][m]=(grid[main][m]||0)+t.amount;
+    grid[main][m]=(grid[main][m]||0)+txCatDelta(t,ct);
   });
   return Object.keys(grid).sort().map(cat=>{
     const catObj=categories.find(c=>c.name===cat);
@@ -12535,9 +12556,10 @@ const buildHeatRowsQ=(allTx,categories)=>{
   const grid={};
   allTx.forEach(t=>{
     const main=catMainName(t.cat||"Others");
+    const ct=catClassType(categories,t.cat||"Others");
     const qk=toQ(t.date.substr(0,7));
     if(!grid[main])grid[main]={};
-    grid[main][qk]=(grid[main][qk]||0)+t.amount;
+    grid[main][qk]=(grid[main][qk]||0)+txCatDelta(t,ct);
   });
   return Object.keys(grid).sort().map(cat=>{
     const catObj=categories.find(c=>c.name===cat);
@@ -12557,9 +12579,10 @@ const buildHeatRowsFY=(allTx,categories)=>{
   const grid={};
   allTx.forEach(t=>{
     const main=catMainName(t.cat||"Others");
+    const ct=catClassType(categories,t.cat||"Others");
     const yk=toFYKey(t.date);
     if(!grid[main])grid[main]={};
-    grid[main][yk]=(grid[main][yk]||0)+t.amount;
+    grid[main][yk]=(grid[main][yk]||0)+txCatDelta(t,ct);
   });
   return Object.keys(grid).sort().map(cat=>{
     const catObj=categories.find(c=>c.name===cat);
@@ -12621,11 +12644,12 @@ const RptCashFlow=({data,from,to})=>{
   allTx.forEach(t=>{
     const k=t.date.substr(0,7);
     const ct=catClassType(data.categories,t.cat||"Others");
+    const d=txCatDelta(t,ct);
     if(!monthly[k])monthly[k]={inc:0,exp:0,inv:0,oth:0};
-    if(ct==="Income")monthly[k].inc+=t.amount;
-    else if(ct==="Investment")monthly[k].inv+=t.amount;
-    else if(ct==="Others")monthly[k].oth+=t.amount;
-    else{if(t.type==="credit")monthly[k].inc+=t.amount;else monthly[k].exp+=t.amount;}
+    if(ct==="Income")monthly[k].inc+=d;
+    else if(ct==="Investment")monthly[k].inv+=d;
+    else if(ct==="Others")monthly[k].oth+=d;
+    else monthly[k].exp+=d;
   });
   const rows=Object.entries(monthly).sort().map(([k,v])=>({
     label:k.slice(5)+"/"+k.slice(2,4),v1:v.inc,v2:v.exp,v3:v.inv,v4:v.oth,net:v.inc-v.exp-v.inv,key:k
@@ -12639,7 +12663,7 @@ const RptCashFlow=({data,from,to})=>{
   allTx.forEach(t=>{
     const ct=catClassType(data.categories,t.cat||"Others");
     const m=t.date.substr(0,7);
-    clsData[ct].data[m]=(clsData[ct].data[m]||0)+t.amount;
+    clsData[ct].data[m]=(clsData[ct].data[m]||0)+txCatDelta(t,ct);
   });
   const hmRows=CLASS_TYPES.filter(ct=>clsData[ct]&&Object.keys(clsData[ct].data).length>0)
     .map(ct=>({label:CLASS_ICON[ct]+" "+ct,col:clsData[ct].col,data:clsData[ct].data}));
@@ -12696,11 +12720,12 @@ const RptClassification=({data,from,to,onJumpToLedger})=>{
   allTx.forEach(t=>{
     const ct=catClassType(data.categories,t.cat||"Others");
     const main=catMainName(t.cat||"Others");
-    byClass[ct].total+=t.amount;
-    byClass[ct].cats[main]=(byClass[ct].cats[main]||0)+t.amount;
-    if(t.cat&&t.cat.includes("::")){byClassSub[ct][t.cat]=(byClassSub[ct][t.cat]||0)+t.amount;}
+    const d=txCatDelta(t,ct);
+    byClass[ct].total+=d;
+    byClass[ct].cats[main]=(byClass[ct].cats[main]||0)+d;
+    if(t.cat&&t.cat.includes("::")){byClassSub[ct][t.cat]=(byClassSub[ct][t.cat]||0)+d;}
   });
-  const grandTotal=allTx.reduce((s,t)=>s+t.amount,0);
+  const grandTotal=allTx.reduce((s,t)=>s+txCatDelta(t,catClassType(data.categories,t.cat||"Others")),0);
   const months=Object.keys(Object.fromEntries(allTx.map(t=>[t.date.substr(0,7),1]))).sort();
   const hmRows=buildHeatRows(allTx,months,data.categories);
   return React.createElement("div",{className:"fu"},
@@ -12894,10 +12919,11 @@ const RptCatMonthly=({data,from,to,onJumpToLedger})=>{
     const ct=catClassType(data.categories,t.cat||"Others");
     if(!monthlyAgg[m])monthlyAgg[m]={inc:0,exp:0,inv:0,xfr:0,oth:0,txCount:0};
     monthlyAgg[m].txCount++;
-    if(ct==="Income")monthlyAgg[m].inc+=t.amount;
-    else if(ct==="Investment")monthlyAgg[m].inv+=t.amount;
-    else if(ct==="Others")monthlyAgg[m].oth+=t.amount;
-    else monthlyAgg[m].exp+=t.amount;
+    const d=txCatDelta(t,ct);
+    if(ct==="Income")monthlyAgg[m].inc+=d;
+    else if(ct==="Investment")monthlyAgg[m].inv+=d;
+    else if(ct==="Others")monthlyAgg[m].oth+=d;
+    else monthlyAgg[m].exp+=d;
   });
   const months=Object.keys(monthlyAgg).sort();
   const monthCatGrid={};const monthSubGrid={};const monthCatType={};
@@ -12905,13 +12931,14 @@ const RptCatMonthly=({data,from,to,onJumpToLedger})=>{
     const m=t.date.substr(0,7);
     const main=catMainName(t.cat||"Others");
     const ct=catClassType(data.categories,t.cat||"Others");
+    const d=txCatDelta(t,ct);
     if(!monthCatGrid[m])monthCatGrid[m]={};
-    monthCatGrid[m][main]=(monthCatGrid[m][main]||0)+t.amount;
+    monthCatGrid[m][main]=(monthCatGrid[m][main]||0)+d;
     if(!monthCatType[m])monthCatType[m]={};
     monthCatType[m][main]=ct;
     if(t.cat&&t.cat.includes("::")){
       if(!monthSubGrid[m])monthSubGrid[m]={};
-      monthSubGrid[m][t.cat]=(monthSubGrid[m][t.cat]||0)+t.amount;
+      monthSubGrid[m][t.cat]=(monthSubGrid[m][t.cat]||0)+d;
     }
   });
   const totInc=months.reduce((s,m)=>s+(monthlyAgg[m]?.inc||0),0);
@@ -12925,8 +12952,9 @@ const RptCatMonthly=({data,from,to,onJumpToLedger})=>{
     const ct=catClassType(data.categories,t.cat||"Others");
     const catObj=data.categories.find(c=>c.name===main);
     const col=catObj?.color||CAT_C[main]||"#8ba0c0";
-    if(ct==="Expense"||ct==="Others"){if(!allExpByCat[main])allExpByCat[main]={val:0,col};allExpByCat[main].val+=t.amount;}
-    if(ct==="Income"){if(!allIncByCat[main])allIncByCat[main]={val:0,col};allIncByCat[main].val+=t.amount;}
+    const d=txCatDelta(t,ct);
+    if(ct==="Expense"||ct==="Others"){if(!allExpByCat[main])allExpByCat[main]={val:0,col};allExpByCat[main].val+=d;}
+    if(ct==="Income"){if(!allIncByCat[main])allIncByCat[main]={val:0,col};allIncByCat[main].val+=d;}
   });
   const expCatRows=Object.entries(allExpByCat).sort((a,b)=>b[1].val-a[1].val);
   const incCatRows=Object.entries(allIncByCat).sort((a,b)=>b[1].val-a[1].val);
@@ -13188,10 +13216,11 @@ const RptCatQuarterly=({data,from,to,onJumpToLedger})=>{
     const ct=catClassType(data.categories,t.cat||"Others");
     if(!periodAgg[qk])periodAgg[qk]={inc:0,exp:0,inv:0,oth:0,txCount:0};
     periodAgg[qk].txCount++;
-    if(ct==="Income")periodAgg[qk].inc+=t.amount;
-    else if(ct==="Investment")periodAgg[qk].inv+=t.amount;
-    else if(ct==="Others")periodAgg[qk].oth+=t.amount;
-    else periodAgg[qk].exp+=t.amount;
+    const d=txCatDelta(t,ct);
+    if(ct==="Income")periodAgg[qk].inc+=d;
+    else if(ct==="Investment")periodAgg[qk].inv+=d;
+    else if(ct==="Others")periodAgg[qk].oth+=d;
+    else periodAgg[qk].exp+=d;
   });
   const periods=Object.keys(periodAgg).sort();
   const periodCatGrid={};const periodSubGrid={};const periodCatType={};
@@ -13199,13 +13228,14 @@ const RptCatQuarterly=({data,from,to,onJumpToLedger})=>{
     const qk=toFYQ(t.date.substr(0,7));
     const main=catMainName(t.cat||"Others");
     const ct=catClassType(data.categories,t.cat||"Others");
+    const d=txCatDelta(t,ct);
     if(!periodCatGrid[qk])periodCatGrid[qk]={};
-    periodCatGrid[qk][main]=(periodCatGrid[qk][main]||0)+t.amount;
+    periodCatGrid[qk][main]=(periodCatGrid[qk][main]||0)+d;
     if(!periodCatType[qk])periodCatType[qk]={};
     periodCatType[qk][main]=ct;
     if(t.cat&&t.cat.includes("::")){
       if(!periodSubGrid[qk])periodSubGrid[qk]={};
-      periodSubGrid[qk][t.cat]=(periodSubGrid[qk][t.cat]||0)+t.amount;
+      periodSubGrid[qk][t.cat]=(periodSubGrid[qk][t.cat]||0)+d;
     }
   });
   const totInc=periods.reduce((s,p)=>s+(periodAgg[p]?.inc||0),0);
@@ -13219,8 +13249,9 @@ const RptCatQuarterly=({data,from,to,onJumpToLedger})=>{
     const ct=catClassType(data.categories,t.cat||"Others");
     const catObj=data.categories.find(c=>c.name===main);
     const col=catObj?.color||CAT_C[main]||"#8ba0c0";
-    if(ct==="Expense"||ct==="Others"){if(!allExpByCat[main])allExpByCat[main]={val:0,col};allExpByCat[main].val+=t.amount;}
-    if(ct==="Income"){if(!allIncByCat[main])allIncByCat[main]={val:0,col};allIncByCat[main].val+=t.amount;}
+    const d=txCatDelta(t,ct);
+    if(ct==="Expense"||ct==="Others"){if(!allExpByCat[main])allExpByCat[main]={val:0,col};allExpByCat[main].val+=d;}
+    if(ct==="Income"){if(!allIncByCat[main])allIncByCat[main]={val:0,col};allIncByCat[main].val+=d;}
   });
   const expCatRows=Object.entries(allExpByCat).sort((a,b)=>b[1].val-a[1].val);
   const incCatRows=Object.entries(allIncByCat).sort((a,b)=>b[1].val-a[1].val);
@@ -13480,10 +13511,11 @@ const RptCatYearly=({data,from,to,onJumpToLedger})=>{
     const ct=catClassType(data.categories,t.cat||"Others");
     if(!periodAgg[yk])periodAgg[yk]={inc:0,exp:0,inv:0,oth:0,txCount:0};
     periodAgg[yk].txCount++;
-    if(ct==="Income")periodAgg[yk].inc+=t.amount;
-    else if(ct==="Investment")periodAgg[yk].inv+=t.amount;
-    else if(ct==="Others")periodAgg[yk].oth+=t.amount;
-    else periodAgg[yk].exp+=t.amount;
+    const d=txCatDelta(t,ct);
+    if(ct==="Income")periodAgg[yk].inc+=d;
+    else if(ct==="Investment")periodAgg[yk].inv+=d;
+    else if(ct==="Others")periodAgg[yk].oth+=d;
+    else periodAgg[yk].exp+=d;
   });
   const periods=Object.keys(periodAgg).sort();
   const periodCatGrid={};const periodSubGrid={};const periodCatType={};
@@ -13491,13 +13523,14 @@ const RptCatYearly=({data,from,to,onJumpToLedger})=>{
     const yk=toFY(t.date);
     const main=catMainName(t.cat||"Others");
     const ct=catClassType(data.categories,t.cat||"Others");
+    const d=txCatDelta(t,ct);
     if(!periodCatGrid[yk])periodCatGrid[yk]={};
-    periodCatGrid[yk][main]=(periodCatGrid[yk][main]||0)+t.amount;
+    periodCatGrid[yk][main]=(periodCatGrid[yk][main]||0)+d;
     if(!periodCatType[yk])periodCatType[yk]={};
     periodCatType[yk][main]=ct;
     if(t.cat&&t.cat.includes("::")){
       if(!periodSubGrid[yk])periodSubGrid[yk]={};
-      periodSubGrid[yk][t.cat]=(periodSubGrid[yk][t.cat]||0)+t.amount;
+      periodSubGrid[yk][t.cat]=(periodSubGrid[yk][t.cat]||0)+d;
     }
   });
   const totInc=periods.reduce((s,p)=>s+(periodAgg[p]?.inc||0),0);
@@ -13511,8 +13544,9 @@ const RptCatYearly=({data,from,to,onJumpToLedger})=>{
     const ct=catClassType(data.categories,t.cat||"Others");
     const catObj=data.categories.find(c=>c.name===main);
     const col=catObj?.color||CAT_C[main]||"#8ba0c0";
-    if(ct==="Expense"||ct==="Others"){if(!allExpByCat[main])allExpByCat[main]={val:0,col};allExpByCat[main].val+=t.amount;}
-    if(ct==="Income"){if(!allIncByCat[main])allIncByCat[main]={val:0,col};allIncByCat[main].val+=t.amount;}
+    const d=txCatDelta(t,ct);
+    if(ct==="Expense"||ct==="Others"){if(!allExpByCat[main])allExpByCat[main]={val:0,col};allExpByCat[main].val+=d;}
+    if(ct==="Income"){if(!allIncByCat[main])allIncByCat[main]={val:0,col};allIncByCat[main].val+=d;}
   });
   const expCatRows=Object.entries(allExpByCat).sort((a,b)=>b[1].val-a[1].val);
   const incCatRows=Object.entries(allIncByCat).sort((a,b)=>b[1].val-a[1].val);
@@ -13750,18 +13784,19 @@ const RptCatSummary=({data,from,to,onJumpToLedger})=>{
   allTx.forEach(t=>{
     const ct=catClassType(data.categories,t.cat||"Others");
     const main=catMainName(t.cat||"Others");
+    const d=txCatDelta(t,ct);
     if(!byClass[ct])byClass[ct]={};
-    byClass[ct][main]=(byClass[ct][main]||0)+t.amount;
+    byClass[ct][main]=(byClass[ct][main]||0)+d;
     if(!byClassTx[ct])byClassTx[ct]={};
     byClassTx[ct][main]=(byClassTx[ct][main]||0)+1;
     if(t.cat&&t.cat.includes("::")){
       if(!byClassSub[ct])byClassSub[ct]={};
-      byClassSub[ct][t.cat]=(byClassSub[ct][t.cat]||0)+t.amount;
+      byClassSub[ct][t.cat]=(byClassSub[ct][t.cat]||0)+d;
     }
   });
   const months=Object.keys(Object.fromEntries(allTx.map(t=>[t.date.substr(0,7),1]))).sort();
   const hmRows=buildHeatRows(allTx,months,data.categories);
-  const grandTotal=allTx.reduce((s,t)=>s+t.amount,0);
+  const grandTotal=allTx.reduce((s,t)=>s+txCatDelta(t,catClassType(data.categories,t.cat||"Others")),0);
   const clsTotals=CLASS_TYPES.reduce((acc,ct)=>{acc[ct]=Object.values(byClass[ct]||{}).reduce((s,v)=>s+v,0);return acc;},{});
 
   return React.createElement("div",{className:"fu"},
@@ -13911,10 +13946,12 @@ const RptMoneyGoes=({data,from,to,onJumpToLedger})=>{
   const allTx=collectTx(data,from,to,accFilter).filter(t=>{const ct=catClassType(data.categories,t.cat||"Others");return ct==="Expense"||ct==="Others";});
   const byCat={},bySubCat={};
   allTx.forEach(t=>{
+    const ct=catClassType(data.categories,t.cat||"Others");
+    const d=txCatDelta(t,ct);
     const main=catMainName(t.cat||"Others");
     const sub=t.cat&&t.cat.includes("::")?t.cat:"";
-    byCat[main]=(byCat[main]||0)+t.amount;
-    if(sub){bySubCat[sub]=(bySubCat[sub]||0)+t.amount;}
+    byCat[main]=(byCat[main]||0)+d;
+    if(sub){bySubCat[sub]=(bySubCat[sub]||0)+d;}
   });
   const rows=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
   const subRows=Object.entries(bySubCat).sort((a,b)=>b[1]-a[1]);
@@ -14022,10 +14059,11 @@ const RptMoneyComes=({data,from,to,onJumpToLedger})=>{
   const allTx=collectTx(data,from,to,accFilter).filter(t=>catClassType(data.categories,t.cat||"Others")==="Income");
   const byCat={},bySubCat={};
   allTx.forEach(t=>{
+    const d=txCatDelta(t,"Income"); /* allTx is income-only */
     const main=catMainName(t.cat||"Others");
     const sub=t.cat&&t.cat.includes("::")?t.cat:"";
-    byCat[main]=(byCat[main]||0)+t.amount;
-    if(sub){bySubCat[sub]=(bySubCat[sub]||0)+t.amount;}
+    byCat[main]=(byCat[main]||0)+d;
+    if(sub){bySubCat[sub]=(bySubCat[sub]||0)+d;}
   });
   const rows=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
   const subRows=Object.entries(bySubCat).sort((a,b)=>b[1]-a[1]);
@@ -14131,12 +14169,11 @@ const RptIncVsExp=({data,from,to})=>{
   allTx.forEach(t=>{
     const k=t.date.substr(0,7);
     const ct=catClassType(data.categories,t.cat||"Others");
+    const d=txCatDelta(t,ct);
     if(!monthly[k])monthly[k]={inc:0,exp:0,inv:0};
-    if(ct==="Income")monthly[k].inc+=t.amount;
-    else if(ct==="Expense")monthly[k].exp+=t.amount;
-    else if(ct==="Investment")monthly[k].inv+=t.amount;
-    else if(t.type==="credit")monthly[k].inc+=t.amount;
-    else monthly[k].exp+=t.amount;
+    if(ct==="Income")monthly[k].inc+=d;
+    else if(ct==="Investment")monthly[k].inv+=d;
+    else monthly[k].exp+=d;
   });
   const rows=Object.entries(monthly).sort().map(([k,v])=>({label:k.slice(5)+"/"+k.slice(2,4),v1:v.inc,v2:v.exp+v.inv,key:k,sav:v.inc>0?Math.max(0,v.inc-v.exp-v.inv)/v.inc:0}));
   const totInc=rows.reduce((s,r)=>s+r.v1,0);
