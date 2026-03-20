@@ -2034,10 +2034,23 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.32.11";
+const APP_VERSION="3.32.12";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.32.12",date:"2026-03-20",title:"Feature — Jump-to-Ledger on every row in all Report detailed cards",changes:[
+    "Monthly Detailed cards: added card-level JumpBtn (header, scoped to full month) on each period card; added per-category JumpBtn on every category row (previously missing); added per-sub-category JumpBtn on every expanded sub-category row.",
+    "Quarterly Detailed cards: added card-level JumpBtn in the header (scoped to the quarter date range); added per-sub-category JumpBtn on every expanded sub-category row (category-level row already had it).",
+    "Yearly Detailed cards: added card-level JumpBtn in the header (scoped to the FY date range); added per-sub-category JumpBtn on every expanded sub-category row (category-level row already had it).",
+    "Monthly Snapshot expanded rows: added per-sub-category JumpBtn on every expanded sub-category row (category-level row already had it).",
+    "Quarterly Snapshot expanded rows: added per-sub-category JumpBtn on every expanded sub-category row.",
+    "Yearly Snapshot expanded rows: added per-sub-category JumpBtn on every expanded sub-category row.",
+    "Classification Breakdown Detailed: added JumpBtn to every sub-category row (grid expanded from 4-col to 5-col to accommodate the button column, matching the parent category row layout).",
+    "Categories Summary Detailed: added JumpBtn to every sub-category row (grid expanded from 4-col to 5-col).",
+    "Where Money Goes Detailed: replaced the two trailing empty grid cells on sub-category rows with a proper JumpBtn column.",
+    "Where Money Comes From Detailed: same fix as Where Money Goes.",
+    "All JumpBtns pass the correct date range (dateFrom/dateTo) scoped to the card period and the sub-category key (e.g. 'Food::Groceries') as the category filter so the Unified Ledger opens pre-filtered to exactly those transactions.",
+  ]},
   {version:"3.32.11",date:"2026-03-20",title:"Fix — Remove all description-pattern transfer detection; category tag is sole authority",changes:[
     "Removed TRANSFER_DESC_PATTERNS array and isLikelyTransfer() function entirely. These heuristics matched keywords like NEFT, RTGS, IMPS, ATM, 'fund transfer', 'card bill' etc. in transaction descriptions and automatically excluded matching transactions from all reports — even when the user had explicitly categorised them as Expense, Income, or any other non-Transfer type.",
     "The only criterion for treating a transaction as a transfer is now the category's classType === 'Transfer', checked by isTransferTx(). If the user tags a transaction as a Transfer category it is excluded from reports; if they tag it as anything else it is always included, regardless of what the description says.",
@@ -12806,14 +12819,15 @@ const RptClassification=({data,from,to,onJumpToLedger})=>{
                 React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},tot>0?((val/tot)*100).toFixed(1)+"%":""),
                 React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"flex-end"}},onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([cat]),payees:new Set(),dateFrom:from,dateTo:to,label:cat})}))
               ),
-              isExp&&subs.map(([subKey,sv])=>React.createElement("div",{key:subKey,style:{display:"grid",gridTemplateColumns:"2fr 120px 1fr 80px",padding:"6px 14px 6px 32px",borderBottom:"1px solid var(--border2)",background:"rgba(0,0,0,.02)"}},
+              isExp&&subs.map(([subKey,sv])=>React.createElement("div",{key:subKey,style:{display:"grid",gridTemplateColumns:"2fr 120px 1fr 80px 90px",padding:"6px 14px 6px 32px",borderBottom:"1px solid var(--border2)",background:"rgba(0,0,0,.02)"}},
                 React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
                   React.createElement("span",{style:{width:5,height:5,borderRadius:"50%",background:catCol,opacity:.6,display:"inline-block",flexShrink:0}}),
                   React.createElement("span",{style:{fontSize:11,color:"var(--text4)"}},catDisplayName(subKey))
                 ),
                 React.createElement("div",null),
                 React.createElement("div",{style:{fontSize:11,color:catCol,fontWeight:600,fontFamily:"'Sora',sans-serif"}},INR(sv)),
-                React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},val>0?((sv/val)*100).toFixed(1)+"%":"")
+                React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},val>0?((sv/val)*100).toFixed(1)+"%":""),
+                React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"flex-end"}},onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([subKey]),payees:new Set(),dateFrom:from,dateTo:to,label:catDisplayName(subKey)})}))
               ))
             );
           })
@@ -13084,7 +13098,8 @@ const RptCatMonthly=({data,from,to,onJumpToLedger})=>{
                       React.createElement("div",{style:{height:"100%",width:(val>0?(sv/val)*100:0)+"%",background:col,opacity:.7,borderRadius:2}})
                     ),
                     React.createElement("span",{style:{fontSize:11,color:col,fontWeight:600,minWidth:70,textAlign:"right",fontFamily:"'Sora',sans-serif"}},INR(sv)),
-                    React.createElement("span",{style:{fontSize:10,color:"var(--text5)",minWidth:32,textAlign:"right"}},val>0?((sv/val)*100).toFixed(0)+"%":"")
+                    React.createElement("span",{style:{fontSize:10,color:"var(--text5)",minWidth:32,textAlign:"right"}},val>0?((sv/val)*100).toFixed(0)+"%":""),
+                    onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([subKey]),payees:new Set(),dateFrom:m+"-01",dateTo:m+"-31",label:catDisplayName(subKey)+" · "+MONTH_NAMES[parseInt(m.slice(5))-1]+"'"+m.slice(2,4)})})
                   ))
                 );
               })
@@ -13120,7 +13135,8 @@ const RptCatMonthly=({data,from,to,onJumpToLedger})=>{
               ),
               React.createElement("div",{style:{textAlign:"right"}},
                 React.createElement("div",{style:{fontSize:13,fontWeight:700,color:net>=0?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif"}},(net>=0?"+":"")+INR(net)),
-                React.createElement("div",{style:{fontSize:9,color:"var(--text5)",marginTop:1}},"net flow")
+                React.createElement("div",{style:{fontSize:9,color:"var(--text5)",marginTop:1}},"net flow"),
+                onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set(),payees:new Set(),dateFrom:m+"-01",dateTo:m+"-31",label:"All · "+MONTH_NAMES[parseInt(m.slice(5))-1]+" "+m.slice(0,4)})})
               )
             ),
             React.createElement("div",{style:{marginTop:10}},React.createElement(MiniStackBar,{segments,total:totalM,h:8}))
@@ -13157,12 +13173,14 @@ const RptCatMonthly=({data,from,to,onJumpToLedger})=>{
                   React.createElement("span",{style:{fontSize:12,color:"var(--text2)",flex:1,fontWeight:500}},cat),
                   React.createElement(ClsBadge,{ct}),
                   React.createElement("span",{style:{fontSize:12,color:col,fontWeight:700,fontFamily:"'Sora',sans-serif"}},INR(val)),
-                  subs.length>0&&React.createElement("span",{style:{fontSize:9,color:"var(--text6)",marginLeft:4}},isExpCat?"▲":"▼")
+                  subs.length>0&&React.createElement("span",{style:{fontSize:9,color:"var(--text6)",marginLeft:4}},isExpCat?"▲":"▼"),
+                  onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([cat]),payees:new Set(),dateFrom:m+"-01",dateTo:m+"-31",label:cat+" · "+MONTH_NAMES[parseInt(m.slice(5))-1]+" "+m.slice(0,4)})})
                 ),
                 isExpCat&&subs.map(([subKey,sv])=>React.createElement("div",{key:subKey,style:{display:"flex",alignItems:"center",gap:7,padding:"4px 14px 4px 32px",borderLeft:"2px solid "+col+"33",marginLeft:0,background:"rgba(0,0,0,.02)"}},
                   React.createElement("span",{style:{width:5,height:5,borderRadius:"50%",background:col,opacity:.6,flexShrink:0,display:"inline-block"}}),
                   React.createElement("span",{style:{fontSize:11,color:"var(--text4)",flex:1}},catDisplayName(subKey)),
-                  React.createElement("span",{style:{fontSize:11,color:col,fontWeight:600,fontFamily:"'Sora',sans-serif"}},INR(sv))
+                  React.createElement("span",{style:{fontSize:11,color:col,fontWeight:600,fontFamily:"'Sora',sans-serif"}},INR(sv)),
+                  onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([subKey]),payees:new Set(),dateFrom:m+"-01",dateTo:m+"-31",label:catDisplayName(subKey)+" · "+MONTH_NAMES[parseInt(m.slice(5))-1]+" "+m.slice(0,4)})})
                 ))
               );
             })
@@ -13390,7 +13408,8 @@ const RptCatQuarterly=({data,from,to,onJumpToLedger})=>{
                       React.createElement("div",{style:{height:"100%",width:(val>0?(sv/val)*100:0)+"%",background:col,opacity:.7,borderRadius:2}})
                     ),
                     React.createElement("span",{style:{fontSize:11,color:col,fontWeight:600,minWidth:70,textAlign:"right",fontFamily:"'Sora',sans-serif"}},INR(sv)),
-                    React.createElement("span",{style:{fontSize:10,color:"var(--text5)",minWidth:32,textAlign:"right"}},val>0?((sv/val)*100).toFixed(0)+"%":"")
+                    React.createElement("span",{style:{fontSize:10,color:"var(--text5)",minWidth:32,textAlign:"right"}},val>0?((sv/val)*100).toFixed(0)+"%":""),
+                    onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([subKey]),payees:new Set(),dateFrom:dr.from,dateTo:dr.to,label:catDisplayName(subKey)+" · "+qLabel(p)})})
                   ))
                 );
               })
@@ -13426,7 +13445,8 @@ const RptCatQuarterly=({data,from,to,onJumpToLedger})=>{
               ),
               React.createElement("div",{style:{textAlign:"right"}},
                 React.createElement("div",{style:{fontSize:13,fontWeight:700,color:net>=0?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif"}},(net>=0?"+":"")+INR(net)),
-                React.createElement("div",{style:{fontSize:9,color:"var(--text5)",marginTop:1}},"net flow")
+                React.createElement("div",{style:{fontSize:9,color:"var(--text5)",marginTop:1}},"net flow"),
+                onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>{const dr=qDateRange(p);onJumpToLedger({cats:new Set(),payees:new Set(),dateFrom:dr.from,dateTo:dr.to,label:"All · "+qLabel(p)});}})
               )
             ),
             React.createElement("div",{style:{marginTop:10}},React.createElement(MiniStackBar,{segments,total:totalP,h:8}))
@@ -13470,7 +13490,8 @@ const RptCatQuarterly=({data,from,to,onJumpToLedger})=>{
                 isExpCat&&subs.map(([subKey,sv])=>React.createElement("div",{key:subKey,style:{display:"flex",alignItems:"center",gap:7,padding:"4px 14px 4px 32px",borderLeft:"2px solid "+col+"33",marginLeft:0,background:"rgba(0,0,0,.02)"}},
                   React.createElement("span",{style:{width:5,height:5,borderRadius:"50%",background:col,opacity:.6,flexShrink:0,display:"inline-block"}}),
                   React.createElement("span",{style:{fontSize:11,color:"var(--text4)",flex:1}},catDisplayName(subKey)),
-                  React.createElement("span",{style:{fontSize:11,color:col,fontWeight:600,fontFamily:"'Sora',sans-serif"}},INR(sv))
+                  React.createElement("span",{style:{fontSize:11,color:col,fontWeight:600,fontFamily:"'Sora',sans-serif"}},INR(sv)),
+                  onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([subKey]),payees:new Set(),dateFrom:dr.from,dateTo:dr.to,label:catDisplayName(subKey)+" · "+qLabel(p)})})
                 ))
               );
             })
@@ -13677,7 +13698,8 @@ const RptCatYearly=({data,from,to,onJumpToLedger})=>{
                       React.createElement("div",{style:{height:"100%",width:(val>0?(sv/val)*100:0)+"%",background:col,opacity:.7,borderRadius:2}})
                     ),
                     React.createElement("span",{style:{fontSize:11,color:col,fontWeight:600,minWidth:70,textAlign:"right",fontFamily:"'Sora',sans-serif"}},INR(sv)),
-                    React.createElement("span",{style:{fontSize:10,color:"var(--text5)",minWidth:32,textAlign:"right"}},val>0?((sv/val)*100).toFixed(0)+"%":"")
+                    React.createElement("span",{style:{fontSize:10,color:"var(--text5)",minWidth:32,textAlign:"right"}},val>0?((sv/val)*100).toFixed(0)+"%":""),
+                    onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>{const dr=yDateRange(p);onJumpToLedger({cats:new Set([subKey]),payees:new Set(),dateFrom:dr.from,dateTo:dr.to,label:catDisplayName(subKey)+" · "+getIndianFYLabel(parseInt(p))});}})
                   ))
                 );
               })
@@ -13713,7 +13735,8 @@ const RptCatYearly=({data,from,to,onJumpToLedger})=>{
               ),
               React.createElement("div",{style:{textAlign:"right"}},
                 React.createElement("div",{style:{fontSize:13,fontWeight:700,color:net>=0?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif"}},(net>=0?"+":"")+INR(net)),
-                React.createElement("div",{style:{fontSize:9,color:"var(--text5)",marginTop:1}},"net flow")
+                React.createElement("div",{style:{fontSize:9,color:"var(--text5)",marginTop:1}},"net flow"),
+                onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>{const dr=yDateRange(p);onJumpToLedger({cats:new Set(),payees:new Set(),dateFrom:dr.from,dateTo:dr.to,label:"All · "+getIndianFYLabel(parseInt(p))});}})
               )
             ),
             React.createElement("div",{style:{marginTop:10}},React.createElement(MiniStackBar,{segments,total:totalP,h:8}))
@@ -13756,7 +13779,8 @@ const RptCatYearly=({data,from,to,onJumpToLedger})=>{
                 isExpCat&&subs.map(([subKey,sv])=>React.createElement("div",{key:subKey,style:{display:"flex",alignItems:"center",gap:7,padding:"4px 14px 4px 32px",borderLeft:"2px solid "+col+"33",marginLeft:0,background:"rgba(0,0,0,.02)"}},
                   React.createElement("span",{style:{width:5,height:5,borderRadius:"50%",background:col,opacity:.6,flexShrink:0,display:"inline-block"}}),
                   React.createElement("span",{style:{fontSize:11,color:"var(--text4)",flex:1}},catDisplayName(subKey)),
-                  React.createElement("span",{style:{fontSize:11,color:col,fontWeight:600,fontFamily:"'Sora',sans-serif"}},INR(sv))
+                  React.createElement("span",{style:{fontSize:11,color:col,fontWeight:600,fontFamily:"'Sora',sans-serif"}},INR(sv)),
+                  onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>{const dr=yDateRange(p);onJumpToLedger({cats:new Set([subKey]),payees:new Set(),dateFrom:dr.from,dateTo:dr.to,label:catDisplayName(subKey)+" · "+getIndianFYLabel(parseInt(p))});}})
                 ))
               );
             })
@@ -13909,14 +13933,15 @@ const RptCatSummary=({data,from,to,onJumpToLedger})=>{
                 React.createElement("div",{style:{display:"flex",justifyContent:"flex-end"}},onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([cat]),payees:new Set(),dateFrom:from,dateTo:to,label:cat})}))
               ),
               /* Sub-category rows */
-              isExp&&subs.map(([subKey,sv])=>React.createElement("div",{key:subKey,style:{display:"grid",gridTemplateColumns:"1fr 90px 80px 60px",padding:"7px 14px 7px 32px",borderBottom:"1px solid var(--border2)",background:"rgba(0,0,0,.015)",alignItems:"center"}},
+              isExp&&subs.map(([subKey,sv])=>React.createElement("div",{key:subKey,style:{display:"grid",gridTemplateColumns:"1fr 90px 80px 60px 90px",padding:"7px 14px 7px 32px",borderBottom:"1px solid var(--border2)",background:"rgba(0,0,0,.015)",alignItems:"center"}},
                 React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
                   React.createElement("span",{style:{width:5,height:5,borderRadius:"50%",background:col,opacity:.6,flexShrink:0,display:"inline-block"}}),
                   React.createElement("span",{style:{fontSize:11,color:"var(--text4)"}},catDisplayName(subKey))
                 ),
                 React.createElement("div",{style:{fontSize:11,color:col,fontWeight:600,textAlign:"right",fontFamily:"'Sora',sans-serif"}},INR(sv)),
                 React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textAlign:"right"}},val>0?((sv/val)*100).toFixed(1)+"%":""),
-                React.createElement("div",null)
+                React.createElement("div",null),
+                React.createElement("div",{style:{display:"flex",justifyContent:"flex-end"}},onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([subKey]),payees:new Set(),dateFrom:from,dateTo:to,label:catDisplayName(subKey)})}))
               ))
             );
           }),
@@ -14035,7 +14060,8 @@ const RptMoneyGoes=({data,from,to,onJumpToLedger})=>{
             ),
             React.createElement("div",{style:{fontSize:11,color:col,fontWeight:600,textAlign:"right"}},INR(sv)),
             React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textAlign:"right"}},val>0?((sv/val)*100).toFixed(1)+"%":""),
-            React.createElement("div",null),React.createElement("div",null)
+            React.createElement("div",null),
+            React.createElement("div",{style:{display:"flex",justifyContent:"flex-end"}},onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([s]),payees:new Set(),dateFrom:from,dateTo:to,label:catDisplayName(s)})}))
           ))
         );
       }),
@@ -14145,7 +14171,8 @@ const RptMoneyComes=({data,from,to,onJumpToLedger})=>{
             ),
             React.createElement("div",{style:{fontSize:11,color:col,fontWeight:600,textAlign:"right"}},INR(sv)),
             React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textAlign:"right"}},val>0?((sv/val)*100).toFixed(1)+"%":""),
-            React.createElement("div",null),React.createElement("div",null)
+            React.createElement("div",null),
+            React.createElement("div",{style:{display:"flex",justifyContent:"flex-end"}},onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([s]),payees:new Set(),dateFrom:from,dateTo:to,label:catDisplayName(s)})}))
           ))
         );
       }),
