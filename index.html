@@ -2036,10 +2036,22 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.32.20";
+const APP_VERSION="3.32.21";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.32.21",date:"2026-03-20",title:"Feature — Export ledger to Excel & Re-import with upsert (no duplicates)",changes:[
+    "New '⬇ Export Excel' button in every bank, card, and cash ledger toolbar (desktop). Exports the currently visible/filtered transactions to a .xlsx file. Columns: MM_ID (internal key), SN, Date, Reference/Number, Status, Type, Description, Payee, Category, Debit, Credit, Notes, Tags. The MM_ID column is the identity anchor used during re-import.",
+    "Export filename includes the account name and today's date for easy identification (e.g. 'HDFC Savings Account-txns-2026-03-20.xlsx').",
+    "The export respects active filters — if you've filtered by date range, category, or payee, only the visible rows are exported.",
+    "New reducer case UPDATE_BULK_TX: accepts {accType, accId, updates:[{id, desc, payee, txNum, cat, notes, tags, status}]}. Iterates each update by matching on tx.id and merges only safe metadata fields. Amount and type are intentionally not updatable via this path to preserve balance integrity.",
+    "Re-import (upsert) mode: when the uploaded file's first column header is exactly 'MM_ID', the ImportTxModal switches to Upsert Mode. Column mapping step is skipped entirely — MM-exported files are always in the exact expected format.",
+    "Upsert preview shows three separate counts: UPDATED (MM_ID matched an existing tx), NEW (MM_ID not found — will be added fresh), SKIPPED (empty or malformed rows).",
+    "Updatable fields via re-import: Description, Reference/Number, Payee, Category, Notes, Tags, Status. Non-updatable: Date, Amount, Type (balance-critical; changes ignored silently to prevent corruption).",
+    "Duplicate prevention: rows whose MM_ID already exists are updated in-place, never duplicated. Only rows with no MM_ID match (genuinely new) go through IMPORT_BULK_TX.",
+    "Regular import mode (no MM_ID column) is 100% unchanged — existing bank statement import workflow unaffected.",
+    "TxPanel now threads accountName and onUpsertTxns props to TxLedger. BankSection, CardSection, and CashSection all wired with onUpsertTxns dispatching UPDATE_BULK_TX.",
+  ]},
   {version:"3.32.20",date:"2026-03-20",title:"Fix — yearlyBudgetPlans fully covered by all backup, restore, FSA, and cloud-backup modules",changes:[
     "fsaWriteFile summary: added hasYearlyBudget flag (true when any yearlyBudgetPlans value > 0) so the FSA file is auditable.",
     "fsaReadFile: insightPrefs is now deep-merged with EMPTY_STATE().insightPrefs on load — old FSA files that predate yearlyBudgetPlans restore cleanly with {} as the fallback instead of undefined.",
@@ -4404,6 +4416,32 @@ const reducer=(s,a)=>{
       }
       return s;
     }
+    case"UPDATE_BULK_TX":{
+      /* Update existing transactions by id — only safe metadata fields, not amount/type/date */
+      const{accType:_ubt_acc,accId:_ubt_id,updates:_ubt_upd}=a;
+      if(!_ubt_upd||!_ubt_upd.length)return s;
+      const applyUpdates=(txns)=>{
+        const byId={};
+        _ubt_upd.forEach(u=>{byId[u.id]=u;});
+        return txns.map(tx=>{
+          const u=byId[tx.id];
+          if(!u)return tx;
+          return{...tx,
+            desc:u.desc!==undefined&&u.desc!==""?u.desc:tx.desc,
+            payee:u.payee!==undefined?u.payee:tx.payee,
+            txNum:u.txNum!==undefined?u.txNum:tx.txNum,
+            cat:u.cat!==undefined&&u.cat!==""?u.cat:tx.cat,
+            notes:u.notes!==undefined?u.notes:tx.notes,
+            tags:u.tags!==undefined?u.tags:tx.tags,
+            status:u.status&&["Reconciled","Unreconciled","Void","Duplicate","Follow-Up"].includes(u.status)?u.status:tx.status,
+          };
+        });
+      };
+      if(_ubt_acc==="bank")return{...s,banks:s.banks.map(b=>b.id!==_ubt_id?b:{...b,transactions:applyUpdates(b.transactions)})};
+      if(_ubt_acc==="card")return{...s,cards:s.cards.map(c=>c.id!==_ubt_id?c:{...c,transactions:applyUpdates(c.transactions)})};
+      if(_ubt_acc==="cash")return{...s,cash:{...s.cash,transactions:applyUpdates(s.cash.transactions)}};
+      return s;
+    }
     case"SET_TAX_DATA":return{...s,taxData:a.data};
     case"SET_INSIGHT_PREFS":return{...s,insightPrefs:{...s.insightPrefs,...a.p}};
     case"SET_NW_SNAPSHOT":return{...s,nwSnapshots:{...(s.nwSnapshots||{}),[a.month]:a.nw}};
@@ -4736,18 +4774,94 @@ const parseAmt=(raw)=>{
   return isNaN(n)?0:Math.abs(n);
 };
 
-const ImportTxModal=({onImport,onClose,categories,accType="bank"})=>{
+/* ══════════════════════════════════════════════════════════════════════════
+   EXPORT LEDGER TO EXCEL
+   Exports the given transactions array to .xlsx using SheetJS.
+   Includes MM_ID column so the file can be re-imported as an upsert.
+   ══════════════════════════════════════════════════════════════════════════ */
+const exportLedgerXlsx=(transactions,accountName,snMap)=>{
+  try{
+    const XL=window.XLSX;
+    if(!XL){alert("XLSX library not available.");return;}
+    const rows=transactions.map((tx,i)=>{
+      const sn=snMap?snMap[tx.id]:(i+1);
+      const isDebit=tx.type==="debit";
+      return{
+        "MM_ID":tx.id,
+        "SN":sn,
+        "Date":tx.date, /* YYYY-MM-DD — Excel will display; user may reformat */
+        "Reference":tx.txNum||"",
+        "Status":tx.status||"Unreconciled",
+        "Type":isDebit?"Debit":"Credit",
+        "Description":tx.desc||"",
+        "Payee":tx.payee||"",
+        "Category":tx.cat||"",
+        "Debit":isDebit?tx.amount:0,
+        "Credit":isDebit?0:tx.amount,
+        "Notes":tx.notes||"",
+        "Tags":tx.tags||"",
+      };
+    });
+    const ws=XL.utils.json_to_sheet(rows);
+    /* Widen columns */
+    ws["!cols"]=[
+      {wch:28}, /* MM_ID */
+      {wch:5},  /* SN */
+      {wch:12}, /* Date */
+      {wch:16}, /* Reference */
+      {wch:14}, /* Status */
+      {wch:7},  /* Type */
+      {wch:36}, /* Description */
+      {wch:22}, /* Payee */
+      {wch:22}, /* Category */
+      {wch:12}, /* Debit */
+      {wch:12}, /* Credit */
+      {wch:28}, /* Notes */
+      {wch:18}, /* Tags */
+    ];
+    const wb=XL.utils.book_new();
+    XL.utils.book_append_sheet(wb,ws,"Transactions");
+    /* Info sheet — explains the format */
+    const infoRows=[
+      {Field:"MM_ID",Description:"Internal transaction ID — DO NOT edit. Used for re-import matching."},
+      {Field:"SN",Description:"Serial number — informational only, not re-imported."},
+      {Field:"Date",Description:"Transaction date (YYYY-MM-DD). Not updated on re-import to preserve balance."},
+      {Field:"Reference",Description:"Cheque no / UTR / transaction ID — editable."},
+      {Field:"Status",Description:"Reconciled / Unreconciled / Void / Duplicate / Follow-Up — editable."},
+      {Field:"Type",Description:"Debit or Credit — NOT updated on re-import (balance-critical)."},
+      {Field:"Description",Description:"Transaction narration — editable."},
+      {Field:"Payee",Description:"Merchant or party name — editable."},
+      {Field:"Category",Description:"Category tag (e.g. Food, Housing::Rent) — editable."},
+      {Field:"Debit",Description:"Withdrawal amount — NOT updated on re-import (balance-critical)."},
+      {Field:"Credit",Description:"Deposit amount — NOT updated on re-import (balance-critical)."},
+      {Field:"Notes",Description:"Free-text notes — editable."},
+      {Field:"Tags",Description:"Comma-separated tags — editable."},
+      {Field:"",Description:""},
+      {Field:"HOW TO RE-IMPORT",Description:"Edit any editable fields above, then go to the same ledger and click ⬆ Import Excel. The app will detect MM_ID and update existing transactions without creating duplicates."},
+    ];
+    const wsInfo=XL.utils.json_to_sheet(infoRows);
+    wsInfo["!cols"]=[{wch:18},{wch:80}];
+    XL.utils.book_append_sheet(wb,wsInfo,"How to Re-import");
+    const safeName=(accountName||"ledger").replace(/[^a-zA-Z0-9\s\-_]/g,"").replace(/\s+/g,"_").slice(0,40);
+    const today=new Date().toISOString().split("T")[0];
+    XL.writeFile(wb,`${safeName}-txns-${today}.xlsx`);
+  }catch(e){console.error("[Export] Failed:",e);alert("Export failed: "+e.message);}
+};
+
+const ImportTxModal=({onImport,onClose,categories,accType="bank",existingTxns=[],onUpsert})=>{
   const STEPS=["upload","map","preview","done"];
   const[step,setStep]=useState("upload");
-  const[rows,setRows]=useState([]);     // raw rows from file
+  const[rows,setRows]=useState([]);
   const[headers,setHeaders]=useState([]);
-  const[map,setMap]=useState({});       // field → header column
+  const[map,setMap]=useState({});
   const[preview,setPreview]=useState([]);
   const[importing,setImporting]=useState(false);
   const[result,setResult]=useState(null);
   const[fileName,setFileName]=useState("");
   const[parseError,setParseError]=useState("");
   const[defaultType,setDefaultType]=useState(accType==="card"?"debit":"debit");
+  const[upsertMode,setUpsertMode]=useState(false); /* true when file has MM_ID column */
+  const[upsertPreview,setUpsertPreview]=useState(null); /* {toUpdate:[],toAdd:[],skipped:[]} */
   const flatC=flatCats(categories);
 
   const fieldDefs=[
@@ -4793,6 +4907,15 @@ const ImportTxModal=({onImport,onClose,categories,accType="bank"})=>{
         if(!hdrs.length||!dataRows.length){setParseError("No data found in file. Make sure the file has a header row and data rows.");return;}
         setHeaders(hdrs);
         setRows(dataRows);
+        /* ── Detect MM export (upsert mode) ── */
+        if(hdrs[0]==="MM_ID"){
+          setUpsertMode(true);
+          setStep("preview"); /* skip mapping — format is fixed */
+          /* Build upsert preview immediately */
+          buildUpsertPreviewFromRows(hdrs,dataRows);
+          return;
+        }
+        setUpsertMode(false);
         // Auto-detect column mapping
         const autoMap={};
         for(const fd of fieldDefs){
@@ -4868,6 +4991,62 @@ const ImportTxModal=({onImport,onClose,categories,accType="bank"})=>{
     });
     setPreview({txns,skipped});
     setStep("preview");
+  };
+
+  /* ── Build upsert preview from MM-exported rows ── */
+  const buildUpsertPreviewFromRows=(hdrs,dataRows)=>{
+    const col=name=>hdrs.indexOf(name);
+    const g=(row,name)=>{const i=col(name);return i>=0?(row[i]!==undefined&&row[i]!==null?row[i].toString().trim():""):"";};
+    const existingById={};
+    (existingTxns||[]).forEach(tx=>{existingById[tx.id]=tx;});
+    const toUpdate=[];
+    const toAdd=[];
+    const skipped=[];
+    dataRows.forEach((row,i)=>{
+      const mmId=g(row,"MM_ID");
+      if(!mmId){skipped.push(i+2);return;}
+      const desc=g(row,"Description");
+      const payee=g(row,"Payee");
+      const txNum=g(row,"Reference");
+      const catRaw=g(row,"Category");
+      const notes=g(row,"Notes");
+      const tags=g(row,"Tags");
+      const status=g(row,"Status");
+      const catMatch=flatC.find(c=>c.toLowerCase()===catRaw.toLowerCase())||(catRaw||"");
+      if(existingById[mmId]){
+        /* Matched — build update object */
+        toUpdate.push({id:mmId,desc,payee,txNum,cat:catMatch,notes,tags,status,
+          _orig:existingById[mmId]});
+      }else{
+        /* New row — needs date and amount to create */
+        const rawDate=g(row,"Date");
+        const date=parseDate(rawDate)||rawDate;
+        const debitVal=parseAmt(g(row,"Debit"));
+        const creditVal=parseAmt(g(row,"Credit"));
+        if(!date||(debitVal===0&&creditVal===0)){skipped.push(i+2);return;}
+        const type=debitVal>0?"debit":"credit";
+        const amount=debitVal>0?debitVal:creditVal;
+        toAdd.push({id:uid(),date,amount,type,desc:desc||payee||"Imported",
+          payee,txNum,cat:catMatch,notes,tags,
+          status:status||"Reconciled",
+          txType:type==="credit"?(accType==="card"?"Payment":"Deposit"):accType==="card"?"Purchase":"Withdrawal",
+        });
+      }
+    });
+    setUpsertPreview({toUpdate,toAdd,skipped});
+  };
+
+  const doUpsert=()=>{
+    setImporting(true);
+    if(upsertPreview.toUpdate.length>0&&onUpsert){
+      onUpsert(upsertPreview.toUpdate.map(({id,desc,payee,txNum,cat,notes,tags,status})=>({id,desc,payee,txNum,cat,notes,tags,status})));
+    }
+    if(upsertPreview.toAdd.length>0&&onImport){
+      onImport(upsertPreview.toAdd);
+    }
+    setResult({updated:upsertPreview.toUpdate.length,added:upsertPreview.toAdd.length,skipped:upsertPreview.skipped.length});
+    setStep("done");
+    setImporting(false);
   };
 
   /* ── Download template -- generates CSV (universally supported, no SheetJS write needed) */
@@ -5006,68 +5185,149 @@ const ImportTxModal=({onImport,onClose,categories,accType="bank"})=>{
     ),
 
     /* ── STEP 3: Preview & Confirm ── */
-    step==="preview"&&preview&&React.createElement("div",null,
-      React.createElement("div",{style:{display:"flex",gap:12,marginBottom:14,flexWrap:"wrap"}},
-        React.createElement("div",{style:{background:"rgba(22,163,74,.1)",border:"1px solid rgba(22,163,74,.3)",borderRadius:8,padding:"10px 16px",flex:1}},
-          React.createElement("div",{style:{fontSize:11,color:"#16a34a",textTransform:"uppercase",letterSpacing:.5}},"Will Import"),
-          React.createElement("div",{style:{fontSize:24,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#16a34a"}},preview.txns.length+" rows")
+    step==="preview"&&React.createElement("div",null,
+      /* ── UPSERT MODE ── */
+      upsertMode&&upsertPreview&&React.createElement(React.Fragment,null,
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,padding:"9px 14px",background:"rgba(14,116,144,.08)",border:"1px solid rgba(14,116,144,.3)",borderRadius:8,marginBottom:14,fontSize:12,color:"#0e7490",fontWeight:600}},
+          React.createElement("span",{style:{fontSize:16}},"🔄"),
+          "Re-import mode — MM_ID column detected. Existing transactions will be updated, new rows added, no duplicates created."
         ),
-        preview.skipped.length>0&&React.createElement("div",{style:{background:"rgba(194,65,12,.1)",border:"1px solid rgba(194,65,12,.3)",borderRadius:8,padding:"10px 16px",flex:1}},
-          React.createElement("div",{style:{fontSize:11,color:"#c2410c",textTransform:"uppercase",letterSpacing:.5}},"Skipped (no amount)"),
-          React.createElement("div",{style:{fontSize:24,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#c2410c"}},preview.skipped.length+" rows")
-        ),
-        React.createElement("div",{style:{background:"var(--accentbg2)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 16px",flex:1}},
-          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5}},"Net Change"),
-          React.createElement("div",{style:{fontSize:18,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"var(--accent)"}},
-            INR(preview.txns.reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0))
+        React.createElement("div",{style:{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap"}},
+          React.createElement("div",{style:{background:"rgba(29,78,216,.08)",border:"1px solid rgba(29,78,216,.3)",borderRadius:8,padding:"10px 16px",flex:1,minWidth:100}},
+            React.createElement("div",{style:{fontSize:10,color:"#1d4ed8",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}},"✏ Will Update"),
+            React.createElement("div",{style:{fontSize:24,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#1d4ed8"}},upsertPreview.toUpdate.length)
+          ),
+          upsertPreview.toAdd.length>0&&React.createElement("div",{style:{background:"rgba(22,163,74,.08)",border:"1px solid rgba(22,163,74,.3)",borderRadius:8,padding:"10px 16px",flex:1,minWidth:100}},
+            React.createElement("div",{style:{fontSize:10,color:"#16a34a",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}},"＋ New Rows"),
+            React.createElement("div",{style:{fontSize:24,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#16a34a"}},upsertPreview.toAdd.length)
+          ),
+          upsertPreview.skipped.length>0&&React.createElement("div",{style:{background:"rgba(194,65,12,.08)",border:"1px solid rgba(194,65,12,.3)",borderRadius:8,padding:"10px 16px",flex:1,minWidth:100}},
+            React.createElement("div",{style:{fontSize:10,color:"#c2410c",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}},"⊘ Skipped"),
+            React.createElement("div",{style:{fontSize:24,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#c2410c"}},upsertPreview.skipped.length)
           )
-        )
-      ),
-      /* Transaction preview table */
-      React.createElement("div",{style:{border:"1px solid var(--border)",borderRadius:8,overflow:"hidden",marginBottom:14}},
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"100px 1fr 80px 80px 80px",padding:"7px 10px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:11,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4}},"Date","Description","Type","Amount","Category"),
-        React.createElement("div",{style:{maxHeight:260,overflowY:"auto"}},
-          preview.txns.map(tx=>React.createElement("div",{key:tx.id,className:"tr",style:{display:"grid",gridTemplateColumns:"100px 1fr 80px 80px 80px",padding:"8px 10px",borderBottom:"1px solid var(--border2)",alignItems:"center"}},
-            React.createElement("div",{style:{fontSize:11,color:"var(--text4)",fontFamily:"'Sora',sans-serif"}},dmyFmt(tx.date)),
-            React.createElement("div",{style:{fontSize:12,color:"var(--text2)",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
-              tx.desc||(tx.payee||"--"),
-              tx.payee&&tx.desc&&React.createElement("span",{style:{fontSize:10,color:"var(--text6)",marginLeft:6}},"↳ "+tx.payee)
-            ),
-            React.createElement("div",null,
-              React.createElement("span",{style:{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:10,background:tx.type==="credit"?"rgba(22,163,74,.15)":"rgba(239,68,68,.15)",color:tx.type==="credit"?"#16a34a":"#ef4444"}},tx.type)
-            ),
-            React.createElement("div",{style:{fontSize:12,fontWeight:700,color:tx.type==="credit"?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif",textAlign:"right"}},INR(tx.amount)),
-            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},tx.cat||"--")
-          ))
-        )
-      ),
-      preview.skipped.length>0&&React.createElement("div",{style:{marginBottom:12,fontSize:11,color:"var(--text5)"}},
-        "ℹ Skipped rows (zero amount or parse error): "+preview.skipped.join(", ")
-      ),
-      React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
-        React.createElement(Btn,{onClick:doImport,disabled:importing||!preview.txns.length,sx:{flex:1,justifyContent:"center"}},
-          importing?"Importing…":"✓ Confirm Import "+preview.txns.length+" Transactions"
         ),
-        React.createElement(Btn,{v:"secondary",onClick:()=>setStep("map"),sx:{justifyContent:"center"}},"← Back")
+        /* Update preview table */
+        upsertPreview.toUpdate.length>0&&React.createElement("div",{style:{border:"1px solid var(--border)",borderRadius:8,overflow:"hidden",marginBottom:12}},
+          React.createElement("div",{style:{padding:"6px 12px",background:"rgba(29,78,216,.06)",borderBottom:"1px solid var(--border2)",fontSize:11,fontWeight:700,color:"#1d4ed8",textTransform:"uppercase",letterSpacing:.5}},"Transactions to Update"),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr",padding:"5px 10px",background:"var(--bg4)",borderBottom:"1px solid var(--border2)",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},"Date","Description → New","Category → New","Status → New"),
+          React.createElement("div",{style:{maxHeight:180,overflowY:"auto"}},
+            upsertPreview.toUpdate.map((u,i)=>React.createElement("div",{key:u.id,className:"tr",style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr",padding:"6px 10px",borderBottom:"1px solid var(--border2)",alignItems:"center",fontSize:11}},
+              React.createElement("div",{style:{color:"var(--text5)",fontFamily:"'Sora',sans-serif"}},dmyFmt(u._orig.date)),
+              React.createElement("div",{style:{minWidth:0}},
+                u.desc!==u._orig.desc&&u.desc
+                  ?React.createElement(React.Fragment,null,
+                      React.createElement("div",{style:{color:"var(--text5)",textDecoration:"line-through",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:10}},u._orig.desc||"—"),
+                      React.createElement("div",{style:{color:"var(--accent)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},u.desc)
+                    )
+                  :React.createElement("div",{style:{color:"var(--text4)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},u._orig.desc||"—")
+              ),
+              React.createElement("div",{style:{minWidth:0}},
+                u.cat!==u._orig.cat&&u.cat
+                  ?React.createElement(React.Fragment,null,
+                      React.createElement("div",{style:{color:"var(--text5)",textDecoration:"line-through",fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},u._orig.cat||"—"),
+                      React.createElement("div",{style:{color:"var(--accent)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},u.cat)
+                    )
+                  :React.createElement("div",{style:{color:"var(--text4)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},u._orig.cat||"—")
+              ),
+              React.createElement("div",null,
+                u.status!==u._orig.status&&u.status
+                  ?React.createElement("span",{style:{fontSize:10,color:"var(--accent)",fontWeight:600}},u._orig.status,"→",u.status)
+                  :React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},u._orig.status||"—")
+              )
+            ))
+          )
+        ),
+        upsertPreview.skipped.length>0&&React.createElement("div",{style:{marginBottom:10,fontSize:11,color:"var(--text5)"}},
+          "ℹ Skipped rows (no MM_ID or no amount for new): "+upsertPreview.skipped.join(", ")
+        ),
+        React.createElement("div",{style:{padding:"9px 12px",background:"var(--bg4)",borderRadius:8,border:"1px solid var(--border2)",fontSize:11,color:"var(--text5)",marginBottom:12,lineHeight:1.6}},
+          "⚠ Date, Amount, and Type are never updated to protect your balance. Only Description, Reference, Payee, Category, Notes, Tags, and Status are updated."
+        ),
+        React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
+          React.createElement(Btn,{
+            onClick:doUpsert,
+            disabled:importing||(upsertPreview.toUpdate.length===0&&upsertPreview.toAdd.length===0),
+            sx:{flex:1,justifyContent:"center"}
+          },importing?"Processing…":"✓ Apply "+upsertPreview.toUpdate.length+" Updates"+(upsertPreview.toAdd.length>0?" + "+upsertPreview.toAdd.length+" New":"")),
+          React.createElement(Btn,{v:"secondary",onClick:()=>{setStep("upload");setUpsertMode(false);setUpsertPreview(null);},sx:{justifyContent:"center"}},"← Back")
+        )
+      ),
+      /* ── NORMAL IMPORT MODE ── */
+      !upsertMode&&preview&&React.createElement(React.Fragment,null,
+        React.createElement("div",{style:{display:"flex",gap:12,marginBottom:14,flexWrap:"wrap"}},
+          React.createElement("div",{style:{background:"rgba(22,163,74,.1)",border:"1px solid rgba(22,163,74,.3)",borderRadius:8,padding:"10px 16px",flex:1}},
+            React.createElement("div",{style:{fontSize:11,color:"#16a34a",textTransform:"uppercase",letterSpacing:.5}},"Will Import"),
+            React.createElement("div",{style:{fontSize:24,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#16a34a"}},preview.txns.length+" rows")
+          ),
+          preview.skipped.length>0&&React.createElement("div",{style:{background:"rgba(194,65,12,.1)",border:"1px solid rgba(194,65,12,.3)",borderRadius:8,padding:"10px 16px",flex:1}},
+            React.createElement("div",{style:{fontSize:11,color:"#c2410c",textTransform:"uppercase",letterSpacing:.5}},"Skipped (no amount)"),
+            React.createElement("div",{style:{fontSize:24,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#c2410c"}},preview.skipped.length+" rows")
+          ),
+          React.createElement("div",{style:{background:"var(--accentbg2)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 16px",flex:1}},
+            React.createElement("div",{style:{fontSize:11,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5}},"Net Change"),
+            React.createElement("div",{style:{fontSize:18,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"var(--accent)"}},
+              INR(preview.txns.reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0))
+            )
+          )
+        ),
+        React.createElement("div",{style:{border:"1px solid var(--border)",borderRadius:8,overflow:"hidden",marginBottom:14}},
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"100px 1fr 80px 80px 80px",padding:"7px 10px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:11,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4}},"Date","Description","Type","Amount","Category"),
+          React.createElement("div",{style:{maxHeight:260,overflowY:"auto"}},
+            preview.txns.map(tx=>React.createElement("div",{key:tx.id,className:"tr",style:{display:"grid",gridTemplateColumns:"100px 1fr 80px 80px 80px",padding:"8px 10px",borderBottom:"1px solid var(--border2)",alignItems:"center"}},
+              React.createElement("div",{style:{fontSize:11,color:"var(--text4)",fontFamily:"'Sora',sans-serif"}},dmyFmt(tx.date)),
+              React.createElement("div",{style:{fontSize:12,color:"var(--text2)",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
+                tx.desc||(tx.payee||"--"),
+                tx.payee&&tx.desc&&React.createElement("span",{style:{fontSize:10,color:"var(--text6)",marginLeft:6}},"↳ "+tx.payee)
+              ),
+              React.createElement("div",null,
+                React.createElement("span",{style:{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:10,background:tx.type==="credit"?"rgba(22,163,74,.15)":"rgba(239,68,68,.15)",color:tx.type==="credit"?"#16a34a":"#ef4444"}},tx.type)
+              ),
+              React.createElement("div",{style:{fontSize:12,fontWeight:700,color:tx.type==="credit"?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif",textAlign:"right"}},INR(tx.amount)),
+              React.createElement("div",{style:{fontSize:10,color:"var(--text5)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},tx.cat||"--")
+            ))
+          )
+        ),
+        preview.skipped.length>0&&React.createElement("div",{style:{marginBottom:12,fontSize:11,color:"var(--text5)"}},
+          "ℹ Skipped rows (zero amount or parse error): "+preview.skipped.join(", ")
+        ),
+        React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
+          React.createElement(Btn,{onClick:doImport,disabled:importing||!preview.txns.length,sx:{flex:1,justifyContent:"center"}},
+            importing?"Importing…":"✓ Confirm Import "+preview.txns.length+" Transactions"
+          ),
+          React.createElement(Btn,{v:"secondary",onClick:()=>setStep("map"),sx:{justifyContent:"center"}},"← Back")
+        )
       )
     ),
 
     /* ── STEP 4: Done ── */
     step==="done"&&result&&React.createElement("div",{style:{textAlign:"center",padding:"20px 0"}},
       React.createElement("div",{style:{fontSize:52,marginBottom:12}},"✅"),
-      React.createElement("div",{style:{fontSize:20,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"#16a34a",marginBottom:6}},result.count+" transactions imported!"),
-      result.skipped>0&&React.createElement("div",{style:{fontSize:13,color:"var(--text5)",marginBottom:12}},result.skipped+" rows were skipped (no valid amount)."),
-      React.createElement("div",{style:{fontSize:13,color:"var(--text4)",marginBottom:20,lineHeight:1.7}},
-        "All transactions have been added to your account.",React.createElement("br"),
-        "Your balance has been updated accordingly."
-      ),
+      upsertMode
+        ?React.createElement(React.Fragment,null,
+            React.createElement("div",{style:{fontSize:20,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"#16a34a",marginBottom:6}},
+              (result.updated||0)+" updated · "+(result.added||0)+" added"
+            ),
+            result.skipped>0&&React.createElement("div",{style:{fontSize:13,color:"var(--text5)",marginBottom:12}},result.skipped+" rows were skipped."),
+            React.createElement("div",{style:{fontSize:13,color:"var(--text4)",marginBottom:20,lineHeight:1.7}},
+              "Existing transactions have been updated in-place.",React.createElement("br"),
+              "No duplicates were created."
+            )
+          )
+        :React.createElement(React.Fragment,null,
+            React.createElement("div",{style:{fontSize:20,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"#16a34a",marginBottom:6}},result.count+" transactions imported!"),
+            result.skipped>0&&React.createElement("div",{style:{fontSize:13,color:"var(--text5)",marginBottom:12}},result.skipped+" rows were skipped (no valid amount)."),
+            React.createElement("div",{style:{fontSize:13,color:"var(--text4)",marginBottom:20,lineHeight:1.7}},
+              "All transactions have been added to your account.",React.createElement("br"),
+              "Your balance has been updated accordingly."
+            )
+          ),
       React.createElement(Btn,{onClick:onClose,sx:{justifyContent:"center",margin:"0 auto"}},"Close")
     )
   );
 };
 
 /* ── LEDGER TABLE VIEW ─────────────────────────────────────────────────── */
-const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport,onMassUpdateStatus,onMassCategorize,onMassDelete,categories,payees,txTypes,allAccounts,currentAccountId,accentColor,openBalance,accType="bank",isMobile=false,jumpTxId=null,jumpSerial=null})=>{
+const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport,onUpsert,onMassUpdateStatus,onMassCategorize,onMassDelete,categories,payees,txTypes,allAccounts,currentAccountId,accentColor,openBalance,accType="bank",accountName="",isMobile=false,jumpTxId=null,jumpSerial=null})=>{
   const[selId,setSelId]=useState(null);
   const jumpRowRef=React.useRef(null);
   const[jumpActive,setJumpActive]=useState(false); /* true = show ONLY the jumped-to tx */
@@ -5408,7 +5668,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
       /* Edit modal */
       editTx&&React.createElement(TxEditModal,{tx:editTx,categories,payees,txTypes,allAccounts:allAccounts||[],onSave:(updated)=>{onEdit(updated,editTx);setEditTx(null);setSelId(updated.id);},onClose:()=>setEditTx(null)}),
       confirmDel&&React.createElement(ConfirmModal,{msg:`Delete "${confirmDel.desc||confirmDel.payee||"this transaction"}"? This will adjust your balance.`,onConfirm:()=>{onDelete(confirmDel);setConfirmDel(null);setSelId(null);},onCancel:()=>setConfirmDel(null)}),
-      importOpen&&React.createElement(ImportTxModal,{accType,categories,onMassUpdateStatus:(ids,status)=>{if(onMassUpdateStatus)onMassUpdateStatus(ids,status);},onImport:txns=>{if(onImport)onImport(txns);setImportOpen(false);},onClose:()=>setImportOpen(false)})
+      importOpen&&React.createElement(ImportTxModal,{accType,categories,existingTxns:transactions,onUpsert:updates=>{if(onUpsert)onUpsert(updates);},onMassUpdateStatus:(ids,status)=>{if(onMassUpdateStatus)onMassUpdateStatus(ids,status);},onImport:txns=>{if(onImport)onImport(txns);setImportOpen(false);},onClose:()=>setImportOpen(false)})
     );
   }
   /* ── END MOBILE VIEW ─────────────────────────────────────────────────── */
@@ -5913,6 +6173,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
             React.createElement("button",{onClick:()=>{if(!selTx)return;const updated={...selTx,status:selTx.status==="Reconciled"?"Unreconciled":"Reconciled"};onEdit(updated,selTx);},disabled:!selTx,style:tbBtn("#16a34a","rgba(22,163,74,.12)",!selTx)},(selTx&&selTx.status)==="Reconciled"?"○ Unreconcile":"✓ Reconcile"),
             React.createElement("div",{style:{width:1,height:22,background:"var(--border)",margin:"0 4px"}}),
             React.createElement("button",{onClick:()=>setImportOpen(true),style:tbBtn("#0e7490","rgba(14,116,144,.12)")},"⬆ Import Excel"),
+            React.createElement("button",{onClick:()=>exportLedgerXlsx(filtered,accountName,snMap),style:tbBtn("#16a34a","rgba(22,163,74,.10)")},"⬇ Export Excel"),
             React.createElement("div",{style:{flex:1}}),
             /* Active filter summary chips — visible when panel is hidden */
             !showFilters&&activeFilterCount>0&&React.createElement("div",{style:{display:"flex",gap:4,alignItems:"center",marginRight:4,flexShrink:0,flexWrap:"wrap"}},
@@ -5961,6 +6222,8 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
     importOpen&&React.createElement(ImportTxModal,{
       accType,
       categories,
+      existingTxns:transactions,
+      onUpsert:updates=>{if(onUpsert)onUpsert(updates);},
       onMassUpdateStatus:(ids,status)=>{if(onMassUpdateStatus)onMassUpdateStatus(ids,status);},
       onImport:txns=>{if(onImport)onImport(txns);setImportOpen(false);},
       onClose:()=>setImportOpen(false)
@@ -6956,7 +7219,7 @@ const TxForm=({onAdd,categories,payees,txTypes,allAccounts,currentAccountId,disp
 };
 
 /* ── INLINE TRANSACTION PANEL ────────────────────────────────────────── */
-const TxPanel=({account,label,onAddTx,onEditTx,onDeleteTx,onDupTx,onSplitTx,onImportTx,onMassUpdateTx,onMassCatTx,onMassDeleteTx,accType="bank",accentColor="#0e7490",categories,payees,txTypes,allAccounts,openBalance,dispatch,state,isMobile=false,jumpTxId=null,jumpSerial=null})=>{
+const TxPanel=({account,label,onAddTx,onEditTx,onDeleteTx,onDupTx,onSplitTx,onImportTx,onUpsertTx,onMassUpdateTx,onMassCatTx,onMassDeleteTx,accType="bank",accentColor="#0e7490",categories,payees,txTypes,allAccounts,openBalance,dispatch,state,isMobile=false,jumpTxId=null,jumpSerial=null})=>{
   const[addOpen,setAddOpen]=useState(false);
   if(!account)return React.createElement("div",{className:"si",style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:14,color:"var(--text6)",background:"var(--bg5)",borderRadius:14,border:"1px dashed var(--border)",minHeight:300}},
     React.createElement("div",{style:{fontSize:36}},"👈"),
@@ -6997,6 +7260,7 @@ const TxPanel=({account,label,onAddTx,onEditTx,onDeleteTx,onDupTx,onSplitTx,onIm
       openBalance:openBalance||0,
       categories,payees,txTypes,allAccounts,
       currentAccountId:account.id,
+      accountName:account.name||"",
       accType,
       jumpTxId,
       jumpSerial,
@@ -7006,6 +7270,7 @@ const TxPanel=({account,label,onAddTx,onEditTx,onDeleteTx,onDupTx,onSplitTx,onIm
       onDuplicate:onDupTx,
       onSplit:onSplitTx,
       onImport:onImportTx,
+      onUpsert:onUpsertTx,
       onMassUpdateStatus:onMassUpdateTx,
       onMassCategorize:onMassCatTx,
       onMassDelete:onMassDeleteTx
@@ -8807,6 +9072,7 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
           else{dispatch({type:"ADD_BANK_TX",id:selD.id,tx});dispatch({type:"UPD_BANK_BAL",id:selD.id,tx});}
         },
         onImportTx:txns=>{if(selD)dispatch({type:"IMPORT_BULK_TX",accType:"bank",accId:selD.id,txns});},
+        onUpsertTx:updates=>{if(selD)dispatch({type:"UPDATE_BULK_TX",accType:"bank",accId:selD.id,updates});},
         onMassUpdateTx:(ids,status)=>{if(selD)dispatch({type:"MASS_UPDATE_STATUS",accType:"bank",accId:selD.id,ids,status});},
         onMassCatTx:(ids,cat,payee)=>{if(selD)dispatch({type:"MASS_UPDATE_CAT",accType:"bank",accId:selD.id,ids,cat,payee});},
         onMassDeleteTx:(ids)=>{if(selD)dispatch({type:"MASS_DEL_BANK_TX",accId:selD.id,ids});},
@@ -9010,6 +9276,7 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
           else{dispatch({type:"ADD_CARD_TX",id:selD.id,tx});dispatch({type:"UPD_CARD_BAL",id:selD.id,tx});}
         },
         onImportTx:txns=>{if(selD)dispatch({type:"IMPORT_BULK_TX",accType:"card",accId:selD.id,txns});},
+        onUpsertTx:updates=>{if(selD)dispatch({type:"UPDATE_BULK_TX",accType:"card",accId:selD.id,updates});},
         onMassUpdateTx:(ids,status)=>{if(selD)dispatch({type:"MASS_UPDATE_STATUS",accType:"card",accId:selD.id,ids,status});},
         onMassCatTx:(ids,cat,payee)=>{if(selD)dispatch({type:"MASS_UPDATE_CAT",accType:"card",accId:selD.id,ids,cat,payee});},
         onMassDeleteTx:(ids)=>{if(selD)dispatch({type:"MASS_DEL_CARD_TX",accId:selD.id,ids});},
@@ -9071,7 +9338,7 @@ const CashSection=React.memo(({cash,dispatch,categories,payees,allBanks,allCards
           accentColor:"var(--accent)",
           openBalance:cash.balance-cash.transactions.filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0),
           accType:"cash",
-          categories,payees,
+          accountName:"Cash",
           jumpTxId,
           jumpSerial,
           txTypes:TX_TYPES_CASH,
@@ -9083,6 +9350,7 @@ const CashSection=React.memo(({cash,dispatch,categories,payees,allBanks,allCards
           onDuplicate:tx=>dispatch({type:"DUP_CASH_TX",tx}),
           onSplit:(origTx,splits)=>dispatch({type:"SPLIT_TX",accType:"cash",accId:"__cash__",originalTx:origTx,splits}),
           onImport:txns=>dispatch({type:"IMPORT_BULK_TX",accType:"cash",accId:"__cash__",txns}),
+          onUpsert:updates=>dispatch({type:"UPDATE_BULK_TX",accType:"cash",accId:"__cash__",updates}),
           onMassUpdateStatus:(ids,status)=>dispatch({type:"MASS_UPDATE_STATUS",accType:"cash",accId:"__cash__",ids,status}),
           onMassCategorize:(ids,cat,payee)=>dispatch({type:"MASS_UPDATE_CAT",accType:"cash",accId:"__cash__",ids,cat,payee}),
           onMassDelete:(ids)=>dispatch({type:"MASS_DEL_CASH_TX",ids})
