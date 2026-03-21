@@ -2036,10 +2036,23 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.32.25";
+const APP_VERSION="3.32.27";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.32.27",date:"2026-03-21",title:"Enhancement — Donut chart shows sub-category breakdown in Where Money Comes From & Where Money Goes",changes:[
+    "Previously the donut chart always used top-level categories as slices. When all transactions share one parent (e.g. all income tagged as 'Income'), the donut showed a single uninformative solid ring.",
+    "Fix: when Sub-categories is checked AND sub-category data exists, the donut automatically uses sub-categories (up to 10 slices) instead of top-level categories. Falls back to top-level when unchecked or no subs exist.",
+    "Donut legend below the chart is updated in sync — always lists exactly the same items shown in the chart with matching PAL colours and % share.",
+    "A small 'By sub-category' / 'By category' label appears below the donut to make the current grouping level clear.",
+    "Applied to both RptMoneyComes and RptMoneyGoes.",
+    "Negative sub-category values (refunds/reversals) filtered out of the donut via Math.max(v,0) and .filter(d=>d.value>0).",
+  ]},
+  {version:"3.32.26",date:"2026-03-21",title:"Fix — DonutChart invisible when all transactions belong to a single category (e.g. 100% Income)",changes:[
+    "Root cause: DonutChart renders each slice as an SVG arc path. When only one category is present its sweep angle is exactly 360°, making the arc's start and end points identical. SVG arc paths with coincident endpoints are degenerate — the browser discards them, leaving only the grey inner-hole circle visible. Affected: 'Where Money Comes From' (when all income is tagged to one top-level category), 'Where Money Goes' (all spend in one category), and the Snapshot donuts in Classification Breakdown.",
+    "Fix: added a sweep>=359.99 guard inside DonutChart's slice loop. A full-circle slice is now rendered as a plain SVG <circle> element (same radius, same fill colour, same opacity) instead of an arc path. The inner-hole circle is still drawn on top, producing the correct donut appearance with one colour.",
+    "The 359.99 threshold (not exactly 360) guards against floating-point rounding where a near-100% slice might land at e.g. 359.9999998 and still misbehave.",
+  ]},
   {version:"3.32.25",date:"2026-03-21",title:"Crash Fix — SyntaxError in MonteCarloCalc RE Age div (} instead of ))",changes:[
     "Root cause: in the RE Age badge inside MonteCarloCalc's input panel, the closing parenthesis of React.createElement was accidentally written as } instead of ), causing Babel to throw 'Unexpected token, expected \",\"' at parse time and produce a blank screen.",
     "Fix: changed the single erroneous } to ) on that line. No logic change.",
@@ -4566,6 +4579,12 @@ const DonutChart=({data,size=170})=>{
   const cx=size/2,cy=size/2,r=size*.38,ir=size*.23;
   const slices=data.map((d,i)=>{
     const sweep=(d.value/total)*360;
+    /* SVG arc with sweep=360 is degenerate (start===end point → invisible).
+       When a slice covers the full circle, draw a plain circle instead. */
+    if(sweep>=359.99){
+      angle+=sweep;
+      return React.createElement("circle",{key:i,cx,cy,r,fill:PAL[i%PAL.length],opacity:.9});
+    }
     const a1=angle*(Math.PI/180),a2=(angle+sweep)*(Math.PI/180);
     const x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
     const x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2);
@@ -14410,7 +14429,11 @@ const RptMoneyGoes=({data,from,to,onJumpToLedger})=>{
   const rows=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
   const subRows=Object.entries(bySubCat).sort((a,b)=>b[1]-a[1]);
   const total=rows.reduce((s,[,v])=>s+v,0);
-  const donutData=rows.slice(0,8).map(([n,v])=>({name:n,value:v}));
+  /* Use sub-categories for the donut when showSubs is on and subs exist — gives meaningful
+     breakdown even when all spend falls under one top-level category */
+  const useSubsForDonut=showSubs&&subRows.length>0;
+  const donutItems=(useSubsForDonut?subRows:rows).slice(0,10).map(([n,v])=>({name:useSubsForDonut?catDisplayName(n):n,value:Math.max(v,0)})).filter(d=>d.value>0);
+  const donutData=donutItems;
   const months=Object.keys(Object.fromEntries(allTx.map(t=>[t.date.substr(0,7),1]))).sort();
   const hmRows=buildHeatRows(allTx,months,data.categories);
   return React.createElement("div",{className:"fu"},
@@ -14433,11 +14456,12 @@ const RptMoneyGoes=({data,from,to,onJumpToLedger})=>{
     view==="snapshot"&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"220px 1fr",gap:14,alignItems:"start"}},
       React.createElement(Card,null,
         React.createElement(DonutChart,{data:donutData,size:180}),
-        React.createElement("div",{style:{marginTop:10}},
-          rows.slice(0,8).map(([n,v],i)=>React.createElement("div",{key:n,style:{display:"flex",alignItems:"center",gap:7,marginBottom:5}},
-            React.createElement("span",{style:{width:9,height:9,borderRadius:"50%",background:PAL[i%PAL.length],display:"inline-block",flexShrink:0}}),
-            React.createElement("span",{style:{fontSize:11,color:"var(--text4)",flex:1}},n),
-            React.createElement("span",{style:{fontSize:11,color:"var(--text3)",fontWeight:600}},total>0?((v/total)*100).toFixed(1)+"%":"0%")
+        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textAlign:"center",marginBottom:6,marginTop:4}},useSubsForDonut?"By sub-category":"By category"),
+        React.createElement("div",{style:{marginTop:6}},
+          donutItems.map(({name,value},i)=>React.createElement("div",{key:name,style:{display:"flex",alignItems:"center",gap:7,marginBottom:5}},
+            React.createElement("span",{style:{width:9,height:9,borderRadius:"50%",background:PAL[i%PAL.length],flexShrink:0,display:"inline-block"}}),
+            React.createElement("span",{style:{fontSize:11,color:"var(--text4)",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},name),
+            React.createElement("span",{style:{fontSize:11,color:"var(--text3)",fontWeight:600,flexShrink:0}},total>0?((value/total)*100).toFixed(1)+"%":"0%")
           ))
         )
       ),
@@ -14523,7 +14547,11 @@ const RptMoneyComes=({data,from,to,onJumpToLedger})=>{
   const rows=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
   const subRows=Object.entries(bySubCat).sort((a,b)=>b[1]-a[1]);
   const total=rows.reduce((s,[,v])=>s+v,0);
-  const donutData=rows.slice(0,8).map(([n,v])=>({name:n,value:v}));
+  /* Use sub-categories for the donut when showSubs is on and subs exist — gives meaningful
+     breakdown even when all income falls under one top-level category like "Income" */
+  const useSubsForDonut=showSubs&&subRows.length>0;
+  const donutItems=(useSubsForDonut?subRows:rows).slice(0,10).map(([n,v])=>({name:useSubsForDonut?catDisplayName(n):n,value:Math.max(v,0)})).filter(d=>d.value>0);
+  const donutData=donutItems;
   const months=Object.keys(Object.fromEntries(allTx.map(t=>[t.date.substr(0,7),1]))).sort();
   const hmRows=buildHeatRows(allTx,months,data.categories);
   return React.createElement("div",{className:"fu"},
@@ -14545,11 +14573,12 @@ const RptMoneyComes=({data,from,to,onJumpToLedger})=>{
     view==="snapshot"&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"220px 1fr",gap:14,alignItems:"start"}},
       React.createElement(Card,null,
         React.createElement(DonutChart,{data:donutData,size:180}),
-        React.createElement("div",{style:{marginTop:10}},
-          rows.slice(0,8).map(([n,v],i)=>React.createElement("div",{key:n,style:{display:"flex",alignItems:"center",gap:7,marginBottom:5}},
-            React.createElement("span",{style:{width:9,height:9,borderRadius:"50%",background:PAL[i%PAL.length],display:"inline-block",flexShrink:0}}),
-            React.createElement("span",{style:{fontSize:11,color:"var(--text4)",flex:1}},n),
-            React.createElement("span",{style:{fontSize:11,color:"var(--text3)",fontWeight:600}},total>0?((v/total)*100).toFixed(1)+"%":"0%")
+        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textAlign:"center",marginBottom:6,marginTop:4}},useSubsForDonut?"By sub-category":"By category"),
+        React.createElement("div",{style:{marginTop:6}},
+          donutItems.map(({name,value},i)=>React.createElement("div",{key:name,style:{display:"flex",alignItems:"center",gap:7,marginBottom:5}},
+            React.createElement("span",{style:{width:9,height:9,borderRadius:"50%",background:PAL[i%PAL.length],flexShrink:0,display:"inline-block"}}),
+            React.createElement("span",{style:{fontSize:11,color:"var(--text4)",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},name),
+            React.createElement("span",{style:{fontSize:11,color:"var(--text3)",fontWeight:600,flexShrink:0}},total>0?((value/total)*100).toFixed(1)+"%":"0%")
           ))
         )
       ),
