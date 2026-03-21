@@ -2036,10 +2036,14 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.32.27";
+const APP_VERSION="3.32.28";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.32.28",date:"2026-03-21",title:"Cleanup — Remove 'How to Use This App' section from Info tab",changes:[
+    "Removed the entire '❓ How to Use This App' card from the Info section. This card contained the Quick Start steps, collapsible tab group cards (Accounts & Transactions, Investments, Planning & Tools), and the GrpHdr / TabCard sub-components.",
+    "The rest of the Info section is unchanged: Developer, Version & Changelog, Data & Privacy, Permitted Use, and the legal/copyright block remain.",
+  ]},
   {version:"3.32.27",date:"2026-03-21",title:"Enhancement — Donut chart shows sub-category breakdown in Where Money Comes From & Where Money Goes",changes:[
     "Previously the donut chart always used top-level categories as slices. When all transactions share one parent (e.g. all income tagged as 'Income'), the donut showed a single uninformative solid ring.",
     "Fix: when Sub-categories is checked AND sub-category data exists, the donut automatically uses sub-categories (up to 10 slices) instead of top-level categories. Falls back to top-level when unchecked or no subs exist.",
@@ -23852,110 +23856,6 @@ const InfoSection=React.memo(({isMobile})=>{
       React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?18:22,fontWeight:800,color:"var(--text)",marginBottom:4}},"App Information"),
       React.createElement("p",{style:{fontSize:13,color:"var(--text5)",lineHeight:1.6,margin:0}},"Developer details, version history, copyright, and terms of authorised use for ₹ Money Manager.")
     ),
-
-    /* ── How to Use This App ── */
-    (()=>{
-      const[openGroup,setOpenGroup]=React.useState({start:true,accounts:true,investments:true,more:true});
-      const toggle=k=>setOpenGroup(p=>({...p,[k]:!p[k]}));
-      const GrpHdr=({k,label,icon,count})=>React.createElement("div",{
-        onClick:()=>toggle(k),
-        style:{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",borderRadius:8,cursor:"pointer",
-          background:"var(--accentbg2)",border:"1px solid var(--border2)",marginBottom:openGroup[k]?8:0,
-          userSelect:"none",transition:"background .15s"},
-        onMouseEnter:e=>{e.currentTarget.style.background="var(--accentbg)";},
-        onMouseLeave:e=>{e.currentTarget.style.background="var(--accentbg2)";},
-      },
-        React.createElement("span",{style:{fontSize:16}},icon),
-        React.createElement("span",{style:{flex:1,fontSize:13,fontWeight:700,color:"var(--text2)",fontFamily:"'Sora',sans-serif"}},label),
-        React.createElement("span",{style:{fontSize:10,color:"var(--text5)",marginRight:6}},count+" tabs"),
-        React.createElement("span",{style:{fontSize:11,color:"var(--text5)",transform:openGroup[k]?"rotate(180deg)":"rotate(0deg)",display:"inline-block",transition:"transform .2s"}},"▼")
-      );
-      const TabCard=({icon,name,desc,tips})=>React.createElement("div",{style:{
-        display:"flex",gap:12,alignItems:"flex-start",
-        padding:"11px 14px",borderRadius:10,background:"var(--bg4)",
-        border:"1px solid var(--border2)",marginBottom:8,
-      }},
-        React.createElement("div",{style:{
-          width:36,height:36,borderRadius:9,background:"var(--accentbg)",
-          display:"flex",alignItems:"center",justifyContent:"center",
-          fontSize:18,flexShrink:0,
-        }},icon),
-        React.createElement("div",{style:{flex:1,minWidth:0}},
-          React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif",marginBottom:3}},name),
-          React.createElement("div",{style:{fontSize:12,color:"var(--text4)",lineHeight:1.6,marginBottom:tips.length?6:0}},desc),
-          tips.length>0&&React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:3}},
-            tips.map((t,i)=>React.createElement("div",{key:i,style:{display:"flex",gap:6,alignItems:"flex-start"}},
-              React.createElement("span",{style:{color:"var(--accent)",fontSize:11,flexShrink:0,marginTop:2}},"•"),
-              React.createElement("span",{style:{fontSize:11,color:"var(--text5)",lineHeight:1.5}},t)
-            ))
-          )
-        )
-      );
-
-      const GROUPS=[
-        {k:"accounts",icon:"🏦",label:"Accounts & Transactions",tabs:[
-          {icon:"🏠",name:"Dashboard",desc:"Your financial command centre — net worth, account balances, recent transactions, and a cash-flow snapshot at a glance.",tips:["Check net worth and month-to-date income vs expenses here every morning.","Click any account card to jump straight to its ledger.","Scroll down to see recent transactions across all accounts."]},
-          {icon:"🏦",name:"Bank Accounts",desc:"Manage all your savings, current, salary, and NRE bank accounts. Add transactions manually or import from Excel/CSV bank statements.",tips:["Use Add Account to create each bank account with its opening balance.","Tap Import Transactions to bulk-load from your bank's Excel statement.","Use the Filter bar to search by date range, category, or keyword."]},
-          {icon:"💳",name:"Credit Cards",desc:"Track every credit card — outstanding balance, credit limit, billing cycle, and all card transactions.",tips:["Add a card with its current outstanding amount as the opening balance.","Record every purchase as a debit transaction to keep outstanding accurate.","Pay Card Bill creates a transfer from your bank and clears the outstanding."]},
-          {icon:"💵",name:"Cash Account",desc:"Track physical cash on hand. Record cash income, expenses, and ATM withdrawals.",tips:["Set the opening cash balance in Settings first.","ATM withdrawals should be a debit in Bank and a credit in Cash.","Use the Transfer feature to move money between cash and bank."]},
-          {icon:"🏠",name:"Loan Accounts",desc:"Track all loans — home, vehicle, personal, education. Shows outstanding balance, EMI, and a full amortization schedule.",tips:["Add each loan with its current outstanding (not original principal).","Use Pay EMI to debit your bank/cash and reduce the loan outstanding in one step.","Tap Amortization to see the full repayment schedule month by month."]},
-          {icon:"🗓",name:"Scheduled",desc:"Set up recurring transactions — monthly SIPs, rent, EMIs, subscriptions — so they execute automatically on due dates.",tips:["Create a scheduled entry with frequency (daily/weekly/monthly/yearly) and next due date.","The app auto-executes due transactions on launch; you can also run them manually.","Month-wise groups show total inflow and outflow for each upcoming month."]},
-          {icon:"📋",name:"All Transactions",desc:"A unified ledger combining every transaction from all banks, cards, and cash in one searchable, filterable view.",tips:["Use the Filter panel to slice by date range, account, category, payee, or type.","Multi-select rows to bulk-categorise, reconcile, void, or delete transactions.","Jump to the source account of any transaction using the account chip on each row."]},
-        ]},
-        {k:"investments",icon:"📈",label:"Investments",tabs:[
-          {icon:"📊",name:"Investment Overview",desc:"A portfolio dashboard showing total invested value, current value, overall P&L, and XIRR across all asset classes.",tips:["Click Refresh Live Prices to fetch the latest share prices and MF NAVs.","The donut chart breaks down your portfolio allocation by asset class.","Use the top KPI cards to monitor overall gain/loss and annualised returns."]},
-          {icon:"📈",name:"Mutual Funds",desc:"Track all MF folios — SIP or lump-sum. Records scheme name, AMFI code, units, purchase NAV, and current NAV.",tips:["Enter the AMFI scheme code to enable live NAV refresh from mfapi.in.","Add each SIP instalment as a separate entry to get accurate XIRR.","The P&L column shows absolute gain and percentage return per folio."]},
-          {icon:"📉",name:"Shares",desc:"Track your stock portfolio. Enter ticker symbols (NSE) and the app fetches live prices via Stooq and Yahoo Finance.",tips:["Use the NSE ticker symbol (e.g. RELIANCE, TCS) for live price refresh.","Record the average buy price to track unrealised gain per holding.","Refresh Live Prices fetches current market prices for all holdings at once."]},
-          {icon:"🏦",name:"Fixed Deposits",desc:"Record all FDs with principal, interest rate, tenure, and maturity date. Auto-calculates maturity value and days remaining.",tips:["Add each FD separately — even from the same bank — for individual tracking.","The maturity value is auto-calculated using compound or simple interest.","Sort by maturity date to plan liquidity needs ahead of time."]},
-          {icon:"🏘",name:"Real Estate",desc:"Log property holdings with purchase price, current estimated value, and rental income to include in net worth.",tips:["Update the current value periodically to keep net worth accurate.","Add rental income as a credit transaction in your bank account too.","Real estate value is included in the net worth calculation on the Dashboard."]},
-        ]},
-        {k:"more",icon:"💡",label:"Planning & Tools",tabs:[
-          {icon:"🎯",name:"Financial Goals",desc:"Set savings goals with a target amount, deadline, and linked account. Visualise progress with a live progress bar.",tips:["Link a goal to the bank account where you are building that corpus.","Set a realistic monthly savings amount and the app shows estimated completion date.","Use multiple goals for emergency fund, vacation, house down-payment, etc."]},
-          {icon:"💡",name:"Insights",desc:"Deep analytical tabs: Budget vs Actual, Cash Flow, Spending Breakdown, Subscriptions, FIRE projection, and Net Worth trends.",tips:["Configure your monthly budget targets in Settings then check the Budget tab here.","The FIRE tab estimates your retirement date based on savings rate and corpus target.","Jump from any category row directly to All Transactions filtered to that category."]},
-          {icon:"📝",name:"Notes",desc:"A free-form notepad for financial reminders, account details, passwords (offline only), and any personal finance notes.",tips:["Colour-code notes by category — bills, goals, reminders, passwords, etc.","Notes are stored offline like all other data — never synced to any server.","Pin important notes to keep them at the top of the list."]},
-          {icon:"🔢",name:"Calculator",desc:"A built-in financial calculator for quick arithmetic — useful when entering transactions or checking totals.",tips:["Supports standard arithmetic plus percentage calculations.","Calculation history is shown below the display for reference.","Use it alongside the ledger to verify import totals or split bills."]},
-          {icon:"📊",name:"Reports",desc:"Detailed reports: category summary, cash-flow trends, net worth history, income vs expense, quarterly breakdown, and more.",tips:["Switch between Snapshot (charts), Detailed (tables), and Heatmap views per report.","Click any category row to jump to All Transactions filtered to that category and period.","Export a full HTML report for a permanent record using the Export button."]},
-          {icon:"⚙",name:"Settings",desc:"Configure accounts, categories, payees, themes, PIN lock, backup/restore, file storage, tab visibility, and budget targets.",tips:["Start here first: add your bank accounts, credit cards, and opening balances.","Use Data and Backup regularly to download a JSON backup to your device.","Tab Management lets you hide tabs you do not use to keep the sidebar clean."]},
-          {icon:"ℹ",name:"Info",desc:"App version, developer info, copyright notice, permitted use terms, privacy policy, and this usage guide.",tips:["Check here for the current version and full changelog.","Review the Data and Privacy section to understand how your data is stored."]},
-        ]},
-      ];
-
-      return Block({icon:"❓",title:"How to Use This App",accent:"#0284c7",children:React.createElement("div",null,
-
-        /* Getting Started steps */
-        React.createElement("div",{style:{
-          background:"linear-gradient(135deg,rgba(2,132,199,.07),rgba(2,132,199,.02))",
-          border:"1px solid rgba(2,132,199,.2)",borderRadius:12,padding:"14px 16px",marginBottom:18,
-        }},
-          React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--accent)",textTransform:"uppercase",letterSpacing:.7,marginBottom:10}},"Quick Start — Recommended Setup for New Users"),
-          [
-            "Open Settings and add your bank accounts with their current balances.",
-            "Add credit cards, entering the current outstanding amount.",
-            "Set your cash balance in Settings, then record recent cash transactions.",
-            "Add any loans (home, vehicle, personal) with outstanding amounts.",
-            "In Investments, add your MF folios, stock holdings, and fixed deposits.",
-            "Go to Insights Config in Settings and set monthly budget targets per category.",
-            "Come back to Dashboard to see your complete financial picture in one place.",
-          ].map((t,i)=>React.createElement("div",{key:i,style:{display:"flex",gap:10,alignItems:"flex-start",marginBottom:7}},
-            React.createElement("div",{style:{
-              width:20,height:20,borderRadius:"50%",background:"var(--accent)",
-              color:"white",fontSize:10,fontWeight:800,flexShrink:0,
-              display:"flex",alignItems:"center",justifyContent:"center",marginTop:1,
-            }},i+1),
-            React.createElement("span",{style:{fontSize:12,color:"var(--text3)",lineHeight:1.6}},t)
-          ))
-        ),
-
-        /* Tab groups */
-        GROUPS.map(({k,icon,label,tabs})=>React.createElement("div",{key:k,style:{marginBottom:12}},
-          GrpHdr({k,icon,label,count:tabs.length}),
-          openGroup[k]&&React.createElement("div",{style:{paddingLeft:4}},
-            tabs.map(t=>TabCard(t))
-          )
-        ))
-
-      )});
-    })(),
 
     /* ── Developer Card ── */
     Block({icon:"👨‍💻",title:"Developer",accent:"var(--accent)",children:React.createElement("div",null,
