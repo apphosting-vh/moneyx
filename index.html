@@ -2036,10 +2036,29 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.32.29";
+const APP_VERSION="3.33.3";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.33.3",date:"2026-03-22",title:"Fix — Share button blank screen (React error #310: useState inside IIFE)",changes:[
+    "Root cause: the Share Summary modal was implemented as an IIFE (()=>{...})() inside Dashboard's return. The IIFE called useState(false) for the copy-to-clipboard state. React error #310 means 'Hooks can only be called inside the body of a function component' — an IIFE is not a component, so React throws and blanks the screen.",
+    "Fix: extracted the entire modal into a proper named component ShareSummaryModal defined at module scope before Dashboard. Data needed for the summary (data, allBankTx, thisMonth) is passed as props. The useState hook is now at the top of a real component body. Dashboard renders it as React.createElement(ShareSummaryModal, {data, allBankTx, thisMonth, onClose}).",
+  ]},
+  {version:"3.33.2",date:"2026-03-22",title:"Fix — Notifications tab: duplicate entry in sidebar + blank screen on click",changes:[
+    "Bug 1 — Duplicate tab: STABS array had two {id:'notifications'} entries. Removed the second duplicate.",
+    "Bug 2 — Blank screen: TogRow used 'arguments[0]' which doesn't exist in arrow functions (Babel strict mode throws ReferenceError). Fixed by using the destructured label prop directly.",
+  ]},
+  {version:"3.33.1",date:"2026-03-22",title:"Crash Fix — Orphaned NotificationsPanel body at module scope caused 'return outside of function' SyntaxError",changes:[
+    "Root cause: when the duplicate NotificationsPanel was being removed, the Python removal script found the first closing '};' inside the component (matching the useState/useCallback closings) rather than the component's final '};'. This left the tail of the function body — const testNotif, const SlRow, const notifSupported, and the return statement — stranded at module scope where 'return' is illegal.",
+    "Fix: re-ran the removal targeting the specific 70-line orphan range (lines 17965–18034) between checkAndFireNotifications and CatRulesPanel, leaving exactly one NotificationsPanel definition in the file.",
+  ]},
+  {version:"3.33.0",date:"2026-03-22",title:"Tier 1 Features — SMS Parser, Push Notifications, NW Chart Enhancement, Smart Auto-Tag, WhatsApp/Email Share",changes:[
+    "1. SMS Auto-Parser: new '📲 Parse SMS' button in every bank, card, and cash ledger toolbar. Opens a paste-box modal where the user can paste raw Indian bank SMS alerts (HDFC, SBI, ICICI, Axis, Kotak, IndusInd, Yes Bank, Federal, IDFC, Canara, PNB, BOB, AU Small Finance). Regex patterns extract date, amount, debit/credit direction, description, and reference number. Preview table shows parsed transactions before import; errors listed separately. Parsed rows feed directly into the existing IMPORT_BULK_TX reducer — no new state.",
+    "2. Push Notification Reminders: new '🔔 Notifications' tab in Settings. One-click permission request. Configurable reminders: EMI due (N days before nextDate of scheduled transactions tagged as EMI/loan), credit card bill due (N days before billing due date), SIP/investment reminders (N days before scheduled SIPs), budget alerts (notify when monthly spending hits 80% of plan). Notifications scheduled via setTimeout on app load (same-session) and checked on every tab-focus. A 'Test Notification' button fires an immediate sample.",
+    "3. Net Worth History Chart — enhanced: expanded from a tiny sparkline to a full card with interactive hover tooltip (age/date + value), year-over-year growth annotation, asset vs liability dual-line overlay toggle, and a 'Save snapshot now' one-click button so users don't have to navigate to Insights → Net Worth to record the current month.",
+    "4. Smart Auto-Tag improvements: (a) payee-frequency suggestion — when creating a new rule, top unmatched payees from the last 90 days are surfaced as one-click starters; (b) fuzzy payee match option in applyCatRule (toggleable per rule: exact/contains/fuzzy); (c) 'Apply to All' now shows a per-account breakdown of how many transactions were updated; (d) rule import/export as JSON for backup and sharing.",
+    "5. WhatsApp / Email Monthly Summary Share: new '📤 Share Month' button on Dashboard (top-right, next to the period selector). Generates a clean plain-text financial summary for the current or selected month: total income, total expenses by top-5 category, savings rate, net worth, and any budget overruns. 'Copy to clipboard' button + direct WhatsApp deep-link (wa.me?text=...) + mailto: link for email. Works fully offline.",
+  ]},
   {version:"3.32.29",date:"2026-03-21",title:"Perf — Search infrastructure: debounce, memo fix, flat index in GlobalSearchModal",changes:[
     "Fix 1 — Pre-flattened transaction index: GlobalSearchModal now builds a flat allTxFlat[] array once via useMemo([banks,cards,cash]) instead of running nested banks.forEach/transactions.forEach on every keystroke. The flat array is ~42K items at heavy usage and is built only when account data actually changes, not on every unrelated state update.",
     "Fix 2 — Memo dependency narrowed: results useMemo was dependent on [qLow, state] — the entire app state object. Since state changes on every dispatch (theme changes, prefs, investment prices, etc.) the memo busted constantly even when transaction data was unchanged. Changed to [debouncedQ, allTxFlat, notes, payees, banks, cards] — only the six slices the search actually reads.",
@@ -4834,6 +4853,137 @@ const parseAmt=(raw)=>{
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
+   SMS AUTO-PARSER
+   Parses raw Indian bank SMS alerts into transaction objects.
+   Covers: HDFC, SBI, ICICI, Axis, Kotak, IndusInd, Yes Bank, Federal,
+           IDFC, Canara, PNB, BOB, AU Small Finance, Paytm, PhonePe.
+   ══════════════════════════════════════════════════════════════════════════ */
+const SMS_PATTERNS=[
+  /* ── Debit patterns ── */
+  {type:"debit", re:/(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)\s*(?:has been |is |)(?:debited|deducted|spent|withdrawn)/i},
+  {type:"debit", re:/debited.*?(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)/i},
+  {type:"debit", re:/(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)\s*debited/i},
+  {type:"debit", re:/spent\s+(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)/i},
+  {type:"debit", re:/withdrawn.*?(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)/i},
+  /* ── Credit patterns ── */
+  {type:"credit",re:/(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)\s*(?:has been |is |)(?:credited|received|deposited)/i},
+  {type:"credit",re:/credited.*?(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)/i},
+  {type:"credit",re:/(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)\s*credited/i},
+  {type:"credit",re:/received.*?(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)/i},
+];
+const SMS_DATE_PATTERNS=[
+  /(\d{2}[\/\-]\d{2}[\/\-]\d{2,4})/,
+  /(\d{2}[A-Za-z]{3}\d{2,4})/,
+  /(\d{2}\s+[A-Za-z]{3}\s+\d{2,4})/,
+  /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{4}/i,
+];
+const SMS_REF_RE=/(?:Ref(?:erence|\.?)\s*(?:No\.?|#)?|UPI|UTR|Txn|Ref)[:\s#]*([A-Z0-9]{8,})/i;
+const SMS_DESC_RE=/(?:at|to|from|via|Info:|at merchant|merchant)\s+([A-Za-z0-9 &\-\/.,']+?)(?:\s+on|\s+Ref|\s+UPI|\s+Avl|\s+Available|\s+Bal|$)/i;
+
+function parseSmsDate(raw){
+  const MONTHS={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+  if(!raw)return TODAY();
+  raw=raw.trim();
+  /* DD/MM/YY or DD-MM-YY or DD/MM/YYYY */
+  let m=raw.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{2,4})$/);
+  if(m){const yr=m[3].length===2?"20"+m[3]:m[3];return `${yr}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;}
+  /* DDMonYY or DDMonYYYY */
+  m=raw.match(/^(\d{2})([A-Za-z]{3})(\d{2,4})$/);
+  if(m){const mo=MONTHS[m[2].toLowerCase()];const yr=m[3].length===2?"20"+m[3]:m[3];if(mo)return `${yr}-${String(mo).padStart(2,"0")}-${m[1].padStart(2,"0")}`;}
+  return TODAY();
+}
+
+function parseSingleSms(sms){
+  if(!sms||!sms.trim())return null;
+  let type=null,amount=0;
+  for(const p of SMS_PATTERNS){
+    const m=sms.match(p.re);
+    if(m){type=p.type;amount=parseFloat(m[1].replace(/,/g,""));break;}
+  }
+  if(!type||!amount)return null;
+  let dateStr=TODAY();
+  for(const dp of SMS_DATE_PATTERNS){const dm=sms.match(dp);if(dm){dateStr=parseSmsDate(dm[1]);break;}}
+  const refM=sms.match(SMS_REF_RE);
+  const ref=refM?refM[1]:"";
+  const descM=sms.match(SMS_DESC_RE);
+  const desc=(descM?descM[1].trim():"SMS Import").replace(/\s+/g," ").slice(0,80);
+  return{id:uid(),date:dateStr,amount,type,desc:desc||"SMS Import",txNum:ref,payee:"",cat:"",notes:"",status:"Unreconciled",
+    txType:type==="credit"?"Deposit":"Withdrawal"};
+}
+
+const SmsScanModal=({onImport,onClose,accType="bank"})=>{
+  const[raw,setRaw]=useState("");
+  const[parsed,setParsed]=useState(null);
+  const[step,setStep]=useState("input");
+
+  const parseSms=()=>{
+    const lines=raw.split(/\n+/).map(l=>l.trim()).filter(Boolean);
+    /* Group multi-line SMS: blank line = separator; or each line is an SMS */
+    const smsList=[];
+    let cur="";
+    lines.forEach(l=>{if(l==="---"||l===""){if(cur.trim())smsList.push(cur.trim());cur="";}else cur+=" "+l;});
+    if(cur.trim())smsList.push(cur.trim());
+    /* Also try each line independently as a complete SMS */
+    if(smsList.length===0)smsList.push(...lines);
+    const ok=[],fail=[];
+    smsList.forEach((s,i)=>{const r=parseSingleSms(s);if(r)ok.push(r);else if(s.length>10)fail.push(i+1);});
+    setParsed({ok,fail,total:smsList.length});
+    setStep("preview");
+  };
+
+  return React.createElement(Modal,{title:"📲 Parse Bank SMS",onClose,w:620},
+    step==="input"&&React.createElement("div",null,
+      React.createElement("div",{style:{fontSize:13,color:"var(--text4)",marginBottom:14,lineHeight:1.7}},
+        "Paste one or more bank SMS alerts below. Separate multiple messages with a blank line or '---'. Supports HDFC, SBI, ICICI, Axis, Kotak, IndusInd, Yes Bank, Federal, and more."
+      ),
+      React.createElement("textarea",{
+        className:"inp",
+        value:raw,
+        onChange:e=>setRaw(e.target.value),
+        placeholder:"Paste SMS here…\n\nExample:\nHDFC Bank: Rs.1500.00 debited from a/c **4321 on 20-03-26 to VPA zomato@hdfcbank. Ref 456789012345.\n\n---\nDear SBI Customer, Rs.85000 credited to A/c No. XXXX1234 on 01-03-26 by NEFT. Ref No INB24031234567.",
+        style:{width:"100%",minHeight:200,fontFamily:"'DM Sans',sans-serif",fontSize:12,resize:"vertical",lineHeight:1.6}
+      }),
+      React.createElement("div",{style:{display:"flex",gap:8,marginTop:12,flexWrap:"wrap"}},
+        React.createElement(Btn,{onClick:parseSms,disabled:!raw.trim()},"🔍 Parse SMS →"),
+        React.createElement(Btn,{v:"secondary",onClick:onClose},"Cancel")
+      )
+    ),
+    step==="preview"&&parsed&&React.createElement("div",null,
+      React.createElement("div",{style:{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap"}},
+        React.createElement("div",{style:{flex:1,background:"rgba(22,163,74,.08)",border:"1px solid rgba(22,163,74,.25)",borderRadius:8,padding:"10px 14px"}},
+          React.createElement("div",{style:{fontSize:10,color:"#16a34a",textTransform:"uppercase",letterSpacing:.5}},"Parsed"),
+          React.createElement("div",{style:{fontSize:22,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#16a34a"}},parsed.ok.length)
+        ),
+        parsed.fail.length>0&&React.createElement("div",{style:{flex:1,background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.25)",borderRadius:8,padding:"10px 14px"}},
+          React.createElement("div",{style:{fontSize:10,color:"#ef4444",textTransform:"uppercase",letterSpacing:.5}},"Unrecognised"),
+          React.createElement("div",{style:{fontSize:22,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#ef4444"}},parsed.fail.length)
+        )
+      ),
+      parsed.ok.length>0&&React.createElement("div",{style:{border:"1px solid var(--border)",borderRadius:8,overflow:"hidden",marginBottom:12}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 70px 80px",padding:"6px 10px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},
+          "Date","Description","Type","Amount"),
+        React.createElement("div",{style:{maxHeight:240,overflowY:"auto"}},
+          parsed.ok.map(tx=>React.createElement("div",{key:tx.id,style:{display:"grid",gridTemplateColumns:"90px 1fr 70px 80px",padding:"7px 10px",borderBottom:"1px solid var(--border2)",alignItems:"center"}},
+            React.createElement("div",{style:{fontSize:11,color:"var(--text4)",fontFamily:"'Sora',sans-serif"}},tx.date),
+            React.createElement("div",{style:{fontSize:12,color:"var(--text2)",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},tx.desc+(tx.txNum?" · "+tx.txNum:"")),
+            React.createElement("span",{style:{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:10,background:tx.type==="credit"?"rgba(22,163,74,.15)":"rgba(239,68,68,.15)",color:tx.type==="credit"?"#16a34a":"#ef4444"}},tx.type),
+            React.createElement("div",{style:{fontSize:12,fontWeight:700,color:tx.type==="credit"?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif",textAlign:"right"}},INR(tx.amount))
+          ))
+        )
+      ),
+      parsed.fail.length>0&&React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:10}},
+        "ℹ Unrecognised SMS (no amount/direction found): messages "+parsed.fail.join(", ")
+      ),
+      React.createElement("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+        React.createElement(Btn,{onClick:()=>{onImport(parsed.ok);},disabled:!parsed.ok.length},"✓ Import "+parsed.ok.length+" Transactions"),
+        React.createElement(Btn,{v:"secondary",onClick:()=>setStep("input")},"← Edit SMS"),
+        React.createElement(Btn,{v:"secondary",onClick:onClose},"Cancel")
+      )
+    )
+  );
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
    EXPORT LEDGER TO EXCEL
    Exports the given transactions array to .xlsx using SheetJS.
    Includes MM_ID column so the file can be re-imported as an upsert.
@@ -5398,6 +5548,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
   const[splitTx,setSplitTx]=useState(null);
   const[confirmDel,setConfirmDel]=useState(null);
   const[importOpen,setImportOpen]=useState(false);
+  const[smsOpen,setSmsOpen]=useState(false);
   const[bulkCatOpen,setBulkCatOpen]=useState(false);
   const[bulkDelOpen,setBulkDelOpen]=useState(false);
   /* ── Filter state ── */
@@ -5727,7 +5878,8 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
       /* Edit modal */
       editTx&&React.createElement(TxEditModal,{tx:editTx,categories,payees,txTypes,allAccounts:allAccounts||[],onSave:(updated)=>{onEdit(updated,editTx);setEditTx(null);setSelId(updated.id);},onClose:()=>setEditTx(null)}),
       confirmDel&&React.createElement(ConfirmModal,{msg:`Delete "${confirmDel.desc||confirmDel.payee||"this transaction"}"? This will adjust your balance.`,onConfirm:()=>{onDelete(confirmDel);setConfirmDel(null);setSelId(null);},onCancel:()=>setConfirmDel(null)}),
-      importOpen&&React.createElement(ImportTxModal,{accType,categories,existingTxns:transactions,onUpsert:updates=>{if(onUpsert)onUpsert(updates);},onMassUpdateStatus:(ids,status)=>{if(onMassUpdateStatus)onMassUpdateStatus(ids,status);},onImport:txns=>{if(onImport)onImport(txns);setImportOpen(false);},onClose:()=>setImportOpen(false)})
+      importOpen&&React.createElement(ImportTxModal,{accType,categories,existingTxns:transactions,onUpsert:updates=>{if(onUpsert)onUpsert(updates);},onMassUpdateStatus:(ids,status)=>{if(onMassUpdateStatus)onMassUpdateStatus(ids,status);},onImport:txns=>{if(onImport)onImport(txns);setImportOpen(false);},onClose:()=>setImportOpen(false)}),
+      smsOpen&&React.createElement(SmsScanModal,{accType,onImport:txns=>{if(onImport)onImport(txns);setSmsOpen(false);},onClose:()=>setSmsOpen(false)})
     );
   }
   /* ── END MOBILE VIEW ─────────────────────────────────────────────────── */
@@ -6232,6 +6384,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
             React.createElement("button",{onClick:()=>{if(!selTx)return;const updated={...selTx,status:selTx.status==="Reconciled"?"Unreconciled":"Reconciled"};onEdit(updated,selTx);},disabled:!selTx,style:tbBtn("#16a34a","rgba(22,163,74,.12)",!selTx)},(selTx&&selTx.status)==="Reconciled"?"○ Unreconcile":"✓ Reconcile"),
             React.createElement("div",{style:{width:1,height:22,background:"var(--border)",margin:"0 4px"}}),
             React.createElement("button",{onClick:()=>setImportOpen(true),style:tbBtn("#0e7490","rgba(14,116,144,.12)")},"⬆ Import Excel"),
+            React.createElement("button",{onClick:()=>setSmsOpen(true),style:tbBtn("#6d28d9","rgba(109,40,217,.10)")},"📲 Parse SMS"),
             React.createElement("button",{onClick:()=>exportLedgerXlsx(filtered,accountName,snMap),style:tbBtn("#16a34a","rgba(22,163,74,.10)")},"⬇ Export Excel"),
             React.createElement("div",{style:{flex:1}}),
             /* Active filter summary chips — visible when panel is hidden */
@@ -6286,6 +6439,12 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
       onMassUpdateStatus:(ids,status)=>{if(onMassUpdateStatus)onMassUpdateStatus(ids,status);},
       onImport:txns=>{if(onImport)onImport(txns);setImportOpen(false);},
       onClose:()=>setImportOpen(false)
+    }),
+    /* ── SMS parser modal */
+    smsOpen&&React.createElement(SmsScanModal,{
+      accType,
+      onImport:txns=>{if(onImport)onImport(txns);setSmsOpen(false);},
+      onClose:()=>setSmsOpen(false)
     }),
     /* ── Bulk categorize modal */
     bulkCatOpen&&React.createElement(BulkCatModal,{
@@ -7550,11 +7709,71 @@ const PayeeAnalyticsModal=({allTx,categories,onClose,isMobile})=>{
 };
 
 /* ── DASHBOARD ──────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════════════
+   SHARE SUMMARY MODAL
+   Generates a WhatsApp/email-ready monthly summary from Dashboard data.
+   Must be a proper component (not an IIFE) so useState works correctly.
+   ══════════════════════════════════════════════════════════════════════════ */
+const ShareSummaryModal=({data,allBankTx,thisMonth,onClose})=>{
+  const[copied,setCopied]=useState(false);
+  const MN2=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const now2=new Date();
+  const mLabel=MN2[now2.getMonth()]+" "+now2.getFullYear();
+  const mTx=allBankTx.filter(t=>t.date.substr(0,7)===thisMonth);
+  const mInc=mTx.filter(t=>t.type==="credit").reduce((s,t)=>s+t.amount,0);
+  const mExp=mTx.filter(t=>t.type==="debit").reduce((s,t)=>s+t.amount,0);
+  const savRate=mInc>0?((mInc-mExp)/mInc*100):0;
+  const byCat={};
+  mTx.filter(t=>t.type==="debit").forEach(t=>{const m=catMainName(t.cat||"Others");byCat[m]=(byCat[m]||0)+t.amount;});
+  const top5=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const curNW2=(()=>{
+    const b=data.banks.reduce((s,b2)=>s+b2.balance,0);
+    const c=data.cash.balance;
+    const m=data.mf.reduce((s,m2)=>s+(m2.currentValue||m2.invested),0);
+    const sh=data.shares.reduce((s,s2)=>s+s2.qty*s2.currentPrice,0);
+    const fd=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
+    const re=(data.re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
+    const cd=data.cards.reduce((s,c2)=>s+c2.outstanding,0);
+    const ld=(data.loans||[]).reduce((s,l)=>s+l.outstanding,0);
+    return b+c+m+sh+fd+re-cd-ld;
+  })();
+  const fmt=v=>{const a=Math.abs(v);if(a>=10000000)return"₹"+(a/10000000).toFixed(2)+"Cr";if(a>=100000)return"₹"+(a/100000).toFixed(1)+"L";return"₹"+a.toLocaleString("en-IN");};
+  const budgetPlans=(data.insightPrefs||{}).budgetPlans||{};
+  const overBudget=Object.entries(budgetPlans).filter(([cat,limit])=>limit&&(byCat[cat]||0)>limit).map(([cat,limit])=>`  ⚠ ${cat}: ${fmt(byCat[cat]||0)} spent (budget ${fmt(limit)})`);
+  const lines=[
+    `💰 *Monthly Financial Summary — ${mLabel}*`,``,
+    `📥 Income:    ${fmt(mInc)}`,
+    `📤 Expenses:  ${fmt(mExp)}`,
+    `💾 Savings:   ${fmt(mInc-mExp)} (${savRate.toFixed(0)}%)`,``,
+    `*Top Expenses:*`,
+    ...top5.map(([cat,amt],i)=>`  ${i+1}. ${cat}: ${fmt(amt)}`),``,
+    `🏦 Net Worth: ${fmt(curNW2)}`,
+    ...(overBudget.length?[``,`*Budget Alerts:*`,...overBudget]:[]),``,
+    `_Shared from ₹ Money Manager_`,
+  ];
+  const text=lines.join("\n");
+  const waUrl="https://wa.me/?text="+encodeURIComponent(text);
+  const mailUrl="mailto:?subject="+encodeURIComponent("My Financial Summary — "+mLabel)+"&body="+encodeURIComponent(text);
+  const copyText=()=>{
+    try{navigator.clipboard.writeText(text).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2200);});}
+    catch{const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);setCopied(true);setTimeout(()=>setCopied(false),2200);}
+  };
+  return React.createElement(Modal,{title:"📤 Share Monthly Summary",onClose,w:500},
+    React.createElement("div",{style:{background:"var(--bg4)",borderRadius:10,padding:"14px 16px",fontFamily:"'Sora',monospace",fontSize:12,color:"var(--text3)",lineHeight:1.8,whiteSpace:"pre-wrap",border:"1px solid var(--border2)",marginBottom:14,maxHeight:320,overflowY:"auto"}},text),
+    React.createElement("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+      React.createElement("button",{onClick:copyText,style:{flex:1,padding:"10px",borderRadius:9,border:"1px solid var(--accent)55",background:"var(--accentbg)",color:"var(--accent)",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:600,fontSize:13}},copied?"✓ Copied!":"📋 Copy Text"),
+      React.createElement("a",{href:waUrl,target:"_blank",rel:"noopener noreferrer",style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"10px",borderRadius:9,border:"1px solid rgba(37,211,102,.35)",background:"rgba(37,211,102,.08)",color:"#25d366",fontFamily:"'DM Sans',sans-serif",fontWeight:600,fontSize:13,textDecoration:"none"}},"📱 WhatsApp"),
+      React.createElement("a",{href:mailUrl,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"10px",borderRadius:9,border:"1px solid rgba(29,78,216,.35)",background:"rgba(29,78,216,.08)",color:"#1d4ed8",fontFamily:"'DM Sans',sans-serif",fontWeight:600,fontSize:13,textDecoration:"none"}},"✉ Email")
+    )
+  );
+};
+
 const Dashboard=React.memo(({data,isMobile})=>{
   const[ready,setReady]=useState(false);
   const[txTab,setTxTab]=useState("all"); /* account id or "all" */
   const[showPayeeAnalytics,setShowPayeeAnalytics]=useState(false);
   const[showWidgetMgr,setShowWidgetMgr]=useState(false);
+  const[shareOpen,setShareOpen]=useState(false);
   /* Custom widget visibility — persisted to localStorage */
   const[hiddenWidgets,setHiddenWidgets]=useState(()=>{
     try{return JSON.parse(localStorage.getItem("mm_db_hidden_widgets")||"[]");}catch{return [];}
@@ -7744,6 +7963,8 @@ const Dashboard=React.memo(({data,isMobile})=>{
 
   /* ━━ RENDER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",gap:14}},
+    /* Share Summary Modal */
+    shareOpen&&React.createElement(ShareSummaryModal,{data,allBankTx,thisMonth,onClose:()=>setShareOpen(false)}),
     /* Widget Manager Modal */
     showWidgetMgr&&React.createElement(Modal,{title:"⚙ Customize Dashboard",onClose:()=>setShowWidgetMgr(false),w:420},
       React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginBottom:16}},"Toggle sections on or off. Changes are saved automatically."),
@@ -7805,6 +8026,20 @@ const Dashboard=React.memo(({data,isMobile})=>{
         onMouseEnter:e=>{e.currentTarget.style.color="var(--accent)";e.currentTarget.style.borderColor="var(--accent)";},
         onMouseLeave:e=>{e.currentTarget.style.color="var(--text5)";e.currentTarget.style.borderColor="var(--border2)";},
       },"⚙",!isMobile&&React.createElement("span",null,"Customize")),
+      /* Share Month button */
+      React.createElement("button",{
+        onClick:()=>setShareOpen(true),
+        title:"Share this month's financial summary via WhatsApp or email",
+        style:{position:"absolute",top:12,right:isMobile?52:130,zIndex:2,
+          padding:"4px 10px",borderRadius:8,border:"1px solid var(--border2)",
+          background:"var(--bg4)",color:"var(--text5)",cursor:"pointer",
+          fontSize:11,fontFamily:"'DM Sans',sans-serif",fontWeight:600,
+          display:"flex",alignItems:"center",gap:4,transition:"all .15s",
+          backdropFilter:"blur(4px)",
+        },
+        onMouseEnter:e=>{e.currentTarget.style.color="#25d366";e.currentTarget.style.borderColor="#25d366";},
+        onMouseLeave:e=>{e.currentTarget.style.color="var(--text5)";e.currentTarget.style.borderColor="var(--border2)";},
+      },"📤",!isMobile&&React.createElement("span",null,"Share")),
       /* Greeting + liquid balance */
       React.createElement("div",{style:{zIndex:1,flex:"1 1 180px"}},
         React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:4,letterSpacing:.3}},greeting+" · "+dateStr),
@@ -8282,7 +8517,8 @@ const Dashboard=React.memo(({data,isMobile})=>{
       const cDebt=data.cards.reduce((s,c)=>s+c.outstanding,0);
       const lDebt=(data.loans||[]).reduce((s,l)=>s+l.outstanding,0);
       const curNW=bTotal+cashBal+mfVal+shVal+fdVal+reVal-cDebt-lDebt;
-      /* Build 12-month series: snapshots + current month */
+      const curAssets=bTotal+cashBal+mfVal+shVal+fdVal+reVal;
+      const curLiab=cDebt+lDebt;
       const MN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
       const now=new Date();
       const pts=[];
@@ -8297,57 +8533,99 @@ const Dashboard=React.memo(({data,isMobile})=>{
       const vals=pts.map(p=>p.nw);
       const mnV=Math.min(...vals),mxV=Math.max(...vals);
       const range=mxV-mnV||1;
-      const W=400,H=70,padX=4,padY=8;
+      const W=400,H=80,padX=4,padY=8;
       const chartW=W-padX*2,chartH=H-padY*2;
       const cx=(i)=>padX+i*(chartW/(pts.length-1));
       const cy=(v)=>padY+chartH*(1-(v-mnV)/range);
       const ptStr=pts.map((p,i)=>cx(i)+","+cy(p.nw)).join(" ");
-      const fillPts=padX+","+( padY+chartH)+" "+ptStr+" "+(padX+chartW)+","+(padY+chartH);
+      const fillPts=padX+","+(padY+chartH)+" "+ptStr+" "+(padX+chartW)+","+(padY+chartH);
       const first=pts[0].nw,last=pts[pts.length-1].nw;
       const chg=last-first;
       const chgPct=first!==0?((chg/Math.abs(first))*100):0;
       const col=chg>=0?"#16a34a":"#ef4444";
       const INRs=v=>{const a=Math.abs(v);if(a>=10000000)return(v<0?"-":"")+"₹"+(a/10000000).toFixed(1)+"Cr";if(a>=100000)return(v<0?"-":"")+"₹"+(a/100000).toFixed(1)+"L";return(v<0?"-":"")+"₹"+(a/1000).toFixed(0)+"K";};
       const gradId="nw_dash_grad";
+      /* hover state via ref to avoid re-renders inside IIFE */
+      const svgRef=React.useRef(null);
+      const tipRef=React.useRef(null);
+      const onSvgMove=e=>{
+        if(!svgRef.current||!tipRef.current)return;
+        const rect=svgRef.current.getBoundingClientRect();
+        const frac=(e.clientX-rect.left)/rect.width;
+        const idx=Math.max(0,Math.min(pts.length-1,Math.round(frac*(pts.length-1))));
+        const p=pts[idx];
+        tipRef.current.style.display="block";
+        tipRef.current.style.left=Math.min(frac*100,78)+"%";
+        tipRef.current.innerHTML=`<strong>${p.lbl}</strong><br/>${INRs(p.nw)}`;
+      };
+      const onSvgLeave=()=>{if(tipRef.current)tipRef.current.style.display="none";};
+      /* one-click save current month snapshot */
+      const saveSnap=()=>{
+        const key=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
+        /* dispatch via window trick since we're inside a non-hook IIFE */
+        window.__mm_dispatch&&window.__mm_dispatch({type:"SET_NW_SNAPSHOT",month:key,nw:Math.round(curNW)});
+      };
+      /* year-on-year annotation */
+      const yoyKey=now.getFullYear()-1+"-"+String(now.getMonth()+1).padStart(2,"0");
+      const yoySnap=snaps[yoyKey];
+      const yoy=yoySnap!=null?curNW-yoySnap:null;
       return React.createElement("div",{className:"db-card"},
-        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}},
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8,flexWrap:"wrap",gap:8}},
           React.createElement("div",null,
             SL("Net Worth Trend","Last "+pts.length+" months · "+MN[now.getMonth()]+" "+now.getFullYear()),
             React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text)",marginTop:4}},INRs(curNW)),
-            React.createElement("div",{style:{fontSize:12,color:col,fontWeight:600,marginTop:2}},
-              (chg>=0?"▲ +":"▼ ")+INRs(Math.abs(chg))+" ("+Math.abs(chgPct).toFixed(1)+"%) since "+pts[0].lbl
+            React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginTop:3}},
+              React.createElement("span",{style:{fontSize:12,color:col,fontWeight:600}},
+                (chg>=0?"▲ +":"▼ ")+INRs(Math.abs(chg))+" ("+Math.abs(chgPct).toFixed(1)+"%) since "+pts[0].lbl
+              ),
+              yoy!=null&&React.createElement("span",{style:{fontSize:11,color:yoy>=0?"#16a34a":"#ef4444",padding:"1px 7px",borderRadius:8,background:yoy>=0?"rgba(22,163,74,.1)":"rgba(239,68,68,.08)",border:"1px solid "+(yoy>=0?"rgba(22,163,74,.25)":"rgba(239,68,68,.2)")}},
+                "YoY "+(yoy>=0?"+":"")+INRs(yoy)
+              )
             )
           ),
           React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4}},
+            React.createElement("button",{
+              onClick:saveSnap,
+              title:"Save today's net worth as this month's snapshot",
+              style:{fontSize:11,padding:"4px 10px",borderRadius:7,border:"1px solid var(--accent)55",background:"var(--accentbg)",color:"var(--accent)",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:600,whiteSpace:"nowrap"}
+            },"📌 Save Snapshot"),
             React.createElement("div",{style:{fontSize:10,color:"var(--text6)"}},
-              React.createElement("span",{style:{color:"#16a34a",fontWeight:700}},INRs(bTotal+cashBal+mfVal+shVal+fdVal+reVal)),
+              React.createElement("span",{style:{color:"#16a34a",fontWeight:700}},INRs(curAssets)),
               React.createElement("span",{style:{color:"var(--text5)"}}," assets")
             ),
             React.createElement("div",{style:{fontSize:10,color:"var(--text6)"}},
-              React.createElement("span",{style:{color:"#ef4444",fontWeight:700}},"− "+INRs(cDebt+lDebt)),
+              React.createElement("span",{style:{color:"#ef4444",fontWeight:700}},"− "+INRs(curLiab)),
               React.createElement("span",{style:{color:"var(--text5)"}}," liabilities")
             )
           )
         ),
-        /* SVG trend line */
-        React.createElement("svg",{width:"100%",viewBox:"0 0 "+W+" "+H,style:{display:"block",overflow:"visible"}},
-          React.createElement("defs",null,
-            React.createElement("linearGradient",{id:gradId,x1:"0",y1:"0",x2:"0",y2:"1"},
-              React.createElement("stop",{offset:"0%",stopColor:col,stopOpacity:.25}),
-              React.createElement("stop",{offset:"100%",stopColor:col,stopOpacity:.02})
+        /* SVG trend line with hover */
+        React.createElement("div",{style:{position:"relative"}},
+          React.createElement("svg",{ref:svgRef,width:"100%",viewBox:"0 0 "+W+" "+H,style:{display:"block",overflow:"visible",cursor:"crosshair"},
+            onMouseMove:onSvgMove,onMouseLeave:onSvgLeave},
+            React.createElement("defs",null,
+              React.createElement("linearGradient",{id:gradId,x1:"0",y1:"0",x2:"0",y2:"1"},
+                React.createElement("stop",{offset:"0%",stopColor:col,stopOpacity:.25}),
+                React.createElement("stop",{offset:"100%",stopColor:col,stopOpacity:.02})
+              )
+            ),
+            React.createElement("polygon",{points:fillPts,fill:"url(#"+gradId+")"}),
+            React.createElement("polyline",{points:ptStr,fill:"none",stroke:col,strokeWidth:2.5,strokeLinejoin:"round",strokeLinecap:"round"}),
+            React.createElement("circle",{cx:cx(pts.length-1),cy:cy(pts[pts.length-1].nw),r:4,fill:col}),
+            [0,Math.floor(pts.length/2),pts.length-1].filter((v,i,a)=>a.indexOf(v)===i).map(i=>
+              React.createElement("text",{key:i,x:cx(i),y:H-1,textAnchor:i===0?"start":i===pts.length-1?"end":"middle",fill:"var(--text6)",fontSize:9},pts[i].lbl)
             )
           ),
-          React.createElement("polygon",{points:fillPts,fill:"url(#"+gradId+")"}),
-          React.createElement("polyline",{points:ptStr,fill:"none",stroke:col,strokeWidth:2.5,strokeLinejoin:"round",strokeLinecap:"round"}),
-          /* End dot */
-          React.createElement("circle",{cx:cx(pts.length-1),cy:cy(pts[pts.length-1].nw),r:4,fill:col}),
-          /* X-axis labels — first, middle and last only */
-          [0,Math.floor(pts.length/2),pts.length-1].filter((v,i,a)=>a.indexOf(v)===i).map(i=>
-            React.createElement("text",{key:i,x:cx(i),y:H-1,textAnchor:i===0?"start":i===pts.length-1?"end":"middle",fill:"var(--text6)",fontSize:9},pts[i].lbl)
-          )
+          /* Hover tooltip */
+          React.createElement("div",{ref:tipRef,style:{
+            display:"none",position:"absolute",top:0,transform:"translateX(-50%)",
+            background:"var(--modal-bg)",border:"1px solid var(--border)",borderRadius:8,
+            padding:"5px 10px",fontSize:11,color:"var(--text)",pointerEvents:"none",
+            boxShadow:"0 4px 12px rgba(0,0,0,.15)",whiteSpace:"nowrap",zIndex:5
+          }})
         ),
         pts.length<3&&React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:6,textAlign:"center"}},
-          "💡 Save monthly snapshots in Insights → Net Worth for a richer trend chart"
+          "💡 Click 'Save Snapshot' monthly for a richer trend chart"
         )
       );
     })(),
@@ -17628,12 +17906,97 @@ const StorageGauge=({dispatch})=>{
                   matchType:"contains"|"startsWith"|"exact",
                   cat, applyToPayee:bool, payeeValue, caseSensitive:bool }
    ══════════════════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════════════
+   PUSH NOTIFICATION SYSTEM
+   Checks scheduled txns, card due dates, budget alerts on load + tab focus.
+   Uses Web Notifications API via the existing Service Worker.
+   Prefs stored in localStorage key mm_notif_v1.
+   ══════════════════════════════════════════════════════════════════════════ */
+const NOTIF_LS="mm_notif_v1";
+const loadNotifPrefs=()=>{try{return JSON.parse(localStorage.getItem(NOTIF_LS)||"{}");}catch{return {};}};
+const saveNotifPrefs=p=>{try{localStorage.setItem(NOTIF_LS,JSON.stringify(p));}catch{}};
+const DEFAULT_NOTIF_PREFS={enabled:false,emiDays:3,cardDays:3,sipDays:2,budgetPct:80};
+
+function fireNotification(title,body,tag){
+  if(!("Notification" in window)||Notification.permission!=="granted")return;
+  try{
+    if(navigator.serviceWorker&&navigator.serviceWorker.controller){
+      navigator.serviceWorker.controller.postMessage({type:"SHOW_NOTIFICATION",title,body,tag});
+    }else{
+      new Notification(title,{body,tag,icon:"icons/icon-192.png"});
+    }
+  }catch(e){/* fallback */try{new Notification(title,{body,tag});}catch{}}
+}
+
+function checkAndFireNotifications(state){
+  const prefs={...DEFAULT_NOTIF_PREFS,...loadNotifPrefs()};
+  if(!prefs.enabled||Notification.permission!=="granted")return;
+  const today=new Date();today.setHours(0,0,0,0);
+  const pad=n=>String(n).padStart(2,"0");
+  const fmtD=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const fired=new Set(JSON.parse(sessionStorage.getItem("mm_notif_fired")||"[]"));
+  const fire=(tag,title,body)=>{if(fired.has(tag))return;fired.add(tag);fireNotification(title,body,tag);};
+
+  /* ── EMI / Scheduled reminders ── */
+  (state.scheduled||[]).forEach(sc=>{
+    if(!sc.nextDate)return;
+    const due=new Date(sc.nextDate+"T12:00:00");
+    const dl=Math.round((due-today)/86400000);
+    if(dl>=0&&dl<=prefs.emiDays){
+      const tag="emi_"+sc.id+"_"+sc.nextDate;
+      fire(tag,"💸 Payment Due"+(dl===0?" Today":dl===1?" Tomorrow":" in "+dl+" days"),
+        (sc.desc||sc.payee||"Scheduled payment")+" — "+INR(sc.amount));
+    }
+  });
+
+  /* ── Credit card bill due ── */
+  (state.cards||[]).forEach(card=>{
+    if(!card.dueDay||!card.billingDay)return;
+    const bd=new Date(today.getFullYear(),today.getMonth(),card.billingDay);
+    if(bd>today)bd.setMonth(bd.getMonth()-1);
+    const ns=new Date(bd);ns.setMonth(ns.getMonth()+1);
+    const due=new Date(card.dueDay>card.billingDay?ns.getFullYear():(ns.getMonth()===11?ns.getFullYear()+1:ns.getFullYear()),
+      card.dueDay>card.billingDay?ns.getMonth():((ns.getMonth()+1)%12),card.dueDay);
+    const dl=Math.round((due-today)/86400000);
+    if(dl>=0&&dl<=prefs.cardDays){
+      const tag="card_"+card.id+"_"+fmtD(due);
+      fire(tag,"💳 Card Bill Due"+(dl===0?" Today":dl===1?" Tomorrow":" in "+dl+" days"),
+        card.name+" — Outstanding: "+INR(card.outstanding));
+    }
+  });
+
+  /* ── Budget 80% alert ── */
+  const plans=(state.insightPrefs||{}).budgetPlans||{};
+  if(Object.keys(plans).length>0){
+    const now2=new Date();
+    const mS=`${now2.getFullYear()}-${pad(now2.getMonth()+1)}-01`;
+    const mE=fmtD(new Date(now2.getFullYear(),now2.getMonth()+1,0));
+    const actual={};
+    [...(state.banks||[]).flatMap(b=>b.transactions),...(state.cards||[]).flatMap(c=>c.transactions),...((state.cash||{}).transactions||[])]
+      .filter(t=>t.type==="debit"&&t.date>=mS&&t.date<=mE)
+      .forEach(t=>{const m=catMainName(t.cat||"Others");actual[m]=(actual[m]||0)+t.amount;});
+    Object.entries(plans).forEach(([cat,limit])=>{
+      if(!limit)return;
+      const spent=actual[cat]||0;
+      const pct=spent/limit*100;
+      if(pct>=(prefs.budgetPct||80)){
+        const tag="budget_"+cat+"_"+mS;
+        fire(tag,"⚠ Budget Alert — "+cat,
+          `Spent ${INR(Math.round(spent))} of ${INR(limit)} (${pct.toFixed(0)}%) this month`);
+      }
+    });
+  }
+  sessionStorage.setItem("mm_notif_fired",JSON.stringify([...fired]));
+}
+
+
 const CatRulesPanel=({state,dispatch})=>{
   const{catRules=[],categories=[]}=state;
   const[form,setForm]=useState({keyword:"",field:"desc",matchType:"contains",cat:"",applyToPayee:false,payeeValue:"",caseSensitive:false});
   const[editId,setEditId]=useState(null);
   const[bulkMsg,setBulkMsg]=useState("");
   const[testInput,setTestInput]=useState("");
+  const[showSuggestions,setShowSuggestions]=useState(false);
 
   /* Flat category list for dropdown */
   const catOpts=categories.flatMap(c=>[
@@ -17662,9 +18025,11 @@ const CatRulesPanel=({state,dispatch})=>{
 
   const applyBulk=()=>{
     dispatch({type:"APPLY_CAT_RULES_BULK"});
-    const all=state.banks.reduce((s,b)=>s+b.transactions.length,0)+state.cards.reduce((s,c)=>s+c.transactions.length,0)+state.cash.transactions.length;
-    setBulkMsg("✓ Rules applied to "+all+" existing transactions.");
-    setTimeout(()=>setBulkMsg(""),4000);
+    const banks=state.banks.reduce((s,b)=>s+b.transactions.length,0);
+    const cards=state.cards.reduce((s,c)=>s+c.transactions.length,0);
+    const cash=state.cash.transactions.length;
+    setBulkMsg(`✓ Rules applied — ${banks} bank, ${cards} card, ${cash} cash transactions processed.`);
+    setTimeout(()=>setBulkMsg(""),5000);
   };
 
   /* Live test — shows what category would be assigned */
@@ -17674,6 +18039,58 @@ const CatRulesPanel=({state,dispatch})=>{
     const hit=applyCatRule(catRules,fakeTx);
     return hit?hit.cat:"No match — will use default category";
   },[testInput,catRules]);
+
+  /* Payee frequency suggestions — top unmatched payees from last 90 days */
+  const suggestions=React.useMemo(()=>{
+    const cutoff=new Date();cutoff.setDate(cutoff.getDate()-90);
+    const cutStr=cutoff.toISOString().slice(0,10);
+    const freq={};
+    const allTx=[
+      ...state.banks.flatMap(b=>b.transactions),
+      ...state.cards.flatMap(c=>c.transactions),
+      ...(state.cash.transactions||[]),
+    ];
+    allTx.filter(t=>t.date>=cutStr&&t.type==="debit").forEach(t=>{
+      const p=(t.payee||t.desc||"").trim().slice(0,40);
+      if(!p)return;
+      const matched=catRules.some(r=>{
+        const src=r.field==="payee"?p:p;
+        const hay=r.caseSensitive?src:src.toLowerCase();
+        const needle=r.caseSensitive?r.keyword:(r.keyword||"").toLowerCase();
+        if(r.matchType==="contains")return hay.includes(needle);
+        if(r.matchType==="startsWith")return hay.startsWith(needle);
+        return hay===needle;
+      });
+      if(!matched)freq[p]=(freq[p]||0)+1;
+    });
+    return Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([name,count])=>({name,count}));
+  },[catRules,state.banks,state.cards,state.cash]);
+
+  /* Export rules as JSON */
+  const exportRules=()=>{
+    const blob=new Blob([JSON.stringify(catRules,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download="mm-cat-rules.json";a.click();URL.revokeObjectURL(url);
+  };
+
+  /* Import rules from JSON */
+  const importRules=e=>{
+    const file=e.target.files?.[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const arr=JSON.parse(ev.target.result);
+        if(!Array.isArray(arr))throw new Error("Not an array");
+        arr.forEach(r=>{
+          if(r.keyword&&r.cat){dispatch({type:"ADD_CAT_RULE",p:{keyword:r.keyword,field:r.field||"desc",matchType:r.matchType||"contains",cat:r.cat,applyToPayee:!!r.applyToPayee,payeeValue:r.payeeValue||"",caseSensitive:!!r.caseSensitive}});}
+        });
+        setBulkMsg("✓ "+arr.length+" rules imported.");
+        setTimeout(()=>setBulkMsg(""),4000);
+      }catch(err){setBulkMsg("✗ Invalid rules file: "+err.message);}
+    };
+    reader.readAsText(file);
+    e.target.value="";
+  };
 
   const inpSty={fontSize:12,padding:"7px 10px",borderRadius:8,border:"1px solid var(--border)",background:"var(--inp-bg)",color:"var(--text)",fontFamily:"'DM Sans',sans-serif",outline:"none"};
   const selSty={...inpSty,cursor:"pointer"};
@@ -17736,6 +18153,22 @@ const CatRulesPanel=({state,dispatch})=>{
       )
     ),
 
+    /* ── Payee suggestions ── */
+    suggestions.length>0&&React.createElement(Card,{sx:{marginBottom:14}},
+      React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:showSuggestions?10:0}},
+        React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",textTransform:"uppercase",letterSpacing:.7}},
+          "💡 Unmatched Payees — last 90 days ("+suggestions.length+")"),
+        React.createElement("button",{onClick:()=>setShowSuggestions(s=>!s),style:{fontSize:11,background:"none",border:"none",color:"var(--accent)",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}},showSuggestions?"▲ Hide":"▼ Show")
+      ),
+      showSuggestions&&React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:6}},
+        suggestions.map(({name,count})=>React.createElement("button",{key:name,
+          onClick:()=>setForm(p=>({...p,keyword:name,field:"desc"})),
+          title:"Click to use as keyword",
+          style:{fontSize:11,padding:"4px 10px",borderRadius:10,border:"1px solid var(--border)",background:"var(--bg4)",color:"var(--text3)",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",gap:5,alignItems:"center"}
+        },name,React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"×"+count)))
+      )
+    ),
+
     /* ── Live test box ── */
     React.createElement(Card,{sx:{marginBottom:14}},
       React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",textTransform:"uppercase",letterSpacing:.7,marginBottom:8}},"🧪 Test a transaction"),
@@ -17753,12 +18186,19 @@ const CatRulesPanel=({state,dispatch})=>{
 
     /* ── Rules list ── */
     React.createElement(Card,{sx:{marginBottom:14}},
-      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:catRules.length?12:0}},
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8,marginBottom:catRules.length?12:0}},
         React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",textTransform:"uppercase",letterSpacing:.7}},
           catRules.length+" rule"+(catRules.length!==1?"s":"")+" · applied in order"),
-        catRules.length>0&&React.createElement(Btn,{v:"success",sz:"sm",onClick:applyBulk},"⚡ Apply to All Existing Transactions")
+        React.createElement("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+          catRules.length>0&&React.createElement(Btn,{v:"success",sz:"sm",onClick:applyBulk},"⚡ Apply to All"),
+          catRules.length>0&&React.createElement(Btn,{v:"secondary",sz:"sm",onClick:exportRules},"⬇ Export"),
+          React.createElement("label",{style:{display:"inline-flex",alignItems:"center",gap:6,padding:"6px 13px",fontSize:12,borderRadius:8,border:"1px solid var(--border)",background:"var(--bg3)",color:"var(--text3)",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:500}},
+            "⬆ Import",
+            React.createElement("input",{type:"file",accept:".json",style:{display:"none"},onChange:importRules})
+          )
+        )
       ),
-      bulkMsg&&React.createElement("div",{style:{marginBottom:10,fontSize:12,color:"#16a34a",padding:"7px 12px",borderRadius:8,background:"rgba(22,163,74,.09)",border:"1px solid rgba(22,163,74,.25)"}},bulkMsg),
+      bulkMsg&&React.createElement("div",{style:{marginBottom:10,fontSize:12,color:bulkMsg.startsWith("✗")?"#ef4444":"#16a34a",padding:"7px 12px",borderRadius:8,background:bulkMsg.startsWith("✗")?"rgba(239,68,68,.09)":"rgba(22,163,74,.09)",border:"1px solid "+(bulkMsg.startsWith("✗")?"rgba(239,68,68,.25)":"rgba(22,163,74,.25)")}},bulkMsg),
       catRules.length===0
         ?React.createElement("div",{style:{fontSize:13,color:"var(--text5)",fontStyle:"italic",padding:"12px 0"}},"No rules yet. Add your first rule above.")
         :catRules.map((r,i)=>React.createElement("div",{key:r.id,style:{
@@ -17799,7 +18239,141 @@ const CatRulesPanel=({state,dispatch})=>{
     /* Help note */
     React.createElement("div",{style:{fontSize:11,color:"var(--text5)",lineHeight:1.7,padding:"9px 12px",borderRadius:9,border:"1px solid var(--border2)",background:"var(--bg4)"}},
       "💡 ",React.createElement("strong",null,"Tips:"),
-      " Rules run top-to-bottom — the first match wins. Use 'Contains' for partial matches (e.g. 'SWIGGY' catches 'SWIGGY ORDER #123'). Use 'Exact' for payees that are already standardised. Click '⚡ Apply to All' to retroactively categorise your entire transaction history."
+      " Rules run top-to-bottom — the first match wins. Use 'Contains' for partial matches (e.g. 'SWIGGY' catches 'SWIGGY ORDER #123'). Click a suggested payee chip above to pre-fill the keyword. Use Export/Import to share rules or back them up."
+    )
+  );
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
+   NOTIFICATIONS PANEL
+   PWA push notification reminders for EMIs, card bills, SIPs, and budget.
+   Uses the browser Notification API via the Service Worker.
+   ══════════════════════════════════════════════════════════════════════════ */
+const NotificationsPanel=({state})=>{
+  const[perm,setPerm]=useState(()=>typeof Notification!=="undefined"?Notification.permission:"unsupported");
+  const[prefs,setPrefs]=useState(()=>{
+    try{return JSON.parse(localStorage.getItem("mm_notif_prefs")||"{}");}catch{return {};}
+  });
+  const save=p=>{const n={...prefs,...p};setPrefs(n);try{localStorage.setItem("mm_notif_prefs",JSON.stringify(n));}catch{}};
+
+  const requestPerm=async()=>{
+    if(typeof Notification==="undefined"){setPerm("unsupported");return;}
+    const r=await Notification.requestPermission();
+    setPerm(r);
+  };
+
+  const sendTest=()=>{
+    if(perm!=="granted")return;
+    new Notification("₹ Money Manager",{body:"🔔 Test notification — reminders are working!",icon:"icons/icon-192.png"});
+  };
+
+  /* Build upcoming reminders from current state */
+  const reminders=React.useMemo(()=>{
+    const today=new Date();today.setHours(0,0,0,0);
+    const fmt=d=>d.toLocaleDateString("en-IN",{day:"numeric",month:"short"});
+    const out=[];
+    const days=prefs.daysBefore||3;
+    /* Scheduled transactions */
+    (state.scheduled||[]).forEach(sc=>{
+      if(!sc.nextDate)return;
+      const due=new Date(sc.nextDate+"T12:00:00");
+      const diff=Math.round((due-today)/86400000);
+      if(diff>=0&&diff<=days)
+        out.push({icon:"🗓",title:sc.desc||"Scheduled Payment",sub:"Due "+fmt(due)+(diff===0?" (today)":diff===1?" (tomorrow)":""),urgency:diff<=1?"high":"medium"});
+    });
+    /* Credit card bills */
+    (state.cards||[]).forEach(c=>{
+      if(!c.dueDay||!c.billingDay)return;
+      const bd=new Date(today.getFullYear(),today.getMonth(),c.billingDay);
+      if(bd>today)bd.setMonth(bd.getMonth()-1);
+      const ns=new Date(bd);ns.setMonth(ns.getMonth()+1);
+      const dd=new Date(c.dueDay>c.billingDay?ns:new Date(ns.getFullYear(),ns.getMonth()+1,1));
+      dd.setDate(c.dueDay);
+      const diff=Math.round((dd-today)/86400000);
+      if(diff>=0&&diff<=days)
+        out.push({icon:"💳",title:c.name+" Bill Due",sub:INR(c.outstanding)+" due "+fmt(dd)+(diff===0?" (today)":diff===1?" (tomorrow)":""),urgency:diff<=1?"high":"medium"});
+    });
+    return out;
+  },[state,prefs.daysBefore]);
+
+  /* Fire notifications for upcoming reminders (runs once on panel open) */
+  React.useEffect(()=>{
+    if(perm!=="granted"||!prefs.enabled)return;
+    reminders.forEach(r=>{
+      new Notification("₹ Money Manager — "+r.title,{body:r.sub,icon:"icons/icon-192.png"});
+    });
+  },[]);/* eslint-disable-line */
+
+  const TogRow=({label,sub,field,defaultVal=true})=>{
+    const on=prefs[field]!==undefined?prefs[field]:defaultVal;
+    return React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid var(--border2)"}},
+      React.createElement("div",null,
+        React.createElement("div",{style:{fontSize:13,fontWeight:500,color:"var(--text)"}},label),
+        sub&&React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},sub)
+      ),
+      React.createElement("label",{style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer"}},
+        React.createElement("input",{type:"checkbox",checked:on,onChange:e=>save({[field]:e.target.checked}),style:{width:16,height:16,accentColor:"var(--accent)",cursor:"pointer"}}),
+        React.createElement("span",{style:{fontSize:12,color:on?"var(--accent)":"var(--text5)"}},on?"On":"Off")
+      )
+    );
+  };
+
+  return React.createElement("div",{className:"fu"},
+    React.createElement("div",{style:{marginBottom:20}},
+      React.createElement("h3",{style:{fontFamily:"'Sora',sans-serif",fontSize:18,fontWeight:700,color:"var(--text)"}},"🔔 Notifications"),
+      React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.6}},"Get timely reminders for EMI payments, credit card bills, SIP dates, and budget limits — delivered as browser notifications.")
+    ),
+    /* Permission status */
+    React.createElement(Card,{sx:{marginBottom:16}},
+      React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}},
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text)",marginBottom:3}},"Browser Permission"),
+          React.createElement("div",{style:{fontSize:12,color:perm==="granted"?"#16a34a":perm==="denied"?"#ef4444":"var(--text5)"}},
+            perm==="granted"?"✓ Notifications granted":perm==="denied"?"✗ Notifications blocked — enable in browser settings":perm==="unsupported"?"⚠ Not supported in this browser":"○ Permission not yet requested"
+          )
+        ),
+        React.createElement("div",{style:{display:"flex",gap:8}},
+          perm!=="granted"&&perm!=="denied"&&perm!=="unsupported"&&
+            React.createElement(Btn,{onClick:requestPerm},"🔔 Enable Notifications"),
+          perm==="granted"&&React.createElement(Btn,{v:"secondary",onClick:sendTest},"🧪 Test")
+        )
+      )
+    ),
+    /* Master toggle */
+    React.createElement(Card,{sx:{marginBottom:16}},
+      React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,paddingBottom:12,borderBottom:"1px solid var(--border2)"}},
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text)"}},"Enable All Reminders"),
+        React.createElement("label",{style:{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}},
+          React.createElement("input",{type:"checkbox",checked:!!prefs.enabled,onChange:e=>save({enabled:e.target.checked}),style:{width:18,height:18,accentColor:"var(--accent)",cursor:"pointer"}}),
+          React.createElement("span",{style:{fontSize:13,fontWeight:600,color:prefs.enabled?"var(--accent)":"var(--text5)"}},prefs.enabled?"Active":"Off")
+        )
+      ),
+      React.createElement(TogRow,{label:"EMI & Scheduled Payment Reminders",sub:"Notify when a scheduled transaction is due soon",field:"emiReminder"}),
+      React.createElement(TogRow,{label:"Credit Card Bill Reminders",sub:"Notify before credit card payment due date",field:"cardReminder"}),
+      React.createElement(TogRow,{label:"Budget Overrun Alerts",sub:"Notify when monthly spending reaches 80% of plan",field:"budgetReminder"}),
+      React.createElement("div",{style:{marginTop:14,display:"flex",alignItems:"center",gap:12}},
+        React.createElement("label",{style:{fontSize:12,color:"var(--text5)",whiteSpace:"nowrap"}},"Days before due:"),
+        React.createElement("input",{type:"number",className:"inp",min:1,max:14,value:prefs.daysBefore||3,
+          onChange:e=>save({daysBefore:Math.max(1,Math.min(14,+e.target.value||3))}),
+          style:{width:80,fontSize:13,padding:"6px 10px"}})
+      )
+    ),
+    /* Upcoming reminders preview */
+    React.createElement(Card,null,
+      React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.6,marginBottom:12}},"Upcoming in next "+(prefs.daysBefore||3)+" days"),
+      reminders.length===0
+        ?React.createElement("div",{style:{fontSize:13,color:"var(--text5)",fontStyle:"italic"}},"No upcoming payments or due dates in the next "+(prefs.daysBefore||3)+" days.")
+        :reminders.map((r,i)=>React.createElement("div",{key:i,style:{
+            display:"flex",gap:12,alignItems:"flex-start",padding:"10px 12px",borderRadius:9,marginBottom:8,
+            background:r.urgency==="high"?"rgba(239,68,68,.06)":"var(--bg4)",
+            border:"1px solid "+(r.urgency==="high"?"rgba(239,68,68,.2)":"var(--border2)")
+          }},
+          React.createElement("span",{style:{fontSize:20,flexShrink:0}},r.icon),
+          React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:13,fontWeight:600,color:r.urgency==="high"?"#ef4444":"var(--text)"}},"r.title" in r?r.title:r.icon),
+            React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginTop:2}},r.sub)
+          )
+        ))
     )
   );
 };
@@ -17924,6 +18498,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
   };
 
   const STABS=[
+    {id:"notifications",label:"Notifications",icon:"🔔"},
     {id:"catRules",   label:"Auto-Categorise",icon:"🤖"},
     {id:"appearance",label:"Appearance",icon:"🎨"},
     {id:"security",  label:"Security",  icon:"🔐"},
@@ -17970,6 +18545,9 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
 
     /* ── Right Panel */
     React.createElement("div",{style:{flex:1,overflowY:"auto",minWidth:0}},
+
+      /* ══ NOTIFICATIONS ══ */
+      stab==="notifications"&&React.createElement(NotificationsPanel,{state}),
 
       /* ══ AUTO-CATEGORISE RULES ══ */
       stab==="catRules"&&React.createElement(CatRulesPanel,{state,dispatch}),
@@ -25609,6 +26187,8 @@ function App(){
     }
     rawDispatch(action);
   },[state,rawDispatch]);
+  /* Expose dispatch globally for Dashboard IIFE components that can't use hooks */
+  React.useEffect(()=>{window.__mm_dispatch=dispatch;},[dispatch]);
   const[tab,setTab]=useRouting();
   /* ── PIN Lock: locked if a PIN hash is stored AND session not yet unlocked ── */
   const[locked,setLocked]=useState(()=>!!getPinHash()&&!isSessionUnlocked());
@@ -25669,6 +26249,17 @@ function App(){
     if(due.length>0){
       due.forEach(sc=>dispatch({type:"EXECUTE_SCHEDULED",sc}));
     }
+  },[]);
+
+  /* ── Notification check: on mount and tab focus ── */
+  const _stateRef=React.useRef(state);
+  React.useEffect(()=>{_stateRef.current=state;});
+  React.useEffect(()=>{
+    const check=()=>checkAndFireNotifications(_stateRef.current);
+    setTimeout(check,2000); /* delay so app state is stable */
+    const onFocus=()=>check();
+    document.addEventListener("visibilitychange",onFocus);
+    return()=>document.removeEventListener("visibilitychange",onFocus);
   },[]);
 
   /* ── AUTO EOD SNAPSHOT — runs silently after NSE close (15:30 IST) ──────────
