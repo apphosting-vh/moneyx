@@ -185,7 +185,7 @@
   }, true);
 
   /* ── 4. PRINT BLOCKED ────────────────────────────────────────────── */
-  window.addEventListener('beforeprint', function(e) { e.preventDefault(); window.stop(); });
+  window.addEventListener('beforeprint', function(e) { if(!window.__mmPrintOK){ e.preventDefault(); window.stop(); } });
 
   /* ── 5. TEXT SELECTION DISABLED (except form fields) ────────────── */
   document.addEventListener('selectstart', function(e) {
@@ -1049,14 +1049,40 @@ html[data-theme="orchid"]     .sidebar-panel {
 }
 
 @media print{
-  body * { visibility: hidden !important; }
-  body::after {
+  /* ── Block Ctrl+P unless controlled export mode is active ── */
+  html:not([data-mm-printing]) body * { visibility: hidden !important; }
+  html:not([data-mm-printing]) body::after {
     visibility: visible !important;
     content: "Printing is disabled for this application.";
     position: fixed; top: 50%; left: 50%;
     transform: translate(-50%,-50%);
     font-size: 20px; font-family: sans-serif; color: #333;
   }
+  /* ── Controlled PDF export: show only the report print area ── */
+  html[data-mm-printing] * { visibility: hidden !important; }
+  html[data-mm-printing] #rpt-print-area,
+  html[data-mm-printing] #rpt-print-area * { visibility: visible !important; }
+  html[data-mm-printing] #rpt-print-area {
+    /* Reflow to top-left so content fills the page naturally */
+    position: absolute !important; top: 0 !important; left: 0 !important;
+    width: 210mm !important; overflow: visible !important;
+    padding: 0 !important; margin: 0 !important;
+    /* Force light palette so charts & text are readable on white paper */
+    --bg: #ffffff; --bg2: #f8f9fa; --bg3: #f1f5f9; --bg4: #e2e8f0;
+    --card: #ffffff; --card2: #f8fafc; --card3: #f0f4f8;
+    --border: #cbd5e1; --border2: #e2e8f0;
+    --text: #0f172a; --text2: #1e293b; --text3: #334155;
+    --text4: #475569; --text5: #64748b; --text6: #94a3b8;
+    --accent: #1d4ed8; --accentbg: #eff6ff; --accentbg2: #dbeafe; --accentbg3: #bfdbfe;
+    --inp-bg: #f8fafc; --scrollbar: #cbd5e1; --subnav-bg: #eff6ff;
+    background: #ffffff !important;
+  }
+  html[data-mm-printing] .no-print { display: none !important; visibility: hidden !important; }
+  /* Ensure cards & section backgrounds render correctly */
+  html[data-mm-printing] #rpt-print-area .card,
+  html[data-mm-printing] #rpt-print-area [class*="card"] { background: #ffffff !important; border: 1px solid #e2e8f0 !important; box-shadow: none !important; }
+  /* A4 page setup */
+  @page { size: A4 portrait; margin: 14mm 12mm 14mm 12mm; }
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body,#root{height:100%;transition:background .3s,color .3s}
@@ -2038,10 +2064,22 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.34.10";
+const APP_VERSION="3.35.0";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.35.0",date:"2026-03-23",title:"Feature — PDF Export of Current Report View (all 17 reports × all views)",changes:[
+    "New 'Export this View' button (📄) added to every report's RptCtrlBar toolbar — visible in Snapshot, Detailed and Heatmap views of all 17 reports (Cash Flow, Classification, Categories Monthly/Quarterly/Yearly/Summary, Where Money Goes, Where Money Comes From, Income vs Expenses, Forecast, My Usage, Payees, Summary of Accounts, Investment Portfolio, Reconciliation, Net Worth, GST & TDS).",
+    "Clicking 'Export this View' generates a PDF of exactly what is currently visible on screen — the active view (Snapshot/Detailed/Heatmap), current date range, current account filter — ready for A4 print.",
+    "PDF header injected temporarily into the print area: shows '₹ Money Manager — [Report Name]', the active date range, and the generation timestamp. Removed automatically after print dialog closes.",
+    "Print mode uses CSS custom property overrides on #rpt-print-area so all charts, cards and text render in a clean light palette (white background, dark text, blue accent) regardless of which dark/light theme is active in the app.",
+    "Two-layer print block preserved: Ctrl+P / browser print is still blocked (beforeprint listener + @media print CSS). Only the 'Export this View' button path sets window.__mmPrintOK=true and html[data-mm-printing] attribute, bypassing both guards.",
+    "RptCtrlBar upgraded: accepts optional onExportPDF prop; renders the Export button at the trailing edge of the toolbar only when the prop is provided. All 17 RptCtrlBar call sites pass {onExportPDF}.",
+    "All 17 report component signatures extended with onExportPDF prop. ReportsSection passes onExportPDF:handleExportView through the shared props object into every rendered report.",
+    "DateFilter bar wrapped in a .no-print div so it is hidden in the PDF. RptCtrlBar itself also carries .no-print so view toggle / account filter / export button do not appear in the printed output.",
+    "A4 page setup: @page { size: A4 portrait; margin: 14mm 12mm 14mm 12mm; } inside @media print ensures correct page size and margins when saving to PDF from the browser's print dialog.",
+    "afterprint event cleans up: removes mm-print-hdr, clears window.__mmPrintOK and data-mm-printing attribute so the app returns to normal state after the dialog closes or is cancelled.",
+  ]},
   {version:"3.34.10",date:"2026-03-23",title:"Fix — ReferenceError: activeTxTypes not defined in TxEditModal (Edit Transaction blank screen)",changes:[
     "Root cause: TxEditModal used activeTxTypes in two places — the Type dropdown (.map()) and the account picker onChange (setActiveTxTypes) — but the useState declaration was never added to TxEditModal, only to TxModal.",
     "Fix: Added const[activeTxTypes,setActiveTxTypes]=useState(txTypes); immediately after the existing useState hooks inside TxEditModal, mirroring the identical pattern already present in TxModal.",
@@ -13753,10 +13791,18 @@ const ViewToggle=({views=VIEWS_3,value,onChange})=>React.createElement("div",{st
 );
 
 /* Controls strip that houses AccFilter + ViewToggle */
-const RptCtrlBar=({children})=>React.createElement("div",{style:{
+const RptCtrlBar=({children,onExportPDF})=>React.createElement("div",{className:"no-print",style:{
   display:"flex",gap:10,alignItems:"center",flexWrap:"wrap",marginBottom:18,
   padding:"10px 14px",background:"var(--bg4)",border:"1px solid var(--border2)",borderRadius:10
-}},children);
+}},
+  children,
+  onExportPDF&&React.createElement("button",{onClick:onExportPDF,title:"Export current view as PDF — A4",style:{
+    display:"flex",alignItems:"center",gap:5,padding:"5px 13px",borderRadius:20,
+    border:"1px solid rgba(180,83,9,.4)",background:"var(--accentbg)",color:"var(--accent)",
+    cursor:"pointer",fontSize:11,fontFamily:"'DM Sans',sans-serif",fontWeight:600,
+    whiteSpace:"nowrap",flexShrink:0,transition:"all .15s",marginLeft:6
+  }},"📄 Export this View")
+);
 
 /* ── Generic category×month heatmap grid ─────────────────────────────────── */
 const HeatGrid=({rows,months,rowLabel="Category",hint="",colLabel})=>{
@@ -13916,7 +13962,7 @@ const AccFilter=({data,value,onChange})=>{
 };
 
 /* ══ 1. CASH FLOW ════════════════════════════════════════════════════════════ */
-const RptCashFlow=({data,from,to})=>{
+const RptCashFlow=({data,from,to,onExportPDF})=>{
   const[accFilter,setAccFilter]=useState("all");
   const[view,setView]=useState("snapshot");
   const allTx=collectTx(data,from,to,accFilter);
@@ -13949,7 +13995,7 @@ const RptCashFlow=({data,from,to})=>{
     .map(ct=>({label:CLASS_ICON[ct]+" "+ct,col:clsData[ct].col,data:clsData[ct].data}));
   return React.createElement("div",{className:"fu"},
     React.createElement(RptHeader,{title:"Cash Flow",desc:"Monthly classification breakdown — Income, Expenses, Investments (Transfers excluded)",icon:"💰"}),
-    React.createElement(RptCtrlBar,null,
+    React.createElement(RptCtrlBar,{onExportPDF},
       React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Account:"),
       React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
       React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
@@ -13990,7 +14036,7 @@ const RptCashFlow=({data,from,to})=>{
 };
 
 /* ══ 2. CLASSIFICATION BREAKDOWN ════════════════════════════════════════════ */
-const RptClassification=({data,from,to,onJumpToLedger})=>{
+const RptClassification=({data,from,to,onJumpToLedger,onExportPDF})=>{
   const[accFilter,setAccFilter]=useState("all");
   const[view,setView]=useState("snapshot");
   const[expandedCats,setExpandedCats]=useState({});
@@ -14010,7 +14056,7 @@ const RptClassification=({data,from,to,onJumpToLedger})=>{
   const hmRows=buildHeatRows(allTx,months,data.categories);
   return React.createElement("div",{className:"fu"},
     React.createElement(RptHeader,{title:"Classification Breakdown",desc:"Spending grouped by transaction classification — Income, Expense, Investment, Transfer, Others",icon:"🏷"}),
-    React.createElement(RptCtrlBar,null,
+    React.createElement(RptCtrlBar,{onExportPDF},
       React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Account:"),
       React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
       React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
@@ -14188,7 +14234,7 @@ const TrendLine=({incData,expData,h=120})=>{
   );
 };
 
-const RptCatMonthly=({data,from,to,onJumpToLedger})=>{
+const RptCatMonthly=({data,from,to,onJumpToLedger,onExportPDF})=>{
   const[accFilter,setAccFilter]=useState("all");
   const[view,setView]=useState("snapshot");
   const[expandedMonths,setExpandedMonths]=useState({});
@@ -14253,7 +14299,7 @@ const RptCatMonthly=({data,from,to,onJumpToLedger})=>{
 
   return React.createElement("div",{className:"fu"},
     React.createElement(RptHeader,{title:"Categories — Monthly",desc:"Snapshot, detailed month cards and heatmap across all transaction types",icon:"📅"}),
-    React.createElement(RptCtrlBar,null,
+    React.createElement(RptCtrlBar,{onExportPDF},
       React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.5}},"Account:"),
       React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
       React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
@@ -14463,7 +14509,7 @@ const RptCatMonthly=({data,from,to,onJumpToLedger})=>{
 
 
 /* ══ 3b. CATEGORIES QUARTERLY ═══════════════════════════════════════════════ */
-const RptCatQuarterly=({data,from,to,onJumpToLedger})=>{
+const RptCatQuarterly=({data,from,to,onJumpToLedger,onExportPDF})=>{
   const[accFilter,setAccFilter]=useState("all");
   const[view,setView]=useState("snapshot");
   const[expandedPeriods,setExpandedPeriods]=useState({});
@@ -14562,7 +14608,7 @@ const RptCatQuarterly=({data,from,to,onJumpToLedger})=>{
 
   return React.createElement("div",{className:"fu"},
     React.createElement(RptHeader,{title:"Categories — Quarterly",desc:"Snapshot, detailed quarter cards and heatmap across all transaction types",icon:"📆"}),
-    React.createElement(RptCtrlBar,null,
+    React.createElement(RptCtrlBar,{onExportPDF},
       React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.5}},"Account:"),
       React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
       React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
@@ -14777,7 +14823,7 @@ const RptCatQuarterly=({data,from,to,onJumpToLedger})=>{
 };
 
 /* ══ 3c. CATEGORIES YEARLY ═══════════════════════════════════════════════════ */
-const RptCatYearly=({data,from,to,onJumpToLedger})=>{
+const RptCatYearly=({data,from,to,onJumpToLedger,onExportPDF})=>{
   const[accFilter,setAccFilter]=useState("all");
   const[view,setView]=useState("snapshot");
   const[expandedPeriods,setExpandedPeriods]=useState({});
@@ -14851,7 +14897,7 @@ const RptCatYearly=({data,from,to,onJumpToLedger})=>{
 
   return React.createElement("div",{className:"fu"},
     React.createElement(RptHeader,{title:"Categories — Yearly",desc:"Snapshot, detailed year cards and heatmap across all transaction types",icon:"📊"}),
-    React.createElement(RptCtrlBar,null,
+    React.createElement(RptCtrlBar,{onExportPDF},
       React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.5}},"Account:"),
       React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
       React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
@@ -15066,7 +15112,7 @@ const RptCatYearly=({data,from,to,onJumpToLedger})=>{
 };
 
 /* ══ 4. CATEGORIES SUMMARY ══════════════════════════════════════════════════ */
-const RptCatSummary=({data,from,to,onJumpToLedger})=>{
+const RptCatSummary=({data,from,to,onJumpToLedger,onExportPDF})=>{
   const[accFilter,setAccFilter]=useState("all");
   const[view,setView]=useState("snapshot");
   const[expandedCats,setExpandedCats]=useState({});
@@ -15092,7 +15138,7 @@ const RptCatSummary=({data,from,to,onJumpToLedger})=>{
 
   return React.createElement("div",{className:"fu"},
     React.createElement(RptHeader,{title:"Categories — Summary",desc:"Snapshot overview, detailed drill-down, and month-by-month heatmap for all categories",icon:"📋"}),
-    React.createElement(RptCtrlBar,null,
+    React.createElement(RptCtrlBar,{onExportPDF},
       React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Account:"),
       React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
       React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
@@ -15231,7 +15277,7 @@ const RptCatSummary=({data,from,to,onJumpToLedger})=>{
 };
 
 /* ══ 5. WHERE THE MONEY GOES ════════════════════════════════════════════════ */
-const RptMoneyGoes=({data,from,to,onJumpToLedger})=>{
+const RptMoneyGoes=({data,from,to,onJumpToLedger,onExportPDF})=>{
   const[accFilter,setAccFilter]=useState("all");
   const[view,setView]=useState("snapshot");
   const[showSubs,setShowSubs]=useState(true);
@@ -15257,7 +15303,7 @@ const RptMoneyGoes=({data,from,to,onJumpToLedger})=>{
   const hmRows=buildHeatRows(allTx,months,data.categories);
   return React.createElement("div",{className:"fu"},
     React.createElement(RptHeader,{title:"Where the Money Goes",desc:"All expense outflow — by category and sub-category",icon:"💸"}),
-    React.createElement(RptCtrlBar,null,
+    React.createElement(RptCtrlBar,{onExportPDF},
       React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Account:"),
       React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
       React.createElement("label",{style:{display:"flex",alignItems:"center",gap:6,fontSize:12,color:"var(--text4)",cursor:"pointer"}},
@@ -15350,7 +15396,7 @@ const RptMoneyGoes=({data,from,to,onJumpToLedger})=>{
 };
 
 /* ══ 6. WHERE THE MONEY COMES FROM ══════════════════════════════════════════ */
-const RptMoneyComes=({data,from,to,onJumpToLedger})=>{
+const RptMoneyComes=({data,from,to,onJumpToLedger,onExportPDF})=>{
   const[accFilter,setAccFilter]=useState("all");
   const[view,setView]=useState("snapshot");
   const[showSubs,setShowSubs]=useState(true);
@@ -15375,7 +15421,7 @@ const RptMoneyComes=({data,from,to,onJumpToLedger})=>{
   const hmRows=buildHeatRows(allTx,months,data.categories);
   return React.createElement("div",{className:"fu"},
     React.createElement(RptHeader,{title:"Where the Money Comes From",desc:"All income inflow — by category and sub-category",icon:"💹"}),
-    React.createElement(RptCtrlBar,null,
+    React.createElement(RptCtrlBar,{onExportPDF},
       React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Account:"),
       React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
       React.createElement("label",{style:{display:"flex",alignItems:"center",gap:6,fontSize:12,color:"var(--text4)",cursor:"pointer"}},
@@ -15465,7 +15511,7 @@ const RptMoneyComes=({data,from,to,onJumpToLedger})=>{
 };
 
 /* ══ 7. INCOME vs EXPENSES ══════════════════════════════════════════════════ */
-const RptIncVsExp=({data,from,to})=>{
+const RptIncVsExp=({data,from,to,onExportPDF})=>{
   const[accFilter,setAccFilter]=useState("all");
   const[view,setView]=useState("snapshot");
   const allTx=collectTx(data,from,to,accFilter);
@@ -15494,7 +15540,7 @@ const RptIncVsExp=({data,from,to})=>{
   ].filter(r=>Object.values(r.data).some(v=>v>0));
   return React.createElement("div",{className:"fu"},
     React.createElement(RptHeader,{title:"Income vs Expenses",desc:"Monthly comparison — investments are savings, not expenses",icon:"⚖"}),
-    React.createElement(RptCtrlBar,null,
+    React.createElement(RptCtrlBar,{onExportPDF},
       React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Account:"),
       React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
       React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
@@ -15527,7 +15573,7 @@ const RptIncVsExp=({data,from,to})=>{
 };
 
 /* ══ 8. FORECAST ════════════════════════════════════════════════════════════ */
-const RptForecast=({data})=>{
+const RptForecast=({data,onExportPDF})=>{
   const[view,setView]=useState("snapshot");
   const allTx=[...data.banks.flatMap(b=>b.transactions),...data.cards.flatMap(c=>c.transactions),...data.cash.transactions]
     .filter(t=>!isAnyTransfer(t,data.categories));
@@ -15554,7 +15600,7 @@ const RptForecast=({data})=>{
   });
   return React.createElement("div",{className:"fu"},
     React.createElement(RptHeader,{title:"Forecast",desc:"6-month projected bank balance — investments reduce balance but grow your portfolio",icon:"🔮"}),
-    React.createElement(RptCtrlBar,null,
+    React.createElement(RptCtrlBar,{onExportPDF},
       React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontSize:12}},"Based on last 6 months average"),
       React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{views:VIEWS_2,value:view,onChange:setView}))
     ),
@@ -15581,7 +15627,7 @@ const RptForecast=({data})=>{
 };
 
 /* ══ 9. MY USAGE ════════════════════════════════════════════════════════════ */
-const RptMyUsage=({data,from,to})=>{
+const RptMyUsage=({data,from,to,onExportPDF})=>{
   const[view,setView]=useState("snapshot");
   const bankTx=data.banks.flatMap(b=>b.transactions.filter(t=>t.date>=from&&t.date<=to).map(t=>({...t,accName:b.name,accType:"Bank",accId:b.id})));
   const cardTx=data.cards.flatMap(c=>c.transactions.filter(t=>t.date>=from&&t.date<=to).map(t=>({...t,accName:c.name,accType:"Card",accId:c.id})));
@@ -15612,7 +15658,7 @@ const RptMyUsage=({data,from,to})=>{
   });
   return React.createElement("div",{className:"fu"},
     React.createElement(RptHeader,{title:"My Usage",desc:"Account activity, day-of-week patterns, and classification split",icon:"📱"}),
-    React.createElement(RptCtrlBar,null,
+    React.createElement(RptCtrlBar,{onExportPDF},
       React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},allTx.length+" transactions in period"),
       React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
     ),
@@ -15701,7 +15747,7 @@ const RptMyUsage=({data,from,to})=>{
 };
 
 /* ══ 10. PAYEES ══════════════════════════════════════════════════════════════ */
-const RptPayees=({data,from,to,onJumpToLedger})=>{
+const RptPayees=({data,from,to,onJumpToLedger,onExportPDF})=>{
   const[view,setView]=useState("snapshot");
   const allTx=[...data.banks.flatMap(b=>b.transactions),...data.cards.flatMap(c=>c.transactions),...data.cash.transactions]
     .filter(t=>t.date>=from&&t.date<=to&&!isAnyTransfer(t,data.categories));
@@ -15728,7 +15774,7 @@ const RptPayees=({data,from,to,onJumpToLedger})=>{
   const hmRows=rows.slice(0,12).map(([name,v],i)=>({label:name,col:PAL[i%PAL.length],data:v.months}));
   return React.createElement("div",{className:"fu"},
     React.createElement(RptHeader,{title:"Payees",desc:"Top 20 payees by spend — with classification, trends and month heatmap",icon:"👤"}),
-    React.createElement(RptCtrlBar,null,
+    React.createElement(RptCtrlBar,{onExportPDF},
       React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},rows.length+" payees"),
       React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
     ),
@@ -15799,7 +15845,7 @@ const RptPayees=({data,from,to,onJumpToLedger})=>{
 };
 
 /* ══ 11. SUMMARY OF ACCOUNTS ════════════════════════════════════════════════ */
-const RptSummary=({data})=>{
+const RptSummary=({data,onExportPDF})=>{
   const[view,setView]=useState("snapshot");
   const bTotal=data.banks.reduce((s,b)=>s+b.balance,0);
   const cDebt=data.cards.reduce((s,c)=>s+c.outstanding,0);
@@ -15820,7 +15866,7 @@ const RptSummary=({data})=>{
   const allItems=sections.flatMap(sec=>sec.rows.map(r=>({...r,section:sec.title}))).sort((a,b)=>b.val-a.val);
   return React.createElement("div",{className:"fu"},
     React.createElement(RptHeader,{title:"Summary of Accounts",desc:"Complete snapshot of all accounts, investments, and liabilities",icon:"🗂"}),
-    React.createElement(RptCtrlBar,null,
+    React.createElement(RptCtrlBar,{onExportPDF},
       React.createElement("span",{style:{fontSize:12,color:"var(--text5)"}},"All accounts · point-in-time"),
       React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{views:VIEWS_2,value:view,onChange:setView}))
     ),
@@ -15860,7 +15906,7 @@ const RptSummary=({data})=>{
 };
 
 /* ══ 12. INVESTMENTS REPORT ══════════════════════════════════════════════════ */
-const RptInvestments=({data})=>{
+const RptInvestments=({data,onExportPDF})=>{
   const[view,setView]=useState("snapshot");
   const mfInv=data.mf.reduce((s,m)=>s+m.invested,0);
   const mfVal=data.mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
@@ -15875,7 +15921,7 @@ const RptInvestments=({data})=>{
   const alloc=[{name:"Mutual Funds",val:mfVal,col:"#6d28d9"},{name:"Shares",val:shVal,col:"#16a34a"},{name:"Fixed Deposits",val:fdVal,col:"var(--accent)"}].filter(a=>a.val>0);
   return React.createElement("div",{className:"fu"},
     React.createElement(RptHeader,{title:"Investment Portfolio",desc:"Consolidated view of Mutual Funds, Shares, and Fixed Deposits",icon:"📈"}),
-    React.createElement(RptCtrlBar,null,
+    React.createElement(RptCtrlBar,{onExportPDF},
       React.createElement("span",{style:{fontSize:12,color:"var(--text5)"}},"Point-in-time portfolio snapshot"),
       React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{views:VIEWS_2,value:view,onChange:setView}))
     ),
@@ -15953,7 +15999,7 @@ const RptInvestments=({data})=>{
 };
 
 /* ══ 13. RECONCILIATION ══════════════════════════════════════════════════════ */
-const RptReconciliation=({data,from,to})=>{
+const RptReconciliation=({data,from,to,onExportPDF})=>{
   const[view,setView]=useState("snapshot");
   const allTx=[...data.banks.flatMap(b=>b.transactions.map(t=>({...t,accName:b.name,accType:"Bank"}))),
     ...data.cards.flatMap(c=>c.transactions.map(t=>({...t,accName:c.name,accType:"Card"}))),
@@ -15978,7 +16024,7 @@ const RptReconciliation=({data,from,to})=>{
   const hmRows=accNames.map((name,i)=>({label:name,col:PAL[i%PAL.length],data:accGrid[name]||{}}));
   return React.createElement("div",{className:"fu"},
     React.createElement(RptHeader,{title:"Reconciliation Status",desc:"Transaction status breakdown — reconciled, unreconciled, flagged",icon:"✅"}),
-    React.createElement(RptCtrlBar,null,
+    React.createElement(RptCtrlBar,{onExportPDF},
       React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},total+" total transactions"),
       React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
     ),
@@ -16045,7 +16091,7 @@ const RptReconciliation=({data,from,to})=>{
 };
 
 /* ══ 14. NET WORTH TREND ════════════════════════════════════════════════════ */
-const RptNetWorth=({data})=>{
+const RptNetWorth=({data,onExportPDF})=>{
   const[view,setView]=useState("snapshot");
   const bankBal=data.banks.reduce((s,b)=>s+b.balance,0);
   const cashBal=data.cash.balance;
@@ -16080,7 +16126,7 @@ const RptNetWorth=({data})=>{
   const totalLiab=liabilities.reduce((s,l)=>s+l.val,0);
   return React.createElement("div",{className:"fu"},
     React.createElement(RptHeader,{title:"Net Worth Trend",desc:"Estimated month-by-month net worth trajectory over the last 12 months",icon:"📊"}),
-    React.createElement(RptCtrlBar,null,
+    React.createElement(RptCtrlBar,{onExportPDF},
       React.createElement("span",{style:{fontSize:12,color:"var(--text5)"}},"Last 12 months estimation"),
       React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{views:VIEWS_2,value:view,onChange:setView}))
     ),
@@ -16776,7 +16822,7 @@ ${table(
    ► TDS (from net received/paid):
        Gross = Net × 100/(100 − rate%)             TDS = Gross − Net
    ══════════════════════════════════════════════════════════════════════════ */
-const RptGstTds=({data,from,to})=>{
+const RptGstTds=({data,from,to,onExportPDF})=>{
   const[view,setView]=useState("snapshot");
   const[gstTypeFilter,setGstTypeFilter]=useState("all"); /* all | inclusive | exclusive */
   const[tdsOnly,setTdsOnly]=useState(false);
@@ -16887,7 +16933,7 @@ const RptGstTds=({data,from,to})=>{
     React.createElement(RptHeader,{title:"GST & TDS Report",desc:"Breaks down GST (inclusive/exclusive) and TDS deducted across all accounts for the selected period",icon:"🧾"}),
 
     /* ── Ctrl bar ── */
-    React.createElement(RptCtrlBar,null,
+    React.createElement(RptCtrlBar,{onExportPDF},
       React.createElement("div",{style:{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}},
         React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600}})
         ,["all","inclusive","exclusive"].map(t=>React.createElement("button",{key:t,
@@ -17190,8 +17236,34 @@ const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
     );
   };
 
+  const handleExportView=()=>{
+    const rptLabel=REPORT_TREE.flatMap(r=>r.children||[r]).find(r=>r.id===activeRpt)?.label||activeRpt;
+    const noD=["forecast","summary","investments"];
+    const dateLabel=noD.includes(activeRpt)?"":from+" → "+to;
+    /* Inject a temporary print-only header above the report */
+    const hdr=document.createElement("div");
+    hdr.id="mm-print-hdr";
+    hdr.style.cssText="font-family:\'Sora\',sans-serif;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #1d4ed8;page-break-after:avoid";
+    const genDate=new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+    hdr.innerHTML="<div style=\"font-size:19px;font-weight:800;color:#0f172a;margin-bottom:3px\">₹ Money Manager — "+rptLabel+"</div>"
+      +"<div style=\"font-size:11px;color:#64748b;font-family:\'DM Sans\',sans-serif\">"+(dateLabel?"Period: "+dateLabel+" &nbsp;·&nbsp; ":"")+"Generated: "+genDate+"</div>";
+    const area=document.getElementById("rpt-print-area");
+    if(area)area.insertBefore(hdr,area.firstChild);
+    window.__mmPrintOK=true;
+    document.documentElement.setAttribute("data-mm-printing","1");
+    const cleanup=()=>{
+      window.__mmPrintOK=false;
+      document.documentElement.removeAttribute("data-mm-printing");
+      const h=document.getElementById("mm-print-hdr");
+      if(h)h.remove();
+      window.removeEventListener("afterprint",cleanup);
+    };
+    window.addEventListener("afterprint",cleanup);
+    setTimeout(()=>window.print(),80);
+  };
+
   const renderReport=()=>{
-    const props={data,from,to,onJumpToLedger};
+    const props={data,from,to,onJumpToLedger,onExportPDF:handleExportView};
     switch(activeRpt){
       case"cashflow":        return React.createElement(RptCashFlow,props);
       case"classification":  return React.createElement(RptClassification,props);
@@ -17248,8 +17320,8 @@ const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
       ),
       REPORT_TREE.map(item=>React.createElement(NavItem,{key:item.id,item}))
     ),
-    React.createElement("div",{className:"fu",style:{flex:1,overflowY:"auto",minWidth:0}},
-      !noDate.includes(activeRpt)&&React.createElement(DateFilter,{from,to,onFrom:setFrom,onTo:setTo,presets}),
+    React.createElement("div",{id:"rpt-print-area",className:"fu",style:{flex:1,overflowY:"auto",minWidth:0}},
+      !noDate.includes(activeRpt)&&React.createElement("div",{className:"no-print"},React.createElement(DateFilter,{from,to,onFrom:setFrom,onTo:setTo,presets})),
       renderReport()
     ),
     exportOpen&&React.createElement(ExportReportModal,{data,onClose:()=>setExportOpen(false)})
