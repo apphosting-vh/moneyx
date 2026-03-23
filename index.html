@@ -2036,10 +2036,15 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.34.2";
+const APP_VERSION="3.34.3";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.34.3",date:"2026-03-23",title:"Fix — Scheduled: duplicate completed cards + wrong Executed date",changes:[
+    "Bug 1 — Duplicate completed cards: The App-level auto-execute useEffect (runs on every app load) was missing the lastExecuted !== today guard that the Execute Now and Execute All Due buttons already had. When a user previously Copied a completed one-time entry, the copy inherited nextDate:null and defaulted to TODAY() — making it immediately due. On next load, the app auto-executed it, creating another completed entry. Repeating the copy cycle produced the three LIC Maturity cards seen. Fix: added sc.lastExecuted !== today guard to the App-level useEffect, matching the existing button guards.",
+    "Bug 2 — Copy defaulting to today: the Copy confirm handler used nextDate:copySc.nextDate||TODAY(). For completed entries nextDate is null, so it fell back to TODAY() — meaning the copy auto-executed immediately on the next load. Fix: copies now default to tomorrow instead of today for completed/past entries (baseDate = copySc.nextDate if in the future, else tomorrow). This ensures copies are always at least one day away and gives the user time to edit the date.",
+    "Bug 3 — 'Last:' date label: renamed to 'Executed:' to make it unambiguous. The two copied entries showed 2026-03-24 because that was their nextDate when auto-executed (set to TODAY() at copy time). With fix 1+2 applied, newly created copies will always show the correct execution date.",
+  ]},
   {version:"3.34.2",date:"2026-03-23",title:"Fix — Receipt attachment missing from New Transaction modal (TxModal)",changes:[
     "Root cause: ReceiptAttachPanel was only wired into TxEditModal (edit existing). TxModal (new transaction) had no attachment UI.",
     "Fix: TxModal now pre-generates a stable transaction id via uid() on mount (stored in useState so it never changes). This id is passed to ReceiptAttachPanel as txId so file handles can be stored in IDB before Save is clicked. On save, the pre-generated id is used instead of a fresh uid() call, and _receipts:pendingReceipts is included in the dispatched payload if any files were attached.",
@@ -20382,7 +20387,7 @@ const ScheduledSection=React.memo(({state,dispatch})=>{
       ),
       React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,fontSize:11,color:"var(--text5)",marginBottom:10}},
         React.createElement("div",null,React.createElement("span",{style:{color:"var(--text6)"}},"Next: "),React.createElement("span",{style:{color:isDue?"#ef4444":"var(--text3)",fontWeight:600}},sc.nextDate||"--")),
-        React.createElement("div",null,React.createElement("span",{style:{color:"var(--text6)"}},"Last: "),React.createElement("span",{style:{color:"var(--text3)"}},sc.lastExecuted||"Never")),
+        React.createElement("div",null,React.createElement("span",{style:{color:"var(--text6)"}},"Executed: "),React.createElement("span",{style:{color:"var(--text3)"}},sc.lastExecuted||"Never")),
         sc.endDate&&React.createElement("div",null,React.createElement("span",{style:{color:"var(--text6)"}},"Ends: "),React.createElement("span",null,sc.endDate))
       ),
       isDue&&React.createElement("div",{style:{marginBottom:10,padding:"7px 10px",background:"rgba(239,68,68,.08)",borderRadius:7,border:"1px solid rgba(239,68,68,.25)",fontSize:12,color:"#ef4444",display:"flex",alignItems:"center",gap:6}},
@@ -20417,13 +20422,17 @@ const ScheduledSection=React.memo(({state,dispatch})=>{
     copySc&&React.createElement(ConfirmModal,{
       title:"Copy Schedule",icon:"⎘",
       msg:'Create a copy of "'+(copySc.desc||copySc.payee||"this scheduled transaction")+'"?',
-      detail:"A new active schedule will be created with the same settings. You can edit it after.",
+      detail:"A new active schedule will be created with the same settings. You can edit the date and settings after.",
       confirmLabel:"Yes, Copy",btnVariant:"success",
       onConfirm:function(){
+        /* For completed/expired entries, don't inherit the old nextDate (null or past).
+           Use tomorrow so the copy doesn't immediately auto-execute on load. */
+        const tomorrow=(()=>{const d=new Date();d.setDate(d.getDate()+1);return d.toISOString().split("T")[0];})();
+        const baseDate=copySc.nextDate&&copySc.nextDate>TODAY()?copySc.nextDate:tomorrow;
         dispatch({type:"ADD_SCHEDULED",p:{
           ...copySc,id:undefined,
           desc:(copySc.desc||copySc.payee||"Scheduled Transaction")+" (Copy)",
-          status:"active",lastExecuted:null,nextDate:copySc.nextDate||TODAY(),
+          status:"active",lastExecuted:null,nextDate:baseDate,
         }});
         setCopySc(null);
       },
@@ -26946,7 +26955,11 @@ function App(){
   /* Auto-execute due scheduled transactions on load */
   React.useEffect(()=>{
     const today=TODAY();
-    const due=(state.scheduled||[]).filter(sc=>sc.status==="active"&&sc.nextDate&&sc.nextDate<=today);
+    /* Guard: skip entries already executed today to prevent double-firing on
+       rapid reloads or when the user revisits the tab the same day. */
+    const due=(state.scheduled||[]).filter(sc=>
+      sc.status==="active"&&sc.nextDate&&sc.nextDate<=today&&sc.lastExecuted!==today
+    );
     if(due.length>0){
       due.forEach(sc=>dispatch({type:"EXECUTE_SCHEDULED",sc}));
     }
