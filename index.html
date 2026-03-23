@@ -2036,10 +2036,14 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.34.7";
+const APP_VERSION="3.34.8";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.34.8",date:"2026-03-23",title:"Deep Audit Fix Round 4 — Excel FD totals column misalignment; export includes transfers in category breakdown",changes:[
+    "Bug 1 FIXED — Excel FD export TOTALS row misaligned: The FD sheet TOTALS row was ['TOTALS','',principal_sum,'','',value_today,...]. Col 1=Principal header received blank, col 2=Rate header received principal_sum. Fixed to ['TOTALS',principal_sum,'','','',value_today,...] so principal total appears under the Principal column.",
+    "Bug 2 FIXED — Excel/PDF export Category Breakdown includes transfer transactions: getTx() returns all transactions including those categorised as Transfer. getCatSummary() and getMonthlyCF() included them, inflating category debit/credit counts and adding a Transfer row to the Category Breakdown sheet. Fixed by filtering out Transfer-class transactions in getCatSummary() (getMonthlyCF already correctly buckets them separately as 'transfer' type).",
+  ]},
   {version:"3.34.7",date:"2026-03-23",title:"Fix — FAB Quick-Add Type dropdown + EDIT_CAT catRules cascade wrong field",changes:[
     "Bug 1 FIXED — FAB Quick-Add Type dropdown shows wrong options after account switch: Added activeTxTypes state to TxModal, initialized from the txTypes prop, updated whenever the account picker onChange fires. The Type dropdown now renders activeTxTypes.map(...) instead of txTypes.map(...). Switching to a card now correctly shows Purchase/Payment/Refund, not Debit/Credit/Transfer.",
     "Bug 2 FIXED — EDIT_CAT and EDIT_SUBCAT catRules cascade used wrong field name: The cascade updated r.category but catRules store the target category as r.cat (set by ADD_CAT_RULE and read by applyCatRule). So renaming a category never actually updated the matching auto-categorise rules, leaving them permanently pointing to the old name. Fixed both EDIT_CAT and EDIT_SUBCAT cascade to update r.cat instead of r.category.",
@@ -16164,13 +16168,15 @@ const ExportReportModal=({data,onClose})=>{
     return{banks,cards,cash,all:[...banks,...cards,...cash]};
   };
 
-  /* ── category aggregation ── */
+  /* ── category aggregation — excludes Transfer transactions (same as Dashboard/Reports) ── */
   const getCatSummary=(txns)=>{
     const map={};
     txns.forEach(t=>{
+      const ct=catClassType(data.categories,t.cat||"Others");
+      /* Skip transfers — they're internal money movement, not income/expense */
+      if(ct==="Transfer")return;
       const main=catMainName(t.cat||"Others");
       const sub=t.cat&&t.cat.includes("::")?t.cat.split("::")[1]:"";
-      const ct=catClassType(data.categories,t.cat||"Others");
       const key=main+(sub?"::"+sub:"");
       if(!map[key])map[key]={category:main,subCategory:sub,classType:ct,debit:0,credit:0,count:0};
       if(t.type==="debit")map[key].debit+=t.amount;
@@ -16320,7 +16326,7 @@ const ExportReportModal=({data,onClose})=>{
           return[f.bank,fmt(f.amount),f.rate,f.startDate,f.maturityDate,fmt(calcFDValueToday(f)),fmt(mat),fmt(mat-f.amount),daysLeft(f.maturityDate)];
         }),
         ["","","","","","","","",""],
-        ["TOTALS","",data.fd.reduce((s,f)=>s+f.amount,0),"","",
+        ["TOTALS",data.fd.reduce((s,f)=>s+f.amount,0),"","","",
           data.fd.reduce((s,f)=>s+calcFDValueToday(f),0),
           data.fd.reduce((s,f)=>{const m=f.maturityAmount&&f.maturityAmount>f.amount?f.maturityAmount:calcFDMaturity(f.amount,f.rate,f.startDate,f.maturityDate);return s+m;},0),
           data.fd.reduce((s,f)=>{const m=f.maturityAmount&&f.maturityAmount>f.amount?f.maturityAmount:calcFDMaturity(f.amount,f.rate,f.startDate,f.maturityDate);return s+m-f.amount;},0),""],
