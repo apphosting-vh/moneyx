@@ -2067,10 +2067,20 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.36.2";
+const APP_VERSION="3.36.3";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.36.3",date:"2026-03-24",title:"Feature — Purge Old Transactions by date in Storage Monitor (Settings → Data & Backup)",changes:[
+    "New 'Purge Old Transactions' panel added inside the Storage Monitor card in Settings → Data & Backup, below the existing Cache Free-Up section.",
+    "Users choose a cutoff date (default: 1 year ago) and select which sources to purge — 🏦 Bank, 💳 Cards, 💵 Cash — independently or in any combination.",
+    "Two-step safety flow: 'Preview Deletions' shows an exact per-source count and estimated bytes freed before any data is touched. A second 'Confirm Permanent Deletion' step must then be clicked, followed by a final '⚠️ Yes, Delete Permanently' button — preventing accidental purges.",
+    "Account balances auto-adjusted on purge: banks and cash balances are corrected by reversing the net Reconciled-transaction delta of the removed rows; card outstanding is reduced by the net Reconciled debit delta. Pending/Unreconciled transactions are removed without affecting balances, matching MASS_DEL_* reducer behaviour.",
+    "New reducer action PURGE_OLD_TRANSACTIONS: accepts beforeDate (YYYY-MM-DD) and sources (Set<'banks'|'cards'|'cash'>). Handles all three account types atomically in a single state update.",
+    "PURGE_OLD_TRANSACTIONS added to the DESTRUCTIVE action set so the 6-second undo snapshot is captured before execution.",
+    "After purge completes the storage stats gauge is automatically re-measured and refreshed, immediately reflecting the space freed.",
+    "StorageGauge component updated to accept a state prop (passed from SettingsSection alongside dispatch) so live preview counts are computed directly from in-memory state without extra localStorage reads.",
+  ]},
   {version:"3.36.2",date:"2026-03-24",title:"Bug Fixes — Budget plan keys orphaned on category rename; localStorage compaction desync",changes:[
     "Bug 1 Fix (Budget plans not renamed when category renamed) — The EDIT_CAT reducer cascaded renames into transactions, catRules, and scheduled entries but never touched insightPrefs.budgetPlans or insightPrefs.yearlyBudgetPlans, both of which are keyed by main category name. Renaming a category left the old key in both maps as an orphaned entry and the renamed category would show no budget plan. Fixed: EDIT_CAT now calls _renamePlanKey() on both budgetPlans and yearlyBudgetPlans when _nameChanged — the old key's value is moved to the new key and the old key is deleted — and the updated insightPrefs is written back to state.",
     "Bug 2 Fix (localStorage compaction desync causing repeated QuotaExceededError) — _emergencyCompact() pruned the caches in localStorage but returned a boolean, so the in-memory state was never updated to match. On the next state change the full (un-pruned) caches were serialised again, triggering another QuotaExceededError on every subsequent action. Fixed: _emergencyCompact now returns a string identifying the furthest pass that succeeded (\"historyCache\", \"eodPrices\", or \"eodNavs\") instead of true/false. saveState returns this string to its caller. The useEffect call site checks the return value and dispatches the cumulative PRUNE actions (PRUNE_HISTORY_CACHE on pass 1+, PRUNE_EOD_PRICES on pass 2+, PRUNE_EOD_NAVS on pass 3) so in-memory state is immediately synchronised with what was persisted.",
@@ -4880,6 +4890,47 @@ const reducer=(s,a)=>{
       const _nPruned={};
       _nKeys.slice(-_keepNavDays).forEach(k=>{_nPruned[k]=(s.eodNavs||{})[k];});
       return{...s,eodNavs:_nPruned};
+    }
+    case"PURGE_OLD_TRANSACTIONS":{
+      /* Permanently delete all bank/card/cash transactions strictly before a.beforeDate.
+         Balance adjustments mirror MASS_DEL_* logic:
+           • Banks & Cash : reverse net credit/debit delta of Reconciled txns removed.
+           • Cards        : reduce outstanding by net debit delta of Reconciled txns removed.
+         Pending/Unreconciled txns are dropped without touching balances. */
+      const _cut=a.beforeDate;
+      if(!_cut)return s;
+      const _src=a.sources||new Set(["banks","cards","cash"]);
+      let _ps={...s};
+      if(_src.has("banks")){
+        _ps={..._ps,banks:_ps.banks.map(b=>{
+          const _rem=b.transactions.filter(t=>t.date<_cut);
+          if(!_rem.length)return b;
+          const _delta=_rem.filter(t=>t.status==="Reconciled")
+            .reduce((d,t)=>d+(t.type==="credit"?t.amount:-t.amount),0);
+          return{...b,balance:b.balance-_delta,transactions:b.transactions.filter(t=>t.date>=_cut)};
+        })};
+      }
+      if(_src.has("cards")){
+        _ps={..._ps,cards:_ps.cards.map(c=>{
+          const _rem=c.transactions.filter(t=>t.date<_cut);
+          if(!_rem.length)return c;
+          const _delta=_rem.filter(t=>t.status==="Reconciled")
+            .reduce((d,t)=>d+(t.type==="debit"?t.amount:-t.amount),0);
+          return{...c,outstanding:Math.max(0,c.outstanding-_delta),transactions:c.transactions.filter(t=>t.date>=_cut)};
+        })};
+      }
+      if(_src.has("cash")){
+        const _remC=_ps.cash.transactions.filter(t=>t.date<_cut);
+        if(_remC.length){
+          const _deltaC=_remC.filter(t=>t.status==="Reconciled")
+            .reduce((d,t)=>d+(t.type==="credit"?t.amount:-t.amount),0);
+          _ps={..._ps,cash:{..._ps.cash,
+            balance:_ps.cash.balance-_deltaC,
+            transactions:_ps.cash.transactions.filter(t=>t.date>=_cut)
+          }};
+        }
+      }
+      return _ps;
     }
     default:return s;
   }
@@ -18548,10 +18599,47 @@ const CloudBackupPanel=({state})=>{
    Visual localStorage usage monitor shown in Settings → Data & Backup.
    Shows a colour-coded progress bar, per-key breakdown, and pruning actions.
    ══════════════════════════════════════════════════════════════════════════ */
-const StorageGauge=({dispatch})=>{
+const StorageGauge=({dispatch,state})=>{
   const[stats,setStats]=useState(()=>getStorageStats());
   const[showBreakdown,setShowBreakdown]=useState(false);
   const[pruning,setPruning]=useState(null); /* "hist"|"eod"|"nav" */
+
+  /* ── Purge Old Transactions state ── */
+  const[purgeDate,setPurgeDate]=useState(()=>{
+    const d=new Date();d.setFullYear(d.getFullYear()-1);
+    return d.toISOString().split("T")[0];
+  });
+  const[purgeSrc,setPurgeSrc]=useState({banks:true,cards:true,cash:true});
+  const[purgePreview,setPurgePreview]=useState(null); /* null | {bCount,cCount,kCount,total,estBytes} */
+  const[purgeConfirm,setPurgeConfirm]=useState(false);
+  const[purgeBusy,setPurgeBusy]=useState(false);
+  const[purgeResult,setPurgeResult]=useState(null); /* null | {deleted,freedEst} */
+
+  const computePurgePreview=()=>{
+    if(!state||!purgeDate)return null;
+    const cut=purgeDate;
+    const bCount=purgeSrc.banks?state.banks.reduce((s,b)=>s+b.transactions.filter(t=>t.date<cut).length,0):0;
+    const cCount=purgeSrc.cards?state.cards.reduce((s,c)=>s+c.transactions.filter(t=>t.date<cut).length,0):0;
+    const kCount=purgeSrc.cash?state.cash.transactions.filter(t=>t.date<cut).length:0;
+    const total=bCount+cCount+kCount;
+    const estBytes=total*320; /* avg transaction JSON ~320 bytes */
+    return{bCount,cCount,kCount,total,estBytes};
+  };
+
+  const doPurge=async()=>{
+    if(purgeBusy)return;
+    setPurgeBusy(true);
+    const prev=purgePreview;
+    const src=new Set(Object.entries(purgeSrc).filter(([,v])=>v).map(([k])=>k));
+    dispatch({type:"PURGE_OLD_TRANSACTIONS",beforeDate:purgeDate,sources:src});
+    await new Promise(r=>setTimeout(r,800));
+    const sv=await getStorageStatsAsync();
+    setStats(sv);
+    setPurgeBusy(false);
+    setPurgeConfirm(false);
+    setPurgePreview(null);
+    setPurgeResult({deleted:prev?.total||0,freedEst:prev?.estBytes||0});
+  };
 
   /* Refresh with async quota API on mount */
   React.useEffect(()=>{
@@ -18750,6 +18838,161 @@ const StorageGauge=({dispatch})=>{
           },pruning==="nav"?"Pruning…":"Prune to 14d")
         )
       )
+    ),
+
+    /* ── Purge Old Transactions Panel ── */
+    React.createElement("div",{style:{marginTop:16,background:"var(--bg4)",border:"1px solid var(--border2)",borderRadius:12,padding:"12px 14px"}},
+
+      /* Header */
+      React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text3)",textTransform:"uppercase",letterSpacing:.6,marginBottom:8,display:"flex",alignItems:"center",gap:6}},
+        "🗑 Purge Old Transactions"
+      ),
+
+      /* Description */
+      React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:12,lineHeight:1.65}},
+        "Permanently delete transactions older than a chosen date to reclaim localStorage space. ",
+        React.createElement("span",{style:{fontWeight:600,color:"var(--text4)"}},"Account balances are adjusted automatically.")
+      ),
+
+      /* Date picker row */
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}},
+        React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text3)",whiteSpace:"nowrap"}},"Delete before:"),
+        React.createElement("input",{
+          type:"date",className:"inp",value:purgeDate,
+          onChange:e=>{setPurgeDate(e.target.value);setPurgePreview(null);setPurgeConfirm(false);setPurgeResult(null);},
+          style:{flex:1,minWidth:140,maxWidth:200,fontSize:12,padding:"6px 10px"}
+        })
+      ),
+
+      /* Source checkboxes */
+      React.createElement("div",{style:{display:"flex",gap:16,marginBottom:12,flexWrap:"wrap"}},
+        ...[
+          {key:"banks",label:"🏦 Bank",col:"#0e7490"},
+          {key:"cards",label:"💳 Cards",col:"#be185d"},
+          {key:"cash", label:"💵 Cash", col:"#16a34a"},
+        ].map(({key,label,col})=>
+          React.createElement("label",{key,style:{display:"flex",alignItems:"center",gap:5,cursor:"pointer",fontSize:12,fontWeight:600,
+            color:purgeSrc[key]?col:"var(--text5)",transition:"color .15s"}},
+            React.createElement("input",{
+              type:"checkbox",checked:purgeSrc[key],
+              onChange:e=>{setPurgeSrc(p=>({...p,[key]:e.target.checked}));setPurgePreview(null);setPurgeConfirm(false);},
+              style:{accentColor:col,cursor:"pointer",width:14,height:14}
+            }),
+            label
+          )
+        )
+      ),
+
+      /* Success result banner */
+      purgeResult&&React.createElement("div",{style:{
+        background:"rgba(22,163,74,.09)",border:"1px solid rgba(22,163,74,.28)",
+        borderRadius:9,padding:"9px 13px",marginBottom:10,
+        fontSize:12,color:"#16a34a",display:"flex",alignItems:"center",gap:8
+      }},
+        React.createElement("span",{style:{fontSize:15,flexShrink:0}},"✅"),
+        React.createElement("span",{style:{flex:1}},
+          React.createElement("span",{style:{fontWeight:700}},purgeResult.deleted),
+          " transactions purged. Freed ≈ ",
+          React.createElement("span",{style:{fontWeight:700}},fmtBytes(purgeResult.freedEst)),
+          "."
+        ),
+        React.createElement("button",{
+          onClick:()=>setPurgeResult(null),
+          style:{background:"none",border:"none",color:"#16a34a",cursor:"pointer",fontSize:18,lineHeight:1,padding:0,flexShrink:0}
+        },"×")
+      ),
+
+      /* Preview panel (shown after "Preview" clicked) */
+      purgePreview&&!purgeResult&&React.createElement("div",{style:{
+        background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.22)",
+        borderRadius:9,padding:"10px 13px",marginBottom:10
+      }},
+        purgePreview.total===0
+          /* Nothing to delete */
+          ? React.createElement("div",{style:{fontSize:12,color:"var(--text5)",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}},
+              React.createElement("span",null,"No transactions found before ",
+                React.createElement("strong",null,purgeDate),
+                " in the selected sources."
+              ),
+              React.createElement("button",{
+                onClick:()=>setPurgePreview(null),
+                style:{background:"none",border:"none",color:"var(--accent)",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",padding:0,whiteSpace:"nowrap"}
+              },"← Back")
+            )
+          /* Show breakdown + confirmation buttons */
+          : React.createElement("div",null,
+              /* Warning header */
+              React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"#ef4444",marginBottom:8,display:"flex",alignItems:"center",gap:5}},
+                "⚠️ This action is permanent and cannot be undone"
+              ),
+              /* Per-source counts */
+              React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:5,marginBottom:10}},
+                ...[
+                  purgeSrc.banks&&{label:"🏦 Bank transactions",  count:purgePreview.bCount,col:"#0e7490"},
+                  purgeSrc.cards&&{label:"💳 Card transactions",  count:purgePreview.cCount,col:"#be185d"},
+                  purgeSrc.cash &&{label:"💵 Cash transactions",  count:purgePreview.kCount,col:"#16a34a"},
+                ].filter(Boolean).map(({label,count,col})=>
+                  React.createElement("div",{key:label,style:{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12}},
+                    React.createElement("span",{style:{color:"var(--text4)"}},[label]),
+                    React.createElement("span",{style:{fontWeight:700,color:col}},count+" txns")
+                  )
+                ),
+                /* Total row */
+                React.createElement("div",{style:{
+                  borderTop:"1px solid rgba(239,68,68,.18)",paddingTop:6,marginTop:2,
+                  display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:12,fontWeight:700
+                }},
+                  React.createElement("span",{style:{color:"var(--text3)"}},"Total to delete"),
+                  React.createElement("span",{style:{color:"#ef4444"}},
+                    purgePreview.total+" transactions · ≈ "+fmtBytes(purgePreview.estBytes)+" freed"
+                  )
+                )
+              ),
+              /* Step 1: Confirm button */
+              !purgeConfirm&&React.createElement("button",{
+                onClick:()=>setPurgeConfirm(true),
+                style:{width:"100%",padding:"8px",borderRadius:8,
+                  border:"1px solid rgba(239,68,68,.4)",background:"rgba(239,68,68,.1)",
+                  color:"#ef4444",fontSize:12,fontWeight:700,cursor:"pointer",
+                  fontFamily:"'DM Sans',sans-serif"}
+              },"Confirm Permanent Deletion"),
+              /* Step 2: Final Yes / Cancel */
+              purgeConfirm&&React.createElement("div",{style:{display:"flex",gap:8}},
+                React.createElement("button",{
+                  onClick:doPurge,disabled:purgeBusy,
+                  style:{flex:1,padding:"8px",borderRadius:8,border:"none",
+                    background:"#ef4444",color:"#fff",fontSize:12,fontWeight:700,
+                    cursor:purgeBusy?"not-allowed":"pointer",
+                    fontFamily:"'DM Sans',sans-serif",opacity:purgeBusy?0.6:1}
+                },purgeBusy?"Purging…":"⚠️ Yes, Delete Permanently"),
+                React.createElement("button",{
+                  onClick:()=>setPurgeConfirm(false),
+                  style:{padding:"8px 14px",borderRadius:8,
+                    border:"1px solid var(--border2)",background:"var(--bg3)",
+                    color:"var(--text4)",fontSize:12,fontWeight:600,cursor:"pointer",
+                    fontFamily:"'DM Sans',sans-serif"}
+                },"Cancel")
+              )
+            )
+      ),
+
+      /* Preview Deletions button — only visible when not in preview/result state */
+      !purgePreview&&!purgeResult&&React.createElement("button",{
+        onClick:()=>{
+          const p=computePurgePreview();
+          setPurgePreview(p);
+          setPurgeConfirm(false);
+          setPurgeResult(null);
+        },
+        disabled:!Object.values(purgeSrc).some(Boolean)||!purgeDate,
+        style:{
+          width:"100%",padding:"8px 14px",borderRadius:8,
+          border:"1px solid var(--border2)",background:"var(--bg3)",
+          color:"var(--text3)",fontSize:12,fontWeight:600,cursor:"pointer",
+          fontFamily:"'DM Sans',sans-serif",
+          opacity:Object.values(purgeSrc).some(Boolean)&&purgeDate?1:0.5
+        }
+      },"🔍 Preview Deletions")
     )
   );
 };
@@ -19773,7 +20016,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
 
         /* ── Storage Monitor Card */
         React.createElement(Card,{sx:{marginBottom:16}},
-          React.createElement(StorageGauge,{dispatch})
+          React.createElement(StorageGauge,{dispatch,state})
         ),
 
         /* ── Data Management Card */
@@ -27469,7 +27712,7 @@ function App(){
   /* ── Wrap dispatch: auto-snapshot before destructive actions for undo ── */
   const _undoPushRef=React.useRef(null);
   const dispatch=React.useCallback((action)=>{
-    const DESTRUCTIVE=new Set(["DEL_BANK_TX","DEL_CARD_TX","DEL_CASH_TX","MASS_DEL_BANK_TX","MASS_DEL_CARD_TX","MASS_DEL_CASH_TX","SPLIT_TX","DEL_BANK","DEL_CARD","DEL_LOAN","DEL_MF","DEL_SHARE","DEL_FD","DEL_RE","DEL_GOAL","DEL_NOTE","DEL_PAYEE","DEL_CAT","DEL_SUBCAT","RESET_ALL"]);
+    const DESTRUCTIVE=new Set(["DEL_BANK_TX","DEL_CARD_TX","DEL_CASH_TX","MASS_DEL_BANK_TX","MASS_DEL_CARD_TX","MASS_DEL_CASH_TX","SPLIT_TX","DEL_BANK","DEL_CARD","DEL_LOAN","DEL_MF","DEL_SHARE","DEL_FD","DEL_RE","DEL_GOAL","DEL_NOTE","DEL_PAYEE","DEL_CAT","DEL_SUBCAT","PURGE_OLD_TRANSACTIONS","RESET_ALL"]);
     if(DESTRUCTIVE.has(action.type)&&_undoPushRef.current){
       _undoPushRef.current(state);
     }
