@@ -2067,10 +2067,14 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.36.1";
+const APP_VERSION="3.36.2";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.36.2",date:"2026-03-24",title:"Bug Fixes — Budget plan keys orphaned on category rename; localStorage compaction desync",changes:[
+    "Bug 1 Fix (Budget plans not renamed when category renamed) — The EDIT_CAT reducer cascaded renames into transactions, catRules, and scheduled entries but never touched insightPrefs.budgetPlans or insightPrefs.yearlyBudgetPlans, both of which are keyed by main category name. Renaming a category left the old key in both maps as an orphaned entry and the renamed category would show no budget plan. Fixed: EDIT_CAT now calls _renamePlanKey() on both budgetPlans and yearlyBudgetPlans when _nameChanged — the old key's value is moved to the new key and the old key is deleted — and the updated insightPrefs is written back to state.",
+    "Bug 2 Fix (localStorage compaction desync causing repeated QuotaExceededError) — _emergencyCompact() pruned the caches in localStorage but returned a boolean, so the in-memory state was never updated to match. On the next state change the full (un-pruned) caches were serialised again, triggering another QuotaExceededError on every subsequent action. Fixed: _emergencyCompact now returns a string identifying the furthest pass that succeeded (\"historyCache\", \"eodPrices\", or \"eodNavs\") instead of true/false. saveState returns this string to its caller. The useEffect call site checks the return value and dispatches the cumulative PRUNE actions (PRUNE_HISTORY_CACHE on pass 1+, PRUNE_EOD_PRICES on pass 2+, PRUNE_EOD_NAVS on pass 3) so in-memory state is immediately synchronised with what was persisted.",
+  ]},
   {version:"3.36.1",date:"2026-03-24",title:"Bug Fixes — SPLIT_TX attachment/tax inheritance, Net Worth investment exclusion, FIRE divide-by-zero, right-click context menu",changes:[
     "Bug 1 Fix (SPLIT_TX orphans file attachments and drops tax data) — The SPLIT_TX reducer was spreading only user-supplied split fields onto each new fragment, silently dropping _receipts, gstRate, tdsRate, and tags from the original transaction. Fixed: each split fragment is now seeded with the original transaction's _receipts, gstRate, tdsRate, and tags before the user-supplied spread is applied, so custom per-split overrides still win but inherited fields are never lost.",
     "Bug 2 Fix (Historical Net Worth reconstruction treats investments as expenses) — The backward-walk net-flow formula in both RptNetWorth and NetWorthInsightTab used the guard ct !== 'Transfer' to exclude non-expense flows. However, catClassType returns 'Investment' (not 'Transfer') for SIP / stocks / PPF debits, so every investment purchase was subtracted as an expense, making historical net worth appear artificially lower. Fixed: guard updated to ct !== 'Transfer' && ct !== 'Investment' in both components.",
@@ -4469,7 +4473,23 @@ const reducer=(s,a)=>{
         }
         return upd;
       };
+      /* Bug 1 fix: cascade rename into insightPrefs.budgetPlans and yearlyBudgetPlans
+         (both objects are keyed by main category name) */
+      let _insightPrefs=s.insightPrefs||{};
+      if(_nameChanged){
+        const _renamePlanKey=(plans={})=>{
+          if(!plans[_oldCatName])return plans;
+          const _p={...plans,[_newCatName]:plans[_oldCatName]};
+          delete _p[_oldCatName];
+          return _p;
+        };
+        _insightPrefs={..._insightPrefs,
+          budgetPlans:_renamePlanKey(_insightPrefs.budgetPlans||{}),
+          yearlyBudgetPlans:_renamePlanKey(_insightPrefs.yearlyBudgetPlans||{}),
+        };
+      }
       return{...s,categories:updCats,
+        insightPrefs:_insightPrefs,
         banks:s.banks.map(b=>({...b,transactions:b.transactions.map(_updTx)})),
         cards:s.cards.map(c=>({...c,transactions:c.transactions.map(_updTx)})),
         cash:{...s.cash,transactions:s.cash.transactions.map(_updTx)},
@@ -21281,26 +21301,33 @@ const getStorageStatsAsync=async()=>{
 };
 
 /* ── Compact-then-retry save: called when QuotaExceededError is hit ─── */
+/* Returns a string describing which pass succeeded, or null if all failed.
+   The caller uses this to dispatch matching PRUNE actions so in-memory
+   state stays in sync with what was actually persisted to localStorage. */
 const _emergencyCompact=(s)=>{
   /* Pass 1: wipe the history cache (largest variable cache) */
   const p1={...s,historyCache:{}};
-  try{localStorage.setItem(LS_KEY,JSON.stringify(p1));console.warn("[MM] Storage: historyCache cleared to recover space.");return true;}catch{}
+  try{localStorage.setItem(LS_KEY,JSON.stringify(p1));console.warn("[MM] Storage: historyCache cleared to recover space.");return"historyCache";}catch{}
   /* Pass 2: shrink EOD prices to last 7 days */
   const eodKeys=Object.keys(s.eodPrices||{}).sort();
   const eodPruned={};eodKeys.slice(-7).forEach(k=>{eodPruned[k]=s.eodPrices[k];});
   const p2={...p1,eodPrices:eodPruned};
-  try{localStorage.setItem(LS_KEY,JSON.stringify(p2));console.warn("[MM] Storage: eodPrices pruned to 7 days to recover space.");return true;}catch{}
+  try{localStorage.setItem(LS_KEY,JSON.stringify(p2));console.warn("[MM] Storage: eodPrices pruned to 7 days to recover space.");return"eodPrices";}catch{}
   /* Pass 3: shrink EOD NAVs to last 14 days */
   const navKeys=Object.keys(s.eodNavs||{}).sort();
   const navPruned={};navKeys.slice(-14).forEach(k=>{navPruned[k]=s.eodNavs[k];});
   const p3={...p2,eodNavs:navPruned};
-  try{localStorage.setItem(LS_KEY,JSON.stringify(p3));console.warn("[MM] Storage: eodNavs pruned to 14 days to recover space.");return true;}catch{}
+  try{localStorage.setItem(LS_KEY,JSON.stringify(p3));console.warn("[MM] Storage: eodNavs pruned to 14 days to recover space.");return"eodNavs";}catch{}
   /* All passes failed */
   console.error("[MM] Storage FULL — emergency compaction failed.");
   window.dispatchEvent(new CustomEvent("mm:storage-full"));
-  return false;
+  return null;
 };
 
+/* saveState returns the compaction level string if emergency compaction ran
+   ("historyCache" | "eodPrices" | "eodNavs"), or null on a clean save or
+   total failure — so the call site can dispatch the matching PRUNE action
+   to bring in-memory state in sync with what was persisted. */
 const saveState=(s)=>{
   try{
     localStorage.setItem(LS_KEY,JSON.stringify(s));
@@ -21310,13 +21337,15 @@ const saveState=(s)=>{
     if(stats.usedPct>=80){
       window.dispatchEvent(new CustomEvent("mm:storage-warn",{detail:{pct:stats.usedPct}}));
     }
+    return null;
   }catch(e){
     /* Specifically handle QuotaExceededError */
     if(e&&(e.name==="QuotaExceededError"||e.name==="NS_ERROR_DOM_QUOTA_REACHED"||e.code===22)){
       console.warn("[MM] QuotaExceededError — attempting emergency compaction…");
-      _emergencyCompact(s);
+      return _emergencyCompact(s);
     }else{
       console.warn("Failed to save state:",e);
+      return null;
     }
   }
 };
@@ -21709,7 +21738,22 @@ const usePersistentReducer=(reducer,init)=>{
       // Defer the expensive JSON.stringify to idle time so it never blocks a user gesture
       if(ricRef.current)cancelIdleCallback?.(ricRef.current);
       ricRef.current=_ric(()=>{
-        saveState(state);
+        const _compacted=saveState(state);
+        /* Bug 2 fix: if emergency compaction pruned caches to fit in localStorage,
+           dispatch the matching PRUNE action(s) so in-memory state stays in sync.
+           Without this the next save would re-include the full caches and trigger
+           another QuotaExceededError on every subsequent state change. */
+        if(_compacted){
+          if(_compacted==="historyCache"||_compacted==="eodPrices"||_compacted==="eodNavs"){
+            dispatch({type:"PRUNE_HISTORY_CACHE"});
+          }
+          if(_compacted==="eodPrices"||_compacted==="eodNavs"){
+            dispatch({type:"PRUNE_EOD_PRICES",days:7});
+          }
+          if(_compacted==="eodNavs"){
+            dispatch({type:"PRUNE_EOD_NAVS",days:14});
+          }
+        }
         /* Also write to FSA file if connected and has permission */
         if(window.__fsa&&window.__fsa.handle&&window.__fsa.ready){
           fsaWriteFile(window.__fsa.handle,state).then(ok=>{
