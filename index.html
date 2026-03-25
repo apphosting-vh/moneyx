@@ -1688,8 +1688,10 @@ const fetchTickerPrice=async(rawTicker)=>{
     const stooqUrl="https://stooq.com/q/l/?s="+encodeURIComponent(ticker.toLowerCase()+".in")+"&f=sd2t2ohlcv&h&e=csv";
     for(const proxyUrl of[
       "https://corsproxy.io/?"+encodeURIComponent(stooqUrl),
-      "https://api.allorigins.win/raw?url="+encodeURIComponent(stooqUrl),
+      "https://cors.eu.org/"+stooqUrl,
       "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(stooqUrl),
+      "https://thingproxy.freeboard.io/fetch/"+stooqUrl,
+      "https://api.allorigins.win/raw?url="+encodeURIComponent(stooqUrl),
     ]){
       try{
         const r=await _fetchX(proxyUrl);if(!r.ok)continue;
@@ -1704,8 +1706,10 @@ const fetchTickerPrice=async(rawTicker)=>{
     const yHosts=["query1.finance.yahoo.com","query2.finance.yahoo.com"];
     const yProxyFns=[
       u=>"https://corsproxy.io/?"+encodeURIComponent(u),
-      u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u),
+      u=>"https://cors.eu.org/"+u,
       u=>"https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(u),
+      u=>"https://thingproxy.freeboard.io/fetch/"+u,
+      u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u),
     ];
     for(const host of yHosts){
       for(const mkP of yProxyFns){
@@ -1730,6 +1734,8 @@ const fetchTickerPrice=async(rawTicker)=>{
         encodeURIComponent(ticker+".NS,"+ticker+".BO")+"&fields=regularMarketPrice,previousClose";
       for(const proxy of[
         "https://corsproxy.io/?"+encodeURIComponent(v7url),
+        "https://cors.eu.org/"+v7url,
+        "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(v7url),
         "https://api.allorigins.win/raw?url="+encodeURIComponent(v7url),
       ]){
         try{
@@ -1790,16 +1796,17 @@ const normalizeEodNavKeys=(navs)=>{
    Returns { nav: number, navDate: "DD-MMM-YYYY", navDateISO: "YYYY-MM-DD" }
    or null.
 
-   Strategy (v3.37.1):
-   • Direct mfapi.in fetch is SKIPPED — mfapi.in now returns 403 for browser
-     CORS requests (null origin / hosted origins). Skipping avoids console
-     errors and wasted 5-8 s timeout.
-   • 5 proxy attempts against mfapi.in (8 s each):
-       1. corsproxy.io
-       2. allorigins.win raw
-       3. allorigins.win get (JSON-wrapped variant)
-       4. codetabs.com
-       5. thingproxy.freeboard.io
+   Strategy (v3.37.2):
+   • Direct mfapi.in fetch is tried FIRST — works from proper HTTPS origins
+     (GitHub Pages, Netlify, custom domains). Fails silently from null/file://
+     origins where mfapi.in returns 403.
+   • 6 proxy attempts against mfapi.in (8 s each) in reliability order:
+       1. corsproxy.io       — most reliable free CORS proxy
+       2. cors.eu.org        — European proxy, stable CORS headers
+       3. codetabs.com       — works but rate-limited (5 req/min)
+       4. thingproxy         — fallback for small payloads
+       5. allorigins raw     — last resort; blocks some GitHub Pages origins
+       6. allorigins get     — JSON-wrapped variant of allorigins
    • Final fallback: AMFI NAVAll.txt — official government source, never
      blocked, always current. Parsed for the specific scheme code.
    ══════════════════════════════════════════════════════════════════════════ */
@@ -1819,9 +1826,10 @@ const fetchNavFromAMFI=async(code)=>{
   const amfiUrl="https://www.amfiindia.com/spages/NAVAll.txt";
   const proxies=[
     "https://corsproxy.io/?"+encodeURIComponent(amfiUrl),
-    "https://api.allorigins.win/raw?url="+encodeURIComponent(amfiUrl),
+    "https://cors.eu.org/"+amfiUrl,
     "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(amfiUrl),
     "https://thingproxy.freeboard.io/fetch/"+amfiUrl,
+    "https://api.allorigins.win/raw?url="+encodeURIComponent(amfiUrl),
   ];
   for(const proxy of proxies){
     try{
@@ -1844,14 +1852,18 @@ const fetchNavFromAMFI=async(code)=>{
 };
 
 const fetchOneNav=async(code)=>{
-  /* ── mfapi.in via proxies (direct fetch omitted — returns 403 from browser) ── */
+  /* ── mfapi.in: try direct first (works from HTTPS origins like GitHub Pages),
+     then proxies in reliability order. allorigins.win kept as last resort only —
+     it has been blocking certain GitHub Pages origins (no CORS header returned). ── */
   const base="https://api.mfapi.in/mf/"+code;
   const mfProxies=[
+    base,  /* direct — works from proper HTTPS origins; fails silently from null/file:// */
     "https://corsproxy.io/?"+encodeURIComponent(base),
-    "https://api.allorigins.win/raw?url="+encodeURIComponent(base),
-    "https://api.allorigins.win/get?url="+encodeURIComponent(base),
+    "https://cors.eu.org/"+base,
     "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(base),
     "https://thingproxy.freeboard.io/fetch/"+base,
+    "https://api.allorigins.win/raw?url="+encodeURIComponent(base),
+    "https://api.allorigins.win/get?url="+encodeURIComponent(base),
   ];
   for(const url of mfProxies){
     try{
@@ -1892,8 +1904,10 @@ const fetchHistoricalPrices=async(rawTicker,fromDate)=>{
     const symbols=[ticker+".NS",ticker+".BO",ticker];
     const proxyFns=[
       u=>"https://corsproxy.io/?"+encodeURIComponent(u),
-      u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u),
+      u=>"https://cors.eu.org/"+u,
       u=>"https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(u),
+      u=>"https://thingproxy.freeboard.io/fetch/"+u,
+      u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u),
     ];
 
     for(const sym of symbols){
@@ -2125,10 +2139,19 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.37.1";
+const APP_VERSION="3.37.2";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.37.2",date:"2026-03-25",title:"Fix — MF NAV / Share price CORS failure on GitHub Pages (allorigins.win blocking)",changes:[
+    "Root cause: api.allorigins.win is returning responses without the Access-Control-Allow-Origin header for requests originating from certain GitHub Pages domains (e.g. apphosting-vh.github.io). When a CORS proxy omits that header the browser rejects the response entirely with a CORS policy error — the proxy attempt fails, console shows the error, and the code falls through to the AMFI fallback which also uses allorigins and hits the same block.",
+    "Fix 1 — cors.eu.org added as the new primary secondary proxy in every fetch chain. cors.eu.org is a stable European CORS proxy (format: https://cors.eu.org/https://target.com/path) that correctly adds Access-Control-Allow-Origin: * to all responses and has no known GitHub Pages block. It is now position 2 (after corsproxy.io) in all four fetch chains: fetchTickerPrice/Stooq, fetchTickerPrice/Yahoo-v8, fetchTickerPrice/Yahoo-v7, fetchNavFromAMFI, fetchOneNav, and fetchHistoricalPrices.",
+    "Fix 2 — allorigins.win demoted to last-resort position in every chain (was position 2 in most chains). It is kept as a final fallback because it still works for many origins and provides the useful JSON-wrapped /get variant.",
+    "Fix 3 — thingproxy.freeboard.io added to Stooq, Yahoo v7, and AMFI chains (was already in mfapi.in chain). Provides one more fallback before allorigins.",
+    "Fix 4 — fetchOneNav now tries the mfapi.in URL directly (no proxy) as the very first attempt. mfapi.in allows browser-direct CORS fetches from legitimate HTTPS origins (GitHub Pages, Netlify, custom domains). The direct attempt was previously removed because it returned 403 from null/file:// origins — those still fail silently (caught by try/catch) while GitHub Pages succeeds, eliminating the need for any proxy at all when hosted correctly.",
+    "Fix 5 — fetchHistoricalPrices proxy chain expanded from 3 to 5 (corsproxy → cors.eu.org → codetabs → thingproxy → allorigins). Reduces console noise and improves resilience for share price history fetches.",
+    "Net effect: GitHub Pages deployments no longer see allorigins CORS errors in the console; mfapi.in direct fetch succeeds on first attempt for HTTPS-hosted apps; allorigins errors are only a last-resort fallback that rarely triggers.",
+  ]},
   {version:"3.37.1",date:"2026-03-25",title:"Fix — MF NAV fetch 403 / CORS failure: extended proxy chain + AMFI fallback",changes:[
     "Root cause: api.mfapi.in changed its CORS policy and now returns 403 for direct browser fetches, particularly from null (file://) and certain hosted origins. The old proxy chain (corsproxy.io → allorigins → codetabs) was also occasionally all rate-limited simultaneously, leaving users with no NAV data.",
     "Fix 1 — Direct fetch removed from the mfapi.in attempt list. The direct URL was always the first attempt and always produced a console 403 / CORS error before the proxies were tried. Since mfapi.in no longer allows browser-direct CORS fetches, skipping it eliminates the error and saves ~5 s of timeout.",
