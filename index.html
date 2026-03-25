@@ -2067,10 +2067,22 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.36.3";
+const APP_VERSION="3.37.0";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.37.0",date:"2026-03-25",title:"Feature — Account Attachments: store passbook scans & card images on bank and credit card accounts",changes:[
+    "New account-level attachment system for Bank Accounts and Credit Cards. Attach photos, scans, or PDFs (passbook, card front/back, welcome letter, sanction letter, etc.) directly to any account.",
+    "Attachments appear on the account card in Banking and Credit Cards sections as compact 📎 hyperlinks. Clicking a link opens the file in a new tab — no extra steps.",
+    "Settings → Bank Accounts and Settings → Credit Cards each have a new '📎 Files' button per row. Clicking it opens an Attachments modal where you can add, preview, or delete files for that account.",
+    "Architecture: attachment metadata ({name, type, size, attachedAt}) is stored in the account's own state field (banks[].attachments / cards[].attachments) — serialises to JSON and is automatically included in all manual backups, encrypted backups, FSA auto-save, and restore operations with zero extra code.",
+    "File handles are stored in IndexedDB (same mm_fsa_db, 'receipts' object store) under key 'acc:accountId:filename' — separate namespace from transaction receipts, survives page reloads without re-picking files.",
+    "New helpers: accRcptKey(), accRcptSaveHandle(), accRcptGetHandle(), accRcptDelHandle(), accRcptDelAllForAcc() — mirror the existing transaction receipt IDB helpers.",
+    "New AccAttachPanel component mirrors ReceiptAttachPanel. Supports images and PDFs; shows file icon, size, date attached, preview (opens Blob URL in new tab), and remove button.",
+    "DEL_BANK / DEL_CARD reducers: accRcptDelAllForAcc() is called on account deletion to clean up orphaned IDB file handles.",
+    "EDIT_BANK / EDIT_CARD reducers already spread arbitrary fields — no reducer changes needed; attachments field propagates automatically.",
+    "Graceful degradation: on browsers without FSA (Android, iOS, Firefox without File System Access), the '+ Attach File' button is hidden and a brief note explains the desktop-only requirement.",
+  ]},
   {version:"3.36.3",date:"2026-03-24",title:"Feature — Purge Old Transactions by date in Storage Monitor (Settings → Data & Backup)",changes:[
     "New 'Purge Old Transactions' panel added inside the Storage Monitor card in Settings → Data & Backup, below the existing Cache Free-Up section.",
     "Users choose a cutoff date (default: 1 year ago) and select which sources to purge — 🏦 Bank, 💳 Cards, 💵 Cash — independently or in any combination.",
@@ -7318,6 +7330,95 @@ const ReceiptAttachPanel=({txId,receipts=[],onChange})=>{
   );
 };
 
+/* ══════════════════════════════════════════════════════════════════════════
+   AccAttachPanel — account-level attachment manager
+   Used in Settings → Bank Accounts and Settings → Credit Cards.
+   Metadata stored in acc.attachments[]. Handles in IDB "acc:accId:name".
+   ══════════════════════════════════════════════════════════════════════════ */
+const AccAttachPanel=({accId,attachments=[],onSave})=>{
+  const[list,setList]=useState(attachments);
+  const[busy,setBusy]=useState(false);
+  const[msg,setMsg]=useState("");
+  const showMsg=(m,err=false)=>{setMsg({text:m,err});setTimeout(()=>setMsg(""),3500);};
+  const fmtSize=b=>{if(b>1048576)return(b/1048576).toFixed(1)+" MB";if(b>1024)return(b/1024).toFixed(0)+" KB";return b+" B";};
+  const fileIcon=type=>type&&type.includes("pdf")?"📄":type&&type.includes("image")?"🖼":"📎";
+
+  const attach=async()=>{
+    if(!("showOpenFilePicker" in window)){showMsg("File picker not supported in this browser.",true);return;}
+    try{
+      setBusy(true);
+      const[handle]=await window.showOpenFilePicker({
+        types:[{description:"Images & PDFs",accept:{"image/*":[".jpg",".jpeg",".png",".webp",".gif"],"application/pdf":[".pdf"]}}],
+        multiple:false,
+      });
+      const file=await handle.getFile();
+      if(list.some(r=>r.name===file.name)){showMsg("A file with this name is already attached.",true);setBusy(false);return;}
+      await accRcptSaveHandle(accId,file.name,handle);
+      const newList=[...list,{name:file.name,type:file.type,size:file.size,attachedAt:new Date().toISOString()}];
+      setList(newList);
+      onSave(newList);
+      showMsg("📎 "+file.name+" attached.");
+    }catch(e){if(e.name!=="AbortError")showMsg("Could not attach file: "+e.message,true);}
+    setBusy(false);
+  };
+
+  const preview=async(r)=>{
+    const handle=await accRcptGetHandle(accId,r.name);
+    if(!handle){showMsg("File handle lost — please re-attach the file.",true);return;}
+    try{
+      const perm=await handle.queryPermission({mode:"read"});
+      if(perm!=="granted"){
+        const req=await handle.requestPermission({mode:"read"});
+        if(req!=="granted"){showMsg("Permission denied to read file.",true);return;}
+      }
+      const file=await handle.getFile();
+      const url=URL.createObjectURL(file);
+      window.open(url,"_blank");
+      setTimeout(()=>URL.revokeObjectURL(url),60000);
+    }catch(e){showMsg("Cannot open file: "+e.message,true);}
+  };
+
+  const remove=async(r)=>{
+    await accRcptDelHandle(accId,r.name);
+    const newList=list.filter(x=>x.name!==r.name);
+    setList(newList);
+    onSave(newList);
+    showMsg("Removed "+r.name+".");
+  };
+
+  return React.createElement("div",{style:{marginTop:4}},
+    /* Header row */
+    React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:list.length?8:6}},
+      React.createElement("label",{style:{display:"block",color:"var(--text5)",fontSize:11,textTransform:"uppercase",letterSpacing:.5,fontWeight:600}},"📎 Attachments (Passbook / Card photo / PDF)"),
+      fsaSupported()
+        ? React.createElement("button",{onClick:attach,disabled:busy,style:{fontSize:11,padding:"4px 10px",borderRadius:7,border:"1px solid var(--accent)66",background:"var(--accentbg)",color:"var(--accent)",cursor:busy?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:600}},busy?"Picking…":"+ Attach File")
+        : null
+    ),
+    /* File list */
+    list.length>0&&React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:5,marginBottom:8}},
+      list.map(r=>React.createElement("div",{key:r.name,style:{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",borderRadius:8,background:"var(--bg3)",border:"1px solid var(--border2)"}},
+        React.createElement("span",{style:{fontSize:16,flexShrink:0}},fileIcon(r.type)),
+        React.createElement("div",{style:{flex:1,minWidth:0}},
+          React.createElement("button",{
+            onClick:()=>preview(r),
+            title:"Open / Preview "+r.name,
+            style:{background:"none",border:"none",cursor:"pointer",padding:0,textAlign:"left",color:"var(--accent)",fontSize:12,fontWeight:600,fontFamily:"'DM Sans',sans-serif",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"100%",textDecoration:"underline"}
+          },r.name),
+          React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:1}},fmtSize(r.size)+" · "+new Date(r.attachedAt).toLocaleDateString("en-IN"))
+        ),
+        React.createElement("button",{onClick:()=>preview(r),title:"Open / Preview",style:{background:"none",border:"none",cursor:"pointer",fontSize:15,padding:"2px 4px",color:"var(--accent)",flexShrink:0}},r.type&&r.type.includes("image")?"🔍":"📂"),
+        React.createElement("button",{onClick:()=>remove(r),title:"Remove attachment",style:{background:"none",border:"none",cursor:"pointer",fontSize:14,padding:"2px 4px",color:"#ef4444",flexShrink:0}},"✕")
+      ))
+    ),
+    list.length===0&&React.createElement("div",{style:{fontSize:12,color:"var(--text6)",fontStyle:"italic",marginBottom:8}},
+      fsaSupported()
+        ? "No attachments yet. Click '+ Attach File' to add a passbook scan, card photo, or PDF."
+        : "📎 Attachments require a desktop browser with File System Access API (Chrome / Edge on Windows / macOS)."
+    ),
+    msg&&React.createElement("div",{style:{fontSize:11,fontWeight:600,color:msg.err?"#ef4444":"#16a34a",padding:"4px 8px",borderRadius:6,background:msg.err?"rgba(239,68,68,.08)":"rgba(22,163,74,.08)"}},msg.text)
+  );
+};
+
 const TxEditModal=({tx,categories,payees,txTypes,onSave,onClose,allAccounts=[]})=>{
   const[f,setF]=useState({...tx,amount:String(tx.amount),_receipts:tx._receipts||[]});
   const[showTax,setShowTax]=useState(!!(tx.gstRate&&+tx.gstRate>0)||!!(tx.tdsRate&&+tx.tdsRate>0));
@@ -9991,6 +10092,28 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
                       )
                     : React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic",userSelect:"none"}},"📝 Click to add a note…")
                 ),
+            /* ── Account attachment hyperlinks ── */
+            (b.attachments&&b.attachments.length>0)&&React.createElement("div",{style:{marginTop:8,display:"flex",flexWrap:"wrap",gap:5,alignItems:"center"},onClick:e=>e.stopPropagation()},
+              React.createElement("span",{style:{fontSize:10,color:"var(--text6)",flexShrink:0}},"📎"),
+              b.attachments.map(att=>React.createElement("button",{
+                key:att.name,
+                title:"Open "+att.name,
+                onClick:async e=>{
+                  e.stopPropagation();
+                  const handle=await accRcptGetHandle(b.id,att.name);
+                  if(!handle){return;}
+                  try{
+                    const perm=await handle.queryPermission({mode:"read"});
+                    if(perm!=="granted"){const r=await handle.requestPermission({mode:"read"});if(r!=="granted")return;}
+                    const file=await handle.getFile();
+                    const url=URL.createObjectURL(file);
+                    window.open(url,"_blank");
+                    setTimeout(()=>URL.revokeObjectURL(url),60000);
+                  }catch{}
+                },
+                style:{background:"none",border:"none",cursor:"pointer",padding:0,color:"var(--accent)",fontSize:11,fontFamily:"'DM Sans',sans-serif",textDecoration:"underline",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}
+              },att.name))
+            ),
             sel===b.id&&React.createElement("div",{style:{marginTop:10,height:2,background:"linear-gradient(90deg,#f0a500,#f0a50030)",borderRadius:2}})
           );
         }),
@@ -10196,6 +10319,28 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
                       )
                     : React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic",userSelect:"none"}},"📝 Click to add a note…")
                 ),
+            /* ── Account attachment hyperlinks ── */
+            (c.attachments&&c.attachments.length>0)&&React.createElement("div",{style:{marginTop:8,display:"flex",flexWrap:"wrap",gap:5,alignItems:"center"},onClick:e=>e.stopPropagation()},
+              React.createElement("span",{style:{fontSize:10,color:"var(--text6)",flexShrink:0}},"📎"),
+              c.attachments.map(att=>React.createElement("button",{
+                key:att.name,
+                title:"Open "+att.name,
+                onClick:async e=>{
+                  e.stopPropagation();
+                  const handle=await accRcptGetHandle(c.id,att.name);
+                  if(!handle){return;}
+                  try{
+                    const perm=await handle.queryPermission({mode:"read"});
+                    if(perm!=="granted"){const r=await handle.requestPermission({mode:"read"});if(r!=="granted")return;}
+                    const file=await handle.getFile();
+                    const url=URL.createObjectURL(file);
+                    window.open(url,"_blank");
+                    setTimeout(()=>URL.revokeObjectURL(url),60000);
+                  }catch{}
+                },
+                style:{background:"none",border:"none",cursor:"pointer",padding:0,color:"var(--accent)",fontSize:11,fontFamily:"'DM Sans',sans-serif",textDecoration:"underline",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}
+              },att.name))
+            ),
             sel===c.id&&React.createElement("div",{style:{marginTop:10,height:2,background:"linear-gradient(90deg,#f0a500,#f0a50030)",borderRadius:2}})
           );
         }),
@@ -19487,6 +19632,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
   const[editLoan,setEditLoan]=useState(null);
   const[editShare,setEditShare]=useState(null);
   const[editPayee,setEditPayee]=useState(null);
+  const[accAttachTarget,setAccAttachTarget]=useState(null); /* {id,name,type:'bank'|'card'} */
   const[newPayee,setNewPayee]=useState({name:""});
   const[cashBal,setCashBal]=useState(String(state.cash.balance));
   const[cashSaved,setCashSaved]=useState(false);
@@ -19617,7 +19763,8 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
     {id:"backup",label:"Data & Backup",icon:"💾"},
   ];
 
-  const RowActions=({onEdit,onDelete})=>React.createElement("div",{style:{display:"flex",gap:6,flexShrink:0}},
+  const RowActions=({onEdit,onDelete,onAttach})=>React.createElement("div",{style:{display:"flex",gap:6,flexShrink:0}},
+    onAttach&&React.createElement("button",{onClick:onAttach,style:{background:"rgba(180,83,9,.1)",border:"1px solid rgba(180,83,9,.25)",borderRadius:7,color:"#b45309",cursor:"pointer",fontSize:12,padding:"5px 11px",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}},"📎 Files"),
     onEdit&&React.createElement("button",{onClick:onEdit,style:{background:"rgba(29,78,216,.1)",border:"1px solid rgba(29,78,216,.25)",borderRadius:7,color:"#1d4ed8",cursor:"pointer",fontSize:12,padding:"5px 11px",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}},"✏ Edit"),
     React.createElement("button",{onClick:onDelete,style:{background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.25)",borderRadius:7,color:"#ef4444",cursor:"pointer",fontSize:12,padding:"5px 11px",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}},"✕ Delete")
   );
@@ -19720,17 +19867,35 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
           React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1.2fr auto",gap:12,padding:"9px 16px",borderBottom:"1px solid #1c3050",fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},"Account Name","Bank","Type","Balance","Actions"),
           state.banks.length===0&&React.createElement(Empty,{icon:"🏦",text:"No bank accounts yet"}),
           state.banks.map(b=>React.createElement("div",{key:b.id,style:{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1.2fr auto",gap:12,padding:"13px 16px",borderBottom:"1px solid #0a1828",alignItems:"center",transition:"background .15s"},className:"tr"},
-            React.createElement("div",null,React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text2)"}},b.name),React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},b.transactions.length+" transactions")),
+            React.createElement("div",null,
+              React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text2)"}},b.name),
+              React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},b.transactions.length+" transactions"+(b.attachments&&b.attachments.length>0?" · 📎 "+b.attachments.length+" file"+(b.attachments.length>1?"s":""):""))
+            ),
             React.createElement("div",{style:{fontSize:13,color:"var(--text3)"}},b.bank),
             React.createElement("div",null,React.createElement(Badge,{ch:b.type,col:"#0e7490"})),
             React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:14,color:"#0e7490"}},INR(b.balance)),
             React.createElement(RowActions,{
+              onAttach:()=>setAccAttachTarget({id:b.id,name:b.name,accType:"bank",attachments:b.attachments||[]}),
               onEdit:()=>setEditBank(b),
-              onDelete:()=>askDelete(`Delete "${b.name}"? This will remove the account and all its transactions permanently.`,()=>dispatch({type:"DEL_BANK",id:b.id}))
+              onDelete:()=>askDelete(`Delete "${b.name}"? This will remove the account and all its transactions permanently.`,()=>{dispatch({type:"DEL_BANK",id:b.id});accRcptDelAllForAcc(b.id);})
             })
           ))
         ),
-        editBank&&React.createElement(BankEditModal,{b:editBank,onClose:()=>setEditBank(null)})
+        editBank&&React.createElement(BankEditModal,{b:editBank,onClose:()=>setEditBank(null)}),
+        /* ── Account Attachments Modal ── */
+        accAttachTarget&&accAttachTarget.accType==="bank"&&React.createElement(Modal,{title:"📎 Attachments — "+accAttachTarget.name,onClose:()=>setAccAttachTarget(null),w:500},
+          React.createElement(AccAttachPanel,{
+            accId:accAttachTarget.id,
+            attachments:accAttachTarget.attachments,
+            onSave:newList=>{
+              dispatch({type:"EDIT_BANK",p:{id:accAttachTarget.id,attachments:newList}});
+              setAccAttachTarget(p=>({...p,attachments:newList}));
+            }
+          }),
+          React.createElement("div",{style:{display:"flex",justifyContent:"flex-end",marginTop:8}},
+            React.createElement(Btn,{v:"secondary",onClick:()=>setAccAttachTarget(null),sx:{minWidth:70,justifyContent:"center"}},"Close")
+          )
+        )
       ),
 
       /* ══ CREDIT CARDS ══ */
@@ -19748,7 +19913,10 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
             const used=(c.outstanding/c.limit*100);
             const bc=used>80?"#ef4444":used>50?"#c2410c":"#16a34a";
             return React.createElement("div",{key:c.id,style:{display:"grid",gridTemplateColumns:"2fr 1.5fr 1.2fr 1.2fr auto",gap:12,padding:"13px 16px",borderBottom:"1px solid #0a1828",alignItems:"center"},className:"tr"},
-              React.createElement("div",null,React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text2)"}},c.name),React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},c.transactions.length+" transactions")),
+              React.createElement("div",null,
+                React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text2)"}},c.name),
+                React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},c.transactions.length+" transactions"+(c.attachments&&c.attachments.length>0?" · 📎 "+c.attachments.length+" file"+(c.attachments.length>1?"s":""):""))
+              ),
               React.createElement("div",{style:{fontSize:13,color:"var(--text3)"}},c.bank),
               React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:600,fontSize:13,color:"var(--text4)"}},INR(c.limit)),
               React.createElement("div",null,
@@ -19756,13 +19924,28 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
                 React.createElement("div",{style:{fontSize:10,color:bc,marginTop:3}},used.toFixed(1)+"% used")
               ),
               React.createElement(RowActions,{
+                onAttach:()=>setAccAttachTarget({id:c.id,name:c.name,accType:"card",attachments:c.attachments||[]}),
                 onEdit:()=>setEditCard(c),
-                onDelete:()=>askDelete(`Delete "${c.name}"? This will remove the card and all its transactions permanently.`,()=>dispatch({type:"DEL_CARD",id:c.id}))
+                onDelete:()=>askDelete(`Delete "${c.name}"? This will remove the card and all its transactions permanently.`,()=>{dispatch({type:"DEL_CARD",id:c.id});accRcptDelAllForAcc(c.id);})
               })
             );
           })
         ),
-        editCard&&React.createElement(CardEditModal,{c:editCard,onClose:()=>setEditCard(null)})
+        editCard&&React.createElement(CardEditModal,{c:editCard,onClose:()=>setEditCard(null)}),
+        /* ── Account Attachments Modal ── */
+        accAttachTarget&&accAttachTarget.accType==="card"&&React.createElement(Modal,{title:"📎 Attachments — "+accAttachTarget.name,onClose:()=>setAccAttachTarget(null),w:500},
+          React.createElement(AccAttachPanel,{
+            accId:accAttachTarget.id,
+            attachments:accAttachTarget.attachments,
+            onSave:newList=>{
+              dispatch({type:"EDIT_CARD",p:{id:accAttachTarget.id,attachments:newList}});
+              setAccAttachTarget(p=>({...p,attachments:newList}));
+            }
+          }),
+          React.createElement("div",{style:{display:"flex",justifyContent:"flex-end",marginTop:8}},
+            React.createElement(Btn,{v:"secondary",onClick:()=>setAccAttachTarget(null),sx:{minWidth:70,justifyContent:"center"}},"Close")
+          )
+        )
       ),
 
       /* ══ CASH ACCOUNT ══ */
@@ -21704,6 +21887,31 @@ const rcptDelAllForTx=async(txId)=>{
     await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const store=tx.objectStore(RCPT_IDB_STORE);toDelete.forEach(k=>store.delete(k));tx.oncomplete=()=>res();tx.onerror=e=>rej(e.target.error);});
   }catch{}
 };
+/* ══════════════════════════════════════════════════════════════════════════
+   ACCOUNT-LEVEL ATTACHMENT IDB HELPERS
+   Keyed as "acc:accountId:filename" — separate namespace from tx receipts.
+   Same IDB store (RCPT_IDB_STORE / "receipts") in mm_fsa_db.
+   ══════════════════════════════════════════════════════════════════════════ */
+const accRcptKey=(accId,name)=>"acc:"+accId+":"+name;
+const accRcptSaveHandle=async(accId,name,handle)=>{
+  try{const db=await _fsaDbOpen();await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const r=tx.objectStore(RCPT_IDB_STORE).put(handle,accRcptKey(accId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}catch{}
+};
+const accRcptGetHandle=async(accId,name)=>{
+  try{const db=await _fsaDbOpen();return await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readonly");const r=tx.objectStore(RCPT_IDB_STORE).get(accRcptKey(accId,name));r.onsuccess=e=>res(e.target.result||null);r.onerror=e=>rej(e.target.error);});}catch{return null;}
+};
+const accRcptDelHandle=async(accId,name)=>{
+  try{const db=await _fsaDbOpen();await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const r=tx.objectStore(RCPT_IDB_STORE).delete(accRcptKey(accId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}catch{}
+};
+const accRcptDelAllForAcc=async(accId)=>{
+  try{
+    const db=await _fsaDbOpen();
+    const keys=await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readonly");const r=tx.objectStore(RCPT_IDB_STORE).getAllKeys();r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);});
+    const toDelete=keys.filter(k=>k.startsWith("acc:"+accId+":"));
+    if(!toDelete.length)return;
+    await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const store=tx.objectStore(RCPT_IDB_STORE);toDelete.forEach(k=>store.delete(k));tx.oncomplete=()=>res();tx.onerror=e=>rej(e.target.error);});
+  }catch{}
+};
+
 const fsaGetHandle=async()=>{
   try{
     const db=await _fsaDbOpen();
