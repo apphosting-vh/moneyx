@@ -4513,7 +4513,18 @@ const reducer=(s,a)=>{
       const keys=Object.keys(updated).sort();
       const pruned={};
       keys.slice(-90).forEach(k=>{pruned[k]=updated[k];});
-      return{...s,eodNavs:pruned};
+      /* Sync currentValue for each fund from the latest EOD snapshot so that
+         per-fund cards and dashboard totals stay consistent with eodNavs data */
+      const _latestNavDate=Object.keys(pruned).sort().slice(-1)[0];
+      const _latestNavSnap=_latestNavDate?pruned[_latestNavDate]:{};
+      const _syncedMf=s.mf.map(m=>{
+        const _navFromSnap=_latestNavSnap[m.schemeCode];
+        if(_navFromSnap&&m.units>0){
+          return{...m,currentValue:parseFloat((_navFromSnap*m.units).toFixed(2))};
+        }
+        return m;
+      });
+      return{...s,eodNavs:pruned,mf:_syncedMf};
     }
     case"ADD_SHARE":return{...s,shares:[...s.shares,a.p]};
     case"EDIT_SHARE":return{...s,shares:s.shares.map(sh=>sh.id===a.p.id?{...sh,...a.p}:sh)};
@@ -12430,7 +12441,7 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],dispatch,defaultTab="mf",eod
             /* Three quick-stat pills */
             React.createElement("div",{style:{display:"flex",gap:20,flexWrap:"wrap"}},
               React.createElement("div",null,
-                React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.6,marginBottom:2}},"Today's Value"),
+                React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.6,marginBottom:2}},prevDate?"Value as of "+prevDate:"Latest NAV Value"),
                 React.createElement("div",{style:{fontSize:15,fontWeight:700,color:"#6d28d9",fontFamily:"'Sora',sans-serif"}},INR(mfTotalNow))
               ),
               React.createElement("div",null,
@@ -12478,11 +12489,17 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],dispatch,defaultTab="mf",eod
           const currentVal=m.currentValue&&m.currentValue>0?m.currentValue:m.invested;
           const gain=currentVal-trueCoA;
           const gp=trueCoA>0?(((currentVal-trueCoA)/trueCoA)*100).toFixed(1):"0.0";
-          /* Per-fund day-change from eodNavs */
+          /* Per-fund day-change from eodNavs — D-2 vs D-1 (matches hero card logic).
+             MF NAVs are published after market close, so comparing live m.nav (which may
+             not have updated yet today) against D-1 produces a misleading figure.
+             Instead compare the two most recent completed trading days from eodNavs. */
           const todayIST2=getISTDateStr();
-          const prevNavDt=Object.keys(eodNavs||{}).filter(d=>d<todayIST2).sort().slice(-1)[0];
-          const prevNav=prevNavDt?((eodNavs[prevNavDt]||{})[m.schemeCode]||null):null;
-          const navDayChgPct=prevNav&&m.nav>0?((m.nav-prevNav)/prevNav*100):null;
+          const _fundDatesBeforeToday=Object.keys(eodNavs||{}).filter(d=>d<todayIST2).sort();
+          const _fundD1Dt=_fundDatesBeforeToday.slice(-1)[0];   // most recent completed day
+          const _fundD2Dt=_fundDatesBeforeToday.slice(-2,-1)[0]; // day before that
+          const _fundD1Nav=_fundD1Dt?((eodNavs[_fundD1Dt]||{})[m.schemeCode]||null):null;
+          const _fundD2Nav=_fundD2Dt?((eodNavs[_fundD2Dt]||{})[m.schemeCode]||null):null;
+          const navDayChgPct=_fundD1Nav&&_fundD2Nav&&_fundD2Nav>0?((_fundD1Nav-_fundD2Nav)/_fundD2Nav*100):null;
           return React.createElement(Card,{key:m.id},
             React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text2)",marginBottom:12,lineHeight:1.45}},m.name),
             /* 4-cell metric grid */
@@ -12500,7 +12517,7 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],dispatch,defaultTab="mf",eod
                 React.createElement("div",null,
                   React.createElement("div",{style:{fontWeight:600,color:m.nav?"#0e7490":"var(--text5)"}},m.nav?"₹"+m.nav.toFixed(2):"--"),
                   navDayChgPct!==null&&React.createElement("div",{style:{fontSize:10,fontWeight:700,marginTop:2,color:navDayChgPct>=0?"#16a34a":"#ef4444"}},
-                    (navDayChgPct>=0?"▲ +":"▼ ")+Math.abs(navDayChgPct).toFixed(2)+"% today"
+                    (navDayChgPct>=0?"▲ +":"▼ ")+Math.abs(navDayChgPct).toFixed(2)+"% prev day"
                   )
                 )
               ),
