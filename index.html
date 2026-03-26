@@ -2139,10 +2139,17 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.38.3";
+const APP_VERSION="3.38.4";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.38.4",date:"2026-03-26",title:"Feature — Previous Year (prior Indian FY) period filter in Reports and Unified Ledger",changes:[
+    "Added 'Previous Year' quick-preset button to the Reports section date-filter bar, alongside the existing This Month / 3 Months / 6 Months / This Year presets. Clicking it sets the date range to the prior Indian Financial Year (e.g. FY 2024-25 = Apr 1 2024 – Mar 31 2025) using getIndianFYDates(getCurrentIndianFY()-1).",
+    "Active-state detection for the Previous Year preset: the button highlights correctly when from/to exactly match the prior FY boundaries — consistent with the existing 'This Year' active-state logic.",
+    "Added matching 'Previous Year' preset (key: prevYear) to the Unified Ledger date-filter preset strip so the chip highlights whenever the loaded date range matches the prior FY — including when the Unified Ledger is opened via a jump from Reports while Previous Year is the active period.",
+    "Added prevYear branch to UnifiedLedgerSection's setPreset handler: resolves getIndianFYDates(getCurrentIndianFY()-1) and sets dateFrom/dateTo accordingly.",
+    "Jump-to-Unified-Ledger continuity: all JumpBtn callbacks in Reports pass from/to as dateFrom/dateTo in the filter object. When Previous Year is selected, those dates are the prior FY boundaries, so the Unified Ledger automatically opens pre-filtered to the correct prior-FY window and the Previous Year chip is highlighted.",
+  ]},
   {version:"3.38.3",date:"2026-03-26",title:"Deep-Audit Bug Fixes — 12 correctness issues: billing cycle, card outstanding floors, balance integrity, capital gains losses, FIRE accuracy",changes:[
     "Fix B7 — CardSection cycleStart: comparison changed from < to <= on billing day so that when today IS the billing day the current cycle is treated as just-started (not already-past). Aligns with Dashboard and FinancialCalendar which already used <=.",
     "Fix B8 — cycleSpend date range: cycleStart/cycleEnd were converted to date strings via .toISOString() (UTC), which is one day behind IST before 05:30. Now converted with a local-date formatter (_dFmt) to produce the correct YYYY-MM-DD string.",
@@ -17850,7 +17857,8 @@ const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
     {label:"This Month",onClick:()=>setPreset(1),active:from===new Date(now.getFullYear(),now.getMonth(),1).toISOString().split("T")[0]&&to===lastDay},
     {label:"3 Months",  onClick:()=>setPreset(3),active:from===new Date(now.getFullYear(),now.getMonth()-2,1).toISOString().split("T")[0]&&to===lastDay},
     {label:"6 Months",  onClick:()=>setPreset(6),active:from===firstDay&&to===lastDay},
-    {label:"This Year", onClick:()=>{const fy=getIndianFYDates(getCurrentIndianFY());setFrom(fy.from);setTo(fy.to);},active:from===getIndianFYDates(getCurrentIndianFY()).from},
+    {label:"This Year", onClick:()=>{const fy=getIndianFYDates(getCurrentIndianFY());setFrom(fy.from);setTo(fy.to);},active:from===getIndianFYDates(getCurrentIndianFY()).from&&to===getIndianFYDates(getCurrentIndianFY()).to},
+    {label:"Previous Year", onClick:()=>{const fy=getIndianFYDates(getCurrentIndianFY()-1);setFrom(fy.from);setTo(fy.to);},active:from===getIndianFYDates(getCurrentIndianFY()-1).from&&to===getIndianFYDates(getCurrentIndianFY()-1).to},
   ];
 
   const NavItem=({item,depth=0})=>{
@@ -22717,6 +22725,7 @@ const UnifiedLedgerSection=React.memo(({banks,cards,cash,categories,payees,isMob
     if(preset==="thisMonth"){setDateFrom(fmt(new Date(now.getFullYear(),now.getMonth(),1)));setDateTo(fmt(new Date(now.getFullYear(),now.getMonth()+1,0)));}
     else if(preset==="lastMonth"){setDateFrom(fmt(new Date(now.getFullYear(),now.getMonth()-1,1)));setDateTo(fmt(new Date(now.getFullYear(),now.getMonth(),0)));}
     else if(preset==="thisYear"){const fy=getIndianFYDates(getCurrentIndianFY());setDateFrom(fy.from);setDateTo(fy.to);}
+    else if(preset==="prevYear"){const fy=getIndianFYDates(getCurrentIndianFY()-1);setDateFrom(fy.from);setDateTo(fy.to);}
     else if(preset==="last30"){const d=new Date(now);d.setDate(d.getDate()-30);setDateFrom(fmt(d));setDateTo(fmt(now));}
     else if(preset==="last90"){const d=new Date(now);d.setDate(d.getDate()-90);setDateFrom(fmt(d));setDateTo(fmt(now));}
   };
@@ -22788,7 +22797,7 @@ const UnifiedLedgerSection=React.memo(({banks,cards,cash,categories,payees,isMob
   /* ── Shared style helpers ── */
   const chipStyle=(active,col="#b45309")=>({display:"inline-flex",alignItems:"center",gap:4,padding:"3px 10px",borderRadius:20,cursor:"pointer",border:"1px solid "+(active?col+"88":"var(--border)"),background:active?col+"18":"transparent",color:active?col:"var(--text5)",fontSize:11,fontWeight:active?600:400,fontFamily:"'DM Sans',sans-serif",transition:"all .15s",whiteSpace:"nowrap",flexShrink:0});
   const tbBtn=(col,bg,dis=false)=>({padding:"5px 11px",borderRadius:7,border:"1px solid "+col+"55",background:bg,color:col,cursor:dis?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:500,opacity:dis?.4:1,display:"flex",alignItems:"center",gap:5,whiteSpace:"nowrap",flexShrink:0,transition:"all .15s"});
-  const PRESETS=[{k:"thisMonth",l:"This Month"},{k:"lastMonth",l:"Last Month"},{k:"last30",l:"Last 30 Days"},{k:"last90",l:"Last 90 Days"},{k:"thisYear",l:"This Year"}];
+  const PRESETS=[{k:"thisMonth",l:"This Month"},{k:"lastMonth",l:"Last Month"},{k:"last30",l:"Last 30 Days"},{k:"last90",l:"Last 90 Days"},{k:"thisYear",l:"This Year"},{k:"prevYear",l:"Previous Year"}];
 
   /* ── Filter panel — shared by mobile + desktop ── */
   const FilterPanel=React.createElement("div",{style:{flexShrink:0,borderTop:"1px solid var(--border)",background:"var(--bg4)",padding:"10px 12px",display:"flex",flexDirection:"column",gap:10}},
@@ -24940,8 +24949,8 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     for(let i=5;i>=0;i--){
       const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
       const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
-      const exp=allTxns.filter(t=>t.date>=mS&&t.date<=mE&&!INVEST_CATS.includes(catMainName(t.cat||""))).reduce((s,t)=>{const ct=catClassType(data.categories,t.cat||"Others");return ct==="Expense"||ct==="Others"?s+txCatDelta(t,ct):s;},0);
-      const inc=allTxns.filter(t=>t.date>=mS&&t.date<=mE).reduce((s,t)=>{const ct=catClassType(data.categories,t.cat||"Others");return ct==="Income"?s+txCatDelta(t,ct):s;},0);
+      const exp=allTxns.filter(t=>t.date>=mS&&t.date<=mE&&!INVEST_CATS.includes(catMainName(t.cat||""))).reduce((s,t)=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Expense"||ct==="Others"?s+txCatDelta(t,ct):s;},0);
+      const inc=allTxns.filter(t=>t.date>=mS&&t.date<=mE).reduce((s,t)=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Income"?s+txCatDelta(t,ct):s;},0);
       months6.push({exp,inc,savings:inc-exp,mName:MONTH_NAMES[(now.getMonth()-i+12)%12]});
     }
     const avgMonthlyExpRaw=months6.reduce((s,m)=>s+m.exp,0)/6||0;
@@ -24995,8 +25004,8 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     for(let i=11;i>=0;i--){
       const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
       const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
-      const inc=allTxns.filter(t=>t.date>=mS&&t.date<=mE).reduce((s,t)=>{const ct=catClassType(data.categories,t.cat||"Others");return ct==="Income"?s+txCatDelta(t,ct):s;},0);
-      const exp=allTxns.filter(t=>t.date>=mS&&t.date<=mE&&!INVEST_CATS.includes(catMainName(t.cat||""))).reduce((s,t)=>{const ct=catClassType(data.categories,t.cat||"Others");return ct==="Expense"||ct==="Others"?s+txCatDelta(t,ct):s;},0);
+      const inc=allTxns.filter(t=>t.date>=mS&&t.date<=mE).reduce((s,t)=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Income"?s+txCatDelta(t,ct):s;},0);
+      const exp=allTxns.filter(t=>t.date>=mS&&t.date<=mE&&!INVEST_CATS.includes(catMainName(t.cat||""))).reduce((s,t)=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Expense"||ct==="Others"?s+txCatDelta(t,ct):s;},0);
       const rate=inc>0?Math.max((inc-exp)/inc*100,0):0;
       savingsRate12.push({mName:MONTH_NAMES[(now.getMonth()-i+12)%12],rate,inc,exp,savings:inc-exp});
     }
