@@ -1796,7 +1796,7 @@ const normalizeEodNavKeys=(navs)=>{
    Returns { nav: number, navDate: "DD-MMM-YYYY", navDateISO: "YYYY-MM-DD" }
    or null.
 
-   Strategy (v3.38.2):
+   Strategy (v3.38.3):
    • Direct mfapi.in fetch is tried FIRST — works from proper HTTPS origins
      (GitHub Pages, Netlify, custom domains). Fails silently from null/file://
      origins where mfapi.in returns 403.
@@ -2139,10 +2139,24 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.38.2";
+const APP_VERSION="3.38.3";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.38.3",date:"2026-03-26",title:"Deep-Audit Bug Fixes — 12 correctness issues: billing cycle, card outstanding floors, balance integrity, capital gains losses, FIRE accuracy",changes:[
+    "Fix B7 — CardSection cycleStart: comparison changed from < to <= on billing day so that when today IS the billing day the current cycle is treated as just-started (not already-past). Aligns with Dashboard and FinancialCalendar which already used <=.",
+    "Fix B8 — cycleSpend date range: cycleStart/cycleEnd were converted to date strings via .toISOString() (UTC), which is one day behind IST before 05:30. Now converted with a local-date formatter (_dFmt) to produce the correct YYYY-MM-DD string.",
+    "Fix B9 — FinancialCalendar card due date: due.toISOString().slice(0,10) was UTC-shifted. Replaced with a local-date formatter (_fmtLocal) so the event lands on the correct calendar day in IST.",
+    "Fix B10 — UPDATE_BULK_TX balance integrity: this reducer (used by the CSV/PDF import upsert path) allowed status changes (Reconciled↔Unreconciled) without adjusting the account balance or card outstanding. Now computes a _balDelta from status transitions and applies it atomically alongside the metadata update.",
+    "Fix B11 — MASS_UPDATE_STATUS card outstanding floor: toggling multiple transactions from Reconciled→Unreconciled produced a negative delta; outstanding is now wrapped in Math.max(0,...).",
+    "Fix B12 — DEL_CARD_TX outstanding floor: deleting a reconciled credit (refund) on a card could push outstanding below zero. Wrapped in Math.max(0,...).",
+    "Fix B13 — DUP_CARD_TX outstanding floor: duplicating a reconciled credit on a card could push outstanding below zero. Wrapped in Math.max(0,...).",
+    "Fix B14 — EDIT_CARD_TX outstanding floor: editing a card transaction (e.g. changing debit→credit) could produce a negative outstanding. Wrapped in Math.max(0,...).",
+    "Fix B15 — UPD_CARD_BAL outstanding floor: adding a single reconciled credit (refund) via UPD_CARD_BAL could push outstanding below zero. Wrapped in Math.max(0,...).",
+    "Fix B16 — computeCapitalGains losses never accumulated: stcgLoss and ltcgLoss were always returned as 0. Now negative-gain holdings correctly populate both loss buckets, and stcgTax/ltcgTax are computed on net-of-loss gains. The auto-populate path in TaxEstimator now carries real loss values so the tax form pre-fills correctly.",
+    "Fix B17 — FIRE income/expense loops used raw t.amount: months6 (6-month expense average) and savingsRate12 (12-month savings rate chart) both filtered by t.type instead of using txCatDelta. Income reversals inflated income; credit refunds inflated expenses. Both loops now use txCatDelta matching Dashboard and Reports.",
+    "Fix B18 — EXECUTE_SCHEDULED non-transfer card credit: posting a scheduled credit-type transaction to a card account (e.g. a scheduled cashback) could push outstanding below zero. Wrapped in Math.max(0,...)."
+  ]},
   {version:"3.38.2",date:"2026-03-26",title:"Bug Fixes — 6 correctness fixes: scheduled loan reduction, card outstanding floor, daysLeft IST, FD year-basis, savings rate, category spend",changes:[
     "Fix 1 — EXECUTE_SCHEDULED tgtType=loan: scheduled transfer payments to a loan now reduce the loan outstanding (was silently ignored — only the source account was debited).",
     "Fix 2 — MASS_DEL_CARD_TX: card outstanding is now floored at 0 via Math.max(0,...) when bulk-deleting reconciled transactions, preventing negative outstanding balances.",
@@ -4207,6 +4221,7 @@ const computeCapitalGains=(shares,mf)=>{
   const today=TODAY();
   const details=[];
   let stcgGain=0,ltcgGain=0;
+  let stcgLoss=0,ltcgLoss=0;
   let skippedMF=0;
 
   /* ── Equity shares ── */
@@ -4220,6 +4235,7 @@ const computeCapitalGains=(shares,mf)=>{
     const curVal=sh.qty*sh.currentPrice;
     const gain=curVal-cost;
     if(gain>=0){if(isLT)ltcgGain+=gain;else stcgGain+=gain;}
+    else{if(isLT)ltcgLoss+=Math.abs(gain);else stcgLoss+=Math.abs(gain);}
     details.push({id:sh.id,name:sh.company,ticker:sh.ticker,daysHeld,isLT,cost,curVal,gain,type:"Share"});
   });
 
@@ -4235,14 +4251,15 @@ const computeCapitalGains=(shares,mf)=>{
     const curVal=m.units*(m.nav||0);
     const gain=curVal-cost;
     if(gain>=0){if(isLT)ltcgGain+=gain;else stcgGain+=gain;}
+    else{if(isLT)ltcgLoss+=Math.abs(gain);else stcgLoss+=Math.abs(gain);}
     details.push({id:m.id,name:m.name,ticker:m.schemeCode,daysHeld,isLT,cost,curVal,gain,type:"MF"});
   });
 
   const ltcgExempt=Math.min(125000,Math.max(0,ltcgGain));
   const ltcgTaxable=Math.max(0,ltcgGain-ltcgExempt);
-  const stcgTax=stcgGain*0.20;
-  const ltcgTax=ltcgTaxable*0.125;
-  return{stcgGain,stcgLoss:0,ltcgGain,ltcgLoss:0,ltcgExempt,ltcgTaxable,stcgTax,ltcgTax,totalTax:stcgTax+ltcgTax,details,skippedMF};
+  const stcgTax=Math.max(0,stcgGain-stcgLoss)*0.20;
+  const ltcgTax=Math.max(0,ltcgTaxable-ltcgLoss)*0.125;
+  return{stcgGain,stcgLoss,ltcgGain,ltcgLoss,ltcgExempt,ltcgTaxable,stcgTax,ltcgTax,totalTax:stcgTax+ltcgTax,details,skippedMF};
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -4488,10 +4505,10 @@ const reducer=(s,a)=>{
     }
     case"ADD_CARD":return{...s,cards:[...s.cards,a.p]};
     case"ADD_CARD_TX":{const c=s.cards.find(c=>c.id===a.id);const sn=c?nextSn(c.transactions):1;const _acr2=applyCatRule(s.catRules||[],a.tx);const _upi2=applyUpiEnrichment({...a.tx,...(_acr2||{})});const _tx2={...a.tx,...(_acr2||{}),_sn:sn,...(_upi2||{})};return{...s,cards:s.cards.map(c=>c.id===a.id?{...c,transactions:[...c.transactions,_tx2]}:c)};}
-    case"UPD_CARD_BAL":return{...s,cards:s.cards.map(c=>c.id===a.id?(a.tx.status==="Reconciled"?{...c,outstanding:c.outstanding+(a.tx.type==="debit"?a.tx.amount:-a.tx.amount)}:c):c)};
-    case"EDIT_CARD_TX":{const _cwas=a.old.status==="Reconciled";const _cis=a.tx.status==="Reconciled";const _cOld=_cwas?(a.old.type==="debit"?a.old.amount:-a.old.amount):0;const _cNew=_cis?(a.tx.type==="debit"?a.tx.amount:-a.tx.amount):0;return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,outstanding:c.outstanding+(_cNew-_cOld),transactions:c.transactions.map(t=>t.id===a.tx.id?a.tx:t)}:c)};}
-    case"DEL_CARD_TX":return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,outstanding:c.outstanding-(a.tx.status==="Reconciled"?(a.tx.type==="debit"?a.tx.amount:-a.tx.amount):0),transactions:c.transactions.filter(t=>t.id!==a.tx.id)}:c)};
-    case"DUP_CARD_TX":return{...s,cards:s.cards.map(c=>{if(c.id!==a.accId)return c;const sn=nextSn(c.transactions);const _cr=a.tx.status==="Reconciled";return{...c,outstanding:c.outstanding+(_cr?(a.tx.type==="debit"?a.tx.amount:-a.tx.amount):0),transactions:[...c.transactions,{...a.tx,id:uid(),_sn:sn,_addedAt:new Date().toISOString()}]};})};
+    case"UPD_CARD_BAL":return{...s,cards:s.cards.map(c=>c.id===a.id?(a.tx.status==="Reconciled"?{...c,outstanding:Math.max(0,c.outstanding+(a.tx.type==="debit"?a.tx.amount:-a.tx.amount))}:c):c)};
+    case"EDIT_CARD_TX":{const _cwas=a.old.status==="Reconciled";const _cis=a.tx.status==="Reconciled";const _cOld=_cwas?(a.old.type==="debit"?a.old.amount:-a.old.amount):0;const _cNew=_cis?(a.tx.type==="debit"?a.tx.amount:-a.tx.amount):0;return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,outstanding:Math.max(0,c.outstanding+(_cNew-_cOld)),transactions:c.transactions.map(t=>t.id===a.tx.id?a.tx:t)}:c)};}
+    case"DEL_CARD_TX":return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,outstanding:Math.max(0,c.outstanding-(a.tx.status==="Reconciled"?(a.tx.type==="debit"?a.tx.amount:-a.tx.amount):0)),transactions:c.transactions.filter(t=>t.id!==a.tx.id)}:c)};
+    case"DUP_CARD_TX":return{...s,cards:s.cards.map(c=>{if(c.id!==a.accId)return c;const sn=nextSn(c.transactions);const _cr=a.tx.status==="Reconciled";return{...c,outstanding:Math.max(0,c.outstanding+(_cr?(a.tx.type==="debit"?a.tx.amount:-a.tx.amount):0)),transactions:[...c.transactions,{...a.tx,id:uid(),_sn:sn,_addedAt:new Date().toISOString()}]};})};
     case"EDIT_CARD":return{...s,cards:s.cards.map(c=>c.id===a.p.id?{...c,...a.p}:c)};
     case"DEL_CARD":return{...s,
       cards:s.cards.filter(c=>c.id!==a.id),
@@ -4767,7 +4784,7 @@ const reducer=(s,a)=>{
                      :s.cash.transactions;
         const tx={...baseTx,type:sc.ledgerType,_sn:nextSn(_accTxs)};
         if(sc.accType==="bank")  ns={...ns,banks:ns.banks.map(b=>b.id===sc.accId?{...b,balance:b.balance+(tx.type==="credit"?tx.amount:-tx.amount),transactions:[...b.transactions,tx]}:b)};
-        else if(sc.accType==="card") ns={...ns,cards:ns.cards.map(c=>c.id===sc.accId?{...c,outstanding:c.outstanding+(tx.type==="debit"?tx.amount:-tx.amount),transactions:[...c.transactions,tx]}:c)};
+        else if(sc.accType==="card") ns={...ns,cards:ns.cards.map(c=>c.id===sc.accId?{...c,outstanding:Math.max(0,c.outstanding+(tx.type==="debit"?tx.amount:-tx.amount)),transactions:[...c.transactions,tx]}:c)};
         else if(sc.accType==="cash") ns={...ns,cash:{...ns.cash,balance:ns.cash.balance+(tx.type==="credit"?tx.amount:-tx.amount),transactions:[...ns.cash.transactions,tx]}};
       }
 
@@ -4862,7 +4879,7 @@ const reducer=(s,a)=>{
           return d;
         },0);
       if(at==="bank"){const b=s.banks.find(bk=>bk.id===aid);if(!b)return s;const bd=_delta(b.transactions,_bEff);return{...s,banks:s.banks.map(bk=>bk.id!==aid?bk:{...bk,balance:bk.balance+bd,transactions:bk.transactions.map(t=>ids.has(t.id)?{...t,status:st}:t)})};}
-      if(at==="card"){const c=s.cards.find(cd=>cd.id===aid);if(!c)return s;const cd2=_delta(c.transactions,_cEff);return{...s,cards:s.cards.map(cd=>cd.id!==aid?cd:{...cd,outstanding:cd.outstanding+cd2,transactions:cd.transactions.map(t=>ids.has(t.id)?{...t,status:st}:t)})};}
+      if(at==="card"){const c=s.cards.find(cd=>cd.id===aid);if(!c)return s;const cd2=_delta(c.transactions,_cEff);return{...s,cards:s.cards.map(cd=>cd.id!==aid?cd:{...cd,outstanding:Math.max(0,cd.outstanding+cd2),transactions:cd.transactions.map(t=>ids.has(t.id)?{...t,status:st}:t)})};}
       if(at==="cash"){const bd=_delta(s.cash.transactions,_bEff);return{...s,cash:{...s.cash,balance:s.cash.balance+bd,transactions:s.cash.transactions.map(t=>ids.has(t.id)?{...t,status:st}:t)}};}
       return s;
     }
@@ -4910,29 +4927,40 @@ const reducer=(s,a)=>{
       return s;
     }
     case"UPDATE_BULK_TX":{
-      /* Update existing transactions by id — only safe metadata fields, not amount/type/date */
+      /* Update existing transactions by id — only safe metadata fields, not amount/type/date.
+         Status changes (Reconciled↔Unreconciled) also delta-adjust the running balance so that
+         toggling reconciliation during import does not corrupt account balances. */
       const{accType:_ubt_acc,accId:_ubt_id,updates:_ubt_upd}=a;
       if(!_ubt_upd||!_ubt_upd.length)return s;
-      const applyUpdates=(txns)=>{
-        const byId={};
-        _ubt_upd.forEach(u=>{byId[u.id]=u;});
-        return txns.map(tx=>{
-          const u=byId[tx.id];
-          if(!u)return tx;
-          return{...tx,
-            desc:u.desc!==undefined&&u.desc!==""?u.desc:tx.desc,
-            payee:u.payee!==undefined?u.payee:tx.payee,
-            txNum:u.txNum!==undefined?u.txNum:tx.txNum,
-            cat:u.cat!==undefined&&u.cat!==""?u.cat:tx.cat,
-            notes:u.notes!==undefined?u.notes:tx.notes,
-            tags:u.tags!==undefined?u.tags:tx.tags,
-            status:u.status&&["Reconciled","Unreconciled","Void","Duplicate","Follow-Up"].includes(u.status)?u.status:tx.status,
-          };
-        });
-      };
-      if(_ubt_acc==="bank")return{...s,banks:s.banks.map(b=>b.id!==_ubt_id?b:{...b,transactions:applyUpdates(b.transactions)})};
-      if(_ubt_acc==="card")return{...s,cards:s.cards.map(c=>c.id!==_ubt_id?c:{...c,transactions:applyUpdates(c.transactions)})};
-      if(_ubt_acc==="cash")return{...s,cash:{...s.cash,transactions:applyUpdates(s.cash.transactions)}};
+      const byId={};
+      _ubt_upd.forEach(u=>{byId[u.id]=u;});
+      const applyUpdates=(txns)=>txns.map(tx=>{
+        const u=byId[tx.id];
+        if(!u)return tx;
+        return{...tx,
+          desc:u.desc!==undefined&&u.desc!==""?u.desc:tx.desc,
+          payee:u.payee!==undefined?u.payee:tx.payee,
+          txNum:u.txNum!==undefined?u.txNum:tx.txNum,
+          cat:u.cat!==undefined&&u.cat!==""?u.cat:tx.cat,
+          notes:u.notes!==undefined?u.notes:tx.notes,
+          tags:u.tags!==undefined?u.tags:tx.tags,
+          status:u.status&&["Reconciled","Unreconciled","Void","Duplicate","Follow-Up"].includes(u.status)?u.status:tx.status,
+        };
+      });
+      /* Compute balance delta caused purely by status transitions on Reconciled<->other */
+      const _balDelta=(txns,effFn)=>txns.reduce((d,tx)=>{
+        const u=byId[tx.id];
+        if(!u||!u.status||u.status===tx.status)return d;
+        const wasRec=tx.status==="Reconciled",willRec=u.status==="Reconciled";
+        if(wasRec&&!willRec)return d-effFn(tx);
+        if(!wasRec&&willRec)return d+effFn(tx);
+        return d;
+      },0);
+      const _bEff=t=>t.type==="credit"?t.amount:-t.amount;
+      const _cEff=t=>t.type==="debit"?t.amount:-t.amount;
+      if(_ubt_acc==="bank"){const b=s.banks.find(x=>x.id===_ubt_id);if(!b)return s;const bd=_balDelta(b.transactions,_bEff);return{...s,banks:s.banks.map(x=>x.id!==_ubt_id?x:{...x,balance:x.balance+bd,transactions:applyUpdates(x.transactions)})};}
+      if(_ubt_acc==="card"){const c=s.cards.find(x=>x.id===_ubt_id);if(!c)return s;const cd=_balDelta(c.transactions,_cEff);return{...s,cards:s.cards.map(x=>x.id!==_ubt_id?x:{...x,outstanding:Math.max(0,x.outstanding+cd),transactions:applyUpdates(x.transactions)})};}
+      if(_ubt_acc==="cash"){const cd=_balDelta(s.cash.transactions,_bEff);return{...s,cash:{...s.cash,balance:s.cash.balance+cd,transactions:applyUpdates(s.cash.transactions)}};}
       return s;
     }
     case"SET_TAX_DATA":return{...s,taxData:a.data};
@@ -8507,7 +8535,7 @@ const FinancialCalendar=({data,isMobile})=>{
     if(now.getDate()<=bd)cs.setMonth(cs.getMonth()-1);
     const ns=new Date(cs);ns.setMonth(ns.getMonth()+1);
     const due=dd>bd?new Date(ns.getFullYear(),ns.getMonth(),dd):new Date(ns.getFullYear(),ns.getMonth()+1,dd);
-    const ds=due.toISOString().slice(0,10);
+    const _fmtLocal=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;const ds=_fmtLocal(due);
     if(ds>=todayStr&&ds<=horizonStr)
       events.push({date:ds,icon:"💳",label:card.name+" payment due",
         sub:"Outstanding: "+INRc(card.outstanding||0),
@@ -9264,7 +9292,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
             ?new Date(nextStatement.getFullYear(),nextStatement.getMonth(),dd)
             :new Date(nextStatement.getFullYear(),nextStatement.getMonth()+1,dd);
           const dl=Math.ceil((dueDate-now)/86400000);
-          return{...c,dueDate:dueDate.toISOString().split("T")[0],daysLeft:dl};
+          const _fmtD=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;return{...c,dueDate:_fmtD(dueDate),daysLeft:dl};
         })
         .filter(c=>c.daysLeft>=0)
         .sort((a,b)=>a.daysLeft-b.daysLeft);
@@ -10383,7 +10411,7 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
               const now=new Date();const bd=c.billingDay;const dd=c.dueDay;
               /* Cycle start: last statement date (billingDay that has already passed) */
               const cycleStart=new Date(now.getFullYear(),now.getMonth(),bd);
-              if(now.getDate()<bd)cycleStart.setMonth(cycleStart.getMonth()-1);
+              if(now.getDate()<=bd)cycleStart.setMonth(cycleStart.getMonth()-1);
               /* Cycle end: day before next statement */
               const cycleEnd=new Date(cycleStart);cycleEnd.setMonth(cycleEnd.getMonth()+1);cycleEnd.setDate(cycleEnd.getDate()-1);
               /* Next statement date = cycleStart + 1 month */
@@ -10397,7 +10425,7 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
               ):null;
               const daysUntilDue=dueDate?Math.ceil((dueDate-now)/(86400000)):null;
               const fmtD=d=>`${d.getDate()}/${d.getMonth()+1}`;
-              const cycleSpend=c.transactions.filter(t=>t.type==="debit"&&t.date>=cycleStart.toISOString().split("T")[0]&&t.date<=cycleEnd.toISOString().split("T")[0]).reduce((s,t)=>s+t.amount,0);
+              const _dFmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;const cycleSpend=c.transactions.filter(t=>t.type==="debit"&&t.date>=_dFmt(cycleStart)&&t.date<=_dFmt(cycleEnd)).reduce((s,t)=>s+t.amount,0);
               return React.createElement("div",{style:{marginTop:8,padding:"7px 9px",borderRadius:8,background:"var(--bg5)",border:"1px solid var(--border2)",fontSize:10}},
                 React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:3}},
                   React.createElement("span",{style:{color:"var(--text5)"}},"Cycle: "+fmtD(cycleStart)+" – "+fmtD(cycleEnd)),
@@ -24912,8 +24940,8 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     for(let i=5;i>=0;i--){
       const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
       const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
-      const exp=allTxns.filter(t=>t.type==="debit"&&t.date>=mS&&t.date<=mE&&!INVEST_CATS.includes(catMainName(t.cat||""))).reduce((s,t)=>s+t.amount,0);
-      const inc=allTxns.filter(t=>t.type==="credit"&&t.date>=mS&&t.date<=mE).reduce((s,t)=>s+t.amount,0);
+      const exp=allTxns.filter(t=>t.date>=mS&&t.date<=mE&&!INVEST_CATS.includes(catMainName(t.cat||""))).reduce((s,t)=>{const ct=catClassType(data.categories,t.cat||"Others");return ct==="Expense"||ct==="Others"?s+txCatDelta(t,ct):s;},0);
+      const inc=allTxns.filter(t=>t.date>=mS&&t.date<=mE).reduce((s,t)=>{const ct=catClassType(data.categories,t.cat||"Others");return ct==="Income"?s+txCatDelta(t,ct):s;},0);
       months6.push({exp,inc,savings:inc-exp,mName:MONTH_NAMES[(now.getMonth()-i+12)%12]});
     }
     const avgMonthlyExpRaw=months6.reduce((s,m)=>s+m.exp,0)/6||0;
@@ -24967,8 +24995,8 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     for(let i=11;i>=0;i--){
       const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
       const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
-      const inc=allTxns.filter(t=>t.type==="credit"&&t.date>=mS&&t.date<=mE).reduce((s,t)=>s+t.amount,0);
-      const exp=allTxns.filter(t=>t.type==="debit"&&t.date>=mS&&t.date<=mE&&!INVEST_CATS.includes(catMainName(t.cat||""))).reduce((s,t)=>s+t.amount,0);
+      const inc=allTxns.filter(t=>t.date>=mS&&t.date<=mE).reduce((s,t)=>{const ct=catClassType(data.categories,t.cat||"Others");return ct==="Income"?s+txCatDelta(t,ct):s;},0);
+      const exp=allTxns.filter(t=>t.date>=mS&&t.date<=mE&&!INVEST_CATS.includes(catMainName(t.cat||""))).reduce((s,t)=>{const ct=catClassType(data.categories,t.cat||"Others");return ct==="Expense"||ct==="Others"?s+txCatDelta(t,ct):s;},0);
       const rate=inc>0?Math.max((inc-exp)/inc*100,0):0;
       savingsRate12.push({mName:MONTH_NAMES[(now.getMonth()-i+12)%12],rate,inc,exp,savings:inc-exp});
     }
