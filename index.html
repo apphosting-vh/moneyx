@@ -1796,7 +1796,7 @@ const normalizeEodNavKeys=(navs)=>{
    Returns { nav: number, navDate: "DD-MMM-YYYY", navDateISO: "YYYY-MM-DD" }
    or null.
 
-   Strategy (v3.38.0):
+   Strategy (v3.38.1):
    • Direct mfapi.in fetch is tried FIRST — works from proper HTTPS origins
      (GitHub Pages, Netlify, custom domains). Fails silently from null/file://
      origins where mfapi.in returns 403.
@@ -2139,15 +2139,13 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.38.0";
+const APP_VERSION="3.38.1";
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
-  {version:"3.38.0",date:"2026-03-26",title:"Fixes — MF dashboard value/day-change accuracy; Bank & Card hide toggle in Settings",changes:[
-    "Fix 1 — SET_EOD_NAVS reducer now syncs currentValue for every mutual fund: Previously, m.currentValue was only updated when the user manually edited a fund or triggered certain NAV refreshes. After a SET_EOD_NAVS dispatch the reducer now iterates state.mf, looks up the latest NAV from the freshly pruned snapshot, and writes currentValue = nav × units for any fund whose schemeCode appears in the snapshot. Funds with no matching snapshot are untouched. The return merges both eodNavs and mf atomically so currentValue is always consistent with what eodNavs stores.",
-    "Fix 2 — Per-fund day-change badge (MF tab) uses D-2 vs D-1 from eodNavs instead of live m.nav vs D-1: MF NAVs are officially published after market close. Comparing the live m.nav (which may be today's not-yet-settled value) against the prior-day eodNavs snapshot produced a misleading badge before the official NAV had propagated. The badge now takes the two most recent dates in eodNavs that are strictly before today (D-1 and D-2), computes the change between those two completed-day portfolio values, and displays the result. Badge label updated from '% today' to '% prev day' to correctly describe the comparison.",
-    "Fix 3 — MF hero card day-change badge and value were inconsistent: The hero value (₹ large number) was derived from m.currentValue (potentially today's live NAV) while the day-change badge was computed from D-1 vs D-2 in eodNavs — two different data sources producing a sign mismatch (badge showed red while value was higher than Prev Snapshot). Root cause: the IIFE filtered eodNavs dates to strictly before todayIST, so on the day a new NAV arrives (latestDate === todayIST) it was excluded from the comparison, and the badge compared D-1 vs D-2 instead of latestDate vs D-1. Fix: removed the todayIST filter entirely. Both hero value and badge now derive from latestDate (allDates[-1]) and prevDate (allDates[-2]) — the two most recent entries in eodNavs regardless of calendar date. latestTotal replaces m.currentValue as the hero figure, making value, badge sign, badge amount, and 'Value as of' label all consistent with the same eodNavs snapshot.",
-    "Feature 4 — Hide / show individual Bank Accounts and Credit Cards from the Banking section: Two new reducer cases TOGGLE_BANK_HIDDEN and TOGGLE_CARD_HIDDEN flip a hidden boolean on the account object. BankSection and CardSection filter their account lists to !b.hidden / !c.hidden so hidden accounts are invisible in the main UI. Initial selected-account state skips hidden accounts. Settings → Bank Accounts and Settings → Credit Cards each gain a 🙈 Hide / 👁 Show toggle button (via RowActions) per row. Hidden rows render at 55% opacity with an amber Hidden badge next to the account name. The section header sub-line shows '· N hidden' in amber when any accounts are hidden. Critically, hidden accounts remain fully in state — all balances, transactions, reports, Net Worth, Insights, and Backup/Restore are completely unaffected.",
+  {version:"3.38.1",date:"2026-03-26",title:"Bug Fixes — InvestDashboard MF day-change pill incorrect sign; NAV fetch always reporting failure",changes:[
+    "Fix 1 — InvestDashboard MF day-change pill used stale D-1 vs D-2 filter logic: The per-asset stat row IIFE was still computing mfDayChgPct by filtering eodNavs to dates strictly before todayIST, then comparing slice(-1) vs slice(-2,-1). When today's NAV arrived (latestDate === todayIST), it was excluded, so the pill compared two older dates and showed the wrong sign and magnitude — the identical root cause that was fixed in the hero card in v3.38.0. Fix: removed the todayIST filter entirely. Now uses _eodAllDates.slice(-1) (latestDate) and _eodAllDates.slice(-2,-1) (prevDate) with no calendar filtering, exactly mirroring the hero card logic.",
+    "Fix 2 — InvestDashboard NAV fetch (refreshAll navPromise) always reported failure due to undefined variable: The navPromise IIFE dispatched UPD_MF_NAV and SET_EOD_NAVS correctly but then executed return{ok:updated>0,updated} where updated was never declared in that scope — a ReferenceError caught by the outer catch block, which returned {ok:false,updated:0}. This made the UI always show '✗ NAV fetch failed' even when all NAVs were successfully fetched and stored. Fix: replaced the undefined updated reference with updatedCount=upd.filter(m=>m.nav>0&&m.navDate).length, matching the counting pattern used in InvestSection's fetchNAV. Also added navDateISO:res.navDateISO to the upd map spread so the ISO date is reliably forwarded for the SET_EOD_NAVS dispatch.",
   ]},
   {version:"3.37.2",date:"2026-03-25",title:"Fix — MF NAV / Share price CORS failure on GitHub Pages (allorigins.win blocking)",changes:[
     "Root cause: api.allorigins.win is returning responses without the Access-Control-Allow-Origin header for requests originating from certain GitHub Pages domains (e.g. apphosting-vh.github.io). When a CORS proxy omits that header the browser rejects the response entirely with a CORS policy error — the proxy attempt fails, console shows the error, and the code falls through to the AMFI fallback which also uses allorigins and hits the same block.",
@@ -11063,7 +11061,7 @@ const InvestDashboard=React.memo(({mf,shares,fd,re=[],dispatch,isMobile,eodPrice
     setRefreshStatus(null);
     const pos=v=>{const n=parseFloat(v);return n>0?Math.round(n*100)/100:null;};
 
-    /* ── NAV fetch — delegates to shared fetchOneNav helper ── */
+    /* ── NAV fetch — mirrors InvestSection fetchNAV exactly ── */
     const navPromise=(async()=>{
       if(!mf.length)return{ok:true,updated:0};
       try{
@@ -11071,18 +11069,19 @@ const InvestDashboard=React.memo(({mf,shares,fd,re=[],dispatch,isMobile,eodPrice
           try{
             const res=await fetchOneNav(m.schemeCode);
             if(!res)return m;
-            return{...m,nav:res.nav,navDate:res.navDate,currentValue:res.nav*m.units};
+            return{...m,nav:res.nav,navDate:res.navDate,navDateISO:res.navDateISO,currentValue:res.nav*m.units};
           }catch{return m;}
         }));
         dispatch({type:"UPD_MF_NAV",p:upd});
-        /* Also save EOD NAV snapshot keyed by ISO navDate */
+        /* Save EOD NAV snapshot keyed by ISO navDate — identical to InvestSection */
         const navsByCode={};
         upd.forEach(m=>{if(m.nav>0&&m.navDate)navsByCode[m.schemeCode]=m.nav;});
         if(Object.keys(navsByCode).length>0){
           const navDateISO=upd.find(m=>m.navDateISO)?.navDateISO||mfNavDateToISO(upd.find(m=>m.navDate)?.navDate||"");
           if(navDateISO)dispatch({type:"SET_EOD_NAVS",date:navDateISO,navs:navsByCode});
         }
-        return{ok:updated>0,updated};
+        const updatedCount=upd.filter(m=>m.nav>0&&m.navDate).length;
+        return{ok:updatedCount>0,updated:updatedCount};
       }catch{return{ok:false,updated:0};}
     })();
 
@@ -11207,18 +11206,18 @@ const InvestDashboard=React.memo(({mf,shares,fd,re=[],dispatch,isMobile,eodPrice
     /* ── Per-asset stat row */
     (()=>{
       /* Compute aggregate MF day-change from eodNavs.
-         MF NAVs are published after market close, so the correct comparison is
-         D-1 vs D-2 (the two most recent completed trading days), not live vs D-1.
-         Using the live mfVal vs D-1 would show a "change" before it has occurred. */
-      const todayIST=getISTDateStr();
-      const _datesBeforeToday=Object.keys(eodNavs||{}).filter(d=>d<todayIST).sort();
-      const _d1=_datesBeforeToday.slice(-1)[0];   // most recent completed day
-      const _d2=_datesBeforeToday.slice(-2,-1)[0]; // day before that
+         Use the two most recent EOD snapshot dates — no "before today" filter.
+         eodNavs only stores officially published NAV dates so the latest entry
+         IS the most recent completed trading day regardless of calendar date.
+         latestDate = most recent published NAV; prevDate = the one before it. */
+      const _eodAllDates=Object.keys(eodNavs||{}).sort();
+      const _latestNavDate=_eodAllDates.slice(-1)[0];
+      const _prevNavDate=_eodAllDates.slice(-2,-1)[0];
       let mfDayChgPct=null;
-      if(_d1&&_d2){
-        const d1Total=mf.reduce((s,m)=>{const n=(eodNavs[_d1]||{})[m.schemeCode];return s+(n?n*m.units:0);},0);
-        const d2Total=mf.reduce((s,m)=>{const n=(eodNavs[_d2]||{})[m.schemeCode];return s+(n?n*m.units:0);},0);
-        if(d2Total>0&&d1Total>0)mfDayChgPct=((d1Total-d2Total)/d2Total*100);
+      if(_latestNavDate&&_prevNavDate){
+        const latestTotal=mf.reduce((s,m)=>{const n=(eodNavs[_latestNavDate]||{})[m.schemeCode];return s+(n?n*m.units:0);},0);
+        const prevTotal=mf.reduce((s,m)=>{const n=(eodNavs[_prevNavDate]||{})[m.schemeCode];return s+(n?n*m.units:0);},0);
+        if(prevTotal>0&&latestTotal>0)mfDayChgPct=((latestTotal-prevTotal)/prevTotal*100);
       }
       return React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
         React.createElement(StatCard,{label:"Mutual Funds",val:INR(mfVal),
