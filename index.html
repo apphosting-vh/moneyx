@@ -2139,7 +2139,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.39.0";
+const APP_VERSION="3.40.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -22562,29 +22562,184 @@ const usePersistentReducer=(reducer,init)=>{
 /* ── APP SHELL ────────────────────────────────────────────────────────────── */
 /* ── NAV ICONS -- pixel-perfect 16×16 stroke SVGs, inherit color via currentColor ── */
 const NavIcon=({id,size=16})=>{
-  const s={width:size,height:size,viewBox:"0 0 16 16",fill:"none",stroke:"currentColor",strokeWidth:1.55,strokeLinecap:"round",strokeLinejoin:"round",display:"block",flexShrink:0};
+  const s={width:size,height:size,viewBox:"0 0 16 16",fill:"none",stroke:"currentColor",strokeWidth:1.5,strokeLinecap:"round",strokeLinejoin:"round",display:"block",flexShrink:0};
   switch(id){
-    case"dashboard":   return React.createElement("svg",s,React.createElement("rect",{x:1.5,y:1.5,width:5.5,height:5.5,rx:1.3}),React.createElement("rect",{x:9,y:1.5,width:5.5,height:5.5,rx:1.3}),React.createElement("rect",{x:1.5,y:9,width:5.5,height:5.5,rx:1.3}),React.createElement("rect",{x:9,y:9,width:5.5,height:5.5,rx:1.3}));
-    case"banks":       return React.createElement("svg",s,React.createElement("path",{d:"M1.5 6.2L8 2l6.5 4.2H1.5z"}),React.createElement("line",{x1:3.2,y1:6.2,x2:3.2,y2:11.5}),React.createElement("line",{x1:6.4,y1:6.2,x2:6.4,y2:11.5}),React.createElement("line",{x1:9.6,y1:6.2,x2:9.6,y2:11.5}),React.createElement("line",{x1:12.8,y1:6.2,x2:12.8,y2:11.5}),React.createElement("line",{x1:1.2,y1:11.5,x2:14.8,y2:11.5}),React.createElement("line",{x1:1.2,y1:13.5,x2:14.8,y2:13.5}));
-    case"cards":       return React.createElement("svg",s,React.createElement("rect",{x:1.5,y:3.8,width:13,height:8.4,rx:1.4}),React.createElement("line",{x1:1.5,y1:6.8,x2:14.5,y2:6.8}),React.createElement("rect",{x:3.2,y:9,width:3,height:1.5,rx:.4}));
-    case"cash":        return React.createElement("svg",s,React.createElement("rect",{x:1.5,y:4.5,width:13,height:7.5,rx:1.4}),React.createElement("circle",{cx:8,cy:8.25,r:1.9}),React.createElement("path",{d:"M4.8 8.25h.1M11.1 8.25h.1",strokeWidth:2.4}));
-    case"loans":       return React.createElement("svg",s,React.createElement("path",{d:"M1.5 7.5L8 1.8l6.5 5.7V14.5H10v-4H6v4H1.5z"}));
-    case"scheduled":   return React.createElement("svg",s,React.createElement("rect",{x:2,y:3.2,width:12,height:10.8,rx:1.5}),React.createElement("line",{x1:5.2,y1:1.5,x2:5.2,y2:4.8}),React.createElement("line",{x1:10.8,y1:1.5,x2:10.8,y2:4.8}),React.createElement("line",{x1:2,y1:7,x2:14,y2:7}),React.createElement("polyline",{points:"8,8.8 8,11.2 9.8,12.8"}));
-    case"inv_dash":    return React.createElement("svg",s,React.createElement("polyline",{points:"1.5,12 5,7.5 8.5,10 14.5,4.2"}),React.createElement("polyline",{points:"11.2,4.2 14.5,4.2 14.5,7.5"}));
-    case"inv_mf":      return React.createElement("svg",s,React.createElement("rect",{x:1.5,y:9,width:2.2,height:5.5,rx:.5}),React.createElement("rect",{x:5.4,y:6,width:2.2,height:8.5,rx:.5}),React.createElement("rect",{x:9.3,y:3.2,width:2.2,height:11.3,rx:.5}),React.createElement("rect",{x:13.2,y:1.5,width:1.3,height:13,rx:.5,strokeWidth:.8}),React.createElement("path",{d:"M1.5 3.5 Q5 7.5 8 5.5 Q11 3.5 14.5 4.5"}));
-    case"inv_shares":  return React.createElement("svg",s,React.createElement("polyline",{points:"1.5,13 5.5,7.5 9,10.2 13.5,5"}),React.createElement("circle",{cx:13.5,cy:5,r:1.5}),React.createElement("line",{x1:1.5,y1:14.5,x2:14.5,y2:14.5}));
-    case"inv_fd":      return React.createElement("svg",s,React.createElement("circle",{cx:8,cy:8,r:6}),React.createElement("polyline",{points:"8,5 8,8.5 10.5,10.5"}));
-    case"inv_re":      return React.createElement("svg",s,React.createElement("path",{d:"M1.5 14.5v-7l6.5-5.5 6.5 5.5v7z"}),React.createElement("rect",{x:5.5,y:9,width:2.5,height:5.5,rx:.4}),React.createElement("rect",{x:8,y:9,width:2.5,height:5.5,rx:.4}),React.createElement("line",{x1:1.5,y1:14.5,x2:14.5,y2:14.5}));
-    case"notes":       return React.createElement("svg",s,React.createElement("path",{d:"M10.8 1.5H3.8A1.2 1.2 0 002.5 2.7v10.6A1.2 1.2 0 003.8 14.5h8.4a1.2 1.2 0 001.3-1.2V5.2L10.8 1.5z"}),React.createElement("polyline",{points:"10.8,1.5 10.8,5.2 13.5,5.2"}),React.createElement("line",{x1:5.2,y1:8,x2:10.8,y2:8}),React.createElement("line",{x1:5.2,y1:10.8,x2:8.8,y2:10.8}));
-    case"calculator":  return React.createElement("svg",s,React.createElement("rect",{x:2.5,y:1.5,width:11,height:13,rx:1.8}),React.createElement("rect",{x:4.5,y:3.2,width:7,height:2.8,rx:.8,fill:"currentColor",opacity:.25}),React.createElement("circle",{cx:5.2,cy:8,r:.9,fill:"currentColor"}),React.createElement("circle",{cx:8,cy:8,r:.9,fill:"currentColor"}),React.createElement("circle",{cx:10.8,cy:8,r:.9,fill:"currentColor"}),React.createElement("circle",{cx:5.2,cy:10.8,r:.9,fill:"currentColor"}),React.createElement("circle",{cx:8,cy:10.8,r:.9,fill:"currentColor"}),React.createElement("circle",{cx:10.8,cy:10.8,r:.9,fill:"currentColor"}),React.createElement("circle",{cx:5.2,cy:13.2,r:.9,fill:"currentColor"}),React.createElement("circle",{cx:8,cy:13.2,r:.9,fill:"currentColor"}),React.createElement("circle",{cx:10.8,cy:13.2,r:.9,fill:"currentColor"}));
-    case"reports":     return React.createElement("svg",s,React.createElement("rect",{x:2,y:1.5,width:12,height:13,rx:1.5}),React.createElement("line",{x1:5,y1:5.5,x2:11,y2:5.5}),React.createElement("line",{x1:5,y1:8,x2:11,y2:8}),React.createElement("line",{x1:5,y1:10.5,x2:8.5,y2:10.5}));
-    case"settings":        return React.createElement("svg",s,React.createElement("circle",{cx:8,cy:8,r:2.4}),React.createElement("path",{d:"M8 1.5v1.3M8 13.2v1.3M1.5 8h1.3M13.2 8h1.3M3.55 3.55l.92.92M11.53 11.53l.92.92M3.55 12.45l.92-.92M11.53 4.47l.92-.92"}));
-    case"unified_ledger": return React.createElement("svg",s,React.createElement("rect",{x:1.5,y:2,width:13,height:2.5,rx:.7}),React.createElement("rect",{x:1.5,y:6.6,width:13,height:2.5,rx:.7}),React.createElement("rect",{x:1.5,y:11.2,width:13,height:2.5,rx:.7}),React.createElement("line",{x1:3.5,y1:3.25,x2:12.5,y2:3.25,strokeWidth:.8,stroke:"var(--bg)"}),React.createElement("line",{x1:3.5,y1:7.85,x2:12.5,y2:7.85,strokeWidth:.8,stroke:"var(--bg)"}),React.createElement("line",{x1:3.5,y1:12.45,x2:10,y2:12.45,strokeWidth:.8,stroke:"var(--bg)"}));
-    case"goals": return React.createElement("svg",s,React.createElement("circle",{cx:8,cy:8,r:6}),React.createElement("circle",{cx:8,cy:8,r:3.5}),React.createElement("line",{x1:8,y1:1.5,x2:8,y2:4.5}),React.createElement("line",{x1:8,y1:11.5,x2:8,y2:14.5}),React.createElement("line",{x1:1.5,y1:8,x2:4.5,y2:8}),React.createElement("line",{x1:11.5,y1:8,x2:14.5,y2:8}));
-    case"insights": return React.createElement("svg",s,React.createElement("rect",{x:1.5,y:9,width:2.8,height:5.5,rx:.6}),React.createElement("rect",{x:6.6,y:5.5,width:2.8,height:9,rx:.6}),React.createElement("rect",{x:11.7,y:2,width:2.8,height:12.5,rx:.6}),React.createElement("polyline",{points:"2.9,8.5 8,5 13.1,1.5",strokeDasharray:"2,1.5"}));
-    case"tax_est":  return React.createElement(Icon,{n:"receipt",size:18});
-    case"info":     return React.createElement("svg",s,React.createElement("circle",{cx:8,cy:8,r:6.2}),React.createElement("line",{x1:8,y1:7,x2:8,y2:11.5}),React.createElement("circle",{cx:8,cy:4.8,r:.85,fill:"currentColor",stroke:"none"}));
-    default:              return React.createElement("svg",s,React.createElement("circle",{cx:8,cy:8,r:5}));
+    /* ── Dashboard: 2×2 rounded tiles ── */
+    case"dashboard":
+      return React.createElement("svg",s,
+        React.createElement("rect",{x:1.5,y:1.5,width:5.5,height:5.5,rx:1.2}),
+        React.createElement("rect",{x:9,y:1.5,width:5.5,height:5.5,rx:1.2}),
+        React.createElement("rect",{x:1.5,y:9,width:5.5,height:5.5,rx:1.2}),
+        React.createElement("rect",{x:9,y:9,width:5.5,height:5.5,rx:1.2})
+      );
+    /* ── Banks: roof triangle + 3 columns + base bar ── */
+    case"banks":
+      return React.createElement("svg",s,
+        React.createElement("path",{d:"M1.5 6.5L8 2l6.5 4.5H1.5z"}),
+        React.createElement("line",{x1:3.5,y1:6.5,x2:3.5,y2:11.5}),
+        React.createElement("line",{x1:8,y1:6.5,x2:8,y2:11.5}),
+        React.createElement("line",{x1:12.5,y1:6.5,x2:12.5,y2:11.5}),
+        React.createElement("line",{x1:1.5,y1:11.5,x2:14.5,y2:11.5}),
+        React.createElement("line",{x1:1.5,y1:13.5,x2:14.5,y2:13.5})
+      );
+    /* ── Cards: card body + stripe + chip ── */
+    case"cards":
+      return React.createElement("svg",s,
+        React.createElement("rect",{x:1.5,y:3.5,width:13,height:9,rx:1.5}),
+        React.createElement("line",{x1:1.5,y1:7,x2:14.5,y2:7}),
+        React.createElement("rect",{x:3,y:9,width:3,height:2,rx:.6})
+      );
+    /* ── Cash: banknote rectangle + centre circle + corner dots ── */
+    case"cash":
+      return React.createElement("svg",s,
+        React.createElement("rect",{x:1.5,y:4.5,width:13,height:7,rx:1.3}),
+        React.createElement("circle",{cx:8,cy:8,r:1.9}),
+        React.createElement("circle",{cx:4,cy:8,r:.6,fill:"currentColor",stroke:"none"}),
+        React.createElement("circle",{cx:12,cy:8,r:.6,fill:"currentColor",stroke:"none"})
+      );
+    /* ── Loans: document + diagonal % ── */
+    case"loans":
+      return React.createElement("svg",s,
+        React.createElement("path",{d:"M9.5 1.5H4a1.2 1.2 0 00-1.2 1.2v10.6a1.2 1.2 0 001.2 1.2h8a1.2 1.2 0 001.2-1.2V5.2z"}),
+        React.createElement("polyline",{points:"9.5,1.5 9.5,5.2 13.2,5.2"}),
+        React.createElement("line",{x1:5.5,y1:11,x2:10.5,y2:7}),
+        React.createElement("circle",{cx:6,cy:7.5,r:.9}),
+        React.createElement("circle",{cx:10,cy:10.5,r:.9})
+      );
+    /* ── Scheduled: calendar + clock face ── */
+    case"scheduled":
+      return React.createElement("svg",s,
+        React.createElement("rect",{x:2,y:3,width:12,height:11,rx:1.4}),
+        React.createElement("line",{x1:5.5,y1:1.5,x2:5.5,y2:4.5}),
+        React.createElement("line",{x1:10.5,y1:1.5,x2:10.5,y2:4.5}),
+        React.createElement("line",{x1:2,y1:7,x2:14,y2:7}),
+        React.createElement("circle",{cx:8,cy:10.5,r:2.4}),
+        React.createElement("polyline",{points:"8,9.2 8,10.5 9.2,11.4"})
+      );
+    /* ── All Transactions: 3 clean horizontal rows ── */
+    case"unified_ledger":
+      return React.createElement("svg",s,
+        React.createElement("line",{x1:1.5,y1:4,x2:14.5,y2:4}),
+        React.createElement("line",{x1:1.5,y1:8,x2:14.5,y2:8}),
+        React.createElement("line",{x1:1.5,y1:12,x2:10.5,y2:12}),
+        React.createElement("circle",{cx:1.5,cy:4,r:.9,fill:"currentColor",stroke:"none"}),
+        React.createElement("circle",{cx:1.5,cy:8,r:.9,fill:"currentColor",stroke:"none"}),
+        React.createElement("circle",{cx:1.5,cy:12,r:.9,fill:"currentColor",stroke:"none"})
+      );
+    /* ── Invest overview: rising trend + arrow ── */
+    case"inv_dash":
+      return React.createElement("svg",s,
+        React.createElement("polyline",{points:"1.5,12 5,7.5 8.5,9.5 13.5,4"}),
+        React.createElement("polyline",{points:"10.5,4 13.5,4 13.5,7"})
+      );
+    /* ── Mutual Funds: 4 ascending bars ── */
+    case"inv_mf":
+      return React.createElement("svg",s,
+        React.createElement("rect",{x:1.5,y:10.5,width:2.5,height:3.5,rx:.6}),
+        React.createElement("rect",{x:5.5,y:7.5,width:2.5,height:6.5,rx:.6}),
+        React.createElement("rect",{x:9.5,y:4.5,width:2.5,height:9.5,rx:.6}),
+        React.createElement("line",{x1:1.5,y1:14,x2:14.5,y2:14})
+      );
+    /* ── Shares: candlestick chart ── */
+    case"inv_shares":
+      return React.createElement("svg",s,
+        React.createElement("line",{x1:4,y1:2.5,x2:4,y2:13.5}),
+        React.createElement("rect",{x:2.5,y:5,width:3,height:5.5,rx:.5}),
+        React.createElement("line",{x1:9,y1:1.5,x2:9,y2:12}),
+        React.createElement("rect",{x:7.5,y:4.5,width:3,height:4,rx:.5}),
+        React.createElement("line",{x1:13.5,y1:4,x2:13.5,y2:14}),
+        React.createElement("rect",{x:12,y:6.5,width:3,height:5,rx:.5})
+      );
+    /* ── Fixed Deposit: clock (time-locked) ── */
+    case"inv_fd":
+      return React.createElement("svg",s,
+        React.createElement("circle",{cx:8,cy:8.5,r:5.5}),
+        React.createElement("polyline",{points:"8,5.5 8,8.5 10.5,10"}),
+        React.createElement("line",{x1:6,y1:2,x2:10,y2:2})
+      );
+    /* ── Real Estate: clean house silhouette ── */
+    case"inv_re":
+      return React.createElement("svg",s,
+        React.createElement("path",{d:"M1.5 8.5L8 2.5l6.5 6V14H10v-4H6v4H1.5z"}),
+        React.createElement("line",{x1:1.5,y1:14,x2:14.5,y2:14})
+      );
+    /* ── Calendar: grid with highlighted day ── */
+    case"calendar":
+      return React.createElement("svg",s,
+        React.createElement("rect",{x:1.5,y:3,width:13,height:11.5,rx:1.4}),
+        React.createElement("line",{x1:5.5,y1:1.5,x2:5.5,y2:4.5}),
+        React.createElement("line",{x1:10.5,y1:1.5,x2:10.5,y2:4.5}),
+        React.createElement("line",{x1:1.5,y1:7,x2:14.5,y2:7}),
+        React.createElement("circle",{cx:8,cy:10.5,r:1.2,fill:"currentColor",stroke:"none"})
+      );
+    /* ── Goals: concentric target rings + dot ── */
+    case"goals":
+      return React.createElement("svg",s,
+        React.createElement("circle",{cx:8,cy:8,r:6}),
+        React.createElement("circle",{cx:8,cy:8,r:3.5}),
+        React.createElement("circle",{cx:8,cy:8,r:1,fill:"currentColor",stroke:"none"})
+      );
+    /* ── Insights: ascending bars + dashed trend ── */
+    case"insights":
+      return React.createElement("svg",s,
+        React.createElement("rect",{x:1.5,y:10,width:3,height:4,rx:.6}),
+        React.createElement("rect",{x:6.5,y:6.5,width:3,height:7.5,rx:.6}),
+        React.createElement("rect",{x:11.5,y:3,width:3,height:11,rx:.6}),
+        React.createElement("polyline",{points:"3,9.5 8,6 13,2.5",strokeDasharray:"2,1.5"})
+      );
+    /* ── Notes: document + 2 text lines ── */
+    case"notes":
+      return React.createElement("svg",s,
+        React.createElement("path",{d:"M10.5 1.5H3.8a1.2 1.2 0 00-1.2 1.2v10.6a1.2 1.2 0 001.2 1.2h8.4a1.2 1.2 0 001.2-1.2V5.2z"}),
+        React.createElement("polyline",{points:"10.5,1.5 10.5,5.2 13.4,5.2"}),
+        React.createElement("line",{x1:5,y1:8,x2:11,y2:8}),
+        React.createElement("line",{x1:5,y1:10.5,x2:8.5,y2:10.5})
+      );
+    /* ── Calculator: body + display + 6 keys ── */
+    case"calculator":
+      return React.createElement("svg",s,
+        React.createElement("rect",{x:2.5,y:1.5,width:11,height:13,rx:1.6}),
+        React.createElement("rect",{x:4.5,y:3.2,width:7,height:2.8,rx:.7,fill:"currentColor",opacity:.2,stroke:"none"}),
+        React.createElement("circle",{cx:5.5,cy:8.5,r:.85,fill:"currentColor",stroke:"none"}),
+        React.createElement("circle",{cx:8,cy:8.5,r:.85,fill:"currentColor",stroke:"none"}),
+        React.createElement("circle",{cx:10.5,cy:8.5,r:.85,fill:"currentColor",stroke:"none"}),
+        React.createElement("circle",{cx:5.5,cy:11.5,r:.85,fill:"currentColor",stroke:"none"}),
+        React.createElement("circle",{cx:8,cy:11.5,r:.85,fill:"currentColor",stroke:"none"}),
+        React.createElement("circle",{cx:10.5,cy:11.5,r:.85,fill:"currentColor",stroke:"none"})
+      );
+    /* ── Reports: document + embedded bar chart ── */
+    case"reports":
+      return React.createElement("svg",s,
+        React.createElement("path",{d:"M9.5 1.5H4a1.2 1.2 0 00-1.2 1.2v10.6a1.2 1.2 0 001.2 1.2h8a1.2 1.2 0 001.2-1.2V5.2z"}),
+        React.createElement("polyline",{points:"9.5,1.5 9.5,5.2 13.2,5.2"}),
+        React.createElement("rect",{x:5,y:9.5,width:1.5,height:3,rx:.4}),
+        React.createElement("rect",{x:7.5,y:8,width:1.5,height:4.5,rx:.4}),
+        React.createElement("rect",{x:10,y:6.5,width:1.5,height:6,rx:.4})
+      );
+    /* ── Settings: gear — circle + 8 spokes ── */
+    case"settings":
+      return React.createElement("svg",s,
+        React.createElement("circle",{cx:8,cy:8,r:2.4}),
+        React.createElement("path",{d:"M8 1.5v1.3M8 13.2v1.3M1.5 8h1.3M13.2 8h1.3M3.4 3.4l.95.95M11.65 11.65l.95.95M3.4 12.6l.95-.95M11.65 4.35l.95-.95"})
+      );
+    /* ── Info: circled lowercase i ── */
+    case"info":
+      return React.createElement("svg",s,
+        React.createElement("circle",{cx:8,cy:8,r:6.2}),
+        React.createElement("line",{x1:8,y1:7,x2:8,y2:11.5}),
+        React.createElement("circle",{cx:8,cy:4.8,r:.85,fill:"currentColor",stroke:"none"})
+      );
+    /* ── Tax Estimator: receipt + % lines ── */
+    case"tax_est":
+      return React.createElement("svg",s,
+        React.createElement("path",{d:"M11 1.5H5a1.2 1.2 0 00-1.2 1.2v10.6a1.2 1.2 0 001.2 1.2h6a1.2 1.2 0 001.2-1.2V2.7a1.2 1.2 0 00-1.2-1.2z"}),
+        React.createElement("line",{x1:5.5,y1:5,x2:10.5,y2:5}),
+        React.createElement("line",{x1:5.5,y1:10.5,x2:10.5,y2:7}),
+        React.createElement("circle",{cx:6.2,cy:7.2,r:.85}),
+        React.createElement("circle",{cx:9.8,cy:10.2,r:.85})
+      );
+    default:
+      return React.createElement("svg",s,React.createElement("circle",{cx:8,cy:8,r:5}));
   }
 };
 
