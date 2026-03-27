@@ -4253,7 +4253,7 @@ const buildCatOptions=(categories)=>{
     .filter(ct=>byClass[ct]&&byClass[ct].length>0)
     .map(ct=>{
       const mainCats=byClass[ct];
-      return React.createElement("optgroup",{key:ct,label:CLASS_ICON[ct]+" "+ct},
+      return React.createElement("optgroup",{key:ct,label:ct},
         mainCats.flatMap(c=>[
           // Main category option — shows "Housing ▸" when it has subs
           React.createElement("option",{key:c.id,value:c.name},
@@ -14149,7 +14149,7 @@ const CategoriesPanel=({state,dispatch,askDelete})=>{
                   React.createElement("span",{style:{width:12,height:12,borderRadius:"50%",background:cat.color,display:"inline-block",flexShrink:0,boxShadow:"0 0 0 3px "+cat.color+"33"}}),
                   React.createElement("span",{style:{fontSize:13,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},cat.name),
                   React.createElement("span",{style:{fontSize:10,color:"var(--text5)",background:"var(--bg5)",borderRadius:10,padding:"1px 7px",flexShrink:0}},cat.subs.length+" subs"),
-                  React.createElement("span",{style:{fontSize:10,fontWeight:700,padding:"1px 8px",borderRadius:10,border:"1px solid "+(CLASS_C[cat.classType||"Expense"]+"55"),color:CLASS_C[cat.classType||"Expense"],background:CLASS_C[cat.classType||"Expense"]+"15",flexShrink:0}},CLASS_ICON[cat.classType||"Expense"]+" "+(cat.classType||"Expense")),
+                  React.createElement("span",{style:{fontSize:10,fontWeight:700,padding:"1px 8px",borderRadius:10,border:"1px solid "+(CLASS_C[cat.classType||"Expense"]+"55"),color:CLASS_C[cat.classType||"Expense"],background:CLASS_C[cat.classType||"Expense"]+"15",flexShrink:0}},CLASS_ICON[cat.classType||"Expense"]," ",(cat.classType||"Expense")),
                   inUse&&React.createElement("span",{style:{fontSize:10,color:"var(--text6)",background:"var(--bg5)",borderRadius:10,padding:"1px 7px",flexShrink:0}},"in use")
                 ),
                 /* Right: edit/delete + expand */
@@ -14188,7 +14188,7 @@ const CategoriesPanel=({state,dispatch,askDelete})=>{
                   /* Left: sub name + default payee inline picker */
                   React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,flex:1,minWidth:0,flexWrap:"wrap"}},
                     React.createElement("span",{style:{width:6,height:6,borderRadius:"50%",background:cat.color,opacity:.7,display:"inline-block",flexShrink:0}}),
-                    React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:8,border:"1px solid "+(CLASS_C[cat.classType||"Expense"]+"44"),color:CLASS_C[cat.classType||"Expense"],background:CLASS_C[cat.classType||"Expense"]+"12",marginRight:2,letterSpacing:.2,flexShrink:0}},CLASS_ICON[cat.classType||"Expense"]+" "+(cat.classType||"Expense")),
+                    React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:8,border:"1px solid "+(CLASS_C[cat.classType||"Expense"]+"44"),color:CLASS_C[cat.classType||"Expense"],background:CLASS_C[cat.classType||"Expense"]+"12",marginRight:2,letterSpacing:.2,flexShrink:0}},CLASS_ICON[cat.classType||"Expense"]," ",(cat.classType||"Expense")),
                     editingSub&&editingSub.subId===sc.id
                       ? React.createElement("input",{className:"inp",autoFocus:true,value:editingSub.name,
                           onChange:e=>setEditingSub(p=>({...p,name:e.target.value})),
@@ -14256,7 +14256,7 @@ const CategoriesPanel=({state,dispatch,askDelete})=>{
                 background:newMainClass===ct?CLASS_C[ct]+"22":"transparent",
                 color:newMainClass===ct?CLASS_C[ct]:"var(--text5)",
                 cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:10,fontWeight:newMainClass===ct?700:400,transition:"all .15s"
-              }},CLASS_ICON[ct]+" "+ct))
+              }},CLASS_ICON[ct]," ",ct))
             )
           ),
           React.createElement(Field,{label:"Color"},
@@ -14307,7 +14307,7 @@ const CategoriesPanel=({state,dispatch,askDelete})=>{
                 background:(editingCat.classType||"Expense")===ct?CLASS_C[ct]+"22":"transparent",
                 color:(editingCat.classType||"Expense")===ct?CLASS_C[ct]:"var(--text5)",
                 cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:10,fontWeight:(editingCat.classType||"Expense")===ct?700:400,transition:"all .15s"
-              }},CLASS_ICON[ct]+" "+ct))
+              }},CLASS_ICON[ct]," ",ct))
             )
           ),
           React.createElement(Field,{label:"Color"},
@@ -14626,7 +14626,7 @@ const RptHeader=({title,desc,icon})=>
 const ClsBadge=({ct})=>React.createElement("span",{style:{
   fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:8,whiteSpace:"nowrap",
   background:CLASS_C[ct]+"18",color:CLASS_C[ct],border:"1px solid "+CLASS_C[ct]+"30"
-}},CLASS_ICON[ct]+" "+ct);
+}},CLASS_ICON[ct]," ",ct);
 
 /* ── Shared tx collector ──────────────────────────────────────────────────── */
 const collectTx=(data,from,to,accFilter="all")=>{
@@ -14689,7 +14689,7 @@ const RptCashFlow=({data,from,to,onExportPDF})=>{
     clsData[ct].data[m]=(clsData[ct].data[m]||0)+txCatDelta(t,ct);
   });
   const hmRows=CLASS_TYPES.filter(ct=>clsData[ct]&&Object.keys(clsData[ct].data).length>0)
-    .map(ct=>({label:CLASS_ICON[ct]+" "+ct,col:clsData[ct].col,data:clsData[ct].data}));
+    .map(ct=>({label:[CLASS_ICON[ct]," ",ct],col:clsData[ct].col,data:clsData[ct].data}));
   return React.createElement("div",{className:"fu"},
     React.createElement(RptHeader,{title:"Cash Flow",desc:"Monthly classification breakdown — Income, Expenses, Investments (Transfers excluded)",icon:React.createElement(Icon,{n:"money",size:18})}),
     React.createElement(RptCtrlBar,{onExportPDF},
@@ -14759,7 +14759,7 @@ const RptClassification=({data,from,to,onJumpToLedger,onExportPDF})=>{
       React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
     ),
     React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
-      CLASS_TYPES.map(ct=>React.createElement(StatCard,{key:ct,label:CLASS_ICON[ct]+" "+ct,val:INR(byClass[ct]?.total||0),col:CLASS_C[ct],icon:null}))
+      CLASS_TYPES.map(ct=>React.createElement(StatCard,{key:ct,label:[CLASS_ICON[ct]," ",ct],val:INR(byClass[ct]?.total||0),col:CLASS_C[ct],icon:null}))
     ),
     /* SNAPSHOT */
     view==="snapshot"&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
@@ -15842,7 +15842,7 @@ const RptCatSummary=({data,from,to,onJumpToLedger,onExportPDF})=>{
     ),
     /* KPI strip */
     React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:18}},
-      CLASS_TYPES.filter(ct=>clsTotals[ct]>0).map(ct=>React.createElement(StatCard,{key:ct,label:CLASS_ICON[ct]+" "+ct,val:INR(clsTotals[ct]),col:CLASS_C[ct],icon:null}))
+      CLASS_TYPES.filter(ct=>clsTotals[ct]>0).map(ct=>React.createElement(StatCard,{key:ct,label:[CLASS_ICON[ct]," ",ct],val:INR(clsTotals[ct]),col:CLASS_C[ct],icon:null}))
     ),
     /* ── SNAPSHOT ── */
     view==="snapshot"&&React.createElement("div",null,
@@ -16390,7 +16390,7 @@ const RptMyUsage=({data,from,to,onExportPDF})=>{
       React.createElement(Card,null,
         React.createElement("div",{style:{fontSize:12,color:"var(--text4)",fontWeight:600,marginBottom:12,textTransform:"uppercase",letterSpacing:.5}},"Classification Split"),
         clsTotal===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"tag",size:34}),text:"No data"}),
-        CLASS_TYPES.filter(ct=>byCls[ct]>0).map(ct=>React.createElement(HBar,{key:ct,label:CLASS_ICON[ct]+" "+ct,value:byCls[ct],max:clsTotal,color:CLASS_C[ct],sub:clsTotal>0?((byCls[ct]/clsTotal)*100).toFixed(1)+"%":null}))
+        CLASS_TYPES.filter(ct=>byCls[ct]>0).map(ct=>React.createElement(HBar,{key:ct,label:[CLASS_ICON[ct]," ",ct],value:byCls[ct],max:clsTotal,color:CLASS_C[ct],sub:clsTotal>0?((byCls[ct]/clsTotal)*100).toFixed(1)+"%":null}))
       )
     ),
     view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
@@ -17940,7 +17940,7 @@ const RptGstTds=({data,from,to,onExportPDF})=>{
 
 const REPORT_TREE=[
   {id:"cashflow",      label:"Cash Flow",                icon:React.createElement(Icon,{n:"money",size:18})},
-  {id:"classification",label:"Classification Breakdown", icon:React.createElement(Icon,{n:"tag",size:34})},
+  {id:"classification",label:"Classification Breakdown", icon:React.createElement(Icon,{n:"tag",size:18})},
   {id:"categories",    label:"Categories",               icon:React.createElement(Icon,{n:"folder",size:18}),children:[
     {id:"cat_monthly",   label:"Monthly",                icon:React.createElement(Icon,{n:"calendar",size:18})},
     {id:"cat_quarterly", label:"Quarterly",              icon:React.createElement(Icon,{n:"calendar",size:18})},
@@ -21657,7 +21657,7 @@ const ScheduledSection=React.memo(({state,dispatch})=>{
           React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text)",marginBottom:3}},sc.desc||sc.payee||"Scheduled Transaction"),
           React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}},
             React.createElement("span",{style:{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:10,border:"1px solid "+(FREQ_C[sc.frequency]||"var(--accent)")+"55",color:FREQ_C[sc.frequency]||"var(--accent)",background:(FREQ_C[sc.frequency]||"var(--accent)")+"15"}},sc.frequency==="once"?"One-time":sc.frequency),
-            React.createElement("span",{style:{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:10,border:"1px solid "+CLASS_C[ct]+"55",color:CLASS_C[ct],background:CLASS_C[ct]+"15"}},CLASS_ICON[ct]+" "+ct),
+            React.createElement("span",{style:{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:10,border:"1px solid "+CLASS_C[ct]+"55",color:CLASS_C[ct],background:CLASS_C[ct]+"15"}},CLASS_ICON[ct]," ",ct),
             sc.cat&&React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},catDisplayName(sc.cat))
           )
         ),
