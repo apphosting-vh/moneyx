@@ -2209,7 +2209,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.43.5";
+const APP_VERSION="3.43.6";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -23782,16 +23782,33 @@ const resolveGoalIcon=(ic,sz=18)=>React.createElement(Icon,{n:typeof ic==="strin
 const GOAL_ICONS=GOAL_ICON_NAMES.map(n=>React.createElement(Icon,{n,size:18}));
 const GOAL_COLORS=["#0e7490","#16a34a","#b45309","#6d28d9","#c2410c","#be185d","#1d4ed8","#059669"];
 
-const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],cards=[],cash={transactions:[]}})=>{
+const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],cards=[],cash={transactions:[]},mf=[],shares=[],fd=[],re=[]})=>{
   const[addOpen,setAddOpen]=useState(false);
   const[editGoal,setEditGoal]=useState(null);
   const[fundsGoal,setFundsGoal]=useState(null);
   const[delGoal,setDelGoal]=useState(null);
-  const[sipLinkGoal,setSipLinkGoal]=useState(null); /* goal to link a SIP to */
+  const[sipLinkGoal,setSipLinkGoal]=useState(null);
+  const[poolBreakdownOpen,setPoolBreakdownOpen]=useState(false);
   const EMPTY_GOAL={title:"",icon:"target",targetAmount:"",savedAmount:"",targetDate:"",color:"#0e7490",notes:"",linkedSipId:""};
   const[gf,setGf]=useState(EMPTY_GOAL);
   const[fundsAmt,setFundsAmt]=useState("");
   const gset=k=>e=>setGf(p=>({...p,[k]:e.target.value}));
+
+  /* ── Investment Pool Calculation ── */
+  const mfVal=mf.reduce((s,m)=>s+(m.currentValue||m.invested||0),0);
+  const sharesVal=shares.reduce((s,sh)=>s+(sh.qty||0)*(sh.currentPrice||0),0);
+  const fdVal=fd.reduce((s,f)=>s+calcFDValueToday(f),0);
+  const reVal=(re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
+  const totalInvestmentPool=mfVal+sharesVal+fdVal+reVal;
+  const totalAllocated=goals.reduce((s,g)=>s+(+g.savedAmount||0),0);
+  const availablePool=Math.max(0,totalInvestmentPool-totalAllocated);
+  const poolAllocPct=totalInvestmentPool>0?Math.min(100,totalAllocated/totalInvestmentPool*100):0;
+  const poolBreakdown=[
+    {label:"Mutual Funds",val:mfVal,col:"#6d28d9"},
+    {label:"Shares",val:sharesVal,col:"#16a34a"},
+    {label:"Fixed Deposits",val:fdVal,col:"#b45309"},
+    {label:"Real Estate",val:reVal,col:"#c2410c"},
+  ].filter(x=>x.val>0);
 
   const totalTarget=goals.reduce((s,g)=>s+(+g.targetAmount||0),0);
   const totalSaved=goals.reduce((s,g)=>s+(+g.savedAmount||0),0);
@@ -23813,10 +23830,14 @@ const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],ca
     return{sc,totalInvested,txCount:matched.length,monthsNeeded,projDate,sipAmt:sc.amount,freq:sc.frequency};
   };
 
+  /* Available pool for the modal: add back current goal's allocation when editing */
+  const modalAvailable=editGoal?availablePool+(+editGoal.savedAmount||0):availablePool;
+
   const saveGoal=()=>{
     if(!gf.title||!gf.targetAmount)return;
-    if(editGoal){dispatch({type:"EDIT_GOAL",p:{...editGoal,...gf,targetAmount:+gf.targetAmount,savedAmount:+gf.savedAmount||0}});setEditGoal(null);}
-    else{dispatch({type:"ADD_GOAL",p:{...gf,targetAmount:+gf.targetAmount,savedAmount:+gf.savedAmount||0}});}
+    const allocAmt=Math.min(+gf.savedAmount||0, modalAvailable);
+    if(editGoal){dispatch({type:"EDIT_GOAL",p:{...editGoal,...gf,targetAmount:+gf.targetAmount,savedAmount:allocAmt}});setEditGoal(null);}
+    else{dispatch({type:"ADD_GOAL",p:{...gf,targetAmount:+gf.targetAmount,savedAmount:allocAmt}});}
     setGf(EMPTY_GOAL);setAddOpen(false);
   };
 
@@ -23824,7 +23845,22 @@ const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],ca
 
   const lbl={display:"block",color:"var(--text5)",fontSize:11,textTransform:"uppercase",letterSpacing:.5,marginBottom:5};
 
-  const GoalModal=React.createElement(Modal,{title:editGoal?"Edit Goal":"New Financial Goal",onClose:()=>{setAddOpen(false);setEditGoal(null);setGf(EMPTY_GOAL);},w:500},
+  const GoalModal=React.createElement(Modal,{title:editGoal?"Edit Goal":"New Financial Goal",onClose:()=>{setAddOpen(false);setEditGoal(null);setGf(EMPTY_GOAL);},w:520},
+    /* Investment pool banner inside modal */
+    React.createElement("div",{style:{
+      background:"linear-gradient(135deg,rgba(6,182,212,.08),rgba(109,40,217,.08))",
+      border:"1px solid rgba(6,182,212,.25)",borderRadius:12,padding:"12px 16px",marginBottom:16,
+      display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"
+    }},
+      React.createElement("div",null,
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}},"Available from Investment Pool"),
+        React.createElement("div",{style:{fontSize:20,fontWeight:700,fontFamily:"'Sora',sans-serif",color:modalAvailable>0?"#06b6d4":"#ef4444"}},INR(modalAvailable)),
+      ),
+      React.createElement("div",{style:{textAlign:"right"}},
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}},"Total Pool"),
+        React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},INR(totalInvestmentPool)),
+      )
+    ),
     React.createElement("div",{style:{display:"flex",gap:12,marginBottom:12,alignItems:"flex-start"}},
       React.createElement("div",{style:{flex:1}},
         React.createElement("label",{style:lbl},"Goal Title *"),
@@ -23843,8 +23879,26 @@ const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],ca
         React.createElement("input",{className:"inp",type:"number",placeholder:"500000",value:gf.targetAmount,onChange:gset("targetAmount")})
       ),
       React.createElement("div",null,
-        React.createElement("label",{style:lbl},"Already Saved (₹)"),
-        React.createElement("input",{className:"inp",type:"number",placeholder:"0",value:gf.savedAmount,onChange:gset("savedAmount")})
+        React.createElement("label",{style:{...lbl,color:+gf.savedAmount>modalAvailable?"#ef4444":"var(--text5)"}},
+          "Allocate from Portfolio (₹)"+(+gf.savedAmount>modalAvailable?" — exceeds available!":"")),
+        React.createElement("div",{style:{position:"relative"}},
+          React.createElement("input",{
+            className:"inp",type:"number",
+            placeholder:"0",
+            value:gf.savedAmount,
+            onChange:e=>setGf(p=>({...p,savedAmount:e.target.value})),
+            style:{paddingRight:60,borderColor:+gf.savedAmount>modalAvailable?"#ef4444":""}
+          }),
+          modalAvailable>0&&React.createElement("button",{
+            onClick:()=>setGf(p=>({...p,savedAmount:String(Math.min(modalAvailable,+p.targetAmount||modalAvailable))})),
+            style:{position:"absolute",right:6,top:"50%",transform:"translateY(-50%)",
+              fontSize:10,padding:"2px 7px",borderRadius:5,border:"1px solid var(--border)",
+              background:"var(--bg4)",color:"var(--text4)",cursor:"pointer",whiteSpace:"nowrap",fontFamily:"'DM Sans',sans-serif"}
+          },"Max")
+        ),
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:3}},
+          "Available: "+INR(modalAvailable)
+        )
       ),
       React.createElement("div",null,
         React.createElement("label",{style:lbl},"Target Date"),
@@ -23877,23 +23931,78 @@ const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],ca
     )
   );
 
-  const FundsModal=fundsGoal&&React.createElement(Modal,{title:"Add Funds to Goal",onClose:()=>{setFundsGoal(null);setFundsAmt("");},w:380},
-    React.createElement("div",{style:{textAlign:"center",padding:"10px 0 18px"}},
-      React.createElement("div",{style:{fontSize:36,marginBottom:6}},resolveGoalIcon(fundsGoal.icon,28)),
+  const fundsAvailable=fundsGoal?availablePool+(+fundsGoal.savedAmount||0):0;
+  const FundsModal=fundsGoal&&React.createElement(Modal,{title:"Allocate from Investment Portfolio",onClose:()=>{setFundsGoal(null);setFundsAmt("");},w:420},
+    /* Pool summary */
+    React.createElement("div",{style:{
+      background:"linear-gradient(135deg,rgba(6,182,212,.08),rgba(109,40,217,.08))",
+      border:"1px solid rgba(6,182,212,.25)",borderRadius:12,padding:"12px 16px",marginBottom:16
+    }},
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
+        React.createElement("span",{style:{fontSize:11,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5}},"Investment Pool"),
+        React.createElement("span",{style:{fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"var(--text3)"}},INR(totalInvestmentPool))
+      ),
+      React.createElement("div",{style:{background:"var(--bg5)",borderRadius:4,height:6,overflow:"hidden",marginBottom:8}},
+        React.createElement("div",{style:{
+          width:poolAllocPct+"%",height:"100%",
+          background:"linear-gradient(90deg,#06b6d4,#6d28d9)",borderRadius:4,transition:"width .5s"
+        }})
+      ),
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
+        React.createElement("span",{style:{fontSize:11,color:"#06b6d4"}},INR(totalAllocated)+" allocated"),
+        React.createElement("span",{style:{fontSize:11,color:fundsAvailable>0?"#16a34a":"#ef4444",fontWeight:700}},INR(fundsAvailable)+" available")
+      )
+    ),
+    /* Goal info */
+    React.createElement("div",{style:{textAlign:"center",padding:"6px 0 16px"}},
+      React.createElement("div",{style:{fontSize:32,marginBottom:6}},resolveGoalIcon(fundsGoal.icon,26)),
       React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text)"}},fundsGoal.title),
       React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginTop:3}},
-        INR(fundsGoal.savedAmount||0)+" of "+INR(fundsGoal.targetAmount)+" saved"
+        INR(fundsGoal.savedAmount||0)+" allocated · "+INR(fundsGoal.targetAmount)+" target"
       ),
       React.createElement("div",{style:{marginTop:10,background:"var(--bg5)",borderRadius:3,height:6,overflow:"hidden"}},
         React.createElement("div",{style:{width:Math.min(100,(fundsGoal.savedAmount||0)/(fundsGoal.targetAmount||1)*100)+"%",height:"100%",background:fundsGoal.color||"var(--accent)",borderRadius:3,transition:"width .5s"}})
       )
     ),
-    React.createElement("div",{style:{marginBottom:16}},
-      React.createElement("label",{style:lbl},"Amount to Add (₹)"),
-      React.createElement("input",{className:"inp",type:"number",autoFocus:true,placeholder:"Enter amount",value:fundsAmt,onChange:e=>setFundsAmt(e.target.value),style:{fontSize:18,fontWeight:700,fontFamily:"'Sora',sans-serif"}})
+    React.createElement("div",{style:{marginBottom:8}},
+      React.createElement("label",{style:lbl},"Additional Amount to Allocate (₹)"),
+      React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center"}},
+        React.createElement("input",{className:"inp",type:"number",autoFocus:true,
+          placeholder:"Enter amount",value:fundsAmt,
+          onChange:e=>setFundsAmt(e.target.value),
+          style:{flex:1,fontSize:18,fontWeight:700,fontFamily:"'Sora',sans-serif",
+            borderColor:+fundsAmt>fundsAvailable?"#ef4444":""}}),
+        fundsAvailable>0&&React.createElement("button",{
+          onClick:()=>setFundsAmt(String(Math.min(fundsAvailable,Math.max(0,(+fundsGoal.targetAmount||0)-(+fundsGoal.savedAmount||0))))),
+          style:{padding:"8px 12px",borderRadius:9,border:"1px solid var(--border)",
+            background:"var(--bg4)",color:"var(--text4)",cursor:"pointer",
+            fontSize:12,fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap"}
+        },"Fill Gap")
+      )
+    ),
+    +fundsAmt>fundsAvailable&&React.createElement("div",{style:{fontSize:11,color:"#ef4444",marginBottom:10,padding:"6px 10px",background:"rgba(239,68,68,.08)",borderRadius:7}},
+      "⚠ Amount exceeds available portfolio balance of "+INR(fundsAvailable)
+    ),
+    /* Quick amounts */
+    fundsAvailable>0&&React.createElement("div",{style:{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}},
+      [10,25,50,100].map(pct=>React.createElement("button",{key:pct,
+        onClick:()=>setFundsAmt(String(Math.round(fundsAvailable*pct/100))),
+        style:{flex:1,padding:"5px 8px",borderRadius:7,border:"1px solid var(--border)",
+          background:"var(--bg4)",color:"var(--text5)",cursor:"pointer",
+          fontSize:11,fontFamily:"'DM Sans',sans-serif"}
+      },pct+"% of available"))
     ),
     React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
-      React.createElement(Btn,{onClick:()=>{if(!fundsAmt||+fundsAmt<=0)return;dispatch({type:"ADD_GOAL_FUNDS",id:fundsGoal.id,amount:+fundsAmt});setFundsGoal(null);setFundsAmt("");},disabled:!fundsAmt||+fundsAmt<=0,sx:{flex:"1 1 120px",justifyContent:"center"}},"Add Funds"),
+      React.createElement(Btn,{
+        onClick:()=>{
+          if(!fundsAmt||+fundsAmt<=0)return;
+          const amt=Math.min(+fundsAmt,fundsAvailable);
+          dispatch({type:"ADD_GOAL_FUNDS",id:fundsGoal.id,amount:amt});
+          setFundsGoal(null);setFundsAmt("");
+        },
+        disabled:!fundsAmt||+fundsAmt<=0||fundsAvailable<=0,
+        sx:{flex:"1 1 120px",justifyContent:"center"}
+      },"Allocate to Goal"),
       React.createElement(Btn,{v:"secondary",onClick:()=>{setFundsGoal(null);setFundsAmt("");},sx:{justifyContent:"center",minWidth:70}},"Cancel")
     )
   );
@@ -23905,28 +24014,120 @@ const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],ca
   });
 
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",height:"100%",overflowY:"auto"}},
+    /* Header row */
     React.createElement("div",{style:{marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}},
       React.createElement("div",null,
         React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,color:"var(--text)"}},"Financial Goals"),
-        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},"Track your savings targets and financial milestones")
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},"Allocate your investment portfolio to life goals")
       ),
       React.createElement(Btn,{onClick:()=>{setEditGoal(null);setGf(EMPTY_GOAL);setAddOpen(true);}},"+ New Goal")
     ),
-    /* Summary strip */
-    goals.length>0&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"1fr 1fr 1fr",gap:12,marginBottom:20}},
+
+    /* ── Investment Pool Hero Banner ── */
+    React.createElement("div",{style:{
+      background:"linear-gradient(135deg,rgba(6,182,212,.1) 0%,rgba(109,40,217,.1) 100%)",
+      border:"1px solid rgba(6,182,212,.3)",
+      borderRadius:18,padding:isMobile?"14px 16px":"20px 24px",
+      marginBottom:20,position:"relative",overflow:"hidden"
+    }},
+      /* decorative ring */
+      React.createElement("div",{style:{
+        position:"absolute",right:-30,top:-30,width:160,height:160,
+        borderRadius:"50%",border:"1.5px solid rgba(6,182,212,.15)",pointerEvents:"none"
+      }}),
+      React.createElement("div",{style:{
+        position:"absolute",right:20,top:20,width:80,height:80,
+        borderRadius:"50%",border:"1.5px solid rgba(109,40,217,.15)",pointerEvents:"none"
+      }}),
+      /* Top row: title + breakdown toggle */
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}},
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:10,textTransform:"uppercase",letterSpacing:.7,color:"var(--text5)",marginBottom:4}},"Investment Pool"),
+          React.createElement("div",{style:{fontSize:isMobile?24:32,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"var(--text)",lineHeight:1}},
+            INR(totalInvestmentPool)
+          )
+        ),
+        React.createElement("button",{
+          onClick:()=>setPoolBreakdownOpen(v=>!v),
+          style:{padding:"6px 14px",borderRadius:10,border:"1px solid rgba(6,182,212,.35)",
+            background:"rgba(6,182,212,.08)",color:"#06b6d4",cursor:"pointer",
+            fontSize:11,fontFamily:"'DM Sans',sans-serif",fontWeight:600}
+        },poolBreakdownOpen?"▲ Hide":"▼ Breakdown")
+      ),
+      /* Pool breakdown rows (collapsible) */
+      poolBreakdownOpen&&React.createElement("div",{style:{
+        display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)",
+        gap:8,marginBottom:14,
+        paddingBottom:14,borderBottom:"1px solid rgba(6,182,212,.15)"
+      }},
+        poolBreakdown.length===0
+          ?React.createElement("div",{style:{fontSize:12,color:"var(--text5)",gridColumn:"1/-1"}},"No investments tracked yet. Add mutual funds, shares, FDs or real estate.")
+          :poolBreakdown.map(pb=>React.createElement("div",{key:pb.label,style:{
+              background:"var(--card)",borderRadius:10,padding:"9px 12px",
+              borderLeft:"3px solid "+pb.col
+            }},
+            React.createElement("div",{style:{fontSize:9,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:2}},pb.label),
+            React.createElement("div",{style:{fontSize:14,fontWeight:700,fontFamily:"'Sora',sans-serif",color:pb.col}},INR(pb.val)),
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},
+              totalInvestmentPool>0?(pb.val/totalInvestmentPool*100).toFixed(1)+"%":"—"
+            )
+          ))
+      ),
+      /* Allocation bar */
+      React.createElement("div",{style:{marginBottom:10}},
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:5}},
+          React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Portfolio Allocation"),
+          React.createElement("span",{style:{fontSize:12,fontWeight:700,fontFamily:"'Sora',sans-serif",
+            color:poolAllocPct>90?"#ef4444":poolAllocPct>70?"#f59e0b":"#06b6d4"}},
+            poolAllocPct.toFixed(1)+"% allocated"
+          )
+        ),
+        React.createElement("div",{style:{background:"rgba(255,255,255,.08)",borderRadius:6,height:10,overflow:"hidden"}},
+          React.createElement("div",{style:{
+            width:poolAllocPct+"%",height:"100%",borderRadius:6,
+            background:"linear-gradient(90deg,#06b6d4,#6d28d9)",
+            transition:"width .6s cubic-bezier(.22,1,.36,1)"
+          }})
+        )
+      ),
+      /* Three metrics */
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:isMobile?8:16}},
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.4,marginBottom:2}},"Allocated"),
+          React.createElement("div",{style:{fontSize:isMobile?13:16,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"#6d28d9"}},INR(totalAllocated))
+        ),
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.4,marginBottom:2}},"Available"),
+          React.createElement("div",{style:{fontSize:isMobile?13:16,fontWeight:700,fontFamily:"'Sora',sans-serif",color:availablePool>0?"#06b6d4":"#ef4444"}},INR(availablePool))
+        ),
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.4,marginBottom:2}},"Goals"),
+          React.createElement("div",{style:{fontSize:isMobile?13:16,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"var(--text3)"}},goals.length)
+        )
+      )
+    ),
+
+    /* Summary stat cards */
+    goals.length>0&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"1fr 1fr 1fr 1fr",gap:12,marginBottom:20}},
       React.createElement(StatCard,{label:"Total Target",val:INR(totalTarget),icon:React.createElement(Icon,{n:"target",size:18}),col:"var(--accent)"}),
-      React.createElement(StatCard,{label:"Total Saved",val:INR(totalSaved),sub:((totalSaved/Math.max(totalTarget,1))*100).toFixed(1)+"% overall progress",icon:React.createElement(Icon,{n:"money",size:15}),col:"#16a34a"}),
+      React.createElement(StatCard,{label:"Allocated",val:INR(totalAllocated),sub:poolAllocPct.toFixed(1)+"% of portfolio",icon:React.createElement(Icon,{n:"money",size:15}),col:"#6d28d9"}),
+      React.createElement(StatCard,{label:"Unallocated",val:INR(availablePool),sub:totalInvestmentPool>0?((availablePool/totalInvestmentPool)*100).toFixed(1)+"% free":"Add investments",icon:React.createElement(Icon,{n:"invest",size:18}),col:availablePool>0?"#06b6d4":"#ef4444"}),
       React.createElement(StatCard,{label:"Active Goals",val:goals.length+" goals",sub:onTrack+" on track",icon:React.createElement(Icon,{n:"chart",size:18}),col:"#0e7490"})
     ),
+
     /* Goals grid */
     goals.length===0
       ?React.createElement("div",{style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,color:"var(--text6)"}},
           React.createElement("div",{style:{fontSize:52}},React.createElement(Icon,{n:"target",size:18})),
           React.createElement("div",{style:{fontSize:16,fontWeight:600}},"No goals yet"),
-          React.createElement("div",{style:{fontSize:13,textAlign:"center",maxWidth:280,lineHeight:1.5}},"Set financial goals to track your progress towards major purchases, savings targets, or milestones."),
+          React.createElement("div",{style:{fontSize:13,textAlign:"center",maxWidth:320,lineHeight:1.6}},
+            totalInvestmentPool>0
+              ?"You have "+INR(totalInvestmentPool)+" in investments. Create goals and allocate your portfolio to them."
+              :"Set financial goals and allocate your investments to track progress."
+          ),
           React.createElement(Btn,{onClick:()=>setAddOpen(true),sx:{marginTop:8}},"+ Create Your First Goal")
         )
-      :React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(auto-fill,minmax(290px,1fr))",gap:16,paddingBottom:20}},
+      :React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(auto-fill,minmax(300px,1fr))",gap:16,paddingBottom:20}},
           goals.map(g=>{
             const pct=Math.min(100,(+g.savedAmount||0)/(+g.targetAmount||1)*100);
             const remaining=Math.max(0,(+g.targetAmount||0)-(+g.savedAmount||0));
@@ -23934,12 +24135,24 @@ const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],ca
             const col=g.color||"var(--accent)";
             const overdue=daysLeft!==null&&daysLeft<0;
             const done=pct>=100;
-            return React.createElement("div",{key:g.id,style:{background:"var(--card)",border:"1px solid "+(done?"rgba(22,163,74,.4)":"var(--border)"),borderRadius:16,padding:18,display:"flex",flexDirection:"column",gap:10,transition:"border-color .2s,box-shadow .2s"},
-              className:"db-card"},
+            /* What share of the total pool this goal uses */
+            const poolShare=totalInvestmentPool>0?((+g.savedAmount||0)/totalInvestmentPool*100):0;
+            /* Unallocated pool available for this goal additionally */
+            const thisGoalAvail=availablePool+(+g.savedAmount||0);
+            return React.createElement("div",{key:g.id,style:{
+                background:"var(--card)",
+                border:"1px solid "+(done?"rgba(22,163,74,.4)":"var(--border)"),
+                borderRadius:18,padding:18,display:"flex",flexDirection:"column",gap:10,
+                transition:"border-color .2s,box-shadow .2s"
+              },className:"db-card"},
               /* Header */
               React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
                 React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
-                  React.createElement("div",{style:{width:42,height:42,borderRadius:12,background:col+"20",border:"1px solid "+col+"40",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}},resolveGoalIcon(g.icon)),
+                  React.createElement("div",{style:{
+                    width:42,height:42,borderRadius:12,
+                    background:col+"20",border:"1px solid "+col+"40",
+                    display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0
+                  }},resolveGoalIcon(g.icon)),
                   React.createElement("div",null,
                     React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",lineHeight:1.2}},g.title),
                     g.targetDate&&React.createElement("div",{style:{fontSize:11,color:overdue?"#ef4444":daysLeft<30?"#c2410c":"var(--text5)",marginTop:2}},
@@ -23949,29 +24162,43 @@ const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],ca
                 ),
                 done&&React.createElement("span",{style:{display:"flex",color:"#f59e0b"}},React.createElement(Icon,{n:"checkcircle",size:20}))
               ),
-              /* Progress bar */
+              /* Goal progress bar */
               React.createElement("div",null,
-                React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:5}},
-                  React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Progress"),
+                React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:4}},
+                  React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Goal Progress"),
                   React.createElement("span",{style:{fontSize:12,fontWeight:700,color:col}},pct.toFixed(1)+"%")
                 ),
                 React.createElement("div",{style:{background:"var(--bg5)",borderRadius:4,height:8,overflow:"hidden"}},
                   React.createElement("div",{style:{width:pct+"%",height:"100%",background:col,borderRadius:4,transition:"width .5s cubic-bezier(.22,1,.36,1)"}})
                 )
               ),
-              /* Amounts */
+              /* Amounts row */
               React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
                 React.createElement("div",null,
-                  React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"Saved"),
-                  React.createElement("div",{style:{fontSize:16,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#16a34a"}},INR(+g.savedAmount||0))
+                  React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"Allocated"),
+                  React.createElement("div",{style:{fontSize:16,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#06b6d4"}},INR(+g.savedAmount||0))
                 ),
                 React.createElement("div",{style:{textAlign:"center"}},
                   React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"Remaining"),
-                  React.createElement("div",{style:{fontSize:14,fontFamily:"'Sora',sans-serif",fontWeight:600,color:remaining>0?"#ef4444":"#16a34a"}},INR(remaining))
+                  React.createElement("div",{style:{fontSize:14,fontFamily:"'Sora',sans-serif",fontWeight:600,color:remaining>0?"#f59e0b":"#16a34a"}},INR(remaining))
                 ),
                 React.createElement("div",{style:{textAlign:"right"}},
                   React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"Target"),
                   React.createElement("div",{style:{fontSize:14,fontFamily:"'Sora',sans-serif",fontWeight:600,color:"var(--text4)"}},INR(+g.targetAmount||0))
+                )
+              ),
+              /* Portfolio share pill */
+              totalInvestmentPool>0&&React.createElement("div",{style:{
+                display:"flex",alignItems:"center",justifyContent:"space-between",
+                background:"rgba(109,40,217,.06)",border:"1px solid rgba(109,40,217,.15)",
+                borderRadius:8,padding:"6px 10px"
+              }},
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+                  React.createElement("div",{style:{width:8,height:8,borderRadius:"50%",background:"#6d28d9"}}),
+                  React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Portfolio share")
+                ),
+                React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"#6d28d9",fontFamily:"'Sora',sans-serif"}},
+                  poolShare.toFixed(1)+"%"
                 )
               ),
               g.notes&&React.createElement("div",{style:{fontSize:11,color:"var(--text5)",background:"var(--bg5)",borderRadius:8,padding:"6px 10px",lineHeight:1.5,fontStyle:"italic"}},g.notes),
@@ -24002,7 +24229,11 @@ const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],ca
               })(),
               /* Actions */
               React.createElement("div",{style:{display:"flex",gap:7,borderTop:"1px solid var(--border2)",paddingTop:10,flexWrap:"wrap"}},
-                !done&&React.createElement(Btn,{v:"success",sz:"sm",onClick:()=>{setFundsGoal(g);setFundsAmt("");}},"+  Add Funds"),
+                !done&&React.createElement(Btn,{v:"success",sz:"sm",
+                  onClick:()=>{setFundsGoal(g);setFundsAmt("");},
+                  disabled:availablePool<=0&&(+g.savedAmount||0)===0},
+                  availablePool>0?"＋ Allocate Funds":"Pool Exhausted"
+                ),
                 React.createElement(Btn,{v:"secondary",sz:"sm",onClick:()=>setSipLinkGoal(g)},g.linkedSipId?"SIP Linked":"Link SIP"),
                 React.createElement(Btn,{v:"secondary",sz:"sm",onClick:()=>openEdit(g)},"Edit"),
                 React.createElement(Btn,{v:"danger",sz:"sm",onClick:()=>setDelGoal(g)},"×")
@@ -29529,7 +29760,7 @@ function App(){
       tab==="inv_fd"&&React.createElement(InvestSection,{mf:state.mf,shares:state.shares,fd:state.fd,re:state.re||[],dispatch,defaultTab:"fd",isMobile,eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{}}),
       tab==="inv_re"&&React.createElement(InvestSection,{mf:state.mf,shares:state.shares,fd:state.fd,re:state.re||[],dispatch,defaultTab:"re",isMobile,eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{}}),
       tab==="loans"&&React.createElement(LoanSection,{loans:state.loans,dispatch,allBanks:state.banks,allCards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees,isMobile}),
-      tab==="goals"&&React.createElement(GoalsSection,{goals:state.goals||[],dispatch,isMobile,scheduled:state.scheduled||[],banks:state.banks,cards:state.cards,cash:state.cash}),
+      tab==="goals"&&React.createElement(GoalsSection,{goals:state.goals||[],dispatch,isMobile,scheduled:state.scheduled||[],banks:state.banks,cards:state.cards,cash:state.cash,mf:state.mf||[],shares:state.shares||[],fd:state.fd||[],re:state.re||[]}),
       tab==="insights"&&React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs,onJumpToLedger,nwSnapshots:state.nwSnapshots||{}}),
       tab==="notes"&&React.createElement(NotesSection,{notes:state.notes||[],dispatch}),
       tab==="calculator"&&React.createElement(CalculatorSection,null),
