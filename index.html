@@ -2209,7 +2209,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.43.7";
+const APP_VERSION="3.43.8";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -23931,7 +23931,7 @@ const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],ca
     )
   );
 
-  const fundsAvailable=fundsGoal?availablePool+(+fundsGoal.savedAmount||0):0;
+  const fundsAvailable=fundsGoal?availablePool:0;
   const FundsModal=fundsGoal&&React.createElement(Modal,{title:"Allocate from Investment Portfolio",onClose:()=>{setFundsGoal(null);setFundsAmt("");},w:420},
     /* Pool summary */
     React.createElement("div",{style:{
