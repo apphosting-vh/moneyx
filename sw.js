@@ -7,7 +7,7 @@
    • Same-origin assets     → cache-first, fallback to network
    ══════════════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'mm-v3-43-1';
+const CACHE_NAME = 'mm-v3-43-4';
 
 /* Assets to precache on install */
 const PRECACHE_URLS = [
