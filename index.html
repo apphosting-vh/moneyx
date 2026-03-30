@@ -2273,7 +2273,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.45.0";
+const APP_VERSION="3.46.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -25907,6 +25907,8 @@ const TAX_LS_KEY = "itr3_ay2627_v1";
   const DEFAULT_TDS = [{ id:uid(), deductor:"", amount:"", date:"" }];
   const DEFAULT_AT  = [{ id:uid(), amount:"", date:"", ref:"" }];
 
+/* TaxEstimatorSection — declared as plain function then wrapped in React.memo
+   so the optimiser treats it identically to every other section component. */
 function TaxEstimatorSection({taxData, dispatch}) {
     /* ── Source of truth priority:
        1. taxData from MM state (persists via MM's saveState → LS_KEY)
@@ -27232,20 +27234,27 @@ function TaxEstimatorSection({taxData, dispatch}) {
         </div>
       </div>
     );
-  }
+}
+/* Wrap with React.memo so it skips re-renders when taxData/dispatch are unchanged */
+TaxEstimatorSection=React.memo(TaxEstimatorSection);
 
 
 function App(){
   const[state,rawDispatch]=usePersistentReducer(reducer,INIT);
-  /* ── Wrap dispatch: auto-snapshot before destructive actions for undo ── */
+  /* ── Wrap dispatch: auto-snapshot before destructive actions for undo ──
+     _undoStateRef mirrors `state` each render so the useCallback closure
+     never needs `state` in its dep array — keeping `dispatch` identity
+     stable across every re-render and letting React.memo children bail out. */
   const _undoPushRef=React.useRef(null);
+  const _undoStateRef=React.useRef(state);
+  _undoStateRef.current=state;          // sync every render, no useEffect needed
   const dispatch=React.useCallback((action)=>{
     const DESTRUCTIVE=new Set(["DEL_BANK_TX","DEL_CARD_TX","DEL_CASH_TX","MASS_DEL_BANK_TX","MASS_DEL_CARD_TX","MASS_DEL_CASH_TX","SPLIT_TX","DEL_BANK","DEL_CARD","DEL_LOAN","DEL_MF","DEL_SHARE","DEL_FD","DEL_RE","DEL_PF","DEL_GOAL","DEL_NOTE","DEL_PAYEE","DEL_CAT","DEL_SUBCAT","PURGE_OLD_TRANSACTIONS","RESET_ALL"]);
     if(DESTRUCTIVE.has(action.type)&&_undoPushRef.current){
-      _undoPushRef.current(state);
+      _undoPushRef.current(_undoStateRef.current);  // read current state via ref
     }
     rawDispatch(action);
-  },[state,rawDispatch]);
+  },[rawDispatch]);  // stable — no `state` dep
   /* Expose dispatch globally for Dashboard IIFE components that can't use hooks */
   React.useEffect(()=>{window.__mm_dispatch=dispatch;},[dispatch]);
   const[tab,setTab]=useRouting();
@@ -28139,28 +28148,58 @@ function App(){
         display:"flex",flexDirection:"column",background:"var(--bg)"
       }
     },
-      tab==="dashboard"&&React.createElement(Dashboard,{data:state,isMobile}),
-      tab==="banks"&&React.createElement(BankSection,{banks:state.banks,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,cash:state.cash,loans:state.loans||[],isMobile,jumpAccId:txJump?.accType==="bank"?txJump.accId:null,jumpTxId:txJump?.accType==="bank"?txJump.txId:null,jumpSerial:txJump?.accType==="bank"?txJump.serial:null,onClearAccountJump:onClearTxJump}),
-      tab==="cards"&&React.createElement(CardSection,{cards:state.cards,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,cash:state.cash,loans:state.loans||[],isMobile,jumpAccId:txJump?.accType==="card"?txJump.accId:null,jumpTxId:txJump?.accType==="card"?txJump.txId:null,jumpSerial:txJump?.accType==="card"?txJump.serial:null,onClearAccountJump:onClearTxJump}),
-      tab==="cash"&&React.createElement(CashSection,{cash:state.cash,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,loans:state.loans||[],isMobile,jumpTxId:txJump?.accType==="cash"?txJump.txId:null,jumpSerial:txJump?.accType==="cash"?txJump.serial:null}),
-      tab==="inv_dash"&&React.createElement(InvestDashboard,{mf:state.mf,shares:state.shares,fd:state.fd,re:state.re||[],dispatch,isMobile,eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{}}),
+      /* ── Keep-alive tab panels ──────────────────────────────────────────────
+         All section components are mounted once and stay alive for the lifetime
+         of the app. Switching tabs only toggles display:none ↔ display:block.
+         Combined with React.memo + stable dispatch this means:
+           • No unmount/remount cost on tab switch (scroll pos, internal state preserved)
+           • No re-render of hidden sections when an unrelated dispatch fires
+         Note: InvestSection is NOT keep-alived because it is intentionally re-used
+         for five different sub-tabs (mf/shares/fd/re/pf) with different defaultTab
+         props — those still use the original && guard so each sub-tab gets its own
+         isolated mount driven by `tab`. All other sections are keep-alive.
+         ─────────────────────────────────────────────────────────────────────── */
+      React.createElement("div",{style:{display:tab==="dashboard"?"contents":"none"}},
+        React.createElement(Dashboard,{data:state,isMobile})),
+      React.createElement("div",{style:{display:tab==="banks"?"contents":"none"}},
+        React.createElement(BankSection,{banks:state.banks,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,cash:state.cash,loans:state.loans||[],isMobile,jumpAccId:txJump?.accType==="bank"?txJump.accId:null,jumpTxId:txJump?.accType==="bank"?txJump.txId:null,jumpSerial:txJump?.accType==="bank"?txJump.serial:null,onClearAccountJump:onClearTxJump})),
+      React.createElement("div",{style:{display:tab==="cards"?"contents":"none"}},
+        React.createElement(CardSection,{cards:state.cards,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,cash:state.cash,loans:state.loans||[],isMobile,jumpAccId:txJump?.accType==="card"?txJump.accId:null,jumpTxId:txJump?.accType==="card"?txJump.txId:null,jumpSerial:txJump?.accType==="card"?txJump.serial:null,onClearAccountJump:onClearTxJump})),
+      React.createElement("div",{style:{display:tab==="cash"?"contents":"none"}},
+        React.createElement(CashSection,{cash:state.cash,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,loans:state.loans||[],isMobile,jumpTxId:txJump?.accType==="cash"?txJump.txId:null,jumpSerial:txJump?.accType==="cash"?txJump.serial:null})),
+      React.createElement("div",{style:{display:tab==="inv_dash"?"contents":"none"}},
+        React.createElement(InvestDashboard,{mf:state.mf,shares:state.shares,fd:state.fd,re:state.re||[],dispatch,isMobile,eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{}})),
+      /* InvestSection: five sub-tabs reuse the same component with different
+         defaultTab — keep the && pattern so each sub-tab mounts independently */
       tab==="inv_mf"&&React.createElement(InvestSection,{mf:state.mf,shares:state.shares,fd:state.fd,re:state.re||[],pf:state.pf||[],dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{}}),
       tab==="inv_shares"&&React.createElement(InvestSection,{mf:state.mf,shares:state.shares,fd:state.fd,re:state.re||[],pf:state.pf||[],dispatch,defaultTab:"shares",isMobile,eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{}}),
       tab==="inv_fd"&&React.createElement(InvestSection,{mf:state.mf,shares:state.shares,fd:state.fd,re:state.re||[],pf:state.pf||[],dispatch,defaultTab:"fd",isMobile,eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{}}),
       tab==="inv_re"&&React.createElement(InvestSection,{mf:state.mf,shares:state.shares,fd:state.fd,re:state.re||[],pf:state.pf||[],dispatch,defaultTab:"re",isMobile,eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{}}),
       tab==="inv_pf"&&React.createElement(InvestSection,{mf:state.mf,shares:state.shares,fd:state.fd,re:state.re||[],pf:state.pf||[],dispatch,defaultTab:"pf",isMobile,eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{}}),
-      tab==="loans"&&React.createElement(LoanSection,{loans:state.loans,dispatch,allBanks:state.banks,allCards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees,isMobile}),
-      tab==="goals"&&React.createElement(GoalsSection,{goals:state.goals||[],dispatch,isMobile,scheduled:state.scheduled||[],banks:state.banks,cards:state.cards,cash:state.cash,mf:state.mf||[],shares:state.shares||[],fd:state.fd||[],re:state.re||[]}),
-      tab==="insights"&&React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs,onJumpToLedger,nwSnapshots:state.nwSnapshots||{}}),
-      tab==="notes"&&React.createElement(NotesSection,{notes:state.notes||[],dispatch}),
-      tab==="calculator"&&React.createElement(CalculatorSection,null),
-      tab==="scheduled"&&React.createElement(ScheduledSection,{state,dispatch}),
-      tab==="unified_ledger"&&React.createElement(UnifiedLedgerSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees,isMobile,initialFilter:jumpFilter,onClearJump,onJumpToTx}),
-      tab==="calendar"&&React.createElement(CalendarSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,isMobile}),
-      tab==="reports"&&React.createElement(ReportsSection,{data:state,isMobile,onJumpToLedger}),
-      tab==="settings"&&React.createElement(SettingsSection,{state,dispatch,themeId,setTheme,isMobile,onResetAll:()=>{dispatch({type:"RESET_ALL"});try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_THEME);localStorage.removeItem(TAX_LS_KEY);}catch{}setTimeout(()=>window.location.reload(),100);}}),
-      tab==="info"&&React.createElement(InfoSection,{isMobile}),
-      tab==="tax_est"&&React.createElement(TaxEstimatorSection,{taxData:state.taxData||null,dispatch})
+      React.createElement("div",{style:{display:tab==="loans"?"contents":"none"}},
+        React.createElement(LoanSection,{loans:state.loans,dispatch,allBanks:state.banks,allCards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees,isMobile})),
+      React.createElement("div",{style:{display:tab==="goals"?"contents":"none"}},
+        React.createElement(GoalsSection,{goals:state.goals||[],dispatch,isMobile,scheduled:state.scheduled||[],banks:state.banks,cards:state.cards,cash:state.cash,mf:state.mf||[],shares:state.shares||[],fd:state.fd||[],re:state.re||[]})),
+      React.createElement("div",{style:{display:tab==="insights"?"contents":"none"}},
+        React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs,onJumpToLedger,nwSnapshots:state.nwSnapshots||{}})),
+      React.createElement("div",{style:{display:tab==="notes"?"contents":"none"}},
+        React.createElement(NotesSection,{notes:state.notes||[],dispatch})),
+      React.createElement("div",{style:{display:tab==="calculator"?"contents":"none"}},
+        React.createElement(CalculatorSection,null)),
+      React.createElement("div",{style:{display:tab==="scheduled"?"contents":"none"}},
+        React.createElement(ScheduledSection,{state,dispatch})),
+      React.createElement("div",{style:{display:tab==="unified_ledger"?"contents":"none"}},
+        React.createElement(UnifiedLedgerSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees,isMobile,initialFilter:jumpFilter,onClearJump,onJumpToTx})),
+      React.createElement("div",{style:{display:tab==="calendar"?"contents":"none"}},
+        React.createElement(CalendarSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,isMobile})),
+      React.createElement("div",{style:{display:tab==="reports"?"contents":"none"}},
+        React.createElement(ReportsSection,{data:state,isMobile,onJumpToLedger})),
+      React.createElement("div",{style:{display:tab==="settings"?"contents":"none"}},
+        React.createElement(SettingsSection,{state,dispatch,themeId,setTheme,isMobile,onResetAll:()=>{dispatch({type:"RESET_ALL"});try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_THEME);localStorage.removeItem(TAX_LS_KEY);}catch{}setTimeout(()=>window.location.reload(),100);}})),
+      React.createElement("div",{style:{display:tab==="info"?"contents":"none"}},
+        React.createElement(InfoSection,{isMobile})),
+      React.createElement("div",{style:{display:tab==="tax_est"?"contents":"none"}},
+        React.createElement(TaxEstimatorSection,{taxData:state.taxData||null,dispatch}))
     )
   ),
     FsaPermCard,
