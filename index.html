@@ -2209,7 +2209,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.43.8";
+const APP_VERSION="3.43.9";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -2362,6 +2362,14 @@ const Icon=({n,size=16,col,style={}})=>{
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
 window.__MM_APP_VERSION = APP_VERSION;
 const CHANGELOG=[
+  {version:"3.43.9",date:"2026-03-30",title:"Fix — Report table headers cramped into one column + Goals card amount overlap",changes:[
+    "Bug Fix — All report section tables (Categories Monthly, Quarterly, Yearly, Cash Flow, Classification, Income vs Expenses, Forecast, Account Summary, Payees, Investment Portfolio, Reconciliation, Net Worth, and more): column header texts were rendering concatenated into a single grid cell instead of occupying separate columns. Root cause: bare text string children of display:grid containers are treated as a single anonymous block by browsers. Fixed by wrapping every header string in a React.createElement span so each becomes a proper grid item.",
+    "28 grid header rows fixed across all report components. Each header cell now also carries whiteSpace:nowrap to prevent mid-word wrapping on narrow screens.",
+    "Added overflowX:auto to all 30 report Card table containers (previously overflow:hidden only), so wide tables scroll horizontally instead of clipping content on mobile or narrow panels.",
+    "Added minWidth constraints to multi-column report grids (7-column quarterly/monthly breakdown: 580px; 5/6-column grids: 480-540px) so columns never collapse below their intended widths.",
+    "Bug Fix — Goals card Allocated/Remaining/Target amounts overlapping on cards with large Indian rupee values. Reduced font sizes: Allocated 16px to 12px, Remaining and Target 14px to 12px. All three columns now equal size.",
+    "Added minWidth:0, whiteSpace:nowrap, and textOverflow:ellipsis to each amount column in the Goals card amounts row so values truncate gracefully rather than overflowing into adjacent columns.",
+  ]},
   {version:"3.43.5",date:"2026-03-29",title:"Enhancement — App-wide Selection Signature System & Bug Fix — Goals Tab crash",changes:[
     "Selection Signature System: introduced a unified visual language for every selected/active state in the app, mirroring the vivid sidebar nav-bar treatment — accent label colour, a directional border strip, a gradient tint background, and an ambient glow shadow.",
     "Three CSS utility classes added: .mm-tab-sel (horizontal tabs — 3px bottom border + top-to-bottom accentbg gradient + drop glow), .mm-pill-sel (pill/chip selectors — 1.5px full border + diagonal gradient + outer glow ring), .mm-row-sel (list rows — 3px left border + left-to-transparent sweep + inset glow). All classes use a spring-pop entrance animation (mm-sel-pop).",
@@ -5729,8 +5737,7 @@ const SmsScanModal=({onImport,onClose,accType="bank"})=>{
         )
       ),
       parsed.ok.length>0&&React.createElement("div",{style:{border:"1px solid var(--border)",borderRadius:8,overflow:"hidden",marginBottom:12}},
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 70px 80px",padding:"6px 10px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},
-          "Date","Description","Type","Amount"),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 70px 80px",padding:"6px 10px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Date"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Description"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Type"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Amount")),
         React.createElement("div",{style:{maxHeight:240,overflowY:"auto"}},
           parsed.ok.map(tx=>React.createElement("div",{key:tx.id,style:{display:"grid",gridTemplateColumns:"90px 1fr 70px 80px",padding:"7px 10px",borderBottom:"1px solid var(--border2)",alignItems:"center"}},
             React.createElement("div",{style:{fontSize:11,color:"var(--text4)",fontFamily:"'Sora',sans-serif"}},tx.date),
@@ -6187,7 +6194,7 @@ const ImportTxModal=({onImport,onClose,categories,accType="bank",existingTxns=[]
         /* Update preview table */
         upsertPreview.toUpdate.length>0&&React.createElement("div",{style:{border:"1px solid var(--border)",borderRadius:8,overflow:"hidden",marginBottom:12}},
           React.createElement("div",{style:{padding:"6px 12px",background:"rgba(29,78,216,.06)",borderBottom:"1px solid var(--border2)",fontSize:11,fontWeight:700,color:"#1d4ed8",textTransform:"uppercase",letterSpacing:.5}},"Transactions to Update"),
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr",padding:"5px 10px",background:"var(--bg4)",borderBottom:"1px solid var(--border2)",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},"Date","Description → New","Category → New","Status → New"),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr",padding:"5px 10px",background:"var(--bg4)",borderBottom:"1px solid var(--border2)",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Date"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Description → New"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Category → New"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Status → New")),
           React.createElement("div",{style:{maxHeight:180,overflowY:"auto"}},
             upsertPreview.toUpdate.map((u,i)=>React.createElement("div",{key:u.id,className:"tr",style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr",padding:"6px 10px",borderBottom:"1px solid var(--border2)",alignItems:"center",fontSize:11}},
               React.createElement("div",{style:{color:"var(--text5)",fontFamily:"'Sora',sans-serif"}},dmyFmt(u._orig.date)),
@@ -6249,7 +6256,7 @@ const ImportTxModal=({onImport,onClose,categories,accType="bank",existingTxns=[]
           )
         ),
         React.createElement("div",{style:{border:"1px solid var(--border)",borderRadius:8,overflow:"hidden",marginBottom:14}},
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"100px 1fr 80px 80px 80px",padding:"7px 10px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:11,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4}},"Date","Description","Type","Amount","Category"),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"100px 1fr 80px 80px 80px",padding:"7px 10px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:11,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Date"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Description"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Type"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Amount"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Category")),
           React.createElement("div",{style:{maxHeight:260,overflowY:"auto"}},
             preview.txns.map(tx=>React.createElement("div",{key:tx.id,className:"tr",style:{display:"grid",gridTemplateColumns:"100px 1fr 80px 80px 80px",padding:"8px 10px",borderBottom:"1px solid var(--border2)",alignItems:"center"}},
               React.createElement("div",{style:{fontSize:11,color:"var(--text4)",fontFamily:"'Sora',sans-serif"}},dmyFmt(tx.date)),
@@ -11625,7 +11632,7 @@ const InvestDashboard=React.memo(({mf,shares,fd,re=[],dispatch,isMobile,eodPrice
         React.createElement(SecHead,{title:"Mutual Fund Performance",color:"#6d28d9"}),
         mf.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"chart",size:18}),text:"No mutual funds added yet"}),
         mfPerf.length>0&&React.createElement("div",null,
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr 90px",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4,padding:"0 0 6px",borderBottom:"1px solid var(--border2)",marginBottom:8}},"Fund","Invested","Current","P&L","Return"),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr 90px",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4,padding:"0 0 6px",borderBottom:"1px solid var(--border2)",marginBottom:8}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Fund"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Invested"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Current"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"P&L"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Return")),
           mfPerf.map(m=>{
             const cost=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;
             const cur=m.currentValue||m.invested;
@@ -14277,7 +14284,7 @@ const CategoriesPanel=({state,dispatch,askDelete})=>{
     React.createElement("div",{style:{display:"flex",gap:14,alignItems:"flex-start",flexWrap:"wrap"}},
       /* ── Category tree */
       React.createElement("div",{style:{flex:"1 1 340px",minWidth:280}},
-        React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
+        React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
           /* Header row */
           React.createElement("div",{style:{padding:"10px 16px",borderBottom:"1px solid var(--border)",fontSize:12,color:"var(--text4)",fontWeight:500,display:"flex",justifyContent:"space-between",alignItems:"center"}},
             React.createElement("span",null,state.categories.length+" main categories"),
@@ -14865,17 +14872,17 @@ const RptCashFlow=({data,from,to,onExportPDF})=>{
       React.createElement(SvgGroupBar,{data:rows,h:150})
     ),
     /* DETAILED */
-    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4,background:"var(--bg4)"}},"Month","Income","Expenses","Investments","Net"),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",minWidth:480,padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4,background:"var(--bg4)"}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Month"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Income"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Expenses"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Investments"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Net")),
       rows.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"chart",size:18}),text:"No data in selected period"}),
-      rows.map(r=>React.createElement("div",{key:r.key,className:"tr",style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",padding:"10px 14px",borderBottom:"1px solid var(--border2)"}},
+      rows.map(r=>React.createElement("div",{key:r.key,className:"tr",style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",minWidth:480,padding:"10px 14px",borderBottom:"1px solid var(--border2)"}},
         React.createElement("div",{style:{fontSize:12,color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},r.key),
         React.createElement("div",{style:{fontSize:12,color:"#16a34a",fontWeight:600}},INR(r.v1)),
         React.createElement("div",{style:{fontSize:12,color:"#ef4444",fontWeight:600}},INR(r.v2)),
         React.createElement("div",{style:{fontSize:12,color:"#6d28d9",fontWeight:600}},INR(r.v3)),
         React.createElement("div",{style:{fontSize:12,fontWeight:700,color:r.net>=0?"#16a34a":"#ef4444"}},INR(r.net))
       )),
-      rows.length>0&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr 1fr",padding:"10px 14px",borderTop:"2px solid var(--border)",background:"var(--bg4)"}},
+      rows.length>0&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr 1fr",minWidth:540,padding:"10px 14px",borderTop:"2px solid var(--border)",background:"var(--bg4)"}},
         React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text3)"}},"Total"),
         React.createElement("div",{style:{fontSize:12,color:"#16a34a",fontWeight:700}},INR(totInc)),
         React.createElement("div",{style:{fontSize:12,color:"#ef4444",fontWeight:700}},INR(totExp)),
@@ -14955,8 +14962,8 @@ const RptClassification=({data,from,to,onJumpToLedger,onExportPDF})=>{
       })
     ),
     /* DETAILED */
-    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 120px 1fr 80px 90px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},"Category","Classification","Amount","% of Class",""),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 120px 1fr 80px 90px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Category"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Classification"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Amount"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"% of Class"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"")),
       allTx.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"tag",size:34}),text:"No data in selected period"}),
       CLASS_TYPES.filter(ct=>byClass[ct]&&byClass[ct].total>0).flatMap(ct=>{
         const cats=Object.entries(byClass[ct].cats).sort((a,b)=>b[1]-a[1]);
@@ -15209,14 +15216,12 @@ const RptCatMonthly=({data,from,to,onJumpToLedger,onExportPDF})=>{
             )
         )
       ),
-      React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
+      React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
         React.createElement("div",{style:{padding:"10px 14px",borderBottom:"1px solid var(--border)",background:"var(--bg4)",display:"flex",justifyContent:"space-between",alignItems:"center"}},
           React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"var(--text3)"}},"Monthly Breakdown"),
           React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},months.length+" months")
         ),
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr 1fr 1fr 80px",padding:"7px 14px",borderBottom:"1px solid var(--border2)",background:"var(--bg4)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4}},
-          "Month","Income","Expenses","Investments","Net","Savings %","Transactions"
-        ),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr 1fr 1fr 80px",minWidth:580,padding:"7px 14px",borderBottom:"1px solid var(--border2)",background:"var(--bg4)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Month"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Income"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Expenses"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Investments"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Net"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Savings %"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Transactions")),
         months.map(m=>{
           const agg=monthlyAgg[m];
           const net=agg.inc-agg.exp-agg.inv;
@@ -15226,7 +15231,7 @@ const RptCatMonthly=({data,from,to,onJumpToLedger,onExportPDF})=>{
           const segments=catEntries.slice(0,8).map(([n,v])=>{const catObj=data.categories.find(c=>c.name===n);return{val:v,col:catObj?.color||CAT_C[n]||"#8ba0c0"};});
           return React.createElement(React.Fragment,{key:m},
             React.createElement("div",{className:"tr",onClick:()=>toggleMonth(m),
-              style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr 1fr 1fr 80px",padding:"10px 14px",borderBottom:"1px solid var(--border2)",cursor:"pointer"}},
+              style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr 1fr 1fr 80px",minWidth:580,padding:"10px 14px",borderBottom:"1px solid var(--border2)",cursor:"pointer"}},
               React.createElement("div",{style:{fontSize:12,color:"var(--text3)",fontFamily:"'Sora',sans-serif",fontWeight:600}},MONTH_NAMES[parseInt(m.slice(5))-1]+" '"+m.slice(2,4)),
               React.createElement("div",{style:{fontSize:12,color:"#16a34a",fontWeight:600}},INR(agg.inc)),
               React.createElement("div",{style:{fontSize:12,color:"#ef4444",fontWeight:600}},INR(agg.exp)),
@@ -15273,7 +15278,7 @@ const RptCatMonthly=({data,from,to,onJumpToLedger,onExportPDF})=>{
             )
           );
         }),
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr 1fr 1fr 80px",padding:"10px 14px",borderTop:"2px solid var(--border)",background:"var(--bg4)"}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr 1fr 1fr 80px",minWidth:580,padding:"10px 14px",borderTop:"2px solid var(--border)",background:"var(--bg4)"}},
           React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)"}},"Total"),
           React.createElement("div",{style:{fontSize:12,color:"#16a34a",fontWeight:700}},INR(totInc)),
           React.createElement("div",{style:{fontSize:12,color:"#ef4444",fontWeight:700}},INR(totExp)),
@@ -15293,7 +15298,7 @@ const RptCatMonthly=({data,from,to,onJumpToLedger,onExportPDF})=>{
         const totalM=catEntries.reduce((s,[,v])=>s+v,0);
         const segments=catEntries.map(([n,v])=>{const catObj=data.categories.find(c=>c.name===n);return{val:v,col:catObj?.color||CAT_C[n]||"#8ba0c0"};});
         const topExpCats=catEntries.filter(([n])=>{const ct=monthCatType[m]?.[n]||"Others";return ct==="Expense"||ct==="Others";}).slice(0,5).map(([n,v])=>{const catObj=data.categories.find(c=>c.name===n);return{name:n,val:v,col:catObj?.color||CAT_C[n]||"#8ba0c0"};});
-        return React.createElement(Card,{key:m,sx:{padding:0,overflow:"hidden"}},
+        return React.createElement(Card,{key:m,sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
           React.createElement("div",{style:{padding:"12px 14px",background:"var(--card2)",borderBottom:"1px solid var(--border)"}},
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
               React.createElement("div",null,
@@ -15518,14 +15523,12 @@ const RptCatQuarterly=({data,from,to,onJumpToLedger,onExportPDF})=>{
             )
         )
       ),
-      React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
+      React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
         React.createElement("div",{style:{padding:"10px 14px",borderBottom:"1px solid var(--border)",background:"var(--bg4)",display:"flex",justifyContent:"space-between",alignItems:"center"}},
           React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"var(--text3)"}},"Quarterly Breakdown"),
           React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},periods.length+" quarters")
         ),
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr 1fr 1fr 80px",padding:"7px 14px",borderBottom:"1px solid var(--border2)",background:"var(--bg4)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4}},
-          "Quarter","Income","Expenses","Investments","Net","Savings %","Transactions"
-        ),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr 1fr 1fr 80px",minWidth:580,padding:"7px 14px",borderBottom:"1px solid var(--border2)",background:"var(--bg4)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Quarter"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Income"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Expenses"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Investments"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Net"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Savings %"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Transactions")),
         periods.map(p=>{
           const agg=periodAgg[p];
           const net=agg.inc-agg.exp-agg.inv;
@@ -15536,7 +15539,7 @@ const RptCatQuarterly=({data,from,to,onJumpToLedger,onExportPDF})=>{
           const dr=qDateRange(p);
           return React.createElement(React.Fragment,{key:p},
             React.createElement("div",{className:"tr",onClick:()=>togglePeriod(p),
-              style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr 1fr 1fr 80px",padding:"10px 14px",borderBottom:"1px solid var(--border2)",cursor:"pointer"}},
+              style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr 1fr 1fr 80px",minWidth:580,padding:"10px 14px",borderBottom:"1px solid var(--border2)",cursor:"pointer"}},
               React.createElement("div",{style:{fontSize:12,color:"var(--text3)",fontFamily:"'Sora',sans-serif",fontWeight:600}},qLabel(p)),
               React.createElement("div",{style:{fontSize:12,color:"#16a34a",fontWeight:600}},INR(agg.inc)),
               React.createElement("div",{style:{fontSize:12,color:"#ef4444",fontWeight:600}},INR(agg.exp)),
@@ -15583,7 +15586,7 @@ const RptCatQuarterly=({data,from,to,onJumpToLedger,onExportPDF})=>{
             )
           );
         }),
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr 1fr 1fr 80px",padding:"10px 14px",borderTop:"2px solid var(--border)",background:"var(--bg4)"}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr 1fr 1fr 80px",minWidth:580,padding:"10px 14px",borderTop:"2px solid var(--border)",background:"var(--bg4)"}},
           React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)"}},"Total"),
           React.createElement("div",{style:{fontSize:12,color:"#16a34a",fontWeight:700}},INR(totInc)),
           React.createElement("div",{style:{fontSize:12,color:"#ef4444",fontWeight:700}},INR(totExp)),
@@ -15603,7 +15606,7 @@ const RptCatQuarterly=({data,from,to,onJumpToLedger,onExportPDF})=>{
         const totalP=catEntries.reduce((s,[,v])=>s+v,0);
         const segments=catEntries.map(([n,v])=>{const catObj=data.categories.find(c=>c.name===n);return{val:v,col:catObj?.color||CAT_C[n]||"#8ba0c0"};});
         const topExpCats=catEntries.filter(([n])=>{const ct=periodCatType[p]?.[n]||"Others";return ct==="Expense"||ct==="Others";}).slice(0,5).map(([n,v])=>{const catObj=data.categories.find(c=>c.name===n);return{name:n,val:v,col:catObj?.color||CAT_C[n]||"#8ba0c0"};});
-        return React.createElement(Card,{key:p,sx:{padding:0,overflow:"hidden"}},
+        return React.createElement(Card,{key:p,sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
           React.createElement("div",{style:{padding:"12px 14px",background:"var(--card2)",borderBottom:"1px solid var(--border)"}},
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
               React.createElement("div",null,
@@ -15807,14 +15810,12 @@ const RptCatYearly=({data,from,to,onJumpToLedger,onExportPDF})=>{
             )
         )
       ),
-      React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
+      React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
         React.createElement("div",{style:{padding:"10px 14px",borderBottom:"1px solid var(--border)",background:"var(--bg4)",display:"flex",justifyContent:"space-between",alignItems:"center"}},
           React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"var(--text3)"}},"Yearly Breakdown"),
           React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},periods.length+" year"+(periods.length!==1?"s":""))
         ),
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr 1fr 1fr 80px",padding:"7px 14px",borderBottom:"1px solid var(--border2)",background:"var(--bg4)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4}},
-          "Year","Income","Expenses","Investments","Net","Savings %","Transactions"
-        ),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr 1fr 1fr 80px",minWidth:580,padding:"7px 14px",borderBottom:"1px solid var(--border2)",background:"var(--bg4)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Year"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Income"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Expenses"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Investments"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Net"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Savings %"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Transactions")),
         periods.map(p=>{
           const agg=periodAgg[p];
           const net=agg.inc-agg.exp-agg.inv;
@@ -15824,7 +15825,7 @@ const RptCatYearly=({data,from,to,onJumpToLedger,onExportPDF})=>{
           const segments=catEntries.slice(0,8).map(([n,v])=>{const catObj=data.categories.find(c=>c.name===n);return{val:v,col:catObj?.color||CAT_C[n]||"#8ba0c0"};});
           return React.createElement(React.Fragment,{key:p},
             React.createElement("div",{className:"tr",onClick:()=>togglePeriod(p),
-              style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr 1fr 1fr 80px",padding:"10px 14px",borderBottom:"1px solid var(--border2)",cursor:"pointer"}},
+              style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr 1fr 1fr 80px",minWidth:580,padding:"10px 14px",borderBottom:"1px solid var(--border2)",cursor:"pointer"}},
               React.createElement("div",{style:{fontSize:12,color:"var(--text3)",fontFamily:"'Sora',sans-serif",fontWeight:600}},getIndianFYLabel(parseInt(p))),
               React.createElement("div",{style:{fontSize:12,color:"#16a34a",fontWeight:600}},INR(agg.inc)),
               React.createElement("div",{style:{fontSize:12,color:"#ef4444",fontWeight:600}},INR(agg.exp)),
@@ -15873,7 +15874,7 @@ const RptCatYearly=({data,from,to,onJumpToLedger,onExportPDF})=>{
             )
           );
         }),
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr 1fr 1fr 80px",padding:"10px 14px",borderTop:"2px solid var(--border)",background:"var(--bg4)"}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 1fr 1fr 1fr 1fr 80px",minWidth:580,padding:"10px 14px",borderTop:"2px solid var(--border)",background:"var(--bg4)"}},
           React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)"}},"Total"),
           React.createElement("div",{style:{fontSize:12,color:"#16a34a",fontWeight:700}},INR(totInc)),
           React.createElement("div",{style:{fontSize:12,color:"#ef4444",fontWeight:700}},INR(totExp)),
@@ -15893,7 +15894,7 @@ const RptCatYearly=({data,from,to,onJumpToLedger,onExportPDF})=>{
         const totalP=catEntries.reduce((s,[,v])=>s+v,0);
         const segments=catEntries.map(([n,v])=>{const catObj=data.categories.find(c=>c.name===n);return{val:v,col:catObj?.color||CAT_C[n]||"#8ba0c0"};});
         const topExpCats=catEntries.filter(([n])=>{const ct=periodCatType[p]?.[n]||"Others";return ct==="Expense"||ct==="Others";}).slice(0,5).map(([n,v])=>{const catObj=data.categories.find(c=>c.name===n);return{name:n,val:v,col:catObj?.color||CAT_C[n]||"#8ba0c0"};});
-        return React.createElement(Card,{key:p,sx:{padding:0,overflow:"hidden"}},
+        return React.createElement(Card,{key:p,sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
           React.createElement("div",{style:{padding:"12px 14px",background:"var(--card2)",borderBottom:"1px solid var(--border)"}},
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
               React.createElement("div",null,
@@ -16070,9 +16071,7 @@ const RptCatSummary=({data,from,to,onJumpToLedger,onExportPDF})=>{
             React.createElement("span",{style:{fontSize:15,fontWeight:700,color:CLASS_C[ct],fontFamily:"'Sora',sans-serif"}},INR(total))
           ),
           /* Column headers */
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 90px 80px 60px 90px",padding:"6px 14px",borderBottom:"1px solid var(--border2)",background:"var(--bg4)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4}},
-            "Category","Amount","% of Total","Txns",""
-          ),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 90px 80px 60px 90px",padding:"6px 14px",borderBottom:"1px solid var(--border2)",background:"var(--bg4)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Category"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Amount"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"% of Total"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Txns"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"")),
           /* Category rows */
           rows.map(([cat,val])=>{
             const catObj=data.categories.find(c=>c.name===cat);
@@ -16203,8 +16202,8 @@ const RptMoneyGoes=({data,from,to,onJumpToLedger,onExportPDF})=>{
       )
     ),
     /* DETAILED */
-    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 90px 80px 60px 90px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},"Category","Amount","% Share","Txns",""),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 90px 80px 60px 90px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Category"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Amount"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"% Share"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Txns"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"")),
       rows.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"classExpense",size:18}),text:"No expense data in period"}),
       rows.map(([cat,val],i)=>{
         const catObj=data.categories.find(c=>c.name===cat);
@@ -16319,8 +16318,8 @@ const RptMoneyComes=({data,from,to,onJumpToLedger,onExportPDF})=>{
         })
       )
     ),
-    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 90px 80px 60px 90px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},"Source Category","Amount","% Share","Txns",""),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 90px 80px 60px 90px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Source Category"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Amount"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"% Share"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Txns"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"")),
       rows.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"classIncome",size:16}),text:"No income data in period"}),
       rows.map(([cat,val],i)=>{
         const catObj=data.categories.find(c=>c.name===cat);
@@ -16409,8 +16408,8 @@ const RptIncVsExp=({data,from,to,onExportPDF})=>{
     view==="snapshot"&&React.createElement(Card,{sx:{marginBottom:14}},
       rows.length<2?React.createElement(Empty,{icon:React.createElement(Icon,{n:"balance",size:18}),text:"Need at least 2 months of data"}):React.createElement(SvgGroupBar,{data:rows,h:160})
     ),
-    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr 1fr",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},"Month","Income","Expenses","Invested","Net","Savings %"),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr 1fr",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Month"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Income"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Expenses"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Invested"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Net"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Savings %")),
       rows.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"balance",size:18}),text:"No data in selected period"}),
       rows.map(r=>React.createElement("div",{key:r.key,className:"tr",style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr 1fr",padding:"10px 14px",borderBottom:"1px solid var(--border2)"}},
         React.createElement("div",{style:{fontSize:12,color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},r.key),
@@ -16468,8 +16467,8 @@ const RptForecast=({data,onExportPDF})=>{
       React.createElement("div",{style:{fontSize:12,color:"var(--text4)",marginBottom:10}},"Optimistic (solid) vs conservative 80% scenario (dashed)"),
       React.createElement(SvgLine,{data:forecast,h:160,color:"var(--accent)",color2:"#1d4ed8"})
     ),
-    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},"Month","Optimistic","Conservative","Difference"),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Month"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Optimistic"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Conservative"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Difference")),
       forecast.map(r=>React.createElement("div",{key:r.label,className:"tr",style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",padding:"10px 14px",borderBottom:"1px solid var(--border2)"}},
         React.createElement("div",{style:{fontSize:12,color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},r.label),
         React.createElement("div",{style:{fontSize:12,fontWeight:600,color:r.value>=0?"#16a34a":"#ef4444"}},INR(r.value)),
@@ -16550,8 +16549,8 @@ const RptMyUsage=({data,from,to,onExportPDF})=>{
         CLASS_TYPES.filter(ct=>byCls[ct]>0).map(ct=>React.createElement(HBar,{key:ct,label:[CLASS_ICON[ct]," ",ct],value:byCls[ct],max:clsTotal,color:CLASS_C[ct],sub:clsTotal>0?((byCls[ct]/clsTotal)*100).toFixed(1)+"%":null}))
       )
     ),
-    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 80px 80px 1fr 1fr 80px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},"Account","Type","Txns","Spent (Debit)","Received (Credit)","Net"),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 80px 80px 1fr 1fr 80px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Account"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Type"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Txns"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Spent (Debit)"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Received (Credit)"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Net")),
       rows.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"phone",size:18}),text:"No transactions in period"}),
       rows.map(([name,v])=>React.createElement("div",{key:name,className:"tr",style:{display:"grid",gridTemplateColumns:"2fr 80px 80px 1fr 1fr 80px",padding:"10px 14px",borderBottom:"1px solid var(--border2)"}},
         React.createElement("div",{style:{fontSize:12,color:"var(--text2)",fontWeight:600}},name),
@@ -16670,8 +16669,8 @@ const RptPayees=({data,from,to,onJumpToLedger,onExportPDF})=>{
         })
       )
     ),
-    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 70px 1fr 1fr 90px 90px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4,background:"var(--bg4)"}},"Payee","Txns","Spent","Received","Last",""),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 70px 1fr 1fr 90px 90px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",letterSpacing:.4,background:"var(--bg4)"}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Payee"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Txns"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Spent"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Received"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Last"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"")),
       rows.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"user",size:18}),text:"No payee data in period"}),
       rows.map(([name,v],i)=>{
         const topCls=Object.entries(v.cls).sort((a,b)=>b[1]-a[1])[0]?.[0]||"Others";
@@ -16744,8 +16743,8 @@ const RptSummary=({data,onExportPDF})=>{
         React.createElement("div",{style:{fontSize:15,fontWeight:700,color:r.col,fontFamily:"'Sora',sans-serif"}},INR(r.val))
       ))
     )),
-    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 100px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},"Account / Asset","Category","Value","Details"),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 100px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Account / Asset"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Category"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Value"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Details")),
       allItems.map((r,i)=>React.createElement("div",{key:i,className:"tr",style:{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 100px",padding:"10px 14px",borderBottom:"1px solid var(--border2)"}},
         React.createElement("div",null,
           React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)"}},r.name),
@@ -16817,7 +16816,7 @@ const RptInvestments=({data,onExportPDF})=>{
           )
         ))
       ),
-      data.fd.length>0&&React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
+      data.fd.length>0&&React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
         React.createElement("div",{style:{padding:"10px 14px",borderBottom:"1px solid var(--border)",background:"var(--bg4)",fontSize:12,fontWeight:700,color:"var(--text3)"}},"Fixed Deposits"),
         data.fd.map(f=>React.createElement("div",{key:f.id,className:"tr",style:{display:"grid",gridTemplateColumns:"1fr 60px 80px 80px 80px",padding:"10px 14px",borderBottom:"1px solid var(--border2)"}},
           React.createElement("div",{style:{fontSize:12,color:"var(--text2)",fontWeight:500}},f.bank),
@@ -16828,8 +16827,8 @@ const RptInvestments=({data,onExportPDF})=>{
         ))
       )
     ),
-    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 80px 90px 90px 90px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},"Asset","Type","Invested","Current","P&L"),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 80px 90px 90px 90px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Asset"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Type"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Invested"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Current"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"P&L")),
       [
         ...data.mf.map(m=>({name:m.name,type:"MF",inv:m.invested,cur:m.currentValue||m.invested,pnl:(m.currentValue||m.invested)-m.invested,col:"#6d28d9"})),
         ...data.shares.map(s=>({name:s.company+" ("+s.ticker+")",type:"Share",inv:s.qty*s.buyPrice,cur:s.qty*s.currentPrice,pnl:s.qty*(s.currentPrice-s.buyPrice),col:"#16a34a"})),
@@ -16903,7 +16902,7 @@ const RptReconciliation=({data,from,to,onExportPDF})=>{
           ))
         )
       ),
-      React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
+      React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
         React.createElement("div",{style:{padding:"10px 14px",borderBottom:"1px solid var(--border)",background:"var(--bg4)",fontSize:12,fontWeight:700,color:"var(--text3)"}},"Unreconciled, Flagged & Void Transactions"),
         allTx.filter(t=>t.status!=="Reconciled").length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"checkcircle",size:16}),text:"All transactions are reconciled!"}),
         allTx.filter(t=>t.status!=="Reconciled").sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30).map(t=>{
@@ -16921,9 +16920,9 @@ const RptReconciliation=({data,from,to,onExportPDF})=>{
         })
       )
     ),
-    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
       React.createElement("div",{style:{padding:"10px 14px",borderBottom:"1px solid var(--border)",background:"var(--bg4)",fontSize:12,fontWeight:700,color:"var(--text3)"}},"All Transactions — Full Status View"),
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 100px 1fr 80px 80px",padding:"6px 14px",borderBottom:"1px solid var(--border2)",background:"var(--bg4)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase"}},"Description","Date","Account","Amount","Status"),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 100px 1fr 80px 80px",padding:"6px 14px",borderBottom:"1px solid var(--border2)",background:"var(--bg4)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase"}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Description"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Date"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Account"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Amount"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Status")),
       allTx.sort((a,b)=>b.date.localeCompare(a.date)).map(t=>{
         const st=t.status||"Unreconciled";
         return React.createElement("div",{key:t.id,className:"tr",style:{display:"grid",gridTemplateColumns:"1fr 100px 1fr 80px 80px",padding:"9px 14px",borderBottom:"1px solid var(--border2)"}},
@@ -17008,7 +17007,7 @@ const RptNetWorth=({data,onExportPDF})=>{
     ),
     view==="detailed"&&React.createElement("div",null,
       points.length>0&&React.createElement(Card,{sx:{padding:0,overflow:"hidden",marginBottom:14}},
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},"Month","Est. Net Worth","Monthly Change"),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Month"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Est. Net Worth"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Monthly Change")),
         points.map((p,i)=>React.createElement("div",{key:p.label,className:"tr",style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",padding:"10px 14px",borderBottom:"1px solid var(--border2)"}},
           React.createElement("div",{style:{fontSize:12,color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},p.label),
           React.createElement("div",{style:{fontSize:12,fontWeight:700,color:p.value>=0?"var(--accent)":"#ef4444",fontFamily:"'Sora',sans-serif"}},INR(p.value)),
@@ -20361,8 +20360,8 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
             )
           )
         ),
-        React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1.2fr auto",gap:12,padding:"9px 16px",borderBottom:"1px solid #1c3050",fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},"Account Name","Bank","Type","Balance","Actions"),
+        React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1.2fr auto",gap:12,padding:"9px 16px",borderBottom:"1px solid #1c3050",fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Account Name"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Bank"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Type"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Balance"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Actions")),
           state.banks.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"bank",size:18}),text:"No bank accounts yet"}),
           state.banks.map(b=>React.createElement("div",{key:b.id,style:{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1.2fr auto",gap:12,padding:"13px 16px",borderBottom:"1px solid #0a1828",alignItems:"center",transition:"background .15s",opacity:b.hidden?0.55:1},className:"tr"},
             React.createElement("div",null,
@@ -20409,8 +20408,8 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
             React.createElement("p",{style:{color:"var(--text5)",fontSize:12,marginTop:3}},state.cards.length+" card(s) · Outstanding: ",React.createElement("span",{style:{color:"#c2410c"}},INR(state.cards.reduce((s,c)=>s+c.outstanding,0))),state.cards.some(c=>c.hidden)?React.createElement("span",{style:{color:"#d97706",marginLeft:8}},"· "+state.cards.filter(c=>c.hidden).length+" hidden"):null)
           )
         ),
-        React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1.5fr 1.2fr 1.2fr auto",gap:12,padding:"9px 16px",borderBottom:"1px solid #1c3050",fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},"Card Name","Bank","Limit","Outstanding","Actions"),
+        React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1.5fr 1.2fr 1.2fr auto",gap:12,padding:"9px 16px",borderBottom:"1px solid #1c3050",fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Card Name"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Bank"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Limit"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Outstanding"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Actions")),
           state.cards.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"card",size:18}),text:"No credit cards yet"}),
           state.cards.map(c=>{
             const used=(c.outstanding/c.limit*100);
@@ -20486,8 +20485,8 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
             React.createElement("p",{style:{color:"var(--text5)",fontSize:12,marginTop:3}},state.loans.length+" loan(s) · Outstanding: ",React.createElement("span",{style:{color:"#ef4444"}},INR(state.loans.reduce((s,l)=>s+l.outstanding,0))))
           )
         ),
-        React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1.2fr 1.1fr auto",gap:10,padding:"9px 16px",borderBottom:"1px solid #1c3050",fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},"Loan Name","Bank","Type","Outstanding","EMI","Actions"),
+        React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1.2fr 1.1fr auto",gap:10,padding:"9px 16px",borderBottom:"1px solid #1c3050",fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Loan Name"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Bank"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Type"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Outstanding"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"EMI"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Actions")),
           state.loans.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"party",size:34}),text:"No loans -- debt free!"}),
           state.loans.map(l=>React.createElement("div",{key:l.id,style:{display:"grid",gridTemplateColumns:"2fr 1.5fr 1fr 1.2fr 1.1fr auto",gap:10,padding:"13px 16px",borderBottom:"1px solid #0a1828",alignItems:"center"},className:"tr"},
             React.createElement("div",null,React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text2)"}},l.name),React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},l.rate+"% p.a.")),
@@ -20510,8 +20509,8 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
         /* Mutual Funds */
         React.createElement("div",{style:{marginBottom:20}},
           React.createElement("div",{style:{fontSize:13,color:"var(--text4)",fontWeight:600,marginBottom:10,display:"flex",alignItems:"center",gap:8}},React.createElement("span",null,React.createElement(Icon,{n:"chart",size:18})),"Mutual Funds (",state.mf.length,")"),
-          React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"3fr 1fr 1fr 1fr auto",gap:12,padding:"9px 16px",borderBottom:"1px solid #1c3050",fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},"Fund Name","Units","Invested","Value",""),
+          React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"3fr 1fr 1fr 1fr auto",gap:12,padding:"9px 16px",borderBottom:"1px solid #1c3050",fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Fund Name"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Units"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Invested"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Value"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"")),
             state.mf.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"chart",size:18}),text:"No mutual funds"}),
             state.mf.map(m=>React.createElement("div",{key:m.id,style:{display:"grid",gridTemplateColumns:"3fr 1fr 1fr 1fr auto",gap:12,padding:"12px 16px",borderBottom:"1px solid #0a1828",alignItems:"center"},className:"tr"},
               React.createElement("div",null,React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)",lineHeight:1.4}},m.name),React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},"Code: "+m.schemeCode)),
@@ -20525,8 +20524,8 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
         /* Shares */
         React.createElement("div",{style:{marginBottom:20}},
           React.createElement("div",{style:{fontSize:13,color:"var(--text4)",fontWeight:600,marginBottom:10,display:"flex",alignItems:"center",gap:8}},React.createElement("span",null,React.createElement(Icon,{n:"invest",size:18})),"Shares / Equities (",state.shares.length,")"),
-          React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 1fr auto",gap:10,padding:"9px 16px",borderBottom:"1px solid #1c3050",fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},"Company","Ticker","Qty","Buy","Now","Acquired",""),
+          React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 1fr auto",gap:10,padding:"9px 16px",borderBottom:"1px solid #1c3050",fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Company"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Ticker"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Qty"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Buy"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Now"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Acquired"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"")),
             state.shares.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"invest",size:18}),text:"No shares"}),
             state.shares.map(sh=>React.createElement("div",{key:sh.id,style:{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 1fr auto",gap:10,padding:"12px 16px",borderBottom:"1px solid #0a1828",alignItems:"center"},className:"tr"},
               React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text2)"}},sh.company),
@@ -20542,8 +20541,8 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
         /* FDs */
         React.createElement("div",null,
           React.createElement("div",{style:{fontSize:13,color:"var(--text4)",fontWeight:600,marginBottom:10,display:"flex",alignItems:"center",gap:8}},React.createElement("span",null,React.createElement(Icon,{n:"bank",size:18})),"Fixed Deposits (",state.fd.length,")"),
-          React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr auto",gap:12,padding:"9px 16px",borderBottom:"1px solid #1c3050",fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},"Bank","Principal","Rate","Matures",""),
+          React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr auto",gap:12,padding:"9px 16px",borderBottom:"1px solid #1c3050",fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Bank"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Principal"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Rate"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Matures"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"")),
             state.fd.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"bank",size:18}),text:"No fixed deposits"}),
             state.fd.map(f=>React.createElement("div",{key:f.id,style:{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr auto",gap:12,padding:"12px 16px",borderBottom:"1px solid #0a1828",alignItems:"center"},className:"tr"},
               React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text2)"}},f.bank),
@@ -20569,8 +20568,8 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
         React.createElement("div",{style:{display:"flex",gap:14,flexWrap:"wrap",alignItems:"flex-start"}},
           /* Payee table */
           React.createElement("div",{style:{flex:"1 1 380px"}},
-            React.createElement(Card,{sx:{padding:0,overflow:"hidden"}},
-              React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr auto",gap:12,padding:"9px 16px",borderBottom:"1px solid #1c3050",fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},"Name",""),
+            React.createElement(Card,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
+              React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr auto",gap:12,padding:"9px 16px",borderBottom:"1px solid #1c3050",fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Name"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"")),
               state.payees.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"user",size:18}),text:"No payees yet"}),
               state.payees.map(p=>
                 React.createElement("div",{key:p.id,style:{display:"grid",gridTemplateColumns:"1fr auto",gap:12,padding:"12px 16px",borderBottom:"1px solid #0a1828",alignItems:"center"},className:"tr"},
@@ -24721,7 +24720,7 @@ const NetWorthInsightTab=({banks,cards,cash,mf,shares,fd,re,loans,categories,pre
     ),
 
     /* ── Data Table ── */
-    React.createElement(C,{sx:{padding:0,overflow:"hidden"}},
+    React.createElement(C,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
       React.createElement("div",{style:{
         display:"grid",
         gridTemplateColumns:isMobile?"0.9fr 1.2fr 1.1fr":"0.7fr 1.3fr 1.1fr 1fr 0.5fr 0.8fr",
@@ -25297,7 +25296,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     const hasInvest=actualInvest>0||plannedInvest>0;
     const invOnTrack=plannedInvest>0&&actualInvest>=plannedInvest;
     const invShort=plannedInvest>0&&actualInvest<plannedInvest;
-    return React.createElement(Card2,{sx:{padding:0,overflow:"hidden"}},
+    return React.createElement(Card2,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
       /* Header — always visible, click to toggle */
       React.createElement("div",{
         style:{padding:"10px 14px",background:"var(--card2)",borderBottom:collapsed?"none":"1px solid var(--border)",cursor:"pointer",userSelect:"none"},
@@ -25393,7 +25392,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     const savings=income-totalActual;
     const pctUsed=totalPlanned>0?Math.min(totalActual/totalPlanned*100,100):0;
     const maxBar=Math.max(totalPlanned,totalActual,1);
-    return React.createElement(Card2,{sx:{padding:0,overflow:"hidden"}},
+    return React.createElement(Card2,{sx:{padding:0,overflow:"hidden",overflowX:"auto"}},
       /* ── Header — always visible, click to toggle ── */
       React.createElement("div",{
         style:{padding:"12px 16px",background:"var(--card2)",borderBottom:collapsed?"none":"1px solid var(--border)",cursor:"pointer",userSelect:"none"},
@@ -26524,8 +26523,7 @@ const CapGainsTab=({shares=[],mf=[],isMobile})=>{
     ),
     /* Holdings table */
     React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,overflow:"hidden"}},
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 90px 80px 80px 80px 90px",padding:"7px 12px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},
-        "Holding","Buy Date","Held","Gain/Loss","Type","Tax Est.†"),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 90px 80px 80px 80px 90px",padding:"7px 12px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Holding"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Buy Date"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Held"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Gain/Loss"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Type"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Tax Est.†")),
       holdings.length===0&&React.createElement("div",{style:{padding:"30px",textAlign:"center",color:"var(--text5)",fontSize:13}},"No holdings with gains/losses found. Add shares or mutual funds in the Investments section."),
       holdings.map((h,i)=>React.createElement("div",{key:h.id,style:{display:"grid",gridTemplateColumns:"1fr 90px 80px 80px 80px 90px",padding:"9px 12px",borderBottom:i<holdings.length-1?"1px solid var(--border2)":"none",alignItems:"center",background:i%2?"var(--bg5)":"transparent"}},
         React.createElement("div",null,
