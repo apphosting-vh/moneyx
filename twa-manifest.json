@@ -1,0 +1,71 @@
+{
+  "packageId": "com.vivekhh.finsight",
+  "host": "YOUR_HOSTED_DOMAIN.com",
+  "name": "finsight",
+  "launcherName": "finsight",
+  "display": "standalone",
+  "orientation": "any",
+  "themeColor": "#05080f",
+  "navigationColor": "#05080f",
+  "navigationColorDark": "#05080f",
+  "navigationDividerColor": "#0a1628",
+  "navigationDividerColorDark": "#0a1628",
+  "backgroundColor": "#05080f",
+  "enableNotifications": false,
+  "startUrl": "/",
+  "iconUrl": "https://YOUR_HOSTED_DOMAIN.com/icons/icon-512x512.png",
+  "maskableIconUrl": "https://YOUR_HOSTED_DOMAIN.com/icons/icon-512x512-maskable.png",
+  "monochromeIconUrl": "https://YOUR_HOSTED_DOMAIN.com/icons/icon-512x512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./finsight-release.keystore",
+    "alias": "finsight"
+  },
+  "appVersionName": "3.48.0",
+  "appVersionCode": 3480,
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "shortName": "Dashboard",
+      "url": "/#/dashboard",
+      "icons": [{ "src": "https://YOUR_HOSTED_DOMAIN.com/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Add Transaction",
+      "shortName": "Add Txn",
+      "url": "/#/banks",
+      "icons": [{ "src": "https://YOUR_HOSTED_DOMAIN.com/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Investments",
+      "shortName": "Invest",
+      "url": "/#/inv_overview",
+      "icons": [{ "src": "https://YOUR_HOSTED_DOMAIN.com/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Reports",
+      "shortName": "Reports",
+      "url": "/#/reports",
+      "icons": [{ "src": "https://YOUR_HOSTED_DOMAIN.com/icons/icon-96x96.png", "sizes": "96x96" }]
+    }
+  ],
+  "webManifestUrl": "https://YOUR_HOSTED_DOMAIN.com/manifest.json",
+  "generatorApp": "bubblewrap-cli",
+  "sdkVersion": "34",
+  "minSdkVersion": "23",
+  "targetSdkVersion": "34",
+  "includeSourceCode": false,
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://YOUR_HOSTED_DOMAIN.com/",
+  "locationDelegationEnabled": false,
+  "playBilling": {
+    "enabled": false
+  },
+  "fingerprints": [],
+  "features": {
+    "locationDelegation": { "enabled": false },
+    "playBilling":        { "enabled": false }
+  }
+}

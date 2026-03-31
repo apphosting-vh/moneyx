@@ -1,0 +1,10 @@
+# finsight robots.txt
+User-agent: *
+Allow: /
+
+# Block unnecessary crawling of PWA service worker and backup files
+Disallow: /sw.js
+Disallow: /*.json$
+
+# Allow manifest (needed for PWA discovery)
+Allow: /manifest.json
