@@ -244,14 +244,14 @@
   // BUG FIX v3.32.2: require the delta to be present across 2 consecutive polls
   // (≥2 s apart) before locking. A single transient spike (Android split-screen
   // snap, browser zoom change, OS keyboard appearing) is NOT treated as DevTools.
-  // Threshold raised from 200 → 250 px to further reduce false positives on
-  // unusual but legitimate viewport configurations (e.g. side-docked browser panels).
+  // Threshold 350 px to reduce false positives on high-DPI / zoomed / split-screen.
+  // Require 3 consecutive failures (~6 s) before locking — avoids transient snaps.
   var _sizeFailCount = 0;
   var _sizeCheck = function() {
-    if (window.outerWidth  - window.innerWidth  > 250 ||
-        window.outerHeight - window.innerHeight > 250) {
+    if (window.outerWidth  - window.innerWidth  > 350 ||
+        window.outerHeight - window.innerHeight > 350) {
       _sizeFailCount++;
-      if (_sizeFailCount >= 2) { _lockScreen(); }
+      if (_sizeFailCount >= 3) { _lockScreen(); }
     } else {
       _sizeFailCount = 0; // reset on any clean poll
     }
@@ -706,7 +706,7 @@ select.inp option{background:var(--inp-opt)}
 @keyframes db-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 @keyframes db-bar-grow{from{width:0}to{width:var(--bar-w)}}
 @keyframes db-pulse-ring{0%{transform:scale(1);opacity:.5}70%{transform:scale(1.6);opacity:0}100%{transform:scale(1.6);opacity:0}}
-@keyframes tx-flash{0%{box-shadow:inset 0 0 0 2px var(--accent),inset 0 0 24px var(--accentbg5)}40%{box-shadow:inset 0 0 0 2px var(--accent),inset 0 0 24px var(--accentbg5)}85%{box-shadow:inset 0 0 0 1px var(--accent)55,inset 0 0 10px transparent}100%{box-shadow:none}}
+@keyframes tx-flash{0%{box-shadow:inset 0 0 0 2px var(--accent),inset 0 0 24px var(--accentbg5)}40%{box-shadow:inset 0 0 0 2px var(--accent),inset 0 0 24px var(--accentbg5)}85%{box-shadow:inset 0 0 0 1px var(--accentbg),inset 0 0 10px transparent}100%{box-shadow:none}}
 @keyframes pinShake{0%,100%{transform:translateX(0)}15%{transform:translateX(-10px)}35%{transform:translateX(10px)}55%{transform:translateX(-7px)}75%{transform:translateX(7px)}90%{transform:translateX(-3px)}}
 @keyframes fsaPulse{0%,100%{box-shadow:0 0 0 0 rgba(251,146,60,.55),0 8px 32px rgba(0,0,0,.35)}60%{box-shadow:0 0 0 8px rgba(251,146,60,.0),0 8px 32px rgba(0,0,0,.35)}}
 @keyframes undoSlideUp{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
