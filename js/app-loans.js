@@ -1202,8 +1202,9 @@ const buildHeatRows=(allTx,months,categories,filterFn)=>{
     const main=catMainName(t.cat||"Others");
     const ct=catClassType(categories,t.cat||"Others");
     const m=t.date.substr(0,7);
-    /* Transfer: debit-only (inter-bank mirror credits excluded) */
-    const d=ct==="Transfer"?(t.type==="debit"?t.amount:0):txCatDelta(t,ct);
+    /* Transfer: debit-only, abs to handle negative-stored CSV amounts */
+    const raw=ct==="Transfer"?(t.type==="debit"?Math.abs(t.amount):0):txCatDelta(t,ct);
+    const d=Math.abs(raw);
     if(!grid[main])grid[main]={};
     grid[main][m]=(grid[main][m]||0)+d;
   });
@@ -1383,13 +1384,15 @@ const RptClassification=({data,from,to,onJumpToLedger,onExportPDF})=>{
   allTx.forEach(t=>{
     const ct=catClassType(data.categories,t.cat||"Others");
     const main=catMainName(t.cat||"Others");
-    /* Transfer: only sum debits (inter-bank = debit in A, credit in B — count once) */
-    const d=ct==="Transfer"?(t.type==="debit"?t.amount:0):txCatDelta(t,ct);
+    /* Transfer: only sum debits (inter-bank = debit in A, credit in B — count once).
+       Use Math.abs to handle CSV imports where debits may be stored as negative. */
+    const raw=ct==="Transfer"?(t.type==="debit"?Math.abs(t.amount):0):txCatDelta(t,ct);
+    const d=Math.abs(raw);
     byClass[ct].total+=d;
     byClass[ct].cats[main]=(byClass[ct].cats[main]||0)+d;
     if(t.cat&&t.cat.includes("::")){byClassSub[ct][t.cat]=(byClassSub[ct][t.cat]||0)+d;}
   });
-  const grandTotal=allTx.reduce((s,t)=>{const ct=catClassType(data.categories,t.cat||"Others");return s+(ct==="Transfer"?(t.type==="debit"?t.amount:0):txCatDelta(t,ct));},0);
+  const grandTotal=CLASS_TYPES.reduce((s,ct)=>s+(byClass[ct]?.total||0),0);
   const months=Object.keys(Object.fromEntries(allTx.map(t=>[t.date.substr(0,7),1]))).sort();
   const hmRows=buildHeatRows(allTx,months,data.categories);
   return React.createElement("div",{className:"fu"},
