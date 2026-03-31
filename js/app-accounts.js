@@ -9,6 +9,7 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
   const[noteEdit,setNoteEdit]=useState(null); // {id, val}
   const[reorderMode,setReorderMode]=useState(false);
   const[mobileView,setMobileView]=useState("list"); // "list" | "detail"
+  const[lightbox,setLightbox]=useState(null); /* {url,name} — image preview overlay */
   /* local jump — captures txId+serial before App clears txJump */
   const[localJump,setLocalJump]=useState({txId:null,serial:0});
   /* ── Jump-in from Unified Ledger: select the account and switch to detail view ── */
@@ -144,8 +145,13 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
                     if(perm!=="granted"){const r=await handle.requestPermission({mode:"read"});if(r!=="granted")return;}
                     const file=await handle.getFile();
                     const url=URL.createObjectURL(file);
-                    const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener noreferrer";document.body.appendChild(a);a.click();document.body.removeChild(a);
-                    setTimeout(()=>URL.revokeObjectURL(url),60000);
+                    if(att.type&&att.type.includes("image")){
+                      setLightbox({url,name:att.name});
+                    }else{
+                      const a=document.createElement("a");a.href=url;a.download=att.name;
+                      document.body.appendChild(a);a.click();document.body.removeChild(a);
+                      setTimeout(()=>URL.revokeObjectURL(url),5000);
+                    }
                   }catch{}
                 },
                 style:{background:"none",border:"none",cursor:"pointer",padding:0,color:"var(--accent)",fontSize:11,fontFamily:"'DM Sans',sans-serif",textDecoration:"underline",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}
@@ -200,6 +206,11 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
       React.createElement(Field,{label:"Opening Balance (₹)"},React.createElement("input",{className:"inp",type:"number",placeholder:"0",value:f.balance,onChange:set("balance")})),
       React.createElement(Field,{label:"Notes (optional)"},React.createElement("textarea",{className:"inp",placeholder:"Account number, branch, IFSC, contact, or any important details…",value:f.notes,onChange:set("notes"),style:{resize:"vertical",minHeight:72,lineHeight:1.6,fontSize:13}})),
       React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,marginTop:4}},React.createElement(Btn,{onClick:save,sx:{flex:"1 1 120px",justifyContent:"center"}},"Add Account"),React.createElement(Btn,{v:"secondary",onClick:()=>setAddOpen(false),sx:{justifyContent:"center",minWidth:70}},"Cancel"))
+    ),
+    lightbox&&React.createElement("div",{onClick:()=>{URL.revokeObjectURL(lightbox.url);setLightbox(null);},style:{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.9)",zIndex:3000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20,cursor:"zoom-out"}},
+      React.createElement("img",{src:lightbox.url,alt:lightbox.name,onClick:e=>e.stopPropagation(),style:{maxWidth:"100%",maxHeight:"80vh",borderRadius:8,boxShadow:"0 4px 40px rgba(0,0,0,.6)",objectFit:"contain"}}),
+      React.createElement("div",{style:{marginTop:12,color:"#fff",fontSize:12,opacity:.75,maxWidth:"100%",textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},lightbox.name),
+      React.createElement("div",{style:{marginTop:6,color:"#fff",fontSize:11,opacity:.45}},"Tap anywhere to close")
     )
   );
 });
@@ -212,6 +223,7 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
   const[noteEdit,setNoteEdit]=useState(null);
   const[reorderMode,setReorderMode]=useState(false);
   const[mobileView,setMobileView]=useState("list");
+  const[lightbox,setLightbox]=useState(null); /* {url,name} — image preview overlay */
   /* local jump — captures txId+serial before App clears txJump */
   const[localJump,setLocalJump]=useState({txId:null,serial:0});
   /* ── Jump-in from Unified Ledger: select the account and switch to detail view ── */
@@ -371,8 +383,13 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
                     if(perm!=="granted"){const r=await handle.requestPermission({mode:"read"});if(r!=="granted")return;}
                     const file=await handle.getFile();
                     const url=URL.createObjectURL(file);
-                    const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener noreferrer";document.body.appendChild(a);a.click();document.body.removeChild(a);
-                    setTimeout(()=>URL.revokeObjectURL(url),60000);
+                    if(att.type&&att.type.includes("image")){
+                      setLightbox({url,name:att.name});
+                    }else{
+                      const a=document.createElement("a");a.href=url;a.download=att.name;
+                      document.body.appendChild(a);a.click();document.body.removeChild(a);
+                      setTimeout(()=>URL.revokeObjectURL(url),5000);
+                    }
                   }catch{}
                 },
                 style:{background:"none",border:"none",cursor:"pointer",padding:0,color:"var(--accent)",fontSize:11,fontFamily:"'DM Sans',sans-serif",textDecoration:"underline",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}
@@ -429,6 +446,11 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
       ),
       React.createElement(Field,{label:"Notes (optional)"},React.createElement("textarea",{className:"inp",placeholder:"Card number (last 4), due date, reward program, contact…",value:f.notes,onChange:set("notes"),style:{resize:"vertical",minHeight:72,lineHeight:1.6,fontSize:13}})),
       React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,marginTop:4}},React.createElement(Btn,{onClick:save,sx:{flex:"1 1 120px",justifyContent:"center"}},"Add Card"),React.createElement(Btn,{v:"secondary",onClick:()=>setAddOpen(false),sx:{justifyContent:"center",minWidth:70}},"Cancel"))
+    ),
+    lightbox&&React.createElement("div",{onClick:()=>{URL.revokeObjectURL(lightbox.url);setLightbox(null);},style:{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.9)",zIndex:3000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20,cursor:"zoom-out"}},
+      React.createElement("img",{src:lightbox.url,alt:lightbox.name,onClick:e=>e.stopPropagation(),style:{maxWidth:"100%",maxHeight:"80vh",borderRadius:8,boxShadow:"0 4px 40px rgba(0,0,0,.6)",objectFit:"contain"}}),
+      React.createElement("div",{style:{marginTop:12,color:"#fff",fontSize:12,opacity:.75,maxWidth:"100%",textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},lightbox.name),
+      React.createElement("div",{style:{marginTop:6,color:"#fff",fontSize:11,opacity:.45}},"Tap anywhere to close")
     )
   );
 });

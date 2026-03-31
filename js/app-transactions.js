@@ -366,6 +366,7 @@ const CatCombobox=({value,onChange,categories,placeholder="Search categories…"
 const ReceiptAttachPanel=({txId,receipts=[],onChange})=>{
   const[busy,setBusy]=useState(false);
   const[msg,setMsg]=useState("");
+  const[lightbox,setLightbox]=useState(null); /* {url,name} — image preview overlay */
   const showMsg=(m,err=false)=>{setMsg({text:m,err});setTimeout(()=>setMsg(""),3500);};
 
   const fmtSize=b=>{if(b>1048576)return(b/1048576).toFixed(1)+" MB";if(b>1024)return(b/1024).toFixed(0)+" KB";return b+" B";};
@@ -403,8 +404,13 @@ const ReceiptAttachPanel=({txId,receipts=[],onChange})=>{
       }
       const file=await handle.getFile();
       const url=URL.createObjectURL(file);
-      const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener noreferrer";document.body.appendChild(a);a.click();document.body.removeChild(a);
-      setTimeout(()=>URL.revokeObjectURL(url),60000);
+      if(r.type&&r.type.includes("image")){
+        setLightbox({url,name:r.name});
+      }else{
+        const a=document.createElement("a");a.href=url;a.download=r.name;
+        document.body.appendChild(a);a.click();document.body.removeChild(a);
+        setTimeout(()=>URL.revokeObjectURL(url),5000);
+      }
     }catch(e){showMsg("Cannot open file: "+e.message,true);}
   };
 
@@ -431,7 +437,12 @@ const ReceiptAttachPanel=({txId,receipts=[],onChange})=>{
       ))
     ),
     receipts.length===0&&React.createElement("div",{style:{fontSize:12,color:"var(--text6)",fontStyle:"italic",marginTop:4}},"No attachments. Click '+ Attach File' to add a photo or PDF."),
-    msg&&React.createElement("div",{style:{marginTop:6,fontSize:11,fontWeight:600,color:msg.err?"#ef4444":"#16a34a",padding:"4px 8px",borderRadius:6,background:msg.err?"rgba(239,68,68,.08)":"rgba(22,163,74,.08)"}},msg.text)
+    msg&&React.createElement("div",{style:{marginTop:6,fontSize:11,fontWeight:600,color:msg.err?"#ef4444":"#16a34a",padding:"4px 8px",borderRadius:6,background:msg.err?"rgba(239,68,68,.08)":"rgba(22,163,74,.08)"}},msg.text),
+    lightbox&&React.createElement("div",{onClick:()=>{URL.revokeObjectURL(lightbox.url);setLightbox(null);},style:{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.9)",zIndex:3000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20,cursor:"zoom-out"}},
+      React.createElement("img",{src:lightbox.url,alt:lightbox.name,onClick:e=>e.stopPropagation(),style:{maxWidth:"100%",maxHeight:"80vh",borderRadius:8,boxShadow:"0 4px 40px rgba(0,0,0,.6)",objectFit:"contain"}}),
+      React.createElement("div",{style:{marginTop:12,color:"#fff",fontSize:12,opacity:.75,maxWidth:"100%",textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},lightbox.name),
+      React.createElement("div",{style:{marginTop:6,color:"#fff",fontSize:11,opacity:.45}},"Tap anywhere to close")
+    )
   );
 };
 
@@ -444,6 +455,7 @@ const AccAttachPanel=({accId,attachments=[],onSave})=>{
   const[list,setList]=useState(attachments);
   const[busy,setBusy]=useState(false);
   const[msg,setMsg]=useState("");
+  const[lightbox,setLightbox]=useState(null); /* {url,name} — image preview overlay */
   const showMsg=(m,err=false)=>{setMsg({text:m,err});setTimeout(()=>setMsg(""),3500);};
   const fmtSize=b=>{if(b>1048576)return(b/1048576).toFixed(1)+" MB";if(b>1024)return(b/1024).toFixed(0)+" KB";return b+" B";};
   const fileIcon=type=>type&&type.includes("pdf")?React.createElement(Icon,{n:"report",size:16}):type&&type.includes("image")?React.createElement(Icon,{n:"image",size:18}):React.createElement(Icon,{n:"attach",size:14});
@@ -478,8 +490,13 @@ const AccAttachPanel=({accId,attachments=[],onSave})=>{
       }
       const file=await handle.getFile();
       const url=URL.createObjectURL(file);
-      const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener noreferrer";document.body.appendChild(a);a.click();document.body.removeChild(a);
-      setTimeout(()=>URL.revokeObjectURL(url),60000);
+      if(r.type&&r.type.includes("image")){
+        setLightbox({url,name:r.name});
+      }else{
+        const a=document.createElement("a");a.href=url;a.download=r.name;
+        document.body.appendChild(a);a.click();document.body.removeChild(a);
+        setTimeout(()=>URL.revokeObjectURL(url),5000);
+      }
     }catch(e){showMsg("Cannot open file: "+e.message,true);}
   };
 
@@ -520,7 +537,12 @@ const AccAttachPanel=({accId,attachments=[],onSave})=>{
         ? "No attachments yet. Click '+ Attach File' to add a passbook scan, card photo, or PDF."
         : "Attachments require a desktop browser with File System Access API (Chrome / Edge on Windows / macOS)."
     ),
-    msg&&React.createElement("div",{style:{fontSize:11,fontWeight:600,color:msg.err?"#ef4444":"#16a34a",padding:"4px 8px",borderRadius:6,background:msg.err?"rgba(239,68,68,.08)":"rgba(22,163,74,.08)"}},msg.text)
+    msg&&React.createElement("div",{style:{fontSize:11,fontWeight:600,color:msg.err?"#ef4444":"#16a34a",padding:"4px 8px",borderRadius:6,background:msg.err?"rgba(239,68,68,.08)":"rgba(22,163,74,.08)"}},msg.text),
+    lightbox&&React.createElement("div",{onClick:()=>{URL.revokeObjectURL(lightbox.url);setLightbox(null);},style:{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.9)",zIndex:3000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20,cursor:"zoom-out"}},
+      React.createElement("img",{src:lightbox.url,alt:lightbox.name,onClick:e=>e.stopPropagation(),style:{maxWidth:"100%",maxHeight:"80vh",borderRadius:8,boxShadow:"0 4px 40px rgba(0,0,0,.6)",objectFit:"contain"}}),
+      React.createElement("div",{style:{marginTop:12,color:"#fff",fontSize:12,opacity:.75,maxWidth:"100%",textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},lightbox.name),
+      React.createElement("div",{style:{marginTop:6,color:"#fff",fontSize:11,opacity:.45}},"Tap anywhere to close")
+    )
   );
 };
 
