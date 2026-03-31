@@ -355,7 +355,7 @@ window.__loadChangelog=(function(){
     }
     return new Promise(function(resolve,reject){
       var s=document.createElement("script");
-      s.src="./changelog.js";
+      s.src="./js/changelog.js";
       s.onload=function(){CHANGELOG=window.__MM_CHANGELOG||[];_loaded=true;resolve();};
       s.onerror=function(){console.warn("[AS] changelog.js failed to load");resolve();};
       document.head.appendChild(s);
