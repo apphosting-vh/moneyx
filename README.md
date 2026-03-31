@@ -68,7 +68,6 @@ The app covers the full personal finance spectrum: everyday transactions across 
 - **XIRR calculation** — accurate annualised return computation for investment portfolios
 - **17 themes** — dark, light, and coloured accent variants
 - **Export everything** — JSON backup, Excel (.xlsx), PDF reports, HTML reports
-- **Google Drive backup** — optional cloud backup to your own Drive
 - **PIN lock** — optional 4-digit PIN with session unlock
 - **Undo support** — 6-second undo toast for all destructive actions
 - **Global search** — instant cross-account transaction search
@@ -138,7 +137,7 @@ finsight/
 | `app-loans.js` | Loan cards (outstanding, EMI, rate), amortisation schedule, prepayment calculator |
 | `app-reports.js` | 15+ report views — category breakdowns, cash flow, income vs expenses, net worth trend, investment portfolio, reconciliation, forecast |
 | `app-sections.js` | Calendar heatmap, unified ledger (all-account view), goals progress tracker, insights / FIRE planner |
-| `app-settings.js` | Appearance (17 themes), security (PIN), notifications, auto-categorise rules, file storage, cloud backup (Google Drive), account management, data export/restore |
+| `app-settings.js` | Appearance (17 themes), security (PIN), notifications, auto-categorise rules, file storage, account management, data export/restore |
 | `app-main.js` | Root `<App>` component, sidebar nav, tab routing, tax estimator, info/copyright page, update banner, undo toast |
 
 ---
@@ -493,10 +492,6 @@ Go to **Settings → Data & Backup**.
 
 JSON backups can optionally be **password-encrypted** (AES-256-GCM via the Web Crypto API). Encrypted backups prompt for a password on restore.
 
-### Google Drive Backup
-
-If you connect Google Drive (via the **File Storage** tab in Settings), the app can save JSON backups directly to a dedicated `finsight Backups` folder in your Drive. This provides automatic cloud redundancy without any third-party sync service.
-
 ### Restore
 
 Choose a previously exported `.json` backup file from the **Restore Data** section. The app validates the file structure before overwriting any data. If the backup is encrypted, you will be prompted for the password.
@@ -569,8 +564,7 @@ The app respects the system `prefers-color-scheme` for the PWA status bar (dark 
 | **Security** | PIN lock — set, change, remove; idle timeout |
 | **Notifications** | In-app alerts for upcoming scheduled transactions and due FDs |
 | **Auto-Categorise** | Rules engine — auto-assign categories to new transactions based on description keywords or payee name |
-| **File Storage** | Google Drive integration for cloud backups |
-| **Cloud Backup** | Manual and scheduled backup to Google Drive |
+| **File Storage** | File System integration for local fifle storage backups |
 | **Bank Accounts** | Add, edit, delete bank accounts; view all accounts in a table |
 | **Credit Cards** | Add, edit, delete credit cards; billing cycle and due date config |
 | **Cash Account** | Edit opening cash balance |
