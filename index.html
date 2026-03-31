@@ -82,7 +82,7 @@
   window.__swReg = null;
 
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('./sw.js', { scope: './' })
+    navigator.serviceWorker.register('./js/sw.js', { scope: './' })
       .then(function(reg){
         window.__swReg = reg;
         console.log('[SW] Registered, scope:', reg.scope);
