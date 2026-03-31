@@ -1267,18 +1267,18 @@ const ClsBadge=({ct})=>React.createElement("span",{style:{
 }},CLASS_ICON[ct]," ",ct);
 
 /* ── Shared tx collector ──────────────────────────────────────────────────── */
-const collectTx=(data,from,to,accFilter="all")=>{
+const collectTx=(data,from,to,accFilter="all",includeTransfers=false)=>{
   let rows=[];
   data.banks.forEach(b=>{
     if(accFilter!=="all"&&accFilter!==b.id)return;
-    b.transactions.forEach(t=>{if(t.date>=from&&t.date<=to&&!isAnyTransfer(t,data.categories))rows.push({...t,accName:b.name,accId:b.id,accType:"bank"});});
+    b.transactions.forEach(t=>{if(t.date>=from&&t.date<=to&&(includeTransfers||!isAnyTransfer(t,data.categories)))rows.push({...t,accName:b.name,accId:b.id,accType:"bank"});});
   });
   data.cards.forEach(c=>{
     if(accFilter!=="all"&&accFilter!==c.id)return;
-    c.transactions.forEach(t=>{if(t.date>=from&&t.date<=to&&!isAnyTransfer(t,data.categories))rows.push({...t,accName:c.name,accId:c.id,accType:"card"});});
+    c.transactions.forEach(t=>{if(t.date>=from&&t.date<=to&&(includeTransfers||!isAnyTransfer(t,data.categories)))rows.push({...t,accName:c.name,accId:c.id,accType:"card"});});
   });
   if(accFilter==="all"||accFilter==="__cash__"){
-    data.cash.transactions.forEach(t=>{if(t.date>=from&&t.date<=to&&!isAnyTransfer(t,data.categories))rows.push({...t,accName:"Cash",accId:"__cash__",accType:"cash"});});
+    data.cash.transactions.forEach(t=>{if(t.date>=from&&t.date<=to&&(includeTransfers||!isAnyTransfer(t,data.categories)))rows.push({...t,accName:"Cash",accId:"__cash__",accType:"cash"});});
   }
   return rows;
 };
@@ -1375,7 +1375,7 @@ const RptClassification=({data,from,to,onJumpToLedger,onExportPDF})=>{
   const[accFilter,setAccFilter]=useState("all");
   const[view,setView]=useState("snapshot");
   const[expandedCats,setExpandedCats]=useState({});
-  const allTx=collectTx(data,from,to,accFilter);
+  const allTx=collectTx(data,from,to,accFilter,true);
   const byClass={};const byClassSub={};
   CLASS_TYPES.forEach(ct=>{byClass[ct]={total:0,cats:{}};byClassSub[ct]={};});
   allTx.forEach(t=>{
