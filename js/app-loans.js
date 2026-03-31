@@ -1202,8 +1202,10 @@ const buildHeatRows=(allTx,months,categories,filterFn)=>{
     const main=catMainName(t.cat||"Others");
     const ct=catClassType(categories,t.cat||"Others");
     const m=t.date.substr(0,7);
+    /* Transfer: debit-only (inter-bank mirror credits excluded) */
+    const d=ct==="Transfer"?(t.type==="debit"?t.amount:0):txCatDelta(t,ct);
     if(!grid[main])grid[main]={};
-    grid[main][m]=(grid[main][m]||0)+txCatDelta(t,ct);
+    grid[main][m]=(grid[main][m]||0)+d;
   });
   return Object.keys(grid).sort().map(cat=>{
     const catObj=categories.find(c=>c.name===cat);
@@ -1381,12 +1383,13 @@ const RptClassification=({data,from,to,onJumpToLedger,onExportPDF})=>{
   allTx.forEach(t=>{
     const ct=catClassType(data.categories,t.cat||"Others");
     const main=catMainName(t.cat||"Others");
-    const d=txCatDelta(t,ct);
+    /* Transfer: only sum debits (inter-bank = debit in A, credit in B — count once) */
+    const d=ct==="Transfer"?(t.type==="debit"?t.amount:0):txCatDelta(t,ct);
     byClass[ct].total+=d;
     byClass[ct].cats[main]=(byClass[ct].cats[main]||0)+d;
     if(t.cat&&t.cat.includes("::")){byClassSub[ct][t.cat]=(byClassSub[ct][t.cat]||0)+d;}
   });
-  const grandTotal=allTx.reduce((s,t)=>s+txCatDelta(t,catClassType(data.categories,t.cat||"Others")),0);
+  const grandTotal=allTx.reduce((s,t)=>{const ct=catClassType(data.categories,t.cat||"Others");return s+(ct==="Transfer"?(t.type==="debit"?t.amount:0):txCatDelta(t,ct));},0);
   const months=Object.keys(Object.fromEntries(allTx.map(t=>[t.date.substr(0,7),1]))).sort();
   const hmRows=buildHeatRows(allTx,months,data.categories);
   return React.createElement("div",{className:"fu"},
