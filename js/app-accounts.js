@@ -144,7 +144,7 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
                     if(perm!=="granted"){const r=await handle.requestPermission({mode:"read"});if(r!=="granted")return;}
                     const file=await handle.getFile();
                     const url=URL.createObjectURL(file);
-                    window.open(url,"_blank");
+                    const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener noreferrer";document.body.appendChild(a);a.click();document.body.removeChild(a);
                     setTimeout(()=>URL.revokeObjectURL(url),60000);
                   }catch{}
                 },
@@ -371,7 +371,7 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
                     if(perm!=="granted"){const r=await handle.requestPermission({mode:"read"});if(r!=="granted")return;}
                     const file=await handle.getFile();
                     const url=URL.createObjectURL(file);
-                    window.open(url,"_blank");
+                    const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener noreferrer";document.body.appendChild(a);a.click();document.body.removeChild(a);
                     setTimeout(()=>URL.revokeObjectURL(url),60000);
                   }catch{}
                 },

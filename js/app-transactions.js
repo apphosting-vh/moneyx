@@ -403,7 +403,7 @@ const ReceiptAttachPanel=({txId,receipts=[],onChange})=>{
       }
       const file=await handle.getFile();
       const url=URL.createObjectURL(file);
-      window.open(url,"_blank");
+      const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener noreferrer";document.body.appendChild(a);a.click();document.body.removeChild(a);
       setTimeout(()=>URL.revokeObjectURL(url),60000);
     }catch(e){showMsg("Cannot open file: "+e.message,true);}
   };
@@ -478,7 +478,7 @@ const AccAttachPanel=({accId,attachments=[],onSave})=>{
       }
       const file=await handle.getFile();
       const url=URL.createObjectURL(file);
-      window.open(url,"_blank");
+      const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener noreferrer";document.body.appendChild(a);a.click();document.body.removeChild(a);
       setTimeout(()=>URL.revokeObjectURL(url),60000);
     }catch(e){showMsg("Cannot open file: "+e.message,true);}
   };
