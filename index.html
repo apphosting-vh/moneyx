@@ -385,43 +385,43 @@ input, textarea, [contenteditable] {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
-/* ── THEME TOKENS (default: Midnight Blue) ── */
+/* ── THEME TOKENS (default: Sky Blue) ── */
 :root{
-  --bg:        #f0f7ff;
-  --bg2:       #e4f0fb;
+  --bg:        #f0f9ff;
+  --bg2:       #e0f2fe;
   --bg3:       #ffffff;
   --bg4:       #f8fbff;
-  --bg5:       #eaf4fd;
-  --border:    #c5ddf2;
-  --border2:   #d8ecf8;
-  --border3:   #cde4f4;
-  --text:      #060e18;
-  --text2:     #0c1c2e;
-  --text3:     #112438;
-  --text4:     #162c44;
-  --text5:     #1c3650;
-  --text6:     #243e5c;
-  --text7:     #2c4868;
-  --text8:     #345274;
-  --accent:    #0284c7;
-  --accent2:   #0369a1;
-  --accentbg:  rgba(2,132,199,.12);
-  --accentbg2: rgba(2,132,199,.05);
-  --accentbg3: rgba(2,132,199,.08);
-  --accentbg4: rgba(2,132,199,.07);
-  --accentbg5: rgba(2,132,199,.15);
-  --sidebar:   linear-gradient(180deg,#1a3a58,#122840);
-  --card:      linear-gradient(135deg,#ffffff,#f0f8ff);
-  --card2:     linear-gradient(135deg,#e8f4fd,#ddeefa);
+  --bg5:       #e8f4fd;
+  --border:    #bae6fd;
+  --border2:   #d0ecfa;
+  --border3:   #c8e8f8;
+  --text:      #020b14;
+  --text2:     #071828;
+  --text3:     #0c2236;
+  --text4:     #112c44;
+  --text5:     #163852;
+  --text6:     #1b4460;
+  --text7:     #20506e;
+  --text8:     #255c7c;
+  --accent:    #0ea5e9;
+  --accent2:   #0284c7;
+  --accentbg:  rgba(14,165,233,.12);
+  --accentbg2: rgba(14,165,233,.05);
+  --accentbg3: rgba(14,165,233,.08);
+  --accentbg4: rgba(14,165,233,.07);
+  --accentbg5: rgba(14,165,233,.15);
+  --sidebar:   linear-gradient(180deg,#082038,#051428);
+  --card:      linear-gradient(135deg,#ffffff,#f0f9ff);
+  --card2:     linear-gradient(135deg,#e0f2fe,#d0eafa);
   --inp-bg:    #ffffff;
   --inp-opt:   #ffffff;
-  --scrollbar: #b0cce0;
-  --scrollbar2:#8ab0cc;
-  --scrolltrack:#e0f0fa;
+  --scrollbar: #90d0f0;
+  --scrollbar2:#60b8e0;
+  --scrolltrack:#d8f0fc;
   --mr-hover:  #e8f4fd;
   --modal-bg:  #ffffff;
-  --networth-bg:linear-gradient(135deg,#e0f0ff,#d0e8fa);
-  --subnav-bg: linear-gradient(90deg,rgba(2,132,199,.12),rgba(2,132,199,.03));
+  --networth-bg:linear-gradient(135deg,#e0f2fe,#d0eafa);
+  --subnav-bg: linear-gradient(90deg,rgba(14,165,233,.12),rgba(14,165,233,.03));
 }
 
 /* ── SKY BLUE THEME ── */
@@ -463,238 +463,10 @@ html[data-theme="sky"]{
   --subnav-bg: linear-gradient(90deg,rgba(14,165,233,.12),rgba(14,165,233,.03));
 }
 
-/* ── COBALT THEME ── */
-html[data-theme="cobalt"]{
-  --bg:        #eff6ff;
-  --bg2:       #dbeafe;
-  --bg3:       #ffffff;
-  --bg4:       #f4f8ff;
-  --bg5:       #e0ecff;
-  --border:    #60a5fa;
-  --border2:   #93c5fd;
-  --border3:   #7cb9fb;
-  --text:      #030b24;
-  --text2:     #071840;
-  --text3:     #0b2358;
-  --text4:     #0f2e70;
-  --text5:     #133988;
-  --text6:     #1744a0;
-  --text7:     #1b4fb8;
-  --text8:     #1f5ad0;
-  --accent:    #3b82f6;
-  --accent2:   #2563eb;
-  --accentbg:  rgba(59,130,246,.13);
-  --accentbg2: rgba(59,130,246,.06);
-  --accentbg3: rgba(59,130,246,.09);
-  --accentbg4: rgba(59,130,246,.07);
-  --accentbg5: rgba(59,130,246,.18);
-  --sidebar:   linear-gradient(180deg,#1e3a8a,#0f2057);
-  --card:      linear-gradient(135deg,#ffffff,#eff6ff);
-  --card2:     linear-gradient(135deg,#dbeafe,#bcd4fd);
-  --inp-bg:    #ffffff;
-  --inp-opt:   #ffffff;
-  --scrollbar: #60a5fa;
-  --scrollbar2:#3b82f6;
-  --scrolltrack:#dbeafe;
-  --mr-hover:  #e0ecff;
-  --modal-bg:  #ffffff;
-  --networth-bg:linear-gradient(135deg,#dbeafe,#bcd4fd);
-  --subnav-bg: linear-gradient(90deg,rgba(59,130,246,.13),rgba(59,130,246,.03));
-}
-/* ── OCEAN TEAL (LIGHT) THEME ── */
-html[data-theme="ocean"]{
-  --bg:        #f0f7ff;
-  --bg2:       #e4f0fb;
-  --bg3:       #ffffff;
-  --bg4:       #f8fbff;
-  --bg5:       #eaf4fd;
-  --border:    #c5ddf2;
-  --border2:   #d8ecf8;
-  --border3:   #cde4f4;
-  --text:      #060e18;
-  --text2:     #0c1c2e;
-  --text3:     #112438;
-  --text4:     #162c44;
-  --text5:     #1c3650;
-  --text6:     #243e5c;
-  --text7:     #2c4868;
-  --text8:     #345274;
-  --accent:    #0284c7;
-  --accent2:   #0369a1;
-  --accentbg:  rgba(2,132,199,.12);
-  --accentbg2: rgba(2,132,199,.05);
-  --accentbg3: rgba(2,132,199,.08);
-  --accentbg4: rgba(2,132,199,.07);
-  --accentbg5: rgba(2,132,199,.15);
-  --sidebar:   linear-gradient(180deg,#1a3a58,#122840);
-  --card:      linear-gradient(135deg,#ffffff,#f0f8ff);
-  --card2:     linear-gradient(135deg,#e8f4fd,#ddeefa);
-  --inp-bg:    #ffffff;
-  --inp-opt:   #ffffff;
-  --scrollbar: #b0cce0;
-  --scrollbar2:#8ab0cc;
-  --scrolltrack:#e0f0fa;
-  --mr-hover:  #e8f4fd;
-  --modal-bg:  #ffffff;
-  --networth-bg:linear-gradient(135deg,#e0f0ff,#d0e8fa);
-  --subnav-bg: linear-gradient(90deg,rgba(2,132,199,.12),rgba(2,132,199,.03));
-}
 
-/* ── SAND DUNE THEME ── */
-html[data-theme="sand"]{
-  --bg:        #faf8f4;
-  --bg2:       #f5f0e8;
-  --bg3:       #ffffff;
-  --bg4:       #fdfbf8;
-  --bg5:       #f8f4ed;
-  --border:    #ddd0b4;
-  --border2:   #e8dfc8;
-  --border3:   #e2d8bc;
-  --text:      #1a1408;
-  --text2:     #2e2410;
-  --text3:     #423418;
-  --text4:     #564420;
-  --text5:     #6a5428;
-  --text6:     #7e6430;
-  --text7:     #927438;
-  --text8:     #a68440;
-  --accent:    #9a6a20;
-  --accent2:   #7e5518;
-  --accentbg:  rgba(154,106,32,.11);
-  --accentbg2: rgba(154,106,32,.05);
-  --accentbg3: rgba(154,106,32,.08);
-  --accentbg4: rgba(154,106,32,.06);
-  --accentbg5: rgba(154,106,32,.16);
-  --sidebar:   linear-gradient(180deg,#4a3820,#2e2010);
-  --card:      linear-gradient(135deg,#ffffff,#faf8f4);
-  --card2:     linear-gradient(135deg,#f5f0e8,#ede5d4);
-  --inp-bg:    #ffffff;
-  --inp-opt:   #ffffff;
-  --scrollbar: #c8b890;
-  --scrollbar2:#a89870;
-  --scrolltrack:#f0e8d8;
-  --mr-hover:  #f5f0e8;
-  --modal-bg:  #ffffff;
-  --networth-bg:linear-gradient(135deg,#f0e8d4,#e8dcc4);
-  --subnav-bg: linear-gradient(90deg,rgba(154,106,32,.11),rgba(154,106,32,.03));
-}
 
-/* ── ROSE QUARTZ THEME ── */
-html[data-theme="rose"]{
-  --bg:        #fdf7f8;
-  --bg2:       #faeef0;
-  --bg3:       #ffffff;
-  --bg4:       #fefbfc;
-  --bg5:       #fcf2f4;
-  --border:    #e8c4cc;
-  --border2:   #f0d4da;
-  --border3:   #ecd0d8;
-  --text:      #1a080c;
-  --text2:     #301018;
-  --text3:     #461824;
-  --text4:     #5c2030;
-  --text5:     #72283c;
-  --text6:     #883048;
-  --text7:     #9e3854;
-  --text8:     #b44060;
-  --accent:    #b55070;
-  --accent2:   #943d58;
-  --accentbg:  rgba(181,80,112,.11);
-  --accentbg2: rgba(181,80,112,.05);
-  --accentbg3: rgba(181,80,112,.08);
-  --accentbg4: rgba(181,80,112,.06);
-  --accentbg5: rgba(181,80,112,.16);
-  --sidebar:   linear-gradient(180deg,#6e2040,#3e1020);
-  --card:      linear-gradient(135deg,#ffffff,#fdf7f8);
-  --card2:     linear-gradient(135deg,#faeef0,#f5e2e6);
-  --inp-bg:    #ffffff;
-  --inp-opt:   #ffffff;
-  --scrollbar: #daa8b8;
-  --scrollbar2:#b88898;
-  --scrolltrack:#f5e8ec;
-  --mr-hover:  #faeef0;
-  --modal-bg:  #ffffff;
-  --networth-bg:linear-gradient(135deg,#faeef0,#f4e0e6);
-  --subnav-bg: linear-gradient(90deg,rgba(181,80,112,.11),rgba(181,80,112,.03));
-}
 
-/* ── SAGE THEME ── */
-html[data-theme="sage"]{
-  --bg:        #f5f8f5;
-  --bg2:       #eaf0ea;
-  --bg3:       #ffffff;
-  --bg4:       #f9fbf9;
-  --bg5:       #eef4ee;
-  --border:    #c0d4c0;
-  --border2:   #d4e4d4;
-  --border3:   #cadcca;
-  --text:      #0c160c;
-  --text2:     #182618;
-  --text3:     #243624;
-  --text4:     #304630;
-  --text5:     #3c563c;
-  --text6:     #486648;
-  --text7:     #547654;
-  --text8:     #608660;
-  --accent:    #4e7a50;
-  --accent2:   #3c6040;
-  --accentbg:  rgba(78,122,80,.11);
-  --accentbg2: rgba(78,122,80,.05);
-  --accentbg3: rgba(78,122,80,.08);
-  --accentbg4: rgba(78,122,80,.06);
-  --accentbg5: rgba(78,122,80,.16);
-  --sidebar:   linear-gradient(180deg,#253c26,#141e16);
-  --card:      linear-gradient(135deg,#ffffff,#f5f8f5);
-  --card2:     linear-gradient(135deg,#eaf0ea,#dce8dc);
-  --inp-bg:    #ffffff;
-  --inp-opt:   #ffffff;
-  --scrollbar: #a8c4a8;
-  --scrollbar2:#88a888;
-  --scrolltrack:#e4f0e4;
-  --mr-hover:  #eaf0ea;
-  --modal-bg:  #ffffff;
-  --networth-bg:linear-gradient(135deg,#e4f0e4,#d8e8d8);
-  --subnav-bg: linear-gradient(90deg,rgba(78,122,80,.11),rgba(78,122,80,.03));
-}
 
-/* ── LAVENDER THEME ── */
-html[data-theme="lavender"]{
-  --bg:        #f8f6fc;
-  --bg2:       #f0ecf8;
-  --bg3:       #ffffff;
-  --bg4:       #fbfafe;
-  --bg5:       #f4f0fa;
-  --border:    #cec0e8;
-  --border2:   #ddd4f0;
-  --border3:   #d4c8ec;
-  --text:      #120c1e;
-  --text2:     #221838;
-  --text3:     #322452;
-  --text4:     #42306c;
-  --text5:     #523c86;
-  --text6:     #6248a0;
-  --text7:     #7254ba;
-  --text8:     #8260d4;
-  --accent:    #7c5cbf;
-  --accent2:   #6248a0;
-  --accentbg:  rgba(124,92,191,.12);
-  --accentbg2: rgba(124,92,191,.05);
-  --accentbg3: rgba(124,92,191,.09);
-  --accentbg4: rgba(124,92,191,.07);
-  --accentbg5: rgba(124,92,191,.17);
-  --sidebar:   linear-gradient(180deg,#2e1e60,#1a1038);
-  --card:      linear-gradient(135deg,#ffffff,#f8f6fc);
-  --card2:     linear-gradient(135deg,#f0ecf8,#e4d8f4);
-  --inp-bg:    #ffffff;
-  --inp-opt:   #ffffff;
-  --scrollbar: #b8a0d8;
-  --scrollbar2:#9880b8;
-  --scrolltrack:#ece4f8;
-  --mr-hover:  #f0ecf8;
-  --modal-bg:  #ffffff;
-  --networth-bg:linear-gradient(135deg,#ece4f8,#e0d4f4);
-  --subnav-bg: linear-gradient(90deg,rgba(124,92,191,.12),rgba(124,92,191,.03));
-}
 
 /* ── SLATE THEME ── */
 html[data-theme="slate"]{
@@ -735,44 +507,6 @@ html[data-theme="slate"]{
   --subnav-bg: linear-gradient(90deg,rgba(74,104,136,.12),rgba(74,104,136,.03));
 }
 
-/* ── TERRACOTTA THEME ── */
-html[data-theme="terra"]{
-  --bg:        #faf7f4;
-  --bg2:       #f4ece6;
-  --bg3:       #ffffff;
-  --bg4:       #fdfaf8;
-  --bg5:       #f8f2ec;
-  --border:    #d8bfad;
-  --border2:   #e8d0c0;
-  --border3:   #e0c8b4;
-  --text:      #1a100a;
-  --text2:     #301e12;
-  --text3:     #462c1a;
-  --text4:     #5c3a22;
-  --text5:     #72482a;
-  --text6:     #885632;
-  --text7:     #9e643a;
-  --text8:     #b47242;
-  --accent:    #b05a38;
-  --accent2:   #8e4828;
-  --accentbg:  rgba(176,90,56,.11);
-  --accentbg2: rgba(176,90,56,.05);
-  --accentbg3: rgba(176,90,56,.08);
-  --accentbg4: rgba(176,90,56,.06);
-  --accentbg5: rgba(176,90,56,.16);
-  --sidebar:   linear-gradient(180deg,#4a2818,#2e1808);
-  --card:      linear-gradient(135deg,#ffffff,#faf7f4);
-  --card2:     linear-gradient(135deg,#f4ece6,#eee0d4);
-  --inp-bg:    #ffffff;
-  --inp-opt:   #ffffff;
-  --scrollbar: #c8a090;
-  --scrollbar2:#a88070;
-  --scrolltrack:#f0e4dc;
-  --mr-hover:  #f4ece6;
-  --modal-bg:  #ffffff;
-  --networth-bg:linear-gradient(135deg,#f0e4d8,#e8d8cc);
-  --subnav-bg: linear-gradient(90deg,rgba(176,90,56,.11),rgba(176,90,56,.03));
-}
 
 /* ── MINT THEME ── */
 html[data-theme="mint"]{
@@ -813,161 +547,9 @@ html[data-theme="mint"]{
   --subnav-bg: linear-gradient(90deg,rgba(26,138,104,.12),rgba(26,138,104,.03));
 }
 
-/* ── BLUSH THEME ── */
-html[data-theme="blush"]{
-  --bg:        #fef8fa;
-  --bg2:       #fdf0f4;
-  --bg3:       #ffffff;
-  --bg4:       #fefcfd;
-  --bg5:       #fdf4f7;
-  --border:    #f0c4d4;
-  --border2:   #f8d8e4;
-  --border3:   #f4ccdc;
-  --text:      #1a0810;
-  --text2:     #2e1020;
-  --text3:     #421830;
-  --text4:     #562040;
-  --text5:     #6a2850;
-  --text6:     #7e3060;
-  --text7:     #923870;
-  --text8:     #a64080;
-  --accent:    #c04878;
-  --accent2:   #a03860;
-  --accentbg:  rgba(192,72,120,.11);
-  --accentbg2: rgba(192,72,120,.05);
-  --accentbg3: rgba(192,72,120,.08);
-  --accentbg4: rgba(192,72,120,.06);
-  --accentbg5: rgba(192,72,120,.16);
-  --sidebar:   linear-gradient(180deg,#6e1840,#3e0e26);
-  --card:      linear-gradient(135deg,#ffffff,#fef8fa);
-  --card2:     linear-gradient(135deg,#fdf0f4,#fae4ec);
-  --inp-bg:    #ffffff;
-  --inp-opt:   #ffffff;
-  --scrollbar: #e8a0bc;
-  --scrollbar2:#c8809c;
-  --scrolltrack:#fce8f0;
-  --mr-hover:  #fdf0f4;
-  --modal-bg:  #ffffff;
-  --networth-bg:linear-gradient(135deg,#fce8f0,#f8dce8);
-  --subnav-bg: linear-gradient(90deg,rgba(192,72,120,.11),rgba(192,72,120,.03));
-}
 
-/* ── GRAPHITE THEME ── */
-html[data-theme="graphite"]{
-  --bg:        #f7f7f6;
-  --bg2:       #eeeeec;
-  --bg3:       #ffffff;
-  --bg4:       #fafaf9;
-  --bg5:       #f2f2f0;
-  --border:    #ccccc8;
-  --border2:   #ddddda;
-  --border3:   #d4d4d0;
-  --text:      #0f0f0e;
-  --text2:     #1e1e1c;
-  --text3:     #2d2d2a;
-  --text4:     #3c3c38;
-  --text5:     #4b4b46;
-  --text6:     #5a5a54;
-  --text7:     #696962;
-  --text8:     #787870;
-  --accent:    #525250;
-  --accent2:   #3e3e3c;
-  --accentbg:  rgba(82,82,80,.10);
-  --accentbg2: rgba(82,82,80,.04);
-  --accentbg3: rgba(82,82,80,.07);
-  --accentbg4: rgba(82,82,80,.05);
-  --accentbg5: rgba(82,82,80,.14);
-  --sidebar:   linear-gradient(180deg,#282826,#141412);
-  --card:      linear-gradient(135deg,#ffffff,#f7f7f6);
-  --card2:     linear-gradient(135deg,#eeeeec,#e4e4e2);
-  --inp-bg:    #ffffff;
-  --inp-opt:   #ffffff;
-  --scrollbar: #b4b4b2;
-  --scrollbar2:#989896;
-  --scrolltrack:#e8e8e6;
-  --mr-hover:  #eeeeec;
-  --modal-bg:  #ffffff;
-  --networth-bg:linear-gradient(135deg,#e8e8e6,#dededc);
-  --subnav-bg: linear-gradient(90deg,rgba(82,82,80,.10),rgba(82,82,80,.02));
-}
 
-/* ── MAUVE THEME ── */
-html[data-theme="mauve"]{
-  --bg:        #f9f6fa;
-  --bg2:       #f2edf5;
-  --bg3:       #ffffff;
-  --bg4:       #fcfafd;
-  --bg5:       #f6f2f8;
-  --border:    #d8c8e4;
-  --border2:   #e4d8f0;
-  --border3:   #ddd0ec;
-  --text:      #160e1a;
-  --text2:     #281c30;
-  --text3:     #3a2a46;
-  --text4:     #4c385c;
-  --text5:     #5e4672;
-  --text6:     #705488;
-  --text7:     #82629e;
-  --text8:     #9470b4;
-  --accent:    #8a5ca0;
-  --accent2:   #704888;
-  --accentbg:  rgba(138,92,160,.11);
-  --accentbg2: rgba(138,92,160,.05);
-  --accentbg3: rgba(138,92,160,.08);
-  --accentbg4: rgba(138,92,160,.06);
-  --accentbg5: rgba(138,92,160,.16);
-  --sidebar:   linear-gradient(180deg,#3a1e50,#221030);
-  --card:      linear-gradient(135deg,#ffffff,#f9f6fa);
-  --card2:     linear-gradient(135deg,#f2edf5,#e8e0f0);
-  --inp-bg:    #ffffff;
-  --inp-opt:   #ffffff;
-  --scrollbar: #c0a0d4;
-  --scrollbar2:#a080b8;
-  --scrolltrack:#eae0f4;
-  --mr-hover:  #f2edf5;
-  --modal-bg:  #ffffff;
-  --networth-bg:linear-gradient(135deg,#e8e0f4,#ddd4ec);
-  --subnav-bg: linear-gradient(90deg,rgba(138,92,160,.11),rgba(138,92,160,.03));
-}
 
-/* ── CARAMEL THEME ── */
-html[data-theme="caramel"]{
-  --bg:        #fdf9f4;
-  --bg2:       #f8f0e6;
-  --bg3:       #ffffff;
-  --bg4:       #fefcf8;
-  --bg5:       #fbf4ea;
-  --border:    #dcc898;
-  --border2:   #e8d8b0;
-  --border3:   #e4d0a4;
-  --text:      #1a1208;
-  --text2:     #2e2010;
-  --text3:     #422e18;
-  --text4:     #563c20;
-  --text5:     #6a4a28;
-  --text6:     #7e5830;
-  --text7:     #926638;
-  --text8:     #a67440;
-  --accent:    #9a7020;
-  --accent2:   #7e5a18;
-  --accentbg:  rgba(154,112,32,.11);
-  --accentbg2: rgba(154,112,32,.05);
-  --accentbg3: rgba(154,112,32,.08);
-  --accentbg4: rgba(154,112,32,.06);
-  --accentbg5: rgba(154,112,32,.16);
-  --sidebar:   linear-gradient(180deg,#503618,#2e1e08);
-  --card:      linear-gradient(135deg,#ffffff,#fdf9f4);
-  --card2:     linear-gradient(135deg,#f8f0e6,#f2e4d0);
-  --inp-bg:    #ffffff;
-  --inp-opt:   #ffffff;
-  --scrollbar: #d4b870;
-  --scrollbar2:#b89850;
-  --scrolltrack:#f2e4c4;
-  --mr-hover:  #f8f0e6;
-  --modal-bg:  #ffffff;
-  --networth-bg:linear-gradient(135deg,#f2e4c8,#ead8b4);
-  --subnav-bg: linear-gradient(90deg,rgba(154,112,32,.11),rgba(154,112,32,.03));
-}
 
 /* ── NORDIC THEME ── */
 html[data-theme="nordic"]{
@@ -1050,22 +632,11 @@ html[data-theme="moss"]{
 
 /* ── LIGHT THEMES: re-scope text vars inside the dark sidebar so nav labels stay readable ── */
 :root .sidebar-panel,
-html[data-theme="ocean"]     .sidebar-panel,
 html[data-theme="sky"]       .sidebar-panel,
-html[data-theme="cobalt"]    .sidebar-panel,
-html[data-theme="sand"]      .sidebar-panel,
-html[data-theme="rose"]      .sidebar-panel,
-html[data-theme="sage"]      .sidebar-panel,
-html[data-theme="lavender"]  .sidebar-panel,
 html[data-theme="slate"]     .sidebar-panel,
-html[data-theme="terra"]     .sidebar-panel,
-html[data-theme="mint"]      .sidebar-panel,
-html[data-theme="blush"]     .sidebar-panel,
-html[data-theme="graphite"]  .sidebar-panel,
-html[data-theme="mauve"]     .sidebar-panel,
-html[data-theme="caramel"]   .sidebar-panel,
 html[data-theme="nordic"]    .sidebar-panel,
-html[data-theme="moss"]      .sidebar-panel {
+html[data-theme="moss"]      .sidebar-panel,
+html[data-theme="mint"]      .sidebar-panel {
   --text:   rgba(255,255,255,0.95);
   --text2:  rgba(255,255,255,0.90);
   --text3:  rgba(255,255,255,0.85);
@@ -1642,9 +1213,9 @@ textarea.inp{resize:vertical}
 }
 
 /* Wave layers */
-.sp-wv1 path{animation:sp-wave1 7s ease-in-out infinite;fill:rgba(2,132,199,.10)}
+.sp-wv1 path{animation:sp-wave1 7s ease-in-out infinite;fill:rgba(241,194,50,.10)}
 .sp-wv2 path{animation:sp-wave2 9s ease-in-out infinite;animation-delay:-.5s;fill:rgba(14,165,233,.07)}
-.sp-wv3 path{animation:sp-wave3 11s ease-in-out infinite;animation-delay:-2s;fill:rgba(6,182,212,.05)}
+.sp-wv3 path{animation:sp-wave3 11s ease-in-out infinite;animation-delay:-2s;fill:rgba(241,194,50,.05)}
 
 /* ── Floating particles ──────────────────────────── */
 #mm-splash-particles{
@@ -1812,11 +1383,37 @@ textarea.inp{resize:vertical}
     <div class="sp-ripple"></div>
     <div class="sp-ripple"></div>
     <div class="sp-ripple"></div>
+	    <div class="sp-ripple"></div>
+    <div class="sp-ripple"></div>
+    <div class="sp-ripple"></div>
+	    <div class="sp-ripple"></div>
+    <div class="sp-ripple"></div>
+    <div class="sp-ripple"></div>
   </div>
 
   <!-- Floating particles -->
   <div id="mm-splash-particles">
     <div class="sp-pt"></div><div class="sp-pt"></div>
+    <div class="sp-pt"></div><div class="sp-pt"></div>
+    <div class="sp-pt"></div><div class="sp-pt"></div>
+    <div class="sp-pt"></div><div class="sp-pt"></div>
+	<div class="sp-pt"></div><div class="sp-pt"></div>
+    <div class="sp-pt"></div><div class="sp-pt"></div>
+    <div class="sp-pt"></div><div class="sp-pt"></div>
+    <div class="sp-pt"></div><div class="sp-pt"></div>
+	 <div class="sp-pt"></div><div class="sp-pt"></div>
+    <div class="sp-pt"></div><div class="sp-pt"></div>
+    <div class="sp-pt"></div><div class="sp-pt"></div>
+    <div class="sp-pt"></div><div class="sp-pt"></div>
+	 <div class="sp-pt"></div><div class="sp-pt"></div>
+    <div class="sp-pt"></div><div class="sp-pt"></div>
+    <div class="sp-pt"></div><div class="sp-pt"></div>
+    <div class="sp-pt"></div><div class="sp-pt"></div>
+	<div class="sp-pt"></div><div class="sp-pt"></div>
+    <div class="sp-pt"></div><div class="sp-pt"></div>
+    <div class="sp-pt"></div><div class="sp-pt"></div>
+    <div class="sp-pt"></div><div class="sp-pt"></div>
+	 <div class="sp-pt"></div><div class="sp-pt"></div>
     <div class="sp-pt"></div><div class="sp-pt"></div>
     <div class="sp-pt"></div><div class="sp-pt"></div>
     <div class="sp-pt"></div><div class="sp-pt"></div>
@@ -1874,10 +1471,12 @@ textarea.inp{resize:vertical}
     <svg class="sp-wv2" viewBox="0 0 1440 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M0,72 C200,40 400,100 600,64 C800,28 1000,84 1200,56 C1320,38 1380,60 1440,50 L1440,160 L0,160Z"/>
     </svg>
-    <svg class="sp-wv1" viewBox="0 0 1440 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0,56 C160,20 340,88 520,52 C700,16 880,72 1060,48 C1200,28 1300,52 1440,40 L1440,160 L0,160Z"/>
+    <svg class="sp-wv4" viewBox="0 0 1440 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,56 C160,20 340,88 510,52 C700,16 890,72 1060,48 C1200,28 1300,52 1440,40 L1440,160 L0,160Z"/>
+	      <svg class="sp-wv3" viewBox="0 0 1440 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,90 C240,60 480,115 710,80 C960,45 1160,95 1320,70 C1380,60 1420,72 1440,68 L1440,160 L0,160Z"/>
     </svg>
-  </div>
+     </div>
 
 </div></div>
 <script type="text/babel" src="./js/app-utils.js"></script>
