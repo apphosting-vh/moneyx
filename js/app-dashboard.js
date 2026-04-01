@@ -806,9 +806,9 @@ const Dashboard=React.memo(({data,isMobile})=>{
 
     /* ══ D: CASH FLOW CHART + CATEGORY DONUT ════════════════════ */
     W("cashflow")&&W("catspend")&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"3fr 2fr",gap:12}},
-      /* D1: Monthly cash flow bar chart — all sources (banks + cards + cash) */
+      /* D1: Monthly cash flow bar chart — bank accounts only */
       W("cashflow")&&React.createElement("div",{className:"db-card"},
-        SL("Cash Flow","Income vs Expenses — last 6 months · all accounts"),
+        SL("Bank Cash Flow","Income vs Expenses — last 6 months · bank accounts only"),
         monthlyFlow.length>0
           ?React.createElement(React.Fragment,null,
               CashFlowChart,
