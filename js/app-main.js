@@ -2031,7 +2031,10 @@ function App(){
       /* Re-show if it escalates to critical even if previously dismissed */
       if(pct>=95)setStorageWarnDismissed(false);
     };
-    const onFull=()=>{setStorageWarnPct(99);setStorageWarnDismissed(false);};
+    const onFull=()=>{setStorageWarnPct(99);setStorageWarnDismissed(false);
+      /* CRITICAL: Data cannot be saved — alert user immediately */
+      try{alert("⚠️ STORAGE FULL — Data cannot be saved!\n\nYour browser storage is completely full. New changes will NOT be saved and will be lost when you close this tab.\n\nPlease go to Settings → Free Up Space immediately, or export your data as a backup.");}catch{}
+    };
     window.addEventListener("mm:storage-warn",onWarn);
     window.addEventListener("mm:storage-full",onFull);
     return()=>{
@@ -2480,7 +2483,7 @@ function App(){
       ),
       React.createElement("div",{style:{fontSize:11,color:"rgba(255,255,255,.65)"}},
         storageWarnPct.toFixed(0)+"% of browser quota used"+(
-          _swCritical?" — future saves may fail. Free up space immediately."
+          _swCritical?" — ⚠️ DATA IS NOT BEING SAVED. Changes will be lost on page close. Free up space or export data immediately."
                      :" — consider clearing cached data."
         )
       )
@@ -2830,8 +2833,8 @@ function App(){
             const accId=tx.srcId;
             const acc=allAcc.find(a=>a.id===accId);
             if(!acc)return;
-            if(acc.accType==="bank"){dispatch({type:"ADD_BANK_TX",id:acc.id,tx});dispatch({type:"UPD_BANK_BAL",id:acc.id,tx});}
-            else if(acc.accType==="card"){dispatch({type:"ADD_CARD_TX",id:acc.id,tx});dispatch({type:"UPD_CARD_BAL",id:acc.id,tx});}
+            if(acc.accType==="bank"){dispatch({type:"ADD_BANK_TX",id:acc.id,tx});}
+            else if(acc.accType==="card"){dispatch({type:"ADD_CARD_TX",id:acc.id,tx});}
             else if(acc.accType==="cash"||acc.id==="__cash__"){dispatch({type:"ADD_CASH_TX",tx});}
           }
           setQuickAddOpen(false);

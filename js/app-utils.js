@@ -50,12 +50,17 @@ const _inrFmt = {
 };
 /* Plain-number INR formatter (no ₹ symbol) — used in export PDF tables */
 const _numFmt0 = new Intl.NumberFormat("en-IN",{minimumFractionDigits:0,maximumFractionDigits:0});
-/** Format a number as ₹ INR.  d=0 → no decimals (default), d=2 → paise. */
-const INR=(n,d=0)=>(_inrFmt[d]??_inrFmt[0]).format(n||0);
+/** Format a number as ₹ INR.  d=0 → no decimals (default), d=2 → paise.
+ *  Guards against NaN/Infinity leaking from calculations into display. */
+const INR=(n,d=0)=>{const v=(!n||!isFinite(n))?0:n;return(_inrFmt[d]??_inrFmt[0]).format(v);};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).substr(2,4);
-const TODAY=()=>new Date().toISOString().split("T")[0];
+/* BUG-1 FIX: TODAY() now returns IST date (UTC+5:30) instead of UTC.
+   Previously returned wrong date for 4.5 hours every evening (8:30 PM–midnight IST).
+   This caused capital gains misclassification (STCG vs LTCG), wrong XIRR dates,
+   and incorrect scheduled execution timestamps. */
+const TODAY=()=>{const istMs=Date.now()+(5.5*60*60*1000);return new Date(istMs).toISOString().split("T")[0];};
 const pct=(v,b)=>b?(((v-b)/b)*100).toFixed(1):"0.0";
-const daysLeft=d=>Math.max(0,Math.ceil((new Date(d+"T00:00:00")-new Date())/86400000));
+const daysLeft=d=>{const istMs=Date.now()+(5.5*60*60*1000);const istToday=new Date(istMs).toISOString().split("T")[0];return Math.max(0,Math.ceil((new Date(d+"T00:00:00")-new Date(istToday+"T00:00:00"))/86400000));};
 
 /* ══════════════════════════════════════════════════════════════════════════
    IST DATE / MARKET HELPERS

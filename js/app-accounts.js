@@ -183,7 +183,7 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
         onAddTx:tx=>{
           if(!selD)return;
           if(tx.isTransfer){dispatch({type:"TRANSFER_TX",srcType:tx.srcType,srcId:tx.srcId,tgtType:tx.tgtType,tgtId:tx.tgtId,tx:tx.tx});}
-          else{dispatch({type:"ADD_BANK_TX",id:selD.id,tx});dispatch({type:"UPD_BANK_BAL",id:selD.id,tx});}
+          else{dispatch({type:"ADD_BANK_TX",id:selD.id,tx});}
         },
         onImportTx:txns=>{if(selD)dispatch({type:"IMPORT_BULK_TX",accType:"bank",accId:selD.id,txns});},
         onUpsertTx:updates=>{if(selD)dispatch({type:"UPDATE_BULK_TX",accType:"bank",accId:selD.id,updates});},
@@ -266,7 +266,7 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
     React.createElement("div",{style:{display:"flex",gap:16,flex:1,minHeight:0}},
       (!isMobile||mobileView==="list")&&React.createElement("div",{style:{width:isMobile?"100%":280,minWidth:isMobile?"auto":280,display:"flex",flexDirection:"column",gap:12,overflowY:"auto",paddingRight:isMobile?0:4}},
         cards.filter(c=>!c.hidden).map((c,cIdx)=>{
-          const used=c.outstanding/c.limit*100;
+          const used=c.limit>0?c.outstanding/c.limit*100:0;
           const bc=used>80?"#ef4444":used>50?"#c2410c":"#16a34a";
           return React.createElement("div",{key:c.id,className:"accard"+(sel===c.id?" active":""),onClick:()=>{if(!reorderMode){setSel(c.id);if(isMobile)setMobileView("detail");}},style:{background:"var(--card)",border:"1px solid "+(reorderMode?"var(--accent)55":"var(--border)"),borderRadius:14,padding:16,cursor:reorderMode?"default":"pointer",transition:"border-color .2s"}},
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:8}},
@@ -417,12 +417,12 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
           ...allCards.map(c=>({...c,accType:"card",accTypeLbl:"↳"})),
           ...loans.map(l=>({...l,accType:"loan",accTypeLbl:"↳",name:l.name+" (Loan)"}))
         ],
-        openBalance:selD?(selD.limit-selD.outstanding-selD.transactions.filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="debit"?-t.amount:t.amount),0)):0,
+        openBalance:selD?(selD.outstanding+selD.transactions.filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0)):0,
         dispatch,state:{banks:allBanks,cards:allCards,cash},
         onAddTx:tx=>{
           if(!selD)return;
           if(tx.isTransfer){dispatch({type:"TRANSFER_TX",srcType:tx.srcType,srcId:tx.srcId,tgtType:tx.tgtType,tgtId:tx.tgtId,tx:tx.tx});}
-          else{dispatch({type:"ADD_CARD_TX",id:selD.id,tx});dispatch({type:"UPD_CARD_BAL",id:selD.id,tx});}
+          else{dispatch({type:"ADD_CARD_TX",id:selD.id,tx});}
         },
         onImportTx:txns=>{if(selD)dispatch({type:"IMPORT_BULK_TX",accType:"card",accId:selD.id,txns});},
         onUpsertTx:updates=>{if(selD)dispatch({type:"UPDATE_BULK_TX",accType:"card",accId:selD.id,updates});},
