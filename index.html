@@ -53,8 +53,6 @@
      If it differs from the version currently running in the page,
      dispatches mm:update-ready so the React banner appears.         */
   var _selfCheckDone = false;
-  var APP_VERSION = "3.50.0";  // canonical version for self-check + UI
-  window.__MM_APP_VERSION = APP_VERSION;
   function selfVersionCheck() {
     if (_selfCheckDone || !navigator.onLine) return;
     _selfCheckDone = true;
