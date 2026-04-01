@@ -266,7 +266,7 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
     React.createElement("div",{style:{display:"flex",gap:16,flex:1,minHeight:0}},
       (!isMobile||mobileView==="list")&&React.createElement("div",{style:{width:isMobile?"100%":280,minWidth:isMobile?"auto":280,display:"flex",flexDirection:"column",gap:12,overflowY:"auto",paddingRight:isMobile?0:4}},
         cards.filter(c=>!c.hidden).map((c,cIdx)=>{
-          const used=c.outstanding/c.limit*100;
+          const used=c.limit>0?c.outstanding/c.limit*100:0;
           const bc=used>80?"#ef4444":used>50?"#c2410c":"#16a34a";
           return React.createElement("div",{key:c.id,className:"accard"+(sel===c.id?" active":""),onClick:()=>{if(!reorderMode){setSel(c.id);if(isMobile)setMobileView("detail");}},style:{background:"var(--card)",border:"1px solid "+(reorderMode?"var(--accent)55":"var(--border)"),borderRadius:14,padding:16,cursor:reorderMode?"default":"pointer",transition:"border-color .2s"}},
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:8}},

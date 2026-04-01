@@ -265,12 +265,15 @@ const ExportReportModal=({data,onClose})=>{
       const f2=(n)=>_numFmt0.format(n||0); // reuse cached plain-number formatter
       const col=(n)=>n>=0?"#16a34a":"#dc2626";
 
+      /* ── HTML escape — prevents XSS via user-supplied text in PDF HTML ── */
+      const esc=(s)=>String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
       /* ── HTML builder helpers ── */
-      const th=(txt,align="left",w="")=>`<th style="background:#1e3a5f;color:#fff;padding:7px 10px;font-size:11px;text-align:${align};white-space:nowrap;${w?"width:"+w+";":""}">${txt}</th>`;
-      const td=(txt,align="left",bold=false,color="")=>`<td style="padding:6px 10px;font-size:11px;text-align:${align};${bold?"font-weight:700;":""}${color?"color:"+color+";":""}">${txt}</td>`;
+      const th=(txt,align="left",w="")=>`<th style="background:#1e3a5f;color:#fff;padding:7px 10px;font-size:11px;text-align:${align};white-space:nowrap;${w?"width:"+w+";":""}">${esc(txt)}</th>`;
+      const td=(txt,align="left",bold=false,color="")=>`<td style="padding:6px 10px;font-size:11px;text-align:${align};${bold?"font-weight:700;":""}${color?"color:"+color+";":""}">${esc(txt)}</td>`;
       const section=(title,icon,body)=>`
         <div style="margin-bottom:28px;page-break-inside:avoid;">
-          <h3 style="font-size:14px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:6px;margin-bottom:12px;">${icon} ${title}</h3>
+          <h3 style="font-size:14px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:6px;margin-bottom:12px;">${icon} ${esc(title)}</h3>
           ${body}
         </div>`;
       const table=(header,rows)=>`
@@ -282,7 +285,7 @@ const ExportReportModal=({data,onClose})=>{
 
       /* ── Build HTML ── */
       const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
-<title>finsight Report — ${label}</title>
+<title>finsight Report — ${esc(label)}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Segoe UI',Arial,sans-serif;color:#1a1a2e;background:#fff;padding:28px;font-size:12px;}
@@ -311,7 +314,7 @@ const ExportReportModal=({data,onClose})=>{
   <div style="display:flex;justify-content:space-between;align-items:flex-end;">
     <div>
       <h1>finsight</h1>
-      <h2>${periodType==="monthly"?"Monthly":"Yearly"} Summary Report &mdash; ${label}</h2>
+      <h2>${periodType==="monthly"?"Monthly":"Yearly"} Summary Report &mdash; ${esc(label)}</h2>
       <span class="badge">${from} to ${to}</span>
       <span class="badge">Generated ${new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})}</span>
     </div>
@@ -509,7 +512,7 @@ ${table(
 <!-- FOOTER -->
 <div style="margin-top:32px;padding-top:12px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:10px;color:#9ca3af;">
   <span>finsight v${APP_VERSION} · Exported ${new Date().toLocaleString("en-IN")}</span>
-  <span>${label} · Personal Finance Report</span>
+  <span>${esc(label)} · Personal Finance Report</span>
 </div>
 </body></html>`;
 

@@ -191,7 +191,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.49.1";
+const APP_VERSION="3.49.2";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -467,7 +467,9 @@ const buildCatOptions=(categories)=>{
 const calcFDMaturity=(principal,ratePercent,startDate,maturityDate)=>{
   if(!principal||!ratePercent||!startDate||!maturityDate)return principal||0;
   const start=new Date(startDate),end=new Date(maturityDate);
+  if(isNaN(start.getTime())||isNaN(end.getTime()))return principal||0;
   const days=Math.max(0,Math.round((end-start)/(1000*60*60*24)));
+  if(days<=0)return principal||0;
   const years=days/365;
   const r=ratePercent/100;
   const maturity=principal*Math.pow(1+r/4,4*years);
@@ -1204,6 +1206,15 @@ const reducer=(s,a)=>{
     case"TRANSFER_TX":{
       const{srcType,srcId,tgtType,tgtId,tx}=a;
       const _addedAt=new Date().toISOString();
+      /* Validate: warn if bank/cash source balance is insufficient */
+      if(srcType==="bank"){
+        const _srcAcct=s.banks.find(b=>b.id===srcId);
+        if(_srcAcct&&_srcAcct.balance<tx.amount){
+          console.warn("[MM] Transfer amount ₹"+tx.amount+" exceeds source bank balance ₹"+_srcAcct.balance+" — account will go negative.");
+        }
+      }else if(srcType==="cash"&&s.cash.balance<tx.amount){
+        console.warn("[MM] Transfer amount ₹"+tx.amount+" exceeds cash balance ₹"+s.cash.balance+" — wallet will go negative.");
+      }
       /* Compute _sn for source and target accounts before building txs */
       const srcTxs=srcType==="bank"?(s.banks.find(b=>b.id===srcId)||{transactions:[]}).transactions
                   :srcType==="card"?(s.cards.find(c=>c.id===srcId)||{transactions:[]}).transactions
