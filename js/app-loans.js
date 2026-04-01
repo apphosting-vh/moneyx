@@ -332,7 +332,11 @@ const LoanSection=React.memo(({loans,dispatch,allBanks=[],allCards=[],cash,isMob
         const pp=l.principal>0?((l.principal-l.outstanding)/l.principal*100):0;
         const col=LC[l.type]||"var(--text3)";
         const amortSch=calcAmortization(l.outstanding,l.rate,l.emi);
+        const monthlyInterest=l.rate>0&&l.outstanding>0?Math.round(l.outstanding*(l.rate/12/100)*100)/100:0;
+        /* BUG-5 FIX: emiTooLow catches EMI ≤ interest; emiBarelyCovers warns when
+           EMI < 2× interest (repayment would take 100+ months, nearly all goes to interest) */
         const emiTooLow=l.rate>0&&l.emi>0&&l.outstanding>0&&amortSch.length===0;
+        const emiBarelyCovers=!emiTooLow&&l.emi>0&&monthlyInterest>0&&l.emi<(monthlyInterest*2);
         const nextInterest=amortSch.length>0?amortSch[0].interest:null;
         const nextPrincipal=amortSch.length>0?amortSch[0].principal:null;
         return React.createElement(Card,{key:l.id,sx:{position:"relative"}},
@@ -365,9 +369,12 @@ const LoanSection=React.memo(({loans,dispatch,allBanks=[],allCards=[],cash,isMob
           ),
           /* Next EMI breakdown (from amortization) */
           emiTooLow&&React.createElement("div",{style:{marginBottom:12,padding:"8px 12px",borderRadius:8,background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.3)",fontSize:11,color:"#ef4444",lineHeight:1.5}},
-            "⚠ EMI ("+INR(l.emi)+") is too low to cover monthly interest ("+INR(Math.round(l.outstanding*(l.rate/12/100)*100)/100)+"). The loan balance will grow instead of shrinking. Please increase the EMI."
+            "⚠ EMI ("+INR(l.emi)+") is too low to cover monthly interest ("+INR(monthlyInterest)+"). The loan balance will grow instead of shrinking. Please increase the EMI."
           ),
-          !emiTooLow&&nextInterest!=null&&React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12}},
+          emiBarelyCovers&&React.createElement("div",{style:{marginBottom:12,padding:"8px 12px",borderRadius:8,background:"rgba(194,65,12,.08)",border:"1px solid rgba(194,65,12,.3)",fontSize:11,color:"#c2410c",lineHeight:1.5}},
+            "⚠ EMI ("+INR(l.emi)+") barely covers monthly interest ("+INR(monthlyInterest)+"). Repayment will take "+(amortSch.length>0?amortSch.length:"100+")+" months — over "+(amortSch.length>0?Math.round(amortSch.length/12):8)+" years. Consider increasing the EMI to save on interest."
+          ),
+          !emiTooLow&&!emiBarelyCovers&&nextInterest!=null&&React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12}},
             React.createElement("div",{style:{flex:1,padding:"7px 10px",borderRadius:8,background:"rgba(109,40,217,.08)",border:"1px solid rgba(109,40,217,.2)",textAlign:"center"}},
               React.createElement("div",{style:{fontSize:9,color:"#6d28d9",textTransform:"uppercase",letterSpacing:.4,marginBottom:2}},"Next Interest"),
               React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"#6d28d9",fontFamily:"'Sora',sans-serif"}},INR(nextInterest))

@@ -191,7 +191,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="3.48.3";
+const APP_VERSION="3.49.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -492,11 +492,11 @@ const calcFDValueToday=(f)=>{
   const start=new Date(f.startDate);
   const maturity=new Date(f.maturityDate);
   if(today>=maturity){
-    /* Already matured — full maturity amount is what the investor has */
-    const mat=f.maturityAmount&&f.maturityAmount>f.amount
-      ?f.maturityAmount
-      :calcFDMaturity(f.amount,f.rate,f.startDate,f.maturityDate);
-    return Math.max(mat,f.amount);
+    /* Already matured — use stored maturityAmount if available (accounts for TDS),
+       otherwise compute from formula. Do NOT use Math.max — if the user entered a
+       lower maturityAmount (e.g. after TDS deduction), respect that value. BUG-7 fix. */
+    if(f.maturityAmount&&f.maturityAmount>0)return Math.max(f.maturityAmount,f.amount);
+    return Math.max(calcFDMaturity(f.amount,f.rate,f.startDate,f.maturityDate),f.amount);
   }
   if(today<=start)return f.amount; /* not started yet */
   /* In-progress: accrue from startDate to today */
@@ -546,9 +546,13 @@ const xirrSingleBuy=(invested,currentValue,buyDate)=>{
    Equity / equity-oriented MF:
      STCG u/s 111A  — held ≤ 12 months → 20% flat
      LTCG u/s 112A  — held > 12 months → 12.5% flat; ₹1.25L exemption p.a.
+   Debt MF (fundType="debt"):
+     STCG — held ≤ 36 months → slab rate (estimated at 30%)
+     LTCG — held > 36 months → 12.5% flat
+   Cross-offset: STCG losses can offset LTCG gains and vice versa (per Sec 111A/112A).
    Takes the shares[] and mf[] arrays + today's date.
    Returns { stcgGain, stcgLoss, ltcgGain, ltcgLoss, ltcgExempt, ltcgTaxable,
-             stcgTax, ltcgTax, totalTax, details[] }
+             stcgTax, ltcgTax, totalTax, details[], skippedMF }
    "details" = one row per holding with classification.
    ══════════════════════════════════════════════════════════════════════════ */
 const computeCapitalGains=(shares,mf)=>{
@@ -558,7 +562,7 @@ const computeCapitalGains=(shares,mf)=>{
   let stcgLoss=0,ltcgLoss=0;
   let skippedMF=0;
 
-  /* ── Equity shares ── */
+  /* ── Equity shares (always equity rules: 12-month threshold) ── */
   shares.forEach(sh=>{
     if(!sh.buyDate||!sh.currentPrice||!sh.buyPrice||!sh.qty)return;
     const buyD=new Date(sh.buyDate+"T12:00:00");
@@ -573,26 +577,37 @@ const computeCapitalGains=(shares,mf)=>{
     details.push({id:sh.id,name:sh.company,ticker:sh.ticker,daysHeld,isLT,cost,curVal,gain,type:"Share"});
   });
 
-  /* ── Equity-oriented MF (all MF treated as equity for simplicity;
-         user can exclude debt funds manually from the Tax Estimator) ── */
+  /* ── Mutual Funds: respect fundType field ──
+     fundType="debt" → 36-month LTCG threshold (debt-oriented funds)
+     fundType="equity" or unset → 12-month LTCG threshold (equity-oriented funds) */
   mf.forEach(m=>{
     if(!m.startDate||!m.nav||!m.units||!m.avgNav){skippedMF++;return;}
     const buyD=new Date(m.startDate+"T12:00:00");
     const todD=new Date(today+"T12:00:00");
     const daysHeld=Math.floor((todD-buyD)/86400000);
-    const isLT=daysHeld>365;
+    const isDebt=(m.fundType||"equity")==="debt";
+    const ltcgThreshold=isDebt?365*3:365; /* debt: 36 months, equity: 12 months */
+    const isLT=daysHeld>ltcgThreshold;
     const cost=m.units*(m.avgNav||0);
     const curVal=m.units*(m.nav||0);
     const gain=curVal-cost;
     if(gain>=0){if(isLT)ltcgGain+=gain;else stcgGain+=gain;}
     else{if(isLT)ltcgLoss+=Math.abs(gain);else stcgLoss+=Math.abs(gain);}
-    details.push({id:m.id,name:m.name,ticker:m.schemeCode,daysHeld,isLT,cost,curVal,gain,type:"MF"});
+    details.push({id:m.id,name:m.name,ticker:m.schemeCode,daysHeld,isLT,cost,curVal,gain,type:isDebt?"Debt MF":"MF"});
   });
 
   const ltcgExempt=Math.min(125000,Math.max(0,ltcgGain));
   const ltcgTaxable=Math.max(0,ltcgGain-ltcgExempt);
-  const stcgTax=Math.max(0,stcgGain-stcgLoss)*0.20;
-  const ltcgTax=Math.max(0,ltcgTaxable-ltcgLoss)*0.125;
+  /* BUG-6 FIX: allow cross-offset — STCG losses offset LTCG gains and vice versa.
+     After same-class netting, remaining losses cross-offset against the other class. */
+  const netStcg=Math.max(0,stcgGain-stcgLoss);
+  const netLtcg=Math.max(0,ltcgTaxable-ltcgLoss);
+  const stcgRemLoss=Math.max(0,stcgLoss-stcgGain); /* excess STCG loss */
+  const ltcgRemLoss=Math.max(0,ltcgLoss-ltcgTaxable); /* excess LTCG loss */
+  const crossStcg=Math.max(0,netStcg-ltcgRemLoss); /* STCG after LTCG loss offset */
+  const crossLtcg=Math.max(0,netLtcg-stcgRemLoss); /* LTCG after STCG loss offset */
+  const stcgTax=crossStcg*0.20;
+  const ltcgTax=crossLtcg*0.125;
   return{stcgGain,stcgLoss,ltcgGain,ltcgLoss,ltcgExempt,ltcgTaxable,stcgTax,ltcgTax,totalTax:stcgTax+ltcgTax,details,skippedMF};
 };
 
@@ -991,7 +1006,28 @@ const reducer=(s,a)=>{
       };
     }
     case"ADD_SUBCAT":return{...s,categories:s.categories.map(c=>c.id===a.catId?{...c,subs:[...c.subs,{id:"cs_"+uid(),name:a.name,defaultPayee:a.defaultPayee||""}]}:c)};
-    case"DEL_SUBCAT":return{...s,categories:s.categories.map(c=>c.id===a.catId?{...c,subs:c.subs.filter(sc=>sc.id!==a.subId)}:c)};
+    case"DEL_SUBCAT":{
+      /* BUG-3+4 FIX: cascade cleanup — remove orphaned catRules and roll back
+         transactions referencing the deleted subcategory to their parent category */
+      const _delParent=s.categories.find(c=>c.id===a.catId);
+      const _delSub=_delParent?((_delParent.subs)||[]).find(sc=>sc.id===a.subId):null;
+      const _delFullCat=_delParent&&_delSub?_delParent.name+"::"+_delSub.name:"";
+      const _delSubName=_delSub?_delSub.name:"";
+      const updCats=s.categories.map(c=>c.id===a.catId?{...c,subs:c.subs.filter(sc=>sc.id!==a.subId)}:c);
+      if(!_delFullCat)return{...s,categories:updCats};
+      /* Roll transactions back to parent category (e.g. "Food::Groceries" → "Food") */
+      const _rollBackCat=cat=>cat===_delFullCat?_delParent.name:cat;
+      const _updTx=t=>{const c=t.cat||"";return c===_delFullCat?{...t,cat:_delParent.name}:t;};
+      const _updSched=sc=>{const c=sc.cat||"";return c===_delFullCat?{...sc,cat:_delParent.name}:sc;};
+      return{...s,categories:updCats,
+        /* Remove catRules that reference the deleted subcategory */
+        catRules:(s.catRules||[]).filter(r=>r.cat!==_delFullCat),
+        banks:s.banks.map(b=>({...b,transactions:b.transactions.map(_updTx)})),
+        cards:s.cards.map(c=>({...c,transactions:c.transactions.map(_updTx)})),
+        cash:{...s.cash,transactions:s.cash.transactions.map(_updTx)},
+        scheduled:(s.scheduled||[]).map(_updSched),
+      };
+    }
     case"EDIT_SUBCAT":{
       /* Cascade rename AND defaultPayee changes to every matching transaction */
       const _parentCat=s.categories.find(c=>c.id===a.catId);
@@ -1091,9 +1127,13 @@ const reducer=(s,a)=>{
       let ns={...s};
 
       if(sc.isTransfer){
-        /* Transfer scheduled: debit source account, credit target account */
-        const srcType=sc.srcAccType||sc.accType;
+        /* BUG-8 FIX: resolve source type/ID deterministically from state, not from
+           potentially stale fallback fields. If srcAccType is missing, look up the
+           actual account to determine its type. */
         const srcId=sc.srcId||sc.accId;
+        const _srcIsBank=s.banks.some(b=>b.id===srcId);
+        const _srcIsCard=s.cards.some(c=>c.id===srcId);
+        const srcType=sc.srcAccType||(_srcIsBank?"bank":_srcIsCard?"card":"cash");
         const tgtType=sc.tgtAccType;
         const tgtId=sc.tgtId;
         /* Compute _sn for source and target before building txs */
