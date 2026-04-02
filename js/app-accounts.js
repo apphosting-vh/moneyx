@@ -138,13 +138,7 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
                 title:"Open "+att.name,
                 onClick:async e=>{
                   e.stopPropagation();
-                  const handle=await accRcptGetHandle(b.id,att.name);
-                  if(!handle){return;}
-                  try{
-                    const perm=await handle.queryPermission({mode:"read"});
-                    if(perm!=="granted"){const r=await handle.requestPermission({mode:"read"});if(r!=="granted")return;}
-                    const file=await handle.getFile();
-                    const url=URL.createObjectURL(file);
+                  const openUrl=(url)=>{
                     if(att.type&&att.type.includes("image")){
                       setLightbox({url,name:att.name});
                     }else{
@@ -152,6 +146,24 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
                       document.body.appendChild(a);a.click();document.body.removeChild(a);
                       setTimeout(()=>URL.revokeObjectURL(url),5000);
                     }
+                  };
+                  const handle=await accRcptGetHandle(b.id,att.name);
+                  if(!handle){
+                    /* Handle lost (cache cleared / restored from backup) — fall back to stored blob */
+                    const blobData=await accRcptGetBlobData(b.id,att.name);
+                    if(!blobData)return;
+                    try{
+                      const bytes=Uint8Array.from(atob(blobData.b64),c=>c.charCodeAt(0));
+                      const blob=new Blob([bytes],{type:blobData.mimeType||att.type});
+                      openUrl(URL.createObjectURL(blob));
+                    }catch{}
+                    return;
+                  }
+                  try{
+                    const perm=await handle.queryPermission({mode:"read"});
+                    if(perm!=="granted"){const r=await handle.requestPermission({mode:"read"});if(r!=="granted")return;}
+                    const file=await handle.getFile();
+                    openUrl(URL.createObjectURL(file));
                   }catch{}
                 },
                 style:{background:"none",border:"none",cursor:"pointer",padding:0,color:"var(--accent)",fontSize:11,fontFamily:"'DM Sans',sans-serif",textDecoration:"underline",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}
@@ -378,13 +390,7 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
                 title:"Open "+att.name,
                 onClick:async e=>{
                   e.stopPropagation();
-                  const handle=await accRcptGetHandle(c.id,att.name);
-                  if(!handle){return;}
-                  try{
-                    const perm=await handle.queryPermission({mode:"read"});
-                    if(perm!=="granted"){const r=await handle.requestPermission({mode:"read"});if(r!=="granted")return;}
-                    const file=await handle.getFile();
-                    const url=URL.createObjectURL(file);
+                  const openUrl=(url)=>{
                     if(att.type&&att.type.includes("image")){
                       setLightbox({url,name:att.name});
                     }else{
@@ -392,6 +398,24 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
                       document.body.appendChild(a);a.click();document.body.removeChild(a);
                       setTimeout(()=>URL.revokeObjectURL(url),5000);
                     }
+                  };
+                  const handle=await accRcptGetHandle(c.id,att.name);
+                  if(!handle){
+                    /* Handle lost (cache cleared / restored from backup) — fall back to stored blob */
+                    const blobData=await accRcptGetBlobData(c.id,att.name);
+                    if(!blobData)return;
+                    try{
+                      const bytes=Uint8Array.from(atob(blobData.b64),c=>c.charCodeAt(0));
+                      const blob=new Blob([bytes],{type:blobData.mimeType||att.type});
+                      openUrl(URL.createObjectURL(blob));
+                    }catch{}
+                    return;
+                  }
+                  try{
+                    const perm=await handle.queryPermission({mode:"read"});
+                    if(perm!=="granted"){const r=await handle.requestPermission({mode:"read"});if(r!=="granted")return;}
+                    const file=await handle.getFile();
+                    openUrl(URL.createObjectURL(file));
                   }catch{}
                 },
                 style:{background:"none",border:"none",cursor:"pointer",padding:0,color:"var(--accent)",fontSize:11,fontFamily:"'DM Sans',sans-serif",textDecoration:"underline",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}
