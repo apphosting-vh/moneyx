@@ -286,6 +286,10 @@ const mfNavDateToISO=(s)=>{
   if(p.length===3&&_MON_MAP[p[1]]){
     return p[2]+"-"+_MON_MAP[p[1]]+"-"+p[0].padStart(2,"0");
   }
+  /* DD-MM-YYYY (numeric months) from AMFI NAVAll.txt */
+  if(p.length===3&&/^\d{2}$/.test(p[1])&&/^\d{4}$/.test(p[2])){
+    return p[2]+"-"+p[1]+"-"+p[0].padStart(2,"0");
+  }
   return s; /* unknown format — return as-is */
 };
 /* Migrate a legacy eodNavs object whose keys may be DD-MMM-YYYY → ISO keys */

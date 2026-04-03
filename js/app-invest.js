@@ -1651,7 +1651,7 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
       try{
         const res=await fetchOneNav(m.schemeCode);
         if(!res)return m;
-        return{...m,nav:res.nav,navDate:res.navDate,currentValue:res.nav*m.units};
+        return{...m,nav:res.nav,navDate:res.navDate,navDateISO:res.navDateISO,currentValue:res.nav*m.units};
       }catch{return m;}
     }));
     dispatch({type:"UPD_MF_NAV",p:upd});
