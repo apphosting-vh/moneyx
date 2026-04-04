@@ -1824,6 +1824,8 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
            by "before today". latestDate drives both the hero value and the badge. */
         const latestDate=allDates.slice(-1)[0];
         const prevDate=allDates.slice(-2,-1)[0];
+        const _heroTodayISO=TODAY();
+        const _heroYesterdayISO=(new Date(Date.now()-864e5)).toISOString().slice(0,10);
         /* Compute total portfolio value for each recorded date (chart) */
         const chartPts=allDates.map(date=>{
           const navSnap=_normHeroNavs[date]||{};
@@ -1871,7 +1873,7 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
             }},
               /* TODAY column */
               React.createElement("div",{style:{padding:"12px 16px"}},
-                React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"#6d28d9",textTransform:"uppercase",letterSpacing:1.1,marginBottom:4}},(latestDate===TODAY()?"Today":"Latest NAV")+(latestDate?" · "+fmtDateLabel(latestDate):"")),
+                React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"#6d28d9",textTransform:"uppercase",letterSpacing:1.1,marginBottom:4}},(latestDate===_heroTodayISO?"Today":"Latest NAV")+(latestDate?" · "+fmtDateLabel(latestDate):"")),
                 React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:20,color:"#6d28d9"}},latestTotal!==null?INR(latestTotal):"--"),
                 dayChgAbs!==null&&React.createElement("div",{style:{fontSize:11,color:dayChgAbs>=0?"#16a34a":"#ef4444",marginTop:3,fontWeight:600}},
                   (dayChgAbs>=0?"▲ +":"▼ ")+INR(Math.abs(dayChgAbs))+" vs prev NAV"
@@ -1894,7 +1896,7 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
               ),
               /* YESTERDAY column */
               prevDate&&React.createElement("div",{style:{padding:"12px 16px",opacity:.85}},
-                React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:1.1,marginBottom:4}},(()=>{const y=new Date();y.setDate(y.getDate()-1);const yISO=y.toISOString().slice(0,10);return(prevDate===yISO?"Yesterday":"Prev NAV")+" · "+fmtDateLabel(prevDate);})(),
+                React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:1.1,marginBottom:4}},(prevDate===_heroYesterdayISO?"Yesterday":"Prev NAV")+" · "+fmtDateLabel(prevDate)),
                 React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:20,color:"var(--text3)"}},prevTotal!==null?INR(prevTotal):"--"),
                 React.createElement("div",{style:{fontSize:11,color:"var(--text6)",marginTop:3}},prevDate?"Prev NAV snapshot":"")
               )
