@@ -1871,10 +1871,10 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
             }},
               /* TODAY column */
               React.createElement("div",{style:{padding:"12px 16px"}},
-                React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"#6d28d9",textTransform:"uppercase",letterSpacing:1.1,marginBottom:4}},"Today"+(latestDate?" · "+fmtDateLabel(latestDate):"")),
+                React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"#6d28d9",textTransform:"uppercase",letterSpacing:1.1,marginBottom:4}},(latestDate===TODAY()?"Today":"Latest NAV")+(latestDate?" · "+fmtDateLabel(latestDate):"")),
                 React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:20,color:"#6d28d9"}},latestTotal!==null?INR(latestTotal):"--"),
                 dayChgAbs!==null&&React.createElement("div",{style:{fontSize:11,color:dayChgAbs>=0?"#16a34a":"#ef4444",marginTop:3,fontWeight:600}},
-                  (dayChgAbs>=0?"▲ +":"▼ ")+INR(Math.abs(dayChgAbs))+" vs prev"
+                  (dayChgAbs>=0?"▲ +":"▼ ")+INR(Math.abs(dayChgAbs))+" vs prev NAV"
                 )
               ),
               /* Centre badge — only when both dates exist */
@@ -1888,15 +1888,15 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
                 dayChgPct!==null
                   ?React.createElement("div",{style:{textAlign:"center",padding:"10px 12px"}},
                       React.createElement("div",{style:{fontSize:16,fontWeight:800,color:dayChgPct>=0?"#16a34a":"#ef4444",lineHeight:1}},(dayChgPct>=0?"▲":""+(dayChgPct<0?"▼":""))+" "+(dayChgPct>=0?"+":"")+Math.abs(dayChgPct).toFixed(2)+"%"),
-                      React.createElement("div",{style:{fontSize:9,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,marginTop:3}},dayChgPct>=0?"Day gain":"Day loss")
+                      React.createElement("div",{style:{fontSize:9,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,marginTop:3}},dayChgPct>=0?"NAV gain":"NAV loss")
                   )
                   :React.createElement("div",{style:{padding:"10px 8px",fontSize:11,color:"var(--text5)"}},"–")
               ),
               /* YESTERDAY column */
               prevDate&&React.createElement("div",{style:{padding:"12px 16px",opacity:.85}},
-                React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:1.1,marginBottom:4}},"Yesterday · "+fmtDateLabel(prevDate)),
+                React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:1.1,marginBottom:4}},(()=>{const y=new Date();y.setDate(y.getDate()-1);const yISO=y.toISOString().slice(0,10);return(prevDate===yISO?"Yesterday":"Prev NAV")+" · "+fmtDateLabel(prevDate);})(),
                 React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:20,color:"var(--text3)"}},prevTotal!==null?INR(prevTotal):"--"),
-                React.createElement("div",{style:{fontSize:11,color:"var(--text6)",marginTop:3}},prevDate?"Prev snapshot":"")
+                React.createElement("div",{style:{fontSize:11,color:"var(--text6)",marginTop:3}},prevDate?"Prev NAV snapshot":"")
               )
             ),
             /* ── Bottom stats: CoA + Total Gain/Loss ── */
