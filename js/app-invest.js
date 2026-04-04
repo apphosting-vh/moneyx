@@ -617,13 +617,14 @@ const InvestDashboard=React.memo(({mf,shares,fd,re=[],dispatch,isMobile,eodPrice
          eodNavs only stores officially published NAV dates so the latest entry
          IS the most recent completed trading day regardless of calendar date.
          latestDate = most recent published NAV; prevDate = the one before it. */
-      const _eodAllDates=Object.keys(eodNavs||{}).sort();
+      const _normDashNavs=normalizeEodNavKeys(eodNavs||{});
+      const _eodAllDates=Object.keys(_normDashNavs).sort();
       const _latestNavDate=_eodAllDates.slice(-1)[0];
       const _prevNavDate=_eodAllDates.slice(-2,-1)[0];
       let mfDayChgPct=null;
       if(_latestNavDate&&_prevNavDate){
-        const latestTotal=mf.reduce((s,m)=>{const n=(eodNavs[_latestNavDate]||{})[m.schemeCode];return s+(n?n*m.units:0);},0);
-        const prevTotal=mf.reduce((s,m)=>{const n=(eodNavs[_prevNavDate]||{})[m.schemeCode];return s+(n?n*m.units:0);},0);
+        const latestTotal=mf.reduce((s,m)=>{const n=(_normDashNavs[_latestNavDate]||{})[m.schemeCode];return s+(n?n*m.units:0);},0);
+        const prevTotal=mf.reduce((s,m)=>{const n=(_normDashNavs[_prevNavDate]||{})[m.schemeCode];return s+(n?n*m.units:0);},0);
         if(prevTotal>0&&latestTotal>0)mfDayChgPct=((latestTotal-prevTotal)/prevTotal*100);
       }
       return React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
@@ -1812,8 +1813,11 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
       ),
       /* ── MF day-change hero card + portfolio value chart ── */
       (()=>{
-        /* All eodNavs dates sorted ascending */
-        const allDates=Object.keys(eodNavs||{}).sort();
+        /* All eodNavs dates sorted ascending — normalise keys to ISO first so that
+           any legacy DD-MMM-YYYY keys (e.g. "29-Mar-2026") sort correctly relative
+           to ISO keys instead of landing at the wrong position lexicographically. */
+        const _normHeroNavs=normalizeEodNavKeys(eodNavs||{});
+        const allDates=Object.keys(_normHeroNavs).sort();
         /* Use the two most recent EOD snapshot dates for day-change.
            eodNavs only stores officially published NAV dates, so the latest
            entry IS the most recent completed trading day — no need to filter
@@ -1822,7 +1826,7 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
         const prevDate=allDates.slice(-2,-1)[0];
         /* Compute total portfolio value for each recorded date (chart) */
         const chartPts=allDates.map(date=>{
-          const navSnap=eodNavs[date]||{};
+          const navSnap=_normHeroNavs[date]||{};
           const val=mf.reduce((s,m)=>{const n=navSnap[m.schemeCode];return s+(n?n*m.units:0);},0);
           /* date is ISO YYYY-MM-DD — convert to short DD-MMM label */
           const parts=date.split("-"); // [YYYY, MM, DD]
@@ -1833,8 +1837,8 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
           return{value:val,label,fullDate};
         }).filter(p=>p.value>0);
         /* Day change: latest snapshot vs the one before it */
-        const latestTotal=latestDate?mf.reduce((s,m)=>{const n=(eodNavs[latestDate]||{})[m.schemeCode];return s+(n?n*m.units:0);},0):null;
-        const prevTotal=prevDate?mf.reduce((s,m)=>{const n=(eodNavs[prevDate]||{})[m.schemeCode];return s+(n?n*m.units:0);},0):null;
+        const latestTotal=latestDate?mf.reduce((s,m)=>{const n=(_normHeroNavs[latestDate]||{})[m.schemeCode];return s+(n?n*m.units:0);},0):null;
+        const prevTotal=prevDate?mf.reduce((s,m)=>{const n=(_normHeroNavs[prevDate]||{})[m.schemeCode];return s+(n?n*m.units:0);},0):null;
         const dayChgAbs=latestTotal&&prevTotal&&prevTotal>0?latestTotal-prevTotal:null;
         const dayChgPct=latestTotal&&prevTotal&&prevTotal>0?((latestTotal-prevTotal)/prevTotal*100):null;
         /* Hero value driven by eodNavs latest snapshot for consistency with badge */
@@ -2026,11 +2030,12 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
              not have updated yet today) against D-1 produces a misleading figure.
              Instead compare the two most recent completed trading days from eodNavs. */
           const todayIST2=getISTDateStr();
-          const _fundDatesBeforeToday=Object.keys(eodNavs||{}).filter(d=>d<todayIST2).sort();
+          const _normFundNavs=normalizeEodNavKeys(eodNavs||{});
+          const _fundDatesBeforeToday=Object.keys(_normFundNavs).filter(d=>d<todayIST2).sort();
           const _fundD1Dt=_fundDatesBeforeToday.slice(-1)[0];   // most recent completed day
           const _fundD2Dt=_fundDatesBeforeToday.slice(-2,-1)[0]; // day before that
-          const _fundD1Nav=_fundD1Dt?((eodNavs[_fundD1Dt]||{})[m.schemeCode]||null):null;
-          const _fundD2Nav=_fundD2Dt?((eodNavs[_fundD2Dt]||{})[m.schemeCode]||null):null;
+          const _fundD1Nav=_fundD1Dt?((_normFundNavs[_fundD1Dt]||{})[m.schemeCode]||null):null;
+          const _fundD2Nav=_fundD2Dt?((_normFundNavs[_fundD2Dt]||{})[m.schemeCode]||null):null;
           const navDayChgPct=_fundD1Nav&&_fundD2Nav&&_fundD2Nav>0?((_fundD1Nav-_fundD2Nav)/_fundD2Nav*100):null;
           return React.createElement(Card,{key:m.id},
             React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text2)",marginBottom:12,lineHeight:1.45}},m.name),
