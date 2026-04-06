@@ -1,4 +1,6 @@
 /* ── ExportReportModal, ReportsSection ── */
+/* Local-date formatter — avoids toISOString() UTC shift in IST (module-level for all components) */
+const fmtD=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 const ExportReportModal=({data,onClose})=>{
   const[periodType,setPeriodType]=useState("monthly"); /* monthly | yearly */
   const[selMonth,setSelMonth]=useState(()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;});
@@ -1080,8 +1082,6 @@ const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
   const[expanded,setExpanded]=useState({categories:true});
   const[exportOpen,setExportOpen]=useState(false);
   /* Memoize so the "6 Months active" check is stable across re-renders */
-  /* Local-date formatter — avoids toISOString() UTC shift bug */
-  const fmtD=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
   const{firstDay,lastDay}=React.useMemo(()=>{
     const now=new Date();
     return{

@@ -2,6 +2,10 @@
 /* Generated automatically — do not edit manually. */
 window.__MM_CHANGELOG =
 [
+  {version:"3.50.08",date:"2026-04-07",title:"Fix — 'fmtD is not defined' crash in Data & Backup and Auto Categorize tabs",changes:[
+    "Bug Fix (Critical) — Opening Settings → Data & Backup or Settings → Auto Categorize threw ReferenceError: fmtD is not defined, causing a blank screen. Root cause: the fmtD local-date formatter added in v3.50.06 was defined inside the ReportsSection component, but two other independent components (StorageGauge and CatRulesPanel) also referenced it. JavaScript const is block-scoped, so the function was invisible outside ReportsSection. Fix: moved fmtD to module scope (top of app-reports.js) so all components in the file can access it.",
+    "Service Worker cache key bumped to finsight-v3-50-08 — clears all prior caches on activate.",
+  ]},
   {version:"3.50.07",date:"2026-04-07",title:"Fix — Comprehensive UTC timezone shift audit: 7 more date comparison bugs fixed across Dashboard, Loans, Reports, Settings",changes:[
     "Bug Fix (Critical) — Dashboard FinancialCalendar: todayStr and horizonStr used toISOString() (UTC) to get today's date, causing all calendar events (scheduled transactions, credit card due dates, FD maturities, loan end dates, goal deadlines) to be filtered with yesterday's date before 05:30 IST. A scheduled transaction due today would not appear in the calendar until 05:30 AM. Same root cause as v3.50.06 Reports fix. Replaced with local-date formatter _fmtL.",
     "Bug Fix (Medium) — Dashboard sparkline chart: 7-day spending sparkline used toISOString() for date keys when matching against transaction dates. Before 05:30 IST, today's bar showed zero spend because the key was yesterday's date. Replaced with _fmtL.",
