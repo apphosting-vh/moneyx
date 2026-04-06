@@ -8,7 +8,7 @@
    • API / cross-origin  → pass through (browser handles CORS natively)
    ══════════════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'finsight-v3-50-07';
+const CACHE_NAME = 'finsight-v3-50-08';
 const MAX_RUNTIME_CACHE_ENTRIES = 80;     // cap runtime cache growth
 const MAX_CACHE_AGE_MS = 30 * 24 * 3600 * 1000; // 30 days max age for CDN assets
 
