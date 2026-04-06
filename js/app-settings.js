@@ -1,3 +1,5 @@
+/* Local-date formatter — avoids toISOString() UTC shift in IST */
+const _fmtLS=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 /* ── SettingsSection, CalculatorSection, NotesSection, ScheduledSection ── */
 const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,isMobile})=>{
   const[stab,setStab]=useState("appearance");
@@ -1817,7 +1819,7 @@ const ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,pa
       onConfirm:function(){
         /* For completed/expired entries, don't inherit the old nextDate (null or past).
            Use tomorrow so the copy doesn't immediately auto-execute on load. */
-        const tomorrow=(()=>{const d=new Date();d.setDate(d.getDate()+1);return d.toISOString().split("T")[0];})();
+        const tomorrow=(()=>{const d=new Date();d.setDate(d.getDate()+1);return _fmtLS(d);})();
         const baseDate=copySc.nextDate&&copySc.nextDate>TODAY()?copySc.nextDate:tomorrow;
         dispatch({type:"ADD_SCHEDULED",p:{
           ...copySc,id:undefined,

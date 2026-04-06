@@ -272,11 +272,13 @@ const ShareSummaryModal=({data,allBankTx,thisMonth,onClose})=>{
    Sources: scheduled transactions, card due dates, FD maturities,
             loan end dates, goal deadlines.
    ══════════════════════════════════════════════════════════════ */
+/* Local-date formatter — avoids toISOString() UTC shift in IST */
+const _fmtL=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 const FinancialCalendar=({data,isMobile})=>{
   const today=new Date();
-  const todayStr=today.toISOString().slice(0,10);
+  const todayStr=_fmtL(today);
   const horizon=new Date(today);horizon.setDate(horizon.getDate()+60);
-  const horizonStr=horizon.toISOString().slice(0,10);
+  const horizonStr=_fmtL(horizon);
   const diffDays=(ds)=>Math.ceil((new Date(ds+"T12:00:00")-today)/86400000);
   const MN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const INRc=v=>_inrFmt[0].format(v||0); // reuse cached formatter
@@ -474,7 +476,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
     const days=7,out=[];
     for(let i=days-1;i>=0;i--){
       const d=new Date();d.setDate(d.getDate()-i);
-      const k=d.toISOString().slice(0,10);
+      const k=_fmtL(d);
       out.push(txns.filter(t=>t.date===k).reduce((s,t)=>s+t.amount,0));
     }
     const maxV=Math.max(...out,1);

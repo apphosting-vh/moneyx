@@ -2228,7 +2228,7 @@ const StorageGauge=({dispatch,state})=>{
   /* ── Purge Old Transactions state ── */
   const[purgeDate,setPurgeDate]=useState(()=>{
     const d=new Date();d.setFullYear(d.getFullYear()-1);
-    return d.toISOString().split("T")[0];
+    return fmtD(d);
   });
   const[purgeSrc,setPurgeSrc]=useState({banks:true,cards:true,cash:true});
   const[purgePreview,setPurgePreview]=useState(null); /* null | {bCount,cCount,kCount,total,estBytes} */
@@ -2768,7 +2768,7 @@ const CatRulesPanel=({state,dispatch})=>{
   /* Payee frequency suggestions — top unmatched payees from last 90 days */
   const suggestions=React.useMemo(()=>{
     const cutoff=new Date();cutoff.setDate(cutoff.getDate()-90);
-    const cutStr=cutoff.toISOString().slice(0,10);
+    const cutStr=fmtD(cutoff);
     const freq={};
     const allTx=[
       ...state.banks.flatMap(b=>b.transactions),

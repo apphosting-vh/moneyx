@@ -1,3 +1,5 @@
+/* Local-date formatter — avoids toISOString() UTC shift in IST */
+const _fmtLD=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 /* ── PrepaySimModal, AmortizationModal, EmiPayModal, LoanSection, ConfirmModal ── */
 const PrepaySimModal=({loan,onClose})=>{
   const[extra,setExtra]=useState(loan.emi||0);
@@ -1752,7 +1754,7 @@ const RptCatMonthly=({data,from,to,onJumpToLedger,onExportPDF})=>{
                     React.createElement("span",{style:{fontSize:12,color:col,fontWeight:700,fontFamily:"'Sora',sans-serif",minWidth:70,textAlign:"right"}},INR(val)),
                     React.createElement("span",{style:{fontSize:10,color:"var(--text5)",minWidth:32,textAlign:"right"}},totalM>0?((val/totalM)*100).toFixed(0)+"%":""),
                     subs.length>0&&React.createElement("span",{style:{fontSize:9,color:"var(--text6)",marginLeft:4}},isExpCat?"▲":"▼"),
-                    onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([cat]),payees:new Set(),dateFrom:m+"-01",dateTo:new Date(+m.slice(0,4),+m.slice(5),0).toISOString().split("T")[0],label:cat+" · "+MONTH_NAMES[parseInt(m.slice(5))-1]+"'"+m.slice(2,4)})})
+                    onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([cat]),payees:new Set(),dateFrom:m+"-01",dateTo:_fmtLD(new Date(+m.slice(0,4),+m.slice(5),0)),label:cat+" · "+MONTH_NAMES[parseInt(m.slice(5))-1]+"'"+m.slice(2,4)})})
                   ),
                   isExpCat&&subs.map(([subKey,sv])=>React.createElement("div",{key:subKey,style:{display:"flex",alignItems:"center",gap:8,padding:"4px 8px 4px 28px",borderLeft:"2px solid "+col+"33",marginLeft:12,marginBottom:1}},
                     React.createElement("span",{style:{width:5,height:5,borderRadius:"50%",background:col,opacity:.6,flexShrink:0,display:"inline-block"}}),
@@ -1762,7 +1764,7 @@ const RptCatMonthly=({data,from,to,onJumpToLedger,onExportPDF})=>{
                     ),
                     React.createElement("span",{style:{fontSize:11,color:col,fontWeight:600,minWidth:70,textAlign:"right",fontFamily:"'Sora',sans-serif"}},INR(sv)),
                     React.createElement("span",{style:{fontSize:10,color:"var(--text5)",minWidth:32,textAlign:"right"}},val>0?((sv/val)*100).toFixed(0)+"%":""),
-                    onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([subKey]),payees:new Set(),dateFrom:m+"-01",dateTo:new Date(+m.slice(0,4),+m.slice(5),0).toISOString().split("T")[0],label:catDisplayName(subKey)+" · "+MONTH_NAMES[parseInt(m.slice(5))-1]+"'"+m.slice(2,4)})})
+                    onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([subKey]),payees:new Set(),dateFrom:m+"-01",dateTo:_fmtLD(new Date(+m.slice(0,4),+m.slice(5),0)),label:catDisplayName(subKey)+" · "+MONTH_NAMES[parseInt(m.slice(5))-1]+"'"+m.slice(2,4)})})
                   ))
                 );
               })
@@ -1799,7 +1801,7 @@ const RptCatMonthly=({data,from,to,onJumpToLedger,onExportPDF})=>{
               React.createElement("div",{style:{textAlign:"right"}},
                 React.createElement("div",{style:{fontSize:13,fontWeight:700,color:net>=0?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif"}},(net>=0?"+":"")+INR(net)),
                 React.createElement("div",{style:{fontSize:9,color:"var(--text5)",marginTop:1}},"net flow"),
-                onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set(),payees:new Set(),dateFrom:m+"-01",dateTo:new Date(+m.slice(0,4),+m.slice(5),0).toISOString().split("T")[0],label:"All · "+MONTH_NAMES[parseInt(m.slice(5))-1]+" "+m.slice(0,4)})})
+                onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set(),payees:new Set(),dateFrom:m+"-01",dateTo:_fmtLD(new Date(+m.slice(0,4),+m.slice(5),0)),label:"All · "+MONTH_NAMES[parseInt(m.slice(5))-1]+" "+m.slice(0,4)})})
               )
             ),
             React.createElement("div",{style:{marginTop:10}},React.createElement(MiniStackBar,{segments,total:totalM,h:8}))
@@ -1837,13 +1839,13 @@ const RptCatMonthly=({data,from,to,onJumpToLedger,onExportPDF})=>{
                   React.createElement(ClsBadge,{ct}),
                   React.createElement("span",{style:{fontSize:12,color:col,fontWeight:700,fontFamily:"'Sora',sans-serif"}},INR(val)),
                   subs.length>0&&React.createElement("span",{style:{fontSize:9,color:"var(--text6)",marginLeft:4}},isExpCat?"▲":"▼"),
-                  onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([cat]),payees:new Set(),dateFrom:m+"-01",dateTo:new Date(+m.slice(0,4),+m.slice(5),0).toISOString().split("T")[0],label:cat+" · "+MONTH_NAMES[parseInt(m.slice(5))-1]+" "+m.slice(0,4)})})
+                  onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([cat]),payees:new Set(),dateFrom:m+"-01",dateTo:_fmtLD(new Date(+m.slice(0,4),+m.slice(5),0)),label:cat+" · "+MONTH_NAMES[parseInt(m.slice(5))-1]+" "+m.slice(0,4)})})
                 ),
                 isExpCat&&subs.map(([subKey,sv])=>React.createElement("div",{key:subKey,style:{display:"flex",alignItems:"center",gap:7,padding:"4px 14px 4px 32px",borderLeft:"2px solid "+col+"33",marginLeft:0,background:"rgba(0,0,0,.02)"}},
                   React.createElement("span",{style:{width:5,height:5,borderRadius:"50%",background:col,opacity:.6,flexShrink:0,display:"inline-block"}}),
                   React.createElement("span",{style:{fontSize:11,color:"var(--text4)",flex:1}},catDisplayName(subKey)),
                   React.createElement("span",{style:{fontSize:11,color:col,fontWeight:600,fontFamily:"'Sora',sans-serif"}},INR(sv)),
-                  onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([subKey]),payees:new Set(),dateFrom:m+"-01",dateTo:new Date(+m.slice(0,4),+m.slice(5),0).toISOString().split("T")[0],label:catDisplayName(subKey)+" · "+MONTH_NAMES[parseInt(m.slice(5))-1]+" "+m.slice(0,4)})})
+                  onJumpToLedger&&React.createElement(JumpBtn,{onClick:()=>onJumpToLedger({cats:new Set([subKey]),payees:new Set(),dateFrom:m+"-01",dateTo:_fmtLD(new Date(+m.slice(0,4),+m.slice(5),0)),label:catDisplayName(subKey)+" · "+MONTH_NAMES[parseInt(m.slice(5))-1]+" "+m.slice(0,4)})})
                 ))
               );
             })
