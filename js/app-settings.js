@@ -1,5 +1,60 @@
 /* Local-date formatter — avoids toISOString() UTC shift in IST */
 const _fmtLS=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+/* ── MFXirrRow — extracted so useState is never called inside .map() ── */
+const MFXirrRow=({m,dispatch,askDelete})=>{
+  const trueCoA=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;
+  const currentVal=m.currentValue||m.invested;
+  const autoXirr=m.startDate&&trueCoA>0&&currentVal>0?xirrSingleBuy(trueCoA,currentVal,m.startDate):null;
+  const manualXirrVal=m.manualXirr!=null&&m.manualXirr!==""?+m.manualXirr:null;
+  const displayXirr=autoXirr!==null?autoXirr:manualXirrVal;
+  const isAuto=autoXirr!==null;
+  const[editingXirr,setEditingXirr]=React.useState(false);
+  const[xirrInput,setXirrInput]=React.useState(manualXirrVal!=null?String(manualXirrVal):"");
+  return React.createElement("div",{style:{display:"grid",gridTemplateColumns:"3fr 1fr 80px 140px auto",gap:12,padding:"12px 16px",borderBottom:"1px solid #0a1828",alignItems:"center"},className:"tr"},
+    React.createElement("div",null,
+      React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)",lineHeight:1.4}},m.name),
+      React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},"Code: "+m.schemeCode)
+    ),
+    React.createElement("div",{style:{fontSize:12,color:"var(--text3)"}},m.units.toFixed(3)),
+    React.createElement("div",{style:{fontSize:11,color:m.startDate?"var(--text3)":"var(--text6)"}},m.startDate||"—"),
+    editingXirr
+      ?React.createElement("div",{style:{display:"flex",gap:5,alignItems:"center"}},
+          React.createElement("input",{
+            className:"inp",type:"number",step:"0.01",
+            value:xirrInput,
+            onChange:e=>setXirrInput(e.target.value),
+            placeholder:"e.g. 14.5",
+            autoFocus:true,
+            style:{padding:"4px 8px",fontSize:12,width:80,borderRadius:6},
+            onKeyDown:e=>{
+              if(e.key==="Enter"){dispatch({type:"EDIT_MF",p:{id:m.id,manualXirr:xirrInput!==""?parseFloat(xirrInput):null}});setEditingXirr(false);}
+              if(e.key==="Escape")setEditingXirr(false);
+            }
+          }),
+          React.createElement("button",{
+            onClick:()=>{dispatch({type:"EDIT_MF",p:{id:m.id,manualXirr:xirrInput!==""?parseFloat(xirrInput):null}});setEditingXirr(false);},
+            style:{background:"rgba(22,163,74,.1)",border:"1px solid rgba(22,163,74,.3)",borderRadius:5,color:"#16a34a",cursor:"pointer",fontSize:11,padding:"3px 7px",fontFamily:"'DM Sans',sans-serif",fontWeight:700}
+          },"✓"),
+          React.createElement("button",{
+            onClick:()=>setEditingXirr(false),
+            style:{background:"none",border:"1px solid var(--border)",borderRadius:5,color:"var(--text5)",cursor:"pointer",fontSize:11,padding:"3px 7px",fontFamily:"'DM Sans',sans-serif"}
+          },"✕")
+        )
+      :React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+          displayXirr!==null
+            ?React.createElement("span",{style:{fontSize:13,fontWeight:700,color:displayXirr>=0?"#6d28d9":"#ef4444"}},(displayXirr>=0?"+":"")+displayXirr.toFixed(2)+"%")
+            :React.createElement("span",{style:{fontSize:11,color:"var(--text6)",fontStyle:"italic"}},"not set"),
+          displayXirr!==null&&React.createElement("span",{style:{fontSize:9,padding:"1px 4px",borderRadius:4,background:isAuto?"rgba(22,163,74,.13)":"rgba(180,83,9,.13)",color:isAuto?"#16a34a":"#b45309",fontWeight:700,border:"1px solid "+(isAuto?"rgba(22,163,74,.25)":"rgba(180,83,9,.25)")}},isAuto?"Auto":"Manual"),
+          React.createElement("button",{
+            onClick:()=>{setXirrInput(manualXirrVal!=null?String(manualXirrVal):"");setEditingXirr(true);},
+            title:isAuto?"Auto-calculated — set manual override":"Edit XIRR",
+            style:{background:"rgba(109,40,217,.08)",border:"1px solid rgba(109,40,217,.25)",borderRadius:5,color:"#6d28d9",cursor:"pointer",fontSize:10,padding:"2px 7px",fontFamily:"'DM Sans',sans-serif",fontWeight:600,whiteSpace:"nowrap"}
+          },isAuto?"Override":"Edit")
+        ),
+    React.createElement("button",{onClick:()=>askDelete(`Remove "${m.name}" from your portfolio?`,()=>dispatch({type:"DEL_MF",id:m.id})),style:{background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.25)",borderRadius:7,color:"#ef4444",cursor:"pointer",fontSize:12,padding:"5px 11px",fontFamily:"'DM Sans',sans-serif"}},"×")
+  );
+};
+
 /* ── SettingsSection, CalculatorSection, NotesSection, ScheduledSection ── */
 const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,isMobile})=>{
   const[stab,setStab]=useState("appearance");
@@ -413,64 +468,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
               React.createElement("span",{style:{whiteSpace:"nowrap"}},"XIRR (% p.a.)"),
               React.createElement("span",{style:{whiteSpace:"nowrap"}},"")),
             state.mf.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"chart",size:18}),text:"No mutual funds"}),
-            state.mf.map(m=>{
-              /* Determine displayed XIRR */
-              const trueCoA=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;
-              const currentVal=m.currentValue||m.invested;
-              const autoXirr=m.startDate&&trueCoA>0&&currentVal>0?xirrSingleBuy(trueCoA,currentVal,m.startDate):null;
-              const manualXirrVal=m.manualXirr!=null&&m.manualXirr!==""?+m.manualXirr:null;
-              const displayXirr=autoXirr!==null?autoXirr:manualXirrVal;
-              const isAuto=autoXirr!==null;
-              const[editingXirr,setEditingXirr]=React.useState(false);
-              const[xirrInput,setXirrInput]=React.useState(manualXirrVal!=null?String(manualXirrVal):"");
-              return React.createElement("div",{key:m.id,style:{display:"grid",gridTemplateColumns:"3fr 1fr 80px 140px auto",gap:12,padding:"12px 16px",borderBottom:"1px solid #0a1828",alignItems:"center"},className:"tr"},
-                React.createElement("div",null,
-                  React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)",lineHeight:1.4}},m.name),
-                  React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},"Code: "+m.schemeCode)
-                ),
-                React.createElement("div",{style:{fontSize:12,color:"var(--text3)"}},m.units.toFixed(3)),
-                React.createElement("div",{style:{fontSize:11,color:m.startDate?"var(--text3)":"var(--text6)"}},m.startDate||"—"),
-                /* XIRR cell: show value or inline editor */
-                editingXirr
-                  ?React.createElement("div",{style:{display:"flex",gap:5,alignItems:"center"}},
-                      React.createElement("input",{
-                        className:"inp",type:"number",step:"0.01",
-                        value:xirrInput,
-                        onChange:e=>setXirrInput(e.target.value),
-                        placeholder:"e.g. 14.5",
-                        autoFocus:true,
-                        style:{padding:"4px 8px",fontSize:12,width:80,borderRadius:6},
-                        onKeyDown:e=>{
-                          if(e.key==="Enter"){
-                            dispatch({type:"EDIT_MF",p:{id:m.id,manualXirr:xirrInput!==""?parseFloat(xirrInput):null}});
-                            setEditingXirr(false);
-                          }
-                          if(e.key==="Escape")setEditingXirr(false);
-                        }
-                      }),
-                      React.createElement("button",{
-                        onClick:()=>{dispatch({type:"EDIT_MF",p:{id:m.id,manualXirr:xirrInput!==""?parseFloat(xirrInput):null}});setEditingXirr(false);},
-                        style:{background:"rgba(22,163,74,.1)",border:"1px solid rgba(22,163,74,.3)",borderRadius:5,color:"#16a34a",cursor:"pointer",fontSize:11,padding:"3px 7px",fontFamily:"'DM Sans',sans-serif",fontWeight:700}
-                      },"✓"),
-                      React.createElement("button",{
-                        onClick:()=>setEditingXirr(false),
-                        style:{background:"none",border:"1px solid var(--border)",borderRadius:5,color:"var(--text5)",cursor:"pointer",fontSize:11,padding:"3px 7px",fontFamily:"'DM Sans',sans-serif"}
-                      },"✕")
-                    )
-                  :React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
-                      displayXirr!==null
-                        ?React.createElement("span",{style:{fontSize:13,fontWeight:700,color:displayXirr>=0?"#6d28d9":"#ef4444"}},(displayXirr>=0?"+":"")+displayXirr.toFixed(2)+"%")
-                        :React.createElement("span",{style:{fontSize:11,color:"var(--text6)",fontStyle:"italic"}},"not set"),
-                      displayXirr!==null&&React.createElement("span",{style:{fontSize:9,padding:"1px 4px",borderRadius:4,background:isAuto?"rgba(22,163,74,.13)":"rgba(180,83,9,.13)",color:isAuto?"#16a34a":"#b45309",fontWeight:700,border:"1px solid "+(isAuto?"rgba(22,163,74,.25)":"rgba(180,83,9,.25)")}},isAuto?"Auto":"Manual"),
-                      React.createElement("button",{
-                        onClick:()=>{setXirrInput(manualXirrVal!=null?String(manualXirrVal):"");setEditingXirr(true);},
-                        title:isAuto?"Auto-calculated — set manual override":"Edit XIRR",
-                        style:{background:"rgba(109,40,217,.08)",border:"1px solid rgba(109,40,217,.25)",borderRadius:5,color:"#6d28d9",cursor:"pointer",fontSize:10,padding:"2px 7px",fontFamily:"'DM Sans',sans-serif",fontWeight:600,whiteSpace:"nowrap"}
-                      },isAuto?"Override":"Edit")
-                    ),
-                React.createElement("button",{onClick:()=>askDelete(`Remove "${m.name}" from your portfolio?`,()=>dispatch({type:"DEL_MF",id:m.id})),style:{background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.25)",borderRadius:7,color:"#ef4444",cursor:"pointer",fontSize:12,padding:"5px 11px",fontFamily:"'DM Sans',sans-serif"}},"×")
-              );
-            })
+            state.mf.map(m=>React.createElement(MFXirrRow,{key:m.id,m,dispatch,askDelete}))
           )
         ),
         /* Shares */

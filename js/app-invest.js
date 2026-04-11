@@ -18,18 +18,45 @@ const ImportMFModal=({onImport,onClose})=>{
     for(const a of aliases){const i=lc.findIndex(h=>h===a||h.includes(a));if(i>=0)return i;}
     return -1;
   };
+  /* RFC-4180 CSV parser — no external library needed */
+  const parseCSVToRows=text=>{
+    const rows=[];let row=[],field="",inQ=false;
+    const push=()=>{row.push(field);field="";};
+    for(let i=0;i<text.length;i++){
+      const ch=text[i],nx=text[i+1];
+      if(inQ){
+        if(ch==='"'&&nx==='"'){field+='"';i++;}
+        else if(ch==='"'){inQ=false;}
+        else{field+=ch;}
+      } else {
+        if(ch==='"'){inQ=true;}
+        else if(ch===','){push();}
+        else if(ch==='\r'&&nx==='\n'){push();rows.push(row);row=[];i++;}
+        else if(ch==='\n'||ch==='\r'){push();rows.push(row);row=[];}
+        else{field+=ch;}
+      }
+    }
+    push();if(row.some(c=>c!==""))rows.push(row);
+    return rows;
+  };
   const handleFile=e=>{
     const file=e.target.files?.[0];if(!file)return;
     setParseErr("");setFileName(file.name);
     const reader=new FileReader();
+    const isCSV=file.name.toLowerCase().endsWith(".csv");
     reader.onload=ev=>{
       try{
-        const XL=window.XLSX;
-        const wb=file.name.toLowerCase().endsWith(".csv")
-          ?XL.read(ev.target.result,{type:"string"})
-          :XL.read(ev.target.result,{type:"array",cellDates:false,cellText:true});
-        const ws=wb.Sheets[wb.SheetNames[0]];
-        const all=XL.utils.sheet_to_json(ws,{header:1,defval:"",raw:false});
+        let all;
+        if(isCSV){
+          /* Parse CSV natively — window.XLSX is not loaded */
+          all=parseCSVToRows(ev.target.result);
+        } else {
+          const XL=window.XLSX;
+          if(!XL){setParseErr("Excel import is not available. Please export your holdings as a CSV file and import that instead.");return;}
+          const wb=XL.read(ev.target.result,{type:"array",cellDates:false,cellText:true});
+          const ws=wb.Sheets[wb.SheetNames[0]];
+          all=XL.utils.sheet_to_json(ws,{header:1,defval:"",raw:false});
+        }
         let hi=0;for(let i=0;i<Math.min(8,all.length);i++){if(all[i].filter(c=>c!=="").length>=2){hi=i;break;}}
         const hdrs=all[hi].map(h=>(h??"")+""
         );
@@ -51,7 +78,7 @@ const ImportMFModal=({onImport,onClose})=>{
         setPreview({items,skipped});setStep("preview");
       }catch(err){setParseErr("Parse error: "+err.message);}
     };
-    file.name.toLowerCase().endsWith(".csv")?reader.readAsText(file):reader.readAsArrayBuffer(file);
+    isCSV?reader.readAsText(file):reader.readAsArrayBuffer(file);
     e.target.value="";
   };
   const downloadTemplate=()=>{
@@ -138,6 +165,298 @@ const ImportMFModal=({onImport,onClose})=>{
   );
 };
 
+/* ── IMPORT MF TRANSACTIONS MODAL (full buy/sell history from CSV) ───────── */
+const ImportMFTxnsModal=({onImport,onClose})=>{
+  const[step,setStep]=useState("upload");
+  const[preview,setPreview]=useState(null);
+  const[parseErr,setParseErr]=useState("");
+  const[fileName,setFileName]=useState("");
+
+  const handleFile=e=>{
+    const file=e.target.files?.[0];if(!file)return;
+    setParseErr("");setFileName(file.name);
+    const reader=new FileReader();
+    const isCSV=file.name.toLowerCase().endsWith(".csv");
+    reader.onload=ev=>{
+      try{
+        const text=ev.target.result;
+        let all;
+        if(isCSV){
+          /* Parse CSV natively — window.XLSX is not loaded */
+          const rows=[];let row=[],field="",inQ=false;
+          const push=()=>{row.push(field);field="";};
+          for(let i=0;i<text.length;i++){
+            const ch=text[i],nx=text[i+1];
+            if(inQ){if(ch==='"'&&nx==='"'){field+='"';i++;}else if(ch==='"'){inQ=false;}else{field+=ch;}}
+            else{if(ch==='"'){inQ=true;}else if(ch===','){push();}else if(ch==='\r'&&nx==='\n'){push();rows.push(row);row=[];i++;}else if(ch==='\n'||ch==='\r'){push();rows.push(row);row=[];}else{field+=ch;}}
+          }
+          push();if(row.some(c=>c!==""))rows.push(row);
+          all=rows;
+        } else {
+          const XL=window.XLSX;
+          if(!XL){setParseErr("Excel import is not available. Please export your transactions as a CSV file and import that instead.");return;}
+          const wb=XL.read(ev.target.result,{type:"array",cellDates:false,cellText:true});
+          const ws=wb.Sheets[wb.SheetNames[0]];
+          all=XL.utils.sheet_to_json(ws,{header:1,defval:"",raw:false});
+        }
+        /* Find header row */
+        let hi=0;
+        for(let i=0;i<Math.min(8,all.length);i++){
+          const row=all[i].map(c=>(c??"")+"");
+          if(row.filter(c=>c.trim()!=="").length>=3){hi=i;break;}
+        }
+        const hdrs=all[hi].map(h=>(h??"")+"");
+        const data=all.slice(hi+1).filter(r=>r.some(c=>(c??"")+"".trim()!==""));
+        if(!hdrs.length||!data.length){setParseErr("No data found. Check the file has headers and data rows.");return;}
+        /* Auto-detect columns */
+        const lcH=hdrs.map(h=>h.toLowerCase().trim());
+        const findCol=(...aliases)=>{for(const a of aliases){const i=lcH.findIndex(h=>h===a||h.includes(a));if(i>=0)return i;}return-1;};
+        const ci={
+          date:  findCol("date","txn date","transaction date","date of transaction"),
+          folio: findCol("folio number","folio no","folio","folio #","foliono"),
+          name:  findCol("name of the fund","fund name","scheme name","name","fund","scheme"),
+          order: findCol("order","type","order type","transaction type","buy/sell","action"),
+          units: findCol("units","qty","quantity","no of units"),
+          nav:   findCol("nav","nav price","purchase nav","sale nav","nav (inr)"),
+          amount:findCol("amount (inr)","amount","value","transaction amount","inr amount","amount inr"),
+        };
+        const get=(row,col)=>{if(col<0)return"";return(row[col]??"")+"".trim();};
+        const txns=[],skipped=[];
+        data.forEach((row,i)=>{
+          const dateStr=get(row,ci.date);
+          const fundName=get(row,ci.name);
+          if(!fundName||!dateStr){skipped.push(i+hi+2);return;}
+          /* Normalize date to YYYY-MM-DD */
+          let date=dateStr;
+          if(/^\d{2}[\/-]\d{2}[\/-]\d{4}$/.test(dateStr)){
+            const parts=dateStr.split(/[\/-]/);
+            date=parts[2]+"-"+parts[1]+"-"+parts[0];
+          }else if(/^\d{4}[\/-]\d{2}[\/-]\d{2}$/.test(dateStr)){
+            date=dateStr.replace(/\//g,"-");
+          }
+          const orderRaw=get(row,ci.order).toLowerCase();
+          const orderType=orderRaw.includes("sell")||orderRaw.includes("redeem")?"sell":"buy";
+          const units=parseFloat((get(row,ci.units)).replace(/[^0-9.\-]/g,""))||0;
+          const nav=parseFloat((get(row,ci.nav)).replace(/[^0-9.\-]/g,""))||0;
+          const amount=parseFloat((get(row,ci.amount)).replace(/[^0-9.\-]/g,""))||0;
+          let folio=get(row,ci.folio);
+          /* Fix Excel scientific notation for folio numbers (e.g., "5.99312E+11" → "599312000000") */
+          if(folio&&/^\d+\.?\d*[eE][+-]?\d+$/.test(folio))folio=Number(folio).toFixed(0);
+          txns.push({date,fundName,folio,orderType,units,nav,amount});
+        });
+        if(!txns.length){setParseErr("No valid transactions found. Check column headers.");return;}
+        setPreview({txns,skipped});setStep("preview");
+      }catch(err){setParseErr("Parse error: "+err.message);}
+    };
+    isCSV?reader.readAsText(file):reader.readAsArrayBuffer(file);
+    e.target.value="";
+  };
+
+  const doImport=()=>{if(preview?.txns?.length){onImport(preview.txns);setStep("done");}};
+
+  /* Summarise by fund */
+  const fundSummary=(txns)=>{
+    const map={};
+    txns.forEach(t=>{
+      if(!map[t.fundName])map[t.fundName]={buys:0,sells:0,buyUnits:0,sellUnits:0};
+      if(t.orderType==="buy"){map[t.fundName].buys++;map[t.fundName].buyUnits+=t.units;}
+      else{map[t.fundName].sells++;map[t.fundName].sellUnits+=t.units;}
+    });
+    return Object.entries(map).map(([name,d])=>({name,...d}));
+  };
+
+  return React.createElement(Modal,{title:"Import MF Transactions (Full History)",onClose,w:720},
+    step==="upload"&&React.createElement("div",null,
+      React.createElement("div",{style:{fontSize:13,color:"var(--text4)",marginBottom:16,lineHeight:1.7}},
+        "Upload a CSV or Excel file containing your mutual fund buy/sell transaction history. ",
+        "Each row should represent one transaction (buy or sell). Holdings will be automatically derived from the transaction history."
+      ),
+      React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginBottom:12,lineHeight:1.6}},
+        React.createElement("strong",null,"Expected columns:"),
+        " Date, Folio Number, Name of the Fund, Order (buy/sell), Units, NAV, Amount (INR)"
+      ),
+      React.createElement("label",{style:{display:"flex",flexDirection:"column",alignItems:"center",gap:10,border:"2px dashed var(--border)",borderRadius:14,padding:"36px 20px",cursor:"pointer",background:"var(--accentbg2)",textAlign:"center"}},
+        React.createElement("span",{style:{fontSize:44}},React.createElement(Icon,{n:"chart",size:18})),
+        React.createElement("span",{style:{fontSize:15,fontWeight:600,color:"var(--text2)"}},"Click to choose file"),
+        React.createElement("span",{style:{fontSize:12,color:"var(--text5)"}},"Supports .xlsx, .xls, .csv"),
+        React.createElement("input",{type:"file",accept:".xlsx,.xls,.csv",style:{display:"none"},onChange:handleFile})
+      ),
+      parseErr&&React.createElement("div",{style:{marginTop:10,padding:"9px 13px",background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.3)",borderRadius:8,fontSize:12,color:"#ef4444"}},"⚠ "+parseErr)
+    ),
+    step==="preview"&&preview&&React.createElement("div",null,
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:13}},
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text2)",marginBottom:2}},
+            preview.txns.length+" transaction"+(preview.txns.length!==1?"s":"")+" found across "+fundSummary(preview.txns).length+" fund"+(fundSummary(preview.txns).length!==1?"s":"")
+          ),
+          React.createElement("div",{style:{fontSize:12,color:"var(--text5)"}},fileName+(preview.skipped.length?" · "+preview.skipped.length+" rows skipped":""))
+        ),
+        React.createElement("button",{onClick:()=>setStep("upload"),style:{background:"none",border:"1px solid var(--border)",borderRadius:7,color:"var(--text5)",cursor:"pointer",fontSize:12,padding:"5px 11px",fontFamily:"'DM Sans',sans-serif"}},"← Re-upload")
+      ),
+      /* Fund summary */
+      React.createElement("div",{style:{border:"1px solid var(--border)",borderRadius:10,overflow:"hidden",marginBottom:14}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 80px 80px 90px 90px",background:"var(--bg4)",padding:"7px 12px",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,borderBottom:"1px solid var(--border)"}},
+          ["Fund Name","Buys","Sells","Buy Units","Sell Units"].map(h=>React.createElement("div",{key:h,style:{textAlign:h!=="Fund Name"?"right":"left"}},h))
+        ),
+        React.createElement("div",{style:{maxHeight:220,overflowY:"auto"}},
+          fundSummary(preview.txns).map((f,i)=>React.createElement("div",{key:i,style:{display:"grid",gridTemplateColumns:"2fr 80px 80px 90px 90px",padding:"8px 12px",borderBottom:"1px solid var(--border2)",background:i%2?"rgba(255,255,255,.014)":"transparent",fontSize:12,alignItems:"center"}},
+            React.createElement("div",{style:{color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",paddingRight:8}},f.name),
+            React.createElement("div",{style:{textAlign:"right",color:"#16a34a",fontWeight:600}},f.buys),
+            React.createElement("div",{style:{textAlign:"right",color:"#ef4444",fontWeight:600}},f.sells),
+            React.createElement("div",{style:{textAlign:"right",color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},f.buyUnits.toFixed(3)),
+            React.createElement("div",{style:{textAlign:"right",color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},f.sellUnits.toFixed(3))
+          ))
+        )
+      ),
+      preview.skipped.length>0&&React.createElement("div",{style:{padding:"8px 12px",background:"rgba(194,65,12,.08)",border:"1px solid rgba(194,65,12,.3)",borderRadius:8,fontSize:12,color:"#c2410c",marginBottom:12}},
+        "⚠ Skipped rows: "+preview.skipped.slice(0,10).join(", ")+(preview.skipped.length>10?"…":"")
+      ),
+      React.createElement("div",{style:{fontSize:12,color:"var(--text4)",marginBottom:14,padding:"9px 13px",background:"var(--accentbg2)",borderRadius:8,border:"1px solid var(--border2)"}},
+        "Holdings will be derived automatically: net units = buy units − sell units. Funds with zero remaining units will be hidden from the dashboard."
+      ),
+      React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
+        React.createElement(Btn,{onClick:doImport,sx:{flex:"1 1 120px",justifyContent:"center"}},"✓ Import "+preview.txns.length+" Transaction"+(preview.txns.length!==1?"s":"")),
+        React.createElement(Btn,{v:"secondary",onClick:onClose},"Cancel")
+      )
+    ),
+    step==="done"&&React.createElement("div",{style:{textAlign:"center",padding:"28px 20px"}},
+      React.createElement("div",{style:{fontSize:52,marginBottom:10}},React.createElement(Icon,{n:"checkcircle",size:16})),
+      React.createElement("div",{style:{fontSize:17,fontWeight:700,color:"var(--text)",marginBottom:8,fontFamily:"'Sora',sans-serif"}},"Import Successful!"),
+      React.createElement("div",{style:{fontSize:13,color:"var(--text4)",marginBottom:18}},
+        preview?.txns?.length+" transaction"+(preview?.txns?.length!==1?"s":"")+" imported. Holdings have been derived automatically."
+      ),
+      React.createElement("div",{style:{fontSize:12,color:"var(--text5)",padding:"9px 13px",background:"var(--accentbg2)",borderRadius:8,border:"1px solid var(--border2)",marginBottom:20}},
+        "Click on any mutual fund holding to view its complete transaction history."
+      ),
+      React.createElement(Btn,{onClick:onClose,sx:{justifyContent:"center"}},"Done")
+    )
+  );
+};
+
+/* ── MF TRANSACTIONS PANEL — shows all buy/sell txns for a specific fund ── */
+const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose})=>{
+  const[showAdd,setShowAdd]=useState(false);
+  const[addForm,setAddForm]=useState({orderType:"buy",date:getISTDateStr?getISTDateStr():(new Date().toISOString().split("T")[0]),amount:"",nav:""});
+  const[addError,setAddError]=useState("");
+  const txns=(mfTxns||[])
+    .filter(t=>t.fundName===fundName)
+    .sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  const buyUnits=txns.filter(t=>t.orderType==="buy").reduce((s,t)=>s+(+t.units||0),0);
+  const sellUnits=txns.filter(t=>t.orderType==="sell").reduce((s,t)=>s+(+t.units||0),0);
+  const netUnits=buyUnits-sellUnits;
+  const totalInvested=txns.filter(t=>t.orderType==="buy").reduce((s,t)=>s+(+t.amount||0),0);
+  const totalRedeemed=txns.filter(t=>t.orderType==="sell").reduce((s,t)=>s+(+t.amount||0),0);
+  const folios=[...new Set(txns.map(t=>t.folio).filter(Boolean))];
+  const handleAddTxn=()=>{
+    setAddError("");
+    const amt=parseFloat(addForm.amount);
+    const navP=parseFloat(addForm.nav);
+    if(!amt||amt<=0){setAddError("Enter a valid amount.");return;}
+    if(!navP||navP<=0){setAddError("Enter a valid NAV.");return;}
+    if(!addForm.date){setAddError("Select a date.");return;}
+    const units=parseFloat((amt/navP).toFixed(4));
+    dispatch({type:"ADD_MF_TXN",txn:{
+      fundName,
+      date:addForm.date,
+      orderType:addForm.orderType,
+      amount:amt,
+      nav:navP,
+      units,
+    }});
+    setShowAdd(false);
+    setAddForm({orderType:"buy",date:getISTDateStr?getISTDateStr():(new Date().toISOString().split("T")[0]),amount:"",nav:""});
+  };
+  return React.createElement(Modal,{title:"Transactions: "+fundName,onClose,w:780},
+    /* Summary row */
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(130px,1fr))",gap:10,marginBottom:16}},
+      React.createElement("div",{style:{padding:"9px 12px",background:"var(--bg4)",borderRadius:9,border:"1px solid var(--border2)"}},
+        React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,marginBottom:3}},"Net Units"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:15,color:netUnits>=0?"var(--text)":"#ef4444"}},netUnits.toFixed(3))
+      ),
+      React.createElement("div",{style:{padding:"9px 12px",background:"var(--bg4)",borderRadius:9,border:"1px solid var(--border2)"}},
+        React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,marginBottom:3}},"Total Invested"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:15,color:"#0e7490"}},INR(totalInvested))
+      ),
+      React.createElement("div",{style:{padding:"9px 12px",background:"var(--bg4)",borderRadius:9,border:"1px solid var(--border2)"}},
+        React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,marginBottom:3}},"Total Redeemed"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:15,color:"#ef4444"}},INR(totalRedeemed))
+      ),
+      React.createElement("div",{style:{padding:"9px 12px",background:"var(--bg4)",borderRadius:9,border:"1px solid var(--border2)"}},
+        React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,marginBottom:3}},"Transactions"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:15,color:"var(--text)"}},txns.length)
+      ),
+      folios.length>0&&React.createElement("div",{style:{padding:"9px 12px",background:"var(--bg4)",borderRadius:9,border:"1px solid var(--border2)"}},
+        React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,marginBottom:3}},"Folio(s)"),
+        React.createElement("div",{style:{fontSize:12,color:"var(--text3)",fontWeight:600,wordBreak:"break-all"}},folios.join(", "))
+      )
+    ),
+    /* Transaction table */
+    React.createElement("div",{style:{border:"1px solid var(--border)",borderRadius:10,overflow:"hidden"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"95px 55px 90px 80px 100px 100px",background:"var(--bg4)",padding:"8px 12px",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,borderBottom:"1px solid var(--border)"}},
+        ["Date","Type","Units","NAV","Amount","Folio"].map(h=>React.createElement("div",{key:h,style:{textAlign:h==="Date"||h==="Folio"?"left":"right"}},h))
+      ),
+      React.createElement("div",{style:{maxHeight:400,overflowY:"auto"}},
+        txns.map((t,i)=>{
+          const isBuy=t.orderType==="buy";
+          return React.createElement("div",{key:t.id||i,style:{display:"grid",gridTemplateColumns:"95px 55px 90px 80px 100px 100px",padding:"7px 12px",borderBottom:"1px solid var(--border2)",background:i%2?"rgba(255,255,255,.014)":"transparent",fontSize:12,alignItems:"center"}},
+            React.createElement("div",{style:{color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},t.date||"--"),
+            React.createElement("div",null,
+              React.createElement("span",{style:{
+                fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:5,
+                background:isBuy?"rgba(22,163,74,.12)":"rgba(239,68,68,.12)",
+                color:isBuy?"#16a34a":"#ef4444",
+                border:"1px solid "+(isBuy?"rgba(22,163,74,.25)":"rgba(239,68,68,.25)")
+              }},isBuy?"BUY":"SELL")
+            ),
+            React.createElement("div",{style:{textAlign:"right",color:isBuy?"#16a34a":"#ef4444",fontWeight:600,fontFamily:"'Sora',sans-serif"}},(isBuy?"+":"-")+(+t.units||0).toFixed(3)),
+            React.createElement("div",{style:{textAlign:"right",color:"var(--text4)"}},t.nav?"₹"+Number(t.nav).toFixed(4):"--"),
+            React.createElement("div",{style:{textAlign:"right",color:"var(--text3)",fontWeight:600}},INR(+t.amount||0)),
+            React.createElement("div",{style:{textAlign:"right",color:"var(--text5)",fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.folio||"--")
+          );
+        })
+      )
+    ),
+    txns.length===0&&React.createElement("div",{style:{textAlign:"center",padding:"24px",color:"var(--text6)",fontSize:13}},"No transactions found for this fund."),
+    /* ── Add Transaction form ── */
+    showAdd?React.createElement("div",{style:{marginTop:14,padding:14,background:"var(--bg4)",borderRadius:10,border:"1px solid var(--border2)"}},
+      React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",textTransform:"uppercase",letterSpacing:.6,marginBottom:10}},"Add Transaction"),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:10,fontWeight:600,color:"var(--text5)",marginBottom:4}},"Type"),
+          React.createElement("div",{style:{display:"flex",gap:6}},
+            ["buy","sell"].map(t=>React.createElement("button",{key:t,onClick:()=>setAddForm(f=>({...f,orderType:t})),style:{
+              flex:1,padding:"7px 0",borderRadius:7,fontSize:12,fontWeight:700,cursor:"pointer",border:"1.5px solid "+(addForm.orderType===t?(t==="buy"?"#16a34a":"#ef4444"):"var(--border2)"),
+              background:addForm.orderType===t?(t==="buy"?"rgba(22,163,74,.12)":"rgba(239,68,68,.12)"):"transparent",
+              color:addForm.orderType===t?(t==="buy"?"#16a34a":"#ef4444"):"var(--text5)"
+            }},t==="buy"?"Buy":"Sell"))
+          )
+        ),
+        React.createElement(Field,{label:"Date"},
+          React.createElement("input",{type:"date",className:"inp",value:addForm.date,onChange:e=>setAddForm(f=>({...f,date:e.target.value}))})
+        ),
+        React.createElement(Field,{label:"Amount (₹)"},
+          React.createElement("input",{type:"number",className:"inp",value:addForm.amount,onChange:e=>setAddForm(f=>({...f,amount:e.target.value})),placeholder:"e.g. 10000",min:"0",step:"0.01"})
+        ),
+        React.createElement(Field,{label:"NAV (₹)"},
+          React.createElement("input",{type:"number",className:"inp",value:addForm.nav,onChange:e=>setAddForm(f=>({...f,nav:e.target.value})),placeholder:"e.g. 45.32",min:"0",step:"0.0001"})
+        )
+      ),
+      /* Preview: calculated units */
+      addForm.amount&&addForm.nav&&parseFloat(addForm.amount)>0&&parseFloat(addForm.nav)>0?
+        React.createElement("div",{style:{marginTop:8,fontSize:11,color:"var(--text5)",fontStyle:"italic"}},"Units: "+(parseFloat(addForm.amount)/parseFloat(addForm.nav)).toFixed(4)):null,
+      addError&&React.createElement("div",{style:{marginTop:8,fontSize:11,color:"#ef4444"}},addError),
+      React.createElement("div",{style:{display:"flex",gap:8,marginTop:12,justifyContent:"flex-end"}},
+        React.createElement(Btn,{v:"secondary",onClick:()=>{setShowAdd(false);setAddError("");}},"Cancel"),
+        React.createElement(Btn,{v:addForm.orderType==="buy"?"primary":"danger",onClick:handleAddTxn},"Add "+(addForm.orderType==="buy"?"Buy":"Sell"))
+      )
+    ):
+    React.createElement("div",{style:{marginTop:14,display:"flex",justifyContent:"space-between",alignItems:"center"}},
+      dispatch?React.createElement(Btn,{v:"primary",onClick:()=>setShowAdd(true)},"+ Add Transaction"):null,
+      React.createElement(Btn,{v:"secondary",onClick:onClose},"Close")
+    )
+  );
+});
+
 /* ── IMPORT FD MODAL ──────────────────────────────────────────────────────── */
 const ImportFDModal=({onImport,onClose})=>{
   const[step,setStep]=useState("upload");
@@ -162,14 +481,29 @@ const ImportFDModal=({onImport,onClose})=>{
     const file=e.target.files?.[0];if(!file)return;
     setParseErr("");setFileName(file.name);
     const reader=new FileReader();
+    const isCSV=file.name.toLowerCase().endsWith(".csv");
     reader.onload=ev=>{
       try{
-        const XL=window.XLSX;
-        const wb=file.name.toLowerCase().endsWith(".csv")
-          ?XL.read(ev.target.result,{type:"string"})
-          :XL.read(ev.target.result,{type:"array",cellDates:false,cellText:true});
-        const ws=wb.Sheets[wb.SheetNames[0]];
-        const all=XL.utils.sheet_to_json(ws,{header:1,defval:"",raw:false});
+        let all;
+        if(isCSV){
+          /* Parse CSV natively — window.XLSX is not loaded */
+          const text=ev.target.result;
+          const rows=[];let row=[],field="",inQ=false;
+          const push=()=>{row.push(field);field="";};
+          for(let i=0;i<text.length;i++){
+            const ch=text[i],nx=text[i+1];
+            if(inQ){if(ch==='"'&&nx==='"'){field+='"';i++;}else if(ch==='"'){inQ=false;}else{field+=ch;}}
+            else{if(ch==='"'){inQ=true;}else if(ch===','){push();}else if(ch==='\r'&&nx==='\n'){push();rows.push(row);row=[];i++;}else if(ch==='\n'||ch==='\r'){push();rows.push(row);row=[];}else{field+=ch;}}
+          }
+          push();if(row.some(c=>c!==""))rows.push(row);
+          all=rows;
+        } else {
+          const XL=window.XLSX;
+          if(!XL){setParseErr("Excel import is not available. Please export your FDs as a CSV file and import that instead.");return;}
+          const wb=XL.read(ev.target.result,{type:"array",cellDates:false,cellText:true});
+          const ws=wb.Sheets[wb.SheetNames[0]];
+          all=XL.utils.sheet_to_json(ws,{header:1,defval:"",raw:false});
+        }
         let hi=0;for(let i=0;i<Math.min(8,all.length);i++){if(all[i].filter(c=>c!=="").length>=2){hi=i;break;}}
         const hdrs=all[hi].map(h=>(h??"")+""
         );
@@ -192,7 +526,7 @@ const ImportFDModal=({onImport,onClose})=>{
         setPreview({items,skipped});setStep("preview");
       }catch(err){setParseErr("Parse error: "+err.message);}
     };
-    file.name.toLowerCase().endsWith(".csv")?reader.readAsText(file):reader.readAsArrayBuffer(file);
+    isCSV?reader.readAsText(file):reader.readAsArrayBuffer(file);
     e.target.value="";
   };
   const downloadTemplate=()=>{
@@ -356,15 +690,16 @@ const CapitalGainsCard=({shares,mf,dispatch})=>{
   );
 };
 
-const InvestDashboard=React.memo(({mf,shares,fd,re=[],dispatch,isMobile,eodPrices={},eodNavs={}})=>{
+const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobile,eodPrices={},eodNavs={}})=>{
   /* ── Refresh state ── */
   const[refreshing,setRefreshing]=useState(false);
   const[refreshStatus,setRefreshStatus]=useState(null); /* {ok,msg,ts,navOk,sharesOk} */
 
   /* ── Totals — derived live from props so re-renders automatically after dispatch ── */
-  const mfVal   = mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
-  const mfCost  = mf.reduce((s,m)=>s+(m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested),0);
-  const mfInv   = mf.reduce((s,m)=>s+m.invested,0);
+  const mfActive=mf.filter(m=>m.units>0); /* hide fully sold funds */
+  const mfVal   = mfActive.reduce((s,m)=>s+(m.currentValue||m.invested),0);
+  const mfCost  = mfActive.reduce((s,m)=>s+(m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested),0);
+  const mfInv   = mfActive.reduce((s,m)=>s+m.invested,0);
   const shVal   = shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
   const shCost  = shares.reduce((s,sh)=>s+sh.qty*sh.buyPrice,0);
   const fdPrinc = fd.reduce((s,f)=>s+f.amount,0);
@@ -1670,7 +2005,7 @@ const FDTimeline=({fd})=>{
   );
 };
 
-const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},historyCache={}})=>{
+const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},historyCache={}})=>{
   const[tab,setTab]=useState(defaultTab);const[open,setOpen]=useState(false);const[navLoad,setNavLoad]=useState(false);
   React.useEffect(()=>{setTab(defaultTab);},[defaultTab]);
   const[srch,setSrch]=useState("");const[results,setResults]=useState([]);const[searching,setSearching]=useState(false);
@@ -1686,6 +2021,8 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
   const[noteEdit,setNoteEdit]=useState(null);
   const[importMFOpen,setImportMFOpen]=useState(false);
   const[importFDOpen,setImportFDOpen]=useState(false);
+  const[importTxnsOpen,setImportTxnsOpen]=useState(false);
+  const[viewTxnsFund,setViewTxnsFund]=useState(null); /* fundName for txns panel */
   const[priceLoad,setPriceLoad]=useState(false);
   const[priceStatus,setPriceStatus]=useState(null); /* {ok:bool, msg:string, ts:Date} */
 
@@ -1762,9 +2099,9 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
     if(!found)setResults([]);
     setSearching(false);
   };
-  const mfTotal=mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
-  const mfInv=mf.reduce((s,m)=>s+m.invested,0);
-  const mfCoA=mf.reduce((s,m)=>s+(m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested),0);
+  const mfTotal=mf.filter(m=>m.units>0).reduce((s,m)=>s+(m.currentValue||m.invested),0);
+  const mfInv=mf.filter(m=>m.units>0).reduce((s,m)=>s+m.invested,0);
+  const mfCoA=mf.filter(m=>m.units>0).reduce((s,m)=>s+(m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested),0);
   const shVal=shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
   const shCost=shares.reduce((s,sh)=>s+sh.qty*sh.buyPrice,0);
   const fdTotal=fd.reduce((s,f)=>s+f.amount,0);
@@ -1792,6 +2129,7 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
       ),
       React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",justifyContent:"flex-end"}},
         tab==="mf"&&React.createElement(Btn,{v:"secondary",sz:"sm",onClick:()=>setImportMFOpen(true),sx:{fontSize:12}},"⬆ Import Excel"),
+        tab==="mf"&&React.createElement(Btn,{v:"secondary",sz:"sm",onClick:()=>setImportTxnsOpen(true),sx:{fontSize:12,borderColor:"rgba(109,40,217,.4)",color:"#6d28d9",background:"rgba(109,40,217,.08)"}},"⬆ Import Txns"),
         tab==="fd"&&React.createElement(Btn,{v:"secondary",sz:"sm",onClick:()=>setImportFDOpen(true),sx:{fontSize:12}},"⬆ Import Excel"),
         tab==="shares"&&React.createElement(Btn,{v:"success",sz:"sm",onClick:fetchSharePrices,disabled:priceLoad},
           priceLoad
@@ -1816,7 +2154,7 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
     ),
     /* ── Stat summary row -- only the relevant card for this tab */
     tab==="mf"&&React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
-      React.createElement(StatCard,{label:"Current Value",val:INR(mfTotal),sub:mf.length+" funds",col:"#6d28d9",icon:React.createElement(Icon,{n:"chart",size:22})}),
+      React.createElement(StatCard,{label:"Current Value",val:INR(mfTotal),sub:mf.filter(m=>m.units>0).length+" active fund"+(mf.filter(m=>m.units>0).length!==1?"s":""),col:"#6d28d9",icon:React.createElement(Icon,{n:"chart",size:22})}),
       React.createElement(StatCard,{label:"Amount Invested",val:INR(mfInv),sub:"Cash deployed",col:"#0e7490",icon:React.createElement(Icon,{n:"money",size:22})}),
       React.createElement(StatCard,{label:"Total P&L",val:(mfTotal-mfCoA>=0?"+":"")+INR(mfTotal-mfCoA),sub:"vs cost of acquisition",col:mfTotal>=mfCoA?"#16a34a":"#ef4444",icon:mfTotal>=mfCoA?"▲":"▼"})
     ),
@@ -1887,11 +2225,12 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
         const dayChgAbs=latestTotal&&prevTotal&&prevTotal>0?latestTotal-prevTotal:null;
         const dayChgPct=latestTotal&&prevTotal&&prevTotal>0?((latestTotal-prevTotal)/prevTotal*100):null;
         /* Hero value driven by eodNavs latest snapshot for consistency with badge */
-        const mfTotalNow=latestTotal||mf.reduce((s,m)=>s+(m.currentValue&&m.currentValue>0?m.currentValue:m.invested),0);
-        const mfCoANow=mf.reduce((s,m)=>s+(m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested),0);
+        const mfActive=mf.filter(m=>m.units>0);
+        const mfTotalNow=latestTotal||mfActive.reduce((s,m)=>s+(m.currentValue&&m.currentValue>0?m.currentValue:m.invested),0);
+        const mfCoANow=mfActive.reduce((s,m)=>s+(m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested),0);
         const overallGain=mfTotalNow-mfCoANow;
         const showHero=chartPts.length>=1||latestDate;
-        if(!showHero||!mf.length)return null;
+        if(!showHero||!mfActive.length)return null;
         /* ── Format a date label: "03 Apr 2026" from ISO string ── */
         const fmtDateLabel=(iso)=>{if(!iso)return"--";const p=iso.split("-");const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return p.length===3?p[2]+" "+MON[parseInt(p[1],10)-1]+" "+p[0]:iso;};
         return React.createElement("div",{style:{marginBottom:16}},
@@ -1972,12 +2311,12 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
             )
           ),
           /* ── MF Analytics: Category Composition + Fund Returns ── */
-          mf.length>=1&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14,marginBottom:14}},
+          mf.filter(m=>m.units>0).length>=1&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14,marginBottom:14}},
             /* LEFT: Category Composition Donut */
             (()=>{
               const CAT_COLORS={"Large Cap":"#6d28d9","Mid Cap":"#2563eb","Small Cap":"#ef4444","Flexi Cap":"#16a34a","ELSS":"#f59e0b","Hybrid":"#0e7490","Debt/Liquid":"#78716c","Index/ETF":"#84cc16","International":"#c2410c","Sectoral":"#ec4899","Other":"#94a3b8"};
               const classify=n=>{const l=n.toLowerCase();if(l.includes("small cap")||l.includes("smallcap"))return"Small Cap";if(l.includes("mid cap")||l.includes("midcap"))return"Mid Cap";if(l.includes("large cap")||l.includes("largecap")||l.includes("bluechip")||l.includes("top 100")||l.includes("top100")||l.includes("top 200"))return"Large Cap";if(l.includes("flexi cap")||l.includes("flexicap")||l.includes("multi cap")||l.includes("multicap")||l.includes("focused"))return"Flexi Cap";if(l.includes("elss")||l.includes("tax saver")||l.includes("tax saving"))return"ELSS";if(l.includes("hybrid")||l.includes("balanced")||l.includes("aggressive")||l.includes("conservative"))return"Hybrid";if(l.includes("debt")||l.includes("bond")||l.includes("liquid")||l.includes("money market")||l.includes("overnight")||l.includes("gilt")||l.includes("corporate bond"))return"Debt/Liquid";if(l.includes("index")||l.includes("nifty")||l.includes("sensex")||l.includes(" etf")||l.includes("momentum"))return"Index/ETF";if(l.includes("international")||l.includes("global")||l.includes("nasdaq")||l.includes("s&p")||l.includes("us ")||l.includes("world"))return"International";if(l.includes("pharma")||l.includes("bank")||l.includes("infra")||l.includes("tech")||l.includes("sector")||l.includes("thematic"))return"Sectoral";return"Other";};
-              const catMap={};mf.forEach(m=>{const cat=classify(m.name);const val=m.currentValue&&m.currentValue>0?m.currentValue:m.invested;if(!catMap[cat])catMap[cat]={cat,value:0,count:0,col:CAT_COLORS[cat]||"#94a3b8"};catMap[cat].value+=val;catMap[cat].count++;});
+              const catMap={};mf.filter(m=>m.units>0).forEach(m=>{const cat=classify(m.name);const val=m.currentValue&&m.currentValue>0?m.currentValue:m.invested;if(!catMap[cat])catMap[cat]={cat,value:0,count:0,col:CAT_COLORS[cat]||"#94a3b8"};catMap[cat].value+=val;catMap[cat].count++;});
               const cats=Object.values(catMap).sort((a,b)=>b.value-a.value);
               const total=cats.reduce((s,c)=>s+c.value,0)||1;
               const R=52,CX=68,CY=68,SW=18;
@@ -2010,7 +2349,7 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
             })(),
             /* RIGHT: Fund-wise Returns bar chart */
             (()=>{
-              const funds=mf.map(m=>{const coA=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;const cur=m.currentValue&&m.currentValue>0?m.currentValue:m.invested;const gain=cur-coA;const gp=coA>0?(gain/coA*100):0;const raw=m.name.replace(/\s*-\s*(direct|regular)\s*(growth|idcw|dividend).*/i,"").replace(/\s*fund$/i,"").trim();const dn=raw.length>26?raw.slice(0,24)+"…":raw;return{id:m.id,name:dn,gain,gp,cur,coA};}).sort((a,b)=>b.gp-a.gp);
+              const funds=mf.filter(m=>m.units>0).map(m=>{const coA=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;const cur=m.currentValue&&m.currentValue>0?m.currentValue:m.invested;const gain=cur-coA;const gp=coA>0?(gain/coA*100):0;const raw=m.name.replace(/\s*-\s*(direct|regular)\s*(growth|idcw|dividend).*/i,"").replace(/\s*fund$/i,"").trim();const dn=raw.length>26?raw.slice(0,24)+"…":raw;return{id:m.id,name:dn,gain,gp,cur,coA};}).sort((a,b)=>b.gp-a.gp);
               const maxAbs=Math.max(...funds.map(f=>Math.abs(f.gp)),0.01);
               return React.createElement(Card,null,
                 React.createElement("div",{style:{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:"var(--text5)",marginBottom:12,paddingBottom:6,borderBottom:"1px solid var(--border2)"}},"Fund-wise Returns"),
@@ -2037,7 +2376,7 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
           ),
           /* ── Invested vs Current Value: stacked comparison bars per fund ── */
           mf.length>=1&&(()=>{
-            const funds=mf.map(m=>{const coA=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;const cur=m.currentValue&&m.currentValue>0?m.currentValue:m.invested;const raw=m.name.replace(/\s*-\s*(direct|regular)\s*(growth|idcw|dividend).*/i,"").replace(/\s*fund$/i,"").trim();const dn=raw.length>22?raw.slice(0,20)+"…":raw;return{id:m.id,name:dn,coA,cur};});
+            const funds=mf.filter(m=>m.units>0).map(m=>{const coA=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;const cur=m.currentValue&&m.currentValue>0?m.currentValue:m.invested;const raw=m.name.replace(/\s*-\s*(direct|regular)\s*(growth|idcw|dividend).*/i,"").replace(/\s*fund$/i,"").trim();const dn=raw.length>22?raw.slice(0,20)+"…":raw;return{id:m.id,name:dn,coA,cur};});
             const maxVal=Math.max(...funds.map(f=>Math.max(f.coA,f.cur)),1);
             return React.createElement(Card,{sx:{marginBottom:4}},
               React.createElement("div",{style:{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:"var(--text5)",marginBottom:12,paddingBottom:6,borderBottom:"1px solid var(--border2)"}},"Invested vs Current Value"),
@@ -2068,10 +2407,10 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
             );
           })(),
           /* ── NAV Progress: Avg Buy NAV → Current NAV per fund ── */
-          mf.some(m=>m.avgNav>0&&m.nav>0)&&React.createElement(Card,{sx:{marginBottom:4}},
+          mf.filter(m=>m.units>0).some(m=>m.avgNav>0&&m.nav>0)&&React.createElement(Card,{sx:{marginBottom:4}},
             React.createElement("div",{style:{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:"var(--text5)",marginBottom:12,paddingBottom:6,borderBottom:"1px solid var(--border2)"}},"NAV Progress — Avg Buy NAV vs Current NAV"),
             React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:10}},
-              mf.filter(m=>m.avgNav>0&&m.nav>0).map(m=>{
+              mf.filter(m=>m.units>0&&m.avgNav>0&&m.nav>0).map(m=>{
                 const pct=(m.nav-m.avgNav)/m.avgNav*100;
                 const barW=Math.min(100,Math.abs(pct));
                 const col=pct>=0?"#16a34a":"#ef4444";
@@ -2098,12 +2437,17 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
           )
         );
       })(),
-      !mf.length?React.createElement(Empty,{icon:React.createElement(Icon,{n:"chart",size:18}),text:"No mutual funds added yet"}):
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}},
-        mf.map(m=>{
+      /* Filter out zero-unit (fully sold) holdings */
+      (()=>{
+        const activeMf=mf.filter(m=>m.units>0);
+        if(!activeMf.length&&!mf.length)return React.createElement(Empty,{icon:React.createElement(Icon,{n:"chart",size:18}),text:"No mutual funds added yet"});
+        if(!activeMf.length)return React.createElement(Empty,{icon:React.createElement(Icon,{n:"chart",size:18}),text:"All holdings sold — import transactions to see history"});
+        return React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}},
+        activeMf.map(m=>{
           const trueCoA=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;
           const currentVal=m.currentValue&&m.currentValue>0?m.currentValue:m.invested;
           const gain=currentVal-trueCoA;
+          const hasTxns=(mfTxns||[]).some(t=>t.fundName===m.name);
           const gp=trueCoA>0?(((currentVal-trueCoA)/trueCoA)*100).toFixed(1):"0.0";
           /* Per-fund day-change from eodNavs — D-2 vs D-1 (matches hero card logic).
              MF NAVs are published after market close, so comparing live m.nav (which may
@@ -2117,8 +2461,11 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
           const _fundD1Nav=_fundD1Dt?((_normFundNavs[_fundD1Dt]||{})[m.schemeCode]||null):null;
           const _fundD2Nav=_fundD2Dt?((_normFundNavs[_fundD2Dt]||{})[m.schemeCode]||null):null;
           const navDayChgPct=_fundD1Nav&&_fundD2Nav&&_fundD2Nav>0?((_fundD1Nav-_fundD2Nav)/_fundD2Nav*100):null;
-          return React.createElement(Card,{key:m.id},
-            React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text2)",marginBottom:12,lineHeight:1.45}},m.name),
+          return React.createElement(Card,{key:m.id,sx:hasTxns?{cursor:"pointer",transition:"box-shadow .15s, border-color .15s","&:hover":{boxShadow:"0 4px 20px rgba(109,40,217,.15)",borderColor:"rgba(109,40,217,.3)"}}:{},onClick:hasTxns?()=>setViewTxnsFund(m.name):undefined},
+            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,gap:8}},
+              React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text2)",lineHeight:1.45,flex:1}},m.name),
+              hasTxns&&React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:6,background:"rgba(109,40,217,.1)",color:"#6d28d9",border:"1px solid rgba(109,40,217,.25)",whiteSpace:"nowrap",flexShrink:0,cursor:"pointer"},onClick:e=>{e.stopPropagation();setViewTxnsFund(m.name);}},"Txns ▸")
+            ),
             /* 4-cell metric grid */
             React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:10}},
               React.createElement("div",null,
@@ -2225,7 +2572,8 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
                 )
           );
         })
-      )
+      );
+      })() /* close IIFE for zero-unit filter */
     ),
     /* ── Shares content */
     tab==="shares"&&(!shares.length?React.createElement(Empty,{icon:React.createElement(Icon,{n:"invest",size:18}),text:"No shares added yet"}):
@@ -2913,6 +3261,18 @@ const InvestSection=React.memo(({mf,shares,fd,re=[],pf=[],dispatch,defaultTab="m
     importFDOpen&&React.createElement(ImportFDModal,{
       onImport:items=>{dispatch({type:"IMPORT_BULK_FD",items});setImportFDOpen(false);},
       onClose:()=>setImportFDOpen(false)
+    }),
+    /* ── Import MF Transactions modal */
+    importTxnsOpen&&React.createElement(ImportMFTxnsModal,{
+      onImport:txns=>{dispatch({type:"IMPORT_MF_TXNS",txns});setImportTxnsOpen(false);},
+      onClose:()=>setImportTxnsOpen(false)
+    }),
+    /* ── MF Transactions detail panel */
+    viewTxnsFund&&React.createElement(MFTxnsPanel,{
+      fundName:viewTxnsFund,
+      mfTxns:mfTxns,
+      dispatch,
+      onClose:()=>setViewTxnsFund(null)
     }),
     /* ── Add PF modal */
     open&&tab==="pf"&&React.createElement(Modal,{title:"Add Provident Fund Account",onClose:()=>setOpen(false),w:500},

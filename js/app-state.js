@@ -69,6 +69,7 @@ const INIT=()=>({
     {id:"mf2",name:"Axis Bluechip Fund - Direct Growth",schemeCode:"120503",units:89.45,invested:35000,avgNav:391.28,nav:0,currentValue:0,navDate:"",startDate:"2023-09-01"},
     {id:"mf3",name:"Parag Parikh Flexi Cap Fund - Direct Growth",schemeCode:"122639",units:52.18,invested:40000,avgNav:766.58,nav:0,currentValue:0,navDate:"",startDate:"2022-12-10"},
   ],
+  mfTxns:[],
   shares:[
     {id:"sh1",company:"Reliance Industries",ticker:"RELIANCE",qty:50,buyPrice:2250,currentPrice:2890,buyDate:"2023-04-15"},
     {id:"sh2",company:"Infosys",ticker:"INFY",qty:100,buyPrice:1450,currentPrice:1720,buyDate:"2023-08-20"},
@@ -137,6 +138,7 @@ const EMPTY_STATE=()=>({
   cards:[],
   cash:{balance:0,transactions:[]},
   mf:[],
+  mfTxns:[],
   shares:[],
   fd:[],
   re:[],
@@ -789,6 +791,52 @@ const applyCatRule=(rules,tx)=>{
   }catch(e){}
 }());
 
+/* ── Shared helper: derive MF holdings from transaction history ─────────────
+   Groups mfTxns by fundName, computes net units & avg NAV, and preserves
+   existing MF metadata (schemeCode, nav, currentValue, navDate, manualXirr).
+   invested = netUnits × avgNav (cost of currently held units = CoA),
+   NOT total historical buy amount (which inflates after partial sells). ── */
+const _deriveMfHoldings=(txns,existingMf)=>{
+  const byFund={};
+  txns.forEach(t=>{
+    const key=t.fundName;
+    if(!key)return;
+    if(!byFund[key])byFund[key]={fundName:key,folios:new Set(),txns:[]};
+    byFund[key].txns.push(t);
+    if(t.folio)byFund[key].folios.add(String(t.folio));
+  });
+  return Object.values(byFund).map(g=>{
+    const buys=g.txns.filter(t=>t.orderType==="buy");
+    const sells=g.txns.filter(t=>t.orderType==="sell");
+    const buyUnits=buys.reduce((s,t)=>s+(+t.units||0),0);
+    const sellUnits=sells.reduce((s,t)=>s+(+t.units||0),0);
+    const netUnits=parseFloat((buyUnits-sellUnits).toFixed(4));
+    const totalBuyAmount=buys.reduce((s,t)=>s+(+t.amount||0),0);
+    const avgNav=buyUnits>0?parseFloat((totalBuyAmount/buyUnits).toFixed(4)):0;
+    /* Fix ②: Cost of Acquisition = netUnits × avgNav, not totalBuyAmount */
+    const invested=parseFloat((netUnits*avgNav).toFixed(2));
+    const allDates=g.txns.map(t=>t.date).filter(Boolean).sort();
+    const startDate=allDates[0]||"";
+    const folioList=[...g.folios].join(", ");
+    /* Fix ①: preserve existing metadata from live MF entry */
+    const existing=existingMf.find(m=>m.name===g.fundName);
+    return{
+      id:existing?existing.id:uid(),
+      name:g.fundName,
+      schemeCode:existing?existing.schemeCode:"",
+      units:netUnits,
+      invested,
+      avgNav,
+      nav:existing?existing.nav:0,
+      currentValue:existing?existing.currentValue:0,
+      navDate:existing?existing.navDate:"",
+      manualXirr:existing?existing.manualXirr:undefined,
+      startDate,
+      notes:folioList?"Folio: "+folioList:"",
+    };
+  });
+};
+
 const reducer=(s,a)=>{
   /* Returns max(_sn) + 1 across all transactions in an array — used to assign a permanent SN at creation time */
   const nextSn=txs=>txs.reduce((m,t)=>Math.max(m,t._sn||0),0)+1;
@@ -945,6 +993,37 @@ const reducer=(s,a)=>{
     case"EDIT_PF":return{...s,pf:(s.pf||[]).map(p=>p.id===a.p.id?{...p,...a.p}:p)};
     case"DEL_PF":return{...s,pf:(s.pf||[]).filter(p=>p.id!==a.id)};
     case"IMPORT_BULK_MF":return{...s,mf:[...s.mf,...(a.items||[])]};
+    /* ── MF Transaction (mfTxns) cases — full buy/sell history import ──
+       Shared helper: _deriveMfHoldings derives mf[] from mfTxns grouped by fundName.
+       Fix ①: Always looks up existing from existingMf and preserves schemeCode,
+               nav, currentValue, navDate, manualXirr.
+       Fix ②: Sets invested = netUnits × avgNav (cost of held units = CoA), so
+               "Amount Invested" and "Cost of Acquisition" are always consistent,
+               and the currentValue || invested fallback is accurate.
+               avgNav formula unchanged (totalBuyAmount / totalBuyUnits). ── */
+    case"IMPORT_MF_TXNS":{
+      /* Deduplicate: build a signature set from existing txns and skip incoming
+         rows that match on fundName + date + orderType + units + amount */
+      const _sig=t=>[t.fundName,t.date,t.orderType,(+t.units||0).toFixed(4),(+t.amount||0).toFixed(2)].join("|");
+      const _existingSigs=new Set((s.mfTxns||[]).map(_sig));
+      const _deduped=(a.txns||[]).filter(t=>!_existingSigs.has(_sig(t)));
+      const newTxns=_deduped.map((t,i)=>({...t,id:t.id||uid()}));
+      const merged=[...(s.mfTxns||[]),...newTxns];
+      const derivedMf=_deriveMfHoldings(merged,s.mf||[]);
+      return{...s,mfTxns:merged,mf:derivedMf};
+    }
+    case"ADD_MF_TXN":{
+      const newTxn={...a.txn,id:a.txn.id||uid()};
+      const merged=[...(s.mfTxns||[]),newTxn];
+      const derivedMf=_deriveMfHoldings(merged,s.mf||[]);
+      return{...s,mfTxns:merged,mf:derivedMf};
+    }
+    case"DEL_MF_TXN":{
+      const filtered=(s.mfTxns||[]).filter(t=>t.id!==a.id);
+      const derivedMf=_deriveMfHoldings(filtered,s.mf||[]);
+      return{...s,mfTxns:filtered,mf:derivedMf};
+    }
+    case"CLEAR_MF_TXNS":return{...s,mfTxns:[],mf:(s.mf||[]).filter(m=>!(s.mfTxns||[]).some(t=>t.fundName===m.name))};
     case"IMPORT_BULK_FD":return{...s,fd:[...s.fd,...(a.items||[])]};
     case"ADD_LOAN":return{...s,loans:[...s.loans,a.p]};
     case"EDIT_LOAN":return{...s,loans:s.loans.map(l=>l.id===a.p.id?{...l,...a.p}:l)};

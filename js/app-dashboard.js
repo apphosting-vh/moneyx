@@ -227,7 +227,7 @@ const ShareSummaryModal=({data,allBankTx,thisMonth,onClose})=>{
   const curNW2=(()=>{
     const b=data.banks.reduce((s,b2)=>s+b2.balance,0);
     const c=data.cash.balance;
-    const m=data.mf.reduce((s,m2)=>s+(m2.currentValue||m2.invested),0);
+    const m=data.mf.filter(m2=>m2.units>0).reduce((s,m2)=>s+(m2.currentValue||m2.invested),0);
     const sh=data.shares.reduce((s,s2)=>s+s2.qty*s2.currentPrice,0);
     const fd=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
     const re=(data.re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
@@ -1109,7 +1109,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
       const snaps=data.nwSnapshots||{};
       const bTotal=data.banks.reduce((s,b)=>s+b.balance,0);
       const cashBal=data.cash.balance;
-      const mfVal=data.mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
+      const mfVal=data.mf.filter(m=>m.units>0).reduce((s,m)=>s+(m.currentValue||m.invested),0);
       const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
       const fdVal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
       const reVal=(data.re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
@@ -1417,7 +1417,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
     W("nwdonut")&&(()=>{
       const bV=data.banks.reduce((s,b)=>s+b.balance,0);
       const cV=data.cash.balance;
-      const mfV=data.mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
+      const mfV=data.mf.filter(m=>m.units>0).reduce((s,m)=>s+(m.currentValue||m.invested),0);
       const shV=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
       const fdV=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
       const reV=(data.re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
