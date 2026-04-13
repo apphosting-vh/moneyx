@@ -3826,7 +3826,7 @@ function App(){
       React.createElement("div",{style:{display:tab==="reports"?"contents":"none"}},
         React.createElement(ReportsSection,{data:state,isMobile,onJumpToLedger})),
       React.createElement("div",{style:{display:tab==="settings"?"contents":"none"}},
-        React.createElement(SettingsSection,{state,dispatch,themeId,setTheme,isMobile,onResetAll:()=>{dispatch({type:"RESET_ALL"});try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_EOD_PRICES);localStorage.removeItem(LS_EOD_NAVS);localStorage.removeItem(LS_THEME);localStorage.removeItem(TAX_LS_KEY);}catch{}setTimeout(()=>window.location.reload(),100);}})),
+        React.createElement(SettingsSection,{state,dispatch,themeId,setTheme,isMobile,onResetAll:()=>{dispatch({type:"RESET_ALL"});try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_EOD_PRICES);localStorage.removeItem(LS_EOD_NAVS);localStorage.removeItem(LS_THEME);localStorage.removeItem(TAX_LS_KEY);}catch{}try{idbClearAll();}catch{}setTimeout(()=>window.location.reload(),100);}})),
       React.createElement("div",{style:{display:tab==="info"?"contents":"none"}},
         React.createElement(InfoSection,{isMobile})),
       React.createElement("div",{style:{display:tab==="tax_est"?"contents":"none"}},

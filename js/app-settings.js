@@ -992,6 +992,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
                       savePinHash("");
                       clearSessionUnlock();
                     }catch{}
+                    try{ idbClearAll(); }catch{}
                     setTimeout(()=>{window.location.href="#/dashboard";window.location.reload();},100);
                   },sx:{flex:1,justifyContent:"center"}},"Yes, Delete Everything"),
                   React.createElement(Btn,{v:"secondary",onClick:()=>setShowResetConfirm(false),sx:{justifyContent:"center"}},"Cancel")
@@ -2163,7 +2164,7 @@ const loadState=()=>{
                       make the gauge always show ~0%.
    ══════════════════════════════════════════════════════════════════════════ */
 const MM_LS_KEYS=[
-  {key:LS_KEY,         label:"App State (transactions, accounts, investments)"},
+  {key:LS_KEY,         label:"App State (accounts, settings) — transactions in IndexedDB"},
   {key:LS_EOD_PRICES,  label:"EOD share prices cache (separate)"},
   {key:LS_EOD_NAVS,    label:"EOD mutual fund NAVs cache (separate)"},
   {key:LS_THEME,       label:"Theme preference"},
@@ -2206,7 +2207,7 @@ const getStorageStats=()=>{
       const historyCacheBytes=JSON.stringify(p.historyCache||{}).length*2;
       const coreBytes=(raw.length*2)-eodPricesBytes-eodNavsBytes-historyCacheBytes;
       cacheBreakdown=[
-        {key:"_core",      label:"Core data (txns, accounts, investments, settings)",bytes:Math.max(0,coreBytes),  isCache:false},
+        {key:"_core",      label:"Core data (accounts, investments, settings)",bytes:Math.max(0,coreBytes),  isCache:false},
         {key:"_histcache", label:"Share Price History Cache",                         bytes:historyCacheBytes,       isCache:true},
         {key:"_eodprices", label:"EOD Share Price Snapshots (last 30 days)",          bytes:eodPricesBytes,         isCache:true},
         {key:"_eodnavs",   label:"EOD Mutual Fund NAV Snapshots (last 90 days)",      bytes:eodNavsBytes,           isCache:true},
@@ -2246,8 +2247,15 @@ const getStorageStatsAsync=async()=>{
    The caller uses this to dispatch matching PRUNE actions so in-memory
    state stays in sync with what was actually persisted to localStorage. */
 const _emergencyCompact=(s)=>{
+  /* Transactions are stored in IndexedDB — strip them before any LS write */
+  const _stripTxns=(st)=>({...st,
+    banks:(st.banks||[]).map((({transactions,...b})=>b)),
+    cards:(st.cards||[]).map((({transactions,...c})=>c)),
+    cash:(({transactions,...c})=>c)(st.cash||{transactions:[]}),
+  });
+  const base=_stripTxns(s);
   /* Pass 1: wipe the history cache (largest variable cache) */
-  const p1={...s,historyCache:{}};
+  const p1={...base,historyCache:{}};
   try{localStorage.setItem(LS_KEY,JSON.stringify(p1));console.warn("[MM] Storage: historyCache cleared to recover space.");return"historyCache";}catch{}
   /* Pass 2: shrink EOD prices to last 7 days */
   const eodKeys=Object.keys(s.eodPrices||{}).sort();
@@ -2271,8 +2279,18 @@ const _emergencyCompact=(s)=>{
    to bring in-memory state in sync with what was persisted. */
 const saveState=(s)=>{
   /* ── Selective serialization: eodPrices and eodNavs are saved to separate keys
-     to avoid serializing large historical price caches on every state change. ── */
-  const _stripped=(({eodPrices,eodNavs,...rest})=>rest)(s);
+     to avoid serializing large historical price caches on every state change.
+     Transactions are saved to IndexedDB (unlimited) to stay under 5 MB LS limit. ── */
+  const _noCaches=(({eodPrices,eodNavs,...rest})=>rest)(s);
+  /* Strip heavy transaction arrays — they live in IndexedDB */
+  const _stripped={
+    ..._noCaches,
+    banks:(_noCaches.banks||[]).map((({transactions,...b})=>b)),
+    cards:(_noCaches.cards||[]).map((({transactions,...c})=>c)),
+    cash:(({transactions,...c})=>c)(_noCaches.cash||{transactions:[]}),
+  };
+  /* Fire-and-forget: save full state (with txns) to IndexedDB */
+  try{ idbSaveTxnArrays(s); }catch{}
   try{
     localStorage.setItem(LS_KEY,JSON.stringify(_stripped));
     /* After a successful save, check if we are approaching the limit and
@@ -2793,6 +2811,51 @@ const usePersistentReducer=(reducer,init)=>{
   /* stateRef: live pointer so writeNow() can access current state without
      waiting for a state-change to re-trigger the debounced effect */
   const stateRef=React.useRef(state);
+  /* ── IndexedDB: load transactions on first mount (async, non-blocking) ── */
+  const _idbLoaded=React.useRef(false);
+  React.useEffect(()=>{
+    if(_idbLoaded.current)return;
+    _idbLoaded.current=true;
+    (async()=>{
+      try{
+        const TXN_FALLBACK_KEY="mm_v7_txn_fallback";
+        let txnData=await idbLoadTxnArrays();
+        /* ── Check localStorage fallback from a previous beforeunload flush ── */
+        if(!txnData||!(txnData.banks||[]).some(b=>(b.transactions||[]).length>0)){
+          try{
+            const raw=localStorage.getItem(TXN_FALLBACK_KEY);
+            if(raw){
+              const fb=JSON.parse(raw);
+              const fbHas=(fb.banks||[]).some(b=>(b.transactions||[]).length>0)
+                        ||(fb.cards||[]).some(c=>(c.transactions||[]).length>0)
+                        ||((fb.cash||{}).transactions||[]).length>0;
+              if(fbHas){
+                txnData=fb;
+                /* Persist fallback to IDB and clean up */
+                await idbSaveTxnArrays(stateRef.current);
+                /* Merge fallback into current state first */
+                const merged=idbMergeTxnArrays(stateRef.current,txnData);
+                await idbSaveTxnArrays(merged);
+                localStorage.removeItem(TXN_FALLBACK_KEY);
+                console.log("[IDB] Recovered transactions from fallback");
+              }
+            }
+          }catch{}
+        }
+        if(txnData){
+          const _hasBanks=(txnData.banks||[]).some(b=>(b.transactions||[]).length>0);
+          const _hasCards=(txnData.cards||[]).some(c=>(c.transactions||[]).length>0);
+          const _hasCash=((txnData.cash||{}).transactions||[]).length>0;
+          if(_hasBanks||_hasCards||_hasCash){
+            rawDispatch({type:"RESTORE_TXNS_FROM_IDB",txnData});
+            /* Clean up fallback after successful load */
+            try{localStorage.removeItem(TXN_FALLBACK_KEY);}catch{}
+            console.log("[IDB] Loaded transactions from IndexedDB");
+          }
+        }
+      }catch(e){console.warn("[IDB] Load failed:",e);}
+    })();
+  },[]);
   /* ── Selective eodPrices/eodNavs serialization: only write to separate LS keys on change ── */
   const _prevEodPricesJson=React.useRef(null);
   const _prevEodNavsJson=React.useRef(null);
@@ -2859,9 +2922,20 @@ const usePersistentReducer=(reducer,init)=>{
      the fallback for older browsers. Both fire synchronously so localStorage and
      FSA writes complete before the page unloads. */
   React.useEffect(()=>{
+    const TXN_FALLBACK_KEY="mm_v7_txn_fallback";
     const flush=()=>{
       stateRef.current=state;
       saveState(state);
+      /* ── Sync fallback: transactions are async in IDB; beforeunload may not
+         wait for the promise.  Save txns to a dedicated LS key as a safety net. ── */
+      try{
+        const _txnData={
+          banks:(state.banks||[]).map(b=>({id:b.id,transactions:b.transactions||[]})),
+          cards:(state.cards||[]).map(c=>({id:c.id,transactions:c.transactions||[]})),
+          cash:{transactions:(state.cash||{}).transactions||[]},
+        };
+        localStorage.setItem(TXN_FALLBACK_KEY,JSON.stringify(_txnData));
+      }catch{}
       try{
         const _ePJson=JSON.stringify(state.eodPrices||{});
         const _eNJson=JSON.stringify(state.eodNavs||{});

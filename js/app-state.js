@@ -193,7 +193,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING & CHANGELOG ──────────────────────────────────────────── */
-const APP_VERSION="4.0.0";
+const APP_VERSION="4.1.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1372,6 +1372,19 @@ const reducer=(s,a)=>{
       if(at==="card")return{...s,cards:s.cards.map(c=>c.id!==aid?c:{...c,transactions:c.transactions.map(upd)})};
       if(at==="cash")return{...s,cash:{...s.cash,transactions:s.cash.transactions.map(upd)}};
       return s;
+    }
+    case"RESTORE_TXNS_FROM_IDB":{
+      /* Merge transaction arrays loaded from IndexedDB back into state.
+         Matches by account id; only replaces if IDB has data for that account. */
+      const _d=a.txnData;if(!_d)return s;
+      const _bm={};(_d.banks||[]).forEach(b=>{_bm[b.id]=b.transactions||[];});
+      const _cm={};(_d.cards||[]).forEach(c=>{_cm[c.id]=c.transactions||[];});
+      const _cashTxs=(_d.cash||{}).transactions||[];
+      return{...s,
+        banks:(s.banks||[]).map(b=>_bm[b.id]?{...b,transactions:_bm[b.id]}:b),
+        cards:(s.cards||[]).map(c=>_cm[c.id]?{...c,transactions:_cm[c.id]}:c),
+        cash:_cashTxs.length?{...s.cash,transactions:_cashTxs}:s.cash,
+      };
     }
     case"RESTORE_ALL":return{...EMPTY_STATE(),...a.data};
     case"RESET_ALL":return{...EMPTY_STATE()};
