@@ -3785,10 +3785,9 @@ function App(){
          Combined with React.memo + stable dispatch this means:
            • No unmount/remount cost on tab switch (scroll pos, internal state preserved)
            • No re-render of hidden sections when an unrelated dispatch fires
-         Note: InvestSection is NOT keep-alived because it is intentionally re-used
-         for five different sub-tabs (mf/shares/fd/re/pf) with different defaultTab
-         props — those still use the original && guard so each sub-tab gets its own
-         isolated mount driven by `tab`. All other sections are keep-alive.
+         Note: InvestSection has 5 sub-tab instances (mf/shares/fd/re/pf), each
+         with its own fixed defaultTab. All 5 are always mounted and hidden with
+         CSS display:none — same keep-alive pattern as the other sections.
          ─────────────────────────────────────────────────────────────────────── */
       React.createElement("div",{style:{display:tab==="dashboard"?"contents":"none"}},
         React.createElement(Dashboard,{data:state,isMobile})),
@@ -3802,11 +3801,20 @@ function App(){
         React.createElement(InvestDashboard,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,dispatch,isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO})),
       /* InvestSection: five sub-tabs reuse the same component with different
          defaultTab — keep the && pattern so each sub-tab mounts independently */
-      tab==="inv_mf"&&React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO}),
-      tab==="inv_shares"&&React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"shares",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO}),
-      tab==="inv_fd"&&React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"fd",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO}),
-      tab==="inv_re"&&React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"re",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO}),
-      tab==="inv_pf"&&React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"pf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO}),
+      /* InvestSection: all 5 sub-tab instances are always mounted (keep-alive).
+         Each gets a fixed defaultTab so internal state survives tab switches.
+         CSS display:none hides the inactive sub-tabs without unmounting. */
+      React.createElement("div",{style:{display:["inv_mf","inv_shares","inv_fd","inv_re","inv_pf"].includes(tab)?"contents":"none"}},
+        React.createElement("div",{style:{display:tab==="inv_mf"?"contents":"none"}},
+          React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO})),
+        React.createElement("div",{style:{display:tab==="inv_shares"?"contents":"none"}},
+          React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"shares",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO})),
+        React.createElement("div",{style:{display:tab==="inv_fd"?"contents":"none"}},
+          React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"fd",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO})),
+        React.createElement("div",{style:{display:tab==="inv_re"?"contents":"none"}},
+          React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"re",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO})),
+        React.createElement("div",{style:{display:tab==="inv_pf"?"contents":"none"}},
+          React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"pf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO}))),
       React.createElement("div",{style:{display:tab==="loans"?"contents":"none"}},
         React.createElement(LoanSection,{loans:state.loans,dispatch,allBanks:state.banks,allCards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees,isMobile})),
       React.createElement("div",{style:{display:tab==="goals"?"contents":"none"}},
