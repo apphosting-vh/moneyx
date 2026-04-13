@@ -2038,40 +2038,29 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const dataPoints=React.useMemo(()=>{
     const sorted=[...(mfTxns||[])].sort((a,b)=>(a.date||"").localeCompare(b.date||""));
     if(sorted.length<2)return[];
-
-    const fundState={};   /* {fundName:{units,totalCost,avgCostPerUnit}} */
-    const lastNav={};     /* {fundName: most recent known nav} */
+    const fundState={};
+    const lastNav={};
     let runningCost=0;
     const pts=[];
-
-    /* Group txns by date */
     const byDate={};
     sorted.forEach(t=>{(byDate[t.date]=byDate[t.date]||[]).push(t);});
     const uniqueDates=[...new Set(sorted.map(t=>t.date))].sort();
-
     const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     const toLabel=iso=>{const p=iso.split("-");return p.length===3?p[2]+"-"+MON[parseInt(p[1],10)-1]+"-"+p[0]:iso;};
-
     uniqueDates.forEach(date=>{
       (byDate[date]||[]).forEach(t=>{
         const fn=t.fundName;
         if(!fundState[fn])fundState[fn]={units:0,totalCost:0,avgCostPerUnit:0};
         const fs=fundState[fn];
-
-        /* Update last known NAV for this fund */
         if(+t.nav>0)lastNav[fn]=+t.nav;
-
         const nav=+t.nav||0;
         const units=+t.units>0?+t.units:(nav>0&&+t.amount>0?+t.amount/nav:0);
         const amount=+t.amount>0?+t.amount:units*nav;
-
         if(t.orderType==="buy"){
-          fs.totalCost+=amount;
-          fs.units+=units;
+          fs.totalCost+=amount;fs.units+=units;
           fs.avgCostPerUnit=fs.units>0?fs.totalCost/fs.units:0;
           runningCost+=amount;
         }else{
-          /* SELL: reduce cost basis by avg cost of sold units */
           const soldUnits=Math.min(units,fs.units);
           const costOfSold=fs.avgCostPerUnit*soldUnits;
           fs.totalCost=Math.max(0,fs.totalCost-costOfSold);
@@ -2080,19 +2069,10 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
           runningCost=Math.max(0,runningCost-costOfSold);
         }
       });
-
-      /* Holding value at this date: Σ(net units × last known NAV) */
       let holdingVal=0;
-      Object.entries(fundState).forEach(([fn,fs])=>{
-        if(fs.units>0&&lastNav[fn])holdingVal+=fs.units*lastNav[fn];
-      });
-
-      if(runningCost>0){
-        pts.push({date:toLabel(date),rawDate:date,cost:runningCost,value:holdingVal});
-      }
+      Object.entries(fundState).forEach(([fn,fs])=>{if(fs.units>0&&lastNav[fn])holdingVal+=fs.units*lastNav[fn];});
+      if(runningCost>0)pts.push({date:toLabel(date),rawDate:date,cost:runningCost,value:holdingVal});
     });
-
-    /* Append today's point using live currentValue from mf holdings */
     if(mf&&mf.length>0&&pts.length>0){
       const activeMf=(mf||[]).filter(m=>m.units>0);
       const curCost=activeMf.reduce((s,m)=>s+(m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested),0);
@@ -2101,23 +2081,18 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
       const todayLabel=now.getDate()+"-"+MON[now.getMonth()]+"-"+now.getFullYear();
       const todayRaw=now.toISOString().slice(0,10);
       const lastPt=pts[pts.length-1];
-      /* Only add today's point if it's a different date and we have live data */
       if(curVal>0&&curCost>0){
-        if(lastPt.rawDate===todayRaw){
-          pts[pts.length-1]={date:todayLabel,rawDate:todayRaw,cost:curCost,value:curVal};
-        } else {
-          pts.push({date:todayLabel,rawDate:todayRaw,cost:curCost,value:curVal});
-        }
+        if(lastPt.rawDate===todayRaw)pts[pts.length-1]={date:todayLabel,rawDate:todayRaw,cost:curCost,value:curVal};
+        else pts.push({date:todayLabel,rawDate:todayRaw,cost:curCost,value:curVal});
       }
     }
-
     return pts;
   },[mfTxns,mf]);
 
   if(dataPoints.length<2)return React.createElement("div",{style:{padding:"20px",textAlign:"center",fontSize:12,color:"var(--text6)"}},"Not enough transaction history to plot evolution.");
 
   /* ── Chart geometry ── */
-  const W=960,padL=66,padR=24,padT=14,padB=28,svgH=190;
+  const W=960,padL=72,padR=28,padT=20,padB=32,svgH=220;
   const chartW=W-padL-padR,chartH=svgH-padT-padB;
 
   const costs=dataPoints.map(d=>d.cost);
@@ -2125,21 +2100,41 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const allVals=[...costs,...vals];
   const rawMn=Math.min(...allVals);
   const rawMx=Math.max(...allVals,1);
-  const padV=(rawMx-rawMn)*0.06;
+  const padV=(rawMx-rawMn)*0.10;
   const mn=Math.max(0,rawMn-padV);
   const mx=rawMx+padV;
   const range=mx-mn||1;
   const xStep=chartW/(dataPoints.length-1);
   const yFn=v=>padT+chartH*(1-(v-mn)/range);
+  const xFn=i=>padL+i*xStep;
 
-  const costPts=dataPoints.map((d,i)=>`${padL+i*xStep},${yFn(d.cost)}`).join(" ");
-  const valPts=dataPoints.map((d,i)=>`${padL+i*xStep},${yFn(d.value)}`).join(" ");
-  const costFill=`${padL},${padT+chartH} ${costPts} ${padL+(dataPoints.length-1)*xStep},${padT+chartH}`;
-  const valFill=`${padL},${padT+chartH} ${valPts} ${padL+(dataPoints.length-1)*xStep},${padT+chartH}`;
+  /* ── Smooth cubic-bezier path builder ── */
+  const smoothPath=pts=>{
+    if(pts.length<2)return"";
+    let d=`M${pts[0][0]},${pts[0][1]}`;
+    for(let i=0;i<pts.length-1;i++){
+      const x0=pts[i][0],y0=pts[i][1];
+      const x1=pts[i+1][0],y1=pts[i+1][1];
+      const cpx=(x0+x1)/2;
+      d+=` C${cpx},${y0} ${cpx},${y1} ${x1},${y1}`;
+    }
+    return d;
+  };
+
+  const costXY=dataPoints.map((d,i)=>[xFn(i),yFn(d.cost)]);
+  const valXY=dataPoints.map((d,i)=>[xFn(i),yFn(d.value)]);
+  const baseY=padT+chartH;
+  const costPath=smoothPath(costXY);
+  const valPath=smoothPath(valXY);
+  const costAreaPath=costPath+` L${xFn(dataPoints.length-1)},${baseY} L${xFn(0)},${baseY} Z`;
+  const valAreaPath=valPath+` L${xFn(dataPoints.length-1)},${baseY} L${xFn(0)},${baseY} Z`;
 
   const last=dataPoints[dataPoints.length-1];
   const isGain=last.value>=last.cost;
   const totalGainPct=last.cost>0?((last.value-last.cost)/last.cost*100):0;
+  const valColor=isGain?"#10b981":"#ef4444";
+  const valColorDark=isGain?"#059669":"#dc2626";
+  const valColorLight=isGain?"rgba(16,185,129,":"rgba(239,68,68,";
 
   const INRshort=v=>{
     if(v>=10000000)return"₹"+(v/10000000).toFixed(2)+"Cr";
@@ -2149,10 +2144,30 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   };
   const INRfmt=v=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(v);
 
-  const yTicks=[rawMn,rawMn+(rawMx-rawMn)*0.5,rawMx];
-  const stride=Math.max(1,Math.ceil(dataPoints.length/7));
+  /* ── Nice Y-axis ticks (4 evenly spaced) ── */
+  const nTicks=4;
+  const rawRange=rawMx-rawMn||1;
+  const tickStep=rawRange/(nTicks-1);
+  const yTicks=Array.from({length:nTicks},(_,i)=>rawMn+tickStep*i);
+  yTicks[nTicks-1]=rawMx;
 
-  /* ── Hover handlers ── */
+  const stride=Math.max(1,Math.ceil(dataPoints.length/8));
+
+  /* ── Peak / trough milestone markers ── */
+  const milestones=React.useMemo(()=>{
+    if(dataPoints.length<5)return[];
+    let peakIdx=0,troughIdx=0;
+    dataPoints.forEach((d,i)=>{
+      if(d.value>dataPoints[peakIdx].value)peakIdx=i;
+      if(d.value<dataPoints[troughIdx].value)troughIdx=i;
+    });
+    const res=[];
+    if(peakIdx!==dataPoints.length-1&&peakIdx!==0)res.push({idx:peakIdx,type:"peak"});
+    if(troughIdx!==0&&troughIdx!==peakIdx)res.push({idx:troughIdx,type:"trough"});
+    return res;
+  },[dataPoints]);
+
+  /* ── Hover ── */
   const handleMouseMove=e=>{
     const svg=svgRef.current;if(!svg)return;
     const rect=svg.getBoundingClientRect();
@@ -2162,158 +2177,237 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   };
 
   const hp=hoverIdx!==null?dataPoints[hoverIdx]:null;
-  const hx=hoverIdx!==null?padL+hoverIdx*xStep:null;
+  const hx=hoverIdx!==null?xFn(hoverIdx):null;
   const hyV=hoverIdx!==null?yFn(dataPoints[hoverIdx].value):null;
   const hyC=hoverIdx!==null?yFn(dataPoints[hoverIdx].cost):null;
-  const tipW=210,tipH=92;
-  const tipX=hx!==null?(hx+tipW+padR+4>W?hx-tipW-12:hx+12):0;
+  const tipW=230,tipH=110;
+  const tipX=hx!==null?(hx+tipW+padR+4>W?hx-tipW-14:hx+14):0;
   const tipY=hyV!==null?Math.max(padT,Math.min(padT+chartH-tipH,hyV-tipH/2)):0;
 
   return React.createElement("div",null,
-    /* ── Stats strip above chart */
-    React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",marginBottom:12}},
-      React.createElement("div",{style:{flex:1,minWidth:120,padding:"9px 13px",borderRadius:9,background:"rgba(245,158,11,.08)",border:"1px solid rgba(245,158,11,.2)"}},
-        React.createElement("div",{style:{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:"#b45309",marginBottom:3}},"Cost of Acquisition"),
-        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:16,color:"#b45309"}},INRfmt(last.cost))
+    /* ── Stats strip ── */
+    React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}},
+      /* CoA card */
+      React.createElement("div",{style:{flex:1,minWidth:140,padding:"12px 16px",borderRadius:12,
+        background:"linear-gradient(135deg,rgba(245,158,11,.13) 0%,rgba(245,158,11,.04) 100%)",
+        border:"1px solid rgba(245,158,11,.28)",position:"relative",overflow:"hidden"}},
+        React.createElement("div",{style:{position:"absolute",right:-12,top:-12,width:56,height:56,
+          borderRadius:"50%",background:"rgba(245,158,11,.08)"}}),
+        React.createElement("div",{style:{fontSize:9,fontWeight:700,textTransform:"uppercase",
+          letterSpacing:.9,color:"#92400e",marginBottom:4}},"Cost of Acquisition"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:18,
+          color:"#b45309",letterSpacing:-.3}},INRfmt(last.cost))
       ),
-      React.createElement("div",{style:{flex:1,minWidth:120,padding:"9px 13px",borderRadius:9,background:isGain?"rgba(22,163,74,.08)":"rgba(239,68,68,.08)",border:"1px solid "+(isGain?"rgba(22,163,74,.2)":"rgba(239,68,68,.2)")}},
-        React.createElement("div",{style:{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:isGain?"#16a34a":"#ef4444",marginBottom:3}},"Current Holding Value"),
-        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:16,color:isGain?"#16a34a":"#ef4444"}},INRfmt(last.value))
+      /* Holding Value card */
+      React.createElement("div",{style:{flex:1,minWidth:140,padding:"12px 16px",borderRadius:12,
+        background:`linear-gradient(135deg,${valColorLight}.13) 0%,${valColorLight}.04) 100%)`,
+        border:`1px solid ${valColorLight}.28)`,position:"relative",overflow:"hidden"}},
+        React.createElement("div",{style:{position:"absolute",right:-12,top:-12,width:56,height:56,
+          borderRadius:"50%",background:`${valColorLight}.08)`}}),
+        React.createElement("div",{style:{fontSize:9,fontWeight:700,textTransform:"uppercase",
+          letterSpacing:.9,color:valColorDark,marginBottom:4}},"Current Holding Value"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:18,
+          color:valColor,letterSpacing:-.3}},INRfmt(last.value))
       ),
-      React.createElement("div",{style:{flex:1,minWidth:120,padding:"9px 13px",borderRadius:9,background:isGain?"rgba(22,163,74,.06)":"rgba(239,68,68,.06)",border:"1px solid "+(isGain?"rgba(22,163,74,.15)":"rgba(239,68,68,.15)")}},
-        React.createElement("div",{style:{fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:isGain?"#16a34a":"#ef4444",marginBottom:3}},"Unrealised Gain / Loss"),
-        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:16,color:isGain?"#16a34a":"#ef4444"}},
+      /* Unrealised G/L card */
+      React.createElement("div",{style:{flex:1,minWidth:140,padding:"12px 16px",borderRadius:12,
+        background:`linear-gradient(135deg,${valColorLight}.10) 0%,${valColorLight}.03) 100%)`,
+        border:`1px solid ${valColorLight}.20)`,position:"relative",overflow:"hidden"}},
+        React.createElement("div",{style:{position:"absolute",right:-12,top:-12,width:56,height:56,
+          borderRadius:"50%",background:`${valColorLight}.06)`}}),
+        React.createElement("div",{style:{fontSize:9,fontWeight:700,textTransform:"uppercase",
+          letterSpacing:.9,color:valColorDark,marginBottom:4}},"Unrealised Gain / Loss"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:18,
+          color:valColor,letterSpacing:-.3}},
           (isGain?"+":"")+INRfmt(Math.round(last.value-last.cost))
         ),
-        React.createElement("div",{style:{fontSize:10,color:isGain?"#16a34a":"#ef4444",opacity:.8}},
-          (isGain?"+":"")+totalGainPct.toFixed(2)+"% on CoA"
+        React.createElement("div",{style:{fontSize:11,color:valColor,opacity:.85,marginTop:2,fontWeight:600}},
+          (isGain?"▲ +":"▼ ")+totalGainPct.toFixed(2)+"% on CoA"
         )
       )
     ),
+
     /* ── Legend ── */
-    React.createElement("div",{style:{display:"flex",gap:16,marginBottom:6,fontSize:11,color:"var(--text5)",flexWrap:"wrap"}},
-      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
-        React.createElement("svg",{width:24,height:10,style:{overflow:"visible"}},
-          React.createElement("line",{x1:0,y1:5,x2:24,y2:5,stroke:"#f59e0b",strokeWidth:2.5,strokeDasharray:"6,4"})
+    React.createElement("div",{style:{display:"flex",gap:20,marginBottom:8,fontSize:11,
+      color:"var(--text5)",flexWrap:"wrap",alignItems:"center"}},
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7}},
+        React.createElement("svg",{width:28,height:12,style:{overflow:"visible"}},
+          React.createElement("line",{x1:0,y1:6,x2:28,y2:6,stroke:"#f59e0b",strokeWidth:2,strokeDasharray:"6,4",strokeLinecap:"round"})
         ),
         React.createElement("span",null,"Cost of Acquisition")
       ),
-      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
-        React.createElement("div",{style:{width:24,height:3,background:isGain?"#16a34a":"#ef4444",borderRadius:2}}),
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7}},
+        React.createElement("svg",{width:28,height:12,style:{overflow:"visible"}},
+          React.createElement("line",{x1:0,y1:6,x2:28,y2:6,stroke:valColor,strokeWidth:2.5,strokeLinecap:"round"}),
+          React.createElement("circle",{cx:14,cy:6,r:3.5,fill:valColor})
+        ),
         React.createElement("span",null,"Holding Value ("+(isGain?"in profit":"in loss")+")")
+      ),
+      React.createElement("div",{style:{marginLeft:"auto",fontSize:10,color:"var(--text6)",fontStyle:"italic"}},
+        dataPoints.length+" data points · "+mfTxns.length+" transactions"
       )
     ),
+
     /* ── SVG Chart ── */
     React.createElement("svg",{
       ref:svgRef,
       width:"100%",
       viewBox:`0 0 ${W} ${svgH}`,
-      style:{display:"block",cursor:"crosshair",overflow:"visible"},
+      style:{display:"block",cursor:"crosshair",overflow:"visible",borderRadius:12},
       onMouseMove:handleMouseMove,
       onMouseLeave:()=>setHoverIdx(null),
     },
       React.createElement("defs",null,
+        /* Gradient fills */
         React.createElement("linearGradient",{id:"pev_cost_g",x1:"0",y1:"0",x2:"0",y2:"1"},
-          React.createElement("stop",{offset:"0%",stopColor:"#f59e0b",stopOpacity:.18}),
-          React.createElement("stop",{offset:"100%",stopColor:"#f59e0b",stopOpacity:.03})
+          React.createElement("stop",{offset:"0%",stopColor:"#f59e0b",stopOpacity:.22}),
+          React.createElement("stop",{offset:"80%",stopColor:"#f59e0b",stopOpacity:.04}),
+          React.createElement("stop",{offset:"100%",stopColor:"#f59e0b",stopOpacity:0})
         ),
         React.createElement("linearGradient",{id:"pev_gain_g",x1:"0",y1:"0",x2:"0",y2:"1"},
-          React.createElement("stop",{offset:"0%",stopColor:"#16a34a",stopOpacity:.20}),
-          React.createElement("stop",{offset:"100%",stopColor:"#16a34a",stopOpacity:.03})
+          React.createElement("stop",{offset:"0%",stopColor:"#10b981",stopOpacity:.30}),
+          React.createElement("stop",{offset:"75%",stopColor:"#10b981",stopOpacity:.07}),
+          React.createElement("stop",{offset:"100%",stopColor:"#10b981",stopOpacity:0})
         ),
         React.createElement("linearGradient",{id:"pev_loss_g",x1:"0",y1:"0",x2:"0",y2:"1"},
-          React.createElement("stop",{offset:"0%",stopColor:"#ef4444",stopOpacity:.20}),
-          React.createElement("stop",{offset:"100%",stopColor:"#ef4444",stopOpacity:.03})
+          React.createElement("stop",{offset:"0%",stopColor:"#ef4444",stopOpacity:.28}),
+          React.createElement("stop",{offset:"75%",stopColor:"#ef4444",stopOpacity:.06}),
+          React.createElement("stop",{offset:"100%",stopColor:"#ef4444",stopOpacity:0})
+        ),
+        /* Glow filter for value line */
+        React.createElement("filter",{id:"pev_glow",x:"-20%",y:"-20%",width:"140%",height:"140%"},
+          React.createElement("feGaussianBlur",{stdDeviation:"3",result:"blur"}),
+          React.createElement("feMerge",null,
+            React.createElement("feMergeNode",{in:"blur"}),
+            React.createElement("feMergeNode",{in:"SourceGraphic"})
+          )
+        ),
+        /* Clip chart area */
+        React.createElement("clipPath",{id:"pev_clip"},
+          React.createElement("rect",{x:padL,y:padT,width:chartW,height:chartH})
         )
       ),
 
+      /* Subtle chart background */
+      React.createElement("rect",{x:padL,y:padT,width:chartW,height:chartH,
+        fill:"var(--bg4)",fillOpacity:.35,rx:6}),
+
       /* Y-axis gridlines + labels */
       yTicks.map((v,i)=>React.createElement("g",{key:"pev_y"+i},
-        React.createElement("line",{x1:padL,y1:yFn(v),x2:W-padR,y2:yFn(v),stroke:"var(--border2)",strokeWidth:.8,strokeDasharray:"4,7"}),
-        React.createElement("text",{x:padL-6,y:yFn(v)+3.5,textAnchor:"end",fill:"var(--text5)",fontSize:9.5,fontWeight:500},INRshort(v))
+        React.createElement("line",{x1:padL,y1:yFn(v),x2:W-padR,y2:yFn(v),
+          stroke:"var(--border2)",strokeWidth:i===0?1:.7,
+          strokeDasharray:i===0?"none":"3,8",opacity:.7}),
+        React.createElement("text",{x:padL-8,y:yFn(v)+3.5,textAnchor:"end",
+          fill:"var(--text5)",fontSize:9.5,fontWeight:600},INRshort(v))
       )),
 
-      /* Baseline */
-      React.createElement("line",{x1:padL,y1:padT+chartH,x2:W-padR,y2:padT+chartH,stroke:"var(--border)",strokeWidth:1}),
-
-      /* Cost area fill (amber, below cost line) */
-      React.createElement("polygon",{points:costFill,fill:"url(#pev_cost_g)"}),
-
-      /* Value area fill (green/red, below value line) */
-      React.createElement("polygon",{points:valFill,fill:`url(#${isGain?"pev_gain_g":"pev_loss_g"})`}),
-
-      /* Cost line — amber dashed */
-      React.createElement("polyline",{points:costPts,fill:"none",stroke:"#f59e0b",strokeWidth:1.8,strokeDasharray:"7,5",strokeLinejoin:"round",strokeLinecap:"round",opacity:.95}),
-
-      /* Value line — solid, green or red */
-      React.createElement("polyline",{points:valPts,fill:"none",stroke:isGain?"#16a34a":"#ef4444",strokeWidth:2.2,strokeLinejoin:"round",strokeLinecap:"round"}),
-
-      /* Dots at each data point (only for sparse charts) */
-      dataPoints.length<=25&&dataPoints.map((d,i)=>i===hoverIdx?null:
-        React.createElement("circle",{key:"pev_d"+i,
-          cx:padL+i*xStep,cy:yFn(d.value),r:2.5,
-          fill:d.value>=d.cost?"#16a34a":"#ef4444",opacity:.55
-        })
+      /* Area fills (clipped) */
+      React.createElement("g",{clipPath:"url(#pev_clip)"},
+        React.createElement("path",{d:costAreaPath,fill:"url(#pev_cost_g)"}),
+        React.createElement("path",{d:valAreaPath,fill:`url(#${isGain?"pev_gain_g":"pev_loss_g"})`})
       ),
+
+      /* Cost line — amber dashed, smooth */
+      React.createElement("path",{d:costPath,fill:"none",stroke:"#f59e0b",strokeWidth:1.8,
+        strokeDasharray:"8,5",strokeLinejoin:"round",strokeLinecap:"round",opacity:.9,
+        clipPath:"url(#pev_clip)"}),
+
+      /* Value line — glowing, smooth */
+      React.createElement("path",{d:valPath,fill:"none",stroke:valColor,strokeWidth:2.5,
+        strokeLinejoin:"round",strokeLinecap:"round",
+        style:{filter:`drop-shadow(0 0 4px ${valColor}80)`},
+        clipPath:"url(#pev_clip)"}),
+
+      /* Milestone markers (peak / trough) */
+      milestones.map(({idx,type})=>{
+        const mx2=xFn(idx),my2=yFn(dataPoints[idx].value);
+        const isPeak=type==="peak";
+        const col=isPeak?"#f59e0b":valColor;
+        const lbl=isPeak?"Peak":"Low";
+        return React.createElement("g",{key:"pev_ms"+idx},
+          React.createElement("circle",{cx:mx2,cy:my2,r:5,fill:col,stroke:"var(--modal-bg)",strokeWidth:2,opacity:.9}),
+          React.createElement("line",{x1:mx2,y1:my2-(isPeak?8:10),x2:mx2,y2:my2-(isPeak?22:28),
+            stroke:col,strokeWidth:1,opacity:.6}),
+          React.createElement("rect",{x:mx2-16,y:my2-(isPeak?34:40),width:32,height:13,rx:3,
+            fill:col,opacity:.15}),
+          React.createElement("text",{x:mx2,y:my2-(isPeak?24:30),textAnchor:"middle",
+            fill:col,fontSize:8.5,fontWeight:700,opacity:.9},lbl),
+          React.createElement("text",{x:mx2,y:my2-(isPeak?13:19),textAnchor:"middle",
+            fill:col,fontSize:7.5,fontWeight:600,opacity:.8},INRshort(dataPoints[idx].value))
+        );
+      }),
 
       /* X-axis date labels */
       dataPoints.map((d,i)=>{
         const isLast=i===dataPoints.length-1;
         if(i%stride!==0&&!isLast)return null;
-        /* Show MMM-YY (e.g. Apr-26) on x-axis */
-        const _dp=d.date.split("-"); /* [DD, Mon, YYYY] */
+        const _dp=d.date.split("-");
         const shortDate=_dp.length===3?_dp[1]+"-"+_dp[2].slice(2):d.date;
         return React.createElement("text",{key:"pev_xl"+i,
-          x:padL+i*xStep,y:svgH-8,
-          textAnchor:isLast?"end":"middle",
-          fill:"var(--text6)",fontSize:8
+          x:xFn(i),y:svgH-10,
+          textAnchor:i===0?"start":isLast?"end":"middle",
+          fill:"var(--text5)",fontSize:9,fontWeight:500
         },shortDate);
       }),
 
       /* Hover group */
       hoverIdx!==null&&hp&&React.createElement("g",null,
-        /* Vertical crosshair */
+        /* Vertical crosshair — full height glow */
         React.createElement("line",{x1:hx,y1:padT,x2:hx,y2:padT+chartH,
-          stroke:"#6d28d9",strokeWidth:1.2,strokeDasharray:"5,4",opacity:.4}),
+          stroke:valColor,strokeWidth:1,strokeDasharray:"4,4",opacity:.35}),
+        /* Shaded area under hover point */
+        React.createElement("rect",{x:hx-1,y:padT,width:2,height:chartH,
+          fill:valColor,opacity:.12}),
+        /* Rings behind dots */
+        React.createElement("circle",{cx:hx,cy:hyC,r:9,fill:"#f59e0b",opacity:.12}),
+        React.createElement("circle",{cx:hx,cy:hyV,r:9,fill:valColor,opacity:.15}),
         /* Cost dot */
-        React.createElement("circle",{cx:hx,cy:hyC,r:4.5,fill:"#f59e0b",stroke:"var(--modal-bg)",strokeWidth:2}),
+        React.createElement("circle",{cx:hx,cy:hyC,r:5,fill:"#f59e0b",stroke:"var(--modal-bg)",strokeWidth:2.5}),
         /* Value dot */
-        React.createElement("circle",{cx:hx,cy:hyV,r:4.5,
-          fill:hp.value>=hp.cost?"#16a34a":"#ef4444",stroke:"var(--modal-bg)",strokeWidth:2}),
-        /* Tooltip shadow */
-        React.createElement("rect",{x:tipX+3,y:tipY+4,width:tipW,height:tipH,
-          rx:10,fill:"rgba(0,0,0,.15)",style:{filter:"blur(4px)"}}),
-        /* Tooltip body */
-        React.createElement("rect",{x:tipX,y:tipY,width:tipW,height:tipH,
-          rx:10,fill:"var(--modal-bg)",stroke:"#6d28d9",strokeWidth:1.6}),
-        /* Accent top bar */
-        React.createElement("rect",{x:tipX,y:tipY,width:tipW,height:5,rx:10,fill:"#6d28d9"}),
-        React.createElement("rect",{x:tipX,y:tipY+2,width:tipW,height:5,fill:"#6d28d9"}),
-        /* Date label */
-        React.createElement("text",{x:tipX+14,y:tipY+21,fill:"var(--text4)",fontSize:10,fontWeight:600,letterSpacing:.3},hp.date),
-        /* Holding value + % — now on top */
-        (()=>{
-          const diff=hp.value-hp.cost;
-          const pct=hp.cost>0?((diff/hp.cost)*100).toFixed(2):"0.00";
-          const col=diff>=0?"#16a34a":"#ef4444";
-          const sign=diff>=0?"▲ +":"▼ ";
-          return React.createElement("text",{x:tipX+14,y:tipY+40,fill:col,fontSize:13,fontWeight:700},
-            "Val  "+INRfmt(Math.round(hp.value))+"  ("+sign+pct+"%)"
-          );
-        })(),
-        /* CoA — now below Val */
-        React.createElement("text",{x:tipX+14,y:tipY+60,fill:"#b45309",fontSize:13,fontWeight:700},
-          "CoA  "+INRfmt(Math.round(hp.cost))
-        ),
-        /* Net Change */
-        (()=>{
-          const netDiff=hp.value-hp.cost;
-          const col=netDiff>=0?"#16a34a":"#ef4444";
-          const sign=netDiff>=0?"+":"";
-          return React.createElement("text",{x:tipX+14,y:tipY+80,fill:col,fontSize:11,fontWeight:600},
-            "Net  "+sign+INRfmt(Math.round(netDiff))
-          );
-        })()
+        React.createElement("circle",{cx:hx,cy:hyV,r:5.5,
+          fill:valColor,stroke:"var(--modal-bg)",strokeWidth:2.5}),
+        /* Tooltip */
+        React.createElement("g",null,
+          /* Drop shadow */
+          React.createElement("rect",{x:tipX+4,y:tipY+5,width:tipW,height:tipH,
+            rx:12,fill:"rgba(0,0,0,.18)",style:{filter:"blur(6px)"}}),
+          /* Background */
+          React.createElement("rect",{x:tipX,y:tipY,width:tipW,height:tipH,
+            rx:12,fill:"var(--modal-bg)",stroke:valColor,strokeWidth:1.5,strokeOpacity:.6}),
+          /* Colored top stripe */
+          React.createElement("rect",{x:tipX,y:tipY,width:tipW,height:6,rx:12,fill:valColor,opacity:.9}),
+          React.createElement("rect",{x:tipX,y:tipY+3,width:tipW,height:6,fill:valColor,opacity:.9}),
+          /* Date */
+          React.createElement("text",{x:tipX+14,y:tipY+24,fill:"var(--text3)",fontSize:11,fontWeight:700,letterSpacing:.2},hp.date),
+          /* Separator */
+          React.createElement("line",{x1:tipX+10,y1:tipY+30,x2:tipX+tipW-10,y2:tipY+30,
+            stroke:"var(--border2)",strokeWidth:.8,opacity:.6}),
+          /* Val row */
+          (()=>{
+            const diff=hp.value-hp.cost;
+            const pct=hp.cost>0?((diff/hp.cost)*100).toFixed(2):"0.00";
+            const col=diff>=0?"#10b981":"#ef4444";
+            const sign=diff>=0?"▲ +":"▼ ";
+            return React.createElement("g",null,
+              React.createElement("text",{x:tipX+14,y:tipY+48,fill:"var(--text5)",fontSize:9.5,fontWeight:600,letterSpacing:.3},"HOLDING VALUE"),
+              React.createElement("text",{x:tipX+14,y:tipY+64,fill:col,fontSize:14,fontWeight:800},
+                INRfmt(Math.round(hp.value))),
+              React.createElement("text",{x:tipX+tipW-14,y:tipY+64,textAnchor:"end",fill:col,fontSize:10,fontWeight:700},
+                sign+pct+"%")
+            );
+          })(),
+          /* CoA row */
+          React.createElement("text",{x:tipX+14,y:tipY+81,fill:"var(--text5)",fontSize:9.5,fontWeight:600,letterSpacing:.3},"COST OF ACQUISITION"),
+          React.createElement("text",{x:tipX+14,y:tipY+97,fill:"#d97706",fontSize:13,fontWeight:700},
+            INRfmt(Math.round(hp.cost))),
+          /* Net */
+          (()=>{
+            const nd=hp.value-hp.cost;
+            const col=nd>=0?"#10b981":"#ef4444";
+            return React.createElement("text",{x:tipX+tipW-14,y:tipY+97,textAnchor:"end",fill:col,fontSize:11,fontWeight:700},
+              (nd>=0?"+":"")+INRfmt(Math.round(nd)));
+          })()
+        )
       )
     )
   );
