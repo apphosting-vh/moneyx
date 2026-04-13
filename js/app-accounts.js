@@ -190,7 +190,7 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
           ...allCards.map(c=>({...c,accType:"card",accTypeLbl:"↳"})),
           ...loans.map(l=>({...l,accType:"loan",accTypeLbl:"↳",name:l.name+" (Loan)"}))
         ],
-        openBalance:selD?(selD.balance-selD.transactions||[].filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0)):0,
+        openBalance:selD?(selD.balance-(selD.transactions||[]).filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0)):0,
         dispatch,state:{banks:allBanks,cards:allCards,cash},
         onAddTx:tx=>{
           if(!selD)return;
@@ -441,7 +441,7 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
           ...allCards.map(c=>({...c,accType:"card",accTypeLbl:"↳"})),
           ...loans.map(l=>({...l,accType:"loan",accTypeLbl:"↳",name:l.name+" (Loan)"}))
         ],
-        openBalance:selD?(selD.outstanding+selD.transactions||[].filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0)):0,
+        openBalance:selD?(selD.outstanding+(selD.transactions||[]).filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0)):0,
         dispatch,state:{banks:allBanks,cards:allCards,cash},
         onAddTx:tx=>{
           if(!selD)return;
