@@ -2,11 +2,6 @@
 /* Generated automatically — do not edit manually. */
 window.__MM_CHANGELOG =
 [
-  {version:"4.0.1",date:"2026-04-14",title:"Fix — TypeError crash when account objects lack transactions array",changes:[
-    "Added defensive null guards (x.transactions||[]) on all bank/card transaction array accesses across 8 files",
-    "Fixes 'Cannot read properties of undefined (reading filter)' and 'reading forEach' errors on app load",
-    "Prevents crashes when IndexedDB records have incomplete account objects (missing transactions property)",
-  ]},
   {version:"3.50.08",date:"2026-04-07",title:"Fix — 'fmtD is not defined' crash in Data & Backup and Auto Categorize tabs",changes:[
     "Bug Fix (Critical) — Opening Settings → Data & Backup or Settings → Auto Categorize threw ReferenceError: fmtD is not defined, causing a blank screen. Root cause: the fmtD local-date formatter added in v3.50.06 was defined inside the ReportsSection component, but two other independent components (StorageGauge and CatRulesPanel) also referenced it. JavaScript const is block-scoped, so the function was invisible outside ReportsSection. Fix: moved fmtD to module scope (top of app-reports.js) so all components in the file can access it.",
     "Service Worker cache key bumped to finsight-v3-50-08 — clears all prior caches on activate.",
