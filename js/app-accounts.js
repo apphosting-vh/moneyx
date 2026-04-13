@@ -59,8 +59,8 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
       /* Left list: hidden on mobile when detail is shown */
       (!isMobile||mobileView==="list")&&React.createElement("div",{style:{width:isMobile?"100%":280,minWidth:isMobile?"auto":280,display:"flex",flexDirection:"column",gap:12,overflowY:"auto",paddingRight:isMobile?0:4}},
         banks.filter(b=>!b.hidden).map((b,bIdx)=>{
-          const inc=b.transactions.filter(t=>t.type==="credit").reduce((s,t)=>s+t.amount,0);
-          const exp=b.transactions.filter(t=>t.type==="debit").reduce((s,t)=>s+t.amount,0);
+          const inc=(b.transactions||[]).filter(t=>t.type==="credit").reduce((s,t)=>s+t.amount,0);
+          const exp=(b.transactions||[]).filter(t=>t.type==="debit").reduce((s,t)=>s+t.amount,0);
           return React.createElement("div",{key:b.id,className:"accard"+(sel===b.id?" active":""),onClick:()=>{if(!reorderMode){setSel(b.id);if(isMobile)setMobileView("detail");}},style:{background:"var(--card)",border:"1px solid "+(reorderMode?"var(--accent)55":"var(--border)"),borderRadius:14,padding:16,cursor:reorderMode?"default":"pointer",transition:"border-color .2s"}},
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}},
               React.createElement("div",{style:{display:"flex",alignItems:"flex-start",gap:8,flex:1,minWidth:0}},
@@ -105,7 +105,7 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
             React.createElement("div",{style:{display:"flex",gap:12,fontSize:11}},
               React.createElement("span",{style:{color:"#16a34a"}},"↑ "+INR(inc)),
               React.createElement("span",{style:{color:"#ef4444"}},"↓ "+INR(exp)),
-              React.createElement("span",{style:{color:"var(--text5)"}},b.transactions.length+" txns")
+              React.createElement("span",{style:{color:"var(--text5)"}},(b.transactions||[]).length+" txns")
             ),
             /* Note anchor */
             noteEdit&&noteEdit.id===b.id
@@ -190,7 +190,7 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
           ...allCards.map(c=>({...c,accType:"card",accTypeLbl:"↳"})),
           ...loans.map(l=>({...l,accType:"loan",accTypeLbl:"↳",name:l.name+" (Loan)"}))
         ],
-        openBalance:selD?(selD.balance-selD.transactions.filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0)):0,
+        openBalance:selD?(selD.balance-(selD.transactions||[]).filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0)):0,
         dispatch,state:{banks:allBanks,cards:allCards,cash},
         onAddTx:tx=>{
           if(!selD)return;
@@ -345,7 +345,7 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
               ):null;
               const daysUntilDue=dueDate?Math.ceil((dueDate-now)/(86400000)):null;
               const fmtD=d=>`${d.getDate()}/${d.getMonth()+1}`;
-              const _dFmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;const cycleSpend=c.transactions.filter(t=>t.type==="debit"&&t.date>=_dFmt(cycleStart)&&t.date<=_dFmt(cycleEnd)).reduce((s,t)=>s+t.amount,0);
+              const _dFmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;const cycleSpend=(c.transactions||[]).filter(t=>t.type==="debit"&&t.date>=_dFmt(cycleStart)&&t.date<=_dFmt(cycleEnd)).reduce((s,t)=>s+t.amount,0);
               return React.createElement("div",{style:{marginTop:8,padding:"7px 9px",borderRadius:8,background:"var(--bg5)",border:"1px solid var(--border2)",fontSize:10}},
                 React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:3}},
                   React.createElement("span",{style:{color:"var(--text5)"}},"Cycle: "+fmtD(cycleStart)+" – "+fmtD(cycleEnd)),
@@ -441,7 +441,7 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
           ...allCards.map(c=>({...c,accType:"card",accTypeLbl:"↳"})),
           ...loans.map(l=>({...l,accType:"loan",accTypeLbl:"↳",name:l.name+" (Loan)"}))
         ],
-        openBalance:selD?(selD.outstanding+selD.transactions.filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0)):0,
+        openBalance:selD?(selD.outstanding+(selD.transactions||[]).filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0)):0,
         dispatch,state:{banks:allBanks,cards:allCards,cash},
         onAddTx:tx=>{
           if(!selD)return;
@@ -484,9 +484,9 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
 /* ── CASH SECTION ────────────────────────────────────────────────────────── */
 const CashSection=React.memo(({cash,dispatch,categories,payees,allBanks,allCards=[],loans=[],isMobile,jumpTxId=null,jumpSerial=null})=>{
   const[addCashOpen,setAddCashOpen]=useState(false);
-  const inc=cash.transactions.filter(t=>t.type==="credit").reduce((s,t)=>s+t.amount,0);
-  const exp=cash.transactions.filter(t=>t.type==="debit").reduce((s,t)=>s+t.amount,0);
-  const catMap=cash.transactions.filter(t=>t.type==="debit").reduce((a,t)=>{const k=catMainName(t.cat||t.cat||"Others");a[k]=(a[k]||0)+t.amount;return a;},{});
+  const inc=(cash.transactions||[]).filter(t=>t.type==="credit").reduce((s,t)=>s+t.amount,0);
+  const exp=(cash.transactions||[]).filter(t=>t.type==="debit").reduce((s,t)=>s+t.amount,0);
+  const catMap=(cash.transactions||[]).filter(t=>t.type==="debit").reduce((a,t)=>{const k=catMainName(t.cat||t.cat||"Others");a[k]=(a[k]||0)+t.amount;return a;},{});
   const pieData=Object.entries(catMap).map(([name,value])=>({name,value}));
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",height:"100%"}},
     React.createElement("div",{style:{marginBottom:16}},
@@ -514,7 +514,7 @@ const CashSection=React.memo(({cash,dispatch,categories,payees,allBanks,allCards
           isMobile,
           transactions:cash.transactions,
           accentColor:"var(--accent)",
-          openBalance:cash.balance-cash.transactions.filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0),
+          openBalance:cash.balance-(cash.transactions||[]).filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0),
           accType:"cash",
           accountName:"Cash",
           categories,payees,

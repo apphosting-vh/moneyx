@@ -141,14 +141,14 @@ const idbMigrateFromLS = async (state) => {
   if (localStorage.getItem(TXN_MIGRATED)) return state;
   try {
     const txnData = _extractTxnArrays(state);
-    const hasData = txnData.banks.some(b => b.transactions.length > 0)
-                 || txnData.cards.some(c => c.transactions.length > 0)
+    const hasData = txnData.banks.some(b => (b.transactions||[]).length > 0)
+                 || txnData.cards.some(c => (c.transactions||[]).length > 0)
                  || txnData.cash.transactions.length > 0;
     if (hasData) {
       await _idbPut(TXN_STORE, TXN_KEY, txnData);
       console.log("[IDB] Migrated", 
-        txnData.banks.reduce((s,b) => s + b.transactions.length, 0) +
-        txnData.cards.reduce((s,c) => s + c.transactions.length, 0) +
+        txnData.banks.reduce((s,b) => s + (b.transactions||[]).length, 0) +
+        txnData.cards.reduce((s,c) => s + (c.transactions||[]).length, 0) +
         txnData.cash.transactions.length,
         "transactions to IndexedDB");
     }

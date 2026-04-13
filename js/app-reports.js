@@ -23,9 +23,9 @@ const ExportReportModal=({data,onClose})=>{
   /* ── collect all transactions in range ── */
   const getTx=(from,to)=>{
     const inRange=t=>t.date>=from&&t.date<=to;
-    const banks=data.banks.flatMap(b=>b.transactions.filter(inRange).map(t=>({...t,accName:b.name,accBank:b.bank,accType:"Bank"})));
-    const cards=data.cards.flatMap(c=>c.transactions.filter(inRange).map(t=>({...t,accName:c.name,accBank:c.bank,accType:"Card"})));
-    const cash=data.cash.transactions.filter(inRange).map(t=>({...t,accName:"Cash Wallet",accBank:"",accType:"Cash"}));
+    const banks=data.banks.flatMap(b=>(b.transactions||[]).filter(inRange).map(t=>({...t,accName:b.name,accBank:b.bank,accType:"Bank"})));
+    const cards=data.cards.flatMap(c=>(c.transactions||[]).filter(inRange).map(t=>({...t,accName:c.name,accBank:c.bank,accType:"Card"})));
+    const cash=(data.cash.transactions||[]).filter(inRange).map(t=>({...t,accName:"Cash Wallet",accBank:"",accType:"Cash"}));
     return{banks,cards,cash,all:[...banks,...cards,...cash]};
   };
 
@@ -531,7 +531,7 @@ ${table(
   };
 
   /* ── Year options: earliest transaction FY year → current FY year ── */
-  const allDates=[...data.banks.flatMap(b=>b.transactions),...data.cards.flatMap(c=>c.transactions),...data.cash.transactions].map(t=>t.date.substr(0,4));
+  const allDates=[...data.banks.flatMap(b=>b.transactions||[]),...data.cards.flatMap(c=>c.transactions||[]),...(data.cash.transactions||[])].map(t=>t.date.substr(0,4));
   const minCalYear=allDates.length?Math.min(...allDates.map(Number)):new Date().getFullYear();
   /* Convert earliest calendar year to FY year (if Jan-Mar, belongs to previous FY) */
   const minFYYear=minCalYear;
@@ -636,9 +636,9 @@ const RptGstTds=({data,from,to,onExportPDF})=>{
 
   /* ── Collect all transactions with GST or TDS tags ── */
   const allTx=[
-    ...data.banks.flatMap(b=>b.transactions.map(t=>({...t,_src:b.name}))),
-    ...data.cards.flatMap(c=>c.transactions.map(t=>({...t,_src:c.name}))),
-    ...data.cash.transactions.map(t=>({...t,_src:"Cash"})),
+    ...data.banks.flatMap(b=>(b.transactions||[]).map(t=>({...t,_src:b.name}))),
+    ...data.cards.flatMap(c=>(c.transactions||[]).map(t=>({...t,_src:c.name}))),
+    ...(data.cash.transactions||[]).map(t=>({...t,_src:"Cash"})),
   ];
 
   const inRange=tx=>(!from||tx.date>=from)&&(!to||tx.date<=to);
@@ -2036,7 +2036,7 @@ const CloudBackupPanel=({state})=>{
       if(!folderId){say("Could not access Drive folder. Token may have expired — please reconnect.",false);setBusy(false);return;}
       const payload={
         version:8,exportedAt:new Date().toISOString(),cloudBackup:true,
-        summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+b.transactions.length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+c.transactions.length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,hasTaxData:!!(state.taxData),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0)},
+        summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),cashTxns:(state.cash.transactions||[]).length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,hasTaxData:!!(state.taxData),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0)},
         data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null}
       };
       const filename="money-manager-backup-"+new Date().toISOString().split("T")[0]+".json";
@@ -2239,9 +2239,9 @@ const StorageGauge=({dispatch,state})=>{
   const computePurgePreview=()=>{
     if(!state||!purgeDate)return null;
     const cut=purgeDate;
-    const bCount=purgeSrc.banks?state.banks.reduce((s,b)=>s+b.transactions.filter(t=>t.date<cut).length,0):0;
-    const cCount=purgeSrc.cards?state.cards.reduce((s,c)=>s+c.transactions.filter(t=>t.date<cut).length,0):0;
-    const kCount=purgeSrc.cash?state.cash.transactions.filter(t=>t.date<cut).length:0;
+    const bCount=purgeSrc.banks?state.banks.reduce((s,b)=>s+(b.transactions||[]).filter(t=>t.date<cut).length,0):0;
+    const cCount=purgeSrc.cards?state.cards.reduce((s,c)=>s+(c.transactions||[]).filter(t=>t.date<cut).length,0):0;
+    const kCount=purgeSrc.cash?(state.cash.transactions||[]).filter(t=>t.date<cut).length:0;
     const total=bCount+cCount+kCount;
     const estBytes=total*320; /* avg transaction JSON ~320 bytes */
     return{bCount,cCount,kCount,total,estBytes};
@@ -2692,7 +2692,7 @@ function checkAndFireNotifications(state){
     const mS=`${now2.getFullYear()}-${pad(now2.getMonth()+1)}-01`;
     const mE=fmtD(new Date(now2.getFullYear(),now2.getMonth()+1,0));
     const actual={};
-    [...(state.banks||[]).flatMap(b=>b.transactions),...(state.cards||[]).flatMap(c=>c.transactions),...((state.cash||{}).transactions||[])]
+    [...(state.banks||[]).flatMap(b=>b.transactions||[]),...(state.cards||[]).flatMap(c=>c.transactions||[]),...(((state.cash||{}).transactions)||[])]
       .filter(t=>{
         if(t.type!=="debit"||t.date<mS||t.date>mE)return false;
         /* Exclude Investment and Transfer — same logic as Dashboard budget widget */
@@ -2750,9 +2750,9 @@ const CatRulesPanel=({state,dispatch})=>{
 
   const applyBulk=()=>{
     dispatch({type:"APPLY_CAT_RULES_BULK"});
-    const banks=state.banks.reduce((s,b)=>s+b.transactions.length,0);
-    const cards=state.cards.reduce((s,c)=>s+c.transactions.length,0);
-    const cash=state.cash.transactions.length;
+    const banks=state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0);
+    const cards=state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0);
+    const cash=(state.cash.transactions||[]).length;
     setBulkMsg(`✓ Rules applied — ${banks} bank, ${cards} card, ${cash} cash transactions processed.`);
     setTimeout(()=>setBulkMsg(""),5000);
   };
@@ -2771,8 +2771,8 @@ const CatRulesPanel=({state,dispatch})=>{
     const cutStr=fmtD(cutoff);
     const freq={};
     const allTx=[
-      ...state.banks.flatMap(b=>b.transactions),
-      ...state.cards.flatMap(c=>c.transactions),
+      ...state.banks.flatMap(b=>b.transactions||[]),
+      ...state.cards.flatMap(c=>c.transactions||[]),
       ...(state.cash.transactions||[]),
     ];
     allTx.filter(t=>t.date>=cutStr&&t.type==="debit").forEach(t=>{

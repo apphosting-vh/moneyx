@@ -316,7 +316,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
                 React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text2)"}},b.name),
                 b.hidden&&React.createElement("span",{title:"Hidden from Banking section",style:{fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:6,background:"rgba(245,158,11,.15)",border:"1px solid rgba(245,158,11,.3)",color:"#d97706",whiteSpace:"nowrap"}},"Hidden")
               ),
-              React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},b.transactions.length+" transactions"+(b.attachments&&b.attachments.length>0?" · "+b.attachments.length+" file"+(b.attachments.length>1?"s":""):""))
+              React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},(b.transactions||[]).length+" transactions"+(b.attachments&&b.attachments.length>0?" · "+b.attachments.length+" file"+(b.attachments.length>1?"s":""):""))
             ),
             React.createElement("div",{style:{fontSize:13,color:"var(--text3)"}},b.bank),
             React.createElement("div",null,React.createElement(Badge,{ch:b.type,col:"#0e7490"})),
@@ -367,7 +367,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
                   React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text2)"}},c.name),
                   c.hidden&&React.createElement("span",{title:"Hidden from Credit Cards section",style:{fontSize:10,fontWeight:700,padding:"1px 6px",borderRadius:6,background:"rgba(245,158,11,.15)",border:"1px solid rgba(245,158,11,.3)",color:"#d97706",whiteSpace:"nowrap"}},"Hidden")
                 ),
-                React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},c.transactions.length+" transactions"+(c.attachments&&c.attachments.length>0?" · "+c.attachments.length+" file"+(c.attachments.length>1?"s":""):""))
+                React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},(c.transactions||[]).length+" transactions"+(c.attachments&&c.attachments.length>0?" · "+c.attachments.length+" file"+(c.attachments.length>1?"s":""):""))
               ),
               React.createElement("div",{style:{fontSize:13,color:"var(--text3)"}},c.bank),
               React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:600,fontSize:13,color:"var(--text4)"}},INR(c.limit)),
@@ -417,9 +417,9 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
         React.createElement(Card,null,
           React.createElement("div",{style:{fontSize:12,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.6,marginBottom:14}},"Transaction Summary"),
           React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"1fr 1fr 1fr",gap:14}},
-            React.createElement("div",null,React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},"Total Entries"),React.createElement("div",{style:{fontSize:22,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"var(--accent)"}},state.cash.transactions.length)),
-            React.createElement("div",null,React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},"Total In"),React.createElement("div",{style:{fontSize:18,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"#16a34a"}},INR(state.cash.transactions.filter(t=>t.type==="credit").reduce((s,t)=>s+t.amount,0)))),
-            React.createElement("div",null,React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},"Total Out"),React.createElement("div",{style:{fontSize:18,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"#ef4444"}},INR(state.cash.transactions.filter(t=>t.type==="debit").reduce((s,t)=>s+t.amount,0))))
+            React.createElement("div",null,React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},"Total Entries"),React.createElement("div",{style:{fontSize:22,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"var(--accent)"}},(state.cash.transactions||[]).length)),
+            React.createElement("div",null,React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},"Total In"),React.createElement("div",{style:{fontSize:18,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"#16a34a"}},INR((state.cash.transactions||[]).filter(t=>t.type==="credit").reduce((s,t)=>s+t.amount,0)))),
+            React.createElement("div",null,React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},"Total Out"),React.createElement("div",{style:{fontSize:18,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"#ef4444"}},INR((state.cash.transactions||[]).filter(t=>t.type==="debit").reduce((s,t)=>s+t.amount,0))))
           )
         )
       ),
@@ -698,9 +698,9 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
             ),
             React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:8}},
               ...[
-                {label:"Bank Txns",     val:state.banks.reduce((s,b)=>s+b.transactions.length,0),         col:"#0e7490", icon:React.createElement(Icon,{n:"bank",size:18})},
-                {label:"Card Txns",     val:state.cards.reduce((s,c)=>s+c.transactions.length,0),         col:"#be185d", icon:React.createElement(Icon,{n:"card",size:18})},
-                {label:"Cash Txns",     val:state.cash.transactions.length,                                col:"#16a34a", icon:React.createElement(Icon,{n:"cash",size:18})},
+                {label:"Bank Txns",     val:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),         col:"#0e7490", icon:React.createElement(Icon,{n:"bank",size:18})},
+                {label:"Card Txns",     val:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),         col:"#be185d", icon:React.createElement(Icon,{n:"card",size:18})},
+                {label:"Cash Txns",     val:(state.cash.transactions||[]).length,                                col:"#16a34a", icon:React.createElement(Icon,{n:"cash",size:18})},
                 {label:"Scheduled",     val:(state.scheduled||[]).length,                                  col:"#b45309", icon:React.createElement(Icon,{n:"calendar",size:18})},
               ].map(({label,val,col,icon})=>
                 React.createElement("div",{key:label,style:{background:"var(--accentbg2)",borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
@@ -806,7 +806,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
                   const attachmentBlobs=await rcptGetAllBlobEntries();
                   const payload={version:8,exportedAt:new Date().toISOString(),theme:loadTheme(),
                     attachmentBlobs:attachmentBlobs.filter(e=>e.b64),
-                    summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+b.transactions.length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+c.transactions.length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,hasTaxData:!!(state.taxData),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0)},
+                    summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),cashTxns:(state.cash.transactions||[]).length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,hasTaxData:!!(state.taxData),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0)},
                     data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})}}
                   };
                   const enc=await encryptBackup(payload,pw);
@@ -830,10 +830,10 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
                   attachmentBlobs:attachmentBlobs.filter(e=>e.b64),
                   summary:{
                     bankAccounts:state.banks.length,
-                    bankTxns:state.banks.reduce((s,b)=>s+b.transactions.length,0),
+                    bankTxns:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),
                     cardAccounts:state.cards.length,
-                    cardTxns:state.cards.reduce((s,c)=>s+c.transactions.length,0),
-                    cashTxns:state.cash.transactions.length,
+                    cardTxns:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),
+                    cashTxns:(state.cash.transactions||[]).length,
                     loans:state.loans.length,
                     mf:state.mf.length,
                     shares:state.shares.length,

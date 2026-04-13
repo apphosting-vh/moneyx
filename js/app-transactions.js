@@ -1208,7 +1208,7 @@ const TxPanel=({account,label,onAddTx,onEditTx,onDeleteTx,onDupTx,onSplitTx,onIm
     React.createElement("div",{style:{fontSize:36}},"←"),
     React.createElement("div",{style:{fontSize:14}},`Select ${label} to view transactions`)
   );
-  const reconTx=account.transactions.filter(t=>t.status==="Reconciled");
+  const reconTx=(account.transactions||[]).filter(t=>t.status==="Reconciled");
   const inc=reconTx.filter(t=>t.type==="credit").reduce((s,t)=>s+t.amount,0);
   const exp=reconTx.filter(t=>t.type==="debit").reduce((s,t)=>s+t.amount,0);
   return React.createElement("div",{className:"si",style:{flex:1,display:"flex",flexDirection:"column",gap:12,minWidth:0,minHeight:0}},
@@ -1222,7 +1222,7 @@ const TxPanel=({account,label,onAddTx,onEditTx,onDeleteTx,onDupTx,onSplitTx,onIm
         React.createElement("div",{style:{display:"flex",gap:20,alignItems:"center"}},
           React.createElement("span",{style:{fontSize:12,color:"#16a34a"}},`↑ ${INR(inc)}`),
           React.createElement("span",{style:{fontSize:12,color:"#ef4444"}},`↓ ${INR(exp)}`),
-          React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},account.transactions.length+" txns"),
+          React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},(account.transactions||[]).length+" txns"),
           account.balance!==undefined
             ? React.createElement("div",{style:{textAlign:"right"}},
                 React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5}},"Balance"),
