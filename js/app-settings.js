@@ -1853,7 +1853,7 @@ const ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,pa
             return executeOne(sc);
           }
           setExecConfirm(sc);
-        },sx:{flex:1,justifyContent:"center",minWidth:80}},isDue?"Execute Now":"Execute Now"),
+        },sx:{flex:1,justifyContent:"center",minWidth:80}},isDue?"Execute Now":"Schedule Now"),
         React.createElement(Btn,{sz:"sm",onClick:()=>setEditSc(sc),sx:{justifyContent:"center",background:"var(--accentbg3)",border:"1px solid var(--border)",color:"var(--text3)"}},"Edit"),
         React.createElement(Btn,{sz:"sm",onClick:()=>setCopySc(sc),sx:{justifyContent:"center",background:"var(--accentbg3)",border:"1px solid var(--border)",color:"var(--text3)"}},"⎘ Copy"),
         React.createElement(Btn,{v:"secondary",sz:"sm",onClick:()=>setDelScConfirm(sc),sx:{justifyContent:"center"}},"Delete")

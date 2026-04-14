@@ -2762,6 +2762,38 @@ const TaxEstimatorWrapper = ({ taxData, dispatch }) => {
 };
 
 
+/* ── Section ErrorBoundary ─────────────────────────────────────────────
+   Catches JS errors in a section so one crash doesn't wipe the whole app.
+   Shows a compact "Reload section" card instead of a blank screen.      */
+class ErrorBoundary extends React.Component{
+  constructor(props){super(props);this.state={hasError:false,err:null};}
+  static getDerivedStateFromError(err){return{hasError:true,err};}
+  componentDidCatch(err,info){console.error("[ErrorBoundary]",this.props.name||"section",err,info);}
+  render(){
+    if(this.state.hasError){
+      var name=this.props.name||"Section";
+      return React.createElement("div",{style:{
+        display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+        minHeight:260,padding:"40px 24px",fontFamily:"'DM Sans',sans-serif",gap:12
+      }},
+        React.createElement("div",{style:{fontSize:40,opacity:.6}},"\u26A0\uFE0F"),
+        React.createElement("div",{style:{fontSize:16,fontWeight:600,color:"#f87171"}},"Something went wrong in "+name),
+        React.createElement("div",{style:{fontSize:13,color:"#8ba0c0",maxWidth:380,textAlign:"center",lineHeight:1.6}},
+          this.state.err&&this.state.err.message
+            ? this.state.err.message
+            : "An unexpected error occurred. Your data is safe — try reloading this section."),
+        React.createElement("button",{onClick:()=>this.setState({hasError:false,err:null}),style:{
+          marginTop:8,padding:"8px 20px",borderRadius:8,
+          border:"1px solid rgba(2,132,199,.6)",background:"rgba(2,132,199,.15)",
+          color:"#38bdf8",fontSize:13,fontWeight:600,cursor:"pointer",
+          fontFamily:"'DM Sans',sans-serif"
+        }},"Reload section")
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function App(){
   const[state,rawDispatch]=usePersistentReducer(reducer,INIT);
   /* ── Wrap dispatch: auto-snapshot before destructive actions for undo ──
@@ -3687,46 +3719,68 @@ function App(){
          isolated mount driven by `tab`. All other sections are keep-alive.
          ─────────────────────────────────────────────────────────────────────── */
       React.createElement("div",{style:{display:tab==="dashboard"?"contents":"none"}},
-        React.createElement(Dashboard,{data:state,isMobile})),
+        React.createElement(ErrorBoundary,{name:"Dashboard"},
+          React.createElement(Dashboard,{data:state,isMobile}))),
       React.createElement("div",{style:{display:tab==="banks"?"contents":"none"}},
-        React.createElement(BankSection,{banks:state.banks,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,cash:state.cash,loans:state.loans||_EA,isMobile,jumpAccId:txJump?.accType==="bank"?txJump.accId:null,jumpTxId:txJump?.accType==="bank"?txJump.txId:null,jumpSerial:txJump?.accType==="bank"?txJump.serial:null,onClearAccountJump:onClearTxJump})),
+        React.createElement(ErrorBoundary,{name:"Bank Accounts"},
+          React.createElement(BankSection,{banks:state.banks,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,cash:state.cash,loans:state.loans||_EA,isMobile,jumpAccId:txJump?.accType==="bank"?txJump.accId:null,jumpTxId:txJump?.accType==="bank"?txJump.txId:null,jumpSerial:txJump?.accType==="bank"?txJump.serial:null,onClearAccountJump:onClearTxJump}))),
       React.createElement("div",{style:{display:tab==="cards"?"contents":"none"}},
-        React.createElement(CardSection,{cards:state.cards,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,cash:state.cash,loans:state.loans||_EA,isMobile,jumpAccId:txJump?.accType==="card"?txJump.accId:null,jumpTxId:txJump?.accType==="card"?txJump.txId:null,jumpSerial:txJump?.accType==="card"?txJump.serial:null,onClearAccountJump:onClearTxJump})),
+        React.createElement(ErrorBoundary,{name:"Cards"},
+          React.createElement(CardSection,{cards:state.cards,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,cash:state.cash,loans:state.loans||_EA,isMobile,jumpAccId:txJump?.accType==="card"?txJump.accId:null,jumpTxId:txJump?.accType==="card"?txJump.txId:null,jumpSerial:txJump?.accType==="card"?txJump.serial:null,onClearAccountJump:onClearTxJump}))),
       React.createElement("div",{style:{display:tab==="cash"?"contents":"none"}},
-        React.createElement(CashSection,{cash:state.cash,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,loans:state.loans||_EA,isMobile,jumpTxId:txJump?.accType==="cash"?txJump.txId:null,jumpSerial:txJump?.accType==="cash"?txJump.serial:null})),
+        React.createElement(ErrorBoundary,{name:"Cash"},
+          React.createElement(CashSection,{cash:state.cash,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,loans:state.loans||_EA,isMobile,jumpTxId:txJump?.accType==="cash"?txJump.txId:null,jumpSerial:txJump?.accType==="cash"?txJump.serial:null}))),
       React.createElement("div",{style:{display:tab==="inv_dash"?"contents":"none"}},
-        React.createElement(InvestDashboard,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,dispatch,isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO})),
+        React.createElement(ErrorBoundary,{name:"Investments"},
+          React.createElement(InvestDashboard,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,dispatch,isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO}))),
       /* InvestSection: five sub-tabs reuse the same component with different
          defaultTab — keep the && pattern so each sub-tab mounts independently */
-      tab==="inv_mf"&&React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO}),
-      tab==="inv_shares"&&React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"shares",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO}),
-      tab==="inv_fd"&&React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"fd",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO}),
-      tab==="inv_re"&&React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"re",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO}),
-      tab==="inv_pf"&&React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"pf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO}),
+      tab==="inv_mf"&&React.createElement(ErrorBoundary,{name:"Mutual Funds"},
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO})),
+      tab==="inv_shares"&&React.createElement(ErrorBoundary,{name:"Shares"},
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"shares",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO})),
+      tab==="inv_fd"&&React.createElement(ErrorBoundary,{name:"Fixed Deposits"},
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"fd",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO})),
+      tab==="inv_re"&&React.createElement(ErrorBoundary,{name:"Real Estate"},
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"re",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO})),
+      tab==="inv_pf"&&React.createElement(ErrorBoundary,{name:"Provident Fund"},
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"pf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO})),
       React.createElement("div",{style:{display:tab==="loans"?"contents":"none"}},
-        React.createElement(LoanSection,{loans:state.loans,dispatch,allBanks:state.banks,allCards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees,isMobile})),
+        React.createElement(ErrorBoundary,{name:"Loans"},
+          React.createElement(LoanSection,{loans:state.loans,dispatch,allBanks:state.banks,allCards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees,isMobile}))),
       React.createElement("div",{style:{display:tab==="goals"?"contents":"none"}},
-        React.createElement(GoalsSection,{goals:state.goals||_EA,dispatch,isMobile,scheduled:state.scheduled||_EA,banks:state.banks,cards:state.cards,cash:state.cash,mf:state.mf||_EA,shares:state.shares||_EA,fd:state.fd||_EA,re:state.re||_EA})),
+        React.createElement(ErrorBoundary,{name:"Goals"},
+          React.createElement(GoalsSection,{goals:state.goals||_EA,dispatch,isMobile,scheduled:state.scheduled||_EA,banks:state.banks,cards:state.cards,cash:state.cash,mf:state.mf||_EA,shares:state.shares||_EA,fd:state.fd||_EA,re:state.re||_EA}))),
       React.createElement("div",{style:{display:tab==="insights"?"contents":"none"}},
-        React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs,onJumpToLedger,nwSnapshots:state.nwSnapshots||_EO})),
+        React.createElement(ErrorBoundary,{name:"Insights"},
+          React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs,onJumpToLedger,nwSnapshots:state.nwSnapshots||_EO}))),
       React.createElement("div",{style:{display:tab==="notes"?"contents":"none"}},
-        React.createElement(NotesSection,{notes:state.notes||_EA,dispatch})),
+        React.createElement(ErrorBoundary,{name:"Notes"},
+          React.createElement(NotesSection,{notes:state.notes||_EA,dispatch}))),
       React.createElement("div",{style:{display:tab==="calculator"?"contents":"none"}},
-        React.createElement(CalculatorSection,null)),
+        React.createElement(ErrorBoundary,{name:"Calculator"},
+          React.createElement(CalculatorSection,null))),
       React.createElement("div",{style:{display:tab==="scheduled"?"contents":"none"}},
-        React.createElement(ScheduledSection,{scheduled:state.scheduled||_EA,banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees||_EA,dispatch})),
+        React.createElement(ErrorBoundary,{name:"Scheduled"},
+          React.createElement(ScheduledSection,{scheduled:state.scheduled||_EA,banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees||_EA,dispatch}))),
       React.createElement("div",{style:{display:tab==="unified_ledger"?"contents":"none"}},
-        React.createElement(UnifiedLedgerSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees,isMobile,initialFilter:jumpFilter,onClearJump,onJumpToTx})),
+        React.createElement(ErrorBoundary,{name:"All Transactions"},
+          React.createElement(UnifiedLedgerSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees,isMobile,initialFilter:jumpFilter,onClearJump,onJumpToTx}))),
       React.createElement("div",{style:{display:tab==="calendar"?"contents":"none"}},
-        React.createElement(CalendarSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,isMobile})),
+        React.createElement(ErrorBoundary,{name:"Calendar"},
+          React.createElement(CalendarSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,isMobile}))),
       React.createElement("div",{style:{display:tab==="reports"?"contents":"none"}},
-        React.createElement(ReportsSection,{data:state,isMobile,onJumpToLedger})),
+        React.createElement(ErrorBoundary,{name:"Reports"},
+          React.createElement(ReportsSection,{data:state,isMobile,onJumpToLedger}))),
       React.createElement("div",{style:{display:tab==="settings"?"contents":"none"}},
-        React.createElement(SettingsSection,{state,dispatch,themeId,setTheme,isMobile,onResetAll:()=>{dispatch({type:"RESET_ALL"});try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_EOD_PRICES);localStorage.removeItem(LS_EOD_NAVS);localStorage.removeItem(LS_THEME);localStorage.removeItem(TAX_LS_KEY);}catch{}/* Clear transactions from IndexedDB so no stale data survives reload */clearTxIDB().catch(()=>{});setTimeout(()=>window.location.reload(),100);}})),
+        React.createElement(ErrorBoundary,{name:"Settings"},
+          React.createElement(SettingsSection,{state,dispatch,themeId,setTheme,isMobile,onResetAll:()=>{dispatch({type:"RESET_ALL"});try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_EOD_PRICES);localStorage.removeItem(LS_EOD_NAVS);localStorage.removeItem(LS_THEME);localStorage.removeItem(TAX_LS_KEY);}catch{}/* Clear transactions from IndexedDB so no stale data survives reload */clearTxIDB().catch(()=>{});setTimeout(()=>window.location.reload(),100);}}))),
       React.createElement("div",{style:{display:tab==="info"?"contents":"none"}},
-        React.createElement(InfoSection,{isMobile})),
+        React.createElement(ErrorBoundary,{name:"About"},
+          React.createElement(InfoSection,{isMobile}))),
       React.createElement("div",{style:{display:tab==="tax_est"?"contents":"none"}},
-        React.createElement(TaxEstimatorWrapper,{taxData:state.taxData||null,dispatch}))
+        React.createElement(ErrorBoundary,{name:"Tax Estimator"},
+          React.createElement(TaxEstimatorWrapper,{taxData:state.taxData||null,dispatch})))
     )
   ),
     FsaPermCard,
