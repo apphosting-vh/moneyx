@@ -2561,11 +2561,6 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
       )
     ),
     /* ── Stat summary row -- only the relevant card for this tab */
-    tab==="mf"&&React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
-      React.createElement(StatCard,{label:"Current Value",val:INR(mfTotal),sub:mf.filter(m=>m.units>0).length+" active fund"+(mf.filter(m=>m.units>0).length!==1?"s":""),col:"#6d28d9",icon:React.createElement(Icon,{n:"chart",size:22})}),
-      React.createElement(StatCard,{label:"Amount Invested",val:INR(mfInv),sub:"Cash deployed",col:"#0e7490",icon:React.createElement(Icon,{n:"money",size:22})}),
-      React.createElement(StatCard,{label:"Total P&L",val:(mfTotal-mfCoA>=0?"+":"")+INR(mfTotal-mfCoA),sub:"vs cost of acquisition",col:mfTotal>=mfCoA?"#16a34a":"#ef4444",icon:mfTotal>=mfCoA?"▲":"▼"})
-    ),
     tab==="shares"&&React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
       React.createElement(StatCard,{label:"Market Value",val:INR(shVal),sub:shares.length+" holdings",col:"#16a34a",icon:React.createElement(Icon,{n:"invest",size:18})}),
       React.createElement(StatCard,{label:"Cost Basis",val:INR(shCost),sub:"Total invested",col:"#0e7490",icon:React.createElement(Icon,{n:"money",size:15})}),
