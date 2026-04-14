@@ -154,124 +154,21 @@
 
 <script>
 /* ══════════════════════════════════════════════════════════════════════
-   APP PROTECTION LAYER — Do not remove or modify
+   APP PROTECTION LAYER
    ══════════════════════════════════════════════════════════════════════ */
 (function(){
   'use strict';
 
   /* ── 1. IFRAME LOCK ─────────────────────────────────────────────────
-     Prevents the app being embedded/re-hosted inside another page.    */
+     Prevents clickjacking — the app cannot be embedded in another page. */
   if (window.self !== window.top) {
     document.documentElement.innerHTML = '';
     try { window.top.location = window.self.location; } catch(e) {}
     throw new Error('Embedding blocked');
   }
 
-  /* ── 2. RIGHT-CLICK DISABLED (except in-app context menus) ─────── */
-  document.addEventListener('contextmenu', function(e) {
-    /* Allow right-click on ledger rows that opt-in via data-ctx attribute
-       so the bulk-categorisation context menu can still fire. */
-    if (e.target && e.target.closest && e.target.closest('[data-ctx="ledger"]')) return;
-    e.preventDefault(); e.stopPropagation(); return false;
-  }, true);
-
-  /* ── 3. DEVTOOLS KEYBOARD SHORTCUTS BLOCKED ─────────────────────── */
-  document.addEventListener('keydown', function(e) {
-    var k = e.key;
-    var ctrl = e.ctrlKey || e.metaKey;
-    if (e.keyCode === 123) { e.preventDefault(); e.stopPropagation(); return false; } // F12
-    if (ctrl && e.shiftKey && 'IJCijc'.indexOf(k) !== -1) { e.preventDefault(); return false; } // Inspect/Console/Picker
-    if (ctrl && 'Uu'.indexOf(k) !== -1) { e.preventDefault(); return false; } // View Source
-    if (ctrl && 'Ss'.indexOf(k) !== -1) { e.preventDefault(); return false; } // Save Page
-    if (ctrl && 'Pp'.indexOf(k) !== -1) { e.preventDefault(); return false; } // Print
-    if (ctrl && 'Aa'.indexOf(k) !== -1) {
-      var t = document.activeElement ? document.activeElement.tagName : '';
-      if (t !== 'INPUT' && t !== 'TEXTAREA' && t !== 'SELECT') { e.preventDefault(); return false; }
-    }
-  }, true);
-
-  /* ── 4. PRINT BLOCKED ────────────────────────────────────────────── */
-  window.addEventListener('beforeprint', function(e) { if(!window.__mmPrintOK){ e.preventDefault(); window.stop(); } });
-
-  /* ── 5. TEXT SELECTION DISABLED (except form fields) ────────────── */
-  document.addEventListener('selectstart', function(e) {
-    var t = (e.target || {}).tagName;
-    if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return;
-    e.preventDefault(); return false;
-  }, true);
-
-  /* ── 6. DRAG DISABLED ────────────────────────────────────────────── */
-  document.addEventListener('dragstart', function(e) { e.preventDefault(); return false; }, true);
-
-  /* ── 7. BULK COPY BLOCKED ────────────────────────────────────────── */
-  document.addEventListener('copy', function(e) {
-    var sel = window.getSelection ? window.getSelection().toString() : '';
-    if (sel && sel.length > 120) {
-      if (e.clipboardData) e.clipboardData.setData('text/plain', '');
-      e.preventDefault(); return false;
-    }
-  }, true);
-
-  /* ── 8. DEVTOOLS DETECTION ───────────────────────────────────────── */
-  var _wiped = false;
-  var _lockScreen = function() {
-    if (_wiped) return;
-    _wiped = true;
-    var r = document.getElementById('root');
-    if (r) {
-      r.innerHTML =
-        '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;'
-        + 'height:100vh;background:#060e18;color:#d8e8f5;font-family:sans-serif;gap:16px;'
-        + 'text-align:center;padding:40px;">'
-        + '<div style="font-size:52px">\u{1F512}</div>'
-        + '<div style="font-size:22px;font-weight:700;color:#0284c7">Access Restricted</div>'
-        + '<div style="font-size:14px;color:#8ba0c0;max-width:380px;line-height:1.8">'
-        + 'Developer tools detected. Close them and reload to continue.</div>'
-        + '</div>';
-    }
-  };
-
-  // Method A: Object property getter — DevTools calls the getter when it renders
-  // objects in the scope/watch/console pane. Uses a plain object, NOT console,
-  // so React and Babel are completely unaffected.
-  var _trapObj = (function() {
-    var o = {toString: function(){ _lockScreen(); return ''; }};
-    Object.defineProperty(o, 'id', { get: function(){ _lockScreen(); return 0; } });
-    return o;
-  }());
-  // Store in a variable name devtools is likely to auto-inspect
-  window['__'] = _trapObj;
-
-  // Method B: Window size heuristic (works for undocked/side-docked DevTools)
-  // Deferred 3 seconds so React/Babel finish loading before first check.
-  // BUG FIX v3.32.2: require the delta to be present across 2 consecutive polls
-  // (≥2 s apart) before locking. A single transient spike (Android split-screen
-  // snap, browser zoom change, OS keyboard appearing) is NOT treated as DevTools.
-  // Threshold 350 px to reduce false positives on high-DPI / zoomed / split-screen.
-  // Require 3 consecutive failures (~6 s) before locking — avoids transient snaps.
-  var _sizeFailCount = 0;
-  var _sizeCheck = function() {
-    if (window.outerWidth  - window.innerWidth  > 350 ||
-        window.outerHeight - window.innerHeight > 350) {
-      _sizeFailCount++;
-      if (_sizeFailCount >= 3) { _lockScreen(); }
-    } else {
-      _sizeFailCount = 0; // reset on any clean poll
-    }
-  };
-  var _poll = function() { _sizeCheck(); setTimeout(_poll, 2000 + Math.random() * 1000); };
-  setTimeout(_poll, 3000);
-
-  /* ── 9. BLOCK view-source: / data: URL NAVIGATION ───────────────── */
-  var _origOpen = window.open;
-  window.open = function(url) {
-    if (typeof url === 'string' &&
-       (url.indexOf('view-source:') === 0 || url.indexOf('data:text/html') === 0)) return null;
-    return _origOpen.apply(this, arguments);
-  };
-
-  /* ── 10. INJECTED EXTERNAL SCRIPT BLOCKER ────────────────────────── */
-  // Only blocks <script src="..."> tags from unknown domains.
+  /* ── 2. INJECTED EXTERNAL SCRIPT BLOCKER ─────────────────────────── */
+  // Blocks <script src="..."> tags from unknown domains.
   // Inline scripts and Babel-transpiled scripts are explicitly allowed.
   window.addEventListener('DOMContentLoaded', function() {
     var TRUSTED = ['cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
@@ -287,16 +184,6 @@
     });
     obs.observe(document.documentElement, { childList: true, subtree: true });
   });
-
-  /* ── 11. BROWSER FINGERPRINT ─────────────────────────────────────── */
-  try {
-    var _fp = [navigator.userAgent, navigator.language, navigator.platform,
-               screen.width, screen.height, screen.colorDepth,
-               new Date().getTimezoneOffset()].join('|');
-    var _h = 0;
-    for (var _i = 0; _i < _fp.length; _i++) { _h = ((_h << 5) - _h) + _fp.charCodeAt(_i); _h |= 0; }
-    window.__mm_fp = (_h >>> 0).toString(16);
-  } catch(e) {}
 
 })();
 </script>
