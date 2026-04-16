@@ -44,7 +44,7 @@ window.addEventListener("gdrive:pulled", (e) => {
    • "null" means "no action needed" — the pull guard in usePersistentReducer
      will skip silently via the `if(!remote||!remote.state) return;` check.
    ══════════════════════════════════════════════════════════════════════════ */
-const gdriveReadSyncFile = async () => {
+gdriveReadSyncFile = async () => {
   try {
     if (!cloudSyncSupported()) return null;
     const token = await _gdriveEnsureToken();
@@ -107,7 +107,7 @@ const gdriveReadSyncFile = async () => {
    LS_GDRIVE_LAST_SYNC on success, so the next launch knows our local state
    is at least as fresh as that timestamp.
    ══════════════════════════════════════════════════════════════════════════ */
-const gdriveUpsertSyncFile = async (state, manual) => {
+gdriveUpsertSyncFile = async (state, manual) => {
   try {
     if (!cloudSyncSupported()) return false;
     /* Bug 4 fix: manual Push bypasses the Android write throttle */
@@ -405,6 +405,8 @@ const CloudBackupPanel = ({ state }) => {
       setLastSync(remote.modifiedTime);
 
       setPullMsg("✓ Restored from Drive (" + fmtTs(remote.modifiedTime) + "). Refreshing…");
+      /* Bug 4 fix: flush to FSA before reload so the restored state is persisted */
+      try { if (window.__fsa && window.__fsa.writeNow) await window.__fsa.writeNow(); } catch {}
       setTimeout(() => window.location.reload(), 1800);
     } catch (e) {
       setPullMsg("✗ Pull failed: " + (e.message || "Unknown error"));
@@ -629,3 +631,4 @@ const CloudBackupPanel = ({ state }) => {
     )
   );
 };
+window.CloudBackupPanel = CloudBackupPanel;

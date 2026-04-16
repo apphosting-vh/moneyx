@@ -2638,7 +2638,7 @@ const _gdriveMarkWritten = () => {
    2. On Android, throttle to max 1 write / 10 s.
    3. Search for existing file; create if missing, update if found.
    ══════════════════════════════════════════════════════════════════════════ */
-const gdriveUpsertSyncFile = async (state) => {
+var gdriveUpsertSyncFile = async (state) => {
   try {
     if (!cloudSyncSupported()) return false;
     if (!_gdriveCanWrite()) return true; /* throttled — skip silently */
@@ -2708,7 +2708,7 @@ const gdriveUpsertSyncFile = async (state) => {
    gdriveReadSyncFile — read state from Drive (Step 4: Windows boot check).
    Returns { state, modifiedTime } or null.
    ══════════════════════════════════════════════════════════════════════════ */
-const gdriveReadSyncFile = async () => {
+var gdriveReadSyncFile = async () => {
   try {
     if (!cloudSyncSupported()) return null;
     const token = await _gdriveEnsureToken();
