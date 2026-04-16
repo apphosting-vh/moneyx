@@ -171,7 +171,7 @@
   // Blocks <script src="..."> tags from unknown domains.
   // Inline scripts and Babel-transpiled scripts are explicitly allowed.
   window.addEventListener('DOMContentLoaded', function() {
-    var TRUSTED = ['cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
+    var TRUSTED = ['cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com', 'accounts.google.com'];
     var obs = new MutationObserver(function(muts) {
       muts.forEach(function(m) {
         m.addedNodes.forEach(function(node) {
@@ -226,6 +226,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js" defer></script>
 <!-- Preload Babel so it downloads in parallel with React without delaying FCP -->
 <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js" as="script" crossorigin/>
+<!-- Google Identity Services — for Google Drive cloud sync (token-only, no sign-in) -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <!-- xlsx (~1.0 MB) + jsPDF (~700 KB) are intentionally absent here.
      They are injected on demand by window.__loadExportLibs() on first export click. -->
 <style>
