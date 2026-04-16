@@ -137,6 +137,8 @@ gdriveUpsertSyncFile = async (state, manual) => {
         scheduled:    (state.scheduled || []).length,
         notes:        (state.notes     || []).length,
         nwSnapshots:  Object.keys(state.nwSnapshots || {}).length,
+        eodDays:      Object.keys(state.eodPrices   || {}).length,
+        eodNavDays:   Object.keys(state.eodNavs     || {}).length,
         hasTaxData:   !!(state.taxData),
         hasYearlyBudget: Object.values((state.insightPrefs || {}).yearlyBudgetPlans || {}).some(v => v > 0),
       },
@@ -157,7 +159,7 @@ gdriveUpsertSyncFile = async (state, manual) => {
         insightPrefs: { ...EMPTY_STATE().insightPrefs, ...(state.insightPrefs || {}) },
       },
     };
-    const content = JSON.stringify(payload);
+    const content = JSON.stringify(payload, null, 2);
 
     /* Try cached file ID first, then search */
     let fileId = "";
