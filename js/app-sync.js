@@ -54,7 +54,7 @@ const gdriveReadSyncFile = async () => {
     let fileId = "";
     try { fileId = localStorage.getItem(GDRIVE_LS_FILEID) || ""; } catch {}
     if (!fileId) fileId = await _gdriveFindFile(token);
-    if (!fileId) return null;
+    if (!fileId) return { notFound: true }; /* Bug 5 fix: signal "no file yet" */
 
     /* Download raw payload */
     const data = await _gdriveDownloadFile(token, fileId);
@@ -102,10 +102,11 @@ const gdriveReadSyncFile = async () => {
    LS_GDRIVE_LAST_SYNC on success, so the next launch knows our local state
    is at least as fresh as that timestamp.
    ══════════════════════════════════════════════════════════════════════════ */
-const gdriveUpsertSyncFile = async (state) => {
+const gdriveUpsertSyncFile = async (state, manual) => {
   try {
     if (!cloudSyncSupported()) return false;
-    if (!_gdriveCanWrite()) return true; /* throttled — skip silently */
+    /* Bug 4 fix: manual Push bypasses the Android write throttle */
+    if (!manual && !_gdriveCanWrite()) return true; /* throttled — skip silently */
 
     const token = await _gdriveEnsureToken();
     if (!token) return false;
@@ -179,6 +180,20 @@ const gdriveUpsertSyncFile = async (state) => {
       _syncSaveLocal(exportedAt);
       return true;
     }
+
+    /* Bug 3 fix: if we got here with an auth error (token was cleared by
+       the helpers), retry once with a fresh token. */
+    if (!_gdriveGetToken()) {
+      const retryToken = await _gdriveEnsureToken();
+      if (!retryToken) return false;
+      const retryId = await _gdriveCreateFile(retryToken, content);
+      if (retryId) {
+        _gdriveMarkWritten();
+        _syncSaveLocal(exportedAt);
+        return true;
+      }
+    }
+
     return false;
   } catch (e) {
     console.warn("[GDrive] upsert failed:", e);
@@ -239,7 +254,19 @@ const CloudBackupPanel = ({ state }) => {
 
   /* ── Save Client ID ── */
   const saveCid = () => {
-    try { localStorage.setItem("mm_gdrive_cid", cidInput.trim()); } catch {}
+    const newCid = cidInput.trim();
+    /* If the Client ID changed, clear stale token & file ID so the user
+       must re-authorise with the new OAuth app (Bug 1 fix). */
+    try {
+      const oldCid = localStorage.getItem("mm_gdrive_cid") || "";
+      if (oldCid && oldCid !== newCid) {
+        localStorage.removeItem(GDRIVE_LS_TOKEN);
+        localStorage.removeItem(GDRIVE_LS_EXPIRE);
+        localStorage.removeItem(GDRIVE_LS_FILEID);
+        setTokenOk(false);
+      }
+      localStorage.setItem("mm_gdrive_cid", newCid);
+    } catch {}
     setCidSaved(true);
     setTimeout(() => setCidSaved(false), 2500);
   };
@@ -264,12 +291,13 @@ const CloudBackupPanel = ({ state }) => {
     setPushing(true);
     setPushMsg("Pushing to Google Drive…");
     try {
-      const ok = await gdriveUpsertSyncFile(state);
+      const ok = await gdriveUpsertSyncFile(state, /* manual */ true);
       if (ok) {
         setLastSync(_syncGetLocal());
         setPushMsg("✓ Pushed to Google Drive successfully!");
-        setTokenOk(true);
+        setTokenOk(!_gdriveTokenExpired() && !!_gdriveGetToken());
       } else {
+        setTokenOk(!_gdriveTokenExpired() && !!_gdriveGetToken());
         setPushMsg("✗ Push failed. Check Client ID and try again.");
       }
     } catch (e) {
@@ -294,9 +322,14 @@ const CloudBackupPanel = ({ state }) => {
       if (!remote || !remote.state) {
         /* Restore the timestamp we cleared */
         _syncSaveLocal(savedSync);
-        setPullMsg("✓ Your local data is already up-to-date. No newer version found.");
+        /* Bug 5 fix: distinguish "no file yet" from "no newer data" */
+        if (remote && remote.notFound) {
+          setPullMsg("No sync file found on Drive yet. Push your data first to create it.");
+        } else {
+          setPullMsg("✓ Your local data is already up-to-date. No newer version found.");
+        }
         setPulling(false);
-        setTimeout(() => setPullMsg(""), 4000);
+        setTimeout(() => setPullMsg(""), 5000);
         return;
       }
 

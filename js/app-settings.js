@@ -2538,7 +2538,8 @@ const _gdriveEnsureToken = async () => {
 
 /* ── Drive API helpers ── */
 
-/* Search for existing finsight-sync.json in user's Drive root. Returns fileId or "". */
+/* Search for existing finsight-sync.json in user's Drive root. Returns fileId or "".
+   On 401/403 clears the cached token (Bug 2 fix). */
 const _gdriveFindFile = async (token) => {
   try {
     const q = encodeURIComponent(`name='${GDRIVE_SYNC_FILENAME}' and trashed=false and 'root' in parents`);
@@ -2546,7 +2547,10 @@ const _gdriveFindFile = async (token) => {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     });
-    if (!r.ok) return "";
+    if (!r.ok) {
+      if (r.status === 401 || r.status === 403) _gdriveClearToken();
+      return "";
+    }
     const j = await r.json();
     const files = j.files || [];
     if (files.length > 0) {
@@ -2557,7 +2561,9 @@ const _gdriveFindFile = async (token) => {
   } catch { return ""; }
 };
 
-/* Create the file on Drive (multipart upload). Returns new fileId or "". */
+/* Create the file on Drive (multipart upload). Returns new fileId or "".
+   On 401/403 (bad / expired token) clears the cached token so the next
+   call will re-prompt for OAuth (Bug 2 fix). */
 const _gdriveCreateFile = async (token, content) => {
   try {
     const metadata = { name: GDRIVE_SYNC_FILENAME, parents: ["root"] };
@@ -2567,7 +2573,7 @@ const _gdriveCreateFile = async (token, content) => {
       `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${content}\r\n`,
       `--${boundary}--`,
     ].join("");
-    const r = await fetch("https://www.googleapis.com/drive/v3/files?uploadType=multipart&fields=id", {
+    const r = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -2575,17 +2581,21 @@ const _gdriveCreateFile = async (token, content) => {
       },
       body,
     });
-    if (!r.ok) return "";
+    if (!r.ok) {
+      if (r.status === 401 || r.status === 403) _gdriveClearToken();
+      return "";
+    }
     const j = await r.json();
     if (j.id) { try { localStorage.setItem(GDRIVE_LS_FILEID, j.id); } catch {} }
     return j.id || "";
   } catch { return ""; }
 };
 
-/* Update existing file content via media upload. */
+/* Update existing file content via media upload.
+   On 401/403 clears the cached token (Bug 2 fix). */
 const _gdriveUpdateFile = async (token, fileId, content) => {
   try {
-    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?uploadType=media&fields=id,modifiedTime`, {
+    const r = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media&fields=id,modifiedTime`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -2593,6 +2603,7 @@ const _gdriveUpdateFile = async (token, fileId, content) => {
       },
       body: content,
     });
+    if (!r.ok && (r.status === 401 || r.status === 403)) _gdriveClearToken();
     return r.ok;
   } catch { return false; }
 };
