@@ -3388,6 +3388,12 @@ const usePersistentReducer=(reducer,init)=>{
         }
         console.log("[GDrive] Found newer state on Drive (",remoteTime,") — applying…");
         _lastPulledAt=remoteTime;
+        /* Restore theme if present in the sync payload */
+        if(remote.theme){try{saveTheme(remote.theme);}catch{}}
+        /* Restore attachment blobs to IDB */
+        if(remote.attachmentBlobs&&remote.attachmentBlobs.length>0){
+          try{await rcptRestoreAllBlobEntries(remote.attachmentBlobs);}catch{}
+        }
         dispatch({type:"RESTORE_ALL",data:remote.state});
         window.dispatchEvent(new CustomEvent("gdrive:pulled",{detail:{time:remoteTime}}));
       }catch(e){console.warn("[GDrive] Pull failed:",e);}
