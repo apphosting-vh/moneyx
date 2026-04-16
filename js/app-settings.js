@@ -3289,6 +3289,8 @@ const usePersistentReducer=(reducer,init)=>{
   /* ── Selective eodPrices/eodNavs serialization: only write to separate LS keys on change ── */
   const _prevEodPricesJson=React.useRef(null);
   const _prevEodNavsJson=React.useRef(null);
+  /* Bug 2 fix: gate Drive writes until boot pull completes */
+  const _bootPullCompletedRef=React.useRef(false);
   /* Expose writeNow on the FSA singleton so every grant-point can call it
      immediately after permission is obtained, even with no state change */
   React.useEffect(()=>{
@@ -3388,19 +3390,13 @@ const usePersistentReducer=(reducer,init)=>{
         }
         console.log("[GDrive] Found newer state on Drive (",remoteTime,") — applying…");
         _lastPulledAt=remoteTime;
-        /* Restore theme if present in the sync payload */
-        if(remote.theme){try{saveTheme(remote.theme);}catch{}}
-        /* Restore attachment blobs to IDB */
-        if(remote.attachmentBlobs&&remote.attachmentBlobs.length>0){
-          try{await rcptRestoreAllBlobEntries(remote.attachmentBlobs);}catch{}
-        }
         dispatch({type:"RESTORE_ALL",data:remote.state});
         window.dispatchEvent(new CustomEvent("gdrive:pulled",{detail:{time:remoteTime}}));
       }catch(e){console.warn("[GDrive] Pull failed:",e);}
     };
 
     /* Immediate pull on launch (both platforms) */
-    const _bootTimer=setTimeout(pullFromDrive, 2000);
+    const _bootTimer=setTimeout(()=>{pullFromDrive().finally(()=>{_bootPullCompletedRef.current=true;});}, 2000);
 
     /* On Android: poll every 30 s for remote changes while the app is open */
     if(_isAndroidDevice()){
@@ -3461,8 +3457,9 @@ const usePersistentReducer=(reducer,init)=>{
         }
         /* ── 6. Cloud sync: write to Google Drive if supported ──
            On Android, writes are throttled to max 1 per 10 s (_gdriveCanWrite gate).
-           On desktop/Windows, writes happen at the normal debounce cadence. */
-        if(cloudSyncSupported()){
+           On desktop/Windows, writes happen at the normal debounce cadence.
+           Bug 2 fix: do not write until boot pull has completed. */
+        if(cloudSyncSupported()&&_bootPullCompletedRef.current){
           gdriveUpsertSyncFile(state).then(ok=>{
             if(ok){window.dispatchEvent(new CustomEvent("gdrive:synced"));}
           });

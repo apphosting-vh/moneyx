@@ -119,17 +119,11 @@ gdriveUpsertSyncFile = async (state, manual) => {
     /* Stamp exportedAt now — same value stored to LS_GDRIVE_LAST_SYNC on success */
     const exportedAt = new Date().toISOString();
 
-    /* Pull attachment blobs from IDB (same as manual backup) */
-    let _blobs = [];
-    try { _blobs = (await rcptGetAllBlobEntries()).filter(e => e.b64); } catch {}
-
     const payload = {
       version:    8,
       exportedAt,
       autoSave:   true,
       cloudSync:  true,
-      theme:      loadTheme(),
-      attachmentBlobs: _blobs,
       summary: {
         bankAccounts: (state.banks  || []).length,
         bankTxns:     (state.banks  || []).reduce((s, b) => s + (b.transactions || []).length, 0),
@@ -392,13 +386,6 @@ const CloudBackupPanel = ({ state }) => {
 
       /* Persist transactions to IDB */
       try { await saveTxToIDB(_restoreData); } catch {}
-
-      /* Restore attachment blobs to IDB */
-      if (remote.attachmentBlobs && remote.attachmentBlobs.length > 0) {
-        try { await rcptRestoreAllBlobEntries(remote.attachmentBlobs); } catch {}
-      }
-      /* Restore theme */
-      if (remote.theme) { try { saveTheme(remote.theme); } catch {} }
 
       /* Save the remote timestamp so next launch won't re-pull */
       _syncSaveLocal(remote.modifiedTime);
