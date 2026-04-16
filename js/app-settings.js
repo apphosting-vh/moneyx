@@ -2453,6 +2453,284 @@ const fsaSupported=()=>{
   return !/Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
 };
 
+/* ══════════════════════════════════════════════════════════════════════════
+   GOOGLE DRIVE CLOUD SYNC
+   ──────────────────────────────────────────────────────────────────────────
+   Both Android (TWA) and Windows (PWA) can read/write a shared JSON file
+   on Google Drive.  Android writes after each debounced save (throttled to
+   max 1 write per 10 s).  Windows checks for a newer Drive file on launch
+   and pulls it if the remote copy is fresher.
+
+   • cloudSyncSupported()  — true when Google Identity Services is available
+   • gdriveUpsertSyncFile() — create-or-update finsight-sync.json
+   • gdriveReadSyncFile()   — fetch & parse the file if it exists
+   • Token storage: localStorage key mm_gdrive_token (expires_in tracked)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const GDRIVE_SYNC_FILENAME = "finsight-sync.json";
+const GDRIVE_LS_TOKEN  = "mm_gdrive_token";
+const GDRIVE_LS_EXPIRE = "mm_gdrive_token_exp";
+const GDRIVE_LS_FILEID = "mm_gdrive_file_id";
+const GDRIVE_LS_LAST_WRITE = "mm_gdrive_last_write";
+
+/* cloudSyncSupported — returns true when the browser can use Google OAuth.
+   We check for the GIS (google.accounts.oauth2) library injected by the
+   index.html <script> tag.  Works on both desktop and Android. */
+const cloudSyncSupported = () => {
+  try {
+    return typeof google !== "undefined"
+      && google.accounts
+      && typeof google.accounts.oauth2 === "object";
+  } catch { return false; }
+};
+
+/* Is the current device Android (TWA / WebView)? */
+const _isAndroidDevice = () => {
+  if (navigator.userAgentData && typeof navigator.userAgentData.mobile === "boolean")
+    return navigator.userAgentData.mobile;
+  return /Android/i.test(navigator.userAgent);
+};
+
+/* ── Token helpers ── */
+const _gdriveGetToken = () => {
+  try { return localStorage.getItem(GDRIVE_LS_TOKEN) || ""; } catch { return ""; }
+};
+const _gdriveSetToken = (tok, expiresIn) => {
+  try {
+    localStorage.setItem(GDRIVE_LS_TOKEN, tok);
+    if (expiresIn) localStorage.setItem(GDRIVE_LS_EXPIRE, String(Date.now() + expiresIn * 1000));
+  } catch {}
+};
+const _gdriveClearToken = () => {
+  try { localStorage.removeItem(GDRIVE_LS_TOKEN); localStorage.removeItem(GDRIVE_LS_EXPIRE); } catch {}
+};
+const _gdriveTokenExpired = () => {
+  try { return Date.now() > +(localStorage.getItem(GDRIVE_LS_EXPIRE) || 0); } catch { return true; }
+};
+
+/* Request a fresh access token via GIS popup. Returns token string or "" on failure. */
+const gdriveRequestToken = () => new Promise((resolve) => {
+  try {
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: (function(){try{return localStorage.getItem("mm_gdrive_cid")||"";}catch{return "";}})(),
+      scope: "https://www.googleapis.com/auth/drive.file",
+      callback: (resp) => {
+        if (resp && resp.access_token) {
+          _gdriveSetToken(resp.access_token, resp.expires_in);
+          resolve(resp.access_token);
+        } else {
+          resolve("");
+        }
+      },
+      error_callback: () => resolve(""),
+    });
+    client.requestAccessToken();
+  } catch { resolve(""); }
+});
+
+/* Ensure we have a valid token; re-prompt if expired. */
+const _gdriveEnsureToken = async () => {
+  let tok = _gdriveGetToken();
+  if (tok && !_gdriveTokenExpired()) return tok;
+  tok = await gdriveRequestToken();
+  return tok;
+};
+
+/* ── Drive API helpers ── */
+
+/* Search for existing finsight-sync.json in user's Drive root. Returns fileId or "". */
+const _gdriveFindFile = async (token) => {
+  try {
+    const q = encodeURIComponent(`name='${GDRIVE_SYNC_FILENAME}' and trashed=false and 'root' in parents`);
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,modifiedTime)&spaces=drive`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!r.ok) return "";
+    const j = await r.json();
+    const files = j.files || [];
+    if (files.length > 0) {
+      try { localStorage.setItem(GDRIVE_LS_FILEID, files[0].id); } catch {}
+      return files[0].id;
+    }
+    return "";
+  } catch { return ""; }
+};
+
+/* Create the file on Drive (multipart upload). Returns new fileId or "". */
+const _gdriveCreateFile = async (token, content) => {
+  try {
+    const metadata = { name: GDRIVE_SYNC_FILENAME, parents: ["root"] };
+    const boundary = "finsight_sync_" + Date.now();
+    const body = [
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`,
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${content}\r\n`,
+      `--${boundary}--`,
+    ].join("");
+    const r = await fetch("https://www.googleapis.com/drive/v3/files?uploadType=multipart&fields=id", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": `multipart/related; boundary=${boundary}`,
+      },
+      body,
+    });
+    if (!r.ok) return "";
+    const j = await r.json();
+    if (j.id) { try { localStorage.setItem(GDRIVE_LS_FILEID, j.id); } catch {} }
+    return j.id || "";
+  } catch { return ""; }
+};
+
+/* Update existing file content via media upload. */
+const _gdriveUpdateFile = async (token, fileId, content) => {
+  try {
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?uploadType=media&fields=id,modifiedTime`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: content,
+    });
+    return r.ok;
+  } catch { return false; }
+};
+
+/* Read file content from Drive. Returns parsed JSON or null. */
+const _gdriveDownloadFile = async (token, fileId) => {
+  try {
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+};
+
+/* ── Throttle gate for Android writes (Step 5) ── */
+const _gdriveCanWrite = () => {
+  if (!_isAndroidDevice()) return true; /* Windows / desktop: no throttle */
+  try {
+    const last = +(localStorage.getItem(GDRIVE_LS_LAST_WRITE) || 0);
+    return Date.now() - last >= 10000; /* 10 s minimum gap */
+  } catch { return true; }
+};
+const _gdriveMarkWritten = () => {
+  try { localStorage.setItem(GDRIVE_LS_LAST_WRITE, String(Date.now())); } catch {}
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
+   gdriveUpsertSyncFile — write the full app state to Drive (Steps 3 & 5).
+   1. Ensure valid token (re-prompt if expired).
+   2. On Android, throttle to max 1 write / 10 s.
+   3. Search for existing file; create if missing, update if found.
+   ══════════════════════════════════════════════════════════════════════════ */
+const gdriveUpsertSyncFile = async (state) => {
+  try {
+    if (!cloudSyncSupported()) return false;
+    if (!_gdriveCanWrite()) return true; /* throttled — skip silently */
+
+    const token = await _gdriveEnsureToken();
+    if (!token) return false;
+
+    /* Build the same envelope format as fsaWriteFile */
+    const payload = {
+      version: 8,
+      exportedAt: new Date().toISOString(),
+      autoSave: true,
+      cloudSync: true,
+      summary: {
+        bankAccounts: (state.banks || []).length,
+        bankTxns: (state.banks || []).reduce((s, b) => s + (b.transactions || []).length, 0),
+        cardAccounts: (state.cards || []).length,
+        cardTxns: (state.cards || []).reduce((s, c) => s + (c.transactions || []).length, 0),
+        cashTxns: ((state.cash || {}).transactions || []).length,
+        loans: (state.loans || []).length,
+        mf: (state.mf || []).length,
+        shares: (state.shares || []).length,
+        fd: (state.fd || []).length,
+      },
+      data: {
+        ...state,
+        notes: state.notes || [],
+        scheduled: state.scheduled || [],
+        nwSnapshots: state.nwSnapshots || {},
+        eodPrices: state.eodPrices || {},
+        eodNavs: state.eodNavs || {},
+        historyCache: state.historyCache || {},
+        taxData: state.taxData || null,
+        re: state.re || [],
+        pf: state.pf || [],
+        goals: state.goals || [],
+        hiddenTabs: state.hiddenTabs || [],
+        catRules: state.catRules || [],
+        insightPrefs: { ...EMPTY_STATE().insightPrefs, ...(state.insightPrefs || {}) },
+      },
+    };
+    const content = JSON.stringify(payload);
+
+    /* Try cached file ID first, then search */
+    let fileId = "";
+    try { fileId = localStorage.getItem(GDRIVE_LS_FILEID) || ""; } catch {}
+    if (fileId) {
+      const ok = await _gdriveUpdateFile(token, fileId, content);
+      if (ok) { _gdriveMarkWritten(); return true; }
+      /* Cached ID is stale — fall through to search */
+    }
+
+    fileId = await _gdriveFindFile(token);
+    if (fileId) {
+      const ok = await _gdriveUpdateFile(token, fileId, content);
+      if (ok) { _gdriveMarkWritten(); return true; }
+    }
+
+    /* File doesn't exist — create it */
+    const newId = await _gdriveCreateFile(token, content);
+    if (newId) { _gdriveMarkWritten(); return true; }
+    return false;
+  } catch (e) { console.warn("[GDrive] upsert failed:", e); return false; }
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
+   gdriveReadSyncFile — read state from Drive (Step 4: Windows boot check).
+   Returns { state, modifiedTime } or null.
+   ══════════════════════════════════════════════════════════════════════════ */
+const gdriveReadSyncFile = async () => {
+  try {
+    if (!cloudSyncSupported()) return null;
+    const token = await _gdriveEnsureToken();
+    if (!token) return null;
+
+    let fileId = "";
+    try { fileId = localStorage.getItem(GDRIVE_LS_FILEID) || ""; } catch {}
+    if (!fileId) fileId = await _gdriveFindFile(token);
+    if (!fileId) return null;
+
+    const data = await _gdriveDownloadFile(token, fileId);
+    if (!data || !data.data) return null;
+
+    const _def = EMPTY_STATE();
+    const _safe = (d) => ({
+      ...d,
+      nwSnapshots: d.nwSnapshots || {},
+      eodPrices: d.eodPrices || {},
+      eodNavs: d.eodNavs || {},
+      historyCache: d.historyCache || {},
+      taxData: d.taxData || null,
+      re: d.re || [],
+      pf: d.pf || [],
+      goals: d.goals || [],
+      hiddenTabs: d.hiddenTabs || [],
+      catRules: d.catRules || [],
+      insightPrefs: { ..._def.insightPrefs, ...(d.insightPrefs || {}) },
+    });
+
+    return { state: _safe(data.data), modifiedTime: data.exportedAt || "" };
+  } catch (e) { console.warn("[GDrive] read failed:", e); return null; }
+};
+
 /* ── IndexedDB open — version 3 adds the receipt_blobs object store ── */
 const _fsaDbOpen=()=>new Promise((res,rej)=>{
   const req=indexedDB.open(FSA_IDB_NAME,3); /* v3: adds receipt_blobs store */
@@ -3065,6 +3343,35 @@ const usePersistentReducer=(reducer,init)=>{
     }).catch(e=>console.warn("[MM] IDB hydration error:",e));
   },[]); // run exactly once on mount
 
+  /* ── CLOUD SYNC CHECK — runs once on mount (Step 4) ────────────────────
+     On Windows/desktop launch, after local state loads from IDB, check
+     Google Drive for a newer version of finsight-sync.json.
+     If the Drive file's exportedAt is newer than the last local save,
+     dispatch RESTORE_ALL to pull the cloud state into memory.
+     Skipped on Android (which is the writer, not the reader on launch). */
+  React.useEffect(()=>{
+    if(!cloudSyncSupported())return;
+    if(_isAndroidDevice())return; /* Android writes; Windows reads on launch */
+    /* Small delay so the UI renders first, then check in background */
+    const _tid=setTimeout(async()=>{
+      try{
+        const remote=await gdriveReadSyncFile();
+        if(!remote||!remote.state)return;
+        const localTime=stateRef.current?._lastModified||"";
+        const remoteTime=remote.modifiedTime||remote.state?.exportedAt||"";
+        /* Only pull if remote is genuinely newer */
+        if(remoteTime&&remoteTime>localTime){
+          console.log("[GDrive] Found newer state on Drive — applying…");
+          dispatch({type:"RESTORE_ALL",data:remote.state});
+          window.dispatchEvent(new CustomEvent("gdrive:pulled",{detail:{time:remoteTime}}));
+        }else{
+          console.log("[GDrive] Local state is current — no pull needed.");
+        }
+      }catch(e){console.warn("[GDrive] Boot sync check failed:",e);}
+    },2000);
+    return()=>clearTimeout(_tid);
+  },[]); // run exactly once on mount
+
   /* ── Debounced save to localStorage + IDB + FSA ── */
   const _ric=typeof requestIdleCallback==="function"?requestIdleCallback:(cb)=>setTimeout(cb,1);
   const timerRef=React.useRef(null);
@@ -3109,6 +3416,14 @@ const usePersistentReducer=(reducer,init)=>{
           fsaWriteFile(window.__fsa.handle,state).then(ok=>{
             if(ok){window.__fsa.lastSaved=new Date();window.dispatchEvent(new CustomEvent("fsa:saved"));}
             else{window.dispatchEvent(new CustomEvent("fsa:write-failed"));}
+          });
+        }
+        /* ── 6. Cloud sync: write to Google Drive if supported ──
+           On Android, writes are throttled to max 1 per 10 s (_gdriveCanWrite gate).
+           On desktop/Windows, writes happen at the normal debounce cadence. */
+        if(cloudSyncSupported()){
+          gdriveUpsertSyncFile(state).then(ok=>{
+            if(ok){window.dispatchEvent(new CustomEvent("gdrive:synced"));}
           });
         }
       },{timeout:2000}); // 2 s hard deadline — don't wait forever on a busy tab
