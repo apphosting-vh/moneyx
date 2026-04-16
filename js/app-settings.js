@@ -3343,33 +3343,57 @@ const usePersistentReducer=(reducer,init)=>{
     }).catch(e=>console.warn("[MM] IDB hydration error:",e));
   },[]); // run exactly once on mount
 
-  /* ── CLOUD SYNC CHECK — runs once on mount (Step 4) ────────────────────
-     On Windows/desktop launch, after local state loads from IDB, check
-     Google Drive for a newer version of finsight-sync.json.
-     If the Drive file's exportedAt is newer than the last local save,
-     dispatch RESTORE_ALL to pull the cloud state into memory.
-     Skipped on Android (which is the writer, not the reader on launch). */
+  /* ── CLOUD SYNC — bidirectional pull from Drive (Step 4, updated) ────────
+     Both Android and Windows check Drive for a newer finsight-sync.json.
+     • On launch (both platforms): pull if Drive's exportedAt > local.
+     • On Android (running): poll every 30 s so edits from Windows arrive
+       without a cold restart.
+     • On Windows (running): pull on launch only — the debounced save effect
+       already writes every change to Drive, so a running Windows tab is
+       always the source of truth for its own edits.
+
+     Conflict resolution: last-writer-wins by exportedAt timestamp.
+     If both devices edit simultaneously, the one whose write lands later
+     overwrites the other on next pull.  This is acceptable for a
+     single-user personal finance app. */
   React.useEffect(()=>{
     if(!cloudSyncSupported())return;
-    if(_isAndroidDevice())return; /* Android writes; Windows reads on launch */
-    /* Small delay so the UI renders first, then check in background */
-    const _tid=setTimeout(async()=>{
+    let _lastPulledAt=""; /* tracks the Drive exportedAt we last applied */
+    let _pollTimer=null;
+
+    const pullFromDrive=async()=>{
       try{
         const remote=await gdriveReadSyncFile();
         if(!remote||!remote.state)return;
-        const localTime=stateRef.current?._lastModified||"";
-        const remoteTime=remote.modifiedTime||remote.state?.exportedAt||"";
-        /* Only pull if remote is genuinely newer */
-        if(remoteTime&&remoteTime>localTime){
-          console.log("[GDrive] Found newer state on Drive — applying…");
-          dispatch({type:"RESTORE_ALL",data:remote.state});
-          window.dispatchEvent(new CustomEvent("gdrive:pulled",{detail:{time:remoteTime}}));
-        }else{
-          console.log("[GDrive] Local state is current — no pull needed.");
+        const remoteTime=remote.state?.exportedAt||remote.modifiedTime||"";
+        if(!remoteTime)return;
+        /* Skip if we already applied this exact version */
+        if(remoteTime<=_lastPulledAt)return;
+        /* On Android, skip if we were the ones who just wrote (avoid echo) */
+        if(_isAndroidDevice()){
+          const lastWrite=localStorage.getItem(GDRIVE_LS_LAST_WRITE)||"0";
+          const writeAge=Date.now()-(+lastWrite);
+          if(writeAge<15000)return; /* we wrote <15s ago — likely our own write */
         }
-      }catch(e){console.warn("[GDrive] Boot sync check failed:",e);}
-    },2000);
-    return()=>clearTimeout(_tid);
+        console.log("[GDrive] Found newer state on Drive (",remoteTime,") — applying…");
+        _lastPulledAt=remoteTime;
+        dispatch({type:"RESTORE_ALL",data:remote.state});
+        window.dispatchEvent(new CustomEvent("gdrive:pulled",{detail:{time:remoteTime}}));
+      }catch(e){console.warn("[GDrive] Pull failed:",e);}
+    };
+
+    /* Immediate pull on launch (both platforms) */
+    const _bootTimer=setTimeout(pullFromDrive, 2000);
+
+    /* On Android: poll every 30 s for remote changes while the app is open */
+    if(_isAndroidDevice()){
+      _pollTimer=setInterval(pullFromDrive, 30000);
+    }
+
+    return()=>{
+      clearTimeout(_bootTimer);
+      if(_pollTimer)clearInterval(_pollTimer);
+    };
   },[]); // run exactly once on mount
 
   /* ── Debounced save to localStorage + IDB + FSA ── */

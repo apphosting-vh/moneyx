@@ -1968,6 +1968,9 @@ const CloudBackupPanel=({state})=>{
   const[msg,setMsg]=useState({text:"",ok:true});
   const[files,setFiles]=useState([]);
   const[loadingFiles,setLoadingFiles]=useState(false);
+  /* Cloud Sync state */
+  const[syncing,setSyncing]=useState(false);
+  const[syncStatus,setSyncStatus]=useState(""); /* last sync result text */
 
   const say=(text,ok=true,ms=5000)=>{setMsg({text,ok});if(ms>0)setTimeout(()=>setMsg({text:"",ok:true}),ms);};
 
@@ -2007,6 +2010,40 @@ const CloudBackupPanel=({state})=>{
     setToken("");setFiles([]);
     say("Disconnected from Google Drive. Session token cleared.");
   };
+
+  /* ── Manual Cloud Sync: pull latest from Drive ── */
+  const manualSync=async()=>{
+    if(typeof cloudSyncSupported!=="function"||!cloudSyncSupported()){say("Google Identity Services not available.",false);return;}
+    setSyncing(true);setSyncStatus("Checking Drive…");
+    try{
+      const remote=await gdriveReadSyncFile();
+      if(!remote||!remote.state){
+        setSyncStatus("No sync file found on Drive.");
+        say("No finsight-sync.json found on Drive. Make a change on your other device first.",false);
+        setSyncing(false);return;
+      }
+      const remoteTime=remote.state?.exportedAt||remote.modifiedTime||"unknown";
+      setSyncStatus("✓ Pulled — last exported at "+remoteTime);
+      say("✓ Synced from Drive — data updated from "+new Date(remoteTime).toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"}));
+      /* Dispatch pulled event so other listeners can react */
+      window.dispatchEvent(new CustomEvent("gdrive:pulled",{detail:{time:remoteTime}}));
+    }catch(e){
+      setSyncStatus("Sync failed");
+      say("Sync failed: "+e.message,false);
+    }
+    setSyncing(false);
+  };
+
+  /* Listen for auto-sync pull events to update status text */
+  React.useEffect(()=>{
+    const onPulled=e=>{
+      const t=e.detail?.time||"";
+      const tStr=t?new Date(t).toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"}):"";
+      setSyncStatus("✓ Auto-synced from Drive"+(tStr?" \u2014 "+tStr:""));
+    };
+    window.addEventListener("gdrive:pulled",onPulled);
+    return()=>window.removeEventListener("gdrive:pulled",onPulled);
+  },[]);
 
   /* ── Helper: find or create "finsight Backups" folder ── */
   const getFolderId=async(tok)=>{
@@ -2173,6 +2210,43 @@ const CloudBackupPanel=({state})=>{
           style:{padding:"10px 16px",borderRadius:9,border:"1px solid var(--border)",background:"transparent",color:"var(--text4)",cursor:"pointer",fontSize:12,fontFamily:"'DM Sans',sans-serif"}},
           loadingFiles?"⟳ Loading…":"↻ Refresh List")
       )
+    ),
+
+    /* ── Cloud Sync — manual pull (works on Android + Windows) ── */
+    React.createElement(Card,{sx:{marginBottom:14}},
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+        React.createElement(Icon,{n:"refresh",size:16}),
+        React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",textTransform:"uppercase",letterSpacing:.7}},"Cloud Sync — Pull from Drive"),
+        React.createElement("span",{style:{fontSize:9,padding:"2px 7px",borderRadius:6,background:"rgba(14,165,233,.1)",border:"1px solid rgba(14,165,233,.25)",color:"var(--accent)",fontWeight:600,marginLeft:4}},"Android + Windows")
+      ),
+      React.createElement("p",{style:{fontSize:12,color:"var(--text5)",marginBottom:14,lineHeight:1.6}},
+        "Manually pull the latest data from the shared ",
+        React.createElement("code",{style:{fontSize:11,background:"var(--bg4)",padding:"1px 5px",borderRadius:4}},"finsight-sync.json"),
+        " file on your Drive. Use this to force-sync after editing on another device, or if auto-sync hasn't caught up yet."
+      ),
+      React.createElement("div",{style:{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}},
+        React.createElement("button",{
+          onClick:manualSync,disabled:syncing||!cloudSyncSupported(),
+          style:{
+            padding:"10px 22px",borderRadius:9,border:"none",
+            background:syncing?"var(--border)":"var(--accent)",
+            color:"#fff",cursor:syncing?"not-allowed":"pointer",
+            fontSize:13,fontWeight:700,fontFamily:"'DM Sans',sans-serif",
+            display:"flex",alignItems:"center",gap:6,
+          }},
+          syncing
+            ?React.createElement(React.Fragment,null,React.createElement("span",{className:"spinr"},"⟳")," Syncing…")
+            :React.createElement(React.Fragment,null,React.createElement(Icon,{n:"refresh",size:14})," Sync Now")
+        ),
+        !cloudSyncSupported()&&React.createElement("span",{style:{fontSize:11,color:"#ef4444"}},"GIS library not loaded")
+      ),
+      syncStatus&&React.createElement("div",{style:{
+        marginTop:10,padding:"8px 12px",borderRadius:8,fontSize:12,
+        background:syncStatus.startsWith("✓")?"rgba(22,163,74,.08)":"var(--bg4)",
+        border:"1px solid "+(syncStatus.startsWith("✓")?"rgba(22,163,74,.2)":"var(--border2)"),
+        color:syncStatus.startsWith("✓")?"#16a34a":"var(--text5)",
+        fontFamily:"'DM Mono',monospace",
+      }},syncStatus)
     ),
 
     /* ── Backup list ── */
