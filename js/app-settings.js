@@ -1826,20 +1826,52 @@ const ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,pa
     const isDue=sc.status==="active"&&sc.nextDate&&sc.nextDate<=today;
     const isCompleted=sc.status==="completed"||!sc.nextDate;
     const ct=catClassType(categories,sc.cat||"Others");
+    const isManual=(sc.executionMode||"auto")==="manual";
+    const toggleExecMode=()=>dispatch({type:"EDIT_SCHEDULED",p:{...sc,executionMode:isManual?"auto":"manual"}});
     return React.createElement(Card,{key:sc.id,sx:{borderLeft:"3px solid "+(isDue?"#ef4444":isCompleted?"var(--border)":FREQ_C[sc.frequency]||"var(--accent)")}},
       React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}},
-        React.createElement("div",null,
-          React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text)",marginBottom:3}},sc.desc||sc.payee||"Scheduled Transaction"),
+        React.createElement("div",{style:{flex:1,minWidth:0}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}},
+            React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text)"}},sc.desc||sc.payee||"Scheduled Transaction"),
+            !isCompleted&&React.createElement("button",{
+              onClick:toggleExecMode,
+              title:isManual?"Manual: will NOT auto-execute. Click to switch to Auto.":"Auto: executes automatically when due. Click to switch to Manual.",
+              style:{
+                display:"inline-flex",alignItems:"center",borderRadius:20,
+                border:"1px solid "+(isManual?"rgba(180,83,9,.45)":"rgba(22,163,74,.45)"),
+                background:isManual?"rgba(180,83,9,.07)":"rgba(22,163,74,.07)",
+                padding:"2px 3px",gap:0,cursor:"pointer",flexShrink:0,
+                transition:"all .2s",userSelect:"none",outline:"none",
+                fontFamily:"'DM Sans',sans-serif"
+              }
+            },
+              React.createElement("span",{style:{
+                fontSize:10,fontWeight:700,padding:"2px 9px",borderRadius:16,
+                background:isManual?"transparent":"#16a34a",
+                color:isManual?"var(--text5)":"#fff",
+                transition:"all .2s"
+              }},"Auto"),
+              React.createElement("span",{style:{
+                fontSize:10,fontWeight:700,padding:"2px 9px",borderRadius:16,
+                background:isManual?"#b45309":"transparent",
+                color:isManual?"#fff":"var(--text5)",
+                transition:"all .2s"
+              }},"Manual")
+            )
+          ),
           React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}},
             React.createElement("span",{style:{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:10,border:"1px solid "+(FREQ_C[sc.frequency]||"var(--accent)")+"55",color:FREQ_C[sc.frequency]||"var(--accent)",background:(FREQ_C[sc.frequency]||"var(--accent)")+"15"}},sc.frequency==="once"?"One-time":sc.frequency),
             React.createElement("span",{style:{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:10,border:"1px solid "+CLASS_C[ct]+"55",color:CLASS_C[ct],background:CLASS_C[ct]+"15"}},CLASS_ICON[ct]," ",ct),
             sc.cat&&React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},catDisplayName(sc.cat))
           )
         ),
-        React.createElement("div",{style:{textAlign:"right"}},
+        React.createElement("div",{style:{textAlign:"right",flexShrink:0,marginLeft:8}},
           React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:sc.ledgerType==="credit"?"#16a34a":"#ef4444"}},(sc.ledgerType==="credit"?"+":"-")+INR(sc.amount)),
           React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},accName)
         )
+      ),
+      isManual&&!isCompleted&&React.createElement("div",{style:{marginBottom:10,padding:"6px 10px",background:"rgba(180,83,9,.07)",borderRadius:7,border:"1px solid rgba(180,83,9,.25)",fontSize:11,color:"#b45309",display:"flex",alignItems:"center",gap:6}},
+        "⚙ Manual mode — this transaction will not auto-execute. Use 'Execute Now' to run it manually."
       ),
       React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,fontSize:11,color:"var(--text5)",marginBottom:10}},
         React.createElement("div",null,React.createElement("span",{style:{color:"var(--text6)"}},"Next: "),React.createElement("span",{style:{color:isDue?"#ef4444":"var(--text3)",fontWeight:600}},sc.nextDate||"--")),
@@ -1942,9 +1974,9 @@ const ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,pa
       ),
       React.createElement(Btn,{v:"danger",onClick:()=>{
         /* Guard: skip any entry whose lastExecuted already equals today (auto-executed on load) */
-        const safeToRun=due.filter(sc=>sc.lastExecuted!==today);
+        const safeToRun=due.filter(sc=>sc.lastExecuted!==today&&(sc.executionMode||"auto")==="auto");
         safeToRun.forEach(sc=>dispatch({type:"EXECUTE_SCHEDULED",sc}));
-      }},"Execute All Due")
+      }},"Execute All Due (Auto)")
     ),
 
     /* ── Due Now (top priority) */

@@ -2903,7 +2903,7 @@ function App(){
     if(!idbHydrated)return; // wait for IDB to be fully loaded first
     const today=TODAY();
     const due=(state.scheduled||[]).filter(sc=>
-      sc.status==="active"&&sc.nextDate&&sc.nextDate<=today&&sc.lastExecuted!==today
+      sc.status==="active"&&sc.nextDate&&sc.nextDate<=today&&sc.lastExecuted!==today&&(sc.executionMode||"auto")==="auto"
     );
     if(due.length>0){
       due.forEach(sc=>dispatch({type:"EXECUTE_SCHEDULED",sc}));

@@ -193,7 +193,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.4.6";
+const APP_VERSION="4.4.7";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1181,7 +1181,7 @@ const reducer=(s,a)=>{
         cash:{...s.cash,transactions:s.cash.transactions.map(applyFn)},
       };
     }
-    case"ADD_SCHEDULED":return{...s,scheduled:[...(s.scheduled||[]),{...a.p,id:uid(),anchorDay:a.p.anchorDay||new Date((a.p.nextDate||TODAY())+"T12:00:00").getDate()}]};
+    case"ADD_SCHEDULED":return{...s,scheduled:[...(s.scheduled||[]),{...a.p,id:uid(),executionMode:a.p.executionMode||"auto",anchorDay:a.p.anchorDay||new Date((a.p.nextDate||TODAY())+"T12:00:00").getDate()}]};
     case"DEL_SCHEDULED":return{...s,scheduled:(s.scheduled||[]).filter(sc=>sc.id!==a.id)};
     case"EDIT_SCHEDULED":return{...s,scheduled:(s.scheduled||[]).map(sc=>{
       if(sc.id!==a.p.id)return sc;
