@@ -230,10 +230,9 @@ gdriveUpsertSyncFile = async (state, manual) => {
    ──────────────────────────────────────────────────────────────────────────
    Lets the user configure Google Drive 2-way sync.
    Provides manual Push and Pull controls with live status feedback.
-   Does NOT require dispatch — Pull restores via saveState + reload (same
-   pattern used by the file-restore in the Data & Backup tab).
+   Receives dispatch so Pull can RESTORE_ALL before the reload.
    ══════════════════════════════════════════════════════════════════════════ */
-const CloudBackupPanel = ({ state }) => {
+const CloudBackupPanel = ({ state, dispatch }) => {
   const [cidInput, setCidInput]     = React.useState(() => {
     try { return localStorage.getItem("mm_gdrive_cid") || ""; } catch { return ""; }
   });

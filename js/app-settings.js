@@ -251,7 +251,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
       stab==="filestorage"&&React.createElement(FSAStoragePanel,{state,dispatch}),
 
       /* ══ CLOUD BACKUP ══ */
-      stab==="cloudbackup"&&React.createElement(CloudBackupPanel,{state}),
+      stab==="cloudbackup"&&React.createElement(CloudBackupPanel,{state,dispatch}),
 
       /* ══ APPEARANCE ══ */
       stab==="appearance"&&React.createElement("div",{className:"fu"},
