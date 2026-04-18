@@ -975,6 +975,10 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
                 ),
                 React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
                   React.createElement(Btn,{v:"danger",onClick:async()=>{
+                    /* Set the reset guard FIRST so the beforeunload/pagehide flush
+                       that fires during window.location.reload() will skip saving
+                       the stale pre-reset state back to localStorage and IndexedDB. */
+                    _mmResetting=true;
                     dispatch({type:"RESET_ALL"});
                     try{
                       localStorage.setItem(LS_KEY,JSON.stringify(EMPTY_STATE()));
@@ -2185,6 +2189,11 @@ const ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,pa
 const LS_KEY="mm_v7_state";
 const LS_EOD_PRICES="mm_v7_eodPrices";
 const LS_EOD_NAVS="mm_v7_eodNavs";
+/* ── Reset guard: set to true just before window.location.reload() inside the
+   "Yes, Delete Everything" handler so the beforeunload/pagehide flush skips
+   saving stale (pre-reset) state back to localStorage and IndexedDB, which
+   was the root cause of categories and cash not being cleared after reset. */
+let _mmResetting=false;
 const LS_THEME="mm_v7_theme";
 const LS_PIN="mm_v7_pin";   /* stores SHA-256 hex hash of the 6-digit PIN */
 const SS_UNLOCK="mm_v7_unlocked"; /* sessionStorage — cleared when tab closes */
@@ -3629,6 +3638,16 @@ const usePersistentReducer=(reducer,init)=>{
      because browsers grant a short grace period for IndexedDB transactions. */
   React.useEffect(()=>{
     const flush=()=>{
+      /* Skip flush entirely when a full reset is in progress. Without this guard
+         the stale closure captures the pre-reset state and:
+           1. saveState(state)  overwrites the EMPTY_STATE we just wrote to LS,
+              restoring all user categories, cash balance, etc. after reload.
+           2. saveTxToIDB(state) writes old cash/bank/card transactions back into
+              IDB immediately after clearTxIDB() had erased them — so cash
+              transactions reappear on the very next boot hydration.
+         _mmResetting is set to true just before window.location.reload() and
+         naturally resets to false on the fresh page load. */
+      if(_mmResetting)return;
       stateRef.current=state;
       saveState(state);
       /* Best-effort IDB flush on close — completes if browser grants grace period */
