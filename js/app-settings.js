@@ -974,7 +974,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
                   "⚠ Are you absolutely sure? All accounts, transactions, investments and settings will be lost."
                 ),
                 React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
-                  React.createElement(Btn,{v:"danger",onClick:()=>{
+                  React.createElement(Btn,{v:"danger",onClick:async()=>{
                     dispatch({type:"RESET_ALL"});
                     try{
                       localStorage.setItem(LS_KEY,JSON.stringify(EMPTY_STATE()));
@@ -984,9 +984,11 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
                       savePinHash("");
                       clearSessionUnlock();
                     }catch{}
-                    /* Clear transactions from IndexedDB so no stale data survives reload */
-                    clearTxIDB().catch(()=>{});
-                    setTimeout(()=>{window.location.href="#/dashboard";window.location.reload();},100);
+                    /* Clear transactions from IndexedDB — MUST complete before reload
+                       or the hydration effect on next boot re-reads stale IDB data. */
+                    try { await clearTxIDB(); } catch {}
+                    window.location.href="#/dashboard";
+                    window.location.reload();
                   },sx:{flex:1,justifyContent:"center"}},"Yes, Delete Everything"),
                   React.createElement(Btn,{v:"secondary",onClick:()=>setShowResetConfirm(false),sx:{justifyContent:"center"}},"Cancel")
                 )
