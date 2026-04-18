@@ -1343,6 +1343,27 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
                 categories,
                 placeholder:"-- Uncategorised --"
               }),
+              /* Edit / Delete action buttons — mobile */
+              React.createElement("div",{style:{display:"flex",gap:8,marginTop:8}},
+                React.createElement("button",{
+                  onClick:e=>{e.stopPropagation();setEditTx(tx);},
+                  style:{
+                    flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,
+                    padding:"8px 12px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,
+                    background:"var(--accentbg)",border:"1px solid var(--accent)55",
+                    color:"var(--accent)",fontFamily:"'DM Sans',sans-serif"
+                  }
+                },React.createElement(Icon,{n:"edit",size:14}),"Edit"),
+                React.createElement("button",{
+                  onClick:e=>{e.stopPropagation();setConfirmDel(tx);},
+                  style:{
+                    flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,
+                    padding:"8px 12px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,
+                    background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.3)",
+                    color:"#ef4444",fontFamily:"'DM Sans',sans-serif"
+                  }
+                },React.createElement(Icon,{n:"delete",size:14}),"Delete")
+              ),
               React.createElement("button",{
                 onClick:e=>{e.stopPropagation();applySimFilter(tx);},
                 style:{
