@@ -804,8 +804,8 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
                 if(pw!==pw2){alert("Passwords do not match.");return;}
                 try{
                   const payload={version:8,exportedAt:new Date().toISOString(),
-                    summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,hasTaxData:!!(state.taxData),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0)},
-                    data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})}}
+                    summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,hasTaxData:!!(state.taxData),hasTaxData2627:!!(state.taxData2627),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0)},
+                    data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,taxData2627:state.taxData2627||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})}}
                   };
                   const enc=await encryptBackup(payload,pw);
                   const blob=new Blob([JSON.stringify(enc)],{type:"application/json"});
@@ -842,6 +842,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
                     eodDays:Object.keys(state.eodPrices||{}).length,
                     eodNavDays:Object.keys(state.eodNavs||{}).length,
                     hasTaxData:!!(state.taxData),
+                    hasTaxData2627:!!(state.taxData2627),
                     hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),
                   },
                   data:{
@@ -853,6 +854,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
                     eodNavs:state.eodNavs||{},
                     historyCache:state.historyCache||{},
                     taxData:state.taxData||null,
+                    taxData2627:state.taxData2627||null,
                     re:state.re||[],
                     pf:state.pf||[],
                     goals:state.goals||[],
@@ -2250,12 +2252,13 @@ const buildBackupPayload=async(st)=>{
       scheduled:(st.scheduled||[]).length,notes:(st.notes||[]).length,
       nwSnapshots:Object.keys(st.nwSnapshots||{}).length,
       hasTaxData:!!(st.taxData),
+      hasTaxData2627:!!(st.taxData2627),
       hasYearlyBudget:Object.values((st.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),
     },
     data:{
       ...st,notes:st.notes||[],scheduled:st.scheduled||[],nwSnapshots:st.nwSnapshots||{},
       eodPrices:st.eodPrices||{},eodNavs:st.eodNavs||{},historyCache:st.historyCache||{},
-      taxData:st.taxData||null,re:st.re||[],pf:st.pf||[],goals:st.goals||[],
+      taxData:st.taxData||null,taxData2627:st.taxData2627||null,re:st.re||[],pf:st.pf||[],goals:st.goals||[],
       hiddenTabs:st.hiddenTabs||[],catRules:st.catRules||[],
       insightPrefs:{...EMPTY_STATE().insightPrefs,...(st.insightPrefs||{})},
     }
@@ -2313,6 +2316,7 @@ const loadState=()=>{
       historyCache:(parsed.historyCache||{}),
       hiddenTabs:(parsed.hiddenTabs||[]),
       taxData:(parsed.taxData||null),
+      taxData2627:(parsed.taxData2627||null),
       catRules:(parsed.catRules||[]),
       insightPrefs:{...EMPTY_STATE().insightPrefs,...(parsed.insightPrefs||{})},
     };
@@ -2913,6 +2917,7 @@ var gdriveReadSyncFile = async () => {
       eodNavs: d.eodNavs || {},
       historyCache: d.historyCache || {},
       taxData: d.taxData || null,
+      taxData2627: d.taxData2627 || null,
       re: d.re || [],
       pf: d.pf || [],
       goals: d.goals || [],
@@ -3145,6 +3150,7 @@ const fsaWriteFile=async(handle,data)=>{
         notes:(data.notes||[]).length,
         nwSnapshots:Object.keys(data.nwSnapshots||{}).length,
         hasTaxData:!!(data.taxData),
+        hasTaxData2627:!!(data.taxData2627),
         hasYearlyBudget:Object.values((data.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),
       },
       data:{
@@ -3156,6 +3162,7 @@ const fsaWriteFile=async(handle,data)=>{
         eodNavs:data.eodNavs||{},
         historyCache:data.historyCache||{},
         taxData:data.taxData||null,
+        taxData2627:data.taxData2627||null,
         re:data.re||[],
         pf:data.pf||[],
         goals:data.goals||[],
@@ -3176,7 +3183,7 @@ const fsaReadFile=async(handle)=>{
     const text=await file.text();
     const parsed=JSON.parse(text);
     const _def=EMPTY_STATE();
-    const _safe=(d)=>({...d,nwSnapshots:d.nwSnapshots||{},eodPrices:d.eodPrices||{},eodNavs:d.eodNavs||{},historyCache:d.historyCache||{},taxData:d.taxData||null,re:d.re||[],pf:d.pf||[],goals:d.goals||[],hiddenTabs:d.hiddenTabs||[],catRules:d.catRules||[],insightPrefs:{..._def.insightPrefs,...(d.insightPrefs||{})}});
+    const _safe=(d)=>({...d,nwSnapshots:d.nwSnapshots||{},eodPrices:d.eodPrices||{},eodNavs:d.eodNavs||{},historyCache:d.historyCache||{},taxData:d.taxData||null,taxData2627:d.taxData2627||null,re:d.re||[],pf:d.pf||[],goals:d.goals||[],hiddenTabs:d.hiddenTabs||[],catRules:d.catRules||[],insightPrefs:{..._def.insightPrefs,...(d.insightPrefs||{})}});
     /* Support both the new envelope format { data:{…} } and the legacy
        raw-state format written by v3.17.0–3.17.2 */
     if(parsed&&parsed.data&&parsed.data.banks)return _safe(parsed.data);
