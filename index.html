@@ -704,17 +704,56 @@ textarea.inp{resize:vertical}
   .ldg-table-hdr{display:none!important;}
   .ldg-mobile-card{display:flex!important;}
   .ldg-desktop-row{display:none!important;}
+  /* Responsive 2-column grids in modals — collapse to 1-col on small screens */
+  .tx-grid-2col{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  /* Scrollable tables on mobile — prevent overflow */
+  .mobile-scroll-table{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    border-radius:9px;
+  }
+  /* Fixed-width grid tables that overflow on mobile get a horizontal scrollbar */
+  .mobile-scroll-table > div[style*="minWidth"]{
+    min-width:0 !important;
+  }
+  /* Modal 2-column grids → single column on narrow screens */
+  .tx-grid-2col{
+    grid-template-columns:1fr !important;
+  }
 }
   /* Modal backdrop: on mobile, offset left by sidebar width (64px) so modal
      centers within the content area, not the full viewport */
   @media (max-width: 768px) {
+    /* Modal should cover full viewport on mobile — no sidebar offset */
     .modal-bd {
-      left: 64px !important;
+      left: 0 !important;
     }
     /* Ensure modal inner content uses full available width */
     .modal-bd .fu {
       width: 100%;
       max-width: 100% !important;
+      /* Constrain height on small screens so long modals scroll internally */
+      max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 48px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    /* Prevent modal content from exceeding screen width */
+    .modal-bd .fu > div {
+      max-width: 100% !important;
+      box-sizing: border-box;
+    }
+  }
+  /* Tight mobile: further constrain modals to viewport */
+  @media (max-width: 420px) {
+    .modal-bd {
+      padding: 8px 4px !important;
+    }
+    .modal-bd .fu {
+      padding: 16px 12px !important;
     }
   }
   /* Responsive 2-column grid inside modals: 2-col on desktop, 1-col on mobile */
@@ -1365,10 +1404,7 @@ textarea.inp{resize:vertical}
     </svg>
     <svg class="sp-wv4" viewBox="0 0 1440 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M0,56 C160,20 340,88 510,52 C700,16 890,72 1060,48 C1200,28 1300,52 1440,40 L1440,160 L0,160Z"/>
-	      <svg class="sp-wv3" viewBox="0 0 1440 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0,90 C240,60 480,115 710,80 C960,45 1160,95 1320,70 C1380,60 1420,72 1440,68 L1440,160 L0,160Z"/>
     </svg>
-     </div>
 
 </div></div>
 <script type="text/babel" src="./js/app-utils.js"></script>
