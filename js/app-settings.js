@@ -678,6 +678,11 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
           React.createElement(StorageGauge,{dispatch,state})
         ),
 
+        /* ── Storage Sync Status Card */
+        React.createElement(Card,{sx:{marginBottom:16}},
+          React.createElement(StorageSyncPanel,null)
+        ),
+
         /* ── Data Management Card */
         React.createElement(Card,{sx:{marginBottom:16}},
           React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:18}},
@@ -1012,6 +1017,227 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
 /* ══════════════════════════════════════════════════════════════════════════
    NOTES SECTION
    ══════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   STORAGE SYNC STATUS PANEL  (Settings › Data & Backup)
+   ──────────────────────────────────────────────────────────────────────────
+   Reads three write-timestamps from localStorage and renders a side-by-side
+   comparison so the user can instantly see whether LocalStorage, IndexedDB
+   and Google Drive are all holding the same generation of data.
+
+   Timestamps
+   ──────────
+   • mm_v7_lastSaved   — stamped by saveState()  on every LS write
+   • mm_idb_lastSaved  — stamped by saveTxToIDB() on every IDB commit
+   • mm_gdrive_last_sync — stamped by gdriveUpsertSyncFile() / gdrive:pulled
+
+   Sync thresholds (LS ↔ IDB)
+   ──────────────────────────
+   < 15 s   → ✅ In sync  (normal: both writes happen in the same save cycle)
+   15–120 s → ⚠ Slightly behind
+   > 120 s  → 🔴 Out of sync
+
+   Sync thresholds (local ↔ Drive)
+   ────────────────────────────────
+   < 5 min  → ✅ Up to date
+   5–60 min → ⚠ Behind
+   > 60 min → 🔴 Out of sync
+   ══════════════════════════════════════════════════════════════════════════ */
+const StorageSyncPanel=()=>{
+  const _readTs=()=>({
+    ls:   (function(){try{return localStorage.getItem(LS_LAST_LS_SAVE)||null;}catch{return null;}})(),
+    idb:  (function(){try{return localStorage.getItem(LS_LAST_IDB_SAVE)||null;}catch{return null;}})(),
+    drive:(function(){try{return localStorage.getItem("mm_gdrive_last_sync")||null;}catch{return null;}})(),
+  });
+
+  const[ts,setTs]=React.useState(_readTs);
+  const[checking,setChecking]=React.useState(false);
+
+  /* Re-read on sync events and poll every 5 s so the "Xs ago" labels stay live */
+  React.useEffect(()=>{
+    const refresh=()=>setTs(_readTs());
+    window.addEventListener("gdrive:synced",refresh);
+    window.addEventListener("gdrive:pulled",refresh);
+    const iv=setInterval(()=>setTs(_readTs()),5000);
+    return()=>{
+      window.removeEventListener("gdrive:synced",refresh);
+      window.removeEventListener("gdrive:pulled",refresh);
+      clearInterval(iv);
+    };
+  },[]);
+
+  /* ── Formatting helpers ── */
+  const fmtTs=(iso)=>{
+    if(!iso)return"Never";
+    try{return new Date(iso).toLocaleString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:true});}
+    catch{return iso;}
+  };
+  const ageMs =(iso)=>iso?Date.now()-new Date(iso).getTime():Infinity;
+  const fmtAge=(ms)=>{
+    if(!isFinite(ms))return"—";
+    if(ms<60000)   return Math.round(ms/1000)+"s ago";
+    if(ms<3600000) return Math.round(ms/60000)+"m ago";
+    if(ms<86400000)return Math.round(ms/3600000)+"h ago";
+    return Math.round(ms/86400000)+"d ago";
+  };
+  const absDiff=(a,b)=>(a&&b)?Math.abs(new Date(a)-new Date(b)):null;
+
+  /* ── Sync calculations ── */
+  const driveConfigured=!!(function(){try{return localStorage.getItem("mm_gdrive_cid");}catch{return null;}}());
+  const lsIdbDiff=absDiff(ts.ls,ts.idb);
+  const lsIdbOk  =!!(ts.ls&&ts.idb&&lsIdbDiff< 15000);
+  const lsIdbWarn=!!(ts.ls&&ts.idb&&lsIdbDiff>=15000&&lsIdbDiff<120000);
+  const lsIdbBad =!!(ts.ls&&ts.idb&&lsIdbDiff>=120000);
+
+  const latestLocal=(!ts.ls&&!ts.idb)?null:
+    (!ts.ls?ts.idb:!ts.idb?ts.ls:
+      new Date(ts.ls)>=new Date(ts.idb)?ts.ls:ts.idb);
+  const driveLag=latestLocal&&ts.drive?new Date(latestLocal)-new Date(ts.drive):null;
+  const driveOk  =driveLag!==null&&driveLag< 5*60000;
+  const driveWarn=driveLag!==null&&driveLag>=5*60000&&driveLag<60*60000;
+  const driveBad =driveLag!==null&&driveLag>=60*60000;
+  const driveNeverSynced=driveConfigured&&!ts.drive&&!!latestLocal;
+
+  const hasBad    =lsIdbBad||(driveConfigured&&driveBad);
+  const hasWarning=lsIdbWarn||(driveConfigured&&(driveWarn||driveNeverSynced));
+  const allInSync =!hasBad&&!hasWarning&&lsIdbOk&&(!driveConfigured||(driveConfigured&&driveOk&&!!ts.drive));
+
+  const overallColor=!ts.ls?"#94a3b8":hasBad?"#ef4444":hasWarning?"#b45309":allInSync?"#16a34a":"#94a3b8";
+  const overallLabel=!ts.ls?"No data yet":hasBad?"Out of sync":hasWarning?"Slightly behind":allInSync?"All in sync":"Checking…";
+  const overallDot  =!ts.ls?"⬜":hasBad?"🔴":hasWarning?"🟡":"🟢";
+
+  /* ── Helper: dot colour for a given ok/warn/bad state ── */
+  const _dc=(ok,warn,bad)=>bad?"#ef4444":warn?"#b45309":ok?"#16a34a":"var(--text6)";
+
+  const lsDot   =ts.ls ?_dc(lsIdbOk,lsIdbWarn,lsIdbBad):"var(--text6)";
+  const idbDot  =ts.idb?_dc(lsIdbOk,lsIdbWarn,lsIdbBad):"var(--text6)";
+  const driveDot=!driveConfigured?"var(--text6)":_dc(driveOk,driveWarn||driveNeverSynced,driveBad);
+
+  const lsNote  =!ts.ls  ?null:lsIdbBad?"⚠ IDB is far behind":lsIdbWarn?"△ IDB slightly behind":lsIdbOk?"✓ In sync with IDB":null;
+  const idbNote =!ts.idb ?null:lsIdbBad?"⚠ LS is far ahead"  :lsIdbWarn?"△ LS slightly ahead"  :lsIdbOk?"✓ In sync with LS" :null;
+  const driveNote=!driveConfigured?"Not configured":
+    driveNeverSynced?"⚠ Never synced":
+    !ts.drive?"No sync yet":
+    driveBad ?"⚠ Way behind local":
+    driveWarn?"△ Behind local":
+    driveOk  ?"✓ Up to date":null;
+  const driveNoteColor=(!driveConfigured||driveNeverSynced||driveBad)?"#ef4444":driveWarn?"#b45309":"#16a34a";
+
+  /* ── Storage card sub-component ── */
+  const StorCard=({icon,label,timestamp,dotColor,note,noteColor,dim})=>
+    React.createElement("div",{
+      style:{
+        background:"var(--accentbg2)",borderRadius:12,padding:"14px 16px",
+        border:"1px solid var(--border2)",display:"flex",flexDirection:"column",gap:9,
+        opacity:dim?0.5:1,transition:"opacity .2s",minWidth:0,
+      }
+    },
+      /* Header row: icon + label + status dot */
+      React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between"}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7}},
+          React.createElement("span",{style:{fontSize:17,lineHeight:1}},icon),
+          React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"var(--text3)"}},label)
+        ),
+        React.createElement("div",{
+          style:{
+            width:9,height:9,borderRadius:"50%",background:dotColor,flexShrink:0,
+            boxShadow:dotColor!=="var(--text6)"?"0 0 0 3px "+dotColor+"33":"none",
+          }
+        })
+      ),
+      /* Timestamp block */
+      React.createElement("div",null,
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginBottom:3,textTransform:"uppercase",letterSpacing:.5}},"Last written"),
+        React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text3)",lineHeight:1.45,wordBreak:"break-all"}},
+          fmtTs(timestamp)
+        ),
+        timestamp&&React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},fmtAge(ageMs(timestamp)))
+      ),
+      /* Status note pill */
+      note&&React.createElement("div",{
+        style:{
+          fontSize:11,color:noteColor,
+          background:noteColor+"1a",border:"1px solid "+noteColor+"33",
+          borderRadius:6,padding:"3px 8px",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
+        }
+      },note)
+    );
+
+  /* ── Render ── */
+  return React.createElement("div",null,
+
+    /* Title bar */
+    React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}},
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}},
+        React.createElement("div",{style:{fontSize:12,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:600}},
+          "Storage Sync Status"
+        ),
+        React.createElement("div",{
+          style:{
+            fontSize:11,fontWeight:700,color:overallColor,
+            background:overallColor+"1a",border:"1px solid "+overallColor+"44",
+            borderRadius:20,padding:"2px 10px",display:"flex",alignItems:"center",gap:5,
+          }
+        },
+          React.createElement("span",null,overallDot),
+          React.createElement("span",null,overallLabel)
+        )
+      ),
+      React.createElement("button",{
+        onClick:()=>{setChecking(true);setTs(_readTs());setTimeout(()=>setChecking(false),700);},
+        style:{
+          background:"none",border:"1px solid var(--border2)",borderRadius:8,
+          padding:"5px 12px",cursor:"pointer",fontSize:12,color:"var(--text5)",
+          display:"flex",alignItems:"center",gap:5,fontFamily:"'DM Sans',sans-serif",
+          flexShrink:0,
+        }
+      },
+        checking
+          ?React.createElement("span",{className:"spinr"},React.createElement(Icon,{n:"refresh",size:12}))
+          :React.createElement(Icon,{n:"refresh",size:12}),
+        "\u00a0Refresh"
+      )
+    ),
+
+    /* Three storage cards */
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}},
+      React.createElement(StorCard,{icon:"💾",label:"Local Storage",timestamp:ts.ls, dotColor:lsDot,  note:lsNote,   noteColor:lsDot}),
+      React.createElement(StorCard,{icon:"🗄\ufe0f",label:"IndexedDB",    timestamp:ts.idb,dotColor:idbDot, note:idbNote,  noteColor:idbDot}),
+      React.createElement(StorCard,{icon:"☁\ufe0f",label:"Google Drive", timestamp:ts.drive,dotColor:driveDot,note:driveNote,noteColor:driveNoteColor,dim:!driveConfigured})
+    ),
+
+    /* Diff summary footer */
+    (ts.ls||ts.idb||ts.drive)&&React.createElement("div",{
+      style:{
+        marginTop:10,padding:"10px 14px",borderRadius:10,
+        background:"var(--bg4)",border:"1px solid var(--border2)",
+        display:"flex",flexWrap:"wrap",gap:18,alignItems:"center",
+      }
+    },
+      /* LS ↔ IDB */
+      ts.ls&&ts.idb&&React.createElement("div",{style:{fontSize:12,color:"var(--text5)",display:"flex",alignItems:"center",gap:6}},
+        React.createElement("span",{style:{fontWeight:700,color:lsDot}},lsIdbBad?"🔴":lsIdbWarn?"🟡":"🟢"),
+        React.createElement("span",null,"LS \u2194 IDB:\u00a0"+(lsIdbDiff<1000?"< 1 s":fmtAge(lsIdbDiff)+" apart"))
+      ),
+      /* Local ↔ Drive */
+      driveConfigured&&latestLocal&&React.createElement("div",{style:{fontSize:12,color:"var(--text5)",display:"flex",alignItems:"center",gap:6}},
+        React.createElement("span",{style:{fontWeight:700,color:driveDot}},
+          !ts.drive?"⬜":driveBad?"🔴":driveWarn?"🟡":"🟢"
+        ),
+        React.createElement("span",null,
+          ts.drive
+            ?"Local \u2194 Drive:\u00a0"+(Math.abs(driveLag)<1000?"< 1 s":fmtAge(Math.abs(driveLag))+(driveLag>0?" (Drive behind)":" (Drive ahead)"))
+            :"Drive: not yet synced"
+        )
+      ),
+      /* Drive not configured note */
+      !driveConfigured&&React.createElement("div",{style:{fontSize:12,color:"var(--text5)",fontStyle:"italic"}},
+        "Google Drive not configured — go to Cloud Backup & Sync tab to set up."
+      )
+    )
+  );
+};
+
 /* ── CALCULATOR SECTION ───────────────────────────────────────────────── */
 const CalculatorSection=React.memo(()=>{
   const[expr,setExpr]=useState("");      /* full expression string */
@@ -2232,7 +2458,9 @@ const LS_THEME="mm_v7_theme";
 const LS_PIN="mm_v7_pin";   /* stores SHA-256 hex hash of the 6-digit PIN */
 const SS_UNLOCK="mm_v7_unlocked"; /* sessionStorage — cleared when tab closes */
 const CALC_LS_KEY="mm_calc_v1"; /* Financial calculator inputs + results */
-const LS_LAST_BACKUP="mm_v7_lastBackup"; /* ISO timestamp of last successful backup download */
+const LS_LAST_BACKUP  ="mm_v7_lastBackup"; /* ISO timestamp of last successful backup download  */
+const LS_LAST_LS_SAVE ="mm_v7_lastSaved";  /* ISO timestamp of last successful localStorage write */
+const LS_LAST_IDB_SAVE="mm_idb_lastSaved"; /* ISO timestamp of last successful IndexedDB write   */
 
 /* ── Backup monitoring helpers ── */
 const recordBackupDate=()=>{try{localStorage.setItem(LS_LAST_BACKUP,new Date().toISOString());}catch{};};
@@ -2465,6 +2693,7 @@ const saveState=(s)=>{
   }))(s);
   try{
     localStorage.setItem(LS_KEY,JSON.stringify(_stripped));
+    try{localStorage.setItem(LS_LAST_LS_SAVE,new Date().toISOString());}catch{}
     /* After a successful save, check if we are approaching the limit and
        fire a warning event so the App banner can update */
     const stats=getStorageStats();
@@ -3263,7 +3492,7 @@ const saveTxToIDB=async(state)=>{
       });
       /* Cash transactions */
       store.put((state.cash&&state.cash.transactions)||[],"cash");
-      tx.oncomplete=()=>{db.close();res(true);};
+      tx.oncomplete=()=>{db.close();try{localStorage.setItem(LS_LAST_IDB_SAVE,new Date().toISOString());}catch{}res(true);};
       tx.onerror   =e=>{db.close();console.warn("[MM] IDB tx write error:",e.target.error);res(false);};
     });
   }catch(e){
