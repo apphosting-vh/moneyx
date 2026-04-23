@@ -1217,8 +1217,8 @@ const reducer=(s,a)=>{
         const _tgtTxs=tgtType==="bank"?(s.banks.find(b=>b.id===tgtId)||{transactions:[]}).transactions
                      :tgtType==="card"?(s.cards.find(c=>c.id===tgtId)||{transactions:[]}).transactions
                      :tgtType==="cash"?s.cash.transactions:[];
-        const debitTx={...baseTx,type:"debit",cat:"Transfer",_sn:nextSn(_srcTxs)};
-        const creditTx={...baseTx,id:uid(),type:"credit",desc:sc.desc||"Transfer In",cat:"Transfer",_sn:nextSn(_tgtTxs)};
+        const debitTx={...baseTx,type:"debit",_sn:nextSn(_srcTxs)};
+        const creditTx={...baseTx,id:uid(),type:"credit",desc:sc.desc||"Transfer In",_sn:nextSn(_tgtTxs)};
         /* Debit source */
         if(srcType==="bank")   ns={...ns,banks:ns.banks.map(b=>b.id===srcId?{...b,balance:b.balance-sc.amount,transactions:[...b.transactions,debitTx]}:b)};
         else if(srcType==="cash") ns={...ns,cash:{...ns.cash,balance:ns.cash.balance-sc.amount,transactions:[...ns.cash.transactions,debitTx]}};
