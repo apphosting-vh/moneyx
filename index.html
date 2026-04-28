@@ -268,10 +268,9 @@ input, textarea, [contenteditable] {
 /* Content-visibility for long scrollable lists — skips offscreen layout/paint */
 .scroll-list { content-visibility: auto; contain-intrinsic-size: auto 500px; }
 /* Prevent layout thrashing on animated elements */
-#mm-splash .sp-orb { will-change: transform, box-shadow; }
-#mm-splash .sp-ticker-line { will-change: stroke-dashoffset; }
-#mm-splash .sp-progress-fill { will-change: width; }
-#mm-splash .sp-pt { will-change: transform, opacity; }
+#mm-splash .sp-letter { will-change: transform, opacity, filter; }
+#mm-splash .sp-rupee { will-change: background-position; }
+#mm-splash .sp-underline { will-change: transform; }
 /* Disable expensive effects on low-power devices */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
@@ -1063,350 +1062,1065 @@ textarea.inp{resize:vertical}
 <body>
 <div id="root"><style>
 /* ══════════════════════════════════════════════════════
-   finsight — Splash Screen v2  (full-screen wave edition)
+   finsight — Splash v7  (Immersive Cosmic Finance Edition)
+   Every pixel alive. No empty space. Pure visual theatre.
    ══════════════════════════════════════════════════════ */
 
-/* ── Keyframes ─────────────────────────────────────── */
-@keyframes sp-fadein   {from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
-@keyframes sp-logopop  {0%{opacity:0;transform:scale(.82) translateY(10px)}60%{transform:scale(1.04)}100%{opacity:1;transform:scale(1) translateY(0)}}
-@keyframes sp-shimmer  {0%,100%{opacity:.45}50%{opacity:1}}
-@keyframes sp-pulse    {0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.45);opacity:1}}
-@keyframes sp-orbit    {from{transform:rotate(0deg) translateX(52px)}to{transform:rotate(360deg) translateX(52px)}}
-@keyframes sp-float    {0%,100%{transform:translateY(0)}50%{transform:translateY(-11px)}}
-@keyframes sp-bar      {from{transform:scaleY(0);opacity:0}to{transform:scaleY(1);opacity:1}}
-@keyframes sp-ripple   {0%{transform:scale(.6);opacity:.7}100%{transform:scale(2.2);opacity:0}}
-@keyframes sp-progress {from{width:0}to{width:92%}}
+/* ── KEYFRAMES ──────────────────────────────────────── */
 
-/* Wave path animations — each layer shifts at different speed */
-@keyframes sp-wave1{0%{d:path("M0,56 C160,20 340,88 520,52 C700,16 880,72 1060,48 C1200,28 1300,52 1440,40 L1440,160 L0,160Z")}50%{d:path("M0,40 C160,76 340,16 520,60 C700,104 880,28 1060,64 C1200,88 1300,40 1440,56 L1440,160 L0,160Z")}100%{d:path("M0,56 C160,20 340,88 520,52 C700,16 880,72 1060,48 C1200,28 1300,52 1440,40 L1440,160 L0,160Z")}}
-@keyframes sp-wave2{0%{d:path("M0,72 C200,40 400,100 600,64 C800,28 1000,84 1200,56 C1320,38 1380,60 1440,50 L1440,160 L0,160Z")}50%{d:path("M0,48 C200,88 400,28 600,72 C800,116 1000,44 1200,80 C1320,102 1380,62 1440,74 L1440,160 L0,160Z")}100%{d:path("M0,72 C200,40 400,100 600,64 C800,28 1000,84 1200,56 C1320,38 1380,60 1440,50 L1440,160 L0,160Z")}}
-@keyframes sp-wave3{0%{d:path("M0,90 C240,60 480,115 720,80 C960,45 1160,95 1320,70 C1380,60 1420,72 1440,68 L1440,160 L0,160Z")}50%{d:path("M0,65 C240,100 480,48 720,88 C960,128 1160,68 1320,100 C1380,116 1420,88 1440,96 L1440,160 L0,160Z")}100%{d:path("M0,90 C240,60 480,115 720,80 C960,45 1160,95 1320,70 C1380,60 1420,72 1440,68 L1440,160 L0,160Z")}}
+@keyframes sp-letter-in{
+  0%{opacity:0;transform:translateY(80px) rotate(-8deg) scale(.5);filter:blur(8px)}
+  60%{opacity:1;transform:translateY(-8px) rotate(2deg) scale(1.05);filter:blur(0)}
+  100%{opacity:1;transform:translateY(0) rotate(0) scale(1);filter:blur(0)}
+}
+@keyframes sp-rupee-in{
+  0%{opacity:0;transform:scale(0) rotate(-180deg);filter:blur(20px)}
+  50%{opacity:1;transform:scale(1.3) rotate(10deg);filter:blur(0)}
+  70%{transform:scale(.95) rotate(-3deg)}
+  100%{opacity:1;transform:scale(1) rotate(0);filter:blur(0)}
+}
+@keyframes sp-gold-shimmer{
+  0%{background-position:-200% center}
+  100%{background-position:200% center}
+}
+@keyframes sp-underline{
+  from{transform:scaleX(0);transform-origin:left}
+  to{transform:scaleX(1);transform-origin:left}
+}
+@keyframes sp-line-draw{
+  from{stroke-dashoffset:400;opacity:0}
+  to{stroke-dashoffset:0;opacity:1}
+}
+@keyframes sp-pattern-pulse{
+  0%,100%{opacity:.03}
+  50%{opacity:.06}
+}
+@keyframes sp-tagletter{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes sp-dot-bounce{
+  0%,80%,100%{transform:translateY(0);opacity:.2}
+  40%{transform:translateY(-12px);opacity:1}
+}
+@keyframes sp-bg-dark{
+  0%,100%{background:#06060e}
+  25%{background:#0a0818}
+  50%{background:#08061a}
+  75%{background:#060a14}
+}
+@keyframes sp-stripe{
+  from{transform:translateX(-100%)}
+  to{transform:translateX(100%)}
+}
+@keyframes sp-letter-float{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-4px)}
+}
+@keyframes sp-fadein{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+@keyframes sp-chart-draw{to{stroke-dashoffset:0}}
+@keyframes sp-dot-appear{from{r:0;opacity:0}to{r:3;opacity:.5}}
+@keyframes sp-cat-in{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+@keyframes sp-geo-rotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes sp-fi-in{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+@keyframes sp-bar-grow{from{width:0}to{width:100%}}
 
-/* Particle float paths */
-@keyframes sp-p1{0%,100%{transform:translate(0,0);opacity:.6}33%{transform:translate(-14px,-28px);opacity:1}66%{transform:translate(10px,-18px);opacity:.7}}
-@keyframes sp-p2{0%,100%{transform:translate(0,0);opacity:.4}40%{transform:translate(18px,-36px);opacity:.9}75%{transform:translate(-8px,-20px);opacity:.6}}
-@keyframes sp-p3{0%,100%{transform:translate(0,0);opacity:.5}50%{transform:translate(-20px,-24px);opacity:1}}
-@keyframes sp-p4{0%,100%{transform:translate(0,0);opacity:.35}45%{transform:translate(12px,-40px);opacity:.85}80%{transform:translate(-6px,-16px);opacity:.55}}
-@keyframes sp-p5{0%,100%{transform:translate(0,0);opacity:.6}60%{transform:translate(22px,-30px);opacity:1}}
+/* NEW animations */
+@keyframes sp-orbit{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes sp-orbit-reverse{from{transform:rotate(360deg)}to{transform:rotate(0deg)}}
+@keyframes sp-pulse-ring{
+  0%{transform:scale(.8);opacity:.4}
+  50%{transform:scale(1.15);opacity:0}
+  100%{transform:scale(.8);opacity:0}
+}
+@keyframes sp-glow-pulse{
+  0%,100%{filter:drop-shadow(0 0 20px rgba(201,162,39,.2)) drop-shadow(0 0 60px rgba(201,162,39,.05))}
+  50%{filter:drop-shadow(0 0 40px rgba(201,162,39,.35)) drop-shadow(0 0 80px rgba(201,162,39,.1))}
+}
+@keyframes sp-mesh-move{
+  0%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(30px,-20px) scale(1.1)}
+  66%{transform:translate(-20px,30px) scale(.95)}
+  100%{transform:translate(0,0) scale(1)}
+}
+@keyframes sp-mesh-move2{
+  0%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(-40px,20px) scale(1.05)}
+  66%{transform:translate(25px,-35px) scale(1.1)}
+  100%{transform:translate(0,0) scale(1)}
+}
+@keyframes sp-mesh-move3{
+  0%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(20px,40px) scale(.9)}
+  66%{transform:translate(-30px,-15px) scale(1.15)}
+  100%{transform:translate(0,0) scale(1)}
+}
+@keyframes sp-aurora{
+  0%{transform:translateX(-50%) scaleY(1);opacity:.3}
+  50%{transform:translateX(-20%) scaleY(1.3);opacity:.5}
+  100%{transform:translateX(-50%) scaleY(1);opacity:.3}
+}
+@keyframes sp-aurora2{
+  0%{transform:translateX(-30%) scaleY(1);opacity:.2}
+  50%{transform:translateX(-60%) scaleY(1.2);opacity:.4}
+  100%{transform:translateX(-30%) scaleY(1);opacity:.2}
+}
+@keyframes sp-ticker{
+  from{transform:translateX(0)}
+  to{transform:translateX(-50%)}
+}
+@keyframes sp-ticker-reverse{
+  from{transform:translateX(-50%)}
+  to{transform:translateX(0)}
+}
+@keyframes sp-star-twinkle{
+  0%,100%{opacity:.1;transform:scale(.8)}
+  50%{opacity:.6;transform:scale(1.2)}
+}
+@keyframes sp-blob-morph{
+  0%{border-radius:42% 58% 70% 30% / 45% 45% 55% 55%}
+  25%{border-radius:70% 30% 50% 50% / 30% 60% 40% 70%}
+  50%{border-radius:30% 70% 40% 60% / 55% 30% 70% 45%}
+  75%{border-radius:55% 45% 60% 40% / 40% 70% 30% 60%}
+  100%{border-radius:42% 58% 70% 30% / 45% 45% 55% 55%}
+}
+@keyframes sp-ring-pulse{
+  0%{transform:translate(-50%,-50%) scale(1);opacity:.15}
+  100%{transform:translate(-50%,-50%) scale(2.5);opacity:0}
+}
+@keyframes sp-logo-breathe{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.02)}
+}
+@keyframes sp-hex-spin{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(60deg)}
+}
+@keyframes sp-particle-drift{
+  0%{transform:translate(0,0);opacity:0}
+  10%{opacity:.6}
+  90%{opacity:.6}
+  100%{transform:translate(var(--drift-x,50px),var(--drift-y,-80px));opacity:0}
+}
+@keyframes sp-scan-line{
+  0%{top:-2px}
+  100%{top:100%}
+}
 
-/* Glow pulse for logo orb */
-@keyframes sp-glow{0%,100%{box-shadow:0 0 24px 4px rgba(2,132,199,.28),0 0 60px 0 rgba(2,132,199,.08)}50%{box-shadow:0 0 40px 8px rgba(2,132,199,.45),0 0 90px 4px rgba(14,165,233,.14)}}
-
-/* Ticker line draw */
-@keyframes sp-draw{from{stroke-dashoffset:420}to{stroke-dashoffset:0}}
-
-/* ── Root container ───────────────────────────────── */
+/* ── ROOT CONTAINER ─────────────────────────────────── */
 #mm-splash{
   position:fixed;inset:0;
   display:flex;flex-direction:column;
   align-items:center;justify-content:center;
-  background:#05080f;
   overflow:hidden;
   font-family:'Nunito',sans-serif;
   z-index:9999;
+  background:#06060e;
+  animation:sp-bg-dark 16s ease-in-out infinite;
 }
 
-/* ── Radial depth gradient (center brightens slightly) ── */
-#mm-splash::before{
-  content:'';
-  position:absolute;inset:0;
-  background:
-    radial-gradient(ellipse 70% 60% at 50% 50%, rgba(2,132,199,.055) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 35% at 30% 20%, rgba(14,165,233,.04) 0%, transparent 60%),
-    radial-gradient(ellipse 30% 40% at 75% 75%, rgba(6,182,212,.035) 0%, transparent 60%);
-  pointer-events:none;
+/* ── MESH GRADIENT LAYERS ───────────────────────────── */
+.sp-mesh{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.sp-mesh-blob{
+  position:absolute;border-radius:50%;
+  filter:blur(80px);
+  opacity:.35;
+  mix-blend-mode:screen;
+}
+.sp-mesh-1{
+  width:600px;height:600px;
+  top:-15%;left:-10%;
+  background:radial-gradient(circle,rgba(201,162,39,.15),transparent 70%);
+  animation:sp-mesh-move 20s ease-in-out infinite;
+}
+.sp-mesh-2{
+  width:500px;height:500px;
+  bottom:-10%;right:-10%;
+  background:radial-gradient(circle,rgba(100,80,220,.12),transparent 70%);
+  animation:sp-mesh-move2 25s ease-in-out infinite;
+}
+.sp-mesh-3{
+  width:400px;height:400px;
+  top:40%;left:50%;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(circle,rgba(201,162,39,.08),transparent 60%);
+  animation:sp-mesh-move3 18s ease-in-out infinite;
+}
+.sp-mesh-4{
+  width:350px;height:350px;
+  top:10%;right:15%;
+  background:radial-gradient(circle,rgba(60,120,200,.08),transparent 60%);
+  animation:sp-mesh-move 22s ease-in-out infinite reverse;
+}
+.sp-mesh-5{
+  width:300px;height:300px;
+  bottom:20%;left:20%;
+  background:radial-gradient(circle,rgba(180,100,255,.06),transparent 60%);
+  animation:sp-mesh-move2 15s ease-in-out infinite;
 }
 
-/* ── Grid texture overlay ─────────────────────────── */
-#mm-splash::after{
-  content:'';
-  position:absolute;inset:0;
-  background-image:
-    linear-gradient(rgba(2,132,199,.028) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(2,132,199,.028) 1px, transparent 1px);
-  background-size:48px 48px;
-  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
-  pointer-events:none;
-  opacity:.6;
+/* ── DOT MATRIX GRID ────────────────────────────────── */
+.sp-grid{
+  position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(circle,rgba(200,200,255,.04) 1px,transparent 1px);
+  background-size:32px 32px;
+  animation:sp-pattern-pulse 8s ease-in-out infinite;
 }
 
-/* ── Wave SVG (bottom) ───────────────────────────── */
-#mm-splash-waves{
-  position:absolute;
-  bottom:0;left:0;right:0;
-  height:220px;
-  overflow:hidden;
+/* ── SCAN LINE ──────────────────────────────────────── */
+.sp-scanline{
+  position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(201,162,39,.06),transparent);
   pointer-events:none;
+  animation:sp-scan-line 8s linear infinite;
+  z-index:1;
 }
-#mm-splash-waves svg{
+
+/* ── AURORA WAVES (BOTTOM) ──────────────────────────── */
+.sp-aurora-wrap{
+  position:absolute;bottom:0;left:0;right:0;height:200px;
+  pointer-events:none;overflow:hidden;
+}
+.sp-aurora{
   position:absolute;bottom:0;left:0;
-  width:100%;height:100%;
+  width:200%;height:100%;
+  background:linear-gradient(180deg,
+    transparent 0%,
+    rgba(201,162,39,.03) 30%,
+    rgba(100,80,220,.04) 50%,
+    rgba(201,162,39,.02) 70%,
+    transparent 100%
+  );
+  animation:sp-aurora 12s ease-in-out infinite;
+}
+.sp-aurora-2{
+  animation:sp-aurora2 15s ease-in-out infinite;
+  opacity:.5;
+  background:linear-gradient(180deg,
+    transparent 0%,
+    rgba(60,120,200,.03) 30%,
+    rgba(201,162,39,.02) 60%,
+    transparent 100%
+  );
 }
 
-/* Wave layers */
-.sp-wv1 path{animation:sp-wave1 7s ease-in-out infinite;fill:rgba(241,194,50,.10)}
-.sp-wv2 path{animation:sp-wave2 9s ease-in-out infinite;animation-delay:-.5s;fill:rgba(14,165,233,.07)}
-.sp-wv3 path{animation:sp-wave3 11s ease-in-out infinite;animation-delay:-2s;fill:rgba(241,194,50,.05)}
-
-/* ── Floating particles ──────────────────────────── */
-#mm-splash-particles{
-  position:absolute;inset:0;
-  pointer-events:none;
-  overflow:hidden;
+/* ── MORPHING BLOBS ─────────────────────────────────── */
+.sp-blob{
+  position:absolute;pointer-events:none;
+  opacity:.06;
+  animation:sp-blob-morph 15s ease-in-out infinite;
 }
-.sp-pt{
+.sp-blob-1{
+  width:300px;height:300px;top:10%;left:5%;
+  background:linear-gradient(135deg,#c9a227,#6450dc);
+  animation-delay:0s;
+}
+.sp-blob-2{
+  width:250px;height:250px;bottom:15%;right:8%;
+  background:linear-gradient(135deg,#3c78c8,#c9a227);
+  animation-delay:-5s;
+}
+.sp-blob-3{
+  width:200px;height:200px;top:55%;left:60%;
+  background:linear-gradient(135deg,#b464ff,#3c78c8);
+  animation-delay:-10s;
+}
+
+/* ── STAR FIELD ─────────────────────────────────────── */
+.sp-stars{position:absolute;inset:0;pointer-events:none}
+.sp-star{
+  position:absolute;width:2px;height:2px;
+  background:#e8e6f0;border-radius:50%;
+  animation:sp-star-twinkle var(--twinkle,3s) ease-in-out infinite;
+  animation-delay:var(--delay,0s);
+}
+
+/* ── FLOATING PARTICLES ─────────────────────────────── */
+.sp-particles{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.sp-particle{
+  position:absolute;width:3px;height:3px;
+  background:rgba(201,162,39,.3);border-radius:50%;
+  animation:sp-particle-drift var(--dur,8s) ease-in-out infinite;
+  animation-delay:var(--pdelay,0s);
+  left:var(--px,50%);top:var(--py,50%);
+}
+
+/* ── CONCENTRIC RINGS (around logo) ─────────────────── */
+.sp-rings{
   position:absolute;
-  border-radius:50%;
-  background:rgba(14,165,233,.7);
-}
-.sp-pt:nth-child(1){width:4px;height:4px;top:22%;left:18%;animation:sp-p1 5.5s ease-in-out infinite}
-.sp-pt:nth-child(2){width:3px;height:3px;top:35%;left:72%;animation:sp-p2 7s ease-in-out infinite;background:rgba(6,182,212,.65)}
-.sp-pt:nth-child(3){width:5px;height:5px;top:55%;left:32%;animation:sp-p3 6.5s ease-in-out infinite;background:rgba(2,132,199,.55)}
-.sp-pt:nth-child(4){width:3px;height:3px;top:18%;left:58%;animation:sp-p4 8s ease-in-out infinite;background:rgba(56,189,248,.6)}
-.sp-pt:nth-child(5){width:4px;height:4px;top:68%;left:80%;animation:sp-p5 6s ease-in-out infinite;background:rgba(14,165,233,.5)}
-.sp-pt:nth-child(6){width:2px;height:2px;top:42%;left:88%;animation:sp-p1 7.5s ease-in-out infinite 1s;background:rgba(56,189,248,.7)}
-.sp-pt:nth-child(7){width:3px;height:3px;top:78%;left:14%;animation:sp-p3 5s ease-in-out infinite .5s;background:rgba(2,132,199,.6)}
-.sp-pt:nth-child(8){width:4px;height:4px;top:12%;left:40%;animation:sp-p2 9s ease-in-out infinite .2s;background:rgba(6,182,212,.5)}
-
-/* ── Ripple rings ────────────────────────────────── */
-.sp-ripple{
-  position:absolute;
-  border-radius:50%;
-  border:1px solid rgba(2,132,199,.25);
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
   pointer-events:none;
+  z-index:1;
 }
-.sp-ripple:nth-child(1){width:160px;height:160px;top:50%;left:50%;margin:-80px 0 0 -80px;animation:sp-ripple 3.6s ease-out infinite}
-.sp-ripple:nth-child(2){width:160px;height:160px;top:50%;left:50%;margin:-80px 0 0 -80px;animation:sp-ripple 3.6s ease-out infinite 1.2s}
-.sp-ripple:nth-child(3){width:160px;height:160px;top:50%;left:50%;margin:-80px 0 0 -80px;animation:sp-ripple 3.6s ease-out infinite 2.4s}
-
-/* ── Centre branding ─────────────────────────────── */
-#mm-splash-center{
-  position:relative;z-index:2;
-  display:flex;flex-direction:column;
-  align-items:center;gap:0;
-  animation:sp-fadein .7s .1s ease both;
-}
-
-/* Orb */
-.sp-orb{
-  width:96px;height:96px;
+.sp-ring{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
   border-radius:50%;
-  background:radial-gradient(circle at 35% 35%, rgba(56,189,248,.22), rgba(2,132,199,.12) 60%, transparent);
-  border:1px solid rgba(56,189,248,.28);
-  display:flex;align-items:center;justify-content:center;
-  animation:sp-glow 3s ease-in-out infinite, sp-float 5s ease-in-out infinite;
-  margin-bottom:28px;
-  position:relative;
-}
-.sp-orb::before{
-  content:'';
-  position:absolute;inset:-1px;
-  border-radius:50%;
-  border:1px solid rgba(56,189,248,.12);
-  animation:sp-ripple 2.8s ease-out infinite;
+  border:1px solid rgba(201,162,39,.08);
+  animation:sp-ring-pulse var(--ring-dur,4s) ease-out infinite;
+  animation-delay:var(--ring-delay,0s);
 }
 
-/* Rupee symbol inside orb */
-.sp-orb-symbol{
-  font-size:40px;font-weight:900;
-  color:#38bdf8;
-  text-shadow:0 0 24px rgba(56,189,248,.6),0 0 8px rgba(2,132,199,.4);
-  font-family:'Nunito',sans-serif;
-  line-height:1;
-  letter-spacing:-1px;
-  animation:sp-float 5s ease-in-out infinite;
+/* ── DATA TICKER STRIPS ─────────────────────────────── */
+.sp-ticker-wrap{
+  position:absolute;left:0;right:0;
+  overflow:hidden;pointer-events:none;
+  height:24px;
+  z-index:2;
+}
+.sp-ticker-top{top:48px}
+.sp-ticker-bottom{bottom:48px}
+.sp-ticker{
+  display:flex;gap:40px;align-items:center;
+  white-space:nowrap;
+  animation:sp-ticker 40s linear infinite;
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  letter-spacing:1px;
+  color:rgba(200,200,255,.12);
+  font-weight:500;
+}
+.sp-ticker-rev{animation:sp-ticker-reverse 35s linear infinite}
+.sp-ticker .sp-t-sep{
+  width:4px;height:4px;border-radius:50%;
+  background:rgba(201,162,39,.2);flex-shrink:0;
+}
+.sp-ticker .sp-t-up{color:rgba(100,220,120,.2)}
+.sp-ticker .sp-t-down{color:rgba(220,100,100,.15)}
+
+/* ── VERTICAL TICKERS ───────────────────────────────── */
+.sp-vticker-wrap{
+  position:absolute;top:80px;bottom:80px;
+  overflow:hidden;pointer-events:none;
+  width:24px;z-index:2;
+}
+.sp-vticker-left{left:20px}
+.sp-vticker-right{right:20px}
+.sp-vticker{
+  display:flex;flex-direction:column;gap:28px;align-items:center;
+  animation:sp-ticker 30s linear infinite;
+  font-family:'DM Mono',monospace;
+  font-size:9px;letter-spacing:2px;
+  color:rgba(200,200,255,.08);font-weight:600;
+  writing-mode:vertical-rl;
+  text-orientation:mixed;
+}
+.sp-vticker-rev{animation:sp-ticker-reverse 25s linear infinite}
+
+/* ── CORNER ACCENTS (enhanced) ──────────────────────── */
+.sp-corner{position:absolute;pointer-events:none;z-index:2}
+.sp-corner-tl{top:30px;left:30px;width:70px;height:70px;border-top:2px solid rgba(201,162,39,.12);border-left:2px solid rgba(201,162,39,.12)}
+.sp-corner-tr{top:30px;right:30px;width:70px;height:70px;border-top:2px solid rgba(201,162,39,.12);border-right:2px solid rgba(201,162,39,.12)}
+.sp-corner-bl{bottom:30px;left:30px;width:70px;height:70px;border-bottom:2px solid rgba(201,162,39,.12);border-left:2px solid rgba(201,162,39,.12)}
+.sp-corner-br{bottom:30px;right:30px;width:70px;height:70px;border-bottom:2px solid rgba(201,162,39,.12);border-right:2px solid rgba(201,162,39,.12)}
+.sp-corner-tl::after,.sp-corner-tr::after,.sp-corner-bl::after,.sp-corner-br::after{
+  content:'';position:absolute;width:6px;height:6px;border-radius:50%;
+  background:rgba(201,162,39,.2);
+}
+.sp-corner-tl::after{top:-3px;left:-3px}
+.sp-corner-tr::after{top:-3px;right:-3px}
+.sp-corner-bl::after{bottom:-3px;left:-3px}
+.sp-corner-br::after{bottom:-3px;right:-3px}
+
+/* ── ACCENT STRIPES ─────────────────────────────────── */
+.sp-stripe{position:absolute;height:3px;border-radius:2px;overflow:hidden;pointer-events:none;z-index:2}
+.sp-stripe::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,#c9a227,#e8c547,#c9a227,transparent);
+  animation:sp-stripe 4s ease-in-out infinite;
+}
+.sp-stripe-1{top:28%;left:3%;width:100px;animation:sp-stripe 4s ease-in-out infinite}
+.sp-stripe-2{bottom:32%;right:5%;width:80px;animation:sp-stripe 4s ease-in-out infinite 1.5s}
+.sp-stripe-3{top:58%;left:8%;width:60px;animation:sp-stripe 4s ease-in-out infinite 2.5s}
+.sp-stripe-4{top:15%;right:3%;width:50px;animation:sp-stripe 4s ease-in-out infinite 3s}
+.sp-stripe-5{bottom:18%;left:5%;width:70px;animation:sp-stripe 4s ease-in-out infinite 0.8s}
+
+/* ── HORIZONTAL DIVIDERS ────────────────────────────── */
+.sp-hdiv{position:absolute;height:1px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(200,200,255,.04),transparent);left:3%;right:3%;z-index:1}
+.sp-hdiv-1{top:18%;animation:sp-fadein 1s 2.2s ease both}
+.sp-hdiv-2{top:82%;animation:sp-fadein 1s 2.5s ease both}
+.sp-hdiv-3{top:33%;animation:sp-fadein 1s 2.8s ease both}
+.sp-hdiv-4{top:67%;animation:sp-fadein 1s 3.1s ease both}
+.sp-hdiv-5{top:50%;animation:sp-fadein 1s 3.4s ease both;opacity:.5}
+.sp-hdiv-6{top:12%;animation:sp-fadein 1s 2s ease both;opacity:.3}
+.sp-hdiv-7{top:88%;animation:sp-fadein 1s 2.3s ease both;opacity:.3}
+
+/* ── DIAGONAL ACCENT LINES ──────────────────────────── */
+.sp-diag{position:absolute;pointer-events:none;width:1px;background:linear-gradient(to bottom,transparent,rgba(201,162,39,.06),transparent);z-index:1}
+.sp-diag-1{height:350px;top:3%;left:22%;transform:rotate(15deg);animation:sp-fadein 1s 2s ease both}
+.sp-diag-2{height:300px;top:8%;right:18%;transform:rotate(-12deg);animation:sp-fadein 1s 2.3s ease both}
+.sp-diag-3{height:250px;bottom:3%;left:28%;transform:rotate(8deg);animation:sp-fadein 1s 2.6s ease both}
+.sp-diag-4{height:320px;bottom:8%;right:22%;transform:rotate(-18deg);animation:sp-fadein 1s 2.9s ease both}
+.sp-diag-5{height:200px;top:30%;left:8%;transform:rotate(25deg);animation:sp-fadein 1s 3.2s ease both}
+.sp-diag-6{height:180px;top:35%;right:8%;transform:rotate(-20deg);animation:sp-fadein 1s 3.5s ease both}
+
+/* ── GEOMETRIC DECORATIONS ──────────────────────────── */
+.sp-geo{position:absolute;pointer-events:none;border:1px solid rgba(201,162,39,.05);z-index:1}
+.sp-geo-circle{border-radius:50%;animation:sp-geo-rotate 20s linear infinite}
+.sp-geo-square{animation:sp-geo-rotate 25s linear infinite reverse}
+.sp-geo-hex{
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  animation:sp-hex-spin 30s linear infinite;
+  border:none;
+  background:linear-gradient(135deg,rgba(201,162,39,.03),transparent);
+}
+.sp-geo-1{width:220px;height:220px;top:3%;right:-50px;border-color:rgba(201,162,39,.04)}
+.sp-geo-2{width:170px;height:170px;bottom:6%;left:-40px;border-color:rgba(200,200,255,.03)}
+.sp-geo-3{width:120px;height:120px;top:58%;right:12%;border-color:rgba(201,162,39,.03);border-style:dashed}
+.sp-geo-4{width:90px;height:90px;top:22%;left:12%;border-color:rgba(200,200,255,.025);border-style:dashed}
+.sp-geo-5{width:140px;height:140px;bottom:22%;right:18%;border-color:rgba(201,162,39,.025)}
+.sp-geo-6{width:80px;height:80px;top:70%;left:5%;border-color:rgba(201,162,39,.03)}
+.sp-geo-7{width:100px;height:100px;top:8%;left:45%;border-color:rgba(200,200,255,.02)}
+.sp-geo-8{width:60px;height:60px;bottom:40%;right:3%;border-color:rgba(201,162,39,.04);border-style:dotted}
+
+/* ── ANIMATED CHART LINES ───────────────────────────── */
+.sp-charts{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1}
+.sp-chart-line{fill:none;stroke-width:1.5;stroke-linecap:round;stroke-dasharray:2000;stroke-dashoffset:2000}
+.sp-chart-1{stroke:rgba(201,162,39,.1);animation:sp-chart-draw 4s 1s ease forwards}
+.sp-chart-2{stroke:rgba(201,162,39,.06);animation:sp-chart-draw 5s 1.5s ease forwards}
+.sp-chart-3{stroke:rgba(200,200,255,.04);animation:sp-chart-draw 6s 2s ease forwards}
+.sp-chart-4{stroke:rgba(200,200,255,.03);animation:sp-chart-draw 4.5s 2.5s ease forwards}
+.sp-chart-5{stroke:rgba(100,180,255,.04);animation:sp-chart-draw 5.5s 3s ease forwards}
+.sp-chart-6{stroke:rgba(180,100,255,.03);animation:sp-chart-draw 5s 3.5s ease forwards}
+.sp-chart-dot{fill:#c9a227;opacity:0;animation:sp-dot-appear .5s ease both}
+.sp-cd1{animation-delay:3.5s}.sp-cd2{animation-delay:3.8s}.sp-cd3{animation-delay:4.1s}.sp-cd4{animation-delay:4.4s}
+.sp-cd5{animation-delay:4.7s}.sp-cd6{animation-delay:5s}.sp-cd7{animation-delay:5.3s}.sp-cd8{animation-delay:5.6s}
+.sp-cd9{animation-delay:5.9s}.sp-cd10{animation-delay:6.2s}
+
+/* ── SCANNING LINE EFFECT ───────────────────────────── */
+.sp-scan-h{
+  position:absolute;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent 5%,rgba(201,162,39,.08) 30%,rgba(201,162,39,.12) 50%,rgba(201,162,39,.08) 70%,transparent 95%);
+  pointer-events:none;z-index:1;
+  animation:sp-scan-line 6s linear infinite;
 }
 
-/* Orbiting dot */
+/* ── SCATTERED CATEGORY LABELS ──────────────────────── */
+.sp-cat{position:absolute;font-size:10px;font-weight:600;font-family:'DM Sans',sans-serif;letter-spacing:3px;text-transform:uppercase;opacity:0;pointer-events:none;z-index:2}
+.sp-cat-gold{color:rgba(201,162,39,.2)}
+.sp-cat-light{color:rgba(200,200,255,.1)}
+.sp-cat-1{top:10%;left:6%;animation:sp-cat-in .8s 2.5s ease both}
+.sp-cat-2{top:16%;right:8%;animation:sp-cat-in .8s 2.8s ease both}
+.sp-cat-3{bottom:20%;left:5%;animation:sp-cat-in .8s 3.1s ease both}
+.sp-cat-4{bottom:13%;right:6%;animation:sp-cat-in .8s 3.4s ease both}
+.sp-cat-5{top:32%;left:3%;animation:sp-cat-in .8s 3.7s ease both}
+.sp-cat-6{top:40%;right:3%;animation:sp-cat-in .8s 4s ease both}
+.sp-cat-7{bottom:36%;left:8%;animation:sp-cat-in .8s 4.3s ease both}
+.sp-cat-8{bottom:30%;right:10%;animation:sp-cat-in .8s 4.6s ease both}
+.sp-cat-9{top:24%;left:15%;animation:sp-cat-in .8s 4.9s ease both;font-size:8px;letter-spacing:2px}
+.sp-cat-10{bottom:45%;right:15%;animation:sp-cat-in .8s 5.2s ease both;font-size:8px;letter-spacing:2px}
+
+/* ── FLOATING FINANCIAL ICONS ───────────────────────── */
+.sp-fi{position:absolute;pointer-events:none;opacity:0;animation:sp-fi-in .6s ease both;z-index:2}
+.sp-fi svg{width:20px;height:20px;stroke:rgba(201,162,39,.1);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.sp-fi-1{top:7%;left:18%;animation-delay:3s}
+.sp-fi-2{top:13%;right:22%;animation-delay:3.3s}
+.sp-fi-3{bottom:16%;left:16%;animation-delay:3.6s}
+.sp-fi-4{bottom:10%;right:20%;animation-delay:3.9s}
+.sp-fi-5{top:48%;left:5%;animation-delay:4.2s}
+.sp-fi-6{top:52%;right:5%;animation-delay:4.5s}
+.sp-fi-7{top:25%;left:88%;animation-delay:4.8s}
+.sp-fi-8{bottom:28%;left:88%;animation-delay:5.1s}
+.sp-fi-9{top:70%;left:12%;animation-delay:5.4s}
+.sp-fi-10{top:20%;left:85%;animation-delay:5.7s}
+
+/* ── ORBITING DOTS ──────────────────────────────────── */
 .sp-orbit-wrap{
-  position:absolute;inset:0;
-  animation:sp-orbit 4s linear infinite;
-  transform-origin:center;
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  pointer-events:none;z-index:1;
+}
+.sp-orbit{
+  position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  border:1px dashed rgba(201,162,39,.06);
 }
 .sp-orbit-dot{
-  position:absolute;
-  top:4px;left:50%;
-  width:6px;height:6px;
+  position:absolute;width:5px;height:5px;
+  background:rgba(201,162,39,.25);border-radius:50%;
+  top:-2.5px;left:50%;margin-left:-2.5px;
+  box-shadow:0 0 8px rgba(201,162,39,.2);
+}
+.sp-orbit-1{width:280px;height:280px;animation:sp-orbit 20s linear infinite}
+.sp-orbit-2{width:380px;height:380px;animation:sp-orbit-reverse 28s linear infinite}
+.sp-orbit-3{width:480px;height:480px;animation:sp-orbit 35s linear infinite}
+.sp-orbit-dot-r{
+  top:auto;bottom:-2.5px;
+  background:rgba(100,160,255,.2);
+  box-shadow:0 0 8px rgba(100,160,255,.15);
+}
+
+/* ── PROGRESS BAR (enhanced) ────────────────────────── */
+.sp-bar{
+  position:absolute;bottom:55px;left:50%;transform:translateX(-50%);
+  width:300px;height:3px;
+  background:rgba(200,200,255,.03);
+  border-radius:2px;overflow:hidden;
+  opacity:0;animation:sp-fadein .5s 3.5s ease both;
+  z-index:3;
+}
+.sp-bar-fill{
+  height:100%;width:0;
+  background:linear-gradient(90deg,rgba(201,162,39,.2),#c9a227,rgba(201,162,39,.2));
+  border-radius:2px;
+  animation:sp-bar-grow 3s 3.8s cubic-bezier(.4,0,.6,1) forwards;
+  box-shadow:0 0 12px rgba(201,162,39,.3),0 0 30px rgba(201,162,39,.1);
+}
+
+/* ── CENTRE BRANDING ────────────────────────────────── */
+#mm-splash-center{
+  position:relative;z-index:3;
+  display:flex;flex-direction:column;
+  align-items:center;
+}
+
+/* ── ₹ SYMBOL ──────────────────────────────────────── */
+.sp-rupee-wrap{
+  position:relative;
+  margin-bottom:24px;
+  opacity:0;
+  animation:sp-rupee-in 1s 1.2s cubic-bezier(.23,1,.32,1) both,
+             sp-glow-pulse 3s 2.5s ease-in-out infinite;
+}
+.sp-rupee{
+  font-size:56px;font-weight:900;
+  font-family:'Nunito',sans-serif;line-height:1;
+  background:linear-gradient(135deg,#b8860b,#daa520,#ffd700,#daa520,#b8860b);
+  background-size:200% auto;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:sp-gold-shimmer 3s 2s ease-in-out infinite;
+  filter:drop-shadow(0 2px 12px rgba(201,162,39,.35));
+  position:relative;z-index:2;
+}
+.sp-rupee-ring{
+  position:absolute;width:90px;height:90px;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  border:1.5px solid rgba(201,162,39,.15);
   border-radius:50%;
-  background:#38bdf8;
-  box-shadow:0 0 8px 2px rgba(56,189,248,.6);
-  transform:translateX(-50%);
+  animation:sp-logo-breathe 4s ease-in-out infinite;
+}
+.sp-rupee-ring-2{
+  position:absolute;width:110px;height:110px;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  border:1px dashed rgba(201,162,39,.08);
+  border-radius:50%;
+  animation:sp-orbit 15s linear infinite;
+}
+.sp-rupee-glow{
+  position:absolute;width:140px;height:140px;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  background:radial-gradient(circle,rgba(201,162,39,.08),transparent 70%);
+  border-radius:50%;
+  animation:sp-logo-breathe 4s ease-in-out infinite;
 }
 
-/* Logo wordmark */
-.sp-wordmark{
-  font-size:36px;font-weight:800;
-  color:#e0f2fe;
-  letter-spacing:-1px;
-  font-family:'Nunito',sans-serif;
-  animation:sp-logopop .65s .2s ease both;
-  opacity:0;
-  line-height:1;
+/* ── THE WORD ───────────────────────────────────────── */
+.sp-word{display:flex;align-items:baseline;gap:0;line-height:1}
+.sp-letter{
+  display:inline-block;font-size:76px;font-weight:800;
+  color:#e8e6f0;font-family:'Nunito',sans-serif;
+  letter-spacing:-3px;opacity:0;
+  animation:sp-letter-in .8s cubic-bezier(.23,1,.32,1) both;
+  text-shadow:0 0 30px rgba(200,200,255,.06);
 }
-.sp-wordmark em{
-  color:#38bdf8;
-  font-style:normal;
-  text-shadow:0 0 20px rgba(56,189,248,.5);
+.sp-letter:nth-child(1){animation-delay:.3s}
+.sp-letter:nth-child(2){animation-delay:.4s}
+.sp-letter:nth-child(3){animation-delay:.5s}
+.sp-letter:nth-child(4){animation-delay:.6s}
+.sp-letter:nth-child(5){animation-delay:.7s}
+.sp-letter:nth-child(6){animation-delay:.8s}
+.sp-letter:nth-child(7){animation-delay:.9s}
+.sp-letter.accent{
+  color:#c9a227;
+  text-shadow:0 2px 4px rgba(201,162,39,.15),0 0 40px rgba(201,162,39,.08);
+}
+.sp-letter.done{opacity:1;animation:sp-letter-float 4s ease-in-out infinite}
+.sp-letter.done:nth-child(1){animation-delay:0s}
+.sp-letter.done:nth-child(2){animation-delay:.3s}
+.sp-letter.done:nth-child(3){animation-delay:.6s}
+.sp-letter.done:nth-child(4){animation-delay:.9s}
+.sp-letter.done:nth-child(5){animation-delay:1.2s}
+.sp-letter.done:nth-child(6){animation-delay:1.5s}
+.sp-letter.done:nth-child(7){animation-delay:1.8s}
+
+/* ── UNDERLINE ──────────────────────────────────────── */
+.sp-underline{
+  width:200px;height:3px;margin-top:18px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,#c9a227,#e8c547,#c9a227,transparent);
+  transform:scaleX(0);
+  animation:sp-underline .8s 1.4s cubic-bezier(.23,1,.32,1) forwards;
 }
 
-/* Tagline */
+/* ── ACCENT SVG LINES ───────────────────────────────── */
+.sp-accent-lines{margin-top:24px;opacity:0;animation:sp-fadein .6s 1.6s ease both}
+.sp-accent-lines svg{overflow:visible}
+.sp-accent-line{
+  stroke-dasharray:400;stroke-dashoffset:400;
+  animation:sp-line-draw 1.5s 1.8s cubic-bezier(.4,0,.2,1) forwards;
+}
+
+/* ── TAGLINE ────────────────────────────────────────── */
 .sp-tagline{
-  font-size:11.5px;
-  color:rgba(148,196,230,.55);
-  letter-spacing:3px;
-  text-transform:uppercase;
-  margin-top:8px;
-  font-weight:600;
-  animation:sp-fadein .6s .55s ease both;opacity:0;
+  margin-top:20px;font-size:12px;font-weight:600;
   font-family:'DM Sans',sans-serif;
+  letter-spacing:6px;text-transform:uppercase;
+  color:rgba(200,200,255,.25);display:flex;gap:0;
+}
+.sp-tag-char{
+  display:inline-block;opacity:0;
+  animation:sp-tagletter .4s ease both;
+}
+.sp-tag-char:nth-child(1){animation-delay:1.8s}
+.sp-tag-char:nth-child(2){animation-delay:1.84s}
+.sp-tag-char:nth-child(3){animation-delay:1.88s}
+.sp-tag-char:nth-child(4){animation-delay:1.92s}
+.sp-tag-char:nth-child(5){animation-delay:1.96s}
+.sp-tag-char:nth-child(6){animation-delay:2s}
+.sp-tag-char:nth-child(7){animation-delay:2.04s}
+.sp-tag-char:nth-child(8){animation-delay:2.08s}
+.sp-tag-char:nth-child(9){animation-delay:2.12s}
+.sp-tag-char:nth-child(10){animation-delay:2.16s}
+.sp-tag-char:nth-child(11){animation-delay:2.2s}
+.sp-tag-char:nth-child(12){animation-delay:2.24s}
+.sp-tag-char:nth-child(13){animation-delay:2.28s}
+.sp-tag-char:nth-child(14){animation-delay:2.32s}
+.sp-tag-char:nth-child(15){animation-delay:2.36s}
+.sp-tag-char:nth-child(16){animation-delay:2.4s}
+.sp-tag-char:nth-child(17){animation-delay:2.44s}
+.sp-tag-char:nth-child(18){animation-delay:2.48s}
+.sp-tag-char:nth-child(19){animation-delay:2.52s}
+.sp-tag-char:nth-child(20){animation-delay:2.56s}
+.sp-tag-char:nth-child(21){animation-delay:2.6s}
+.sp-tag-char:nth-child(22){animation-delay:2.64s}
+.sp-tag-char:nth-child(23){animation-delay:2.68s}
+.sp-tag-char:nth-child(24){animation-delay:2.72s}
+.sp-tag-char:nth-child(25){animation-delay:2.76s}
+.sp-tag-char:nth-child(26){animation-delay:2.8s}
+.sp-tag-char:nth-child(27){animation-delay:2.84s}
+.sp-tag-char:nth-child(28){animation-delay:2.88s}
+.sp-tag-char:nth-child(29){animation-delay:2.92s}
+.sp-tag-char:nth-child(30){animation-delay:2.96s}
+.sp-tag-char:nth-child(31){animation-delay:3s}
+.sp-tag-char:nth-child(32){animation-delay:3.04s}
+.sp-tag-char:nth-child(33){animation-delay:3.08s}
+
+/* ── PROGRESS DOTS ──────────────────────────────────── */
+.sp-progress{
+  margin-top:36px;display:flex;gap:10px;align-items:center;
+  opacity:0;animation:sp-fadein .5s 3.2s ease both;
+}
+.sp-pdot{
+  width:5px;height:5px;border-radius:50%;
+  background:#e8e6f0;opacity:.15;
+  animation:sp-dot-bounce 1.4s ease-in-out infinite;
+}
+.sp-pdot:nth-child(1){animation-delay:0s}
+.sp-pdot:nth-child(2){animation-delay:.15s}
+.sp-pdot:nth-child(3){animation-delay:.3s}
+.sp-pdot:nth-child(4){animation-delay:.45s}
+.sp-pdot:nth-child(5){animation-delay:.6s}
+
+/* ── LOADING STATUS TEXT ────────────────────────────── */
+.sp-status{
+  margin-top:16px;
+  font-size:10px;font-family:'DM Mono',monospace;
+  letter-spacing:2px;text-transform:uppercase;
+  color:rgba(200,200,255,.15);
+  opacity:0;animation:sp-fadein .5s 3.5s ease both;
+  min-height:14px;
 }
 
-/* Ticker sparkline */
-.sp-ticker{
-  margin-top:32px;
-  opacity:0;
-  animation:sp-fadein .6s .75s ease both;
-}
-.sp-ticker svg{overflow:visible}
-.sp-ticker-line{
-  stroke-dasharray:420;
-  stroke-dashoffset:420;
-  animation:sp-draw 1.8s .9s cubic-bezier(.4,0,.2,1) forwards;
-}
-
-/* Progress bar */
-.sp-progress-wrap{
-  margin-top:40px;
-  width:200px;
-  height:2px;
-  background:rgba(2,132,199,.12);
-  border-radius:2px;
-  overflow:hidden;
-  animation:sp-fadein .4s .8s ease both;opacity:0;
-}
-.sp-progress-fill{
-  height:100%;
-  background:linear-gradient(90deg,rgba(2,132,199,.5),#38bdf8,rgba(6,182,212,.8));
-  border-radius:2px;
-  width:0;
-  animation:sp-progress 2.8s .85s cubic-bezier(.4,0,.6,1) forwards;
-  box-shadow:0 0 8px rgba(56,189,248,.5);
-}
-
-/* Loading label */
-.sp-label{
-  margin-top:14px;
-  font-size:10.5px;
-  color:rgba(56,189,248,.42);
-  letter-spacing:2.5px;
-  text-transform:uppercase;
-  font-weight:600;
+/* ── BRAND MARK ─────────────────────────────────────── */
+.sp-brand{
+  position:absolute;bottom:25px;left:50%;transform:translateX(-50%);
+  font-size:9px;letter-spacing:4px;text-transform:uppercase;
+  color:rgba(200,200,255,.1);font-weight:600;
   font-family:'DM Sans',sans-serif;
-  animation:sp-shimmer 2s ease-in-out infinite, sp-fadein .5s .9s ease both;
-  opacity:0;
+  opacity:0;animation:sp-fadein .5s 3.5s ease both;z-index:3;
 }
-</style>
+
+/* ── VERSION PILL ───────────────────────────────────── */
+.sp-version{
+  position:absolute;bottom:25px;right:30px;
+  font-size:8px;letter-spacing:1px;
+  color:rgba(200,200,255,.08);font-weight:500;
+  font-family:'DM Mono',monospace;
+  opacity:0;animation:sp-fadein .5s 4s ease both;z-index:3;
+  padding:3px 8px;
+  border:1px solid rgba(200,200,255,.04);
+  border-radius:4px;
+}
+
+/* ── TIMELINE STRIP (bottom) ────────────────────────── */
+.sp-timeline{
+  position:absolute;bottom:70px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:6px;
+  opacity:0;animation:sp-fadein .5s 4s ease both;z-index:3;
+}
+.sp-tl-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:rgba(200,200,255,.08);position:relative;
+}
+.sp-tl-dot.active{
+  background:rgba(201,162,39,.3);
+  box-shadow:0 0 8px rgba(201,162,39,.2);
+}
+.sp-tl-dot.active::after{
+  content:'';position:absolute;inset:-4px;
+  border:1px solid rgba(201,162,39,.15);
+  border-radius:50%;
+  animation:sp-ring-pulse 2s ease-out infinite;
+}
+.sp-tl-line{width:20px;height:1px;background:rgba(200,200,255,.06)}
+
+@media (prefers-reduced-motion: reduce) {
+  *,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important}
+}
+</style></div>
 
 <div id="mm-splash">
 
-  <!-- Radial ripple rings -->
-  <div style="position:absolute;inset:0;pointer-events:none;overflow:hidden">
-    <div class="sp-ripple"></div>
-    <div class="sp-ripple"></div>
-    <div class="sp-ripple"></div>
-	    <div class="sp-ripple"></div>
-    <div class="sp-ripple"></div>
-    <div class="sp-ripple"></div>
-	    <div class="sp-ripple"></div>
-    <div class="sp-ripple"></div>
-    <div class="sp-ripple"></div>
+  <!-- MESH GRADIENT BACKGROUND -->
+  <div class="sp-mesh">
+    <div class="sp-mesh-blob sp-mesh-1"></div>
+    <div class="sp-mesh-blob sp-mesh-2"></div>
+    <div class="sp-mesh-blob sp-mesh-3"></div>
+    <div class="sp-mesh-blob sp-mesh-4"></div>
+    <div class="sp-mesh-blob sp-mesh-5"></div>
   </div>
 
-  <!-- Floating particles -->
-  <div id="mm-splash-particles">
-    <div class="sp-pt"></div><div class="sp-pt"></div>
-    <div class="sp-pt"></div><div class="sp-pt"></div>
-    <div class="sp-pt"></div><div class="sp-pt"></div>
-    <div class="sp-pt"></div><div class="sp-pt"></div>
-	<div class="sp-pt"></div><div class="sp-pt"></div>
-    <div class="sp-pt"></div><div class="sp-pt"></div>
-    <div class="sp-pt"></div><div class="sp-pt"></div>
-    <div class="sp-pt"></div><div class="sp-pt"></div>
-	 <div class="sp-pt"></div><div class="sp-pt"></div>
-    <div class="sp-pt"></div><div class="sp-pt"></div>
-    <div class="sp-pt"></div><div class="sp-pt"></div>
-    <div class="sp-pt"></div><div class="sp-pt"></div>
-	 <div class="sp-pt"></div><div class="sp-pt"></div>
-    <div class="sp-pt"></div><div class="sp-pt"></div>
-    <div class="sp-pt"></div><div class="sp-pt"></div>
-    <div class="sp-pt"></div><div class="sp-pt"></div>
-	<div class="sp-pt"></div><div class="sp-pt"></div>
-    <div class="sp-pt"></div><div class="sp-pt"></div>
-    <div class="sp-pt"></div><div class="sp-pt"></div>
-    <div class="sp-pt"></div><div class="sp-pt"></div>
-	 <div class="sp-pt"></div><div class="sp-pt"></div>
-    <div class="sp-pt"></div><div class="sp-pt"></div>
-    <div class="sp-pt"></div><div class="sp-pt"></div>
-    <div class="sp-pt"></div><div class="sp-pt"></div>
+  <!-- DOT MATRIX GRID -->
+  <div class="sp-grid"></div>
+
+  <!-- SCAN LINES -->
+  <div class="sp-scanline"></div>
+  <div class="sp-scan-h"></div>
+
+  <!-- AURORA -->
+  <div class="sp-aurora-wrap">
+    <div class="sp-aurora"></div>
+    <div class="sp-aurora sp-aurora-2"></div>
+  </div>
+
+  <!-- MORPHING BLOBS -->
+  <div class="sp-blob sp-blob-1"></div>
+  <div class="sp-blob sp-blob-2"></div>
+  <div class="sp-blob sp-blob-3"></div>
+
+  <!-- STAR FIELD -->
+  <div class="sp-stars" id="sp-stars"></div>
+
+  <!-- FLOATING PARTICLES -->
+  <div class="sp-particles" id="sp-particles"></div>
+
+  <!-- CONCENTRIC RINGS -->
+  <div class="sp-rings">
+    <div class="sp-ring" style="width:200px;height:200px;--ring-dur:3s;--ring-delay:0s"></div>
+    <div class="sp-ring" style="width:300px;height:300px;--ring-dur:4s;--ring-delay:.5s"></div>
+    <div class="sp-ring" style="width:420px;height:420px;--ring-dur:5s;--ring-delay:1s"></div>
+    <div class="sp-ring" style="width:560px;height:560px;--ring-dur:6s;--ring-delay:1.5s"></div>
+    <div class="sp-ring" style="width:720px;height:720px;--ring-dur:7s;--ring-delay:2s"></div>
+  </div>
+
+  <!-- ORBITING DOTS -->
+  <div class="sp-orbit-wrap">
+    <div class="sp-orbit sp-orbit-1"><div class="sp-orbit-dot"></div></div>
+    <div class="sp-orbit sp-orbit-2"><div class="sp-orbit-dot sp-orbit-dot-r"></div></div>
+    <div class="sp-orbit sp-orbit-3"><div class="sp-orbit-dot"></div></div>
+  </div>
+
+  <!-- DATA TICKERS -->
+  <div class="sp-ticker-wrap sp-ticker-top"><div class="sp-ticker" id="sp-ticker-top"></div></div>
+  <div class="sp-ticker-wrap sp-ticker-bottom"><div class="sp-ticker sp-ticker-rev" id="sp-ticker-bottom"></div></div>
+
+  <!-- VERTICAL TICKERS -->
+  <div class="sp-vticker-wrap sp-vticker-left"><div class="sp-vticker" id="sp-vticker-l"></div></div>
+  <div class="sp-vticker-wrap sp-vticker-right"><div class="sp-vticker sp-vticker-rev" id="sp-vticker-r"></div></div>
+
+  <!-- Corner accents -->
+  <div class="sp-corner sp-corner-tl"></div>
+  <div class="sp-corner sp-corner-tr"></div>
+  <div class="sp-corner sp-corner-bl"></div>
+  <div class="sp-corner sp-corner-br"></div>
+
+  <!-- Accent stripes -->
+  <div class="sp-stripe sp-stripe-1"></div>
+  <div class="sp-stripe sp-stripe-2"></div>
+  <div class="sp-stripe sp-stripe-3"></div>
+  <div class="sp-stripe sp-stripe-4"></div>
+  <div class="sp-stripe sp-stripe-5"></div>
+
+  <!-- Horizontal dividers -->
+  <div class="sp-hdiv sp-hdiv-1"></div>
+  <div class="sp-hdiv sp-hdiv-2"></div>
+  <div class="sp-hdiv sp-hdiv-3"></div>
+  <div class="sp-hdiv sp-hdiv-4"></div>
+  <div class="sp-hdiv sp-hdiv-5"></div>
+  <div class="sp-hdiv sp-hdiv-6"></div>
+  <div class="sp-hdiv sp-hdiv-7"></div>
+
+  <!-- Diagonal accent lines -->
+  <div class="sp-diag sp-diag-1"></div>
+  <div class="sp-diag sp-diag-2"></div>
+  <div class="sp-diag sp-diag-3"></div>
+  <div class="sp-diag sp-diag-4"></div>
+  <div class="sp-diag sp-diag-5"></div>
+  <div class="sp-diag sp-diag-6"></div>
+
+  <!-- Geometric decorations -->
+  <div class="sp-geo sp-geo-circle sp-geo-1"></div>
+  <div class="sp-geo sp-geo-circle sp-geo-2"></div>
+  <div class="sp-geo sp-geo-square sp-geo-3"></div>
+  <div class="sp-geo sp-geo-square sp-geo-4"></div>
+  <div class="sp-geo sp-geo-circle sp-geo-5"></div>
+  <div class="sp-geo sp-geo-hex sp-geo-6"></div>
+  <div class="sp-geo sp-geo-square sp-geo-7"></div>
+  <div class="sp-geo sp-geo-circle sp-geo-8"></div>
+
+  <!-- Animated chart lines -->
+  <svg class="sp-charts" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <path class="sp-chart-line sp-chart-1" d="M0,600 C100,550 200,650 300,500 C400,350 500,580 600,420 C700,260 800,500 900,380 L1000,300"/>
+    <path class="sp-chart-line sp-chart-2" d="M0,700 C150,680 250,720 400,600 C500,500 600,650 700,520 C800,390 900,550 1000,450"/>
+    <path class="sp-chart-line sp-chart-3" d="M0,300 C120,350 250,200 380,280 C500,360 620,180 750,250 C850,300 950,200 1000,220"/>
+    <path class="sp-chart-line sp-chart-4" d="M0,800 C200,750 350,850 500,700 C650,550 750,720 850,600 L1000,500"/>
+    <path class="sp-chart-line sp-chart-5" d="M0,450 C100,420 200,480 350,380 C500,280 650,450 800,350 L1000,280"/>
+    <path class="sp-chart-line sp-chart-6" d="M0,150 C150,200 300,100 450,180 C600,260 750,140 900,200 L1000,160"/>
+    <circle class="sp-chart-dot sp-cd1" cx="300" cy="500"/><circle class="sp-chart-dot sp-cd2" cx="600" cy="420"/>
+    <circle class="sp-chart-dot sp-cd3" cx="400" cy="600"/><circle class="sp-chart-dot sp-cd4" cx="700" cy="520"/>
+    <circle class="sp-chart-dot sp-cd5" cx="380" cy="280"/><circle class="sp-chart-dot sp-cd6" cx="750" cy="250"/>
+    <circle class="sp-chart-dot sp-cd7" cx="500" cy="700"/><circle class="sp-chart-dot sp-cd8" cx="850" cy="600"/>
+    <circle class="sp-chart-dot sp-cd9" cx="350" cy="380"/><circle class="sp-chart-dot sp-cd10" cx="800" cy="350"/>
+  </svg>
+
+  <!-- Scattered category labels -->
+  <div class="sp-cat sp-cat-gold sp-cat-1">Savings</div>
+  <div class="sp-cat sp-cat-light sp-cat-2">Analytics</div>
+  <div class="sp-cat sp-cat-gold sp-cat-3">Budget</div>
+  <div class="sp-cat sp-cat-light sp-cat-4">Portfolio</div>
+  <div class="sp-cat sp-cat-gold sp-cat-5">Income</div>
+  <div class="sp-cat sp-cat-light sp-cat-6">Expenses</div>
+  <div class="sp-cat sp-cat-gold sp-cat-7">Reports</div>
+  <div class="sp-cat sp-cat-light sp-cat-8">Planning</div>
+  <div class="sp-cat sp-cat-gold sp-cat-9">Credit</div>
+  <div class="sp-cat sp-cat-light sp-cat-10">Goals</div>
+
+  <!-- Floating financial icons -->
+  <div class="sp-fi sp-fi-1"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+  <div class="sp-fi sp-fi-2"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+  <div class="sp-fi sp-fi-3"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
+  <div class="sp-fi sp-fi-4"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></div>
+  <div class="sp-fi sp-fi-5"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 6 9 6 9"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C17 4 18 9 18 9"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
+  <div class="sp-fi sp-fi-6"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+  <div class="sp-fi sp-fi-7"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 0 1 0 4H8"/><path d="M12 6v2m0 8v2"/></svg></div>
+  <div class="sp-fi sp-fi-8"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></div>
+  <div class="sp-fi sp-fi-9"><svg viewBox="0 0 24 24"><path d="M2 17l1-5 4-4 4 4 4-8 4 4 4-2"/><circle cx="17" cy="17" r="4"/><path d="M17 15v4m-2-2h4"/></svg></div>
+  <div class="sp-fi sp-fi-10"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+
+    <!-- Progress bar -->
+  <div class="sp-bar">
+    <div class="sp-bar-fill"></div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="sp-timeline">
+    <div class="sp-tl-dot active"></div>
+    <div class="sp-tl-line"></div>
+    <div class="sp-tl-dot"></div>
+    <div class="sp-tl-line"></div>
+    <div class="sp-tl-dot"></div>
+    <div class="sp-tl-line"></div>
+    <div class="sp-tl-dot"></div>
+    <div class="sp-tl-line"></div>
+    <div class="sp-tl-dot"></div>
   </div>
 
   <!-- Centre content -->
   <div id="mm-splash-center">
-
-    <!-- Orb with orbiting dot -->
-    <div class="sp-orb">
-      <div class="sp-orbit-wrap"><div class="sp-orbit-dot"></div></div>
-      <span class="sp-orb-symbol">₹</span>
+    <div class="sp-rupee-wrap">
+      <div class="sp-rupee-glow"></div>
+      <div class="sp-rupee-ring-2"></div>
+      <div class="sp-rupee-ring"></div>
+      <span class="sp-rupee">₹</span>
     </div>
 
-    <!-- Wordmark -->
-    <div class="sp-wordmark">fin<em>sight</em></div>
-    <div class="sp-tagline">Financial Management Simplified !</div>
+    <div class="sp-word" id="sp-word">
+      <span class="sp-letter">f</span>
+      <span class="sp-letter">i</span>
+      <span class="sp-letter">n</span>
+      <span class="sp-letter accent">s</span>
+      <span class="sp-letter accent">i</span>
+      <span class="sp-letter accent">g</span>
+      <span class="sp-letter accent">h</span>
+      <span class="sp-letter accent">t</span>
+    </div>
 
-    <!-- Animated sparkline ticker -->
-    <div class="sp-ticker">
-      <svg width="220" height="44" viewBox="0 0 220 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="sp-tg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#38bdf8" stop-opacity=".22"/>
-            <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
-          </linearGradient>
-        </defs>
-        <!-- Area fill (fades in after line is drawn) -->
-        <path d="M0,36 C22,30 44,34 66,24 C88,14 110,28 132,16 C154,4 176,20 198,10 L220,6 L220,44 L0,44Z"
-              fill="url(#sp-tg)"
-              style="animation:sp-fadein .5s 2.5s ease both;opacity:0"/>
-        <!-- Line -->
-        <path class="sp-ticker-line"
-              d="M0,36 C22,30 44,34 66,24 C88,14 110,28 132,16 C154,4 176,20 198,10 L220,6"
-              stroke="#38bdf8" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <!-- Live dot -->
-        <circle cx="220" cy="6" r="3.5" fill="#38bdf8"
-                style="filter:drop-shadow(0 0 5px #38bdf8);animation:sp-pulse 1.4s 2.7s ease-in-out infinite;opacity:0;animation-fill-mode:both"/>
+    <div class="sp-underline"></div>
+
+    <div class="sp-accent-lines">
+      <svg width="260" height="20" viewBox="0 0 260 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path class="sp-accent-line" d="M0,10 C40,2 80,18 120,10 C160,2 200,18 240,10 L260,10" stroke="#c9a227" stroke-width="1" stroke-linecap="round" fill="none" opacity=".4"/>
+        <path class="sp-accent-line" d="M20,10 C60,5 100,15 140,10 C180,5 220,15 260,10" stroke="#e8e6f0" stroke-width=".5" stroke-linecap="round" fill="none" opacity=".08" style="animation-delay:2s"/>
       </svg>
     </div>
 
-    <!-- Progress bar -->
-    <div class="sp-progress-wrap">
-      <div class="sp-progress-fill"></div>
-    </div>
-    <div class="sp-label">Loading your finances…</div>
+    <div class="sp-tagline" id="sp-tagline"></div>
 
+    <div class="sp-progress">
+      <div class="sp-pdot"></div>
+      <div class="sp-pdot"></div>
+      <div class="sp-pdot"></div>
+      <div class="sp-pdot"></div>
+      <div class="sp-pdot"></div>
+    </div>
+
+    <div class="sp-status" id="sp-status"></div>
   </div>
 
-  <!-- Wave layers -->
-  <div id="mm-splash-waves">
-    <svg class="sp-wv3" viewBox="0 0 1440 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0,90 C240,60 480,115 720,80 C960,45 1160,95 1320,70 C1380,60 1420,72 1440,68 L1440,160 L0,160Z"/>
-    </svg>
-    <svg class="sp-wv2" viewBox="0 0 1440 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0,72 C200,40 400,100 600,64 C800,28 1000,84 1200,56 C1320,38 1380,60 1440,50 L1440,160 L0,160Z"/>
-    </svg>
-    <svg class="sp-wv4" viewBox="0 0 1440 160" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0,56 C160,20 340,88 510,52 C700,16 890,72 1060,48 C1200,28 1300,52 1440,40 L1440,160 L0,160Z"/>
-    </svg>
+  <!-- Brand mark -->
+  <div class="sp-brand">finsight</div>
+  <div class="sp-version">v7.0</div>
 
-</div></div>
+</div>
+<script>
+(function(){
+  var letters = document.querySelectorAll('.sp-letter');
+  letters.forEach(function(el, i){
+    el.addEventListener('animationend', function(){
+      if(!el.classList.contains('done')){
+        el.classList.add('done');
+        el.style.opacity = '1';
+        el.style.animation = '';
+        void el.offsetWidth;
+        el.style.animation = 'sp-letter-float 4s ease-in-out infinite';
+        el.style.animationDelay = (i * 0.3) + 's';
+      }
+    });
+  });
+
+  var tagText = 'Financial Management Simplified';
+  var tagContainer = document.getElementById('sp-tagline');
+  if(tagContainer){
+    for(var i = 0; i < tagText.length; i++){
+      var span = document.createElement('span');
+      span.className = 'sp-tag-char';
+      span.textContent = tagText[i] === ' ' ? '\u00A0' : tagText[i];
+      tagContainer.appendChild(span);
+    }
+  }
+
+  var starsEl = document.getElementById('sp-stars');
+  if(starsEl){
+    for(var i = 0; i < 60; i++){
+      var s = document.createElement('div');
+      s.className = 'sp-star';
+      s.style.left = (Math.random()*100) + '%';
+      s.style.top = (Math.random()*100) + '%';
+      s.style.setProperty('--twinkle', (2 + Math.random()*4) + 's');
+      s.style.setProperty('--delay', (Math.random()*5) + 's');
+      s.style.width = s.style.height = (1 + Math.random()*2) + 'px';
+      starsEl.appendChild(s);
+    }
+  }
+
+  var partEl = document.getElementById('sp-particles');
+  if(partEl){
+    for(var i = 0; i < 30; i++){
+      var p = document.createElement('div');
+      p.className = 'sp-particle';
+      p.style.setProperty('--px', (Math.random()*100) + '%');
+      p.style.setProperty('--py', (Math.random()*100) + '%');
+      p.style.setProperty('--drift-x', (Math.random()*100 - 50) + 'px');
+      p.style.setProperty('--drift-y', (Math.random()*-100 - 20) + 'px');
+      p.style.setProperty('--dur', (6 + Math.random()*8) + 's');
+      p.style.setProperty('--pdelay', (Math.random()*8) + 's');
+      p.style.width = p.style.height = (2 + Math.random()*3) + 'px';
+      p.style.opacity = (0.15 + Math.random()*0.3);
+      partEl.appendChild(p);
+    }
+  }
+
+  var tickerData = [
+    {v:'TRACKING',u:true},{v:'EXPENSES',u:false},{v:'BUDGET',u:true},
+    {v:'SAVINGS',u:true},{v:'INVESTMENTS',u:true},{v:'PORTFOLIO',u:false},
+    {v:'ANALYTICS',u:true},{v:'REPORTS',u:false},{v:'PLANNING',u:true},
+    {v:'DASHBOARD',u:true},{v:'INSIGHTS',u:true},{v:'TRENDS',u:true},
+    {v:'GOALS',u:true},{v:'ALERTS',u:false},{v:'RECURRING',u:true},
+    {v:'CATEGORIES',u:true}
+  ];
+  function buildTicker(container){
+    if(!container) return;
+    var html = '';
+    for(var r = 0; r < 2; r++){
+      for(var i = 0; i < tickerData.length; i++){
+        var d = tickerData[i];
+        html += '<span class="' + (d.u ? 'sp-t-up' : 'sp-t-down') + '">' + d.v + '</span>';
+        html += '<span class="sp-t-sep"></span>';
+      }
+    }
+    container.innerHTML = html;
+  }
+  buildTicker(document.getElementById('sp-ticker-top'));
+  buildTicker(document.getElementById('sp-ticker-bottom'));
+
+  var vLabels = ['ASSETS','LIABILITIES','EQUITY','DEBT','CASH','GROWTH','YIELD','RISK','RETURN','INDEX','FUND','BOND'];
+  function buildVticker(container){
+    if(!container) return;
+    var html = '';
+    for(var r = 0; r < 3; r++){
+      for(var i = 0; i < vLabels.length; i++){
+        html += '<span>' + vLabels[i] + '</span>';
+      }
+    }
+    container.innerHTML = html;
+  }
+  buildVticker(document.getElementById('sp-vticker-l'));
+  buildVticker(document.getElementById('sp-vticker-r'));
+
+  var statuses = [
+    'Initializing secure connection...',
+    'Loading financial data...',
+    'Syncing account balances...',
+    'Processing market data...',
+    'Building dashboard...',
+    'Preparing analytics...',
+    'Almost ready...'
+  ];
+  var statusEl = document.getElementById('sp-status');
+  var statusIdx = 0;
+  function cycleStatus(){
+    if(!statusEl || statusIdx >= statuses.length) return;
+    statusEl.style.opacity = '0';
+    statusEl.style.transform = 'translateY(8px)';
+    setTimeout(function(){
+      if(statusEl){
+        statusEl.textContent = statuses[statusIdx];
+        statusEl.style.transition = 'opacity .3s,transform .3s';
+        statusEl.style.opacity = '1';
+        statusEl.style.transform = 'translateY(0)';
+      }
+    }, 200);
+    statusIdx++;
+    if(statusIdx < statuses.length) setTimeout(cycleStatus, 1800);
+  }
+  setTimeout(cycleStatus, 4000);
+
+  var tlDots = document.querySelectorAll('.sp-tl-dot');
+  var tlIdx = 0;
+  function animateTimeline(){
+    if(tlIdx >= tlDots.length) return;
+    tlDots[tlIdx].classList.add('active');
+    tlIdx++;
+    if(tlIdx < tlDots.length) setTimeout(animateTimeline, 1200);
+  }
+  setTimeout(animateTimeline, 4500);
+})();
+</script>
 <script type="text/babel" src="./js/app-utils.js"></script>
 <script type="text/babel" src="./js/app-state.js"></script>
 <script type="text/babel" src="./js/app-ui-base.js"></script>
