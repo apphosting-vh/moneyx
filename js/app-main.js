@@ -1593,6 +1593,9 @@ function App(){
   const[themeId,setThemeId]=useState(loadTheme);
   const setTheme=id=>{setThemeId(id);applyTheme(id);saveTheme(id);};
   React.useEffect(()=>{applyTheme(themeId);},[]);
+  const[fontId,setFontId]=useState(loadFont);
+  const setFont=id=>{setFontId(id);applyFont(id);saveFont(id);};
+  React.useEffect(()=>{applyFont(fontId);},[]);
   /* ── Backup age monitor ── */
   const[backupBanner,setBackupBanner]=useState(null); /* {ageDays,lastDate} or null */
   /* ── Keyboard shortcuts: Ctrl/Cmd+K = global search, Ctrl/Cmd+Z = undo ── */
@@ -2582,7 +2585,7 @@ function App(){
           React.createElement(ReportsSection,{data:state,isMobile,onJumpToLedger}))),
       React.createElement("div",{style:{display:tab==="settings"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Settings"},
-          React.createElement(SettingsSection,{state,dispatch,themeId,setTheme,isMobile,onResetAll:()=>{dispatch({type:"RESET_ALL"});try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_EOD_PRICES);localStorage.removeItem(LS_EOD_NAVS);localStorage.removeItem(LS_THEME);localStorage.removeItem(TAX_LS_KEY);}catch{}/* Clear transactions from IndexedDB so no stale data survives reload */clearTxIDB().catch(()=>{});setTimeout(()=>window.location.reload(),100);}}))),
+          React.createElement(SettingsSection,{state,dispatch,themeId,setTheme,fontId,setFont,isMobile,onResetAll:()=>{dispatch({type:"RESET_ALL"});try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_EOD_PRICES);localStorage.removeItem(LS_EOD_NAVS);localStorage.removeItem(LS_THEME);localStorage.removeItem(TAX_LS_KEY);}catch{}/* Clear transactions from IndexedDB so no stale data survives reload */clearTxIDB().catch(()=>{});setTimeout(()=>window.location.reload(),100);}}))),
       React.createElement("div",{style:{display:tab==="info"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"About"},
           React.createElement(InfoSection,{isMobile}))),

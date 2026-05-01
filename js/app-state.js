@@ -189,6 +189,57 @@ const THEMES=[
 ];
 const applyTheme=id=>{document.documentElement.setAttribute("data-theme",id);};
 
+/* ── FONT SYSTEM ─────────────────────────────────────────────────────────
+   5 most popular fonts for financial apps in 2026.
+   All loaded non-blocking via index.html preload link.
+   applyFont() sets the --font-body CSS variable instantly.
+   ──────────────────────────────────────────────────────────────────────── */
+const LS_FONT="mm_v7_font";
+const FONTS=[
+  {
+    id:"dm-sans",      name:"DM Sans",            stack:"'DM Sans', sans-serif",
+    desc:"Clean & professional · Current default",
+    tag:"Default",     tagColor:"#0e7490",
+    preview:"AaBb 0123"
+  },
+  {
+    id:"inter",        name:"Inter",               stack:"'Inter', sans-serif",
+    desc:"Industry gold-standard · Used by Stripe, Robinhood & Coinbase",
+    tag:"Most Popular", tagColor:"#16a34a",
+    preview:"AaBb 0123"
+  },
+  {
+    id:"plus-jakarta-sans", name:"Plus Jakarta Sans", stack:"'Plus Jakarta Sans', sans-serif",
+    desc:"Modern & elegant · Trending in fintech dashboards",
+    tag:"Trending",    tagColor:"#6d28d9",
+    preview:"AaBb 0123"
+  },
+  {
+    id:"manrope",      name:"Manrope",             stack:"'Manrope', sans-serif",
+    desc:"Neo-bank favourite · Great for data-dense UIs",
+    tag:"Neo-bank",    tagColor:"#b45309",
+    preview:"AaBb 0123"
+  },
+  {
+    id:"outfit",       name:"Outfit",              stack:"'Outfit', sans-serif",
+    desc:"Geometric & fresh · Rising star in wealth apps",
+    tag:"Fresh",       tagColor:"#be185d",
+    preview:"AaBb 0123"
+  },
+  {
+    id:"space-grotesk",name:"Space Grotesk",       stack:"'Space Grotesk', sans-serif",
+    desc:"Technical & bold · Popular in crypto & trading platforms",
+    tag:"Fintech",     tagColor:"#c2410c",
+    preview:"AaBb 0123"
+  },
+];
+const loadFont=()=>{try{return localStorage.getItem(LS_FONT)||"dm-sans";}catch{return"dm-sans";}};
+const saveFont=id=>{try{localStorage.setItem(LS_FONT,id);}catch{}};
+const applyFont=id=>{
+  const font=FONTS.find(f=>f.id===id)||FONTS[0];
+  document.documentElement.style.setProperty("--font-body",font.stack);
+};
+
 const PAL=["#b45309","#0e7490","#16a34a","#6d28d9","#c2410c","#be185d","#1d4ed8","#059669"];
 const CAT_C={Income:"#16a34a",Housing:"#0e7490",Insurance:"#6d28d9",Food:"#c2410c",Transport:"#1d4ed8",Utilities:"#be185d",Shopping:"#b45309",Entertainment:"#059669",Investment:"#16a34a",Travel:"#0e7490",Payment:"#0891b2",Transfer:"#1d4ed8",Others:"#475569"};
 const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak Mahindra Bank","Punjab National Bank","Bank of Baroda","Yes Bank","IndusInd Bank","Federal Bank","Other"];

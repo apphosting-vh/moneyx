@@ -56,7 +56,7 @@ const MFXirrRow=({m,dispatch,askDelete})=>{
 };
 
 /* ── SettingsSection, CalculatorSection, NotesSection, ScheduledSection ── */
-const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,isMobile})=>{
+const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,onResetAll,isMobile})=>{
   const[stab,setStab]=useState("appearance");
   const[confirm,setConfirm]=useState(null);
   const[editBank,setEditBank]=useState(null);
@@ -289,6 +289,53 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,onResetAll,is
                 React.createElement("div",{style:{padding:"10px 14px",background:active?t.preview[1]+"18":t.preview[0],borderTop:"1px solid "+t.preview[2]}},
                   React.createElement("div",{style:{fontSize:13,fontWeight:active?700:500,color:t.preview[1],fontFamily:"'Sora',sans-serif"}},t.name),
                   React.createElement("div",{style:{fontSize:11,color:t.preview[3],marginTop:2,opacity:.8}},t.desc)
+                )
+              );
+            })
+          )
+        ),
+        /* ── Font Picker ── */
+        React.createElement("div",{style:{marginTop:32}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:16}},
+            React.createElement("div",{style:{fontSize:11,color:"var(--text5)",textTransform:"uppercase",letterSpacing:1,fontWeight:600}},"UI Font"),
+            React.createElement("div",{style:{flex:1,height:1,background:"var(--border2)"}}),
+            React.createElement("div",{style:{fontSize:11,color:"var(--text6)"}},FONTS.find(f=>f.id===fontId)?.name||"DM Sans")
+          ),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:10}},
+            FONTS.map(f=>{
+              const active=fontId===f.id;
+              return React.createElement("div",{
+                key:f.id,
+                onClick:()=>setFont(f.id),
+                style:{
+                  cursor:"pointer",borderRadius:12,
+                  border:"2px solid "+(active?"var(--accent)":"var(--border)"),
+                  background:active?"var(--accentbg2)":"var(--card)",
+                  padding:"14px 16px",transition:"all .2s",
+                  boxShadow:active?"0 0 0 3px var(--accentbg5)":"none",
+                  display:"flex",flexDirection:"column",gap:6,
+                }
+              },
+                React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}},
+                  React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+                    React.createElement("div",{style:{
+                      fontSize:22,fontFamily:f.stack,fontWeight:600,
+                      color:active?"var(--accent)":"var(--text2)",lineHeight:1,letterSpacing:"-0.3px"
+                    }},f.preview),
+                    active&&React.createElement("div",{style:{
+                      width:18,height:18,borderRadius:"50%",background:"var(--accent)",
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      fontSize:10,fontWeight:700,color:"#fff",flexShrink:0
+                    }},"✓")
+                  ),
+                  React.createElement("span",{style:{
+                    fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:8,whiteSpace:"nowrap",flexShrink:0,
+                    background:f.tagColor+"18",color:f.tagColor,border:"1px solid "+f.tagColor+"33"
+                  }},f.tag)
+                ),
+                React.createElement("div",null,
+                  React.createElement("div",{style:{fontSize:13,fontWeight:600,color:active?"var(--accent)":"var(--text2)",fontFamily:f.stack}},f.name),
+                  React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2,lineHeight:1.4}},f.desc)
                 )
               );
             })
