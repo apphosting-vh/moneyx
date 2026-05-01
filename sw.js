@@ -8,7 +8,7 @@
    • API / cross-origin  → pass through (browser handles CORS natively)
    ══════════════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'finsight-v4-5-3';
+const CACHE_NAME = 'finsight-v4-5-4';
 const MAX_RUNTIME_CACHE_ENTRIES = 80;     // cap runtime cache growth
 const MAX_CACHE_AGE_MS = 30 * 24 * 3600 * 1000; // 30 days max age for CDN assets
 
@@ -44,6 +44,8 @@ const PRECACHE_CDN = [
   // Google Fonts CSS (actual font files are cached at runtime via stale-while-revalidate)
   'https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Nunito:wght@700;800;900&display=swap',
   'https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=DM+Sans:wght@400;500&family=Nunito:wght@700;800;900&display=swap',
+  // Switchable UI fonts — 5 top financial app fonts (2026)
+  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap',
 ];
 
 /* ── Helpers ───────────────────────────────────────────────────────────── */
