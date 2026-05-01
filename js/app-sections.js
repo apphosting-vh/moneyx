@@ -2609,6 +2609,66 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
   const _biHeatMonths=_biChron.slice(-6);
   const _biMaxRollBar=Math.max(..._biRollover.map(m=>Math.abs(m.delta)),1);
 
+
+  /* BUDGET PLANNING REPORTS */
+  const _biRoundBudget=v=>Math.max(0,Math.round((Number(v)||0)/100)*100);
+  const _biCurrent=_biMonths[0]||{catRows:[],totalPlanned:0,totalActual:0,mName:"",mYear:""};
+  const _biDaysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const _biElapsedDays=Math.max(1,Math.min(now.getDate(),_biDaysInMonth));
+  const _biRemainDays=Math.max(_biDaysInMonth-_biElapsedDays,0);
+  const _biProjectionFactor=_biElapsedDays>0?_biDaysInMonth/_biElapsedDays:1;
+  const _biProjectedMonth=_biCurrent.totalActual*_biProjectionFactor;
+  const _biForecastDelta=_biCurrent.totalPlanned-_biProjectedMonth;
+  const _biRemainingBudget=_biCurrent.totalPlanned-_biCurrent.totalActual;
+  const _biSafeDaily=_biRemainDays>0?_biRemainingBudget/_biRemainDays:_biRemainingBudget;
+  const _biBudgetedActual=_biCurrent.catRows.filter(r=>r.planned>0).reduce((s,r)=>s+r.actual,0);
+  const _biUnbudgetedActual=_biCurrent.catRows.filter(r=>r.planned<=0&&r.actual>0).reduce((s,r)=>s+r.actual,0);
+  const _biCoveragePct=_biCurrent.totalActual>0?_biBudgetedActual/_biCurrent.totalActual*100:(_biCurrent.totalPlanned>0?100:0);
+  const _biUnbudgetedCats=_biCurrent.catRows.filter(r=>r.planned<=0&&r.actual>0).sort((a,b)=>b.actual-a.actual);
+  const _biCatForecast=_biCurrent.catRows.filter(r=>r.planned>0||r.actual>0).map(r=>{
+    const projected=r.actual*_biProjectionFactor;
+    const variance=r.planned-projected;
+    const remaining=r.planned-r.actual;
+    const safeDaily=_biRemainDays>0?remaining/_biRemainDays:remaining;
+    const risk=r.planned<=0&&r.actual>0?"Unbudgeted":projected>r.planned*1.1?"Overrun":r.actual>r.planned*0.8?"Watch":"On track";
+    return {...r,projected,variance,remaining,safeDaily,risk};
+  }).sort((a,b)=>(a.variance-b.variance));
+  const _biRecommendationRows=_biCatStats.map(cs=>{
+    const completed=cs.pts.filter(p=>!p.isCurrent);
+    const recent=completed.slice(-6).filter(p=>p.actual>0||p.planned>0);
+    const actuals=recent.map(p=>p.actual).sort((a,b)=>a-b);
+    const avg=recent.length?recent.reduce((s,p)=>s+p.actual,0)/recent.length:0;
+    const p75=actuals.length?actuals[Math.min(actuals.length-1,Math.floor(actuals.length*.75))]:avg;
+    const latestPlan=(_biCurrent.catRows.find(r=>r.cat===cs.cat)?.planned)||cs.withPlan.slice(-1)[0]?.planned||0;
+    const suggested=_biRoundBudget(avg>0||p75>0?(avg*.55+p75*.45):latestPlan);
+    const gap=suggested-latestPlan;
+    const confidence=recent.length>=6?"High":recent.length>=3?"Medium":"Low";
+    const reason=cs.trend>0.15?"Raise: spend is rising":cs.trend<-0.15?"Can trim: trend is falling":cs.overCount>=2?"Raise: repeated overruns":"Keep close to actuals";
+    return {cat:cs.cat,current:latestPlan,avg,p75,suggested,gap,confidence,reason,trend:cs.trend};
+  }).filter(r=>r.current>0||r.suggested>0||r.avg>0).sort((a,b)=>Math.abs(b.gap)-Math.abs(a.gap)).slice(0,8);
+  const _biFySource=budgetTrackData.hasYearlyBudgets
+    ?budgetTrackData.yearsBudget.find(y=>y.isCurrent)
+    :budgetTrackData.years.find(y=>y.isCurrent);
+  const _biFyRunway=_biFySource?(()=>{
+    const elapsed=Math.max(1,_biFySource.monthsElapsed||1);
+    const totalPlanned=_biFySource.totalPlanned||0;
+    const totalActual=_biFySource.totalActual||0;
+    const usedPct=totalPlanned>0?totalActual/totalPlanned*100:0;
+    const timePct=elapsed/12*100;
+    const projected=elapsed>0?totalActual/elapsed*12:totalActual;
+    const remaining=totalPlanned-totalActual;
+    const monthsLeft=Math.max(12-elapsed,0);
+    const monthlyRoom=monthsLeft>0?remaining/monthsLeft:remaining;
+    return {..._biFySource,totalPlanned,totalActual,usedPct,timePct,projected,remaining,monthsLeft,monthlyRoom,mode:budgetTrackData.hasYearlyBudgets?"yearly budget":"monthly plan x 12"};
+  })():null;
+  const _biMetric=(label,value,sub,col)=>React.createElement("div",{style:{flex:"1 1 145px",padding:"12px 14px",borderRadius:10,background:"var(--bg4)",border:"1px solid var(--border2)",minWidth:0}},
+    React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},label),
+    React.createElement("div",{style:{fontSize:19,fontFamily:"'Sora',sans-serif",fontWeight:800,color:col||"var(--text2)",lineHeight:1.15,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},value),
+    sub&&React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:3,lineHeight:1.4}},sub)
+  );
+  if(_biCurrent.totalPlanned>0&&_biProjectedMonth>_biCurrent.totalPlanned*1.08)_biInsights.unshift({type:'warn',icon:'!',text:`At the current pace, ${_biCurrent.mName} ${_biCurrent.mYear} is projected to exceed budget by ${INR(Math.abs(_biForecastDelta))}. Safe daily spend left is ${INR(Math.max(_biSafeDaily,0))}.`});
+  if(_biUnbudgetedActual>0&&_biCurrent.totalActual>0&&_biUnbudgetedActual/_biCurrent.totalActual>.15)_biInsights.push({type:'warn',icon:'?',text:`Unbudgeted categories make up ${(_biUnbudgetedActual/_biCurrent.totalActual*100).toFixed(0)}% of this month's spend. Add limits for ${_biUnbudgetedCats.slice(0,3).map(r=>r.cat).join(', ')}.`});
+  if(_biFyRunway&&_biFyRunway.totalPlanned>0&&_biFyRunway.projected>_biFyRunway.totalPlanned*1.08)_biInsights.push({type:'warn',icon:'FY',text:`FY runway is hot: projected annual spend is ${INR(Math.round(_biFyRunway.projected))} vs budget ${INR(_biFyRunway.totalPlanned)}.`});
   const BudgetInsightsView=React.createElement("div",{style:{paddingBottom:20}},
     /* ── Health Score Row ── */
     React.createElement("div",{style:{display:"flex",gap:14,flexWrap:"wrap",marginBottom:16,alignItems:"stretch"}},
@@ -2669,6 +2729,86 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       )
     ),
 
+    /* Budget Planning Reports */
+    _biCurrent.totalPlanned>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Month-End Forecast & Daily Guardrails"),
+      React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:12}},"Current month pace, safe daily spend left, and category-level risk before the month closes"),
+      React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}},
+        _biMetric("Current Spend",INR(_biCurrent.totalActual),_biElapsedDays+" of "+_biDaysInMonth+" days elapsed","var(--accent)"),
+        _biMetric("Month-End Forecast",INR(Math.round(_biProjectedMonth)),(_biForecastDelta>=0?"under plan by ":"over plan by ")+INR(Math.abs(Math.round(_biForecastDelta))),_biForecastDelta>=0?"#16a34a":"#ef4444"),
+        _biMetric("Safe Daily Spend",INR(Math.max(Math.round(_biSafeDaily),0)),_biRemainDays+" days remaining",_biSafeDaily>=0?"#16a34a":"#ef4444"),
+        _biMetric("Budget Left",INR(Math.round(_biRemainingBudget)),_biRemainingBudget>=0?"remaining":"already exceeded",_biRemainingBudget>=0?"#0e7490":"#ef4444")
+      ),
+      _biCatForecast.length>0&&React.createElement("div",{style:{overflowX:"auto"}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"110px 82px 82px 82px 90px":"1fr 100px 100px 110px 100px 90px",minWidth:isMobile?470:650,padding:"7px 10px",background:"var(--bg4)",borderBottom:"1px solid var(--border2)"}},
+          ["Category","Plan","Actual","Forecast","Safe/day","Risk"].map((h,i)=>React.createElement("div",{key:h,style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,textAlign:i===0?"left":"right"}},h))
+        ),
+        _biCatForecast.slice(0,8).map((r,i)=>{
+          const riskCol=r.risk==="Overrun"||r.risk==="Unbudgeted"?"#ef4444":r.risk==="Watch"?"#b45309":"#16a34a";
+          return React.createElement("div",{key:r.cat,style:{display:"grid",gridTemplateColumns:isMobile?"110px 82px 82px 82px 90px":"1fr 100px 100px 110px 100px 90px",minWidth:isMobile?470:650,padding:"8px 10px",borderBottom:"1px solid var(--border2)",background:i%2===0?"transparent":"rgba(255,255,255,.012)",alignItems:"center"}},
+            React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text3)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},r.cat),
+            React.createElement("div",{style:{fontSize:12,textAlign:"right",fontFamily:"'Sora',sans-serif",color:"var(--text4)"}},INR(r.planned)),
+            React.createElement("div",{style:{fontSize:12,textAlign:"right",fontFamily:"'Sora',sans-serif",color:"var(--text4)"}},INR(r.actual)),
+            React.createElement("div",{style:{fontSize:12,textAlign:"right",fontFamily:"'Sora',sans-serif",fontWeight:700,color:r.variance>=0?"#16a34a":"#ef4444"}},INR(Math.round(r.projected))),
+            React.createElement("div",{style:{fontSize:12,textAlign:"right",fontFamily:"'Sora',sans-serif",color:r.safeDaily>=0?"#0e7490":"#ef4444"}},INR(Math.max(Math.round(r.safeDaily),0))),
+            React.createElement("div",{style:{fontSize:10,textAlign:"right",fontWeight:700,color:riskCol}},r.risk)
+          );
+        })
+      )
+    ),
+
+    (_biCurrent.totalActual>0||_biCurrent.totalPlanned>0)&&React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Budget Coverage & Leakage Report"),
+      React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:12}},"How much spending is actually governed by a budget, and which categories escaped planning"),
+      React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",marginBottom:12}},
+        _biMetric("Coverage",_biCoveragePct.toFixed(0)+"%",INR(_biBudgetedActual)+" of spend had a category limit",_biCoveragePct>=85?"#16a34a":_biCoveragePct>=65?"#b45309":"#ef4444"),
+        _biMetric("Unbudgeted Spend",INR(_biUnbudgetedActual),_biUnbudgetedCats.length+" categories without limits",_biUnbudgetedActual>0?"#ef4444":"#16a34a"),
+        _biMetric("Plan Breadth",_biCurrent.catRows.filter(r=>r.planned>0).length+" categories",_biCatStats.length+" tracked categories","var(--accent)")
+      ),
+      _biUnbudgetedCats.length>0&&React.createElement("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+        _biUnbudgetedCats.slice(0,6).map(r=>React.createElement("div",{key:r.cat,style:{padding:"6px 10px",borderRadius:8,background:"rgba(239,68,68,.07)",border:"1px solid rgba(239,68,68,.2)",fontSize:12,color:"var(--text3)"}},
+          React.createElement("strong",{style:{color:"#ef4444"}},r.cat)," ",INR(r.actual)
+        ))
+      )
+    ),
+
+    _biRecommendationRows.length>0&&React.createElement(Card2,{sx:{marginBottom:16,padding:0,overflow:"hidden"}},
+      React.createElement("div",{style:{padding:"12px 16px 10px",borderBottom:"1px solid var(--border2)"}},
+        React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)",textTransform:"uppercase",letterSpacing:.5}},"Next Budget Recommendations"),
+        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},"Suggested limits use recent average plus a 75th-percentile guardrail, so one-off spikes do not dominate the plan")
+      ),
+      React.createElement("div",{style:{overflowX:"auto"}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"120px 90px 90px 90px 90px":"1fr 100px 100px 110px 90px 160px",minWidth:isMobile?480:720,padding:"7px 14px",background:"var(--bg4)",borderBottom:"1px solid var(--border2)"}},
+          ["Category","Current","6M Avg","Suggested","Change","Reason"].map((h,i)=>React.createElement("div",{key:h,style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,textAlign:i===0||i===5?"left":"right"}},h))
+        ),
+        _biRecommendationRows.map((r,i)=>React.createElement("div",{key:r.cat,style:{display:"grid",gridTemplateColumns:isMobile?"120px 90px 90px 90px 90px":"1fr 100px 100px 110px 90px 160px",minWidth:isMobile?480:720,padding:"8px 14px",borderBottom:i<_biRecommendationRows.length-1?"1px solid var(--border2)":"none",background:i%2===0?"transparent":"rgba(255,255,255,.012)",alignItems:"center"}},
+          React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text3)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},r.cat),
+          React.createElement("div",{style:{fontSize:12,textAlign:"right",fontFamily:"'Sora',sans-serif",color:"var(--text4)"}},INR(r.current)),
+          React.createElement("div",{style:{fontSize:12,textAlign:"right",fontFamily:"'Sora',sans-serif",color:"var(--text4)"}},INR(Math.round(r.avg))),
+          React.createElement("div",{style:{fontSize:12,textAlign:"right",fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--accent)"}},INR(r.suggested)),
+          React.createElement("div",{style:{fontSize:12,textAlign:"right",fontFamily:"'Sora',sans-serif",fontWeight:700,color:r.gap>0?"#ef4444":r.gap<0?"#16a34a":"var(--text5)"}},(r.gap>0?"+":"")+INR(r.gap)),
+          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",lineHeight:1.35}},r.reason," - ",r.confidence)
+        ))
+      )
+    ),
+
+    _biFyRunway&&_biFyRunway.totalPlanned>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Financial-Year Runway Report"),
+      React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:12}},"Annual pace check using "+_biFyRunway.mode+" for "+_biFyRunway.year),
+      React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",marginBottom:12}},
+        _biMetric("Budget Used",_biFyRunway.usedPct.toFixed(0)+"%",_biFyRunway.monthsElapsed+" of 12 months elapsed",_biFyRunway.usedPct>_biFyRunway.timePct+10?"#ef4444":"#16a34a"),
+        _biMetric("Projected FY Spend",INR(Math.round(_biFyRunway.projected)),"budget "+INR(_biFyRunway.totalPlanned),_biFyRunway.projected>_biFyRunway.totalPlanned?"#ef4444":"#16a34a"),
+        _biMetric("Monthly Room Left",INR(Math.max(Math.round(_biFyRunway.monthlyRoom),0)),_biFyRunway.monthsLeft+" months left",_biFyRunway.monthlyRoom>=0?"#0e7490":"#ef4444")
+      ),
+      React.createElement("div",{style:{position:"relative",height:14,background:"var(--bg5)",borderRadius:8,overflow:"hidden",marginBottom:6}},
+        React.createElement("div",{style:{position:"absolute",left:0,top:0,bottom:0,width:Math.min(_biFyRunway.timePct,100)+"%",background:"rgba(14,116,144,.22)"}}),
+        React.createElement("div",{style:{position:"absolute",left:0,top:0,bottom:0,width:Math.min(_biFyRunway.usedPct,140)+"%",background:_biFyRunway.usedPct>_biFyRunway.timePct+10?"rgba(239,68,68,.75)":"rgba(22,163,74,.75)",borderRadius:8}})
+      ),
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text5)"}},
+        React.createElement("span",null,"Time elapsed: "+_biFyRunway.timePct.toFixed(0)+"%"),
+        React.createElement("span",null,"Budget used: "+_biFyRunway.usedPct.toFixed(0)+"%")
+      )
+    ),
     /* ── Category Efficiency Table ── */
     _biCatStats.length>0&&React.createElement(Card2,{sx:{marginBottom:16,padding:0,overflow:"hidden"}},
       React.createElement("div",{style:{padding:"12px 16px 10px",borderBottom:"1px solid var(--border2)"}},
