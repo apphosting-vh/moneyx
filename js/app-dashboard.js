@@ -237,7 +237,7 @@ const ShareSummaryModal=({data,allBankTx,thisMonth,onClose})=>{
   })();
   const fmt=v=>{const a=Math.abs(v);if(a>=10000000)return"₹"+(a/10000000).toFixed(2)+"Cr";if(a>=100000)return"₹"+(a/100000).toFixed(1)+"L";return"₹"+a.toLocaleString("en-IN");};
   const budgetPlans=(data.insightPrefs||{}).budgetPlans||{};
-  const overBudget=Object.entries(budgetPlans).filter(([cat,limit])=>limit&&(byCat[cat]||0)>limit).map(([cat,limit])=>`  ⚠ ${cat}: ${fmt(byCat[cat]||0)} spent (budget ${fmt(limit)})`);
+  const overBudget=Object.entries(budgetPlans).filter(([cat,limit])=>limit&&(byCat[cat]||0)>limit&&cat!=="Taxes").map(([cat,limit])=>`  ⚠ ${cat}: ${fmt(byCat[cat]||0)} spent (budget ${fmt(limit)})`);
   const lines=[
     `💰 *Monthly Financial Summary — ${mLabel}*`,``,
     `📥 Income:    ${fmt(mInc)}`,
@@ -1239,7 +1239,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
         allBankTx.filter(t=>t.type==="debit"&&t.date.substr(0,7)===monthStr).forEach(t=>{
           const main=catMainName(t.cat||"Others");
           const ct=catClassType(data.categories,t.cat||"Others");
-          if(ct==="Transfer"||ct==="Income"||ct==="Investment")return;
+          if(ct==="Transfer"||ct==="Income"||ct==="Investment"||main==="Taxes")return;
           m[main]=(m[main]||0)+t.amount;
         });
         return m;
@@ -1258,6 +1258,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
       const rows=Object.entries(plans)
         .filter(([cat,v])=>{
           if(!v||v<=0)return false;
+          if(cat==="Taxes")return false;
           /* Only show expense/others categories in the budget strip — not investments */
           const ct=catClassType(data.categories,cat);
           return ct!=="Investment"&&ct!=="Transfer"&&ct!=="Income";
@@ -1534,18 +1535,19 @@ const Dashboard=React.memo(({data,isMobile})=>{
     W("budgetalerts")&&(()=>{
       const plans=data.insightPrefs?.budgetPlans||{};
       if(!Object.keys(plans).length)return null;
-      /* Compute this-month actuals for expense categories only (not investments) */
+      /* Compute this-month actuals for expense categories only (not investments, not taxes) */
       const actuals={};
       allBankTx.filter(t=>t.type==="debit"&&t.date.substr(0,7)===thisMonth).forEach(t=>{
         const main=catMainName(t.cat||"Others");
         const ct=catClassType(data.categories,t.cat||"Others");
-        if(ct==="Transfer"||ct==="Income"||ct==="Investment")return;
+        if(ct==="Transfer"||ct==="Income"||ct==="Investment"||main==="Taxes")return;
         actuals[main]=(actuals[main]||0)+t.amount;
       });
       /* Build alert rows: expense categories at ≥ 80% (investment categories shown separately as positive) */
       const alerts=Object.entries(plans)
         .filter(([cat,plan])=>{
           if(!plan||plan<=0)return false;
+          if(cat==="Taxes")return false;
           const ct=catClassType(data.categories,cat);
           return ct!=="Investment"&&ct!=="Transfer"&&ct!=="Income";
         })

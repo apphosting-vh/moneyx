@@ -2546,6 +2546,330 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     );
   };
 
+  /* ══ BUDGET INSIGHTS COMPUTATIONS ══ */
+  const _biIsTaxesCat=cat=>catMainName(cat||"").trim().toLowerCase()==="taxes";
+  const _biMonths=budgetTrackData.months.map(m=>{
+    const catRows=(m.catRows||[]).filter(r=>!_biIsTaxesCat(r.cat));
+    const totalPlanned=catRows.reduce((s,r)=>s+r.planned,0);
+    const totalActual=catRows.reduce((s,r)=>s+r.actual,0);
+    return {...m,catRows,totalPlanned,totalActual};
+  });
+  const _biChron=[..._biMonths].reverse();
+  const _biAllCats=new Set();
+  _biMonths.forEach(m=>m.catRows.forEach(r=>{if(r.planned>0||r.actual>0)_biAllCats.add(r.cat);}));
+  const _biCatStats=[..._biAllCats].map(cat=>{
+    const pts=_biChron.map(m=>{const r=m.catRows.find(x=>x.cat===cat)||{cat,planned:0,actual:0};return{mName:m.mName,mYear:m.mYear,planned:r.planned,actual:r.actual,isCurrent:m.isCurrent};});
+    const withPlan=pts.filter(p=>p.planned>0);
+    const overCount=withPlan.filter(p=>p.actual>p.planned).length;
+    const avgUtil=withPlan.length>0?withPlan.reduce((s,p)=>s+(p.planned>0?p.actual/p.planned:0),0)/withPlan.length:0;
+    const totalActual=pts.reduce((s,p)=>s+p.actual,0);
+    const totalPlanned=pts.reduce((s,p)=>s+p.planned,0);
+    const nonCurr=pts.filter(p=>!p.isCurrent);
+    const f3=nonCurr.slice(0,3);const l3=nonCurr.slice(-3);
+    const f3avg=f3.length?f3.reduce((s,p)=>s+p.actual,0)/f3.length:0;
+    const l3avg=l3.length?l3.reduce((s,p)=>s+p.actual,0)/l3.length:0;
+    const trend=f3avg>0?(l3avg-f3avg)/f3avg:0;
+    const maxActual=Math.max(...pts.map(p=>p.actual),1);
+    return{cat,pts,withPlan,overCount,avgUtil,totalActual,totalPlanned,trend,f3avg,l3avg,maxActual};
+  }).filter(s=>s.totalActual>0||s.totalPlanned>0).sort((a,b)=>b.totalActual-a.totalActual);
+  let _biCumR=0;
+  const _biRollover=_biChron.map(m=>{const delta=m.totalPlanned>0?m.totalPlanned-m.totalActual:0;_biCumR+=delta;return{...m,delta,cumRollover:_biCumR};});
+  const _biPast=_biMonths.slice(1);
+  const _biPastWithPlan=_biPast.filter(m=>m.totalPlanned>0);
+  const _biAvgUtil=_biPastWithPlan.length>0?_biPastWithPlan.reduce((s,m)=>s+m.totalActual/m.totalPlanned,0)/_biPastWithPlan.length:1;
+  const _biOnTrack=_biPastWithPlan.filter(m=>m.totalActual<=m.totalPlanned).length;
+  const _biCumTotal=_biRollover.reduce((s,m)=>s+m.delta,0);
+  const _biBest=[..._biPastWithPlan].sort((a,b)=>(a.totalActual/a.totalPlanned)-(b.totalActual/b.totalPlanned))[0];
+  const _biWorst=[..._biPastWithPlan].sort((a,b)=>(b.totalActual/b.totalPlanned)-(a.totalActual/a.totalPlanned))[0];
+  const _biScore=Math.min(100,Math.max(0,Math.round(
+    (_biPastWithPlan.length>0?(_biOnTrack/_biPastWithPlan.length)*45:22)+
+    (Math.max(0,Math.min(1,2-_biAvgUtil))*35)+
+    (_biCatStats.filter(c=>c.trend<=0.05).length/Math.max(_biCatStats.length,1))*20
+  )));
+  const _biGrade=_biScore>=85?'A':_biScore>=70?'B':_biScore>=55?'C':_biScore>=40?'D':'F';
+  const _biCol=_biScore>=85?'#16a34a':_biScore>=70?'#0e7490':_biScore>=55?'#b45309':'#ef4444';
+  const _biInsights=[];
+  if(_biAvgUtil>1.1)_biInsights.push({type:'warn',icon:'🔴',text:`Spending averages ${(_biAvgUtil*100).toFixed(0)}% of budget — consistently over by ${((_biAvgUtil-1)*100).toFixed(0)}%. Review your category limits.`});
+  else if(_biAvgUtil<0.7&&_biAvgUtil>0)_biInsights.push({type:'info',icon:'💡',text:`Budget is underutilized at ${(_biAvgUtil*100).toFixed(0)}% — redirect the surplus to investments or an emergency fund.`});
+  else if(_biAvgUtil>0)_biInsights.push({type:'good',icon:'✅',text:`Healthy budget adherence at ${(_biAvgUtil*100).toFixed(0)}% utilization across past months.`});
+  const _risingCats=_biCatStats.filter(c=>c.trend>0.15&&c.f3avg>0);
+  if(_risingCats.length>0)_biInsights.push({type:'warn',icon:'📈',text:`Rising spend: ${_risingCats.slice(0,3).map(c=>`${c.cat} (+${(c.trend*100).toFixed(0)}%)`).join(', ')} vs 6 months ago.`});
+  const _fallingCats=_biCatStats.filter(c=>c.trend<-0.15&&c.f3avg>0);
+  if(_fallingCats.length>0)_biInsights.push({type:'good',icon:'📉',text:`Improving: ${_fallingCats.slice(0,3).map(c=>`${c.cat} (${(c.trend*100).toFixed(0)}%)`).join(', ')} trending down.`});
+  const _habitualOver=_biCatStats.filter(c=>c.withPlan.length>=3&&c.overCount/c.withPlan.length>=0.5);
+  if(_habitualOver.length>0)_biInsights.push({type:'warn',icon:'⚠️',text:`Habitually over-budget: ${_habitualOver.slice(0,3).map(c=>c.cat).join(', ')} exceeded limits in ≥50% of months.`});
+  if(_biCumTotal>0)_biInsights.push({type:'good',icon:'💰',text:`Cumulative budget surplus of ${INR(_biCumTotal)} over 12 months — excellent spending discipline.`});
+  else if(_biCumTotal<0)_biInsights.push({type:'warn',icon:'⚠️',text:`Cumulative deficit of ${INR(Math.abs(_biCumTotal))} over 12 months — spending consistently exceeds plan.`});
+  if(_biBest)_biInsights.push({type:'info',icon:'🏆',text:`Best month: ${_biBest.mName} ${_biBest.mYear} — spent ${(_biBest.totalActual/_biBest.totalPlanned*100).toFixed(0)}% of budget.`});
+  if(_biWorst&&_biWorst!==_biBest)_biInsights.push({type:'info',icon:'📅',text:`Highest spend month: ${_biWorst.mName} ${_biWorst.mYear} at ${(_biWorst.totalActual/_biWorst.totalPlanned*100).toFixed(0)}% of budget.`});
+  const _biNoSpend=_biCatStats.filter(c=>c.withPlan.length>0&&c.pts.slice(-3).every(p=>p.actual===0));
+  if(_biNoSpend.length>0)_biInsights.push({type:'info',icon:'🕳️',text:`Zero spend in last 3 months: ${_biNoSpend.map(c=>c.cat).join(', ')} — budget still allocated. Review if still needed.`});
+
+  /* Heatmap last 6 months */
+  const _biHeatMonths=_biChron.slice(-6);
+  const _biMaxRollBar=Math.max(..._biRollover.map(m=>Math.abs(m.delta)),1);
+
+  const BudgetInsightsView=React.createElement("div",{style:{paddingBottom:20}},
+    /* ── Health Score Row ── */
+    React.createElement("div",{style:{display:"flex",gap:14,flexWrap:"wrap",marginBottom:16,alignItems:"stretch"}},
+      /* Score Circle */
+      React.createElement(Card2,{sx:{flex:"0 0 auto",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"18px 24px",minWidth:140}},
+        React.createElement("svg",{width:100,height:100,viewBox:"0 0 100 100"},
+          React.createElement("circle",{cx:50,cy:50,r:42,fill:"none",stroke:"var(--border2)",strokeWidth:9}),
+          React.createElement("circle",{cx:50,cy:50,r:42,fill:"none",stroke:_biCol,strokeWidth:9,
+            strokeDasharray:`${2*Math.PI*42}`,
+            strokeDashoffset:`${2*Math.PI*42*(1-_biScore/100)}`,
+            strokeLinecap:"round",
+            transform:"rotate(-90 50 50)",
+            style:{transition:"stroke-dashoffset 1s ease"}}),
+          React.createElement("text",{x:50,y:46,textAnchor:"middle",fontSize:24,fontWeight:800,fontFamily:"'Sora',sans-serif",fill:_biCol},_biScore),
+          React.createElement("text",{x:50,y:62,textAnchor:"middle",fontSize:12,fontWeight:600,fontFamily:"'DM Sans',sans-serif",fill:"var(--text5)"},"Grade "+_biGrade)
+        ),
+        React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.6,marginTop:6}},"Budget Health")
+      ),
+      /* KPI Cards */
+      React.createElement(Card2,{sx:{flex:"1 1 120px",display:"flex",flexDirection:"column",justifyContent:"center"}},
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Avg Utilization"),
+        React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:_biAvgUtil>1.1?"#ef4444":_biAvgUtil>0.95?"#b45309":"#16a34a"}},(_biAvgUtil*100).toFixed(0)+"%"),
+        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},_biAvgUtil>1.1?"Over budget":"of monthly plan")
+      ),
+      React.createElement(Card2,{sx:{flex:"1 1 120px",display:"flex",flexDirection:"column",justifyContent:"center"}},
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Months On-Track"),
+        React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--accent)"}},_biOnTrack+"/"+_biPastWithPlan.length),
+        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},"within budget plan")
+      ),
+      React.createElement(Card2,{sx:{flex:"1 1 120px",display:"flex",flexDirection:"column",justifyContent:"center"}},
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"12-Month Rollover"),
+        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:_biCumTotal>=0?"#16a34a":"#ef4444"}},INR(Math.abs(_biCumTotal))),
+        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},_biCumTotal>=0?"cumulative surplus":"cumulative deficit")
+      ),
+      React.createElement(Card2,{sx:{flex:"1 1 120px",display:"flex",flexDirection:"column",justifyContent:"center"}},
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Categories"),
+        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text2)"}},
+          React.createElement("span",{style:{color:"#16a34a"}},_biCatStats.filter(c=>c.avgUtil>0&&c.avgUtil<=1).length),
+          React.createElement("span",{style:{color:"var(--text5)",fontSize:14}}," / "),
+          React.createElement("span",{style:{color:"#ef4444"}},_biCatStats.filter(c=>c.avgUtil>1).length)
+        ),
+        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},"under / over budget")
+      )
+    ),
+
+    /* ── Smart Insights ── */
+    _biInsights.length>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)",textTransform:"uppercase",letterSpacing:.5,marginBottom:12}},"Smart Insights"),
+      React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+        _biInsights.map((ins,i)=>React.createElement("div",{key:i,style:{
+          display:"flex",gap:10,alignItems:"flex-start",padding:"9px 12px",borderRadius:9,
+          background:ins.type==="good"?"rgba(22,163,74,.06)":ins.type==="warn"?"rgba(239,68,68,.06)":"rgba(14,116,144,.06)",
+          border:"1px solid "+(ins.type==="good"?"rgba(22,163,74,.2)":ins.type==="warn"?"rgba(239,68,68,.2)":"rgba(14,116,144,.2)")
+        }},
+          React.createElement("span",{style:{fontSize:16,flexShrink:0,lineHeight:1.2}},ins.icon),
+          React.createElement("span",{style:{fontSize:12,color:"var(--text3)",lineHeight:1.6}},ins.text)
+        ))
+      )
+    ),
+
+    /* ── Category Efficiency Table ── */
+    _biCatStats.length>0&&React.createElement(Card2,{sx:{marginBottom:16,padding:0,overflow:"hidden"}},
+      React.createElement("div",{style:{padding:"12px 16px 10px",borderBottom:"1px solid var(--border2)"}},
+        React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)",textTransform:"uppercase",letterSpacing:.5}},"Category Performance — Last 12 Months"),
+        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},"Spend trend bars (each bar = one month, left = oldest), utilization & drift")
+      ),
+      /* Header */
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 160px 80px 70px 70px",padding:"7px 16px",background:"var(--bg4)",borderBottom:"1px solid var(--border2)"}},
+        React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},"Category"),
+        React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},"12-Month Trend"),
+        React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,textAlign:"right"}},"Avg Util"),
+        React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,textAlign:"center"}},"Over"),
+        React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,textAlign:"right"}},"Drift")
+      ),
+      _biCatStats.map((cs,idx)=>{
+        const utilCol=cs.avgUtil>1.15?"#ef4444":cs.avgUtil>1.0?"#f97316":cs.avgUtil>0.85?"#16a34a":"#0e7490";
+        const trendStr=cs.trend>0.05?"+"+((cs.trend)*100).toFixed(0)+"%":cs.trend<-0.05?((cs.trend)*100).toFixed(0)+"%":"Stable";
+        const trendCol=cs.trend>0.15?"#ef4444":cs.trend>0.05?"#b45309":cs.trend<-0.05?"#16a34a":"var(--text5)";
+        const maxBar=Math.max(...cs.pts.map(p=>Math.max(p.actual,p.planned)),1);
+        return React.createElement("div",{key:cs.cat,style:{
+          display:"grid",gridTemplateColumns:"1fr 160px 80px 70px 70px",
+          padding:"9px 16px",borderBottom:idx<_biCatStats.length-1?"1px solid var(--border2)":"none",
+          alignItems:"center",background:idx%2===0?"transparent":"rgba(255,255,255,.012)"
+        }},
+          React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)"}},cs.cat),
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:1}},INR(cs.totalActual)+" total · "+INR(cs.totalPlanned>0?cs.totalPlanned:0)+" planned")
+          ),
+          /* Mini sparkline bars */
+          React.createElement("div",{style:{display:"flex",gap:2,alignItems:"flex-end",height:28}},
+            cs.pts.map((p,pi)=>{
+              const barH=p.actual>0?Math.max(3,Math.round((p.actual/maxBar)*26)):2;
+              const planH=p.planned>0?Math.max(1,Math.round((p.planned/maxBar)*26)):0;
+              const isOver=p.planned>0&&p.actual>p.planned;
+              return React.createElement("div",{key:pi,style:{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",flex:1}},
+                p.planned>0&&React.createElement("div",{style:{position:"absolute",bottom:0,width:"100%",height:planH,borderTop:"1.5px dashed rgba(100,150,255,.5)",pointerEvents:"none"}}),
+                React.createElement("div",{style:{
+                  width:"100%",height:barH,borderRadius:2,
+                  background:isOver?"#ef4444":p.planned>0?"#16a34a":"var(--accent)",
+                  opacity:p.isCurrent?0.5:0.85,
+                  marginTop:"auto"
+                }})
+              );
+            })
+          ),
+          React.createElement("div",{style:{textAlign:"right",fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:utilCol}},
+            cs.avgUtil>0?(cs.avgUtil*100).toFixed(0)+"%":"—"
+          ),
+          React.createElement("div",{style:{textAlign:"center"}},
+            cs.overCount>0?React.createElement("span",{style:{
+              fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:8,
+              background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.25)",color:"#ef4444"
+            }},cs.overCount+"x"):React.createElement("span",{style:{fontSize:10,color:"#16a34a"}},cs.withPlan.length>0?"✓ None":"—")
+          ),
+          React.createElement("div",{style:{textAlign:"right",fontSize:11,fontWeight:600,color:trendCol}},trendStr)
+        );
+      })
+    ),
+
+    /* ── Monthly Rollover Chart ── */
+    _biRollover.filter(m=>m.totalPlanned>0).length>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Monthly Surplus / Deficit & Cumulative Rollover"),
+      React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:14}},"Green bars = under budget (surplus) · Red bars = over budget (deficit) · Line = cumulative"),
+      React.createElement("div",{style:{display:"flex",gap:4,alignItems:"flex-end",height:80,marginBottom:6}},
+        _biRollover.filter(m=>m.totalPlanned>0).map((m,i)=>{
+          const barH=Math.max(3,Math.round((Math.abs(m.delta)/_biMaxRollBar)*72));
+          const isPos=m.delta>=0;
+          return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2,minWidth:0}},
+            React.createElement("div",{style:{
+              width:"100%",height:barH,borderRadius:"3px 3px 0 0",
+              background:isPos?"rgba(22,163,74,.7)":"rgba(239,68,68,.7)",
+              alignSelf:isPos?"flex-end":"flex-start",
+              transition:"height .3s ease"
+            }})
+          );
+        })
+      ),
+      /* X-axis labels */
+      React.createElement("div",{style:{display:"flex",gap:4}},
+        _biRollover.filter(m=>m.totalPlanned>0).map((m,i)=>
+          React.createElement("div",{key:i,style:{flex:1,textAlign:"center",fontSize:8.5,color:"var(--text6)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
+            m.mName.slice(0,3)
+          )
+        )
+      ),
+      /* Rollover summary table */
+      React.createElement("div",{style:{marginTop:14,overflowX:"auto"}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"80px 100px 100px 90px 110px",minWidth:480,borderBottom:"1px solid var(--border2)",background:"var(--bg4)",padding:"6px 12px"}},
+          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},"Month"),
+          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,textAlign:"right"}},"Planned"),
+          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,textAlign:"right"}},"Actual"),
+          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,textAlign:"right"}},"Delta"),
+          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,textAlign:"right"}},"Cumulative")
+        ),
+        _biRollover.filter(m=>m.totalPlanned>0).reverse().map((m,i)=>
+          React.createElement("div",{key:i,style:{display:"grid",gridTemplateColumns:"80px 100px 100px 90px 110px",minWidth:480,padding:"7px 12px",borderBottom:"1px solid var(--border2)",background:i%2===0?"transparent":"rgba(255,255,255,.015)"}},
+            React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text3)"+(m.isCurrent?" ":""),fontStyle:m.isCurrent?"italic":"normal"}},m.mName.slice(0,3)+" '"+String(m.mYear).slice(-2)+(m.isCurrent?" *":"")),
+            React.createElement("div",{style:{fontSize:12,textAlign:"right",color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},INR(m.totalPlanned)),
+            React.createElement("div",{style:{fontSize:12,textAlign:"right",fontFamily:"'Sora',sans-serif",color:m.totalActual>m.totalPlanned?"#ef4444":"var(--text3)"}},INR(m.totalActual)),
+            React.createElement("div",{style:{fontSize:12,textAlign:"right",fontWeight:700,fontFamily:"'Sora',sans-serif",color:m.delta>=0?"#16a34a":"#ef4444"}},(m.delta>=0?"+":"")+INR(m.delta)),
+            React.createElement("div",{style:{fontSize:12,textAlign:"right",fontWeight:700,fontFamily:"'Sora',sans-serif",color:m.cumRollover>=0?"#16a34a":"#ef4444"}},(m.cumRollover>=0?"+":"")+INR(m.cumRollover))
+          )
+        ),
+        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",padding:"6px 12px",fontStyle:"italic"}},"* Current month (in progress)")
+      )
+    ),
+
+    /* ── Budget Heatmap — last 6 months × categories ── */
+    _biCatStats.length>0&&_biHeatMonths.length>0&&React.createElement(Card2,{sx:{marginBottom:16,padding:0,overflow:"hidden"}},
+      React.createElement("div",{style:{padding:"12px 16px 10px",borderBottom:"1px solid var(--border2)"}},
+        React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)",textTransform:"uppercase",letterSpacing:.5}},"Budget Heatmap — Last 6 Months"),
+        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},"Each cell = % of monthly budget spent · 🟢 <80% · 🟡 80–100% · 🔴 >100%")
+      ),
+      React.createElement("div",{style:{overflowX:"auto"}},
+        /* Header row */
+        React.createElement("div",{style:{
+          display:"grid",
+          gridTemplateColumns:"120px "+_biHeatMonths.map(()=>"1fr").join(" "),
+          minWidth:400,padding:"6px 12px",background:"var(--bg4)",borderBottom:"1px solid var(--border2)"
+        }},
+          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)"}},"Category"),
+          ..._biHeatMonths.map((m,i)=>React.createElement("div",{key:i,style:{fontSize:10,fontWeight:700,color:"var(--text5)",textAlign:"center"}},m.mName.slice(0,3)+" '"+String(m.mYear).slice(-2)))
+        ),
+        /* Category rows */
+        _biCatStats.filter(c=>c.withPlan.length>0).map((cs,ri)=>{
+          return React.createElement("div",{key:cs.cat,style:{
+            display:"grid",
+            gridTemplateColumns:"120px "+_biHeatMonths.map(()=>"1fr").join(" "),
+            minWidth:400,borderBottom:ri<_biCatStats.filter(c=>c.withPlan.length>0).length-1?"1px solid var(--border2)":"none",
+            background:ri%2===0?"transparent":"rgba(255,255,255,.012)"
+          }},
+            React.createElement("div",{style:{padding:"8px 12px",fontSize:11,fontWeight:600,color:"var(--text3)",display:"flex",alignItems:"center"}},cs.cat),
+            ..._biHeatMonths.map((m,mi)=>{
+              const mRow=m.catRows.find(r=>r.cat===cs.cat);
+              const pct=mRow&&mRow.planned>0?mRow.actual/mRow.planned:null;
+              const bg=pct===null?"transparent":pct>1.15?"rgba(239,68,68,.25)":pct>1.0?"rgba(249,115,22,.2)":pct>0.8?"rgba(22,163,74,.18)":"rgba(14,116,144,.15)";
+              const col=pct===null?"var(--text6)":pct>1.15?"#ef4444":pct>1.0?"#f97316":pct>0.8?"#16a34a":"#0e7490";
+              return React.createElement("div",{key:mi,style:{
+                textAlign:"center",fontSize:11,fontWeight:600,color:col,
+                background:bg,padding:"8px 4px",fontFamily:"'Sora',sans-serif"
+              }},pct!==null?(pct*100).toFixed(0)+"%":"—");
+            })
+          );
+        }),
+        /* Totals row */
+        React.createElement("div",{style:{
+          display:"grid",
+          gridTemplateColumns:"120px "+_biHeatMonths.map(()=>"1fr").join(" "),
+          minWidth:400,background:"var(--bg4)",borderTop:"1px solid var(--border2)",padding:"6px 0"
+        }},
+          React.createElement("div",{style:{padding:"6px 12px",fontSize:11,fontWeight:700,color:"var(--text3)"}},"Total"),
+          ..._biHeatMonths.map((m,mi)=>{
+            const pct=m.totalPlanned>0?m.totalActual/m.totalPlanned:null;
+            const col=pct===null?"var(--text6)":pct>1.1?"#ef4444":pct>1.0?"#f97316":"#16a34a";
+            return React.createElement("div",{key:mi,style:{textAlign:"center",fontSize:12,fontWeight:800,color:col,fontFamily:"'Sora',sans-serif",padding:"6px 4px"}},
+              pct!==null?(pct*100).toFixed(0)+"%":"—"
+            );
+          })
+        )
+      )
+    ),
+
+    /* ── Savings-from-Budget Analysis ── */
+    React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)",textTransform:"uppercase",letterSpacing:.5,marginBottom:12}},"Budget-Implied Savings Potential"),
+      React.createElement("div",{style:{display:"flex",gap:14,flexWrap:"wrap",marginBottom:12}},
+        React.createElement("div",{style:{flex:"1 1 140px",padding:"12px 14px",borderRadius:10,background:"rgba(22,163,74,.07)",border:"1px solid rgba(22,163,74,.2)"}},
+          React.createElement("div",{style:{fontSize:10,color:"#16a34a",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"If On Budget All Year"),
+          React.createElement("div",{style:{fontSize:19,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#16a34a"}},
+            INR((_biPastWithPlan.length>0?_biPastWithPlan.reduce((s,m)=>s+(m.totalPlanned>0?m.totalPlanned:0),0)/Math.max(_biPastWithPlan.length,1):0)*12)
+          ),
+          React.createElement("div",{style:{fontSize:11,color:"#16a34a",marginTop:2}},"annual budget capacity")
+        ),
+        React.createElement("div",{style:{flex:"1 1 140px",padding:"12px 14px",borderRadius:10,background:"rgba(239,68,68,.07)",border:"1px solid rgba(239,68,68,.2)"}},
+          React.createElement("div",{style:{fontSize:10,color:"#ef4444",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Actual 12-Month Spend"),
+          React.createElement("div",{style:{fontSize:19,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#ef4444"}},
+            INR(_biPastWithPlan.reduce((s,m)=>s+m.totalActual,0))
+          ),
+          React.createElement("div",{style:{fontSize:11,color:"#ef4444",marginTop:2}},"vs plan")
+        ),
+        React.createElement("div",{style:{flex:"1 1 140px",padding:"12px 14px",borderRadius:10,background:"var(--bg4)",border:"1px solid var(--border2)"}},
+          React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Avg Monthly Over/Under"),
+          React.createElement("div",{style:{fontSize:19,fontFamily:"'Sora',sans-serif",fontWeight:800,color:_biCumTotal>=0?"#16a34a":"#ef4444"}},
+            (_biCumTotal>=0?"+":"")+INR(_biPastWithPlan.length>0?_biCumTotal/_biPastWithPlan.length:0)
+          ),
+          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},"per month avg delta")
+        ),
+        React.createElement("div",{style:{flex:"1 1 140px",padding:"12px 14px",borderRadius:10,background:"rgba(14,116,144,.07)",border:"1px solid rgba(14,116,144,.2)"}},
+          React.createElement("div",{style:{fontSize:10,color:"#0e7490",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Tightest Category"),
+          React.createElement("div",{style:{fontSize:16,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#0e7490",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
+            _biCatStats.filter(c=>c.avgUtil>0).sort((a,b)=>b.avgUtil-a.avgUtil)[0]?.cat||"—"
+          ),
+          React.createElement("div",{style:{fontSize:11,color:"#0e7490",marginTop:2}},
+            (_biCatStats.filter(c=>c.avgUtil>0).sort((a,b)=>b.avgUtil-a.avgUtil)[0]?.avgUtil||0)*100>=1?
+            ((_biCatStats.filter(c=>c.avgUtil>0).sort((a,b)=>b.avgUtil-a.avgUtil)[0]?.avgUtil||0)*100).toFixed(0)+"% avg util":"—"
+          )
+        )
+      )
+    )
+  );
+
   const WaterfallTab=React.createElement("div",{style:{paddingBottom:20}},
     /* ── Planned vs Actual ── */
     React.createElement(SHead,{t:"Planned vs Actual",s:"Set budgets in Settings → Insights Config → Budget Planning"}),
@@ -2558,18 +2882,18 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
         :React.createElement(React.Fragment,null,
             /* ── View Toggle ── */
             React.createElement("div",{style:{display:"flex",gap:0,marginBottom:18,background:"var(--bg4)",borderRadius:10,padding:3,width:"fit-content",border:"1px solid var(--border2)"}},
-              ["monthly","yearly"].map(v=>React.createElement("button",{
-                key:v,
-                onClick:()=>setBudgetView(v),
+              [{id:"monthly",label:"Monthly"},{id:"yearly",label:"Yearly"},{id:"insights",label:"✦ Budget Insights"}].map(v=>React.createElement("button",{
+                key:v.id,
+                onClick:()=>setBudgetView(v.id),
                 style:{
                   padding:"7px 20px",borderRadius:8,cursor:"pointer",
-                  fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:budgetView===v?700:400,
+                  fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:budgetView===v.id?700:400,
                   border:"none",
-                  background:budgetView===v?"var(--accent)":"transparent",
-                  color:budgetView===v?"#fff":"var(--text5)",
+                  background:budgetView===v.id?v.id==="insights"?"linear-gradient(135deg,#7c3aed,#1d4ed8)":"var(--accent)":"transparent",
+                  color:budgetView===v.id?"#fff":"var(--text5)",
                   transition:"all .15s",whiteSpace:"nowrap"
                 }
-              },v==="monthly"?"Monthly":"Yearly"))
+              },v.label))
             ),
             /* ── MONTHLY VIEW ── */
             budgetView==="monthly"&&React.createElement(React.Fragment,null,
@@ -2629,7 +2953,8 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
                       }))
                     )
                   )
-            )
+            ),
+            budgetView==="insights"&&BudgetInsightsView
           )
   );
 

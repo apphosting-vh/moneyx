@@ -1365,7 +1365,7 @@ const InsightPrefsPanel=({state,dispatch})=>{
     React.createElement(Card,{sx:{marginBottom:16}},
       React.createElement(SecHdr,{icon:React.createElement(Icon,{n:"money",size:15}),title:"Budget Planning",sub:"Set a monthly spending target per category. These appear as plan lines in the Budget → Planned vs Actual view."}),
       (()=>{
-        const spendCats=state.categories.filter(c=>c.classType!=="Income"&&c.classType!=="Transfer");
+        const spendCats=state.categories.filter(c=>c.classType!=="Income"&&c.classType!=="Transfer"&&c.name!=="Taxes");
         const plans=P.budgetPlans||{};
         const totalMonthly=spendCats.reduce((s,c)=>s+(plans[c.name]||0),0);
         return React.createElement(React.Fragment,null,
@@ -1409,7 +1409,7 @@ const InsightPrefsPanel=({state,dispatch})=>{
     React.createElement(Card,{sx:{marginBottom:16}},
       React.createElement(SecHdr,{icon:React.createElement(Icon,{n:"calendar",size:18}),title:"Yearly Budget Planning",sub:"Set a direct annual spending target per category — ideal for one-off or infrequent expenses like insurance premiums, travel, festivals, school fees. Shown in the Insights → Budget → Yearly view."}),
       (()=>{
-        const spendCats=state.categories.filter(c=>c.classType!=="Income"&&c.classType!=="Transfer");
+        const spendCats=state.categories.filter(c=>c.classType!=="Income"&&c.classType!=="Transfer"&&c.name!=="Taxes");
         const yPlans=P.yearlyBudgetPlans||{};
         const totalYearly=spendCats.reduce((s,c)=>s+(yPlans[c.name]||0),0);
         return React.createElement(React.Fragment,null,
@@ -2771,13 +2771,13 @@ function checkAndFireNotifications(state){
     [...(state.banks||[]).flatMap(b=>b.transactions),...(state.cards||[]).flatMap(c=>c.transactions),...((state.cash||{}).transactions||[])]
       .filter(t=>{
         if(t.type!=="debit"||t.date<mS||t.date>mE)return false;
-        /* Exclude Investment and Transfer — same logic as Dashboard budget widget */
+        /* Exclude Investment, Transfer and Taxes — same logic as Dashboard budget widget */
         const ct=catClassType((state.categories||[]),t.cat||"Others");
-        return ct!=="Investment"&&ct!=="Transfer"&&ct!=="Income";
+        return ct!=="Investment"&&ct!=="Transfer"&&ct!=="Income"&&catMainName(t.cat||"Others")!=="Taxes";
       })
       .forEach(t=>{const m=catMainName(t.cat||"Others");actual[m]=(actual[m]||0)+t.amount;});
     Object.entries(plans).forEach(([cat,limit])=>{
-      if(!limit)return;
+      if(!limit||cat==="Taxes")return;
       const spent=actual[cat]||0;
       const pct=spent/limit*100;
       if(pct>=(prefs.budgetPct||80)){

@@ -2927,7 +2927,9 @@ const RptForecast=({data,onExportPDF})=>{
   allTx.forEach(t=>{
     const k=t.date.substr(0,7);
     const ct=catClassType(data.categories,t.cat||"Others");
+    const main=catMainName(t.cat||"Others");
     if(!monthly[k])monthly[k]={inc:0,exp:0,inv:0};
+    if(main==="Taxes")return; /* Taxes excluded from forecast — not a budgetary expense */
     const d=txCatDelta(t,ct);
     if(ct==="Income")monthly[k].inc+=d;
     else if(ct==="Investment")monthly[k].inv+=d;
