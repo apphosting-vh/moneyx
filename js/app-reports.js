@@ -1745,6 +1745,7 @@ const FSAStoragePanel=({state,dispatch})=>{
         goals:data.goals||[],
         hiddenTabs:data.hiddenTabs||[],
         catRules:data.catRules||[],
+        reminders:data.reminders||[],
         insightPrefs:{...EMPTY_STATE().insightPrefs,...(data.insightPrefs||{})},
       };
       saveState({...EMPTY_STATE(),..._restoreData});

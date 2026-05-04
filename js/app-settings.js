@@ -860,8 +860,8 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFon
                 if(pw!==pw2){alert("Passwords do not match.");return;}
                 try{
                   const payload={version:8,exportedAt:new Date().toISOString(),
-                    summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,hasTaxData:!!(state.taxData),hasTaxData2627:!!(state.taxData2627),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0)},
-                    data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,taxData2627:state.taxData2627||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})}}
+                    summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,reminders:(state.reminders||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,eodDays:Object.keys(state.eodPrices||{}).length,eodNavDays:Object.keys(state.eodNavs||{}).length,hasTaxData:!!(state.taxData),hasTaxData2627:!!(state.taxData2627),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0)},
+                    data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,taxData2627:state.taxData2627||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],reminders:state.reminders||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})}}
                   };
                   const enc=await encryptBackup(payload,pw);
                   const blob=new Blob([JSON.stringify(enc)],{type:"application/json"});
@@ -983,6 +983,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFon
                         eodNavs:d.eodNavs||{},
                         historyCache:d.historyCache||{},
                         taxData:d.taxData||null,
+                        taxData2627:d.taxData2627||null,
                         re:d.re||[],
                         pf:d.pf||[],
                         goals:d.goals||[],
@@ -3163,6 +3164,17 @@ var gdriveUpsertSyncFile = async (state) => {
         mf: (state.mf || []).length,
         shares: (state.shares || []).length,
         fd: (state.fd || []).length,
+        categories: (state.categories || []).length,
+        payees: (state.payees || []).length,
+        scheduled: (state.scheduled || []).length,
+        notes: (state.notes || []).length,
+        reminders: (state.reminders || []).length,
+        nwSnapshots: Object.keys(state.nwSnapshots || {}).length,
+        eodDays: Object.keys(state.eodPrices || {}).length,
+        eodNavDays: Object.keys(state.eodNavs || {}).length,
+        hasTaxData: !!(state.taxData),
+        hasTaxData2627: !!(state.taxData2627),
+        hasYearlyBudget: Object.values((state.insightPrefs || {}).yearlyBudgetPlans || {}).some(v => v > 0),
       },
       data: {
         ...state,
@@ -3173,11 +3185,13 @@ var gdriveUpsertSyncFile = async (state) => {
         eodNavs: state.eodNavs || {},
         historyCache: state.historyCache || {},
         taxData: state.taxData || null,
+        taxData2627: state.taxData2627 || null,
         re: state.re || [],
         pf: state.pf || [],
         goals: state.goals || [],
         hiddenTabs: state.hiddenTabs || [],
         catRules: state.catRules || [],
+        reminders: state.reminders || [],
         insightPrefs: { ...EMPTY_STATE().insightPrefs, ...(state.insightPrefs || {}) },
       },
     };
@@ -3463,7 +3477,10 @@ const fsaWriteFile=async(handle,data)=>{
         payees:(data.payees||[]).length,
         scheduled:(data.scheduled||[]).length,
         notes:(data.notes||[]).length,
+        reminders:(data.reminders||[]).length,
         nwSnapshots:Object.keys(data.nwSnapshots||{}).length,
+        eodDays:Object.keys(data.eodPrices||{}).length,
+        eodNavDays:Object.keys(data.eodNavs||{}).length,
         hasTaxData:!!(data.taxData),
         hasTaxData2627:!!(data.taxData2627),
         hasYearlyBudget:Object.values((data.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),
@@ -3483,6 +3500,7 @@ const fsaWriteFile=async(handle,data)=>{
         goals:data.goals||[],
         hiddenTabs:data.hiddenTabs||[],
         catRules:data.catRules||[],
+        reminders:data.reminders||[],
         insightPrefs:{...EMPTY_STATE().insightPrefs,...(data.insightPrefs||{})},
       }
     };
