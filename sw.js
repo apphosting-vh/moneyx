@@ -14,7 +14,7 @@
    • Pending actions written to IDB so the app can reconcile on next open
    ══════════════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'finsight-v4-6-1';
+const CACHE_NAME = 'finsight-v4-6-2';
 const MAX_RUNTIME_CACHE_ENTRIES = 80;
 const MAX_CACHE_AGE_MS = 30 * 24 * 3600 * 1000; // 30 days
 
