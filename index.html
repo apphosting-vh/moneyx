@@ -612,6 +612,8 @@ select.inp option{background:var(--inp-opt)}
 @keyframes pinShake{0%,100%{transform:translateX(0)}15%{transform:translateX(-10px)}35%{transform:translateX(10px)}55%{transform:translateX(-7px)}75%{transform:translateX(7px)}90%{transform:translateX(-3px)}}
 @keyframes fsaPulse{0%,100%{box-shadow:0 0 0 0 rgba(251,146,60,.55),0 8px 32px rgba(0,0,0,.35)}60%{box-shadow:0 0 0 8px rgba(251,146,60,.0),0 8px 32px rgba(0,0,0,.35)}}
 @keyframes undoSlideUp{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes reminderOverlayIn{from{opacity:0}to{opacity:1}}
+@keyframes reminderCardIn{from{opacity:0;transform:scale(.93) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
 @keyframes fsaSlideIn{from{opacity:0;transform:translateY(24px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes fsaIconSpin{0%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}100%{transform:rotate(-8deg)}}
 .fu{animation:fadeUp .35s ease forwards}
@@ -1428,6 +1430,7 @@ textarea.inp{resize:vertical}
 <script type="text/babel" src="./js/app-reports.js"></script>
 <script type="text/babel" src="./js/app-settings.js"></script>
 <script type="text/babel" src="./js/app-sync.js"></script>
+<script type="text/babel" src="./js/app-reminders.js"></script>
 <script type="text/babel" src="./js/app-sections.js"></script>
 <script type="text/babel" src="./js/app-main.js"></script>
 </body>
