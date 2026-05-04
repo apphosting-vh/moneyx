@@ -178,6 +178,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFon
 
   const STABS=[
     {id:"notifications",label:"Notifications",icon:React.createElement(Icon,{n:"bell",size:16})},
+    {id:"reminders",    label:"Reminders",    icon:React.createElement("span",{style:{fontSize:14}},"🔔")},
     {id:"catRules",   label:"Auto-Categorise",icon:React.createElement(Icon,{n:"robot",size:16})},
     {id:"appearance",label:"Appearance",icon:React.createElement(Icon,{n:"palette",size:16})},
     {id:"security",  label:"Security",  icon:React.createElement(Icon,{n:"shield",size:16})},
@@ -240,6 +241,9 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFon
 
       /* ══ NOTIFICATIONS ══ */
       stab==="notifications"&&React.createElement(NotificationsPanel,{state}),
+
+      /* ══ REMINDERS ══ */
+      stab==="reminders"&&React.createElement(RemindersSettingsPanel,{state,dispatch}),
 
       /* ══ AUTO-CATEGORISE RULES ══ */
       stab==="catRules"&&React.createElement(CatRulesPanel,{state,dispatch}),
@@ -982,6 +986,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFon
                         goals:d.goals||[],
                         hiddenTabs:d.hiddenTabs||[],
                         catRules:d.catRules||[],
+                        reminders:d.reminders||[],
                         insightPrefs:{...EMPTY_STATE().insightPrefs,...(d.insightPrefs||{})},
                       };
                       /* ── Synchronously persist to localStorage BEFORE reload ── */
@@ -2551,6 +2556,7 @@ const buildBackupPayload=async(st)=>{
       eodPrices:st.eodPrices||{},eodNavs:st.eodNavs||{},historyCache:st.historyCache||{},
       taxData:st.taxData||null,taxData2627:st.taxData2627||null,re:st.re||[],pf:st.pf||[],goals:st.goals||[],
       hiddenTabs:st.hiddenTabs||[],catRules:st.catRules||[],
+      reminders:st.reminders||[],
       insightPrefs:{...EMPTY_STATE().insightPrefs,...(st.insightPrefs||{})},
     }
   };
@@ -2609,6 +2615,7 @@ const loadState=()=>{
       taxData:(parsed.taxData||null),
       taxData2627:(parsed.taxData2627||null),
       catRules:(parsed.catRules||[]),
+      reminders:(parsed.reminders||[]),
       insightPrefs:{...EMPTY_STATE().insightPrefs,...(parsed.insightPrefs||{})},
     };
   }catch(e){console.warn("Failed to load state:",e);return null;}
@@ -3228,6 +3235,7 @@ var gdriveReadSyncFile = async () => {
       goals: d.goals || [],
       hiddenTabs: d.hiddenTabs || [],
       catRules: d.catRules || [],
+      reminders: d.reminders || [],
       insightPrefs: { ..._def.insightPrefs, ...(d.insightPrefs || {}) },
     });
 
@@ -3488,7 +3496,7 @@ const fsaReadFile=async(handle)=>{
     const text=await file.text();
     const parsed=JSON.parse(text);
     const _def=EMPTY_STATE();
-    const _safe=(d)=>({...d,nwSnapshots:d.nwSnapshots||{},eodPrices:d.eodPrices||{},eodNavs:d.eodNavs||{},historyCache:d.historyCache||{},taxData:d.taxData||null,taxData2627:d.taxData2627||null,re:d.re||[],pf:d.pf||[],goals:d.goals||[],hiddenTabs:d.hiddenTabs||[],catRules:d.catRules||[],insightPrefs:{..._def.insightPrefs,...(d.insightPrefs||{})}});
+    const _safe=(d)=>({...d,nwSnapshots:d.nwSnapshots||{},eodPrices:d.eodPrices||{},eodNavs:d.eodNavs||{},historyCache:d.historyCache||{},taxData:d.taxData||null,taxData2627:d.taxData2627||null,re:d.re||[],pf:d.pf||[],goals:d.goals||[],hiddenTabs:d.hiddenTabs||[],catRules:d.catRules||[],reminders:d.reminders||[],insightPrefs:{..._def.insightPrefs,...(d.insightPrefs||{})}});
     /* Support both the new envelope format { data:{…} } and the legacy
        raw-state format written by v3.17.0–3.17.2 */
     if(parsed&&parsed.data&&parsed.data.banks)return _safe(parsed.data);

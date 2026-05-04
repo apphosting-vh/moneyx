@@ -2600,6 +2600,8 @@ function App(){
     UpdateBanner,
     StorageWarnBanner,
     BackupWarnBanner,
+    /* ── Reminder Toast Manager ── */
+    tab==="dashboard"&&React.createElement(ReminderToastManager,{state,dispatch,isMobile}),
     /* ── Undo Toast ── */
     undoSnap&&React.createElement("div",{style:{
       position:"fixed",bottom:isMobile?88:28,left:"50%",transform:"translateX(-50%)",

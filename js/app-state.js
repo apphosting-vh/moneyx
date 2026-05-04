@@ -1,4 +1,19 @@
 /* ── INIT, constants, icons, categories, FD calcs, XIRR, reducer, localStorage ── */
+
+/* Helper: advance a date string by a recurrence frequency, returning new ISO date */
+function _advanceReminderDate(dateStr,frequency,daysBefore){
+  const d=new Date(dateStr+"T12:00:00");
+  switch(frequency){
+    case"daily":   d.setDate(d.getDate()+1); break;
+    case"weekly":  d.setDate(d.getDate()+7); break;
+    case"monthly": d.setMonth(d.getMonth()+1); break;
+    case"quarterly":d.setMonth(d.getMonth()+3); break;
+    case"yearly":  d.setFullYear(d.getFullYear()+1); break;
+    default: break;
+  }
+  return d.toISOString().split("T")[0];
+}
+
 const INIT=()=>({
   categories:[
     {id:"c_inc",  name:"Income",      color:"#16a34a", classType:"Income",      subs:[{id:"cs_sal",name:"Salary"},{id:"cs_free",name:"Freelance"},{id:"cs_int",name:"Interest"},{id:"cs_div",name:"Dividends"}]},
@@ -114,6 +129,7 @@ const INIT=()=>({
     budgetPlans:{},
     yearlyBudgetPlans:{},
   },
+  reminders:[],
 });
 
 /* Blank slate -- no sample data. Used by Reset All to produce a genuinely empty app */
@@ -169,6 +185,7 @@ const EMPTY_STATE=()=>({
     budgetPlans:{},
     yearlyBudgetPlans:{},
   },
+  reminders:[],
 });
 
 /* ── Stable empty-collection sentinels ──────────────────────────────────────
@@ -246,7 +263,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.5.5";
+const APP_VERSION="4.5.7";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1477,6 +1494,34 @@ const reducer=(s,a)=>{
     case"SET_TAX_DATA":return{...s,taxData:a.data};
     case"SET_TAX_DATA_2627":return{...s,taxData2627:a.data};
     case"SET_INSIGHT_PREFS":return{...s,insightPrefs:{...s.insightPrefs,...a.p}};
+    /* ── Financial Reminders ── */
+    case"ADD_REMINDER":return{...s,reminders:[...(s.reminders||[]),{...a.p,id:uid(),createdAt:TODAY(),status:"active"}]};
+    case"EDIT_REMINDER":return{...s,reminders:(s.reminders||[]).map(r=>r.id===a.p.id?{...r,...a.p}:r)};
+    case"DEL_REMINDER":return{...s,reminders:(s.reminders||[]).filter(r=>r.id!==a.id)};
+    case"COMPLETE_REMINDER":{
+      const today=TODAY();
+      return{...s,reminders:(s.reminders||[]).map(r=>{
+        if(r.id!==a.id)return r;
+        if(r.type==="recurring"&&r.frequency){
+          /* Advance nextDate by frequency */
+          const next=_advanceReminderDate(r.nextDate||r.date,r.frequency,r.daysBefore||0);
+          return{...r,lastTriggeredDate:today,nextDate:next,status:"active"};
+        }
+        return{...r,status:"completed",completedDate:today,lastTriggeredDate:today};
+      })};
+    }
+    case"SKIP_REMINDER":{
+      const today=TODAY();
+      return{...s,reminders:(s.reminders||[]).map(r=>{
+        if(r.id!==a.id)return r;
+        if(r.type==="recurring"&&r.frequency){
+          const next=_advanceReminderDate(r.nextDate||r.date,r.frequency,r.daysBefore||0);
+          return{...r,lastTriggeredDate:today,nextDate:next,status:"active"};
+        }
+        return{...r,lastTriggeredDate:today,status:"skipped"};
+      })};
+    }
+    case"POSTPONE_REMINDER":return{...s,reminders:(s.reminders||[]).map(r=>r.id===a.id?{...r,nextDate:a.date,postponedDate:a.date,lastTriggeredDate:TODAY()}:r)};
     case"SET_NW_SNAPSHOT":return{...s,nwSnapshots:{...(s.nwSnapshots||{}),[a.month]:a.nw}};
     case"SET_HIDDEN_TABS":return{...s,hiddenTabs:a.hiddenTabs||[]};
     case"DEL_NW_SNAPSHOT":{const snaps={...(s.nwSnapshots||{})};delete snaps[a.month];return{...s,nwSnapshots:snaps};}
