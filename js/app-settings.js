@@ -1047,6 +1047,9 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFon
                       localStorage.removeItem(LS_EOD_PRICES);
                       localStorage.removeItem(LS_EOD_NAVS);
                       localStorage.removeItem(LS_THEME);
+                      localStorage.removeItem(LS_LAST_BACKUP);
+                      localStorage.removeItem(LS_LAST_LS_SAVE);
+                      localStorage.removeItem(LS_LAST_IDB_SAVE);
                       savePinHash("");
                       clearSessionUnlock();
                     }catch{}
@@ -2549,7 +2552,10 @@ const buildBackupPayload=async(st)=>{
       mf:st.mf.length,shares:st.shares.length,fd:st.fd.length,
       categories:st.categories.length,payees:st.payees.length,
       scheduled:(st.scheduled||[]).length,notes:(st.notes||[]).length,
+      reminders:(st.reminders||[]).length,
       nwSnapshots:Object.keys(st.nwSnapshots||{}).length,
+      eodDays:Object.keys(st.eodPrices||{}).length,
+      eodNavDays:Object.keys(st.eodNavs||{}).length,
       hasTaxData:!!(st.taxData),
       hasTaxData2627:!!(st.taxData2627),
       hasYearlyBudget:Object.values((st.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),

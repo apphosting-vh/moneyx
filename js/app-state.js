@@ -129,6 +129,7 @@ const INIT=()=>({
     budgetPlans:{},
     yearlyBudgetPlans:{},
   },
+  catRules:[],
   reminders:[],
 });
 
@@ -263,7 +264,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.6.2";
+const APP_VERSION="4.6.3";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1318,7 +1319,7 @@ const reducer=(s,a)=>{
         else if(freq==="weekly")    dt.setDate(dt.getDate()+7);
         else if(freq==="monthly"){  dt.setDate(1);dt.setMonth(dt.getMonth()+1);dt.setDate(Math.min(origDay,new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate()));}
         else if(freq==="quarterly"){dt.setDate(1);dt.setMonth(dt.getMonth()+3);dt.setDate(Math.min(origDay,new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate()));}
-        else if(freq==="yearly")    {dt.setFullYear(dt.getFullYear()+1);dt.setDate(Math.min(origDay,new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate()));}
+        else if(freq==="yearly")    {dt.setDate(1);dt.setFullYear(dt.getFullYear()+1);dt.setDate(Math.min(origDay,new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate()));}
         return dt.toISOString().split("T")[0];
       };
       const isOnce=sc.frequency==="once";

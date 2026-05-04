@@ -124,7 +124,7 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
                     ? React.createElement(React.Fragment,null,
                         React.createElement("div",{style:{fontSize:11,color:"var(--text4)",lineHeight:1.5,whiteSpace:"pre-wrap",paddingRight:42}},b.notes),
                         React.createElement("div",{style:{position:"absolute",top:6,right:6,display:"flex",gap:4},onClick:e=>e.stopPropagation()},
-                          React.createElement("button",{title:"Edit note",onClick:e=>{e.stopPropagation();setNoteEdit({id:b.id,val:b.notes||""});},style:{display:"flex",alignItems:"center",gap:3},style:{background:"rgba(29,78,216,.12)",border:"1px solid rgba(29,78,216,.25)",borderRadius:5,color:"#1d4ed8",cursor:"pointer",fontSize:10,padding:"2px 6px",lineHeight:1}},React.createElement(Icon,{n:"edit",size:14})),
+                          React.createElement("button",{title:"Edit note",onClick:e=>{e.stopPropagation();setNoteEdit({id:b.id,val:b.notes||""});},style:{display:"flex",alignItems:"center",gap:3,background:"rgba(29,78,216,.12)",border:"1px solid rgba(29,78,216,.25)",borderRadius:5,color:"#1d4ed8",cursor:"pointer",fontSize:10,padding:"2px 6px",lineHeight:1}},React.createElement(Icon,{n:"edit",size:14})),
                           React.createElement("button",{title:"Delete note",onClick:e=>{e.stopPropagation();dispatch({type:"EDIT_BANK",p:{id:b.id,notes:""}});},style:{background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.25)",borderRadius:5,color:"#ef4444",cursor:"pointer",fontSize:10,padding:"2px 6px",lineHeight:1}},"×")
                         )
                       )
@@ -486,7 +486,7 @@ const CashSection=React.memo(({cash,dispatch,categories,payees,allBanks,allCards
   const[addCashOpen,setAddCashOpen]=useState(false);
   const inc=cash.transactions.filter(t=>t.type==="credit").reduce((s,t)=>s+t.amount,0);
   const exp=cash.transactions.filter(t=>t.type==="debit").reduce((s,t)=>s+t.amount,0);
-  const catMap=cash.transactions.filter(t=>t.type==="debit").reduce((a,t)=>{const k=catMainName(t.cat||t.cat||"Others");a[k]=(a[k]||0)+t.amount;return a;},{});
+  const catMap=cash.transactions.filter(t=>t.type==="debit").reduce((a,t)=>{const k=catMainName(t.cat||"Others");a[k]=(a[k]||0)+t.amount;return a;},{});
   const pieData=Object.entries(catMap).map(([name,value])=>({name,value}));
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",height:"100%"}},
     React.createElement("div",{style:{marginBottom:16}},
