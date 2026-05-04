@@ -263,7 +263,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.5.7";
+const APP_VERSION="4.5.9";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -313,6 +313,7 @@ const Icon=({n,size=16,col,style={}})=>{
     case"user":return svg(c(12,7,4),p("M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"));
     case"category":return svg(r(3,3,8,8,2),r(13,3,8,8,2),r(13,13,8,8,2),r(3,13,8,8,2));
     case"bell":return svg(p("M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"),p("M13.73 21a2 2 0 01-3.46 0"));
+    case"alarmclock":return svg(c(12,13,8),p("M12 9v4l2.5 2.5"),p("M5 3L2 6"),p("M22 6l-3-3"),p("M6.38 18.7L4 21"),p("M17.64 18.67L20 21"));
     case"robot":return svg(r(3,11,18,10,3),c(12,5,2),p("M12 7v4"),c(8,16.5,1.8),c(16,16.5,1.8));
     case"palette":return svg(c(12,12,10),c(8.21,15.89,1.5),c(5.72,11,1.5),c(8.21,6.11,1.5),c(12,4.5,1.5),p("M18.5 9.5a2 2 0 010 5 4 4 0 01-4 4h-1v-3a2 2 0 010-4h4.5z"));
     case"shield":return svg(p("M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"),p("M9 12l2 2 4-4"));

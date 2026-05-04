@@ -178,7 +178,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFon
 
   const STABS=[
     {id:"notifications",label:"Notifications",icon:React.createElement(Icon,{n:"bell",size:16})},
-    {id:"reminders",    label:"Reminders",    icon:React.createElement("span",{style:{fontSize:14}},"🔔")},
+    {id:"reminders",    label:"Reminders",    icon:React.createElement(Icon,{n:"alarmclock",size:16})},
     {id:"catRules",   label:"Auto-Categorise",icon:React.createElement(Icon,{n:"robot",size:16})},
     {id:"appearance",label:"Appearance",icon:React.createElement(Icon,{n:"palette",size:16})},
     {id:"security",  label:"Security",  icon:React.createElement(Icon,{n:"shield",size:16})},

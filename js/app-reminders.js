@@ -4,17 +4,31 @@
    - ReminderToastManager   : live toast queue shown on the home screen
    ══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Constants ─────────────────────────────────────────────────────────── */
-const REMINDER_CATEGORIES = [
-  { id:"payment",    label:"Payment",        icon:"card",    color:"#ef4444" },
-  { id:"emi",        label:"EMI / Loan",     icon:"bank",    color:"#f97316" },
-  { id:"investment", label:"Investment",     icon:"invest",  color:"#16a34a" },
-  { id:"insurance",  label:"Insurance",      icon:"shield",  color:"#6d28d9" },
-  { id:"tax",        label:"Tax / Filing",   icon:"receipt", color:"#0e7490" },
-  { id:"subscription",label:"Subscription", icon:"refresh", color:"#0284c7" },
-  { id:"savings",    label:"Savings Goal",   icon:"target",  color:"#059669" },
-  { id:"other",      label:"Other",          icon:"bell",    color:"#475569" },
-];
+/* ── ClassType → Icon / Color helpers ─────────────────────────────────── */
+const CLASSTYPE_ICON = ct => ({
+  Income:     "classIncome",
+  Expense:    "classExpense",
+  Investment: "classInvest",
+  Transfer:   "classTransfer",
+  Others:     "classOthers",
+}[ct] || "category");
+
+const CLASSTYPE_COLOR = ct => ({
+  Income:     "#16a34a",
+  Expense:    "#ef4444",
+  Investment: "#0ea5e9",
+  Transfer:   "#8b5cf6",
+  Others:     "#64748b",
+}[ct] || "#64748b");
+
+/* Resolve a reminder's category from live state.categories.
+   The reminder's `category` field stores a category name like "Payment"
+   or a sub-category path like "Payment::Card Bill". */
+const _resolveCat = (catName, stateCategories) => {
+  if (!catName || !stateCategories) return null;
+  const mainName = catName.split("::")[0];
+  return stateCategories.find(c => c.name === mainName) || null;
+};
 
 const REMINDER_FREQUENCIES = [
   { id:"once",       label:"One-time (Ad hoc)" },
@@ -24,8 +38,6 @@ const REMINDER_FREQUENCIES = [
   { id:"quarterly",  label:"Every 3 months" },
   { id:"yearly",     label:"Yearly" },
 ];
-
-const _reminderCat = id => REMINDER_CATEGORIES.find(c=>c.id===id) || REMINDER_CATEGORIES[7];
 
 /* ── Compute "due" reminders from state ───────────────────────────────── */
 function getDueReminders(reminders, windowDays=0){
@@ -48,21 +60,43 @@ function getDueReminders(reminders, windowDays=0){
 
 /* ─────────────────────────────────────────────────────────────────────────
    ADD / EDIT REMINDER MODAL
+   Accepts `categories` prop (live state.categories array).
    ───────────────────────────────────────────────────────────────────────── */
-const ReminderFormModal = ({reminder, onSave, onClose}) => {
+const ReminderFormModal = ({reminder, categories, onSave, onClose}) => {
+  const cats = categories || [];
   const isEdit = !!reminder?.id;
-  const [f, setF] = useState(() => ({
-    title:      reminder?.title      || "",
-    message:    reminder?.message    || "",
-    category:   reminder?.category   || "payment",
-    type:       reminder?.type       || "once",
-    frequency:  reminder?.frequency  || "monthly",
-    date:       reminder?.date       || TODAY(),
-    nextDate:   reminder?.nextDate   || reminder?.date || TODAY(),
-    daysBefore: reminder?.daysBefore !== undefined ? String(reminder.daysBefore) : "0",
-  }));
+
+  /* Auto-derive txType from a category name */
+  const txTypeForCat = catName => {
+    const resolved = _resolveCat(catName, cats);
+    return resolved ? resolved.classType : "Expense";
+  };
+
+  const defaultCat = cats.length ? cats[0].name : "";
+
+  const [f, setF] = useState(() => {
+    const initCat = reminder?.category || defaultCat;
+    return {
+      title:      reminder?.title      || "",
+      message:    reminder?.message    || "",
+      category:   initCat,
+      txType:     reminder?.txType     || txTypeForCat(initCat),
+      type:       reminder?.type       || "once",
+      frequency:  reminder?.frequency  || "monthly",
+      date:       reminder?.date       || TODAY(),
+      nextDate:   reminder?.nextDate   || reminder?.date || TODAY(),
+      daysBefore: reminder?.daysBefore !== undefined ? String(reminder.daysBefore) : "0",
+    };
+  });
   const set = k => e => setF(p => ({...p, [k]: e.target.value}));
   const isRecurring = f.type === "recurring";
+
+  /* When category changes, auto-update txType to match */
+  const handleCatChange = e => {
+    const catName = e.target.value;
+    const autoType = txTypeForCat(catName);
+    setF(p => ({...p, category: catName, txType: autoType}));
+  };
 
   const handleSave = () => {
     if(!f.title.trim()) { alert("Please enter a reminder title."); return; }
@@ -79,9 +113,14 @@ const ReminderFormModal = ({reminder, onSave, onClose}) => {
     onClose();
   };
 
-  const cat = _reminderCat(f.category);
+  /* Resolved category for the preview pill */
+  const resolvedCat = _resolveCat(f.category, cats);
+  const catColor  = resolvedCat ? resolvedCat.color : CLASSTYPE_COLOR(f.txType);
+  const catLabel  = f.category || "—";
+  const txColor   = CLASSTYPE_COLOR(f.txType);
+  const txIcon    = CLASSTYPE_ICON(f.txType);
 
-  return React.createElement(Modal, {title: isEdit?"Edit Reminder":"New Financial Reminder", onClose, w:460},
+  return React.createElement(Modal, {title: isEdit?"Edit Reminder":"New Financial Reminder", onClose, w:480},
     /* Title */
     React.createElement(Field, {label:"Title *"},
       React.createElement("input", {
@@ -99,29 +138,36 @@ const ReminderFormModal = ({reminder, onSave, onClose}) => {
         style:{minHeight:64, resize:"vertical", lineHeight:1.6, fontSize:13}
       })
     ),
-    /* Category + Type row */
+    /* Category + Classification Type row */
     React.createElement("div", {className:"grid-2col"},
       React.createElement(Field, {label:"Category"},
-        React.createElement("select", {className:"inp", value:f.category, onChange:set("category")},
-          REMINDER_CATEGORIES.map(c=>React.createElement("option",{key:c.id,value:c.id}, c.label))
+        React.createElement("select", {className:"inp", value:f.category, onChange:handleCatChange},
+          React.createElement("option", {value:""}, "— Select Category —"),
+          buildCatOptions(cats)
         )
       ),
+      React.createElement(Field, {label:"Classification Type"},
+        React.createElement("select", {
+          className:"inp", value:f.txType,
+          onChange: e => setF(p => ({...p, txType: e.target.value}))
+        },
+          (typeof CLASS_TYPES !== "undefined" ? CLASS_TYPES : ["Income","Expense","Investment","Transfer","Others"])
+            .map(ct => React.createElement("option", {key:ct, value:ct}, ct))
+        )
+      )
+    ),
+    /* Reminder Type + Frequency row */
+    React.createElement("div", {className:"grid-2col"},
       React.createElement(Field, {label:"Reminder Type"},
         React.createElement("select", {className:"inp", value:f.type, onChange:e=>setF(p=>({...p,type:e.target.value}))},
           React.createElement("option",{value:"once"},"One-time (Ad hoc)"),
           React.createElement("option",{value:"recurring"},"Recurring")
         )
-      )
-    ),
-    /* Date + Frequency row */
-    React.createElement("div", {className:"grid-2col"},
-      React.createElement(Field, {label: isRecurring?"First Due Date *":"Due Date *"},
-        React.createElement("input", {className:"inp", type:"date", value:f.date, onChange:e=>setF(p=>({...p,date:e.target.value,nextDate:e.target.value}))})
       ),
       isRecurring
         ? React.createElement(Field, {label:"Frequency"},
             React.createElement("select", {className:"inp", value:f.frequency, onChange:set("frequency")},
-              REMINDER_FREQUENCIES.filter(f=>f.id!=="once").map(fr=>
+              REMINDER_FREQUENCIES.filter(fr=>fr.id!=="once").map(fr=>
                 React.createElement("option",{key:fr.id,value:fr.id},fr.label)
               )
             )
@@ -136,6 +182,11 @@ const ReminderFormModal = ({reminder, onSave, onClose}) => {
             )
           )
     ),
+    /* Due date */
+    React.createElement(Field, {label: isRecurring?"First Due Date *":"Due Date *"},
+      React.createElement("input", {className:"inp", type:"date", value:f.date,
+        onChange:e=>setF(p=>({...p,date:e.target.value,nextDate:e.target.value}))})
+    ),
     isRecurring && React.createElement(Field, {label:"Show reminder (days before due)"},
       React.createElement("select", {className:"inp", value:f.daysBefore, onChange:set("daysBefore")},
         React.createElement("option",{value:"0"},"On the due date"),
@@ -145,22 +196,33 @@ const ReminderFormModal = ({reminder, onSave, onClose}) => {
         React.createElement("option",{value:"7"},"1 week before"),
       )
     ),
-    /* Category preview pill */
+    /* Preview pill */
     React.createElement("div", {style:{
-      display:"flex", alignItems:"center", gap:8,
+      display:"flex", alignItems:"center", gap:10,
       background:"var(--bg5)", border:"1px solid var(--border2)",
-      borderRadius:10, padding:"10px 14px", marginBottom:4,
+      borderRadius:10, padding:"10px 14px", marginBottom:4, flexWrap:"wrap",
     }},
-      React.createElement("span", {style:{fontSize:22}}),
+      /* Category badge */
+      f.category && React.createElement("div", {style:{
+        display:"inline-flex", alignItems:"center", gap:6,
+        background:catColor+"18", border:`1px solid ${catColor}44`,
+        borderRadius:20, padding:"4px 12px",
+        fontSize:12, fontWeight:600, color:catColor,
+      }},
+        React.createElement(Icon, {n: resolvedCat ? CLASSTYPE_ICON(resolvedCat.classType) : "category", size:13, col:catColor}),
+        " ", catLabel
+      ),
+      /* ClassType badge */
       React.createElement("div", {style:{
         display:"inline-flex", alignItems:"center", gap:6,
-        background:cat.color+"18", border:`1px solid ${cat.color}44`,
+        background:txColor+"14", border:`1px solid ${txColor}40`,
         borderRadius:20, padding:"4px 12px",
-        fontSize:12, fontWeight:600, color:cat.color
+        fontSize:12, fontWeight:600, color:txColor,
       }},
-        React.createElement(Icon,{n:cat.icon,size:13,col:cat.color}), " ", cat.label
+        React.createElement(Icon, {n:txIcon, size:13, col:txColor}),
+        " ", f.txType
       ),
-      React.createElement("span", {style:{fontSize:12,color:"var(--text5)",marginLeft:4}},
+      React.createElement("span", {style:{fontSize:12, color:"var(--text5)", marginLeft:2}},
         isRecurring
           ? `Repeats ${REMINDER_FREQUENCIES.find(r=>r.id===f.frequency)?.label?.toLowerCase()||"monthly"}`
           : "One-time reminder"
@@ -181,6 +243,7 @@ const ReminderFormModal = ({reminder, onSave, onClose}) => {
    ───────────────────────────────────────────────────────────────────────── */
 const RemindersSettingsPanel = ({state, dispatch}) => {
   const reminders = state.reminders || [];
+  const cats = state.categories || [];
   const [showForm, setShowForm] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [confirmDel, setConfirmDel] = useState(null);
@@ -289,7 +352,11 @@ const RemindersSettingsPanel = ({state, dispatch}) => {
         )
       : React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
           filtered.map(r=>{
-            const cat=_reminderCat(r.category);
+            const resolved = _resolveCat(r.category, cats);
+            const catCol   = resolved ? resolved.color : CLASSTYPE_COLOR(r.txType);
+            const txType   = r.txType || (resolved ? resolved.classType : "Expense");
+            const txCol    = CLASSTYPE_COLOR(txType);
+            const txIco    = CLASSTYPE_ICON(txType);
             const u=getUrgency(r);
             const us=urgencyStyle(u);
             const isDone=r.status==="completed"||r.status==="skipped";
@@ -300,15 +367,16 @@ const RemindersSettingsPanel = ({state, dispatch}) => {
               transition:"box-shadow .15s",
             }},
               React.createElement("div",{style:{display:"flex",gap:12,alignItems:"flex-start"}},
-                /* Category badge */
+                /* Category badge ring with classType icon */
                 React.createElement("div",{style:{
-                  width:40,height:40,borderRadius:10,flexShrink:0,
-                  background:cat.color+"18",border:`1px solid ${cat.color}33`,
+                  width:42,height:42,borderRadius:11,flexShrink:0,
+                  background:catCol+"18",border:`1.5px solid ${catCol}44`,
                   display:"flex",alignItems:"center",justifyContent:"center",
-                  color:cat.color
-                }},React.createElement(Icon,{n:cat.icon,size:20,col:cat.color})),
+                  color:catCol
+                }},React.createElement(Icon,{n:txIco,size:20,col:catCol})),
                 /* Content */
                 React.createElement("div",{style:{flex:1,minWidth:0}},
+                  /* Title row */
                   React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:4}},
                     React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)"}},r.title),
                     /* Urgency badge */
@@ -317,7 +385,7 @@ const RemindersSettingsPanel = ({state, dispatch}) => {
                       background:us.bg,border:`1px solid ${us.border}`,color:us.color,
                       textTransform:"uppercase",letterSpacing:.5
                     }},us.label),
-                    /* Status for done */
+                    /* Completed/Skipped badge */
                     isDone&&React.createElement("span",{style:{
                       fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:10,
                       background:"rgba(22,163,74,.1)",border:"1px solid rgba(22,163,74,.25)",
@@ -331,13 +399,35 @@ const RemindersSettingsPanel = ({state, dispatch}) => {
                       color:"var(--accent)",fontWeight:600,
                       display:"inline-flex",alignItems:"center",gap:3
                     }},React.createElement(Icon,{n:"refresh",size:9,col:"var(--accent)"}),
-                      " "+REMINDER_FREQUENCIES.find(f=>f.id===r.frequency)?.label
+                      " "+REMINDER_FREQUENCIES.find(fr=>fr.id===r.frequency)?.label
                     )
                   ),
-                  r.message&&React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginBottom:4,lineHeight:1.5}},r.message),
+                  r.message&&React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginBottom:6,lineHeight:1.5}},r.message),
+                  /* Category + ClassType pills */
+                  React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}},
+                    r.category&&React.createElement("span",{style:{
+                      fontSize:10,padding:"2px 9px",borderRadius:10,
+                      background:catCol+"14",border:`1px solid ${catCol}40`,
+                      color:catCol,fontWeight:600,
+                      display:"inline-flex",alignItems:"center",gap:4
+                    }},
+                      React.createElement(Icon,{n:txIco,size:10,col:catCol}),
+                      " ",r.category
+                    ),
+                    txType&&React.createElement("span",{style:{
+                      fontSize:10,padding:"2px 9px",borderRadius:10,
+                      background:txCol+"14",border:`1px solid ${txCol}40`,
+                      color:txCol,fontWeight:600,
+                      display:"inline-flex",alignItems:"center",gap:4
+                    }},
+                      React.createElement(Icon,{n:txIco,size:10,col:txCol}),
+                      " ",txType
+                    )
+                  ),
+                  /* Meta row — date / frequency / postponed */
                   React.createElement("div",{style:{fontSize:11,color:"var(--text6)",display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}},
                     React.createElement("span",{style:{display:"inline-flex",alignItems:"center",gap:4}},React.createElement(Icon,{n:"calendar",size:11,col:"var(--text6)"}),"\u00a0Due: ",React.createElement("strong",{style:{color:"var(--text4)"}},fmtDate(r.nextDate||r.date))),
-                    r.type==="recurring"&&r.frequency&&React.createElement("span",{style:{display:"inline-flex",alignItems:"center",gap:4}},React.createElement(Icon,{n:"refresh",size:11,col:"var(--text6)"}),"\u00a0Repeats ",REMINDER_FREQUENCIES.find(f=>f.id===r.frequency)?.label?.toLowerCase()),
+                    r.type==="recurring"&&r.frequency&&React.createElement("span",{style:{display:"inline-flex",alignItems:"center",gap:4}},React.createElement(Icon,{n:"refresh",size:11,col:"var(--text6)"}),"\u00a0Repeats ",REMINDER_FREQUENCIES.find(fr=>fr.id===r.frequency)?.label?.toLowerCase()),
                     r.postponedDate&&React.createElement("span",{style:{color:"#ca8a04",display:"inline-flex",alignItems:"center",gap:4}},
                       React.createElement(Icon,{n:"clock",size:11,col:"#ca8a04"}),"\u00a0Postponed to ",fmtDate(r.postponedDate)
                     )
@@ -375,6 +465,7 @@ const RemindersSettingsPanel = ({state, dispatch}) => {
     /* Form modal */
     showForm&&React.createElement(ReminderFormModal,{
       reminder:editTarget,
+      categories:cats,
       onSave:handleSave,
       onClose:()=>{setShowForm(false);setEditTarget(null);}
     }),
@@ -399,11 +490,11 @@ const RemindersSettingsPanel = ({state, dispatch}) => {
 
 /* ─────────────────────────────────────────────────────────────────────────
    REMINDER TOAST MANAGER
-   Renders a stack of toast cards for due reminders on the home screen.
+   Renders a centered modal overlay for due reminders on the home screen.
    ───────────────────────────────────────────────────────────────────────── */
 const ReminderToastManager = ({state, dispatch, isMobile}) => {
-  /* Only run on dashboard */
   const reminders = state.reminders || [];
+  const cats = state.categories || [];
   const [dismissed, setDismissed] = useState(new Set()); // IDs dismissed this session
   const [postponeId, setPostponeId] = useState(null);
   const [postponeDate, setPostponeDate] = useState("");
@@ -423,7 +514,12 @@ const ReminderToastManager = ({state, dispatch, isMobile}) => {
   const reminder = due[currentIdx] || null;
   if(!reminder) return null;
 
-  const cat = _reminderCat(reminder.category);
+  /* Resolve category + colors */
+  const resolved  = _resolveCat(reminder.category, cats);
+  const txType    = reminder.txType || (resolved ? resolved.classType : "Expense");
+  const catColor  = resolved ? resolved.color : CLASSTYPE_COLOR(txType);
+  const txIcon    = CLASSTYPE_ICON(txType);
+
   const today = TODAY();
   const dueDate = reminder.nextDate || reminder.date;
   const daysOverdue = dueDate < today
@@ -462,7 +558,7 @@ const ReminderToastManager = ({state, dispatch, isMobile}) => {
     if(currentIdx>0) setCurrentIdx(i=>i-1);
   };
 
-  const accentColor = isOverdue ? "#ef4444" : isToday ? "#ea580c" : cat.color;
+  const accentColor = isOverdue ? "#ef4444" : isToday ? "#ea580c" : catColor;
 
   /* Minimum postpone date = tomorrow */
   const minPostpone = new Date();
@@ -501,16 +597,16 @@ const ReminderToastManager = ({state, dispatch, isMobile}) => {
         height:3, background:`linear-gradient(90deg,${accentColor},${accentColor}88)`,
       }}),
 
-      React.createElement("div",{style:{padding:"14px 16px 16px"}},
+      React.createElement("div",{style:{padding:"16px 18px 18px"}},
         /* Header row */
-        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:10}},
-          /* Icon */
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:12}},
+          /* Category icon ring */
           React.createElement("div",{style:{
             width:44,height:44,borderRadius:12,flexShrink:0,
             background:`${accentColor}18`, border:`1.5px solid ${accentColor}44`,
             display:"flex",alignItems:"center",justifyContent:"center",color:accentColor
-          }},React.createElement(Icon,{n:cat.icon,size:22,col:accentColor})),
-          /* Title + badge */
+          }},React.createElement(Icon,{n:txIcon,size:22,col:accentColor})),
+          /* Title + status label */
           React.createElement("div",{style:{flex:1,minWidth:0}},
             React.createElement("div",{style:{
               fontSize:10,fontWeight:700,letterSpacing:.8,textTransform:"uppercase",
@@ -554,6 +650,30 @@ const ReminderToastManager = ({state, dispatch, isMobile}) => {
           },"×")
         ),
 
+        /* Category + ClassType pills */
+        reminder.category&&React.createElement("div",{style:{
+          display:"flex",gap:6,flexWrap:"wrap",marginBottom:10
+        }},
+          React.createElement("span",{style:{
+            fontSize:10,padding:"2px 10px",borderRadius:10,
+            background:catColor+"14",border:`1px solid ${catColor}40`,
+            color:catColor,fontWeight:600,
+            display:"inline-flex",alignItems:"center",gap:4
+          }},
+            React.createElement(Icon,{n:txIcon,size:10,col:catColor}),
+            " ",reminder.category
+          ),
+          txType&&React.createElement("span",{style:{
+            fontSize:10,padding:"2px 10px",borderRadius:10,
+            background:CLASSTYPE_COLOR(txType)+"14",border:`1px solid ${CLASSTYPE_COLOR(txType)}40`,
+            color:CLASSTYPE_COLOR(txType),fontWeight:600,
+            display:"inline-flex",alignItems:"center",gap:4
+          }},
+            React.createElement(Icon,{n:CLASSTYPE_ICON(txType),size:10,col:CLASSTYPE_COLOR(txType)}),
+            " ",txType
+          )
+        ),
+
         /* Message */
         reminder.message&&React.createElement("div",{style:{
           fontSize:12,color:"var(--text5)",lineHeight:1.55,marginBottom:10,
@@ -571,7 +691,7 @@ const ReminderToastManager = ({state, dispatch, isMobile}) => {
             fontSize:10,padding:"2px 8px",borderRadius:10,
             background:"var(--accentbg2)",border:"1px solid var(--accentbg5)",
             color:"var(--accent)",fontWeight:600,display:"inline-flex",alignItems:"center",gap:3
-          }},React.createElement(Icon,{n:"refresh",size:9,col:"var(--accent)"}),"\u00a0",REMINDER_FREQUENCIES.find(f=>f.id===reminder.frequency)?.label)
+          }},React.createElement(Icon,{n:"refresh",size:9,col:"var(--accent)"}),"\u00a0",REMINDER_FREQUENCIES.find(fr=>fr.id===reminder.frequency)?.label)
         ),
 
         /* Postpone expander */
