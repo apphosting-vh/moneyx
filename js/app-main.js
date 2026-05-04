@@ -2601,6 +2601,10 @@ function App(){
     StorageWarnBanner,
     BackupWarnBanner,
     /* ── Reminder Toast Manager ── */
+    /* Global Notification Sync */
+    typeof GlobalNotificationSync !== "undefined"
+      && React.createElement(GlobalNotificationSync,{state,dispatch}),
+    /* Reminder Toast Manager */
     tab==="dashboard"&&React.createElement(ReminderToastManager,{state,dispatch,isMobile}),
     /* ── Undo Toast ── */
     undoSnap&&React.createElement("div",{style:{

@@ -48,9 +48,11 @@ function getDueReminders(reminders, windowDays=0){
     const due = r.nextDate || r.date;
     if(!due) return false;
     const dueMs = new Date(due+"T12:00:00").getTime();
-    const diff = Math.floor((todayMs - dueMs) / 86400000); // positive = overdue
-    const ahead = Math.floor((dueMs - todayMs) / 86400000); // positive = future
-    // Show if overdue (any day) or due within windowDays ahead
+    // Offset by daysBefore so the reminder triggers N days before the actual due date
+    const triggerMs = dueMs - ((parseInt(r.daysBefore)||0) * 86400000);
+    const diff  = Math.floor((todayMs - triggerMs) / 86400000); // positive = on/overdue trigger
+    const ahead = Math.floor((triggerMs - todayMs) / 86400000); // positive = future
+    // Show if trigger date is today or past, or within windowDays ahead
     return diff >= 0 || (windowDays>0 && ahead >= 0 && ahead <= windowDays);
   }).sort((a,b)=>{
     const da=a.nextDate||a.date, db=b.nextDate||b.date;
@@ -303,6 +305,10 @@ const RemindersSettingsPanel = ({state, dispatch}) => {
       )
     ),
 
+    /* Push notification banner */
+    typeof NotificationPermissionBanner !== "undefined"
+      && React.createElement(NotificationPermissionBanner, {state, dispatch}),
+
     /* Summary cards */
     React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:16}},
       ...[
@@ -509,7 +515,7 @@ const ReminderToastManager = ({state, dispatch, isMobile}) => {
   // Reset index if we run out of reminders
   useEffect(()=>{
     if(currentIdx>=due.length && due.length>0) setCurrentIdx(due.length-1);
-  },[due.length]);
+  },[due.length, currentIdx]);
 
   const reminder = due[currentIdx] || null;
   if(!reminder) return null;
@@ -535,18 +541,18 @@ const ReminderToastManager = ({state, dispatch, isMobile}) => {
   const handleComplete = () => {
     dispatch({type:"COMPLETE_REMINDER", id:reminder.id});
     setDismissed(s=>new Set([...s, reminder.id]));
-    if(currentIdx>0) setCurrentIdx(i=>i-1);
+    // Let the useEffect clamp currentIdx if it goes out of bounds
   };
 
   const handleSkip = () => {
     dispatch({type:"SKIP_REMINDER", id:reminder.id});
     setDismissed(s=>new Set([...s, reminder.id]));
-    if(currentIdx>0) setCurrentIdx(i=>i-1);
+    // Let the useEffect clamp currentIdx if it goes out of bounds
   };
 
   const handleDismiss = () => {
     setDismissed(s=>new Set([...s, reminder.id]));
-    if(currentIdx>0) setCurrentIdx(i=>i-1);
+    // Let the useEffect clamp currentIdx if it goes out of bounds
   };
 
   const handlePostpone = () => {
@@ -555,7 +561,7 @@ const ReminderToastManager = ({state, dispatch, isMobile}) => {
     setPostponeId(null);
     setPostponeDate("");
     setDismissed(s=>new Set([...s, reminder.id]));
-    if(currentIdx>0) setCurrentIdx(i=>i-1);
+    // Let the useEffect clamp currentIdx if it goes out of bounds
   };
 
   const accentColor = isOverdue ? "#ef4444" : isToday ? "#ea580c" : catColor;

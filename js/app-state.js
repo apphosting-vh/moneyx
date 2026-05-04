@@ -1,7 +1,7 @@
 /* ── INIT, constants, icons, categories, FD calcs, XIRR, reducer, localStorage ── */
 
 /* Helper: advance a date string by a recurrence frequency, returning new ISO date */
-function _advanceReminderDate(dateStr,frequency,daysBefore){
+function _advanceReminderDate(dateStr,frequency){
   const d=new Date(dateStr+"T12:00:00");
   switch(frequency){
     case"daily":   d.setDate(d.getDate()+1); break;
@@ -263,7 +263,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.5.9";
+const APP_VERSION="4.6.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1505,7 +1505,7 @@ const reducer=(s,a)=>{
         if(r.id!==a.id)return r;
         if(r.type==="recurring"&&r.frequency){
           /* Advance nextDate by frequency */
-          const next=_advanceReminderDate(r.nextDate||r.date,r.frequency,r.daysBefore||0);
+          const next=_advanceReminderDate(r.nextDate||r.date,r.frequency);
           return{...r,lastTriggeredDate:today,nextDate:next,status:"active"};
         }
         return{...r,status:"completed",completedDate:today,lastTriggeredDate:today};
@@ -1516,7 +1516,7 @@ const reducer=(s,a)=>{
       return{...s,reminders:(s.reminders||[]).map(r=>{
         if(r.id!==a.id)return r;
         if(r.type==="recurring"&&r.frequency){
-          const next=_advanceReminderDate(r.nextDate||r.date,r.frequency,r.daysBefore||0);
+          const next=_advanceReminderDate(r.nextDate||r.date,r.frequency);
           return{...r,lastTriggeredDate:today,nextDate:next,status:"active"};
         }
         return{...r,lastTriggeredDate:today,status:"skipped"};
