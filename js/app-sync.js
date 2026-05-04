@@ -311,6 +311,7 @@ gdriveReadSyncFile = async () => {
       goals:        d.goals        || [],
       hiddenTabs:   d.hiddenTabs   || [],
       catRules:     d.catRules     || [],
+      reminders:    d.reminders    || [],
       insightPrefs: { ..._def.insightPrefs, ...(d.insightPrefs || {}) },
     });
 
@@ -361,6 +362,7 @@ gdriveUpsertSyncFile = async (state, manual) => {
         payees:       (state.payees    || []).length,
         scheduled:    (state.scheduled || []).length,
         notes:        (state.notes     || []).length,
+        reminders:    (state.reminders || []).length,
         nwSnapshots:  Object.keys(state.nwSnapshots || {}).length,
         eodDays:      Object.keys(state.eodPrices   || {}).length,
         eodNavDays:   Object.keys(state.eodNavs     || {}).length,
@@ -383,6 +385,7 @@ gdriveUpsertSyncFile = async (state, manual) => {
         goals:        state.goals        || [],
         hiddenTabs:   state.hiddenTabs   || [],
         catRules:     state.catRules     || [],
+        reminders:    state.reminders    || [],
         insightPrefs: { ...EMPTY_STATE().insightPrefs, ...(state.insightPrefs || {}) },
       },
     };
@@ -647,6 +650,7 @@ const CloudBackupPanel = ({ state, dispatch }) => {
         goals:        remote.state.goals        || [],
         hiddenTabs:   remote.state.hiddenTabs   || [],
         catRules:     remote.state.catRules     || [],
+        reminders:    remote.state.reminders    || [],
         insightPrefs: { ...EMPTY_STATE().insightPrefs, ...(remote.state.insightPrefs || {}) },
       };
 

@@ -894,6 +894,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFon
                     payees:state.payees.length,
                     scheduled:(state.scheduled||[]).length,
                     notes:(state.notes||[]).length,
+                    reminders:(state.reminders||[]).length,
                     nwSnapshots:Object.keys(state.nwSnapshots||{}).length,
                     eodDays:Object.keys(state.eodPrices||{}).length,
                     eodNavDays:Object.keys(state.eodNavs||{}).length,
@@ -916,6 +917,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFon
                     goals:state.goals||[],
                     hiddenTabs:state.hiddenTabs||[],
                     catRules:state.catRules||[],
+                    reminders:state.reminders||[],
                     insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})},
                   }
                 };
