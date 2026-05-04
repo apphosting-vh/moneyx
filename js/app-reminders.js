@@ -498,7 +498,7 @@ const RemindersSettingsPanel = ({state, dispatch}) => {
    REMINDER TOAST MANAGER
    Renders a centered modal overlay for due reminders on the home screen.
    ───────────────────────────────────────────────────────────────────────── */
-const ReminderToastManager = ({state, dispatch, isMobile}) => {
+const ReminderToastManager = ({state, dispatch}) => {
   const reminders = state.reminders || [];
   const cats = state.categories || [];
   const [dismissed, setDismissed] = useState(new Set()); // IDs dismissed this session
@@ -572,6 +572,7 @@ const ReminderToastManager = ({state, dispatch, isMobile}) => {
   const minPostponeStr = minPostpone.toISOString().split("T")[0];
 
   return React.createElement("div",{
+    onClick:handleDismiss,
     style:{
       position:"fixed",
       inset:0,
@@ -585,10 +586,12 @@ const ReminderToastManager = ({state, dispatch, isMobile}) => {
       WebkitBackdropFilter:"blur(6px)",
       animation:"reminderOverlayIn .25s ease forwards",
       fontFamily:"'DM Sans',sans-serif",
+      overscrollBehavior:"contain",
+      overflow:"hidden",
     }
   },
     /* Modal card */
-    React.createElement("div",{style:{
+    React.createElement("div",{key:reminder.id, onClick:e=>e.stopPropagation(), style:{
       background:"var(--modal-bg)",
       border:`1.5px solid ${accentColor}55`,
       borderRadius:20,
@@ -633,7 +636,7 @@ const ReminderToastManager = ({state, dispatch, isMobile}) => {
           due.length>1&&React.createElement("div",{style:{
             display:"flex",alignItems:"center",gap:4,flexShrink:0
           }},
-            currentIdx>0&&React.createElement("button",{onClick:()=>setCurrentIdx(i=>i-1),
+            currentIdx>0&&React.createElement("button",{onClick:()=>{setCurrentIdx(i=>i-1);setPostponeId(null);setPostponeDate("");},
               style:{background:"none",border:"1px solid var(--border)",borderRadius:6,
                 color:"var(--text5)",cursor:"pointer",fontSize:11,padding:"2px 6px",
                 fontFamily:"'DM Sans',sans-serif"}
@@ -641,7 +644,7 @@ const ReminderToastManager = ({state, dispatch, isMobile}) => {
             React.createElement("span",{style:{fontSize:10,color:"var(--text5)",whiteSpace:"nowrap"}},
               `${currentIdx+1}/${due.length}`
             ),
-            currentIdx<due.length-1&&React.createElement("button",{onClick:()=>setCurrentIdx(i=>i+1),
+            currentIdx<due.length-1&&React.createElement("button",{onClick:()=>{setCurrentIdx(i=>i+1);setPostponeId(null);setPostponeDate("");},
               style:{background:"none",border:"1px solid var(--border)",borderRadius:6,
                 color:"var(--text5)",cursor:"pointer",fontSize:11,padding:"2px 6px",
                 fontFamily:"'DM Sans',sans-serif"}

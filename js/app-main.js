@@ -2605,7 +2605,7 @@ function App(){
     typeof GlobalNotificationSync !== "undefined"
       && React.createElement(GlobalNotificationSync,{state,dispatch}),
     /* Reminder Toast Manager */
-    tab==="dashboard"&&React.createElement(ReminderToastManager,{state,dispatch,isMobile}),
+    tab==="dashboard"&&React.createElement(ReminderToastManager,{state,dispatch}),
     /* ── Undo Toast ── */
     undoSnap&&React.createElement("div",{style:{
       position:"fixed",bottom:isMobile?88:28,left:"50%",transform:"translateX(-50%)",
