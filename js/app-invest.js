@@ -2487,6 +2487,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
     const q=encodeURIComponent(srch);
     const searchBase="https://api.mfapi.in/mf/search?q="+q;
     const proxies=[
+      "https://api.cors.lol/?url="+encodeURIComponent(searchBase),
       "https://corsproxy.io/?"+encodeURIComponent(searchBase),
       "https://api.allorigins.win/raw?url="+encodeURIComponent(searchBase),
       "https://api.allorigins.win/get?url="+encodeURIComponent(searchBase),

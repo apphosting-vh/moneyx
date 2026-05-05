@@ -145,11 +145,14 @@ const getIndianFYDates=(fyStartYear)=>{
      • InvestDashboard (⟳ Refresh Live Prices button)
      • Auto EOD snapshot background task (App useEffect)
    Fallback chain per ticker:
-     1. Stooq direct (CSV)
-     2. Stooq via corsproxy.io
-     3. Stooq via allorigins.win
-     4–7. Yahoo Finance v8 via corsproxy.io / allorigins / codetabs / thingproxy
-     8. Yahoo Finance v7 quote endpoint via corsproxy.io / allorigins
+     1. Stooq via api.cors.lol   — newer maintained proxy, good uptime
+     2. Stooq via corsproxy.io   — free tier, rate-limited
+     3. Stooq via cors.eu.org    — European proxy, stable
+     4. Stooq via codetabs.com   — rate-limited fallback
+     5–8. Yahoo Finance v8 via api.cors.lol / corsproxy.io / cors.eu.org / codetabs
+     9. Yahoo Finance v7 quote endpoint via same proxies
+   NOTE: allorigins.win intentionally excluded from Yahoo/Stooq chains —
+   it explicitly blocklists financial data domains.
    Returns a positive number or null.
    ══════════════════════════════════════════════════════════════════════════ */
 const _pos=v=>{const n=parseFloat(v);return n>0?Math.round(n*100)/100:null;};
@@ -194,13 +197,13 @@ const fetchTickerPrice=async(rawTicker)=>{
   const _fetch=async()=>{
 
     /* ── Stooq via CORS proxies only (direct stooq.com always fails in PWA mode) ── */
+    /* NOTE: allorigins.win intentionally omitted — it blocklists stooq.com        */
     const stooqUrl="https://stooq.com/q/l/?s="+encodeURIComponent(ticker.toLowerCase()+".in")+"&f=sd2t2ohlcv&h&e=csv";
     for(const proxyUrl of[
+      "https://api.cors.lol/?url="+encodeURIComponent(stooqUrl),
       "https://corsproxy.io/?"+encodeURIComponent(stooqUrl),
       "https://cors.eu.org/"+stooqUrl,
       "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(stooqUrl),
-      "https://thingproxy.freeboard.io/fetch/"+stooqUrl,
-      "https://api.allorigins.win/raw?url="+encodeURIComponent(stooqUrl),
     ]){
       try{
         const r=await _fetchX(proxyUrl);if(!r.ok)continue;
@@ -211,14 +214,14 @@ const fetchTickerPrice=async(rawTicker)=>{
       }catch{}
     }
 
-    /* ── Yahoo Finance v8 — query1 + query2 hosts, 3 CORS proxies, 3 symbol suffixes ── */
+    /* ── Yahoo Finance v8 — query1 + query2 hosts, 4 CORS proxies, 3 symbol suffixes ── */
+    /* NOTE: allorigins.win intentionally omitted — it blocklists finance.yahoo.com  */
     const yHosts=["query1.finance.yahoo.com","query2.finance.yahoo.com"];
     const yProxyFns=[
+      u=>"https://api.cors.lol/?url="+encodeURIComponent(u),
       u=>"https://corsproxy.io/?"+encodeURIComponent(u),
       u=>"https://cors.eu.org/"+u,
       u=>"https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(u),
-      u=>"https://thingproxy.freeboard.io/fetch/"+u,
-      u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u),
     ];
     for(const host of yHosts){
       for(const mkP of yProxyFns){
@@ -238,14 +241,15 @@ const fetchTickerPrice=async(rawTicker)=>{
     }
 
     /* ── Yahoo Finance v7 quote endpoint ── */
+    /* NOTE: allorigins.win intentionally omitted — blocklists finance.yahoo.com */
     for(const host of yHosts){
       const v7url="https://"+host+"/v7/finance/quote?symbols="+
         encodeURIComponent(ticker+".NS,"+ticker+".BO")+"&fields=regularMarketPrice,previousClose";
       for(const proxy of[
+        "https://api.cors.lol/?url="+encodeURIComponent(v7url),
         "https://corsproxy.io/?"+encodeURIComponent(v7url),
         "https://cors.eu.org/"+v7url,
         "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(v7url),
-        "https://api.allorigins.win/raw?url="+encodeURIComponent(v7url),
       ]){
         try{
           const r=await _fetchX(proxy);if(!r.ok)continue;
@@ -338,6 +342,7 @@ const _unwrapMfapi=(raw)=>{
 const fetchNavFromAMFI=async(code)=>{
   const amfiUrl="https://www.amfiindia.com/spages/NAVAll.txt";
   const proxies=[
+    "https://api.cors.lol/?url="+encodeURIComponent(amfiUrl),
     "https://corsproxy.io/?"+encodeURIComponent(amfiUrl),
     "https://cors.eu.org/"+amfiUrl,
     "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(amfiUrl),
@@ -371,6 +376,7 @@ const fetchOneNav=async(code)=>{
   const base="https://api.mfapi.in/mf/"+code;
   const mfProxies=[
     base,  /* direct — works from proper HTTPS origins; fails silently from null/file:// */
+    "https://api.cors.lol/?url="+encodeURIComponent(base),
     "https://corsproxy.io/?"+encodeURIComponent(base),
     "https://cors.eu.org/"+base,
     "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(base),
@@ -415,12 +421,12 @@ const fetchHistoricalPrices=async(rawTicker,fromDate)=>{
 
     const hosts=["query1.finance.yahoo.com","query2.finance.yahoo.com"];
     const symbols=[ticker+".NS",ticker+".BO",ticker];
+    /* NOTE: allorigins.win intentionally omitted — it blocklists finance.yahoo.com */
     const proxyFns=[
+      u=>"https://api.cors.lol/?url="+encodeURIComponent(u),
       u=>"https://corsproxy.io/?"+encodeURIComponent(u),
       u=>"https://cors.eu.org/"+u,
       u=>"https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(u),
-      u=>"https://thingproxy.freeboard.io/fetch/"+u,
-      u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u),
     ];
 
     for(const sym of symbols){
