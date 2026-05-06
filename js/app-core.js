@@ -273,6 +273,130 @@ const fetchTickerPrice=async(rawTicker)=>{
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
+   MARKET INDICES TICKER — Indian Indexes + Commodities
+   Primary: NSE India /api/allIndices via cors.lol (single request, all indexes)
+   Fallback: Stooq for commodities (Gold, Silver, Crude Oil)
+   Returns array of {symbol, name, price, change, changePct, prevClose, currency}.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Indexes to show — matched by indexSymbol from NSE API response */
+const MARKET_INDEX_MAP=[
+  {nseKey:"NIFTY 50",          name:"Nifty 50",          group:"Broad"},
+  {nseKey:"NIFTY MIDCAP 50",   name:"Nifty Midcap 50",   group:"Broad"},
+  {nseKey:"NIFTY SMLCAP 100",  name:"Nifty Smallcap 100",group:"Broad"},
+  {nseKey:"NIFTY BANK",        name:"Bank Nifty",         group:"Sector"},
+  {nseKey:"NIFTY IT",          name:"Nifty IT",           group:"Sector"},
+  {nseKey:"NIFTY PHARMA",      name:"Nifty Pharma",       group:"Sector"},
+  {nseKey:"NIFTY AUTO",        name:"Nifty Auto",         group:"Sector"},
+  {nseKey:"NIFTY FMCG",        name:"Nifty FMCG",         group:"Sector"},
+  {nseKey:"NIFTY METAL",       name:"Nifty Metal",        group:"Sector"},
+  {nseKey:"NIFTY REALTY",      name:"Nifty Realty",       group:"Sector"},
+  {nseKey:"NIFTY ENERGY",      name:"Nifty Energy",       group:"Sector"},
+  {nseKey:"NIFTY INFRA",       name:"Nifty Infra",        group:"Sector"},
+  {nseKey:"NIFTY PSE",         name:"Nifty PSE",          group:"Sector"},
+];
+
+/* Commodity tickers via Stooq (USD-denominated) */
+const COMMODITY_LIST=[
+  {stooq:"xauusd", name:"Gold",           currency:"USD"},
+  {stooq:"xagusd", name:"Silver",         currency:"USD"},
+  {stooq:"cl.f",   name:"Crude Oil (WTI)",currency:"USD"},
+];
+
+const fetchMarketIndices=async()=>{
+  const out=[];
+  const overallCap=new Promise(r=>setTimeout(()=>r(null),18000));
+
+  const _fetch=async()=>{
+
+    /* ── 1. NSE India API for all Indian indexes (single request) ── */
+    const nseUrl="https://www.nseindia.com/api/allIndices";
+    const nseProxies=[
+      "https://api.cors.lol/?url="+encodeURIComponent(nseUrl),
+      "https://cors.eu.org/"+nseUrl,
+      "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(nseUrl),
+    ];
+    let nseData=null;
+    for(const proxyUrl of nseProxies){
+      try{
+        const r=await _fetchX(proxyUrl,{},10000);if(!r.ok)continue;
+        const txt=await _readBody(r,8000);
+        let json;try{json=JSON.parse(txt);}catch{continue;}
+        const payload=json?.contents?JSON.parse(json.contents):json;
+        if(Array.isArray(payload?.data)){nseData=payload.data;break;}
+      }catch{}
+    }
+
+    if(nseData){
+      /* Build a lookup by indexSymbol for fast matching */
+      const bySym={};
+      nseData.forEach(d=>{if(d.indexSymbol)bySym[d.indexSymbol]=d;});
+
+      for(const cfg of MARKET_INDEX_MAP){
+        const d=bySym[cfg.nseKey];
+        if(!d)continue;
+        const price=parseFloat(d.last);
+        const prevClose=parseFloat(d.previousClose);
+        const change=parseFloat(d.variation)||0;
+        const changePct=parseFloat(d.percentChange)||0;
+        if(isNaN(price))continue;
+        out.push({
+          symbol:cfg.nseKey,
+          name:cfg.name,
+          group:cfg.group,
+          price,
+          prevClose:!isNaN(prevClose)?prevClose:null,
+          change,
+          changePct,
+          currency:"INR",
+        });
+      }
+    }
+
+    /* ── 2. Commodities via Stooq ── */
+    const fetchStooq=async(item)=>{
+      const stooqUrl="https://stooq.com/q/l/?s="+encodeURIComponent(item.stooq)+"&f=sd2t2ohlcv&h&e=csv";
+      const proxies=[
+        "https://api.cors.lol/?url="+encodeURIComponent(stooqUrl),
+        "https://cors.eu.org/"+stooqUrl,
+        "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(stooqUrl),
+      ];
+      for(const proxyUrl of proxies){
+        try{
+          const r=await _fetchX(proxyUrl,{},8000);if(!r.ok)continue;
+          const csv=_unwrap(await _readBody(r,6000));
+          const lines=csv.trim().split("\n");if(lines.length<2)continue;
+          const cols=lines[1].split(",");
+          const close=parseFloat(cols[6]);
+          const open=parseFloat(cols[3]);
+          if(isNaN(close)||close<=0)continue;
+          const change=!isNaN(open)&&open>0?close-open:0;
+          const changePct=!isNaN(open)&&open>0?(change/open*100):0;
+          return{
+            symbol:item.stooq,
+            name:item.name,
+            group:"Commodity",
+            price:Math.round(close*100)/100,
+            prevClose:null,
+            change:Math.round(change*100)/100,
+            changePct:Math.round(changePct*100)/100,
+            currency:item.currency,
+          };
+        }catch{}
+      }
+      return null;
+    };
+
+    const commodityResults=await Promise.all(COMMODITY_LIST.map(c=>fetchStooq(c)));
+    commodityResults.forEach(r=>{if(r)out.push(r);});
+
+    return out;
+  };
+
+  return Promise.race([_fetch(),overallCap]).then(r=>r||[]);
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
    MF NAV DATE HELPERS
    mfapi.in returns navDate in "DD-MMM-YYYY" format (e.g. "22-Feb-2026").
    eodNavs keys must be ISO "YYYY-MM-DD" for correct chronological sorting
@@ -732,7 +856,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.6.6";
+const APP_VERSION="4.7.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{

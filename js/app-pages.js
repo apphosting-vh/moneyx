@@ -6261,6 +6261,142 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   );
 });
 
+/* ══════════════════════════════════════════════════════════════════════════
+   MarketTicker — live scrolling ticker for Indian indexes + commodities
+   Shown at the top of the Shares tab in InvestSection.
+   ══════════════════════════════════════════════════════════════════════════ */
+const MarketTicker=React.memo(()=>{
+  const[data,setData]=React.useState([]);
+  const[loading,setLoading]=React.useState(false);
+  const[error,setError]=React.useState(null);
+  const[lastUpdated,setLastUpdated]=React.useState(null);
+  const scrollRef=React.useRef(null);
+  const autoScrollRef=React.useRef(null);
+
+  const load=React.useCallback(async()=>{
+    setLoading(true);setError(null);
+    try{
+      const d=await fetchMarketIndices();
+      if(d.length){setData(d);setLastUpdated(new Date());}
+      else setError("Could not fetch market data");
+    }catch(e){setError(e.message||"Failed to load");}
+    setLoading(false);
+  },[]);
+
+  /* Auto-load on mount */
+  React.useEffect(()=>{load();},[load]);
+
+  /* Auto-refresh every 60 seconds */
+  React.useEffect(()=>{
+    const iv=setInterval(load,60000);
+    return()=>clearInterval(iv);
+  },[load]);
+
+  /* Auto-scroll animation */
+  React.useEffect(()=>{
+    const el=scrollRef.current;if(!el||data.length<2)return;
+    let pos=0;let dir=1;let paused=false;
+    const onEnter=()=>{paused=true;};
+    const onLeave=()=>{paused=false;};
+    el.addEventListener("mouseenter",onEnter);
+    el.addEventListener("touchstart",onEnter,{passive:true});
+    el.addEventListener("mouseleave",onLeave);
+    el.addEventListener("touchend",onLeave);
+    const tick=()=>{
+      if(!paused&&el.scrollWidth>el.clientWidth){
+        pos+=dir*0.5;
+        if(pos>=el.scrollWidth-el.clientWidth-2){dir=-1;}
+        if(pos<=0){dir=1;}
+        el.scrollLeft=pos;
+      }
+      autoScrollRef.current=requestAnimationFrame(tick);
+    };
+    autoScrollRef.current=requestAnimationFrame(tick);
+    return()=>{
+      cancelAnimationFrame(autoScrollRef.current);
+      el.removeEventListener("mouseenter",onEnter);
+      el.removeEventListener("touchstart",onEnter);
+      el.removeEventListener("mouseleave",onLeave);
+      el.removeEventListener("touchend",onLeave);
+    };
+  },[data]);
+
+  if(!data.length&&!loading&&!error)return null;
+
+  const fmtPrice=(v,cur)=>{
+    if(v==null)return"--";
+    if(cur==="USD")return"$"+v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+    return"₹"+v.toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+  };
+
+  return React.createElement("div",{style:{marginBottom:16}},
+    /* Header row */
+    React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8,gap:8,flexWrap:"wrap"}},
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7}},
+        React.createElement("div",{style:{width:3,height:14,borderRadius:2,background:"#16a34a",flexShrink:0}}),
+        React.createElement("span",{style:{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:"var(--text5)"}},"Market Indices"),
+        loading&&React.createElement("span",{className:"spinr",style:{fontSize:12,color:"var(--text6)"},"aria-label":"Loading"},"⟳")
+      ),
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+        lastUpdated&&React.createElement("span",{style:{fontSize:10,color:"var(--text6)",whiteSpace:"nowrap"}},
+          "Updated "+lastUpdated.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})
+        ),
+        React.createElement("button",{
+          onClick:load,disabled:loading,
+          style:{fontSize:10,padding:"3px 10px",borderRadius:6,border:"1px solid rgba(22,163,74,.3)",background:loading?"var(--bg5)":"rgba(22,163,74,.08)",color:"#16a34a",cursor:loading?"default":"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:600,opacity:loading?0.5:1}
+        },loading?"⟳ …":"⟳ Refresh")
+      )
+    ),
+    /* Ticker strip */
+    error&&!data.length
+      ? React.createElement("div",{style:{padding:"12px 16px",borderRadius:10,background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.2)",fontSize:12,color:"#ef4444",textAlign:"center"}},error)
+      : React.createElement("div",{ref:scrollRef,style:{
+          display:"flex",gap:10,overflowX:"auto",overflowY:"hidden",
+          paddingBottom:6,scrollbarWidth:"thin",
+          scrollbarColor:"var(--border) transparent",
+          WebkitOverflowScrolling:"touch",
+        }},
+        data.map((item,idx)=>{
+          const isUp=item.change>=0;
+          const col=isUp?"#16a34a":"#ef4444";
+          const bgCol=isUp?"rgba(22,163,74,.06)":"rgba(239,68,68,.06)";
+          const borderCol=isUp?"rgba(22,163,74,.18)":"rgba(239,68,68,.18)";
+          const groupCol=item.group==="Commodity"?"#b45309":item.group==="Sector"?"#6d28d9":"#0e7490";
+          return React.createElement("div",{key:item.symbol+idx,style:{
+            flex:"0 0 auto",minWidth:155,maxWidth:200,
+            padding:"10px 14px",borderRadius:10,
+            background:bgCol,border:"1px solid "+borderCol,
+            cursor:"default",userSelect:"none",
+            transition:"transform .12s","&:hover":{transform:"translateY(-1px)"},
+          }},
+            /* Group badge */
+            React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:5}},
+              React.createElement("span",{style:{fontSize:8,fontWeight:700,padding:"1px 5px",borderRadius:4,background:groupCol+"18",color:groupCol,border:"1px solid "+groupCol+"30",textTransform:"uppercase",letterSpacing:.6}},item.group),
+              item.currency==="USD"&&React.createElement("span",{style:{fontSize:8,fontWeight:600,color:"var(--text6)"}},"USD")
+            ),
+            /* Index name */
+            React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text2)",marginBottom:6,lineHeight:1.2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},item.name),
+            /* Price */
+            React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:15,color:"var(--text)",marginBottom:4,whiteSpace:"nowrap"}},fmtPrice(item.price,item.currency)),
+            /* Change row */
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}},
+              React.createElement("span",{style:{fontSize:11,fontWeight:700,color,lineHeight:1}},
+                isUp?"▲":"▼",
+                " ",
+                item.currency==="USD"
+                  ?"$"+Math.abs(item.change).toFixed(2)
+                  :"₹"+Math.abs(item.change).toFixed(2)
+              ),
+              React.createElement("span",{style:{fontSize:10,fontWeight:700,color,background:col+"15",padding:"1px 5px",borderRadius:4}},
+                (isUp?"+":"")+item.changePct.toFixed(2)+"%"
+              )
+            )
+          );
+        })
+      )
+  );
+});
+
 const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},historyCache={}})=>{
   const[tab,setTab]=useState(defaultTab);const[open,setOpen]=useState(false);const[navLoad,setNavLoad]=useState(false);
   React.useEffect(()=>{setTab(defaultTab);},[defaultTab]);
@@ -6769,6 +6905,8 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
       );
       })() /* close IIFE for zero-unit filter */
     ),
+    /* ── Market Indices Ticker ── */
+    tab==="shares"&&React.createElement(MarketTicker),
     /* ── Shares content */
     tab==="shares"&&(!shares.length?React.createElement(Empty,{icon:React.createElement(Icon,{n:"invest",size:18}),text:"No shares added yet"}):
       React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(720px,1fr))",gap:20}},
