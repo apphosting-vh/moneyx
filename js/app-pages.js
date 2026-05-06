@@ -2424,7 +2424,8 @@ const Dashboard=React.memo(({data,isMobile})=>{
           {id:"recent",     label:"Recent Transactions"},
           {id:"scheduled",  label:"Upcoming Scheduled"},
           {id:"nwtrend",    label:"Net Worth Trend"},
-          {id:"budget",     label:"Budget vs Actuals"},
+          {id:"budget",     label:"Budget vs Actuals — Monthly"},
+          {id:"budgetyearly",label:"Budget vs Actuals — Yearly"},
           {id:"moneysummary",label:"Monthly Summary (Where did my money go?)"},
           {id:"nwdonut",    label:"Net Worth Donut Chart"},
           {id:"budgetalerts",label:"Budget Alerts"},
@@ -3076,7 +3077,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
         )
       );
     })(),
-    /* ══ H: BUDGET VS ACTUALS WITH ROLLOVER ═════════════════════ */
+    /* ══ H: BUDGET VS ACTUALS — MONTHLY ════════════════════════ */
     W("budget")&&(()=>{
       const plans=data.insightPrefs?.budgetPlans||{};
       if(!Object.keys(plans).length)return null;
@@ -3103,7 +3104,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
       const curActuals=getActuals(thisMonth);
       const prevActuals=getActuals(prevMonth);
 
-      const rows=Object.entries(plans)
+      const allRows=Object.entries(plans)
         .filter(([cat,v])=>{
           if(!v||v<=0)return false;
           if(cat==="Taxes")return false;
@@ -3123,21 +3124,23 @@ const Dashboard=React.memo(({data,isMobile})=>{
           const pct=Math.min((actual/effectivePlan)*100,120);
           return{cat,plan,actual,prevActual,rawDelta,rollover,effectivePlan,pct};
         })
-        .sort((a,b)=>b.pct-a.pct)
-        .slice(0,8);
+        .sort((a,b)=>b.pct-a.pct);
+      /* Summary totals must cover ALL budgeted categories, not just the top 12 shown.
+         Slicing happens after so the card rows display only the highest-utilisation ones. */
+      const rows=allRows.slice(0,12);
       if(!rows.length)return null;
 
       const cat4Color=name=>(data.categories.find(c=>c.name===name)||{}).color||CAT_C[name]||"var(--accent)";
-      const totalPlan=rows.reduce((s,r)=>s+r.plan,0);
-      const totalActual=rows.reduce((s,r)=>s+r.actual,0);
+      const totalPlan=allRows.reduce((s,r)=>s+r.plan,0);
+      const totalActual=allRows.reduce((s,r)=>s+r.actual,0);
       /* Net rollover: sum the raw per-category deltas and clamp at zero once.
          This means overspending in one category cancels out savings in another —
          the "Rolled Over" pill is only shown when the whole budget truly came in under. */
-      const netRolloverRaw=rows.reduce((s,r)=>s+r.rawDelta,0);
+      const netRolloverRaw=allRows.reduce((s,r)=>s+r.rawDelta,0);
       const totalRollover=Math.max(0,netRolloverRaw);
 
       return React.createElement("div",{className:"db-card"},
-        SL("Budget vs Actuals",curName+" — with rollover from "+prevName+" · set budgets in Settings → Preferences"),
+        SL("Budget vs Actuals — Monthly",curName+" — with rollover from "+prevName+" · set budgets in Settings → Preferences"),
         /* Summary strip */
         React.createElement("div",{style:{display:"flex",gap:isMobile?8:16,marginBottom:12,flexWrap:"wrap"}},
           React.createElement("div",{style:{flex:"1 1 80px",background:"var(--bg5)",borderRadius:8,padding:"6px 10px",border:"1px solid var(--border2)"}},
@@ -3186,6 +3189,121 @@ const Dashboard=React.memo(({data,isMobile})=>{
               )
             );
           })
+        )
+      );
+    })(),
+
+    /* ══ H2: BUDGET VS ACTUALS — YEARLY ════════════════════════ */
+    W("budgetyearly")&&(()=>{
+      const yPlans=data.insightPrefs?.yearlyBudgetPlans||{};
+      if(!Object.values(yPlans).some(v=>v>0))return null;
+
+      /* Current Indian FY date range (Apr 1 → Mar 31) */
+      const fyStartYear=getCurrentIndianFY();
+      const fyDates=getIndianFYDates(fyStartYear);
+      const fyLabel=getIndianFYLabel(fyStartYear);
+      const fyFrom=fyDates.from, fyTo=fyDates.to;
+
+      /* Months elapsed in this FY (Apr=1 … Mar=12) */
+      const nowY=new Date();
+      const nowMo=nowY.getMonth(); // 0=Jan … 11=Dec
+      const monthsElapsed=nowMo>=3?(nowMo-3+1):(nowMo+9+1);
+      const timePct=Math.round((monthsElapsed/12)*100);
+
+      /* Compute YTD actuals per category */
+      const fyActuals={};
+      allBankTx.filter(t=>t.type==="debit"&&t.date>=fyFrom&&t.date<=fyTo).forEach(t=>{
+        const main=catMainName(t.cat||"Others");
+        const ct=catClassType(data.categories,t.cat||"Others");
+        if(ct==="Transfer"||ct==="Income"||ct==="Investment"||main==="Taxes")return;
+        fyActuals[main]=(fyActuals[main]||0)+t.amount;
+      });
+
+      const allYRows=Object.entries(yPlans)
+        .filter(([cat,v])=>{
+          if(!v||v<=0)return false;
+          if(cat==="Taxes")return false;
+          const ct=catClassType(data.categories,cat);
+          return ct!=="Investment"&&ct!=="Transfer"&&ct!=="Income";
+        })
+        .map(([cat,plan])=>{
+          const actual=fyActuals[cat]||0;
+          const pct=Math.min((actual/plan)*100,120);
+          const onTrackLimit=(timePct/100)*plan;
+          const status=actual>plan?"over":actual>onTrackLimit?"warn":"ok";
+          return{cat,plan,actual,pct,status,onTrackLimit};
+        })
+        .sort((a,b)=>b.pct-a.pct);
+
+      /* Summary totals from ALL yearly-budgeted categories */
+      const yRows=allYRows.slice(0,12);
+      if(!yRows.length)return null;
+
+      const cat4Color=name=>(data.categories.find(c=>c.name===name)||{}).color||CAT_C[name]||"var(--accent)";
+      const totalYPlan=allYRows.reduce((s,r)=>s+r.plan,0);
+      const totalYActual=allYRows.reduce((s,r)=>s+r.actual,0);
+      const totalYRemaining=Math.max(0,totalYPlan-totalYActual);
+      const onTrackTotal=(timePct/100)*totalYPlan;
+
+      return React.createElement("div",{className:"db-card"},
+        SL("Budget vs Actuals — Yearly",fyLabel+" · "+monthsElapsed+" of 12 months elapsed · set in Settings → Preferences"),
+        /* Summary strip */
+        React.createElement("div",{style:{display:"flex",gap:isMobile?8:16,marginBottom:12,flexWrap:"wrap"}},
+          React.createElement("div",{style:{flex:"1 1 80px",background:"var(--bg5)",borderRadius:8,padding:"6px 10px",border:"1px solid var(--border2)"}},
+            React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}},"Annual Budget"),
+            React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},INR(totalYPlan))
+          ),
+          React.createElement("div",{style:{flex:"1 1 80px",background:"rgba(14,116,144,.07)",borderRadius:8,padding:"6px 10px",border:"1px solid rgba(14,116,144,.2)"}},
+            React.createElement("div",{style:{fontSize:9,color:"#0e7490",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}},"FY Progress"),
+            React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"#0e7490",fontFamily:"'Sora',sans-serif"}},timePct+"% ("+monthsElapsed+" mo)")
+          ),
+          React.createElement("div",{style:{flex:"1 1 80px",background:totalYActual>totalYPlan?"rgba(239,68,68,.07)":totalYActual>onTrackTotal?"rgba(180,83,9,.07)":"var(--bg5)",borderRadius:8,padding:"6px 10px",border:"1px solid "+(totalYActual>totalYPlan?"rgba(239,68,68,.2)":totalYActual>onTrackTotal?"rgba(180,83,9,.2)":"var(--border2)")}},
+            React.createElement("div",{style:{fontSize:9,color:totalYActual>totalYPlan?"#ef4444":totalYActual>onTrackTotal?"#b45309":"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}},"Spent This FY"),
+            React.createElement("div",{style:{fontSize:13,fontWeight:700,color:totalYActual>totalYPlan?"#ef4444":totalYActual>onTrackTotal?"#b45309":"var(--text3)",fontFamily:"'Sora',sans-serif"}},INR(totalYActual))
+          ),
+          React.createElement("div",{style:{flex:"1 1 80px",background:"var(--bg5)",borderRadius:8,padding:"6px 10px",border:"1px solid var(--border2)"}},
+            React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:2}},"Remaining"),
+            React.createElement("div",{style:{fontSize:13,fontWeight:700,color:totalYActual>totalYPlan?"#ef4444":"#16a34a",fontFamily:"'Sora',sans-serif"}},
+              totalYActual>totalYPlan?"-"+INR(totalYActual-totalYPlan):INR(totalYRemaining)
+            )
+          )
+        ),
+        /* Category rows */
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(2,1fr)",gap:"4px 24px"}},
+          yRows.map(r=>{
+            const over=r.actual>r.plan;
+            const warn=!over&&r.actual>r.onTrackLimit;
+            const col=over?"#ef4444":warn?"#c2410c":r.pct>=50?"#b45309":"#16a34a";
+            const cc=cat4Color(r.cat);
+            /* Time-elapsed marker position (capped at 100% of bar width) */
+            const markerPct=Math.min(timePct,100);
+            return React.createElement("div",{key:r.cat,style:{padding:"8px 0",borderBottom:"1px solid var(--border2)"}},
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}},
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+                  React.createElement("span",{style:{width:7,height:7,borderRadius:2,background:cc,flexShrink:0,display:"inline-block"}}),
+                  React.createElement("span",{style:{fontSize:12,fontWeight:500,color:"var(--text3)"}},r.cat),
+                  over&&React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"#ef4444",background:"rgba(239,68,68,.1)",borderRadius:4,padding:"0px 5px"}},"▲ over"),
+                  warn&&React.createElement("span",{style:{fontSize:9,fontWeight:600,color:"#b45309",background:"rgba(180,83,9,.1)",borderRadius:4,padding:"0px 5px"}},"⚡ ahead")
+                ),
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+                  React.createElement("span",{style:{fontSize:11,fontFamily:"'Sora',sans-serif",fontWeight:700,color:col}},INR(r.actual)),
+                  React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"/ "+INR(r.plan))
+                )
+              ),
+              /* Progress bar with time-elapsed marker */
+              React.createElement("div",{style:{height:4,borderRadius:2,background:"var(--border)",overflow:"visible",position:"relative"}},
+                /* Actual spend fill */
+                React.createElement("div",{style:{position:"absolute",left:0,top:0,height:"100%",width:Math.min(r.pct,100)+"%",background:col,borderRadius:2,transition:"width 1s ease"}}),
+                /* Time-elapsed marker line */
+                React.createElement("div",{style:{position:"absolute",top:-2,height:8,width:2,borderRadius:1,background:"var(--text4)",opacity:.55,left:markerPct+"%",transform:"translateX(-50%)"},title:timePct+"% of year elapsed"})
+              )
+            );
+          })
+        ),
+        /* Legend for the marker */
+        React.createElement("div",{style:{marginTop:8,display:"flex",alignItems:"center",gap:5}},
+          React.createElement("div",{style:{width:2,height:8,borderRadius:1,background:"var(--text4)",opacity:.55,flexShrink:0}}),
+          React.createElement("span",{style:{fontSize:10,color:"var(--text6)"}},timePct+"% of "+fyLabel+" elapsed ("+monthsElapsed+" months). Bars above the marker indicate spending ahead of pace.")
         )
       );
     })(),
