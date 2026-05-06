@@ -6380,14 +6380,14 @@ const MarketTicker=React.memo(()=>{
             React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:15,color:"var(--text)",marginBottom:4,whiteSpace:"nowrap"}},fmtPrice(item.price,item.currency)),
             /* Change row */
             React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}},
-              React.createElement("span",{style:{fontSize:11,fontWeight:700,color,lineHeight:1}},
+              React.createElement("span",{style:{fontSize:11,fontWeight:700,color:col,lineHeight:1}},
                 isUp?"▲":"▼",
                 " ",
                 item.currency==="USD"
                   ?"$"+Math.abs(item.change).toFixed(2)
                   :"₹"+Math.abs(item.change).toFixed(2)
               ),
-              React.createElement("span",{style:{fontSize:10,fontWeight:700,color,background:col+"15",padding:"1px 5px",borderRadius:4}},
+              React.createElement("span",{style:{fontSize:10,fontWeight:700,color:col,background:col+"15",padding:"1px 5px",borderRadius:4}},
                 (isUp?"+":"")+item.changePct.toFixed(2)+"%"
               )
             )
