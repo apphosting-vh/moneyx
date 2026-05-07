@@ -23,23 +23,27 @@ const useDebouncedCallback=(fn,delay=200)=>{
    cdnjs.cloudflare.com is already in the trusted-domain whitelist above.      */
 window.__loadExportLibs=(function(){
   var _p=null;   // cached Promise — set on first call, reused for all subsequent ones
+  /* Load a single script tag; returns a Promise that resolves on load. */
+  function loadOne(src){
+    return new Promise(function(resolve,reject){
+      var s=document.createElement('script');
+      s.src=src; s.crossOrigin='anonymous';
+      s.onload=function(){ resolve(); };
+      s.onerror=function(){ reject(new Error('Failed to load: '+src)); };
+      document.head.appendChild(s);
+    });
+  }
   return function(){
     if(_p) return _p;  // already loading or loaded — return same promise
-    _p=new Promise(function(resolve,reject){
-      var LIBS=[
-        'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js',
-      ];
-      var done=0;
-      LIBS.forEach(function(src){
-        var s=document.createElement('script');
-        s.src=src; s.crossOrigin='anonymous';
-        s.onload=function(){if(++done===LIBS.length) resolve();};
-        s.onerror=function(e){_p=null; reject(new Error('Failed to load: '+src));};
-        document.head.appendChild(s);
-      });
-    });
+    /* xlsx can load in parallel with jsPDF, but the autotable plugin MUST come
+       after jsPDF (it patches the jsPDF prototype on execution). Load xlsx and
+       jsPDF concurrently, then chain autotable once jsPDF is ready.           */
+    _p=Promise.all([
+      loadOne('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'),
+      loadOne('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'),
+    ]).then(function(){
+      return loadOne('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js');
+    }).catch(function(err){ _p=null; throw err; });
     return _p;
   };
 }());
@@ -856,7 +860,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.7.3";
+const APP_VERSION="4.7.4";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
