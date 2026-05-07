@@ -6777,6 +6777,33 @@ const ProfitabilityMetrics=({shares,soldShareSnapshots={}})=>{
     return computeXIRR(cfs,dts);
   },[trades]);
 
+  /* ── Report 7: Time-Weighted vs Money-Weighted Return ── */
+  const twrData=React.useMemo(()=>{
+    if(trades.length<2)return null;
+    const sorted=[...trades].sort((a,b)=>(a.sellDate||"").localeCompare(b.sellDate||""));
+    const mwr=overallXirr;
+    let cumGrowth=1;
+    sorted.forEach(t=>{
+      const periodReturn=t.buyAmt>0?(t.pnl/t.buyAmt):0;
+      cumGrowth*=(1+periodReturn);
+    });
+    const twr=(cumGrowth-1)*100;
+    const firstBuy=sorted[0].buyDate;
+    const lastSell=sorted[sorted.length-1].sellDate;
+    const totalDays=firstBuy&&lastSell?Math.max(1,Math.floor((new Date(lastSell+"T12:00:00")-new Date(firstBuy+"T12:00:00"))/864e5)):365;
+    const years=totalDays/365.25;
+    const twrAnnualized=years>0?(Math.pow(cumGrowth,1/years)-1)*100:twr;
+    const mwrAnnualized=mwr;
+    const divergence=mwrAnnualized!==null?mwrAnnualized-twrAnnualized:null;
+    let interpretation="";
+    if(divergence!==null){
+      if(Math.abs(divergence)<1){interpretation="TWR and MWR are closely aligned — your timing of investments has minimal impact on returns.";}
+      else if(divergence>0){interpretation="MWR > TWR — you tend to invest more money before good periods. Your timing adds value.";}
+      else{interpretation="MWR < TWR — you tend to invest more money before bad periods. Consider smoothing entry timing (e.g., SIP).";}
+    }
+    return{twr,twrAnnualized,mwrAnnualized,divergence,totalDays,years,tradeCount:sorted.length,interpretation};
+  },[trades,overallXirr]);
+
   /* ── Report 6: Rolling 12-month realised gains ── */
   const rollingGains=React.useMemo(()=>{
     const soldTrades=trades.filter(t=>t.type==="sold"&&t.sellDate);
@@ -7029,10 +7056,52 @@ const ProfitabilityMetrics=({shares,soldShareSnapshots={}})=>{
       )
     ),
 
+
+    /* ══ Report 7: Time-Weighted vs Money-Weighted Returns ══ */
+    twrData&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
+      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
+        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},
+          React.createElement(Icon,{n:"clock",size:15}),"Time-Weighted vs Money-Weighted Returns"
+        ),
+        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},
+          twrData.tradeCount+" trades · "+twrData.years.toFixed(1)+"y span"
+        )
+      ),
+      React.createElement("div",{style:{padding:"16px 20px"}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}},
+          React.createElement("div",{style:{background:"rgba(14,116,144,.07)",border:"1px solid rgba(14,116,144,.2)",borderRadius:12,padding:"14px 16px"}},
+            React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Time-Weighted Return (TWR)"),
+            React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#0e7490"}},ret(twrData.twrAnnualized)+" p.a."),
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Geometric chain of per-trade returns")
+          ),
+          React.createElement("div",{style:{background:"rgba(109,40,217,.07)",border:"1px solid rgba(109,40,217,.2)",borderRadius:12,padding:"14px 16px"}},
+            React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Money-Weighted Return (MWR)"),
+            React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#6d28d9"}},twrData.mwrAnnualized!==null?ret(twrData.mwrAnnualized)+" p.a.":"—"),
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"XIRR — larger trades have more weight")
+          )
+        ),
+        twrData.divergence!==null&&React.createElement("div",{style:{
+          display:"flex",alignItems:"center",gap:8,padding:"10px 14px",borderRadius:10,
+          background:Math.abs(twrData.divergence)<1?"rgba(22,163,74,.06)":twrData.divergence>0?"rgba(14,116,144,.06)":"rgba(239,68,68,.06)",
+          border:"1px solid "+(Math.abs(twrData.divergence)<1?"rgba(22,163,74,.15)":twrData.divergence>0?"rgba(14,116,144,.15)":"rgba(239,68,68,.15)"),
+          marginBottom:12
+        }},
+          React.createElement(Icon,{n:Math.abs(twrData.divergence)<1?"checkcircle":twrData.divergence>0?"invest":"warning",size:16,color:Math.abs(twrData.divergence)<1?"#16a34a":twrData.divergence>0?"#0e7490":"#ef4444"}),
+          React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:12,fontWeight:700,color:Math.abs(twrData.divergence)<1?"#16a34a":twrData.divergence>0?"#0e7490":"#ef4444"}},"Divergence: "+(twrData.divergence>0?"+":"")+twrData.divergence.toFixed(2)+"% p.a."),
+            React.createElement("div",{style:{fontSize:11,color:"var(--text4)",marginTop:2}},twrData.interpretation)
+          )
+        ),
+        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",lineHeight:1.6,padding:"8px 12px",background:"var(--bg5)",borderRadius:8}},
+          React.createElement("strong",null,"Why do they differ? "),"TWR measures compound growth regardless of how much money was invested at each point — it answers 'how did my strategy perform?' MWR (XIRR) accounts for the timing and size of cash flows — it answers 'what return did my actual dollars earn?' If MWR > TWR, you invested larger amounts before winning trades. If MWR < TWR, larger investments preceded losing trades."
+        )
+      )
+    ),
+
     /* ══ Methodology note ══ */
     React.createElement("div",{style:{padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
       React.createElement("strong",{style:{color:"var(--accent)"}},"Methodology: "),
-      "XIRR (Extended Internal Rate of Return) accounts for the exact timing of cash flows, making it the gold standard for comparing trades with different holding periods. A 20% gain in 3 months shows a much higher XIRR than the same gain over 3 years. Overall XIRR is money-weighted — larger trades have more influence. Rolling 12-month windows show trailing realised gains ending each month."
+      "XIRR (Extended Internal Rate of Return) accounts for the exact timing of cash flows, making it the gold standard for comparing trades with different holding periods. A 20% gain in 3 months shows a much higher XIRR than the same gain over 3 years. Overall XIRR is money-weighted — larger trades have more influence. Rolling 12-month windows show trailing realised gains ending each month. Time-Weighted Return (TWR) geometrically chains per-trade returns, eliminating the effect of cash flow timing. Money-Weighted Return (MWR/XIRR) weights returns by capital deployed. Divergence reveals whether investment timing helps or hurts."
     )
   );
 };
@@ -8097,6 +8166,32 @@ const CapitalEfficiency=({shares,soldShareSnapshots={}})=>{
     return{winRate,avgWin,avgLoss,winLossRatio,fullKelly,halfKelly,actualPct};
   },[trades]);
 
+  /* ── Report 6: Stock-by-Stock Alpha vs Nifty ── */
+  const stockAlphaData=React.useMemo(()=>{
+    if(!trades.length)return[];
+    const NIFTY_CAGR=0.12;
+    const stockMap={};
+    trades.forEach(t=>{
+      const key=(t.ticker||t.company||"Unknown").toUpperCase();
+      if(!stockMap[key])stockMap[key]={ticker:t.ticker||t.company||"Unknown",trades:[],totalPnl:0,totalNiftyReturn:0,totalAlpha:0,totalBuyAmt:0};
+      const st=stockMap[key];
+      st.trades.push(t);
+      st.totalPnl+=t.pnl;
+      st.totalBuyAmt+=t.buyAmt;
+      const days=t.holdDays||Math.max(1,Math.floor((new Date(t.sellDate+"T12:00:00")-new Date(t.buyDate+"T12:00:00"))/864e5));
+      const niftyReturn=t.buyAmt*(Math.pow(1+NIFTY_CAGR,days/365)-1);
+      const alpha=t.pnl-niftyReturn;
+      st.totalNiftyReturn+=niftyReturn;
+      st.totalAlpha+=alpha;
+    });
+    return Object.values(stockMap).map(st=>({
+      ...st,
+      alphaPct:st.totalBuyAmt>0?(st.totalAlpha/st.totalBuyAmt*100):0,
+      returnPct:st.totalBuyAmt>0?(st.totalPnl/st.totalBuyAmt*100):0,
+      winRate:st.trades.length>0?(st.trades.filter(t=>t.pnl>=0).length/st.trades.length*100):0,
+    })).sort((a,b)=>b.totalAlpha-a.totalAlpha);
+  },[trades]);
+
   /* ── Empty state ── */
   if(!trades.length)return React.createElement("div",{style:{textAlign:"center",padding:"48px 20px"}},
     React.createElement("div",{style:{fontSize:40,marginBottom:12,color:"var(--text6)"}},React.createElement(Icon,{n:"crystal",size:40})),
@@ -8382,6 +8477,50 @@ const CapitalEfficiency=({shares,soldShareSnapshots={}})=>{
                 :"Your edge is moderate. Focus on consistency rather than sizing up."
           )
         )
+      )
+    ),
+
+
+    /* ══ Report 6: Stock-by-Stock Alpha vs Nifty ══ */
+    stockAlphaData.length>0&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
+      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
+        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},
+          React.createElement(Icon,{n:"chart",size:15}),"Stock-by-Stock Alpha vs Nifty"
+        ),
+        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},
+          stockAlphaData.length+" stocks"
+        )
+      ),
+      React.createElement("div",{className:"mobile-scroll-table",style:{overflowX:"auto"}},
+        React.createElement("div",{style:{minWidth:700}},
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 60px 80px 80px 90px 70px 60px",gap:0,borderBottom:"1px solid var(--border)",background:"var(--bg4)"}},
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px"}},"Stock"),
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"center"}},"Trades"),
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Your Return"),
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Nifty Return"),
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Alpha (₹)"),
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Alpha (%)"),
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"center"}},"Win Rate")
+          ),
+          stockAlphaData.map((s,i)=>{
+            const isPositiveAlpha=s.totalAlpha>=0;
+            const niftyPct=s.totalBuyAmt>0?(s.totalNiftyReturn/s.totalBuyAmt*100):0;
+            return React.createElement("div",{key:s.ticker||i,style:{display:"grid",gridTemplateColumns:"2fr 60px 80px 80px 90px 70px 60px",gap:0,borderBottom:"1px solid var(--border2)",background:i%2===0?"transparent":"var(--bg4)",transition:"background .1s"},onMouseEnter:e=>e.currentTarget.style.background="var(--accentbg2)",onMouseLeave:e=>e.currentTarget.style.background=i%2===0?"transparent":"var(--bg4)"},
+              React.createElement("div",{style:{padding:"9px 8px",display:"flex",flexDirection:"column",gap:2,minWidth:0}},
+                React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},s.ticker)
+              ),
+              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"center",color:"var(--text3)"}},s.trades.length),
+              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",fontWeight:600,color:s.returnPct>=0?"#16a34a":"#ef4444"}},(s.returnPct>=0?"+":"")+s.returnPct.toFixed(2)+"%"),
+              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",color:"var(--text4)"}},(niftyPct>=0?"+":"")+niftyPct.toFixed(2)+"%"),
+              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"right",fontWeight:700,fontFamily:"'Sora',sans-serif",color:isPositiveAlpha?"#16a34a":"#ef4444"}},(isPositiveAlpha?"+":"")+INR(s.totalAlpha)),
+              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",fontWeight:600,color:isPositiveAlpha?"#16a34a":"#ef4444"}},(s.alphaPct>=0?"+":"")+s.alphaPct.toFixed(2)+"%"),
+              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"center",fontWeight:600,color:s.winRate>=50?"#16a34a":"#ef4444"}},s.winRate.toFixed(0)+"%")
+            );
+          })
+        )
+      ),
+      React.createElement("div",{style:{padding:"10px 16px",background:"var(--bg5)",borderTop:"1px solid var(--border)",fontSize:11,color:"var(--text5)",lineHeight:1.5}},
+        "Alpha = Your P&L − Nifty return for same capital & holding period (12% CAGR benchmark). Positive alpha means you outperformed the index."
       )
     ),
 
@@ -9581,6 +9720,95 @@ const RiskMetrics=({shares,soldShareSnapshots={}})=>{
     return Math.min(Math.round(score),100);
   },[trades,volatilityData,sharpeData,drawdownData,concentrationData]);
 
+  /* ── 5. Value at Risk (VaR) ── */
+  const varData=React.useMemo(()=>{
+    if(volatilityData.returns.length<5)return null;
+    const sorted=[...volatilityData.returns].sort((a,b)=>a-b);
+    const n=sorted.length;
+    const var95Idx=Math.floor(n*0.05);
+    const var99Idx=Math.floor(n*0.01);
+    const var95=sorted[var95Idx];
+    const var99=sorted[Math.max(var99Idx,0)];
+    const tailReturns=sorted.slice(0,var95Idx+1);
+    const expectedShortfall=tailReturns.length>0?tailReturns.reduce((s,r)=>s+r,0)/tailReturns.length:var95;
+    const z95=1.645;
+    const z99=2.326;
+    const parametricVar95=volatilityData.mean-z95*volatilityData.stdDev;
+    const parametricVar99=volatilityData.mean-z99*volatilityData.stdDev;
+    return{var95,var99,expectedShortfall,parametricVar95,parametricVar99,mean:volatilityData.mean,stdDev:volatilityData.stdDev,sampleSize:n,worstReturn:sorted[0],bestReturn:sorted[n-1]};
+  },[volatilityData]);
+
+  /* ── 6. Max Drawdown per Stock ── */
+  const stockDrawdowns=React.useMemo(()=>{
+    if(!trades.length)return[];
+    const stockMap={};
+    trades.forEach(t=>{
+      const key=(t.ticker||t.company||"Unknown").toUpperCase();
+      if(!stockMap[key])stockMap[key]={ticker:t.ticker||t.company||"Unknown",trades:[]};
+      stockMap[key].trades.push(t);
+    });
+    return Object.values(stockMap).map(st=>{
+      const sorted=[...st.trades].sort((a,b)=>(a.sellDate||"").localeCompare(b.sellDate||""));
+      let cumPnl=0,peak=0,maxDD=0,maxDDPct=0;
+      sorted.forEach(t=>{
+        cumPnl+=t.pnl;
+        if(cumPnl>peak)peak=cumPnl;
+        const dd=peak-cumPnl;
+        const ddPct=t.buyAmt>0?(dd/t.buyAmt*100):0;
+        if(dd>maxDD){maxDD=dd;maxDDPct=ddPct;}
+      });
+      return{ticker:st.ticker,tradeCount:sorted.length,totalPnl:sorted.reduce((s,t)=>s+t.pnl,0),maxDrawdown:maxDD,maxDrawdownPct:maxDDPct,};
+    }).sort((a,b)=>b.maxDrawdown-a.maxDrawdown);
+  },[trades]);
+
+  /* ── 7. Risk-Adjusted Rankings ── */
+  const riskAdjustedRankings=React.useMemo(()=>{
+    if(!trades.length)return[];
+    const stockMap={};
+    trades.forEach(t=>{
+      const key=(t.ticker||t.company||"Unknown").toUpperCase();
+      if(!stockMap[key])stockMap[key]={ticker:t.ticker||t.company||"Unknown",returns:[],pnl:0,buyAmt:0,tradeCount:0};
+      const st=stockMap[key];
+      st.returns.push(t.returnPct);
+      st.pnl+=t.pnl;
+      st.buyAmt+=t.buyAmt;
+      st.tradeCount++;
+    });
+    return Object.values(stockMap).map(st=>{
+      const mean=st.returns.reduce((s,r)=>s+r,0)/st.returns.length;
+      const variance=st.returns.length>1?st.returns.reduce((s,r)=>s+Math.pow(r-mean,2),0)/(st.returns.length-1):0;
+      const stdDev=Math.sqrt(variance);
+      const sharpe=stdDev>0?mean/stdDev:(mean>0?Infinity:0);
+      const winRate=st.returns.filter(r=>r>0).length/st.returns.length*100;
+      return{...st,mean,stdDev,sharpe,winRate,avgReturn:mean};
+    }).sort((a,b)=>b.sharpe-a.sharpe);
+  },[trades]);
+
+  /* ── 8. Tail Risk Analysis ── */
+  const tailRiskData=React.useMemo(()=>{
+    if(volatilityData.returns.length<5)return null;
+    const sorted=[...volatilityData.returns].sort((a,b)=>a-b);
+    const n=sorted.length;
+    const mean=volatilityData.mean;
+    const stdDev=volatilityData.stdDev;
+    const p5=sorted[Math.floor(n*0.05)];
+    const p10=sorted[Math.floor(n*0.10)];
+    const p25=sorted[Math.floor(n*0.25)];
+    const p50=sorted[Math.floor(n*0.50)];
+    const p75=sorted[Math.floor(n*0.75)];
+    const p90=sorted[Math.floor(n*0.90)];
+    const p95=sorted[Math.floor(n*0.95)];
+    const skewness=n>2?(sorted.reduce((s,r)=>s+Math.pow((r-mean)/stdDev,3),0)*n)/((n-1)*(n-2)):0;
+    const kurtosis=n>3?((sorted.reduce((s,r)=>s+Math.pow((r-mean)/stdDev,4),0)*n*(n+1))/((n-1)*(n-2)*(n-3))-(3*(n-1)*(n-1))/((n-2)*(n-3))):0;
+    const worst5=sorted.slice(0,5);
+    const best5=sorted.slice(-5).reverse();
+    const tail5Pct=Math.max(1,Math.floor(n*0.05));
+    const avgWorst=sorted.slice(0,tail5Pct).reduce((s,r)=>s+r,0)/tail5Pct;
+    const avgBest=sorted.slice(-tail5Pct).reduce((s,r)=>s+r,0)/tail5Pct;
+    const tailRatio=avgWorst!==0?Math.abs(avgBest/avgWorst):Infinity;
+    return{p5,p10,p25,p50,p75,p90,p95,skewness,kurtosis,worst5,best5,tailRatio,avgWorst,avgBest,sampleSize:n};
+  },[volatilityData]);
+
   if(!trades.length)return React.createElement("div",{style:{textAlign:"center",padding:"48px 20px"}},
     React.createElement("div",{style:{fontSize:40,marginBottom:12,color:"var(--text6)"}},React.createElement(Icon,{n:"warning",size:40})),
     React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text3)",marginBottom:4}},"No Trade Data"),
@@ -9725,10 +9953,203 @@ const RiskMetrics=({shares,soldShareSnapshots={}})=>{
       )
     ),
 
+
+    /* ══ Report: Value at Risk (VaR) ══ */
+    varData&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
+      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
+        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},
+          React.createElement(Icon,{n:"shield",size:15}),"Value at Risk (VaR)"
+        ),
+        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},
+          varData.sampleSize+" trades"
+        )
+      ),
+      React.createElement("div",{style:{padding:"16px 20px"}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:16}},
+          React.createElement("div",{style:{background:"rgba(239,68,68,.07)",border:"1px solid rgba(239,68,68,.2)",borderRadius:12,padding:"14px 16px"}},
+            React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"95% VaR"),
+            React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#ef4444"}},ret(varData.var95)),
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Worst 5% threshold (historical)")
+          ),
+          React.createElement("div",{style:{background:"rgba(220,38,38,.07)",border:"1px solid rgba(220,38,38,.2)",borderRadius:12,padding:"14px 16px"}},
+            React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"99% VaR"),
+            React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#dc2626"}},ret(varData.var99)),
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Worst 1% threshold")
+          ),
+          React.createElement("div",{style:{background:"rgba(245,158,11,.07)",border:"1px solid rgba(245,158,11,.2)",borderRadius:12,padding:"14px 16px"}},
+            React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Expected Shortfall (CVaR)"),
+            React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#f59e0b"}},ret(varData.expectedShortfall)),
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Average loss when beyond 95% VaR")
+          )
+        ),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}},
+          React.createElement("div",{style:{padding:"10px 14px",background:"var(--bg5)",borderRadius:8,fontSize:11,color:"var(--text5)"}},
+            React.createElement("div",{style:{fontWeight:600,color:"var(--text3)",marginBottom:4}},"Parametric VaR (Normal)"),
+            React.createElement("div",null,"95%: ",React.createElement("strong",{style:{color:"#ef4444"}},ret(varData.parametricVar95))),
+            React.createElement("div",null,"99%: ",React.createElement("strong",{style:{color:"#dc2626"}},ret(varData.parametricVar99)))
+          ),
+          React.createElement("div",{style:{padding:"10px 14px",background:"var(--bg5)",borderRadius:8,fontSize:11,color:"var(--text5)"}},
+            React.createElement("div",{style:{fontWeight:600,color:"var(--text3)",marginBottom:4}},"Return Distribution"),
+            React.createElement("div",null,"Mean: ",React.createElement("strong",null,ret(varData.mean))),
+            React.createElement("div",null,"Std Dev: ",React.createElement("strong",null,ret(varData.stdDev))),
+            React.createElement("div",null,"Worst: ",React.createElement("strong",{style:{color:"#ef4444"}},ret(varData.worstReturn))," | Best: ",React.createElement("strong",{style:{color:"#16a34a"}},ret(varData.bestReturn)))
+          )
+        ),
+        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",lineHeight:1.6,padding:"8px 12px",background:"var(--bg5)",borderRadius:8}},
+          React.createElement("strong",null,"Interpretation: "),"95% VaR of "+ret(varData.var95)+" means that on 95% of trades, your return was better than this. The remaining 5% of trades had losses at or below this level. Expected Shortfall (CVaR) tells you the average loss when you do breach the 95% threshold — it captures tail severity. Parametric VaR assumes normal distribution; compare with historical VaR to check for fat tails."
+        )
+      )
+    ),
+
+    /* ══ Report: Max Drawdown per Stock ══ */
+    stockDrawdowns.length>0&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
+      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
+        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},
+          React.createElement(Icon,{n:"trenddown",size:15}),"Max Drawdown per Stock"
+        ),
+        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},
+          stockDrawdowns.length+" stocks"
+        )
+      ),
+      React.createElement("div",{className:"mobile-scroll-table",style:{overflowX:"auto"}},
+        React.createElement("div",{style:{minWidth:550}},
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 60px 90px 100px 80px",gap:0,borderBottom:"1px solid var(--border)",background:"var(--bg4)"}},
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px"}},"Stock"),
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"center"}},"Trades"),
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Total P&L"),
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Max Drawdown (₹)"),
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Max DD (%)")
+          ),
+          stockDrawdowns.map((s,i)=>{
+            const isGain=s.totalPnl>=0;
+            const ddColor=s.maxDrawdownPct<5?"#16a34a":s.maxDrawdownPct<15?"#f59e0b":"#ef4444";
+            return React.createElement("div",{key:s.ticker||i,style:{display:"grid",gridTemplateColumns:"2fr 60px 90px 100px 80px",gap:0,borderBottom:"1px solid var(--border2)",background:i%2===0?"transparent":"var(--bg4)",transition:"background .1s"},onMouseEnter:e=>e.currentTarget.style.background="var(--accentbg2)",onMouseLeave:e=>e.currentTarget.style.background=i%2===0?"transparent":"var(--bg4)"},
+              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,fontWeight:600,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},s.ticker),
+              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"center",color:"var(--text3)"}},s.tradeCount),
+              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"right",fontWeight:700,fontFamily:"'Sora',sans-serif",color:isGain?"#16a34a":"#ef4444"}},(isGain?"+":"")+INR(s.totalPnl)),
+              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"right",fontWeight:700,fontFamily:"'Sora',sans-serif",color:"#ef4444"}},"−"+INR(s.maxDrawdown)),
+              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",fontWeight:700,color:ddColor}},s.maxDrawdownPct.toFixed(1)+"%")
+            );
+          })
+        )
+      )
+    ),
+
+    /* ══ Report: Risk-Adjusted Rankings ══ */
+    riskAdjustedRankings.length>0&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
+      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
+        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},
+          React.createElement(Icon,{n:"target",size:15}),"Risk-Adjusted Rankings"
+        ),
+        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},
+          riskAdjustedRankings.length+" stocks"
+        )
+      ),
+      React.createElement("div",{className:"mobile-scroll-table",style:{overflowX:"auto"}},
+        React.createElement("div",{style:{minWidth:600}},
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"40px 2fr 60px 80px 80px 80px 60px",gap:0,borderBottom:"1px solid var(--border)",background:"var(--bg4)"}},
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"center"}},"#"),
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px"}},"Stock"),
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"center"}},"Trades"),
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Avg Return"),
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Volatility (σ)"),
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Sharpe"),
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"center"}},"Win %")
+          ),
+          riskAdjustedRankings.map((s,i)=>{
+            const medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":"";
+            const sharpeColor=s.sharpe>1?"#16a34a":s.sharpe>0.5?"#f59e0b":"#ef4444";
+            return React.createElement("div",{key:s.ticker||i,style:{display:"grid",gridTemplateColumns:"40px 2fr 60px 80px 80px 80px 60px",gap:0,borderBottom:"1px solid var(--border2)",background:i%2===0?"transparent":"var(--bg4)",transition:"background .1s"},onMouseEnter:e=>e.currentTarget.style.background="var(--accentbg2)",onMouseLeave:e=>e.currentTarget.style.background=i%2===0?"transparent":"var(--bg4)"},
+              React.createElement("div",{style:{padding:"9px 8px",fontSize:13,textAlign:"center",color:medal?"var(--text3)":"var(--text6)"}},medal||(i+1)),
+              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,fontWeight:600,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},s.ticker),
+              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"center",color:"var(--text3)"}},s.tradeCount),
+              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",fontWeight:600,color:s.avgReturn>=0?"#16a34a":"#ef4444"}},(s.avgReturn>=0?"+":"")+s.avgReturn.toFixed(2)+"%"),
+              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",color:"var(--text4)"}},s.stdDev.toFixed(2)+"%"),
+              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"right",fontWeight:700,fontFamily:"'Sora',sans-serif",color:sharpeColor}},s.sharpe===Infinity?"∞":s.sharpe.toFixed(2)),
+              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"center",fontWeight:600,color:s.winRate>=50?"#16a34a":"#ef4444"}},s.winRate.toFixed(0)+"%")
+            );
+          })
+        )
+      )
+    ),
+
+    /* ══ Report: Tail Risk Analysis ══ */
+    tailRiskData&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
+      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
+        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},
+          React.createElement(Icon,{n:"warning",size:15}),"Tail Risk Analysis"
+        ),
+        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},
+          tailRiskData.sampleSize+" trades"
+        )
+      ),
+      React.createElement("div",{style:{padding:"16px 20px"}},
+        /* Percentile strip */
+        React.createElement("div",{style:{marginBottom:16}},
+          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:8}},"Return Distribution Percentiles"),
+          React.createElement("div",{style:{position:"relative",height:32,borderRadius:8,background:"linear-gradient(90deg,#ef4444 0%,#f59e0b 30%,#16a34a 70%,#0e7490 100%)",opacity:.15}}),
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginTop:4,fontSize:9,color:"var(--text6)"}},
+            React.createElement("div",{style:{textAlign:"center"}},
+              React.createElement("div",{style:{fontWeight:700,color:"#ef4444"}},ret(tailRiskData.p5)),
+              React.createElement("div",null,"P5")
+            ),
+            React.createElement("div",{style:{textAlign:"center"}},
+              React.createElement("div",{style:{fontWeight:600}},ret(tailRiskData.p25)),
+              React.createElement("div",null,"P25")
+            ),
+            React.createElement("div",{style:{textAlign:"center"}},
+              React.createElement("div",{style:{fontWeight:700,color:"var(--text3)"}},ret(tailRiskData.p50)),
+              React.createElement("div",null,"Median")
+            ),
+            React.createElement("div",{style:{textAlign:"center"}},
+              React.createElement("div",{style:{fontWeight:600}},ret(tailRiskData.p75)),
+              React.createElement("div",null,"P75")
+            ),
+            React.createElement("div",{style:{textAlign:"center"}},
+              React.createElement("div",{style:{fontWeight:700,color:"#16a34a"}},ret(tailRiskData.p95)),
+              React.createElement("div",null,"P95")
+            )
+          )
+        ),
+        /* Skewness & Kurtosis */
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:16}},
+          React.createElement("div",{style:{padding:"12px 14px",background:tailRiskData.skewness<0?"rgba(239,68,68,.06)":"rgba(22,163,74,.06)",border:"1px solid "+(tailRiskData.skewness<0?"rgba(239,68,68,.15)":"rgba(22,163,74,.15)"),borderRadius:10}},
+            React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Skewness"),
+            React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:tailRiskData.skewness<0?"#ef4444":"#16a34a"}},tailRiskData.skewness.toFixed(3)),
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},tailRiskData.skewness<0?"Left tail heavier — more crash risk":"Right tail heavier — more upside outliers")
+          ),
+          React.createElement("div",{style:{padding:"12px 14px",background:tailRiskData.kurtosis>0?"rgba(245,158,11,.06)":"rgba(22,163,74,.06)",border:"1px solid "+(tailRiskData.kurtosis>0?"rgba(245,158,11,.15)":"rgba(22,163,74,.15)"),borderRadius:10}},
+            React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Excess Kurtosis"),
+            React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:tailRiskData.kurtosis>0?"#f59e0b":"#16a34a"}},tailRiskData.kurtosis.toFixed(3)),
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},tailRiskData.kurtosis>0?"Fat tails — more extreme events than normal":"Thinner tails — more predictable returns")
+          ),
+          React.createElement("div",{style:{padding:"12px 14px",background:"rgba(14,116,144,.06)",border:"1px solid rgba(14,116,144,.15)",borderRadius:10}},
+            React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Tail Ratio"),
+            React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#0e7490"}},tailRiskData.tailRatio===Infinity?"∞":tailRiskData.tailRatio.toFixed(2)+"×"),
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Avg best 5% ÷ avg worst 5%")
+          )
+        ),
+        /* Worst 5 & Best 5 */
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}},
+          React.createElement("div",{style:{padding:"10px 14px",background:"rgba(239,68,68,.04)",border:"1px solid rgba(239,68,68,.12)",borderRadius:8}},
+            React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#ef4444",marginBottom:6}},"Worst 5 Returns"),
+            tailRiskData.worst5.map((r,i)=>React.createElement("div",{key:i,style:{fontSize:11,color:"var(--text4)",padding:"2px 0"}},ret(r)))
+          ),
+          React.createElement("div",{style:{padding:"10px 14px",background:"rgba(22,163,74,.04)",border:"1px solid rgba(22,163,74,.12)",borderRadius:8}},
+            React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#16a34a",marginBottom:6}},"Best 5 Returns"),
+            tailRiskData.best5.map((r,i)=>React.createElement("div",{key:i,style:{fontSize:11,color:"var(--text4)",padding:"2px 0"}},ret(r)))
+          )
+        ),
+        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",lineHeight:1.6,padding:"8px 12px",background:"var(--bg5)",borderRadius:8}},
+          React.createElement("strong",null,"What to watch: "),"Negative skewness means more extreme losses than gains — asymmetric risk. High kurtosis (>1) means more outlier events than a normal distribution would predict. A tail ratio >1 means your best trades outpace your worst, which is healthy."
+        )
+      )
+    ),
+
     /* ══ Methodology note ══ */
     React.createElement("div",{style:{padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
       React.createElement("strong",{style:{color:"var(--accent)"}},"Methodology: "),
-      "Volatility (σ) = population standard deviation of per-trade return percentages (sample std dev with n-1 denominator). Sharpe-like ratio = mean return ÷ σ; this is not the traditional Sharpe ratio (which uses excess return over risk-free rate) but serves as a relative risk-adjusted performance indicator. Max drawdown is computed as the largest peak-to-trough decline in cumulative P&L expressed as a percentage of total capital deployed. Losing streaks count consecutive trades with negative P&L. Concentration risk = (sum of |P&L| for top 3 stocks) ÷ (sum of |P&L| for all stocks) × 100; higher values indicate fewer stocks drive performance, increasing the role of luck. Composite risk score is a weighted aggregate: 30% volatility + 25% Sharpe weakness + 25% drawdown + 20% concentration. Active holdings use current price as exit. All amounts include brokerage."
+      "Volatility (σ) = population standard deviation of per-trade return percentages (sample std dev with n-1 denominator). Sharpe-like ratio = mean return ÷ σ; this is not the traditional Sharpe ratio (which uses excess return over risk-free rate) but serves as a relative risk-adjusted performance indicator. Max drawdown is computed as the largest peak-to-trough decline in cumulative P&L expressed as a percentage of total capital deployed. Losing streaks count consecutive trades with negative P&L. Concentration risk = (sum of |P&L| for top 3 stocks) ÷ (sum of |P&L| for all stocks) × 100; higher values indicate fewer stocks drive performance, increasing the role of luck. Composite risk score is a weighted aggregate: 30% volatility + 25% Sharpe weakness + 25% drawdown + 20% concentration. Active holdings use current price as exit. All amounts include brokerage. Value at Risk (VaR) shows the worst return at 95% and 99% confidence levels (historical and parametric). Expected Shortfall (CVaR) averages losses beyond VaR. Max Drawdown per Stock tracks the worst peak-to-trough decline for each position. Risk-Adjusted Rankings use Sharpe-like ratio (mean return ÷ σ) to rank stocks by risk-normalised performance. Tail Risk Analysis examines skewness, kurtosis, and extreme return percentiles."
     )
   );
 };
