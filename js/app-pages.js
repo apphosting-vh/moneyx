@@ -19423,7 +19423,7 @@ const FY_CONFIGS = {
     deductionsSub: "Available under Old Tax Regime only — limits unchanged for FY 2026-27",
     exportNamePrefix: "ITR3_Tax_AY2027-28",
     excelSheets: "3 sheets · AY 2027-28",
-    hasPDF: false,
+    hasPDF: true,
     hasLtclSetoff: true,
     hasBuyback: true,
     bannerSavedNote: false,
