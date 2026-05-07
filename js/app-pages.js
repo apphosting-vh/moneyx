@@ -6695,6 +6695,8 @@ const PreviousTrades=({soldShareSnapshots={},dispatch})=>{
 const ProfitabilityMetrics=({shares,soldShareSnapshots={}})=>{
   const[sortBy,setSortBy]=useState("pnl"); /* pnl | returnPct | xirr */
   const[sortDir,setSortDir]=useState("desc");
+  const ret=(v)=>(v>=0?"+":"")+v.toFixed(2)+"%";
+  const INR=(v)=>"₹"+Number(Math.round(v)).toLocaleString("en-IN");
 
   /* ── Build unified trade list ── */
   const trades=React.useMemo(()=>{
@@ -8016,6 +8018,8 @@ const WinLossPatterns=({shares,soldShareSnapshots={}})=>{
 const CapitalEfficiency=({shares,soldShareSnapshots={}})=>{
   const NIFTY_CAGR=0.12;
   const SENSEX_CAGR=0.125;
+  const ret=(v)=>(v>=0?"+":"")+v.toFixed(2)+"%";
+  const INR=(v)=>"₹"+Number(Math.round(v)).toLocaleString("en-IN");
 
   /* ── Build unified trade list ── */
   const trades=React.useMemo(()=>{
