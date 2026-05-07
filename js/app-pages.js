@@ -19256,8 +19256,8 @@ const TAX_LS_KEY = "itr3_ay2627_v1";
   const fmt = n => {
     if (!n && n !== 0) return "₹0";
     const a = Math.abs(n);
-    const s = a >= 10000000 ? (a/10000000).toFixed(2)+" Cr"
-            : a >= 100000  ? (a/100000).toFixed(2)+" L"
+    const s = a >= 10000000 ? (a/10000000).toFixed(1)+" Cr"
+            : a >= 100000  ? (a/100000).toFixed(1)+" L"
             : a.toLocaleString("en-IN");
     return (n < 0 ? "-₹" : "₹") + s;
   };
@@ -19620,7 +19620,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
     () => calc234BFor(liability, totalTDS, atRows, cfg.advTaxDateFrom), [liability, totalTDS, JSON.stringify(atRows)]);
   const totPenalty = int234B + int234C;
   const netPayable = Math.max(0, liability - totalTDS - totalAT);
-  const effRate    = grossTotal > 0 ? ((liability / grossTotal) * 100).toFixed(2) : "0.00";
+  const effRate    = grossTotal > 0 ? ((liability / grossTotal) * 100).toFixed(1) : "0.0";
   const altLabel   = regime === "new" ? "Old Regime" : "New Regime";
   const curLabel   = regime === "new" ? "New Regime" : "Old Regime";
   const saving     = cur.liability - alt.liability;
@@ -20491,39 +20491,145 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
 }
 TaxEstimatorSection = React.memo(TaxEstimatorSection);
 
-/* ── Tax Estimator Wrapper — FY tab switcher ── */
+/* ── Tax Estimator Wrapper — FY tab switcher with hide/show ── */
 const TaxEstimatorWrapper = ({ taxData, taxData2627, dispatch }) => {
+  const tabs = [
+    { id:"fy2526", label:"FY 2025-26", sub:"AY 2026-27 · Current Filing", badge:"Current", badgeColor:"var(--accent)", badgeBg:"var(--accentbg)", badgeBd:"var(--accent)44" },
+    { id:"fy2627", label:"FY 2026-27", sub:"AY 2027-28 · Plan Ahead",    badge:"New",     badgeColor:"#6d28d9",       badgeBg:"rgba(109,40,217,.12)", badgeBd:"rgba(109,40,217,.28)" },
+  ];
+
   const [fyTab, setFyTab] = useState(() => {
     try { return localStorage.getItem("itr_fy_tab") || "fy2526"; } catch { return "fy2526"; }
   });
+  const [hiddenFyTabs, setHiddenFyTabs] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem("itr_fy_hidden") || "[]")); } catch { return new Set(); }
+  });
+  const [managing, setManaging] = useState(false);
+
   const switchTab = (t) => { setFyTab(t); try { localStorage.setItem("itr_fy_tab", t); } catch {} };
 
-  const tabs = [
-    { id:"fy2526", label:"FY 2025-26", sub:"AY 2026-27 · Current Filing", badge:"Current", badgeColor:"var(--accent)", badgeBg:"var(--accentbg)", badgeBd:"var(--accent)44" },
-    { id:"fy2627", label:"FY 2026-27", sub:"AY 2027-28 · Plan Ahead", badge:"New", badgeColor:"#6d28d9", badgeBg:"rgba(109,40,217,.12)", badgeBd:"rgba(109,40,217,.28)" },
-  ];
+  const toggleHide = (tabId) => {
+    setHiddenFyTabs(prev => {
+      const next = new Set(prev);
+      if (next.has(tabId)) {
+        /* Unhide */
+        next.delete(tabId);
+      } else {
+        /* Hide — ensure at least one tab stays visible */
+        const willRemain = tabs.filter(t => !next.has(t.id) && t.id !== tabId).length;
+        if (willRemain < 1) return prev;
+        next.add(tabId);
+        /* If hiding the active tab, switch to first still-visible tab */
+        if (fyTab === tabId) {
+          const first = tabs.find(t => !next.has(t.id));
+          if (first) switchTab(first.id);
+        }
+      }
+      try { localStorage.setItem("itr_fy_hidden", JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  };
+
+  const visibleTabs  = tabs.filter(t => !hiddenFyTabs.has(t.id));
+  const hiddenTabs   = tabs.filter(t =>  hiddenFyTabs.has(t.id));
+  const hiddenCount  = hiddenTabs.length;
 
   return (
     <div>
-      <div style={{display:"flex",gap:6,marginBottom:16,background:"var(--bg4)",borderRadius:12,padding:"6px 8px",border:"1px solid var(--border2)",flexWrap:"wrap"}}>
-        {tabs.map(t => (
-          <button key={t.id} onClick={() => switchTab(t.id)} style={{
-            flex:"1 1 180px",padding:"11px 16px",borderRadius:9,border:"none",cursor:"pointer",textAlign:"left",
+      {/* ── FY sub-tab bar ── */}
+      <div style={{display:"flex",gap:6,marginBottom:16,background:"var(--bg4)",borderRadius:12,
+                   padding:"6px 8px",border:"1px solid var(--border2)",flexWrap:"wrap",alignItems:"stretch"}}>
+
+        {/* Visible tabs */}
+        {visibleTabs.map(t => (
+          <button key={t.id} onClick={() => !managing && switchTab(t.id)} style={{
+            flex:"1 1 180px",padding:"11px 16px",borderRadius:9,border:"none",
+            cursor: managing ? "default" : "pointer",textAlign:"left",
             fontFamily:"'DM Sans',sans-serif",transition:"all .18s",
-            background: fyTab===t.id ? "var(--card)" : "transparent",
-            boxShadow: fyTab===t.id ? "0 2px 14px rgba(0,0,0,0.09)" : "none",
-            borderBottom: `3px solid ${fyTab===t.id ? "var(--accent)" : "transparent"}`,
+            background:    fyTab===t.id ? "var(--card)"                      : "transparent",
+            boxShadow:     fyTab===t.id ? "0 2px 14px rgba(0,0,0,0.09)"      : "none",
+            borderBottom: `3px solid ${fyTab===t.id ? "var(--accent)"        : "transparent"}`,
           }}>
-            <div style={{display:"flex",alignItems:"center",gap:8}}>
-              <span style={{fontSize:14,fontWeight:700,color: fyTab===t.id ? "var(--accent)" : "var(--text4)"}}>{t.label}</span>
-              <span style={{fontSize:9,fontWeight:700,padding:"2px 8px",borderRadius:5,background:t.badgeBg,color:t.badgeColor,border:`1px solid ${t.badgeBd}`}}>{t.badge}</span>
+            <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+              <span style={{fontSize:14,fontWeight:700,
+                            color: fyTab===t.id ? "var(--accent)" : "var(--text4)"}}>{t.label}</span>
+              <span style={{fontSize:9,fontWeight:700,padding:"2px 8px",borderRadius:5,
+                            background:t.badgeBg,color:t.badgeColor,
+                            border:`1px solid ${t.badgeBd}`}}>{t.badge}</span>
+              {managing && (
+                <span
+                  onClick={e => { e.stopPropagation(); toggleHide(t.id); }}
+                  title="Hide this FY tab"
+                  style={{
+                    marginLeft:"auto",padding:"2px 10px",borderRadius:5,
+                    border:"1px solid rgba(239,68,68,.4)",
+                    background:"rgba(239,68,68,.08)",color:"#ef4444",
+                    cursor:"pointer",fontSize:10,fontWeight:700,
+                    fontFamily:"'DM Sans',sans-serif",userSelect:"none",
+                    display:"inline-flex",alignItems:"center",gap:3
+                  }}
+                >
+                  ✕ Hide
+                </span>
+              )}
             </div>
             <div style={{fontSize:10,color:"var(--text5)",marginTop:3}}>{t.sub}</div>
           </button>
         ))}
+
+        {/* Hidden tabs — shown as greyed restore pills only while managing */}
+        {managing && hiddenTabs.map(t => (
+          <button key={"h_"+t.id} onClick={() => toggleHide(t.id)} title="Show this FY tab" style={{
+            flex:"1 1 180px",padding:"11px 16px",borderRadius:9,
+            border:"1px dashed var(--border)",cursor:"pointer",textAlign:"left",
+            fontFamily:"'DM Sans',sans-serif",transition:"all .18s",
+            background:"transparent",opacity:.6
+          }}>
+            <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+              <span style={{fontSize:14,fontWeight:700,color:"var(--text5)",
+                            textDecoration:"line-through"}}>{t.label}</span>
+              <span style={{fontSize:9,fontWeight:700,padding:"2px 8px",borderRadius:5,
+                            background:t.badgeBg,color:t.badgeColor,
+                            border:`1px solid ${t.badgeBd}`,opacity:.45}}>{t.badge}</span>
+              <span style={{
+                marginLeft:"auto",padding:"2px 10px",borderRadius:5,
+                border:"1px solid rgba(22,163,74,.4)",background:"rgba(22,163,74,.08)",
+                color:"#16a34a",fontSize:10,fontWeight:700,
+                display:"inline-flex",alignItems:"center",gap:3
+              }}>
+                ◉ Show
+              </span>
+            </div>
+            <div style={{fontSize:10,color:"var(--text6)",marginTop:3}}>{t.sub}</div>
+          </button>
+        ))}
+
+        {/* Manage / Done toggle button */}
+        <button
+          onClick={() => setManaging(m => !m)}
+          title={managing ? "Finish managing tabs" : "Show or hide FY tabs"}
+          style={{
+            alignSelf:"center",flexShrink:0,
+            padding:"8px 12px",borderRadius:8,
+            border:`1px solid ${managing ? "var(--accent)55" : "var(--border2)"}`,
+            background: managing ? "var(--accentbg)" : "transparent",
+            color:       managing ? "var(--accent)"   : "var(--text5)",
+            cursor:"pointer",fontSize:11,fontWeight:700,
+            fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap",
+            transition:"all .15s"
+          }}
+        >
+          {managing
+            ? "✓ Done"
+            : (hiddenCount > 0 ? `👁 Manage (${hiddenCount} hidden)` : "👁 Manage")}
+        </button>
       </div>
-      {fyTab === "fy2526" && <TaxEstimatorSection taxData={taxData} dispatch={dispatch} fyKey="2526" />}
-      {fyTab === "fy2627" && <TaxEstimatorSection taxData={taxData2627} dispatch={dispatch} fyKey="2627" />}
+
+      {/* Section content — guard against rendering a hidden tab's content */}
+      {fyTab === "fy2526" && !hiddenFyTabs.has("fy2526") &&
+        <TaxEstimatorSection taxData={taxData} dispatch={dispatch} fyKey="2526" />}
+      {fyTab === "fy2627" && !hiddenFyTabs.has("fy2627") &&
+        <TaxEstimatorSection taxData={taxData2627} dispatch={dispatch} fyKey="2627" />}
     </div>
   );
 };
