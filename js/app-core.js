@@ -705,6 +705,7 @@ const INIT=()=>({
   notes:[],
   goals:[],
   nwSnapshots:{},
+  soldShareSnapshots:{},
   eodPrices:{},
   eodNavs:{},
   historyCache:{},
@@ -761,6 +762,7 @@ const EMPTY_STATE=()=>({
   notes:[],
   goals:[],
   nwSnapshots:{},
+  soldShareSnapshots:{},
   eodPrices:{},
   eodNavs:{},
   historyCache:{},
@@ -1627,7 +1629,40 @@ const reducer=(s,a)=>{
         if(_ticker)delete p[_ticker];
         if(Object.keys(p).length>0)_cleanEod[date]=p;
       });
-      return{...s,shares:s.shares.filter(sh=>sh.id!==a.id),eodPrices:_cleanEod};
+      /* Also clean this ticker from historyCache */
+      const _cleanHist={...s.historyCache||{}};
+      if(_ticker)delete _cleanHist[_ticker];
+      return{...s,shares:s.shares.filter(sh=>sh.id!==a.id),eodPrices:_cleanEod,historyCache:_cleanHist};
+    }
+    case"SAVE_SHARE_SNAPSHOT":{
+      /* Determine Indian financial year: April-March */
+      const _snapDate=a.savedAt||TODAY();
+      const _snapD=new Date(_snapDate+"T12:00:00");
+      const _snapYear=_snapD.getFullYear();
+      const _snapMonth=_snapD.getMonth(); /* 0-indexed */
+      const _fyStart=_snapMonth>=3?_snapYear:_snapYear-1;
+      const _fyKey="FY"+_fyStart+"-"+String(_fyStart+1).slice(-2);
+      const _existing=s.soldShareSnapshots||{};
+      const _fyList=_existing[_fyKey]||[];
+      return{...s,soldShareSnapshots:{..._existing,[_fyKey]:[..._fyList,a.snapshot]}};
+    }
+    case"DEL_SHARE_SNAPSHOT":{
+      const _snaps={...s.soldShareSnapshots||{}};
+      if(_snaps[a.fyKey]){
+        _snaps[a.fyKey]=_snaps[a.fyKey].filter(sn=>sn.id!==a.id);
+        if(!_snaps[a.fyKey].length)delete _snaps[a.fyKey];
+      }
+      return{...s,soldShareSnapshots:_snaps};
+    }
+    case"UPDATE_SHARE_SNAPSHOT_CHART":{
+      /* Patch chartPts on a specific snapshot by id */
+      const _snaps2={...s.soldShareSnapshots||{}};
+      if(_snaps2[a.fyKey]){
+        _snaps2[a.fyKey]=_snaps2[a.fyKey].map(sn=>
+          sn.id===a.id?{...sn,chartPts:a.chartPts}:sn
+        );
+      }
+      return{...s,soldShareSnapshots:_snaps2};
     }
     case"ADD_FD":return{...s,fd:[...s.fd,a.p]};
     case"ADD_RE":return{...s,re:[...s.re,a.p]};

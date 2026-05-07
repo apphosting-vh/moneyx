@@ -1825,6 +1825,7 @@ const CloudBackupPanel = ({ state, dispatch }) => {
         notes:        remote.state.notes        || [],
         scheduled:    remote.state.scheduled    || [],
         nwSnapshots:  remote.state.nwSnapshots  || {},
+        soldShareSnapshots: remote.state.soldShareSnapshots || {},
         eodPrices:    remote.state.eodPrices    || {},
         eodNavs:      remote.state.eodNavs      || {},
         historyCache: remote.state.historyCache || {},
@@ -3019,8 +3020,8 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFon
                 if(pw!==pw2){alert("Passwords do not match.");return;}
                 try{
                   const payload={version:8,exportedAt:new Date().toISOString(),
-                    summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,reminders:(state.reminders||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,eodDays:Object.keys(state.eodPrices||{}).length,eodNavDays:Object.keys(state.eodNavs||{}).length,hasTaxData:!!(state.taxData),hasTaxData2627:!!(state.taxData2627),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0)},
-                    data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,taxData2627:state.taxData2627||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],reminders:state.reminders||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})}}
+                    summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,reminders:(state.reminders||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,shareSnapshots:Object.values(state.soldShareSnapshots||{}).reduce((s,a)=>s+a.length,0),eodDays:Object.keys(state.eodPrices||{}).length,eodNavDays:Object.keys(state.eodNavs||{}).length,hasTaxData:!!(state.taxData),hasTaxData2627:!!(state.taxData2627),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0)},
+                    data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},soldShareSnapshots:state.soldShareSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,taxData2627:state.taxData2627||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],reminders:state.reminders||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})}}
                   };
                   const enc=await encryptBackup(payload,pw);
                   const blob=new Blob([JSON.stringify(enc)],{type:"application/json"});
@@ -3055,6 +3056,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFon
                     notes:(state.notes||[]).length,
                     reminders:(state.reminders||[]).length,
                     nwSnapshots:Object.keys(state.nwSnapshots||{}).length,
+                    shareSnapshots:Object.values(state.soldShareSnapshots||{}).reduce((s,a)=>s+a.length,0),
                     eodDays:Object.keys(state.eodPrices||{}).length,
                     eodNavDays:Object.keys(state.eodNavs||{}).length,
                     hasTaxData:!!(state.taxData),
@@ -3066,6 +3068,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFon
                     notes:state.notes||[],
                     scheduled:state.scheduled||[],
                     nwSnapshots:state.nwSnapshots||{},
+                    soldShareSnapshots:state.soldShareSnapshots||{},
                     eodPrices:state.eodPrices||{},
                     eodNavs:state.eodNavs||{},
                     historyCache:state.historyCache||{},
@@ -3138,6 +3141,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFon
                         notes:d.notes||[],
                         scheduled:d.scheduled||[],
                         nwSnapshots:d.nwSnapshots||{},
+                        soldShareSnapshots:d.soldShareSnapshots||{},
                         eodPrices:d.eodPrices||{},
                         eodNavs:d.eodNavs||{},
                         historyCache:d.historyCache||{},
@@ -4713,6 +4717,7 @@ const buildBackupPayload=async(st)=>{
       scheduled:(st.scheduled||[]).length,notes:(st.notes||[]).length,
       reminders:(st.reminders||[]).length,
       nwSnapshots:Object.keys(st.nwSnapshots||{}).length,
+      shareSnapshots:Object.values(st.soldShareSnapshots||{}).reduce((s,a)=>s+a.length,0),
       eodDays:Object.keys(st.eodPrices||{}).length,
       eodNavDays:Object.keys(st.eodNavs||{}).length,
       hasTaxData:!!(st.taxData),
@@ -4721,6 +4726,7 @@ const buildBackupPayload=async(st)=>{
     },
     data:{
       ...st,notes:st.notes||[],scheduled:st.scheduled||[],nwSnapshots:st.nwSnapshots||{},
+      soldShareSnapshots:st.soldShareSnapshots||{},
       eodPrices:st.eodPrices||{},eodNavs:st.eodNavs||{},historyCache:st.historyCache||{},
       taxData:st.taxData||null,taxData2627:st.taxData2627||null,re:st.re||[],pf:st.pf||[],goals:st.goals||[],
       hiddenTabs:st.hiddenTabs||[],catRules:st.catRules||[],
@@ -4775,6 +4781,7 @@ const loadState=()=>{
       notes:(parsed.notes||def.notes||[]),
       goals:(parsed.goals||def.goals||[]),
       nwSnapshots:(parsed.nwSnapshots||def.nwSnapshots||{}),
+      soldShareSnapshots:(parsed.soldShareSnapshots||{}),
       /* ── Selective loading: try separate keys first, fallback to main state for migration ── */
       eodPrices:(function(){try{const r=localStorage.getItem(LS_EOD_PRICES);if(r)return JSON.parse(r);}catch{}return(parsed.eodPrices||{});})(),
       eodNavs:(function(){try{const r=localStorage.getItem(LS_EOD_NAVS);if(r)return normalizeEodNavKeys(JSON.parse(r));}catch{}return normalizeEodNavKeys(parsed.eodNavs||{});})(),
@@ -5335,6 +5342,7 @@ var gdriveUpsertSyncFile = async (state) => {
         notes: (state.notes || []).length,
         reminders: (state.reminders || []).length,
         nwSnapshots: Object.keys(state.nwSnapshots || {}).length,
+        shareSnapshots: Object.values(state.soldShareSnapshots || {}).reduce((s, a) => s + a.length, 0),
         eodDays: Object.keys(state.eodPrices || {}).length,
         eodNavDays: Object.keys(state.eodNavs || {}).length,
         hasTaxData: !!(state.taxData),
@@ -5346,6 +5354,7 @@ var gdriveUpsertSyncFile = async (state) => {
         notes: state.notes || [],
         scheduled: state.scheduled || [],
         nwSnapshots: state.nwSnapshots || {},
+        soldShareSnapshots: state.soldShareSnapshots || {},
         eodPrices: state.eodPrices || {},
         eodNavs: state.eodNavs || {},
         historyCache: state.historyCache || {},
@@ -5406,6 +5415,7 @@ var gdriveReadSyncFile = async () => {
     const _safe = (d) => ({
       ...d,
       nwSnapshots: d.nwSnapshots || {},
+      soldShareSnapshots: d.soldShareSnapshots || {},
       eodPrices: d.eodPrices || {},
       eodNavs: d.eodNavs || {},
       historyCache: d.historyCache || {},
@@ -5644,6 +5654,7 @@ const fsaWriteFile=async(handle,data)=>{
         notes:(data.notes||[]).length,
         reminders:(data.reminders||[]).length,
         nwSnapshots:Object.keys(data.nwSnapshots||{}).length,
+        shareSnapshots:Object.values(data.soldShareSnapshots||{}).reduce((s,a)=>s+a.length,0),
         eodDays:Object.keys(data.eodPrices||{}).length,
         eodNavDays:Object.keys(data.eodNavs||{}).length,
         hasTaxData:!!(data.taxData),
@@ -5655,6 +5666,7 @@ const fsaWriteFile=async(handle,data)=>{
         notes:data.notes||[],
         scheduled:data.scheduled||[],
         nwSnapshots:data.nwSnapshots||{},
+        soldShareSnapshots:data.soldShareSnapshots||{},
         eodPrices:data.eodPrices||{},
         eodNavs:data.eodNavs||{},
         historyCache:data.historyCache||{},
@@ -5681,7 +5693,7 @@ const fsaReadFile=async(handle)=>{
     const text=await file.text();
     const parsed=JSON.parse(text);
     const _def=EMPTY_STATE();
-    const _safe=(d)=>({...d,nwSnapshots:d.nwSnapshots||{},eodPrices:d.eodPrices||{},eodNavs:d.eodNavs||{},historyCache:d.historyCache||{},taxData:d.taxData||null,taxData2627:d.taxData2627||null,re:d.re||[],pf:d.pf||[],goals:d.goals||[],hiddenTabs:d.hiddenTabs||[],catRules:d.catRules||[],reminders:d.reminders||[],insightPrefs:{..._def.insightPrefs,...(d.insightPrefs||{})}});
+    const _safe=(d)=>({...d,nwSnapshots:d.nwSnapshots||{},soldShareSnapshots:d.soldShareSnapshots||{},eodPrices:d.eodPrices||{},eodNavs:d.eodNavs||{},historyCache:d.historyCache||{},taxData:d.taxData||null,taxData2627:d.taxData2627||null,re:d.re||[],pf:d.pf||[],goals:d.goals||[],hiddenTabs:d.hiddenTabs||[],catRules:d.catRules||[],reminders:d.reminders||[],insightPrefs:{..._def.insightPrefs,...(d.insightPrefs||{})}});
     /* Support both the new envelope format { data:{…} } and the legacy
        raw-state format written by v3.17.0–3.17.2 */
     if(parsed&&parsed.data&&parsed.data.banks)return _safe(parsed.data);
