@@ -19258,7 +19258,7 @@ const TAX_LS_KEY = "itr3_ay2627_v1";
     const a = Math.abs(n);
     const s = a >= 10000000 ? (a/10000000).toFixed(1)+" Cr"
             : a >= 100000  ? (a/100000).toFixed(1)+" L"
-            : a.toLocaleString("en-IN");
+            : Math.round(a).toLocaleString("en-IN");
     return (n < 0 ? "-₹" : "₹") + s;
   };
   const pn = v => parseFloat(v) || 0;
