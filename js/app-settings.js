@@ -2465,7 +2465,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFon
             React.createElement("div",{style:{flex:1,height:1,background:"var(--border2)"}}),
             React.createElement("div",{style:{fontSize:11,color:"var(--text6)"}},FONTS.find(f=>f.id===fontId)?.name||"DM Sans")
           ),
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:10}},
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:10,alignItems:"start"}},
             FONTS.map(f=>{
               const active=fontId===f.id;
               return React.createElement("div",{
@@ -2912,7 +2912,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFon
               React.createElement("span",null,"Transactions"),
               React.createElement("div",{style:{flex:1,height:1,background:"var(--border2)"}})
             ),
-            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:8}},
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:8,alignItems:"start"}},
               ...[
                 {label:"Bank Txns",     val:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),         col:"#0e7490", icon:React.createElement(Icon,{n:"bank",size:18})},
                 {label:"Card Txns",     val:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),         col:"#be185d", icon:React.createElement(Icon,{n:"card",size:18})},
@@ -2936,7 +2936,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFon
               React.createElement("span",null,"Accounts"),
               React.createElement("div",{style:{flex:1,height:1,background:"var(--border2)"}})
             ),
-            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:8}},
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:8,alignItems:"start"}},
               ...[
                 {label:"Bank Accounts",  val:state.banks.length,   col:"#0e7490", icon:React.createElement(Icon,{n:"bank",size:18})},
                 {label:"Credit Cards",   val:state.cards.length,   col:"#be185d", icon:React.createElement(Icon,{n:"card",size:18})},
@@ -2960,7 +2960,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFon
               React.createElement("span",null,"Investments"),
               React.createElement("div",{style:{flex:1,height:1,background:"var(--border2)"}})
             ),
-            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:8}},
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:8,alignItems:"start"}},
               ...[
                 {label:"Mutual Funds", val:state.mf.length,     col:"#6d28d9", icon:React.createElement(Icon,{n:"chart",size:18})},
                 {label:"Shares",       val:state.shares.length, col:"#16a34a", icon:React.createElement(Icon,{n:"invest",size:18})},
@@ -2983,7 +2983,7 @@ const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFon
               React.createElement("span",null,"Master Data"),
               React.createElement("div",{style:{flex:1,height:1,background:"var(--border2)"}})
             ),
-            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:8}},
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(150px,1fr))",gap:8,alignItems:"start"}},
               ...[
                 {label:"Categories",     val:state.categories.length,                                              col:"#c2410c", icon:React.createElement(Icon,{n:"tag",size:34})},
                 {label:"Sub-categories", val:state.categories.reduce((s,c)=>s+c.subs.length,0),                   col:"#c2410c", icon:"↳"},
@@ -4446,7 +4446,7 @@ const ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,pa
           " Each execute catches up one period at a time. Execute repeatedly (or use 'Execute All Due' on each visit) until the next date is in the future."
         );
       })(),
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))",gap:12}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))",gap:12,alignItems:"start"}},
         due.map(renderCard)
       )
     ),
@@ -4541,7 +4541,7 @@ const ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,pa
               borderRadius:"0 0 10px 10px",
               background:"var(--bg3)"
             }},
-              React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))",gap:12}},
+              React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))",gap:12,alignItems:"start"}},
                 items.map(renderCard)
               )
             )
@@ -4583,7 +4583,7 @@ const ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,pa
           return React.createElement(Card,{key:inst.schedId+"-"+inst.executedDate+"-"+i,sx:{borderLeft:"3px solid var(--border)"}},
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}},
               React.createElement("div",{style:{flex:1,minWidth:0}},
-                React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text)",marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},inst.desc),
+                React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text)",marginBottom:4,whiteSpace:"pre-wrap",wordBreak:"break-word"}},inst.desc),
                 React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}},
                   React.createElement("span",{style:{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:10,border:"1px solid "+(FREQ_C[inst.frequency]||"var(--accent)")+"55",color:FREQ_C[inst.frequency]||"var(--accent)",background:(FREQ_C[inst.frequency]||"var(--accent)")+"15"}},inst.frequency==="once"?"One-time":inst.frequency),
                   React.createElement("span",{style:{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:10,border:"1px solid "+CLASS_C[ct]+"55",color:CLASS_C[ct],background:CLASS_C[ct]+"15"}},CLASS_ICON[ct]," ",ct),
@@ -4649,7 +4649,7 @@ const ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,pa
                 totalOut>0&&React.createElement("span",{style:{fontSize:11,fontWeight:600,color:"#ef4444",fontFamily:"'Sora',sans-serif"}},"−"+INR(totalOut))
               ),
               /* Instance cards — same grid format as Expired Definitions */
-              !isCollapsed&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))",gap:12,padding:"12px",
+              !isCollapsed&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))",gap:12,padding:"12px",alignItems:"start",
                 border:"1px solid var(--border2)",borderTop:"none",borderRadius:"0 0 10px 10px",background:"var(--bg4)"}},
                 items.map(renderInstCard)
               )
@@ -4666,7 +4666,7 @@ const ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,pa
           ),
           React.createElement("div",{style:{flex:1,height:1,background:"var(--border2)"}})
         ),
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))",gap:12}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))",gap:12,alignItems:"start"}},
           expiredDefs.map(renderCard)
         )
       )
