@@ -3795,7 +3795,7 @@ const NotesSection=React.memo(({notes=[],dispatch})=>{
     /* ── Notes grid */
     filtered.length===0
       ?React.createElement(Empty,{icon:React.createElement(Icon,{n:"edit",size:16}),text:search?"No notes match your search":"No notes yet -- click '+ New Note' to create one"})
-      :React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14}},
+      :React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:14,alignItems:"start"}},
           filtered.map(n=>{
             const col=noteColor(n);
             const isReminderDue=n.reminder&&n.reminder<=today&&!n.reminderDismissed;
