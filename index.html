@@ -258,12 +258,7 @@ body{
   overscroll-behavior: none;
   /* Full viewport */
   min-height: 100dvh;
-  /* Disable text selection for app-like feel */
-  -webkit-user-select: none;
-  user-select: none;
-}
-/* Re-enable selection in inputs and text areas */
-input, textarea, [contenteditable] {
+  /* Text selection enabled globally */
   -webkit-user-select: text;
   user-select: text;
 }
