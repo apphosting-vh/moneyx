@@ -3825,10 +3825,9 @@ const NotesSection=React.memo(({notes=[],dispatch})=>{
               ),
 
               /* Body */
-              n.body&&React.createElement("div",{style:{
+              n.body&&React.createElement("div",{className:"note-body",style:{
                 fontSize:13,color:"var(--text4)",lineHeight:1.65,flex:1,marginBottom:12,
-                maxHeight:100,overflow:"hidden",
-                WebkitMaskImage:"linear-gradient(to bottom,black 60%,transparent 100%)"
+                whiteSpace:"pre-wrap",wordBreak:"break-word"
               }},n.body),
 
               /* Actions */
@@ -4290,7 +4289,7 @@ const ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,pa
                 border:"1px solid "+(isManual?"rgba(180,83,9,.45)":"rgba(22,163,74,.45)"),
                 background:isManual?"rgba(180,83,9,.07)":"rgba(22,163,74,.07)",
                 padding:"2px 3px",gap:0,cursor:"pointer",flexShrink:0,
-                transition:"all .2s",userSelect:"none",outline:"none",
+                transition:"all .2s",outline:"none",
                 fontFamily:"'DM Sans',sans-serif"
               }
             },
@@ -4401,7 +4400,7 @@ const ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,pa
       React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}},
         React.createElement(Btn,{onClick:()=>setAddScOpen(true),sx:{gap:6,whiteSpace:"nowrap"}},"+ Add Scheduled"),
         /* Completed toggle checkbox */
-        React.createElement("label",{style:{display:"flex",alignItems:"center",gap:8,cursor:"pointer",userSelect:"none",padding:"7px 13px",borderRadius:9,border:"1px solid "+(showCompleted?"var(--accent)":"var(--border)"),background:showCompleted?"var(--accentbg2)":"var(--bg3)",transition:"all .2s"}},
+        React.createElement("label",{style:{display:"flex",alignItems:"center",gap:8,cursor:"pointer",padding:"7px 13px",borderRadius:9,border:"1px solid "+(showCompleted?"var(--accent)":"var(--border)"),background:showCompleted?"var(--accentbg2)":"var(--bg3)",transition:"all .2s"}},
           React.createElement("input",{type:"checkbox",checked:showCompleted,onChange:e=>setShowCompleted(e.target.checked),style:{width:14,height:14,accentColor:"var(--accent)",cursor:"pointer"}}),
           React.createElement("span",{style:{fontSize:12,fontWeight:600,color:showCompleted?"var(--accent)":"var(--text4)"}},
             showCompleted?"Hide Completed / Expired":"Show Completed / Expired"
@@ -5892,7 +5891,7 @@ const PinLockScreen=({onUnlock})=>{
     position:"fixed",inset:0,
     background:"linear-gradient(160deg,#000d1a 0%,#001428 60%,#000d1a 100%)",
     display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
-    zIndex:9999,userSelect:"none",
+    zIndex:9999,
   }},
     /* App logo */
     React.createElement("div",{style:{marginBottom:36,textAlign:"center"}},

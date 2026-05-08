@@ -3924,7 +3924,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
       gridTemplateColumns:"32px 28px 38px 92px 78px 58px 1fr 140px 140px 100px 100px 108px",
       position:"sticky",top:0,zIndex:3,minWidth:980,
       background:"var(--bg4)",borderBottom:"2px solid var(--border)",
-      fontSize:11,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,userSelect:"none"
+      fontSize:11,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5
     }},
       /* Checkbox */
       React.createElement("div",{style:{padding:"9px 6px",display:"flex",alignItems:"center",justifyContent:"center"}},

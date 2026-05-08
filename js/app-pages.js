@@ -642,7 +642,7 @@ const TxEditModal=({tx,categories,payees,txTypes,onSave,onClose,allAccounts=[]})
       React.createElement(TagInput,{value:f.tags||"",onChange:v=>setF(p=>({...p,tags:v}))})
     ),
     React.createElement("div",{style:{marginBottom:12,padding:"10px 13px",borderRadius:10,border:"1px solid "+(showTax?"var(--accent)":"var(--border2)"),background:showTax?"var(--accentbg2)":"var(--bg4)",transition:"all .2s"}},
-      React.createElement("label",{style:{display:"flex",alignItems:"center",gap:8,cursor:"pointer",userSelect:"none",marginBottom:showTax?12:0}},
+      React.createElement("label",{style:{display:"flex",alignItems:"center",gap:8,cursor:"pointer",marginBottom:showTax?12:0}},
         React.createElement("input",{type:"checkbox",checked:showTax,onChange:e=>setShowTax(e.target.checked),style:{width:14,height:14,accentColor:"var(--accent)",cursor:"pointer",flexShrink:0}}),
         React.createElement("span",{style:{fontSize:13,fontWeight:500,color:showTax?"var(--accent)":"var(--text4)"}},"GST / TDS Tagging"),
         !showTax&&React.createElement("span",{style:{fontSize:11,color:"var(--text6)"}},"(optional)")
@@ -763,7 +763,7 @@ const BulkCatModal=({selectedIds,transactions,categories,payees,onApply,onClose}
       border:"1px solid "+(applyPayee?"var(--accent)55":"var(--border2)"),
       background:applyPayee?"var(--accentbg2)":"var(--bg4)",transition:"all .2s"
     }},
-      React.createElement("label",{style:{display:"flex",alignItems:"center",gap:8,cursor:"pointer",userSelect:"none",marginBottom:applyPayee?10:0}},
+      React.createElement("label",{style:{display:"flex",alignItems:"center",gap:8,cursor:"pointer",marginBottom:applyPayee?10:0}},
         React.createElement("input",{type:"checkbox",checked:applyPayee,
           onChange:e=>setApplyPayee(e.target.checked),
           style:{width:14,height:14,accentColor:"var(--accent)",cursor:"pointer",flexShrink:0}
@@ -1033,7 +1033,7 @@ const TxModal=({onAdd,onClose,categories,payees,txTypes,allAccounts,currentAccou
   });
 
   const schedSection=React.createElement("div",{style:{marginBottom:12,padding:"11px 13px",borderRadius:10,border:"1px solid "+(f.isScheduled?"var(--accent)":"var(--border2)"),background:f.isScheduled?"var(--accentbg2)":"var(--bg4)",transition:"all .2s"}},
-    React.createElement("label",{style:{display:"flex",alignItems:"center",gap:8,cursor:"pointer",userSelect:"none",marginBottom:f.isScheduled?12:0}},
+    React.createElement("label",{style:{display:"flex",alignItems:"center",gap:8,cursor:"pointer",marginBottom:f.isScheduled?12:0}},
       React.createElement("input",{type:"checkbox",checked:f.isScheduled,onChange:e=>setF(p=>({...p,isScheduled:e.target.checked})),style:{width:15,height:15,accentColor:"var(--accent)",cursor:"pointer",flexShrink:0}}),
       React.createElement("span",{style:{fontSize:13,fontWeight:600,color:f.isScheduled?"var(--accent)":"var(--text4)"}},"Schedule this transaction"),
       !f.isScheduled&&React.createElement("span",{style:{fontSize:11,color:"var(--text6)"}},"(recurring / future-dated)")
@@ -1119,7 +1119,7 @@ const TxModal=({onAdd,onClose,categories,payees,txTypes,allAccounts,currentAccou
       React.createElement(TagInput,{value:f.tags,onChange:v=>setF(p=>({...p,tags:v}))})
     ),
     React.createElement("div",{style:{marginBottom:12,padding:"10px 13px",borderRadius:10,border:"1px solid "+(showTax?"var(--accent)":"var(--border2)"),background:showTax?"var(--accentbg2)":"var(--bg4)",transition:"all .2s"}},
-      React.createElement("label",{style:{display:"flex",alignItems:"center",gap:8,cursor:"pointer",userSelect:"none",marginBottom:showTax?12:0}},
+      React.createElement("label",{style:{display:"flex",alignItems:"center",gap:8,cursor:"pointer",marginBottom:showTax?12:0}},
         React.createElement("input",{type:"checkbox",checked:showTax,onChange:e=>setShowTax(e.target.checked),style:{width:14,height:14,accentColor:"var(--accent)",cursor:"pointer",flexShrink:0}}),
         React.createElement("span",{style:{fontSize:13,fontWeight:500,color:showTax?"var(--accent)":"var(--text4)"}},"GST / TDS Tagging"),
         !showTax&&React.createElement("span",{style:{fontSize:11,color:"var(--text6)"}},"(optional)")
@@ -1403,7 +1403,7 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
                           React.createElement("button",{title:"Delete note",onClick:e=>{e.stopPropagation();dispatch({type:"EDIT_BANK",p:{id:b.id,notes:""}});},style:{background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.25)",borderRadius:5,color:"#ef4444",cursor:"pointer",fontSize:10,padding:"2px 6px",lineHeight:1}},"×")
                         )
                       )
-                    : React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic",userSelect:"none"}},"Click to add a note…")
+                    : React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic"}},"Click to add a note…")
                 ),
             /* ── Account attachment hyperlinks ── */
             (b.attachments&&b.attachments.length>0)&&React.createElement("div",{style:{marginTop:8,display:"flex",flexWrap:"wrap",gap:5,alignItems:"center"},onClick:e=>e.stopPropagation()},
@@ -1655,7 +1655,7 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
                           React.createElement("button",{title:"Delete note",onClick:e=>{e.stopPropagation();dispatch({type:"EDIT_CARD",p:{id:c.id,notes:""}});},style:{background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.25)",borderRadius:5,color:"#ef4444",cursor:"pointer",fontSize:10,padding:"2px 6px",lineHeight:1}},"×")
                         )
                       )
-                    : React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic",userSelect:"none"}},"Click to add a note…")
+                    : React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic"}},"Click to add a note…")
                 ),
             /* ── Account attachment hyperlinks ── */
             (c.attachments&&c.attachments.length>0)&&React.createElement("div",{style:{marginTop:8,display:"flex",flexWrap:"wrap",gap:5,alignItems:"center"},onClick:e=>e.stopPropagation()},
@@ -2430,7 +2430,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
           {id:"nwdonut",    label:"Net Worth Donut Chart"},
           {id:"budgetalerts",label:"Budget Alerts"},
           {id:"fincalendar",label:"Financial Calendar (60-day obligations)"},
-        ].map(w=>React.createElement("label",{key:w.id,style:{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:8,cursor:"pointer",userSelect:"none",background:W(w.id)?"transparent":"rgba(239,68,68,.04)",border:"1px solid "+(W(w.id)?"var(--border2)":"rgba(239,68,68,.15)"),transition:"all .15s"}},
+        ].map(w=>React.createElement("label",{key:w.id,style:{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:8,cursor:"pointer",background:W(w.id)?"transparent":"rgba(239,68,68,.04)",border:"1px solid "+(W(w.id)?"var(--border2)":"rgba(239,68,68,.15)"),transition:"all .15s"}},
           React.createElement("input",{type:"checkbox",checked:W(w.id),onChange:()=>toggleWidget(w.id),style:{width:15,height:15,accentColor:"var(--accent)",cursor:"pointer",flexShrink:0}}),
           React.createElement("span",{style:{fontSize:13,color:W(w.id)?"var(--text2)":"var(--text5)",fontWeight:W(w.id)?500:400}},w.label)
         ))
@@ -6366,7 +6366,7 @@ const MarketTicker=React.memo(()=>{
             flex:"0 0 auto",minWidth:155,maxWidth:200,
             padding:"10px 14px",borderRadius:10,
             background:bgCol,border:"1px solid "+borderCol,
-            cursor:"default",userSelect:"none",
+            cursor:"default",
             transition:"transform .12s","&:hover":{transform:"translateY(-1px)"},
           }},
             /* Group badge */
@@ -6488,7 +6488,7 @@ const PreviousTrades=({soldShareSnapshots={},dispatch})=>{
             display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
             borderRadius:10,marginBottom:isCollapsed?0:14,cursor:"pointer",
             background:"var(--bg4)",border:"1px solid var(--border2)",
-            transition:"all .15s",userSelect:"none",
+            transition:"all .15s",
           },
           onMouseEnter:e=>{e.currentTarget.style.background="var(--bg5)";},
           onMouseLeave:e=>{e.currentTarget.style.background="var(--bg4)";},
@@ -6863,7 +6863,7 @@ const ProfitabilityMetrics=({shares,soldShareSnapshots={}})=>{
     onClick:()=>{if(sortBy===field)setSortDir(d=>d==="desc"?"asc":"desc");else{setSortBy(field);setSortDir("desc");}},
     style:{
       fontSize:9,fontWeight:700,color:sortBy===field?"var(--accent)":"var(--text6)",
-      textTransform:"uppercase",letterSpacing:.7,cursor:"pointer",userSelect:"none",
+      textTransform:"uppercase",letterSpacing:.7,cursor:"pointer",
       display:"flex",alignItems:"center",gap:3,justifyContent:align||"flex-start",
       padding:"6px 8px",
     }
@@ -7695,7 +7695,7 @@ const WinLossPatterns=({shares,soldShareSnapshots={}})=>{
     onClick:()=>{if(sortBy===field)setSortDir(d=>d==="desc"?"asc":"desc");else{setSortBy(field);setSortDir("desc");}},
     style:{
       fontSize:9,fontWeight:700,color:sortBy===field?"var(--accent)":"var(--text6)",
-      textTransform:"uppercase",letterSpacing:.7,cursor:"pointer",userSelect:"none",
+      textTransform:"uppercase",letterSpacing:.7,cursor:"pointer",
       display:"flex",alignItems:"center",gap:3,justifyContent:align||"flex-start",
       padding:"6px 8px",
     }
@@ -11034,7 +11034,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                           React.createElement("button",{title:"Delete note",onClick:e=>{e.stopPropagation();dispatch({type:"EDIT_MF",p:{id:m.id,notes:""}});},style:{background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.25)",borderRadius:4,color:"#ef4444",cursor:"pointer",fontSize:10,padding:"2px 5px",lineHeight:1}},"×")
                         )
                       )
-                    : React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic",userSelect:"none"}},"Click to add a note…")
+                    : React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic"}},"Click to add a note…")
                 )
           );
         })
@@ -11265,7 +11265,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                           React.createElement("button",{title:"Delete note",onClick:e=>{e.stopPropagation();dispatch({type:"EDIT_SHARE",p:{id:sh.id,notes:""}});},style:{background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.25)",borderRadius:4,color:"#ef4444",cursor:"pointer",fontSize:10,padding:"2px 5px",lineHeight:1}},"×")
                         )
                       )
-                    : React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic",userSelect:"none"}},"Click to add a note…")
+                    : React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic"}},"Click to add a note…")
                 )
           );
         })
@@ -11348,7 +11348,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                           React.createElement("button",{title:"Delete note",onClick:e=>{e.stopPropagation();dispatch({type:"EDIT_FD",p:{id:f.id,notes:""}});},style:{background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.25)",borderRadius:4,color:"#ef4444",cursor:"pointer",fontSize:10,padding:"2px 5px",lineHeight:1}},"×")
                         )
                       )
-                    : React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic",userSelect:"none"}},"Click to add a note…")
+                    : React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic"}},"Click to add a note…")
                 ),
             /* ── Edit / Copy / Delete action row */
             React.createElement("div",{style:{display:"flex",gap:7,marginTop:10}},
@@ -11441,7 +11441,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                           React.createElement("button",{title:"Delete note",onClick:e=>{e.stopPropagation();dispatch({type:"EDIT_RE",p:{id:r.id,notes:""}});},style:{background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.25)",borderRadius:4,color:"#ef4444",cursor:"pointer",fontSize:10,padding:"2px 5px",lineHeight:1}},"×")
                         )
                       )
-                    : React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic",userSelect:"none"}},"Click to add a note…")
+                    : React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic"}},"Click to add a note…")
                 ),
             /* Edit / Delete buttons */
             React.createElement("div",{style:{display:"flex",gap:7,marginTop:10}},
@@ -11538,7 +11538,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                             React.createElement("button",{title:"Delete note",onClick:e=>{e.stopPropagation();dispatch({type:"EDIT_PF",p:{id:p.id,notes:""}});},style:{background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.25)",borderRadius:4,color:"#ef4444",cursor:"pointer",fontSize:10,padding:"2px 5px",lineHeight:1}},"×")
                           )
                         )
-                      : React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic",userSelect:"none"}},"Click to add a note…")
+                      : React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic"}},"Click to add a note…")
                   ),
               /* Edit / Delete */
               React.createElement("div",{style:{display:"flex",gap:7,marginTop:10}},
@@ -19488,7 +19488,7 @@ const UnifiedLedgerSection=React.memo(({banks,cards,cash,categories,payees,isMob
           filtered.length===0&&React.createElement("div",{style:{textAlign:"center",padding:"36px 20px",color:"var(--text6)"}},
             (search||activeFilterCount>0)?"No transactions match the current filters":"No transactions yet"
           ),
-          React.createElement("div",{className:"ldg-table-hdr",style:{display:"grid",gridTemplateColumns:COLS,minWidth:MINW,background:"var(--bg4)",borderBottom:"2px solid var(--border)",fontSize:11,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,userSelect:"none"}},
+          React.createElement("div",{className:"ldg-table-hdr",style:{display:"grid",gridTemplateColumns:COLS,minWidth:MINW,background:"var(--bg4)",borderBottom:"2px solid var(--border)",fontSize:11,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5}},
             React.createElement("div",{style:{padding:"9px 4px",cursor:"pointer",color:sortKey==="date"?"var(--accent)":"var(--text5)"},onClick:()=>{setSortKey("date");setSortDir("desc");},title:"Reset to default sort (newest first)"},"SN"),
             (()=>{const active=sortKey==="date";return React.createElement("div",{style:{padding:"9px 4px",cursor:"pointer",display:"flex",alignItems:"center",gap:4,color:active?"var(--accent)":"var(--text5)",background:active?"var(--accentbg2)":"transparent",borderRadius:4,transition:"background .12s"},onClick:()=>handleSortU("date","desc"),title:"Sort by Date"},"Date",React.createElement("span",{style:{fontSize:10,opacity:active?1:.35}},active?(sortDir==="desc"?"▼":"▲"):"⇅"));})(),
             (()=>{const active=sortKey==="account";return React.createElement("div",{style:{padding:"9px 4px",cursor:"pointer",display:"flex",alignItems:"center",gap:4,color:active?"var(--accent)":"var(--text5)",background:active?"var(--accentbg2)":"transparent",borderRadius:4,transition:"background .12s"},onClick:()=>handleSortU("account","asc"),title:"Sort by Account"},"Account",React.createElement("span",{style:{fontSize:10,opacity:active?1:.35}},active?(sortDir==="desc"?"▼":"▲"):"⇅"));})(),
@@ -21159,7 +21159,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     return React.createElement(Card2,{sx:{padding:0,overflowY:"hidden",overflowX:"auto"}},
       /* Header — always visible, click to toggle */
       React.createElement("div",{
-        style:{padding:"10px 14px",background:"var(--card2)",borderBottom:collapsed?"none":"1px solid var(--border)",cursor:"pointer",userSelect:"none"},
+        style:{padding:"10px 14px",background:"var(--card2)",borderBottom:collapsed?"none":"1px solid var(--border)",cursor:"pointer"},
         onClick:()=>setCollapsed(c=>!c)
       },
         React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:collapsed?0:6}},
@@ -21255,7 +21255,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     return React.createElement(Card2,{sx:{padding:0,overflowY:"hidden",overflowX:"auto"}},
       /* ── Header — always visible, click to toggle ── */
       React.createElement("div",{
-        style:{padding:"12px 16px",background:"var(--card2)",borderBottom:collapsed?"none":"1px solid var(--border)",cursor:"pointer",userSelect:"none"},
+        style:{padding:"12px 16px",background:"var(--card2)",borderBottom:collapsed?"none":"1px solid var(--border)",cursor:"pointer"},
         onClick:()=>setCollapsed(c=>!c)
       },
         React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
@@ -24923,7 +24923,7 @@ const TaxEstimatorWrapper = ({ taxData, taxData2627, dispatch }) => {
                     border:"1px solid rgba(239,68,68,.4)",
                     background:"rgba(239,68,68,.08)",color:"#ef4444",
                     cursor:"pointer",fontSize:10,fontWeight:700,
-                    fontFamily:"'DM Sans',sans-serif",userSelect:"none",
+                    fontFamily:"'DM Sans',sans-serif",
                     display:"inline-flex",alignItems:"center",gap:3
                   }}
                 >
@@ -25501,7 +25501,7 @@ function App(){
       /* Don't remind me */
       React.createElement("label",{style:{
         display:"flex",alignItems:"center",gap:8,marginTop:14,cursor:"pointer",
-        fontSize:12,color:"rgba(255,255,255,.35)",userSelect:"none",
+        fontSize:12,color:"rgba(255,255,255,.35)",
       }},
         React.createElement("input",{
           type:"checkbox",checked:fsaWarnCheck,
@@ -25524,7 +25524,7 @@ function App(){
       bottom:"24px",right:"18px",
       zIndex:9998,
       animation:"fsaSlideIn .4s cubic-bezier(.22,1,.36,1) forwards",
-      userSelect:"none",
+      
     }
   },
     React.createElement("div",{style:{
@@ -25585,7 +25585,7 @@ function App(){
       zIndex:9998,
       cursor:fsaGranting?"wait":"pointer",
       animation:"fsaSlideIn .4s cubic-bezier(.22,1,.36,1) forwards",
-      userSelect:"none",
+      
     }
   },
     /* The card itself */
