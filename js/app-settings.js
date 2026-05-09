@@ -5,7 +5,7 @@
    ══════════════════════════════════════════════════════════════════════════ */
 
 /* ── ClassType → Icon / Color helpers ─────────────────────────────────── */
-var CLASSTYPE_ICON = ct => ({
+const CLASSTYPE_ICON = ct => ({
   Income:     "classIncome",
   Expense:    "classExpense",
   Investment: "classInvest",
@@ -13,7 +13,7 @@ var CLASSTYPE_ICON = ct => ({
   Others:     "classOthers",
 }[ct] || "category");
 
-var CLASSTYPE_COLOR = ct => ({
+const CLASSTYPE_COLOR = ct => ({
   Income:     "#16a34a",
   Expense:    "#ef4444",
   Investment: "#0ea5e9",
@@ -24,13 +24,13 @@ var CLASSTYPE_COLOR = ct => ({
 /* Resolve a reminder's category from live state.categories.
    The reminder's `category` field stores a category name like "Payment"
    or a sub-category path like "Payment::Card Bill". */
-var _resolveCat = (catName, stateCategories) => {
+const _resolveCat = (catName, stateCategories) => {
   if (!catName || !stateCategories) return null;
   const mainName = catName.split("::")[0];
   return stateCategories.find(c => c.name === mainName) || null;
 };
 
-var REMINDER_FREQUENCIES = [
+const REMINDER_FREQUENCIES = [
   { id:"once",       label:"One-time (Ad hoc)" },
   { id:"daily",      label:"Daily" },
   { id:"weekly",     label:"Weekly" },
@@ -64,7 +64,7 @@ function getDueReminders(reminders, windowDays=0){
    ADD / EDIT REMINDER MODAL
    Accepts `categories` prop (live state.categories array).
    ───────────────────────────────────────────────────────────────────────── */
-var ReminderFormModal = ({reminder, categories, onSave, onClose}) => {
+const ReminderFormModal = ({reminder, categories, onSave, onClose}) => {
   const cats = categories || [];
   const isEdit = !!reminder?.id;
 
@@ -243,7 +243,7 @@ var ReminderFormModal = ({reminder, categories, onSave, onClose}) => {
 /* ─────────────────────────────────────────────────────────────────────────
    SETTINGS PANEL: Settings → Reminders
    ───────────────────────────────────────────────────────────────────────── */
-var RemindersSettingsPanel = ({state, dispatch}) => {
+const RemindersSettingsPanel = ({state, dispatch}) => {
   const reminders = state.reminders || [];
   const cats = state.categories || [];
   const [showForm, setShowForm] = useState(false);
@@ -498,7 +498,7 @@ var RemindersSettingsPanel = ({state, dispatch}) => {
    REMINDER TOAST MANAGER
    Renders a centered modal overlay for due reminders on the home screen.
    ───────────────────────────────────────────────────────────────────────── */
-var ReminderToastManager = ({state, dispatch}) => {
+const ReminderToastManager = ({state, dispatch}) => {
   const reminders = state.reminders || [];
   const cats = state.categories || [];
   const [dismissed, setDismissed] = useState(new Set()); // IDs dismissed this session
@@ -835,14 +835,14 @@ var ReminderToastManager = ({state, dispatch}) => {
    ══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Constants ─────────────────────────────────────────────────────────── */
-var NOTIF_IDB_NAME    = "mm_notif_v1";
-var NOTIF_IDB_VER     = 1;
-var STORE_REMINDERS   = "reminders";
-var STORE_PENDING     = "pending_actions";
-var STORE_FIRED       = "fired_today";
-var PERIODIC_SYNC_TAG = "finsight-check-reminders";
-var NOTIF_ICON        = "./icons/icon-192.png";
-var NOTIF_BADGE       = "./icons/icon-192.png";
+const NOTIF_IDB_NAME    = "mm_notif_v1";
+const NOTIF_IDB_VER     = 1;
+const STORE_REMINDERS   = "reminders";
+const STORE_PENDING     = "pending_actions";
+const STORE_FIRED       = "fired_today";
+const PERIODIC_SYNC_TAG = "finsight-check-reminders";
+const NOTIF_ICON        = "./icons/icon-192.png";
+const NOTIF_BADGE       = "./icons/icon-192.png";
 
 /* ── Open / initialise the notifications IDB ──────────────────────────── */
 function openNotifIDB() {
@@ -979,7 +979,7 @@ async function reconcilePendingActions() {
    ══════════════════════════════════════════════════════════════════════════ */
 
 /* ── useNotifications hook ─────────────────────────────────────────────── */
-var useNotifications = (state, dispatch) => {
+const useNotifications = (state, dispatch) => {
   const [permStatus, setPermStatus]   = React.useState(() => {
     if (!("Notification" in window)) return "unsupported";
     return Notification.permission;
@@ -1042,7 +1042,7 @@ var useNotifications = (state, dispatch) => {
 
 /* ── NotificationPermissionBanner ─────────────────────────────────────── */
 /*  Shown inside Settings → Reminders if permission is not yet granted.   */
-var NotificationPermissionBanner = ({ state, dispatch }) => {
+const NotificationPermissionBanner = ({ state, dispatch }) => {
   const { permStatus, syncing, enable } = useNotifications(state, dispatch);
 
   if (permStatus === "unsupported") return null;
@@ -1144,7 +1144,7 @@ var NotificationPermissionBanner = ({ state, dispatch }) => {
 
 /* ── NotificationStatusWidget ─────────────────────────────────────────── */
 /* A compact inline widget for the Settings page summary row             */
-var NotificationStatusWidget = ({ state, dispatch }) => {
+const NotificationStatusWidget = ({ state, dispatch }) => {
   const { permStatus, enable, syncing } = useNotifications(state, dispatch);
 
   const statusMap = {
@@ -1179,7 +1179,7 @@ var NotificationStatusWidget = ({ state, dispatch }) => {
 /* ── GlobalNotificationSync ────────────────────────────────────────────── */
 /* Mount this once near the root of the app — it wires up the SW message  */
 /* listener and the boot-time reconcile without rendering anything.        */
-var GlobalNotificationSync = ({ state, dispatch }) => {
+const GlobalNotificationSync = ({ state, dispatch }) => {
   useNotifications(state, dispatch); // side-effects only
   return null;
 };
@@ -1212,20 +1212,20 @@ var GlobalNotificationSync = ({ state, dispatch }) => {
    SECTION 1 — REFRESH TOKEN CONSTANTS & LOW-LEVEL HELPERS
    ══════════════════════════════════════════════════════════════════════════ */
 
-var GDRIVE_LS_REFRESH_TOKEN  = "mm_gdrive_refresh_token";
-var GDRIVE_LS_CLIENT_SECRET  = "mm_gdrive_client_secret";
-var GDRIVE_TOKEN_ENDPOINT    = "https://oauth2.googleapis.com/token";
+const GDRIVE_LS_REFRESH_TOKEN  = "mm_gdrive_refresh_token";
+const GDRIVE_LS_CLIENT_SECRET  = "mm_gdrive_client_secret";
+const GDRIVE_TOKEN_ENDPOINT    = "https://oauth2.googleapis.com/token";
 
 /* ── Read / write / clear the stored refresh token ── */
-var _gdriveGetRefreshToken  = () => { try { return localStorage.getItem(GDRIVE_LS_REFRESH_TOKEN) || ""; } catch { return ""; } };
-var _gdriveSetRefreshToken  = (rt) => { try { if (rt) localStorage.setItem(GDRIVE_LS_REFRESH_TOKEN, rt); } catch {} };
-var _gdriveClearRefreshToken = () => { try { localStorage.removeItem(GDRIVE_LS_REFRESH_TOKEN); } catch {} };
+const _gdriveGetRefreshToken  = () => { try { return localStorage.getItem(GDRIVE_LS_REFRESH_TOKEN) || ""; } catch { return ""; } };
+const _gdriveSetRefreshToken  = (rt) => { try { if (rt) localStorage.setItem(GDRIVE_LS_REFRESH_TOKEN, rt); } catch {} };
+const _gdriveClearRefreshToken = () => { try { localStorage.removeItem(GDRIVE_LS_REFRESH_TOKEN); } catch {} };
 
 /* ── Read / write the client secret ── */
-var _gdriveGetClientSecret  = () => { try { return localStorage.getItem(GDRIVE_LS_CLIENT_SECRET) || ""; } catch { return ""; } };
+const _gdriveGetClientSecret  = () => { try { return localStorage.getItem(GDRIVE_LS_CLIENT_SECRET) || ""; } catch { return ""; } };
 
 /* ── Build the redirect_uri Google expects (origin only for SPAs) ── */
-var _gdriveRedirectUri = () => window.location.origin;
+const _gdriveRedirectUri = () => window.location.origin;
 
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -1240,7 +1240,7 @@ var _gdriveRedirectUri = () => window.location.origin;
  * @param  {string} authCode  — code returned by GIS callback
  * @returns {{ access_token, refresh_token, expires_in } | null}
  */
-var _gdriveExchangeCodeForTokens = async (authCode) => {
+const _gdriveExchangeCodeForTokens = async (authCode) => {
   const cid    = (function(){ try { return localStorage.getItem("mm_gdrive_cid") || ""; } catch { return ""; } })();
   const secret = _gdriveGetClientSecret();
   if (!cid || !secret || !authCode) return null;
@@ -1277,7 +1277,7 @@ var _gdriveExchangeCodeForTokens = async (authCode) => {
  *
  * @returns {string}  — new access token, or "" on failure
  */
-var _gdriveRefreshAccessToken = async () => {
+const _gdriveRefreshAccessToken = async () => {
   const refreshToken = _gdriveGetRefreshToken();
   const cid          = (function(){ try { return localStorage.getItem("mm_gdrive_cid") || ""; } catch { return ""; } })();
   const secret       = _gdriveGetClientSecret();
@@ -1339,7 +1339,7 @@ var _gdriveRefreshAccessToken = async () => {
  *
  * @returns {string} — access token, or "" on failure
  */
-var gdriveRequestTokenWithRefresh = () => new Promise((resolve) => {
+const gdriveRequestTokenWithRefresh = () => new Promise((resolve) => {
   try {
     const cid = (function(){ try { return localStorage.getItem("mm_gdrive_cid") || ""; } catch { return ""; } })();
     if (!cid || typeof google === "undefined" || !google.accounts?.oauth2) {
@@ -1402,7 +1402,7 @@ var gdriveRequestTokenWithRefresh = () => new Promise((resolve) => {
  * silent = true  → background / auto-sync: only cached token, refresh token exchange, or
  *                  GIS browser-session silent refresh.  NEVER shows a popup.
  * silent = false → user-initiated (Push, Pull, Sync Now): full chain including popup. */
-var _gdriveEnsureTokenV2 = async (silent = false) => {
+const _gdriveEnsureTokenV2 = async (silent = false) => {
   /* ── Step 1: cached access token still valid ── */
   let tok = _gdriveGetToken();
   if (tok && !_gdriveTokenExpired()) return tok;
@@ -1439,10 +1439,10 @@ var _gdriveEnsureTokenV2 = async (silent = false) => {
    SECTION 5 — PERSISTENT LAST-SYNC TIMESTAMP
    ══════════════════════════════════════════════════════════════════════════ */
 
-var LS_GDRIVE_LAST_SYNC = "mm_gdrive_last_sync";
+const LS_GDRIVE_LAST_SYNC = "mm_gdrive_last_sync";
 
-var _syncGetLocal  = () => { try { return localStorage.getItem(LS_GDRIVE_LAST_SYNC) || ""; } catch { return ""; } };
-var _syncSaveLocal = (ts) => { try { if (ts) localStorage.setItem(LS_GDRIVE_LAST_SYNC, ts); } catch {} };
+const _syncGetLocal  = () => { try { return localStorage.getItem(LS_GDRIVE_LAST_SYNC) || ""; } catch { return ""; } };
+const _syncSaveLocal = (ts) => { try { if (ts) localStorage.setItem(LS_GDRIVE_LAST_SYNC, ts); } catch {} };
 
 /* Save sync timestamp whenever Drive:pulled fires */
 window.addEventListener("gdrive:pulled", (e) => {
@@ -1646,7 +1646,7 @@ gdriveUpsertSyncFile = async (state, manual) => {
    • Refresh Token status indicator
    • "Re-authorise" button to force a new Code flow consent
    ══════════════════════════════════════════════════════════════════════════ */
-var CloudBackupPanel = ({ state, dispatch }) => {
+const CloudBackupPanel = ({ state, dispatch }) => {
   const [cidInput,     setCidInput]     = React.useState(() => { try { return localStorage.getItem("mm_gdrive_cid") || ""; } catch { return ""; } });
   const [secretInput,  setSecretInput]  = React.useState(() => { try { return localStorage.getItem(GDRIVE_LS_CLIENT_SECRET) || ""; } catch { return ""; } });
   const [cidSaved,     setCidSaved]     = React.useState(false);
@@ -1663,20 +1663,15 @@ var CloudBackupPanel = ({ state, dispatch }) => {
 
   /* Refresh status when sync events fire */
   React.useEffect(() => {
-    const onPulled = (e) => {
-      if (e && e.detail && e.detail.time) _syncSaveLocal(e.detail.time);
+    const refresh = () => {
       setLastSync(_syncGetLocal());
       setHasRefresh(!!_gdriveGetRefreshToken());
     };
-    const onSynced = () => {
-      setLastSync(_syncGetLocal());
-      setHasRefresh(!!_gdriveGetRefreshToken());
-    };
-    window.addEventListener("gdrive:synced", onSynced);
-    window.addEventListener("gdrive:pulled", onPulled);
+    window.addEventListener("gdrive:synced", refresh);
+    window.addEventListener("gdrive:pulled", refresh);
     return () => {
-      window.removeEventListener("gdrive:synced", onSynced);
-      window.removeEventListener("gdrive:pulled", onPulled);
+      window.removeEventListener("gdrive:synced", refresh);
+      window.removeEventListener("gdrive:pulled", refresh);
     };
   }, []);
 
@@ -2176,9 +2171,9 @@ var CloudBackupPanel = ({ state, dispatch }) => {
 
 window.CloudBackupPanel = CloudBackupPanel;
 /* Local-date formatter — avoids toISOString() UTC shift in IST */
-var _fmtLS=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const _fmtLS=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 /* ── MFXirrRow — extracted so useState is never called inside .map() ── */
-var MFXirrRow=({m,dispatch,askDelete})=>{
+const MFXirrRow=({m,dispatch,askDelete})=>{
   const trueCoA=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;
   const currentVal=m.currentValue||m.invested;
   const autoXirr=m.startDate&&trueCoA>0&&currentVal>0?xirrSingleBuy(trueCoA,currentVal,m.startDate):null;
@@ -2233,7 +2228,7 @@ var MFXirrRow=({m,dispatch,askDelete})=>{
 };
 
 /* ── SettingsSection, CalculatorSection, NotesSection, ScheduledSection ── */
-var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,onResetAll,isMobile})=>{
+const SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,onResetAll,isMobile})=>{
   const[stab,setStab]=useState("appearance");
   const[confirm,setConfirm]=useState(null);
   const[editBank,setEditBank]=useState(null);
@@ -3281,7 +3276,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
    5–60 min → ⚠ Behind
    > 60 min → 🔴 Out of sync
    ══════════════════════════════════════════════════════════════════════════ */
-var StorageSyncPanel=()=>{
+const StorageSyncPanel=()=>{
   const _readTs=()=>({
     ls:   (function(){try{return localStorage.getItem(LS_LAST_LS_SAVE)||null;}catch{return null;}})(),
     idb:  (function(){try{return localStorage.getItem(LS_LAST_IDB_SAVE)||null;}catch{return null;}})(),
@@ -3477,7 +3472,7 @@ var StorageSyncPanel=()=>{
 };
 
 /* ── CALCULATOR SECTION ───────────────────────────────────────────────── */
-var CalculatorSection=React.memo(()=>{
+const CalculatorSection=React.memo(()=>{
   const[expr,setExpr]=useState("");      /* full expression string */
   const[display,setDisplay]=useState("0");/* current display value */
   const[result,setResult]=useState(null); /* last computed result */
@@ -3716,7 +3711,7 @@ var CalculatorSection=React.memo(()=>{
   );
 });
 
-var NotesSection=React.memo(({notes=[],dispatch})=>{
+const NotesSection=React.memo(({notes=[],dispatch})=>{
   const[open,setOpen]=useState(false);
   const[editing,setEditing]=useState(null);
   const[search,setSearch]=useState("");
@@ -3893,7 +3888,7 @@ var NotesSection=React.memo(({notes=[],dispatch})=>{
 /* ══════════════════════════════════════════════════════════════════════════
    SCHEDULED TRANSACTIONS SECTION
    ══════════════════════════════════════════════════════════════════════════ */
-var ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,payees=_EA,dispatch})=>{
+const ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,payees=_EA,dispatch})=>{
   const[editSc,setEditSc]=useState(null);
   const[execConfirm,setExecConfirm]=useState(null);
   const[delScConfirm,setDelScConfirm]=useState(null);
@@ -4699,29 +4694,29 @@ var ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,paye
 });
 
 /* ── LOCALSTORAGE PERSISTENCE ─────────────────────────────────────────────── */
-var LS_KEY="mm_v7_state";
-var LS_EOD_PRICES="mm_v7_eodPrices";
-var LS_EOD_NAVS="mm_v7_eodNavs";
+const LS_KEY="mm_v7_state";
+const LS_EOD_PRICES="mm_v7_eodPrices";
+const LS_EOD_NAVS="mm_v7_eodNavs";
 /* ── Reset guard: set to true just before window.location.reload() inside the
    "Yes, Delete Everything" handler so the beforeunload/pagehide flush skips
    saving stale (pre-reset) state back to localStorage and IndexedDB, which
    was the root cause of categories and cash not being cleared after reset. */
-var _mmResetting=false;
-var LS_THEME="mm_v7_theme";
-var LS_PIN="mm_v7_pin";   /* stores SHA-256 hex hash of the 6-digit PIN */
-var SS_UNLOCK="mm_v7_unlocked"; /* sessionStorage — cleared when tab closes */
-var CALC_LS_KEY="mm_calc_v1"; /* Financial calculator inputs + results */
-var LS_LAST_BACKUP  ="mm_v7_lastBackup"; /* ISO timestamp of last successful backup download  */
-var LS_LAST_LS_SAVE ="mm_v7_lastSaved";  /* ISO timestamp of last successful localStorage write */
-var LS_LAST_IDB_SAVE="mm_idb_lastSaved"; /* ISO timestamp of last successful IndexedDB write   */
+let _mmResetting=false;
+const LS_THEME="mm_v7_theme";
+const LS_PIN="mm_v7_pin";   /* stores SHA-256 hex hash of the 6-digit PIN */
+const SS_UNLOCK="mm_v7_unlocked"; /* sessionStorage — cleared when tab closes */
+const CALC_LS_KEY="mm_calc_v1"; /* Financial calculator inputs + results */
+const LS_LAST_BACKUP  ="mm_v7_lastBackup"; /* ISO timestamp of last successful backup download  */
+const LS_LAST_LS_SAVE ="mm_v7_lastSaved";  /* ISO timestamp of last successful localStorage write */
+const LS_LAST_IDB_SAVE="mm_idb_lastSaved"; /* ISO timestamp of last successful IndexedDB write   */
 
 /* ── Backup monitoring helpers ── */
-var recordBackupDate=()=>{try{localStorage.setItem(LS_LAST_BACKUP,new Date().toISOString());}catch{};};
-var getLastBackupDate=()=>{try{return localStorage.getItem(LS_LAST_BACKUP);}catch{return null;}};
-var getBackupAgeDays=()=>{const d=getLastBackupDate();if(!d)return Infinity;return(Date.now()-new Date(d).getTime())/(1000*60*60*24);};
+const recordBackupDate=()=>{try{localStorage.setItem(LS_LAST_BACKUP,new Date().toISOString());}catch{};};
+const getLastBackupDate=()=>{try{return localStorage.getItem(LS_LAST_BACKUP);}catch{return null;}};
+const getBackupAgeDays=()=>{const d=getLastBackupDate();if(!d)return Infinity;return(Date.now()-new Date(d).getTime())/(1000*60*60*24);};
 
 /* Build a standard backup payload from current state (reusable for manual & auto backup) */
-var buildBackupPayload=async(st)=>{
+const buildBackupPayload=async(st)=>{
   return{
     version:8,exportedAt:new Date().toISOString(),
     summary:{
@@ -4770,10 +4765,10 @@ window.__mmGetBackupAgeDays=getBackupAgeDays;
 window.__mmGetLastBackupDate=getLastBackupDate;
 
 /* ── Calculator state persistence helpers ── */
-var loadCalcState=()=>{try{return JSON.parse(localStorage.getItem(CALC_LS_KEY)||"{}");}catch{return {};}};
-var saveCalcState=data=>{try{localStorage.setItem(CALC_LS_KEY,JSON.stringify(data));}catch{};};
+const loadCalcState=()=>{try{return JSON.parse(localStorage.getItem(CALC_LS_KEY)||"{}");}catch{return {};}};
+const saveCalcState=data=>{try{localStorage.setItem(CALC_LS_KEY,JSON.stringify(data));}catch{};};
 
-var loadState=()=>{
+const loadState=()=>{
   try{
     const raw=localStorage.getItem(LS_KEY);
     if(!raw)return null;
@@ -4831,7 +4826,7 @@ var loadState=()=>{
    NOT in localStorage. Only account metadata, settings, investments and cache
    data live in the LS_KEY blob. This dramatically reduces LS usage.
    ══════════════════════════════════════════════════════════════════════════ */
-var MM_LS_KEYS=[
+const MM_LS_KEYS=[
   {key:LS_KEY,         label:"App State (transactions, accounts, investments)"},
   {key:LS_EOD_PRICES,  label:"EOD share prices cache (separate)"},
   {key:LS_EOD_NAVS,    label:"EOD mutual fund NAVs cache (separate)"},
@@ -4846,9 +4841,9 @@ var MM_LS_KEYS=[
 
 /* The true localStorage limit — 5 MB, enforced per-origin by all major browsers
    independently of navigator.storage.estimate() which covers the full origin quota. */
-var LS_QUOTA_BYTES = 5 * 1024 * 1024; /* 5,242,880 bytes */
+const LS_QUOTA_BYTES = 5 * 1024 * 1024; /* 5,242,880 bytes */
 
-var _lsBytes=(key)=>{
+const _lsBytes=(key)=>{
   try{
     const k=localStorage.getItem(key)||"";
     /* JS strings are stored as UTF-16: each character = 2 bytes.
@@ -4857,7 +4852,7 @@ var _lsBytes=(key)=>{
   }catch{return 0;}
 };
 
-var getStorageStats=()=>{
+const getStorageStats=()=>{
   /* Measure every MM key */
   const keys=MM_LS_KEYS.map(({key,label})=>{
     const bytes=_lsBytes(key);
@@ -4891,7 +4886,7 @@ var getStorageStats=()=>{
 };
 
 /* Async version: fetches origin quota for INFO display only — does NOT change the gauge */
-var getStorageStatsAsync=async()=>{
+const getStorageStatsAsync=async()=>{
   const sync=getStorageStats();
   try{
     if(navigator.storage&&navigator.storage.estimate){
@@ -4914,7 +4909,7 @@ var getStorageStatsAsync=async()=>{
 /* Returns a string describing which pass succeeded, or null if all failed.
    The caller uses this to dispatch matching PRUNE actions so in-memory
    state stays in sync with what was actually persisted to localStorage. */
-var _emergencyCompact=(s)=>{
+const _emergencyCompact=(s)=>{
   /* Pass 1: wipe the history cache (largest variable cache) */
   const p1={...s,historyCache:{}};
   try{localStorage.setItem(LS_KEY,JSON.stringify(p1));console.warn("[MM] Storage: historyCache cleared to recover space.");return"historyCache";}catch{}
@@ -4938,7 +4933,7 @@ var _emergencyCompact=(s)=>{
    ("historyCache" | "eodPrices" | "eodNavs"), or null on a clean save or
    total failure — so the call site can dispatch the matching PRUNE action
    to bring in-memory state in sync with what was persisted. */
-var saveState=(s)=>{
+const saveState=(s)=>{
   /* ── Strip large/redundant blobs before writing to localStorage ─────────
      1. eodPrices / eodNavs → saved to their own LS keys, not the main blob.
      2. bank / card / cash transactions → moved to IndexedDB (mm_tx_v1).
@@ -4974,7 +4969,7 @@ var saveState=(s)=>{
   }
 };
 /* ── Save eodPrices/eodNavs to separate localStorage keys (called only on change) ── */
-var _saveEodCaches=(state)=>{
+const _saveEodCaches=(state)=>{
   try{
     const eP=state.eodPrices||{};
     const eN=state.eodNavs||{};
@@ -4983,27 +4978,27 @@ var _saveEodCaches=(state)=>{
   }catch{}
 };
 
-var loadTheme=()=>{
+const loadTheme=()=>{
   try{return localStorage.getItem(LS_THEME)||"ocean";}catch{return "ocean";}
 };
 
-var saveTheme=(id)=>{
+const saveTheme=(id)=>{
   try{localStorage.setItem(LS_THEME,id);}catch{}
 };
 
 /* ── PIN SECURITY ─────────────────────────────────────────────────────────── */
 /* Hash a PIN string with SHA-256; returns lowercase hex string */
-var hashPin=async(pin)=>{
+const hashPin=async(pin)=>{
   const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(pin));
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
 };
-var getPinHash=()=>{try{return localStorage.getItem(LS_PIN)||"";}catch{return "";}};
+const getPinHash=()=>{try{return localStorage.getItem(LS_PIN)||"";}catch{return "";}};
 
 /* ── ENCRYPTED BACKUP HELPERS ──────────────────────────────────────────
    Uses AES-256-GCM with a key derived from the user's password via PBKDF2.
    Output format: JSON envelope { encrypted:true, salt:<hex>, iv:<hex>, data:<hex> }
    ─────────────────────────────────────────────────────────────────────── */
-var encryptBackup=async(payloadObj,password)=>{
+const encryptBackup=async(payloadObj,password)=>{
   const enc=new TextEncoder();
   const salt=crypto.getRandomValues(new Uint8Array(16));
   const iv=crypto.getRandomValues(new Uint8Array(12));
@@ -5017,7 +5012,7 @@ var encryptBackup=async(payloadObj,password)=>{
   const toHex=buf=>Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
   return{encrypted:true,v:1,salt:toHex(salt),iv:toHex(iv),data:toHex(ciphertext)};
 };
-var decryptBackup=async(envelope,password)=>{
+const decryptBackup=async(envelope,password)=>{
   const enc=new TextEncoder();
   const fromHex=hex=>new Uint8Array(hex.match(/.{2}/g).map(b=>parseInt(b,16)));
   const salt=fromHex(envelope.salt),iv=fromHex(envelope.iv),ciphertext=fromHex(envelope.data);
@@ -5029,21 +5024,21 @@ var decryptBackup=async(envelope,password)=>{
   const plaintext=await crypto.subtle.decrypt({name:"AES-GCM",iv},key,ciphertext);
   return JSON.parse(new TextDecoder().decode(plaintext));
 };
-var savePinHash=(h)=>{try{if(h)localStorage.setItem(LS_PIN,h);else localStorage.removeItem(LS_PIN);}catch{}};
-var isSessionUnlocked=()=>{try{return sessionStorage.getItem(SS_UNLOCK)==="1";}catch{return false;}};
-var setSessionUnlocked=()=>{try{sessionStorage.setItem(SS_UNLOCK,"1");}catch{}};
-var clearSessionUnlock=()=>{try{sessionStorage.removeItem(SS_UNLOCK);}catch{}};
+const savePinHash=(h)=>{try{if(h)localStorage.setItem(LS_PIN,h);else localStorage.removeItem(LS_PIN);}catch{}};
+const isSessionUnlocked=()=>{try{return sessionStorage.getItem(SS_UNLOCK)==="1";}catch{return false;}};
+const setSessionUnlocked=()=>{try{sessionStorage.setItem(SS_UNLOCK,"1");}catch{}};
+const clearSessionUnlock=()=>{try{sessionStorage.removeItem(SS_UNLOCK);}catch{}};
 
 /* ══════════════════════════════════════════════════════════════════════════
    FILE SYSTEM ACCESS API (FSA) — Save data to any folder on your PC
    Supported: Chrome 86+ / Edge 86+ on desktop.
    Falls back gracefully to localStorage-only on unsupported browsers.
    ══════════════════════════════════════════════════════════════════════════ */
-var FSA_IDB_NAME ="mm_fsa_db";
-var FSA_IDB_STORE="handles";
-var FSA_IDB_KEY  ="saveFileHandle";
-var RCPT_IDB_STORE="receipts"; /* keyed by "txId:filename" */
-var RCPT_BLOB_STORE="receipt_blobs"; /* keyed same way; stores {b64,mimeType} objects */
+const FSA_IDB_NAME ="mm_fsa_db";
+const FSA_IDB_STORE="handles";
+const FSA_IDB_KEY  ="saveFileHandle";
+const RCPT_IDB_STORE="receipts"; /* keyed by "txId:filename" */
+const RCPT_BLOB_STORE="receipt_blobs"; /* keyed same way; stores {b64,mimeType} objects */
 
 /* Is the API available AND usable in this browser?
    showSaveFilePicker exists on Android Chrome 120+ but createWritable() for
@@ -5054,7 +5049,7 @@ var RCPT_BLOB_STORE="receipt_blobs"; /* keyed same way; stores {b64,mimeType} ob
      3. Must not be a mobile device (userAgentData.mobile or UA string fallback)
    This ensures Android/iOS users never hit the FSA code-path and get silent
    write failures. They fall through to the localStorage-only path cleanly. */
-var fsaSupported=()=>{
+const fsaSupported=()=>{
   if(typeof window.showSaveFilePicker!=="function")return false;
   if(typeof FileSystemFileHandle==="undefined"||typeof FileSystemFileHandle.prototype.createWritable!=="function")return false;
   // Prefer modern UA client hints; fall back to userAgent string
@@ -5077,16 +5072,16 @@ var fsaSupported=()=>{
    • Token storage: localStorage key mm_gdrive_token (expires_in tracked)
    ══════════════════════════════════════════════════════════════════════════ */
 
-var GDRIVE_SYNC_FILENAME = "finsight-sync.json";
-var GDRIVE_LS_TOKEN  = "mm_gdrive_token";
-var GDRIVE_LS_EXPIRE = "mm_gdrive_token_exp";
-var GDRIVE_LS_FILEID = "mm_gdrive_file_id";
-var GDRIVE_LS_LAST_WRITE = "mm_gdrive_last_write";
+const GDRIVE_SYNC_FILENAME = "finsight-sync.json";
+const GDRIVE_LS_TOKEN  = "mm_gdrive_token";
+const GDRIVE_LS_EXPIRE = "mm_gdrive_token_exp";
+const GDRIVE_LS_FILEID = "mm_gdrive_file_id";
+const GDRIVE_LS_LAST_WRITE = "mm_gdrive_last_write";
 
 /* cloudSyncSupported — returns true when the browser can use Google OAuth.
    We check for the GIS (google.accounts.oauth2) library injected by the
    index.html <script> tag.  Works on both desktop and Android. */
-var cloudSyncSupported = () => {
+const cloudSyncSupported = () => {
   try {
     return typeof google !== "undefined"
       && google.accounts
@@ -5095,19 +5090,19 @@ var cloudSyncSupported = () => {
 };
 
 /* Is the current device Android (TWA / WebView)? */
-var _isAndroidDevice = () => {
+const _isAndroidDevice = () => {
   if (navigator.userAgentData && typeof navigator.userAgentData.mobile === "boolean")
     return navigator.userAgentData.mobile;
   return /Android/i.test(navigator.userAgent);
 };
 
 /* ── Token helpers ── */
-var _gdriveGetToken = () => {
+const _gdriveGetToken = () => {
   try { return localStorage.getItem(GDRIVE_LS_TOKEN) || ""; } catch { return ""; }
 };
 
 /* Proactive refresh timer — renewed every time a token is stored. */
-var _gdriveRefreshTimer = null;
+let _gdriveRefreshTimer = null;
 
 /* Schedule a silent token refresh ~5 minutes before the current token expires.
    This keeps long-running sessions authorised without ever showing a popup.
@@ -5115,7 +5110,7 @@ var _gdriveRefreshTimer = null;
      1. GIS session cookie (gdriveRequestTokenSilent) — no network round-trip
      2. Stored refresh token (_gdriveRefreshAccessToken, defined in app-sync.js)
         — works even when the browser's Google session has expired           */
-var _gdriveScheduleTokenRefresh = (expiresInSeconds) => {
+const _gdriveScheduleTokenRefresh = (expiresInSeconds) => {
   if (_gdriveRefreshTimer) clearTimeout(_gdriveRefreshTimer);
   const delayMs = Math.max(0, (expiresInSeconds - 300)) * 1000; // 5 min safety margin
   _gdriveRefreshTimer = setTimeout(async () => {
@@ -5133,7 +5128,7 @@ var _gdriveScheduleTokenRefresh = (expiresInSeconds) => {
   }, delayMs);
 };
 
-var _gdriveSetToken = (tok, expiresIn) => {
+const _gdriveSetToken = (tok, expiresIn) => {
   try {
     localStorage.setItem(GDRIVE_LS_TOKEN, tok);
     if (expiresIn) {
@@ -5142,11 +5137,11 @@ var _gdriveSetToken = (tok, expiresIn) => {
     }
   } catch {}
 };
-var _gdriveClearToken = () => {
+const _gdriveClearToken = () => {
   if (_gdriveRefreshTimer) { clearTimeout(_gdriveRefreshTimer); _gdriveRefreshTimer = null; }
   try { localStorage.removeItem(GDRIVE_LS_TOKEN); localStorage.removeItem(GDRIVE_LS_EXPIRE); } catch {}
 };
-var _gdriveTokenExpired = () => {
+const _gdriveTokenExpired = () => {
   try { return Date.now() > +(localStorage.getItem(GDRIVE_LS_EXPIRE) || 0); } catch { return true; }
 };
 
@@ -5154,7 +5149,7 @@ var _gdriveTokenExpired = () => {
    Resolves with a token string on success, or "" if the Google session itself
    has expired (in which case the interactive popup fallback will be used).
    No UI is shown at any point. */
-var gdriveRequestTokenSilent = () => new Promise((resolve) => {
+const gdriveRequestTokenSilent = () => new Promise((resolve) => {
   try {
     const cid = (function(){try{return localStorage.getItem("mm_gdrive_cid")||"";}catch{return "";}})();
     if (!cid || typeof google === "undefined" || !google.accounts?.oauth2) { resolve(""); return; }
@@ -5177,7 +5172,7 @@ var gdriveRequestTokenSilent = () => new Promise((resolve) => {
 });
 
 /* Request a fresh access token via GIS popup. Returns token string or "" on failure. */
-var gdriveRequestToken = () => new Promise((resolve) => {
+const gdriveRequestToken = () => new Promise((resolve) => {
   try {
     const client = google.accounts.oauth2.initTokenClient({
       client_id: (function(){try{return localStorage.getItem("mm_gdrive_cid")||"";}catch{return "";}})(),
@@ -5198,7 +5193,7 @@ var gdriveRequestToken = () => new Promise((resolve) => {
 
 /* Ensure we have a valid token.
    Order: cached (still valid) → silent refresh (no popup) → interactive popup. */
-var _gdriveEnsureToken = async () => {
+const _gdriveEnsureToken = async () => {
   let tok = _gdriveGetToken();
   if (tok && !_gdriveTokenExpired()) return tok;
   // Attempt silent re-auth first — no popup, uses the Google session cookie.
@@ -5240,7 +5235,7 @@ var _gdriveEnsureToken = async () => {
 
 /* Search for existing finsight-sync.json in user's Drive root. Returns fileId or "".
    On 401/403 clears the cached token (Bug 2 fix). */
-var _gdriveFindFile = async (token) => {
+const _gdriveFindFile = async (token) => {
   try {
     const q = encodeURIComponent(`name='${GDRIVE_SYNC_FILENAME}' and trashed=false and 'root' in parents`);
     /* orderBy=modifiedTime+desc ensures the most recently written file is always
@@ -5267,7 +5262,7 @@ var _gdriveFindFile = async (token) => {
 /* Create the file on Drive (multipart upload). Returns new fileId or "".
    On 401/403 (bad / expired token) clears the cached token so the next
    call will re-prompt for OAuth (Bug 2 fix). */
-var _gdriveCreateFile = async (token, content) => {
+const _gdriveCreateFile = async (token, content) => {
   try {
     const metadata = { name: GDRIVE_SYNC_FILENAME, parents: ["root"] };
     const boundary = "finsight_sync_" + Date.now();
@@ -5296,7 +5291,7 @@ var _gdriveCreateFile = async (token, content) => {
 
 /* Update existing file content via media upload.
    On 401/403 clears the cached token (Bug 2 fix). */
-var _gdriveUpdateFile = async (token, fileId, content) => {
+const _gdriveUpdateFile = async (token, fileId, content) => {
   try {
     const r = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media&fields=id,modifiedTime`, {
       method: "PATCH",
@@ -5312,7 +5307,7 @@ var _gdriveUpdateFile = async (token, fileId, content) => {
 };
 
 /* Read file content from Drive. Returns parsed JSON or null. */
-var _gdriveDownloadFile = async (token, fileId) => {
+const _gdriveDownloadFile = async (token, fileId) => {
   try {
     const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -5324,14 +5319,14 @@ var _gdriveDownloadFile = async (token, fileId) => {
 };
 
 /* ── Throttle gate for Android writes (Step 5) ── */
-var _gdriveCanWrite = () => {
+const _gdriveCanWrite = () => {
   if (!_isAndroidDevice()) return true; /* Windows / desktop: no throttle */
   try {
     const last = +(localStorage.getItem(GDRIVE_LS_LAST_WRITE) || 0);
     return Date.now() - last >= 10000; /* 10 s minimum gap */
   } catch { return true; }
 };
-var _gdriveMarkWritten = () => {
+const _gdriveMarkWritten = () => {
   try { localStorage.setItem(GDRIVE_LS_LAST_WRITE, String(Date.now())); } catch {}
 };
 
@@ -5466,7 +5461,7 @@ var _gdriveReadSyncFileV1 = async () => {
 };
 
 /* ── IndexedDB open — version 3 adds the receipt_blobs object store ── */
-var _fsaDbOpen=()=>new Promise((res,rej)=>{
+const _fsaDbOpen=()=>new Promise((res,rej)=>{
   const req=indexedDB.open(FSA_IDB_NAME,3); /* v3: adds receipt_blobs store */
   req.onupgradeneeded=e=>{
     const db=e.target.result;
@@ -5479,17 +5474,17 @@ var _fsaDbOpen=()=>new Promise((res,rej)=>{
 });
 
 /* ── Receipt file handle helpers ── */
-var rcptKey=(txId,name)=>txId+":"+name;
-var rcptSaveHandle=async(txId,name,handle)=>{
+const rcptKey=(txId,name)=>txId+":"+name;
+const rcptSaveHandle=async(txId,name,handle)=>{
   try{const db=await _fsaDbOpen();await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const r=tx.objectStore(RCPT_IDB_STORE).put(handle,rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}catch{}
 };
-var rcptGetHandle=async(txId,name)=>{
+const rcptGetHandle=async(txId,name)=>{
   try{const db=await _fsaDbOpen();return await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readonly");const r=tx.objectStore(RCPT_IDB_STORE).get(rcptKey(txId,name));r.onsuccess=e=>res(e.target.result||null);r.onerror=e=>rej(e.target.error);});}catch{return null;}
 };
-var rcptDelHandle=async(txId,name)=>{
+const rcptDelHandle=async(txId,name)=>{
   try{const db=await _fsaDbOpen();await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const r=tx.objectStore(RCPT_IDB_STORE).delete(rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}catch{}
 };
-var rcptDelAllForTx=async(txId)=>{
+const rcptDelAllForTx=async(txId)=>{
   try{
     const db=await _fsaDbOpen();
     const keys=await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readonly");const r=tx.objectStore(RCPT_IDB_STORE).getAllKeys();r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);});
@@ -5504,26 +5499,26 @@ var rcptDelAllForTx=async(txId)=>{
 /* ── Receipt BLOB helpers (cache-clear resilience) ──
    Stores raw file content as {b64, mimeType} in RCPT_BLOB_STORE.
    Same key format as RCPT_IDB_STORE so handles and blobs stay in sync. */
-var _rcptReadFileAsB64=file=>new Promise((res,rej)=>{
+const _rcptReadFileAsB64=file=>new Promise((res,rej)=>{
   const reader=new FileReader();
   reader.onload=()=>res(reader.result.split(",")[1]);
   reader.onerror=e=>rej(e.target.error);
   reader.readAsDataURL(file);
 });
-var rcptSaveBlobData=async(txId,name,file)=>{
+const rcptSaveBlobData=async(txId,name,file)=>{
   try{
     const b64=await _rcptReadFileAsB64(file);
     const db=await _fsaDbOpen();
     await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readwrite");const r=tx.objectStore(RCPT_BLOB_STORE).put({b64,mimeType:file.type},rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});
   }catch{}
 };
-var rcptGetBlobData=async(txId,name)=>{
+const rcptGetBlobData=async(txId,name)=>{
   try{const db=await _fsaDbOpen();return await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readonly");const r=tx.objectStore(RCPT_BLOB_STORE).get(rcptKey(txId,name));r.onsuccess=e=>res(e.target.result||null);r.onerror=e=>rej(e.target.error);});}catch{return null;}
 };
-var rcptDelBlobData=async(txId,name)=>{
+const rcptDelBlobData=async(txId,name)=>{
   try{const db=await _fsaDbOpen();await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readwrite");const r=tx.objectStore(RCPT_BLOB_STORE).delete(rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}catch{}
 };
-var rcptDelAllBlobsForTx=async(txId)=>{
+const rcptDelAllBlobsForTx=async(txId)=>{
   try{
     const db=await _fsaDbOpen();
     const keys=await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readonly");const r=tx.objectStore(RCPT_BLOB_STORE).getAllKeys();r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);});
@@ -5533,7 +5528,7 @@ var rcptDelAllBlobsForTx=async(txId)=>{
   }catch{}
 };
 /* Gather ALL blob entries — used by backup export */
-var rcptGetAllBlobEntries=async()=>{
+const rcptGetAllBlobEntries=async()=>{
   try{
     const db=await _fsaDbOpen();
     const keys=await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readonly");const r=tx.objectStore(RCPT_BLOB_STORE).getAllKeys();r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);});
@@ -5544,11 +5539,11 @@ var rcptGetAllBlobEntries=async()=>{
   }catch{return[];}
 };
 /* Internal key-based getter (used by rcptGetAllBlobEntries) */
-var rcptGetBlobData_byKey=async(key)=>{
+const rcptGetBlobData_byKey=async(key)=>{
   try{const db=await _fsaDbOpen();return await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readonly");const r=tx.objectStore(RCPT_BLOB_STORE).get(key);r.onsuccess=e=>res(e.target.result||null);r.onerror=e=>rej(e.target.error);});}catch{return null;}
 };
 /* Restore blob entries from a backup (array of {key,b64,mimeType}) */
-var rcptRestoreAllBlobEntries=async(entries)=>{
+const rcptRestoreAllBlobEntries=async(entries)=>{
   if(!entries||!entries.length)return;
   try{
     const db=await _fsaDbOpen();
@@ -5565,17 +5560,17 @@ var rcptRestoreAllBlobEntries=async(entries)=>{
    Keyed as "acc:accountId:filename" — separate namespace from tx receipts.
    Same IDB store (RCPT_IDB_STORE / "receipts") in mm_fsa_db.
    ══════════════════════════════════════════════════════════════════════════ */
-var accRcptKey=(accId,name)=>"acc:"+accId+":"+name;
-var accRcptSaveHandle=async(accId,name,handle)=>{
+const accRcptKey=(accId,name)=>"acc:"+accId+":"+name;
+const accRcptSaveHandle=async(accId,name,handle)=>{
   try{const db=await _fsaDbOpen();await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const r=tx.objectStore(RCPT_IDB_STORE).put(handle,accRcptKey(accId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}catch{}
 };
-var accRcptGetHandle=async(accId,name)=>{
+const accRcptGetHandle=async(accId,name)=>{
   try{const db=await _fsaDbOpen();return await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readonly");const r=tx.objectStore(RCPT_IDB_STORE).get(accRcptKey(accId,name));r.onsuccess=e=>res(e.target.result||null);r.onerror=e=>rej(e.target.error);});}catch{return null;}
 };
-var accRcptDelHandle=async(accId,name)=>{
+const accRcptDelHandle=async(accId,name)=>{
   try{const db=await _fsaDbOpen();await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const r=tx.objectStore(RCPT_IDB_STORE).delete(accRcptKey(accId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}catch{}
 };
-var accRcptDelAllForAcc=async(accId)=>{
+const accRcptDelAllForAcc=async(accId)=>{
   try{
     const db=await _fsaDbOpen();
     const keys=await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readonly");const r=tx.objectStore(RCPT_IDB_STORE).getAllKeys();r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);});
@@ -5588,20 +5583,20 @@ var accRcptDelAllForAcc=async(accId)=>{
 };
 
 /* ── Account attachment BLOB helpers (cache-clear resilience) ── */
-var accRcptSaveBlobData=async(accId,name,file)=>{
+const accRcptSaveBlobData=async(accId,name,file)=>{
   try{
     const b64=await _rcptReadFileAsB64(file);
     const db=await _fsaDbOpen();
     await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readwrite");const r=tx.objectStore(RCPT_BLOB_STORE).put({b64,mimeType:file.type},accRcptKey(accId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});
   }catch{}
 };
-var accRcptGetBlobData=async(accId,name)=>{
+const accRcptGetBlobData=async(accId,name)=>{
   try{const db=await _fsaDbOpen();return await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readonly");const r=tx.objectStore(RCPT_BLOB_STORE).get(accRcptKey(accId,name));r.onsuccess=e=>res(e.target.result||null);r.onerror=e=>rej(e.target.error);});}catch{return null;}
 };
-var accRcptDelBlobData=async(accId,name)=>{
+const accRcptDelBlobData=async(accId,name)=>{
   try{const db=await _fsaDbOpen();await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readwrite");const r=tx.objectStore(RCPT_BLOB_STORE).delete(accRcptKey(accId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}catch{}
 };
-var accRcptDelAllBlobsForAcc=async(accId)=>{
+const accRcptDelAllBlobsForAcc=async(accId)=>{
   try{
     const db=await _fsaDbOpen();
     const keys=await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readonly");const r=tx.objectStore(RCPT_BLOB_STORE).getAllKeys();r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);});
@@ -5611,7 +5606,7 @@ var accRcptDelAllBlobsForAcc=async(accId)=>{
   }catch{}
 };
 
-var fsaGetHandle=async()=>{
+const fsaGetHandle=async()=>{
   try{
     const db=await _fsaDbOpen();
     return await new Promise((res,rej)=>{
@@ -5622,7 +5617,7 @@ var fsaGetHandle=async()=>{
     });
   }catch{return null;}
 };
-var fsaSetHandle=async(handle)=>{
+const fsaSetHandle=async(handle)=>{
   try{
     const db=await _fsaDbOpen();
     await new Promise((res,rej)=>{
@@ -5632,7 +5627,7 @@ var fsaSetHandle=async(handle)=>{
     });
   }catch{}
 };
-var fsaClearHandle=async()=>{
+const fsaClearHandle=async()=>{
   try{
     const db=await _fsaDbOpen();
     await new Promise((res,rej)=>{
@@ -5644,13 +5639,13 @@ var fsaClearHandle=async()=>{
 };
 
 /* ── Permission helpers ── */
-var fsaQueryPermission=async(handle)=>{
+const fsaQueryPermission=async(handle)=>{
   try{return await handle.queryPermission({mode:"readwrite"});}catch{return "denied";}
 };
-var fsaRequestPermission=async(handle)=>{
+const fsaRequestPermission=async(handle)=>{
   try{return await handle.requestPermission({mode:"readwrite"});}catch{return "denied";}
 };
-var fsaVerifyPermission=async(handle)=>{
+const fsaVerifyPermission=async(handle)=>{
   const q=await fsaQueryPermission(handle);
   if(q==="granted")return true;
   const r=await fsaRequestPermission(handle);
@@ -5663,7 +5658,7 @@ var fsaVerifyPermission=async(handle)=>{
    This means the file can be imported directly via Settings → Data & Backup
    → Restore without any conversion. fsaReadFile unwraps the envelope and
    returns raw state so callers get the same shape either way. */
-var fsaWriteFile=async(handle,data)=>{
+const fsaWriteFile=async(handle,data)=>{
   try{
     const payload={
       version:8,
@@ -5718,7 +5713,7 @@ var fsaWriteFile=async(handle,data)=>{
     return true;
   }catch(e){console.warn("[FSA] Write failed:",e);return false;}
 };
-var fsaReadFile=async(handle)=>{
+const fsaReadFile=async(handle)=>{
   try{
     const file=await handle.getFile();
     const text=await file.text();
@@ -5767,11 +5762,11 @@ window.__fsa={handle:null,filename:"",lastSaved:null,ready:false};
    transactions (IDB).  Backup export, FSA file write, and RESTORE_ALL all
    operate on the complete in-memory state — so they require no changes.
    ══════════════════════════════════════════════════════════════════════════ */
-var TX_IDB_NAME ="mm_tx_v1";
-var TX_IDB_STORE="account_transactions";
+const TX_IDB_NAME ="mm_tx_v1";
+const TX_IDB_STORE="account_transactions";
 
 /** Open (or create) the transaction IDB. Returns a Promise<IDBDatabase>. */
-var _txDbOpen=()=>new Promise((res,rej)=>{
+const _txDbOpen=()=>new Promise((res,rej)=>{
   const req=indexedDB.open(TX_IDB_NAME,1);
   req.onupgradeneeded=e=>{
     const db=e.target.result;
@@ -5788,7 +5783,7 @@ var _txDbOpen=()=>new Promise((res,rej)=>{
  * Non-blocking: callers fire-and-forget or await as needed.
  * Returns Promise<boolean> — true on success, false on failure.
  */
-var saveTxToIDB=async(state)=>{
+const saveTxToIDB=async(state)=>{
   try{
     const db=await _txDbOpen();
     return new Promise((res,rej)=>{
@@ -5817,7 +5812,7 @@ var saveTxToIDB=async(state)=>{
  * loadTxFromIDB() — read all transaction arrays from IDB.
  * Returns Promise<{banks:{[id]:[]}, cards:{[id]:[]}, cashTxns:[]}> or null on failure.
  */
-var loadTxFromIDB=async()=>{
+const loadTxFromIDB=async()=>{
   try{
     const db=await _txDbOpen();
     return new Promise((res,rej)=>{
@@ -5855,7 +5850,7 @@ var loadTxFromIDB=async()=>{
  * clearTxIDB() — wipe all stored transactions (used on Reset All).
  * Returns Promise<boolean>.
  */
-var clearTxIDB=async()=>{
+const clearTxIDB=async()=>{
   try{
     const db=await _txDbOpen();
     return new Promise((res)=>{
@@ -5871,7 +5866,7 @@ var clearTxIDB=async()=>{
 };
 
 /* ── PIN LOCK SCREEN ───────────────────────────────────────────────────────── */
-var PinLockScreen=({onUnlock})=>{
+const PinLockScreen=({onUnlock})=>{
   const[digits,setDigits]=React.useState([]);
   const[shake,setShake]=React.useState(false);
   const[err,setErr]=React.useState("");
@@ -5987,19 +5982,19 @@ var PinLockScreen=({onUnlock})=>{
 };
 
 /* ── HASH ROUTING ─────────────────────────────────────────────────────────── */
-var VALID_TABS=["dashboard","banks","cards","cash","inv_dash","inv_mf","inv_shares","inv_fd","inv_re","inv_pf","loans","scheduled","notes","calculator","reports","settings","goals","insights"];
+const VALID_TABS=["dashboard","banks","cards","cash","inv_dash","inv_mf","inv_shares","inv_fd","inv_re","inv_pf","loans","scheduled","notes","calculator","reports","settings","goals","insights"];
 
-var getTabFromHash=()=>{
+const getTabFromHash=()=>{
   const h=window.location.hash.replace("#/","").replace("#","").toLowerCase();
   if(h==="investments")return"inv_mf";
   return VALID_TABS.includes(h)?h:"dashboard";
 };
 
-var setHash=(tab)=>{
+const setHash=(tab)=>{
   window.history.pushState(null,null,"#/"+tab);
 };
 
-var useRouting=()=>{
+const useRouting=()=>{
   const[tab,setTabState]=useState(getTabFromHash);
   const setTab=(id)=>{setTabState(id);setHash(id);};
   React.useEffect(()=>{
@@ -6011,7 +6006,7 @@ var useRouting=()=>{
 };
 
 /* ── PERSISTING REDUCER WRAPPER ───────────────────────────────────────────── */
-var usePersistentReducer=(reducer,init)=>{
+const usePersistentReducer=(reducer,init)=>{
   const[state,rawDispatch]=useReducer(reducer,null,()=>loadState()||init());
   const dispatch=React.useCallback((action)=>{rawDispatch(action);},[]);
   /* stateRef: live pointer so writeNow() and beforeunload can access current
@@ -6261,7 +6256,7 @@ var usePersistentReducer=(reducer,init)=>{
 
 /* ── APP SHELL ────────────────────────────────────────────────────────────── */
 /* ── NAV ICONS -- pixel-perfect 16×16 stroke SVGs, inherit color via currentColor ── */
-var NavIcon=({id,size=16})=>{
+const NavIcon=({id,size=16})=>{
   const s={width:size,height:size,viewBox:"0 0 16 16",fill:"none",stroke:"currentColor",strokeWidth:1.5,strokeLinecap:"round",strokeLinejoin:"round",display:"block",flexShrink:0};
   switch(id){
     /* ── Dashboard: 2×2 rounded tiles ── */
