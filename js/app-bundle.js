@@ -22296,10 +22296,14 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
           flexShrink:0,boxShadow:"0 4px 14px rgba(14,116,144,.35)",
         }},
           React.createElement("svg",{width:22,height:22,viewBox:"0 0 24 24",fill:"none",stroke:"#fff",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},
-            React.createElement("rect",{x:2,y:7,width:20,height:14,rx:2}),
-            React.createElement("path",{d:"M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"}),
-            React.createElement("line",{x1:12,y1:12,x2:12,y2:16}),
-            React.createElement("line",{x1:10,y1:14,x2:14,y2:14})
+            React.createElement("rect",{x:1,y:3,width:22,height:18,rx:2}),
+            React.createElement("circle",{cx:12,cy:12,r:5}),
+            React.createElement("circle",{cx:12,cy:12,r:1.5,fill:"#fff"}),
+            React.createElement("line",{x1:12,y1:7,x2:12,y2:10.5}),
+            React.createElement("line",{x1:12,y1:13.5,x2:12,y2:17}),
+            React.createElement("line",{x1:7,y1:12,x2:10.5,y2:12}),
+            React.createElement("line",{x1:13.5,y1:12,x2:17,y2:12}),
+            React.createElement("line",{x1:3,y1:10,x2:3,y2:14})
           )
         ),
         /* Text section */
