@@ -5829,6 +5829,7 @@ var gdriveReadSyncFile = async (silent = true) => {
     const _def = EMPTY_STATE();
     const _safe = (d) => ({
       ...d,
+      brokerCashBalance: d.brokerCashBalance || 0,
       nwSnapshots:  d.nwSnapshots  || {},
       eodPrices:    d.eodPrices    || {},
       eodNavs:      d.eodNavs      || {},
@@ -5899,6 +5900,7 @@ var gdriveUpsertSyncFile = async (state, manual) => {
         hasTaxData:   !!(state.taxData),
         hasTaxData2627: !!(state.taxData2627),
         hasYearlyBudget: Object.values((state.insightPrefs || {}).yearlyBudgetPlans || {}).some(v => v > 0),
+        brokerCashBalance: state.brokerCashBalance || 0,
       },
       data: {
         ...state,
@@ -6173,6 +6175,7 @@ var CloudBackupPanel = ({ state, dispatch }) => {
 
       const _restoreData = {
         ...remote.state,
+        brokerCashBalance: remote.state.brokerCashBalance || 0,
         notes:        remote.state.notes        || [],
         scheduled:    remote.state.scheduled    || [],
         nwSnapshots:  remote.state.nwSnapshots  || {},
@@ -7432,7 +7435,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                 if(pw!==pw2){alert("Passwords do not match.");return;}
                 try{
                   const payload={version:8,exportedAt:new Date().toISOString(),
-                    summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,reminders:(state.reminders||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,shareSnapshots:Object.values(state.soldShareSnapshots||{}).reduce((s,a)=>s+a.length,0),eodDays:Object.keys(state.eodPrices||{}).length,eodNavDays:Object.keys(state.eodNavs||{}).length,hasTaxData:!!(state.taxData),hasTaxData2627:!!(state.taxData2627),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0)},
+                    summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,reminders:(state.reminders||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,shareSnapshots:Object.values(state.soldShareSnapshots||{}).reduce((s,a)=>s+a.length,0),eodDays:Object.keys(state.eodPrices||{}).length,eodNavDays:Object.keys(state.eodNavs||{}).length,hasTaxData:!!(state.taxData),hasTaxData2627:!!(state.taxData2627),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),brokerCashBalance:state.brokerCashBalance||0},
                     data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},soldShareSnapshots:state.soldShareSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,taxData2627:state.taxData2627||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],reminders:state.reminders||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})}}
                   };
                   const enc=await encryptBackup(payload,pw);
@@ -7474,6 +7477,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                     hasTaxData:!!(state.taxData),
                     hasTaxData2627:!!(state.taxData2627),
                     hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),
+                    brokerCashBalance:state.brokerCashBalance||0,
                   },
                   data:{
                     ...state,
@@ -7550,6 +7554,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                       /* ── Build the full restore object once ── */
                       const _restoreData={
                         ...d,
+                        brokerCashBalance:d.brokerCashBalance||0,
                         notes:d.notes||[],
                         scheduled:d.scheduled||[],
                         nwSnapshots:d.nwSnapshots||{},
@@ -9134,6 +9139,7 @@ var buildBackupPayload=async(st)=>{
       hasTaxData:!!(st.taxData),
       hasTaxData2627:!!(st.taxData2627),
       hasYearlyBudget:Object.values((st.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),
+      brokerCashBalance:st.brokerCashBalance||0,
     },
     data:{
       ...st,notes:st.notes||[],scheduled:st.scheduled||[],nwSnapshots:st.nwSnapshots||{},
@@ -10087,6 +10093,7 @@ var fsaWriteFile=async(handle,data)=>{
         hasTaxData:!!(data.taxData),
         hasTaxData2627:!!(data.taxData2627),
         hasYearlyBudget:Object.values((data.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),
+        brokerCashBalance:(data.brokerCashBalance||0),
       },
       data:{
         ...data,
@@ -10120,7 +10127,7 @@ var fsaReadFile=async(handle)=>{
     const text=await file.text();
     const parsed=JSON.parse(text);
     const _def=EMPTY_STATE();
-    const _safe=(d)=>({...d,nwSnapshots:d.nwSnapshots||{},soldShareSnapshots:d.soldShareSnapshots||{},eodPrices:d.eodPrices||{},eodNavs:d.eodNavs||{},historyCache:d.historyCache||{},taxData:d.taxData||null,taxData2627:d.taxData2627||null,re:d.re||[],pf:d.pf||[],goals:d.goals||[],hiddenTabs:d.hiddenTabs||[],catRules:d.catRules||[],reminders:d.reminders||[],insightPrefs:{..._def.insightPrefs,...(d.insightPrefs||{})}});
+    const _safe=(d)=>({...d,brokerCashBalance:d.brokerCashBalance||0,nwSnapshots:d.nwSnapshots||{},soldShareSnapshots:d.soldShareSnapshots||{},eodPrices:d.eodPrices||{},eodNavs:d.eodNavs||{},historyCache:d.historyCache||{},taxData:d.taxData||null,taxData2627:d.taxData2627||null,re:d.re||[],pf:d.pf||[],goals:d.goals||[],hiddenTabs:d.hiddenTabs||[],catRules:d.catRules||[],reminders:d.reminders||[],insightPrefs:{..._def.insightPrefs,...(d.insightPrefs||{})}});
     /* Support both the new envelope format { data:{…} } and the legacy
        raw-state format written by v3.17.0–3.17.2 */
     if(parsed&&parsed.data&&parsed.data.banks)return _safe(parsed.data);
