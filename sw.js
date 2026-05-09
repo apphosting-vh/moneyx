@@ -35,21 +35,7 @@ const PRECACHE_ASSETS = [
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './js/app-utils.js',
-  './js/app-state.js',
-  './js/app-ui-base.js',
-  './js/app-transactions.js',
-  './js/app-dashboard.js',
-  './js/app-accounts.js',
-  './js/app-invest.js',
-  './js/app-loans.js',
-  './js/app-reports.js',
-  './js/app-bundle.js',
-  './js/app-sync.js',
-  './js/app-reminders.js',
-  './js/app-notifications.js',
-  './js/app-sections.js',
-  './js/app-main.js',
+   './js/app-bundle.js',
 ];
 
 const PRECACHE_CDN = [
