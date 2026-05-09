@@ -44,7 +44,7 @@ const PRECACHE_ASSETS = [
   './js/app-invest.js',
   './js/app-loans.js',
   './js/app-reports.js',
-  './js/app-settings.js',
+  './js/app-bundle.js',
   './js/app-sync.js',
   './js/app-reminders.js',
   './js/app-notifications.js',
@@ -359,7 +359,16 @@ self.addEventListener('install', event => {
   event.waitUntil(
     Promise.all([
       caches.open(CACHE_NAME).then(cache =>
-        cache.addAll(PRECACHE_ASSETS.map(u => new Request(u, { cache: 'reload' })))
+        Promise.all(
+          PRECACHE_ASSETS.map(u =>
+            fetch(new Request(u, { cache: 'reload' }))
+              .then(resp => {
+                if (resp.ok) return cache.put(u, resp);
+                console.warn('[SW] Local precache skipped:', u, resp.status);
+              })
+              .catch(err => console.warn('[SW] Local precache network error:', u, err))
+          )
+        )
       ),
       caches.open(CACHE_NAME).then(cache =>
         Promise.all(
