@@ -1444,10 +1444,6 @@ const LS_GDRIVE_LAST_SYNC = "mm_gdrive_last_sync";
 const _syncGetLocal  = () => { try { return localStorage.getItem(LS_GDRIVE_LAST_SYNC) || ""; } catch { return ""; } };
 const _syncSaveLocal = (ts) => { try { if (ts) localStorage.setItem(LS_GDRIVE_LAST_SYNC, ts); } catch {} };
 
-/* Save sync timestamp whenever Drive:pulled fires */
-window.addEventListener("gdrive:pulled", (e) => {
-  if (e && e.detail && e.detail.time) _syncSaveLocal(e.detail.time);
-});
 
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -1663,15 +1659,20 @@ const CloudBackupPanel = ({ state, dispatch }) => {
 
   /* Refresh status when sync events fire */
   React.useEffect(() => {
-    const refresh = () => {
+    const onPulled = (e) => {
+      if (e && e.detail && e.detail.time) _syncSaveLocal(e.detail.time);
       setLastSync(_syncGetLocal());
       setHasRefresh(!!_gdriveGetRefreshToken());
     };
-    window.addEventListener("gdrive:synced", refresh);
-    window.addEventListener("gdrive:pulled", refresh);
+    const onSynced = () => {
+      setLastSync(_syncGetLocal());
+      setHasRefresh(!!_gdriveGetRefreshToken());
+    };
+    window.addEventListener("gdrive:synced", onSynced);
+    window.addEventListener("gdrive:pulled", onPulled);
     return () => {
-      window.removeEventListener("gdrive:synced", refresh);
-      window.removeEventListener("gdrive:pulled", refresh);
+      window.removeEventListener("gdrive:synced", onSynced);
+      window.removeEventListener("gdrive:pulled", onPulled);
     };
   }, []);
 

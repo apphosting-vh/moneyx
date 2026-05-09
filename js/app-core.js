@@ -862,7 +862,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.7.5";
+const APP_VERSION="4.7.6";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1167,6 +1167,7 @@ const calcFDValueToday=(f)=>{
    ══════════════════════════════════════════════════════════════════════════ */
 const computeXIRR=(cashflows,dates,guess=0.1)=>{
   if(!cashflows||cashflows.length<2)return null;
+  if(dates[0]===dates[dates.length-1])return null; /* all same date → no meaningful annualised return */
   const t0=new Date(dates[0]).getTime();
   const yr=dates.map(d=>(new Date(d).getTime()-t0)/(365.25*86400000));
   /* NPV and its derivative w.r.t. rate */

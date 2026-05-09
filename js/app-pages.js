@@ -18500,6 +18500,7 @@ const CloudBackupPanel=({state})=>{
       const r=await fetch("https://www.googleapis.com/drive/v3/files?q="+encodeURIComponent(q)+"&fields=files(id,name)&orderBy=createdTime desc&pageSize=20",{
         headers:{Authorization:"Bearer "+tok}
       });
+      if(!r.ok)return;
       const d=await r.json();
       const old=(d.files||[]).slice(7);
       await Promise.all(old.map(f=>fetch("https://www.googleapis.com/drive/v3/files/"+f.id,{method:"DELETE",headers:{Authorization:"Bearer "+tok}})));
@@ -25881,7 +25882,7 @@ function App(){
     if(due.length>0){
       due.forEach(sc=>dispatch({type:"EXECUTE_SCHEDULED",sc}));
     }
-  },[idbHydrated]);
+  },[idbHydrated,state.scheduled]);
 
   /* ── Notification check: on mount and tab focus ── */
   const _stateRef=React.useRef(state);
