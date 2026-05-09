@@ -755,6 +755,7 @@ const EMPTY_STATE=()=>({
   mf:[],
   mfTxns:[],
   shares:[],
+  brokerCashBalance:0,
   fd:[],
   re:[],
   pf:[],
@@ -1618,6 +1619,7 @@ const reducer=(s,a)=>{
       });
       return{...s,eodNavs:pruned,mf:_syncedMf};
     }
+    case"SET_BROKER_CASH":return{...s,brokerCashBalance:a.amount};
     case"ADD_SHARE":return{...s,shares:[...s.shares,a.p]};
     case"EDIT_SHARE":return{...s,shares:s.shares.map(sh=>sh.id===a.p.id?{...sh,...a.p}:sh)};
     case"DEL_SHARE":{
@@ -6572,6 +6574,8 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
   const[editCard,setEditCard]=useState(null);
   const[editLoan,setEditLoan]=useState(null);
   const[editShare,setEditShare]=useState(null);
+  const[brokerCashSettingsEdit,setBrokerCashSettingsEdit]=useState(false);
+  const[brokerCashSettingsInput,setBrokerCashSettingsInput]=useState("");
   const[editPayee,setEditPayee]=useState(null);
   const[accAttachTarget,setAccAttachTarget]=useState(null); /* {id,name,type:'bank'|'card'} */
   const[newPayee,setNewPayee]=useState({name:""});
@@ -7034,6 +7038,65 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
         /* Shares */
         React.createElement("div",{style:{marginBottom:20}},
           React.createElement("div",{style:{fontSize:13,color:"var(--text4)",fontWeight:600,marginBottom:10,display:"flex",alignItems:"center",gap:8}},React.createElement("span",null,React.createElement(Icon,{n:"invest",size:18})),"Shares / Equities (",state.shares.length,")"),
+          /* ── Broker Cash Balance sub-panel ── */
+          React.createElement(Card,{sx:{marginBottom:12,padding:"14px 18px",background:"linear-gradient(135deg,rgba(14,116,144,.1) 0%,rgba(6,182,212,.06) 100%)",border:"1px solid rgba(6,182,212,.25)",borderRadius:12}},
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}},
+              React.createElement("div",{style:{
+                width:36,height:36,borderRadius:9,
+                background:"linear-gradient(135deg,#0e7490,#0891b2)",
+                display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
+              }},
+                React.createElement("svg",{width:18,height:18,viewBox:"0 0 24 24",fill:"none",stroke:"#fff",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},
+                  React.createElement("rect",{x:2,y:7,width:20,height:14,rx:2}),
+                  React.createElement("path",{d:"M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"}),
+                  React.createElement("line",{x1:12,y1:12,x2:12,y2:16}),
+                  React.createElement("line",{x1:10,y1:14,x2:14,y2:14})
+                )
+              ),
+              React.createElement("div",{style:{flex:1,minWidth:140}},
+                React.createElement("div",{style:{fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,fontWeight:600,marginBottom:2}},"Cash Balance in Broker Account"),
+                brokerCashSettingsEdit
+                  ? React.createElement("div",{style:{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap",marginTop:4}},
+                      React.createElement("input",{
+                        className:"inp",type:"number",
+                        value:brokerCashSettingsInput,
+                        onChange:e=>setBrokerCashSettingsInput(e.target.value),
+                        placeholder:"0",
+                        style:{width:160,fontSize:13,padding:"5px 10px"},
+                        autoFocus:true,
+                        onKeyDown:e=>{
+                          if(e.key==="Enter"){
+                            dispatch({type:"SET_BROKER_CASH",amount:parseFloat(brokerCashSettingsInput)||0});
+                            setBrokerCashSettingsEdit(false);
+                          }
+                          if(e.key==="Escape")setBrokerCashSettingsEdit(false);
+                        }
+                      }),
+                      React.createElement(Btn,{v:"success",sz:"sm",onClick:()=>{
+                        dispatch({type:"SET_BROKER_CASH",amount:parseFloat(brokerCashSettingsInput)||0});
+                        setBrokerCashSettingsEdit(false);
+                      }},"Save"),
+                      React.createElement(Btn,{v:"secondary",sz:"sm",onClick:()=>setBrokerCashSettingsEdit(false)},"Cancel")
+                    )
+                  : React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"var(--text)"}},
+                      INR(state.brokerCashBalance||0)
+                    )
+              ),
+              !brokerCashSettingsEdit&&React.createElement("div",{style:{display:"flex",gap:6,flexShrink:0}},
+                React.createElement("button",{
+                  onClick:()=>{setBrokerCashSettingsInput(String(state.brokerCashBalance||0));setBrokerCashSettingsEdit(true);},
+                  style:{background:"rgba(14,116,144,.15)",border:"1px solid rgba(6,182,212,.3)",borderRadius:7,color:"#06b6d4",cursor:"pointer",fontSize:12,padding:"5px 12px",fontFamily:"'DM Sans',sans-serif",fontWeight:600},
+                },"\u270E Edit"),
+                (state.brokerCashBalance||0)>0&&React.createElement("button",{
+                  onClick:()=>askDelete("Clear broker cash balance?",()=>dispatch({type:"SET_BROKER_CASH",amount:0})),
+                  style:{background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.25)",borderRadius:7,color:"#ef4444",cursor:"pointer",fontSize:12,padding:"5px 12px",fontFamily:"'DM Sans',sans-serif",fontWeight:600},
+                },"\u00D7 Delete")
+              )
+            ),
+            React.createElement("div",{style:{fontSize:11,color:"var(--text6)",marginTop:8,paddingLeft:48}},
+              "Liquid funds parked in your brokerage account. Counted in your total investment portfolio value."
+            )
+          ),
           React.createElement(Card,{sx:{padding:0,overflowY:"hidden",overflowX:"auto"}},
             React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 1fr auto",gap:10,padding:"9px 16px",borderBottom:"1px solid #1c3050",fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Company"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Ticker"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Qty"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Buy"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Now"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Acquired"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"")),
             state.shares.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"invest",size:18}),text:"No shares"}),
@@ -9119,6 +9182,7 @@ var loadState=()=>{
       cash:(parsed.cash||def.cash),
       mf:(parsed.mf||def.mf),
       shares:(parsed.shares||def.shares),
+      brokerCashBalance:(parsed.brokerCashBalance||def.brokerCashBalance||0),
       fd:(parsed.fd||def.fd),
       loans:(parsed.loans||def.loans),
       categories:(parsed.categories||def.categories).map(c=>({classType:"Expense",...c})),
@@ -12866,7 +12930,7 @@ const ShareSummaryModal=({data,allBankTx,thisMonth,onClose})=>{
     const b=data.banks.reduce((s,b2)=>s+b2.balance,0);
     const c=data.cash.balance;
     const m=data.mf.filter(m2=>m2.units>0).reduce((s,m2)=>s+(m2.currentValue||m2.invested),0);
-    const sh=data.shares.reduce((s,s2)=>s+s2.qty*s2.currentPrice,0);
+    const sh=data.shares.reduce((s,s2)=>s+s2.qty*s2.currentPrice,0)+(data.brokerCashBalance||0);
     const fd=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
     const re=(data.re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
     const cd=data.cards.reduce((s,c2)=>s+c2.outstanding,0);
@@ -13749,7 +13813,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
       const bTotal=data.banks.reduce((s,b)=>s+b.balance,0);
       const cashBal=data.cash.balance;
       const mfVal=data.mf.filter(m=>m.units>0).reduce((s,m)=>s+(m.currentValue||m.invested),0);
-      const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
+      const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
       const fdVal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
       const reVal=(data.re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
       const cDebt=data.cards.reduce((s,c)=>s+c.outstanding,0);
@@ -14175,7 +14239,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
       const bV=data.banks.reduce((s,b)=>s+b.balance,0);
       const cV=data.cash.balance;
       const mfV=data.mf.filter(m=>m.units>0).reduce((s,m)=>s+(m.currentValue||m.invested),0);
-      const shV=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
+      const shV=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
       const fdV=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
       const reV=(data.re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
       const ccV=data.cards.reduce((s,c)=>s+c.outstanding,0);
@@ -15328,7 +15392,7 @@ const CapitalGainsCard=({shares,mf,dispatch})=>{
   );
 };
 
-const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobile,eodPrices={},eodNavs={}})=>{
+const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobile,eodPrices={},eodNavs={},brokerCashBalance=0})=>{
   /* ── Refresh state ── */
   const[refreshing,setRefreshing]=useState(false);
   const[refreshStatus,setRefreshStatus]=useState(null); /* {ok,msg,ts,navOk,sharesOk} */
@@ -15338,7 +15402,7 @@ const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobil
   const mfVal   = mfActive.reduce((s,m)=>s+(m.currentValue||m.invested),0);
   const mfCost  = mfActive.reduce((s,m)=>s+(m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested),0);
   const mfInv   = mfActive.reduce((s,m)=>s+m.invested,0);
-  const shVal   = shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
+  const shVal   = shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+brokerCashBalance;
   const shCost  = shares.reduce((s,sh)=>s+sh.qty*sh.buyPrice,0);
   const fdPrinc = fd.reduce((s,f)=>s+f.amount,0);
   const fdMat   = fd.reduce((s,f)=>{
@@ -15449,10 +15513,12 @@ const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobil
   })();
 
   /* ── Allocation donut — liquid investments only (RE is illiquid, shown separately) ── */
+  const shHoldings=shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
   const allocData=[
-    {name:"Mutual Funds",  value:mfVal,      col:"#6d28d9"},
-    {name:"Shares",        value:shVal,      col:"#16a34a"},
-    {name:"Fixed Deposits",value:fdTodayVal, col:"#b45309"},
+    {name:"Mutual Funds",  value:mfVal,          col:"#6d28d9"},
+    {name:"Shares",        value:shHoldings,      col:"#16a34a"},
+    {name:"Broker Cash",   value:brokerCashBalance,col:"#0891b2"},
+    {name:"Fixed Deposits",value:fdTodayVal,      col:"#b45309"},
   ].filter(a=>a.value>0);
   const allocTotal=allocData.reduce((s,a)=>s+a.value,0);
 
@@ -22051,7 +22117,7 @@ const SwingHoldOptimizer=({shares,soldShareSnapshots={}})=>{
   );
 };
 
-const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},historyCache={},soldShareSnapshots={}})=>{
+const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},historyCache={},soldShareSnapshots={},brokerCashBalance=0})=>{
   const[tab,setTab]=useState(defaultTab);const[open,setOpen]=useState(false);const[navLoad,setNavLoad]=useState(false);
   const[sharesSubTab,setSharesSubTab]=useState("holdings"); /* "holdings" | "profitability" | "timeholding" | "winloss" | "capitaleff" | "behavioural" | "timing" | "risk" | "pattern" | "drawdown" | "multitime" | "frequency" | "swing" */
   React.useEffect(()=>{setTab(defaultTab);},[defaultTab]);
@@ -22074,6 +22140,8 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
   const[viewTxnsFund,setViewTxnsFund]=useState(null); /* fundName for txns panel */
   const[priceLoad,setPriceLoad]=useState(false);
   const[priceStatus,setPriceStatus]=useState(null); /* {ok:bool, msg:string, ts:Date} */
+  const[brokerCashEdit,setBrokerCashEdit]=useState(false);
+  const[brokerCashInput,setBrokerCashInput]=useState("");
 
   const fetchNAV=async()=>{
     setNavLoad(true);
@@ -22208,6 +22276,84 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
       React.createElement(StatCard,{label:"Cost Basis",val:INR(shCost),sub:"Total invested",col:"#0e7490",icon:React.createElement(Icon,{n:"money",size:15})}),
       React.createElement(StatCard,{label:"Total P&L",val:(shVal-shCost>=0?"+":"")+INR(shVal-shCost),sub:pct(shVal,shCost)+"% return",col:shVal>=shCost?"#16a34a":"#ef4444",icon:shVal>=shCost?"▲":"▼"}),
       (()=>{const cg=computeCapitalGains(shares,[]);return(cg.stcgGain>0||cg.ltcgGain>0)?React.createElement(StatCard,{label:"Est. Capital Gains Tax",val:INR(Math.round(cg.totalTax)),sub:"STCG "+INR(Math.round(cg.stcgGain))+" · LTCG "+INR(Math.round(cg.ltcgGain)),col:"#4f46e5",icon:React.createElement(Icon,{n:"report",size:22})}):null;})()
+    ),
+    /* ── Cash Balance in Broker Account hero card (Shares tab only) ── */
+    tab==="shares"&&React.createElement("div",{style:{marginBottom:20}},
+      React.createElement("div",{style:{
+        background:"var(--card)",
+        border:"1px solid var(--border)",
+        borderRadius:14,padding:"18px 22px",
+        display:"flex",alignItems:"center",gap:18,flexWrap:"wrap",
+        position:"relative",overflow:"hidden",
+      }},
+        /* Left accent bar */
+        React.createElement("div",{style:{position:"absolute",left:0,top:0,bottom:0,width:4,background:"linear-gradient(180deg,#0e7490,#06b6d4)",borderRadius:"16px 0 0 16px"}}),
+        /* Icon */
+        React.createElement("div",{style:{
+          width:48,height:48,borderRadius:12,
+          background:"linear-gradient(135deg,#0e7490,#0891b2)",
+          display:"flex",alignItems:"center",justifyContent:"center",
+          flexShrink:0,boxShadow:"0 4px 14px rgba(14,116,144,.35)",
+        }},
+          React.createElement("svg",{width:22,height:22,viewBox:"0 0 24 24",fill:"none",stroke:"#fff",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},
+            React.createElement("rect",{x:2,y:7,width:20,height:14,rx:2}),
+            React.createElement("path",{d:"M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"}),
+            React.createElement("line",{x1:12,y1:12,x2:12,y2:16}),
+            React.createElement("line",{x1:10,y1:14,x2:14,y2:14})
+          )
+        ),
+        /* Text section */
+        React.createElement("div",{style:{flex:1,minWidth:180}},
+          React.createElement("div",{style:{fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.8,marginBottom:4,fontWeight:600}},
+            "Cash Balance in Broker Account"
+          ),
+          React.createElement("div",{style:{fontSize:24,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text)",letterSpacing:-.5}},
+            INR(brokerCashBalance)
+          ),
+          React.createElement("div",{style:{fontSize:11,color:"#06b6d4",marginTop:3}},
+            "Liquid funds · Available to purchase shares"
+          )
+        ),
+        /* Actions */
+        React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center",flexShrink:0}},
+          brokerCashEdit
+            ? React.createElement("div",{style:{display:"flex",gap:6,alignItems:"center"}},
+                React.createElement("input",{
+                  className:"inp",
+                  type:"number",
+                  value:brokerCashInput,
+                  onChange:e=>setBrokerCashInput(e.target.value),
+                  placeholder:"Enter amount",
+                  style:{width:140,fontSize:13,padding:"6px 10px"},
+                  autoFocus:true,
+                  onKeyDown:e=>{
+                    if(e.key==="Enter"){
+                      const v=parseFloat(brokerCashInput)||0;
+                      dispatch({type:"SET_BROKER_CASH",amount:v});
+                      setBrokerCashEdit(false);
+                    }
+                    if(e.key==="Escape"){setBrokerCashEdit(false);}
+                  }
+                }),
+                React.createElement(Btn,{v:"success",sz:"sm",onClick:()=>{
+                  const v=parseFloat(brokerCashInput)||0;
+                  dispatch({type:"SET_BROKER_CASH",amount:v});
+                  setBrokerCashEdit(false);
+                }},"Save"),
+                React.createElement(Btn,{v:"secondary",sz:"sm",onClick:()=>setBrokerCashEdit(false)},"Cancel")
+              )
+            : React.createElement(React.Fragment,null,
+                React.createElement("button",{
+                  onClick:()=>{setBrokerCashInput(String(brokerCashBalance));setBrokerCashEdit(true);},
+                  style:{background:"rgba(14,116,144,.15)",border:"1px solid rgba(6,182,212,.3)",borderRadius:8,color:"#06b6d4",cursor:"pointer",fontSize:12,padding:"6px 14px",fontFamily:"'DM Sans',sans-serif",fontWeight:600},
+                },"\u270E Edit"),
+                brokerCashBalance>0&&React.createElement("button",{
+                  onClick:()=>{if(confirm("Clear broker cash balance?"))dispatch({type:"SET_BROKER_CASH",amount:0});},
+                  style:{background:"rgba(239,68,68,.1)",border:"1px solid rgba(239,68,68,.25)",borderRadius:8,color:"#ef4444",cursor:"pointer",fontSize:12,padding:"6px 14px",fontFamily:"'DM Sans',sans-serif",fontWeight:600},
+                },"\u00D7 Clear")
+              )
+        )
+      )
     ),
     tab==="fd"&&React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
       React.createElement(StatCard,{label:"Value Today",val:INR(fdTodayTotal),sub:fdTodayTotal>fdTotal?"+"+INR(fdTodayTotal-fdTotal)+" accrued interest":"principal "+INR(fdTotal),col:"#b45309",icon:React.createElement(Icon,{n:"chart",size:22})}),
@@ -26816,7 +26962,7 @@ const RptSummary=({data,onExportPDF})=>{
   const cDebt=data.cards.reduce((s,c)=>s+c.outstanding,0);
   const lTotal=data.loans.reduce((s,l)=>s+l.outstanding,0);
   const fdTotal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
-  const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
+  const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
   const mfVal=data.mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
   const totalAssets=bTotal+data.cash.balance+fdTotal+shVal+mfVal;
   const totalLiab=cDebt+lTotal;
@@ -26826,7 +26972,7 @@ const RptSummary=({data,onExportPDF})=>{
     {title:"Cash",rows:[{name:"Cash Account",sub:"Physical cash",val:data.cash.balance,col:"var(--accent)",txns:data.cash.transactions.length}],total:data.cash.balance,colTotal:"var(--accent)"},
     {title:"Credit Cards",rows:data.cards.map(c=>({name:c.name,sub:c.bank+" · Limit "+INR(c.limit),val:c.outstanding,col:"#c2410c",txns:(c.transactions||[]).length,neg:true})),total:cDebt,colTotal:"#c2410c"},
     {title:"Loans",rows:data.loans.map(l=>({name:l.name,sub:l.bank+" · "+l.rate+"% · EMI "+INR(l.emi),val:l.outstanding,col:"#ef4444",neg:true})),total:lTotal,colTotal:"#ef4444"},
-    {title:"Investments",rows:[...data.mf.map(m=>({name:m.name,sub:"Mutual Fund",val:m.currentValue||m.invested,col:"#6d28d9"})),...data.shares.map(s=>({name:s.company,sub:s.ticker+" · "+s.qty+" shares",val:s.qty*s.currentPrice,col:"#16a34a"})),...data.fd.map(f=>({name:f.bank+" FD",sub:f.rate+"% · "+f.maturityDate,val:calcFDValueToday(f),col:"var(--accent)"}))],total:fdTotal+shVal+mfVal,colTotal:"#16a34a"}
+    {title:"Investments",rows:[...data.mf.map(m=>({name:m.name,sub:"Mutual Fund",val:m.currentValue||m.invested,col:"#6d28d9"})),...data.shares.map(s=>({name:s.company,sub:s.ticker+" · "+s.qty+" shares",val:s.qty*s.currentPrice,col:"#16a34a"})),...((data.brokerCashBalance||0)>0?[{name:"Cash in Broker Account",sub:"Liquid funds",val:data.brokerCashBalance,col:"#0891b2"}]:[]),...data.fd.map(f=>({name:f.bank+" FD",sub:f.rate+"% · "+f.maturityDate,val:calcFDValueToday(f),col:"var(--accent)"}))],total:fdTotal+shVal+mfVal,colTotal:"#16a34a"}
   ];
   const allItems=sections.flatMap(sec=>sec.rows.map(r=>({...r,section:sec.title}))).sort((a,b)=>b.val-a.val);
   return React.createElement("div",{className:"fu"},
@@ -26876,7 +27022,7 @@ const RptInvestments=({data,onExportPDF})=>{
   const mfInv=data.mf.reduce((s,m)=>s+m.invested,0);
   const mfVal=data.mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
   const shInv=data.shares.reduce((s,sh)=>s+sh.qty*sh.buyPrice,0);
-  const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
+  const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
   const fdPrinc=data.fd.reduce((s,f)=>s+f.amount,0);
   const fdVal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
   const fdMat=data.fd.reduce((s,f)=>{const m=f.maturityAmount&&f.maturityAmount>f.amount?f.maturityAmount:calcFDMaturity(f.amount,f.rate,f.startDate,f.maturityDate);return s+m;},0);
@@ -27060,7 +27206,7 @@ const RptNetWorth=({data,onExportPDF})=>{
   const[view,setView]=useState("snapshot");
   const bankBal=data.banks.reduce((s,b)=>s+b.balance,0);
   const cashBal=data.cash.balance;
-  const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
+  const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
   const mfVal=data.mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
   const fdVal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
   const reVal=(data.re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
@@ -27251,7 +27397,7 @@ const ExportReportModal=({data,onClose})=>{
       /* ── Sheet 1: Cover & Net Worth Snapshot ── */
       const bankBal=data.banks.reduce((s,b)=>s+b.balance,0);
       const cashBal=data.cash.balance;
-      const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
+      const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
       const mfVal=data.mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
       const fdVal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
       const reVal=data.re.reduce((s,r)=>s+(r.currentValue||r.acquisitionCost),0);
@@ -27342,7 +27488,7 @@ const ExportReportModal=({data,onClose})=>{
         ["","","","","","","","","",""],
         ["TOTALS","","","","",
           data.shares.reduce((s,sh)=>s+sh.qty*sh.buyPrice,0),
-          data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0),
+          data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0),
           data.shares.reduce((s,sh)=>s+sh.qty*(sh.currentPrice-sh.buyPrice),0),"",""],
       ]);
 
@@ -27416,7 +27562,7 @@ const ExportReportModal=({data,onClose})=>{
       const cfRows=getMonthlyCF(all,from,to);
       const bankBal=data.banks.reduce((s,b)=>s+b.balance,0);
       const cashBal=data.cash.balance;
-      const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
+      const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
       const mfVal=data.mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
       const fdVal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
       const reVal=data.re.reduce((s,r)=>s+(r.currentValue||r.acquisitionCost),0);
@@ -30831,7 +30977,7 @@ const resolveGoalIcon=(ic,sz=18)=>React.createElement(Icon,{n:typeof ic==="strin
 const GOAL_ICONS=GOAL_ICON_NAMES.map(n=>React.createElement(Icon,{n,size:18}));
 const GOAL_COLORS=["#0e7490","#16a34a","#b45309","#6d28d9","#c2410c","#be185d","#1d4ed8","#059669"];
 
-const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],cards=[],cash={transactions:[]},mf=[],shares=[],fd=[],re=[]})=>{
+const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],cards=[],cash={transactions:[]},mf=[],shares=[],fd=[],re=[],brokerCashBalance=0})=>{
   const[addOpen,setAddOpen]=useState(false);
   const[editGoal,setEditGoal]=useState(null);
   const[fundsGoal,setFundsGoal]=useState(null);
@@ -30846,7 +30992,7 @@ const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],ca
   /* ── Investment Pool Calculation (liquid assets only; RE excluded) ── */
   const bankBal=banks.reduce((s,b)=>s+(b.balance||0),0);
   const mfVal=mf.reduce((s,m)=>s+(m.currentValue||m.invested||0),0);
-  const sharesVal=shares.reduce((s,sh)=>s+(sh.qty||0)*(sh.currentPrice||0),0);
+  const sharesVal=shares.reduce((s,sh)=>s+(sh.qty||0)*(sh.currentPrice||0),0)+(brokerCashBalance||0);
   const fdVal=fd.reduce((s,f)=>s+calcFDValueToday(f),0);
   const totalInvestmentPool=bankBal+mfVal+sharesVal+fdVal;
   const totalAllocated=goals.reduce((s,g)=>s+(+g.savedAmount||0),0);
@@ -31330,7 +31476,7 @@ const SUBSCRIPTION_KEYWORDS=["netflix","spotify","prime","hotstar","youtube","ap
 /* ══════════════════════════════════════════════════════════════════════════
    NET WORTH INSIGHT TAB v2 — Snapshot-based history + fixed x-axis labels
    ══════════════════════════════════════════════════════════════════════════ */
-const NetWorthInsightTab=({banks,cards,cash,mf,shares,fd,re,loans,categories,prefs,isMobile,dispatch,nwSnapshots})=>{
+const NetWorthInsightTab=({banks,cards,cash,mf,shares,fd,re,loans,categories,prefs,isMobile,dispatch,nwSnapshots,brokerCashBalance=0})=>{
   const[view,setView]=React.useState("monthly");
   const[showSnapshotModal,setShowSnapshotModal]=React.useState(false);
   const MONTH_NAMES=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -31341,7 +31487,7 @@ const NetWorthInsightTab=({banks,cards,cash,mf,shares,fd,re,loans,categories,pre
   const bankBal=banks.reduce((s,b)=>s+b.balance,0);
   const cashBal=cash.balance;
   const mfVal=mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
-  const sharesVal=shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
+  const sharesVal=shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(brokerCashBalance||0);
   const fdVal=fd.reduce((s,f)=>s+calcFDValueToday(f),0);
   const reVal=(re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
   const cDebt=cards.reduce((s,c)=>s+c.outstanding,0);
@@ -31863,7 +32009,7 @@ const NetWorthInsightTab=({banks,cards,cash,mf,shares,fd,re,loans,categories,pre
 
 
 
-const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile,goals,mf,shares,fd,re,loans,prefs,onJumpToLedger,nwSnapshots})=>{
+const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile,goals,mf,shares,fd,re,loans,prefs,onJumpToLedger,nwSnapshots,brokerCashBalance=0})=>{
   const P=prefs||{};
   const[stab,setStab]=useState("pulse");
   const[schedConfirm,setSchedConfirm]=useState(null);
@@ -33412,7 +33558,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     stab==="waterfall"     &&WaterfallTab,
     stab==="subscriptions" &&SubsTab,
     stab==="fire"          &&FireTab,
-    stab==="networth"      &&React.createElement(NetWorthInsightTab,{banks,cards,cash,mf,shares,fd,re:re||[],loans,categories,prefs:P,isMobile,dispatch,nwSnapshots:nwSnapshots||{}}),
+    stab==="networth"      &&React.createElement(NetWorthInsightTab,{banks,cards,cash,mf,shares,fd,re:re||[],loans,categories,prefs:P,isMobile,dispatch,nwSnapshots:nwSnapshots||{},brokerCashBalance}),
     stab==="capgains"      &&React.createElement(CapGainsTab,{shares,mf,isMobile}),
     stab==="calculators"   &&React.createElement(InsightCalculators,{isMobile})
   );
@@ -37229,28 +37375,28 @@ function App(){
           React.createElement(CashSection,{cash:state.cash,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,loans:state.loans||_EA,isMobile,jumpTxId:txJump?.accType==="cash"?txJump.txId:null,jumpSerial:txJump?.accType==="cash"?txJump.serial:null}))),
       React.createElement("div",{style:{display:tab==="inv_dash"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Investments"},
-          React.createElement(InvestDashboard,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,dispatch,isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO}))),
+          React.createElement(InvestDashboard,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,dispatch,isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,brokerCashBalance:state.brokerCashBalance||0}))),
       /* InvestSection: five sub-tabs reuse the same component with different
          defaultTab — keep the && pattern so each sub-tab mounts independently */
       tab==="inv_mf"&&React.createElement(ErrorBoundary,{name:"Mutual Funds"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       tab==="inv_shares"&&React.createElement(ErrorBoundary,{name:"Shares"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"shares",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"shares",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       tab==="inv_fd"&&React.createElement(ErrorBoundary,{name:"Fixed Deposits"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"fd",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"fd",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       tab==="inv_re"&&React.createElement(ErrorBoundary,{name:"Real Estate"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"re",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"re",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       tab==="inv_pf"&&React.createElement(ErrorBoundary,{name:"Provident Fund"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"pf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"pf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       React.createElement("div",{style:{display:tab==="loans"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Loans"},
           React.createElement(LoanSection,{loans:state.loans,dispatch,allBanks:state.banks,allCards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees,isMobile}))),
       React.createElement("div",{style:{display:tab==="goals"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Goals"},
-          React.createElement(GoalsSection,{goals:state.goals||_EA,dispatch,isMobile,scheduled:state.scheduled||_EA,banks:state.banks,cards:state.cards,cash:state.cash,mf:state.mf||_EA,shares:state.shares||_EA,fd:state.fd||_EA,re:state.re||_EA}))),
+          React.createElement(GoalsSection,{goals:state.goals||_EA,dispatch,isMobile,scheduled:state.scheduled||_EA,banks:state.banks,cards:state.cards,cash:state.cash,mf:state.mf||_EA,shares:state.shares||_EA,fd:state.fd||_EA,re:state.re||_EA,brokerCashBalance:state.brokerCashBalance||0}))),
       React.createElement("div",{style:{display:tab==="insights"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Insights"},
-          React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs,onJumpToLedger,nwSnapshots:state.nwSnapshots||_EO}))),
+          React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs,onJumpToLedger,nwSnapshots:state.nwSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0}))),
       React.createElement("div",{style:{display:tab==="notes"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Notes"},
           React.createElement(NotesSection,{notes:state.notes||_EA,dispatch}))),
