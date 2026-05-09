@@ -18395,7 +18395,7 @@ const CloudBackupPanel=({state})=>{
     if(typeof cloudSyncSupported!=="function"||!cloudSyncSupported()){say("Google Identity Services not available.",false);return;}
     setSyncing(true);setSyncStatus("Checking Drive…");
     try{
-      const remote=await gdriveReadSyncFile();
+      const remote=await gdriveReadSyncFile(false); /* user-initiated — allow OAuth popup if token expired */
       if(!remote||!remote.state){
         setSyncStatus("No sync file found on Drive.");
         say("No finsight-sync.json found on Drive. Make a change on your other device first.",false);

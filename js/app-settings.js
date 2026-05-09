@@ -1398,12 +1398,16 @@ const gdriveRequestTokenWithRefresh = () => new Promise((resolve) => {
    define this new function and reference it everywhere in this file instead.
    ══════════════════════════════════════════════════════════════════════════ */
 
-const _gdriveEnsureTokenV2 = async () => {
+/* _gdriveEnsureTokenV2
+ * silent = true  → background / auto-sync: only cached token, refresh token exchange, or
+ *                  GIS browser-session silent refresh.  NEVER shows a popup.
+ * silent = false → user-initiated (Push, Pull, Sync Now): full chain including popup. */
+const _gdriveEnsureTokenV2 = async (silent = false) => {
   /* ── Step 1: cached access token still valid ── */
   let tok = _gdriveGetToken();
   if (tok && !_gdriveTokenExpired()) return tok;
 
-  /* ── Step 2: silent refresh via stored refresh token ── */
+  /* ── Step 2: silent refresh via stored refresh token (no popup, no network round-trip UI) ── */
   if (_gdriveGetRefreshToken() && _gdriveGetClientSecret()) {
     tok = await _gdriveRefreshAccessToken();
     if (tok) return tok;
@@ -1412,6 +1416,12 @@ const _gdriveEnsureTokenV2 = async () => {
   /* ── Step 3: GIS silent re-auth (uses browser's Google session cookie) ── */
   tok = await gdriveRequestTokenSilent();
   if (tok) return tok;
+
+  /* ── Background mode: stop here — never show a popup during auto-sync ── */
+  if (silent) {
+    console.log("[GDrive] Token expired and all silent paths failed; skipping popup (background sync mode).");
+    return "";
+  }
 
   /* ── Step 4: interactive popup — Code flow (gives back a refresh token) ── */
   if (_gdriveGetClientSecret()) {
@@ -1447,10 +1457,10 @@ window.addEventListener("gdrive:pulled", (e) => {
    • exportedAt from payload root (not data.data)
    • Skips restore when remote is not newer than last local sync
    ══════════════════════════════════════════════════════════════════════════ */
-gdriveReadSyncFile = async () => {
+gdriveReadSyncFile = async (silent = true) => {
   try {
     if (!cloudSyncSupported()) return null;
-    const token = await _gdriveEnsureTokenV2();        /* ← v2 */
+    const token = await _gdriveEnsureTokenV2(silent);        /* ← silent by default; pass false for user-initiated pulls */
     if (!token) return null;
 
     /* Resolve file ID (cached or fresh search) */
@@ -1523,7 +1533,8 @@ gdriveUpsertSyncFile = async (state, manual) => {
     if (!cloudSyncSupported()) return false;
     if (!manual && !_gdriveCanWrite()) return true;
 
-    const token = await _gdriveEnsureTokenV2();        /* ← v2 */
+    // Background auto-sync: silent=true (no popup). Manual push: silent=false (popup allowed).
+    const token = await _gdriveEnsureTokenV2(!manual); /* ← v2 */
     if (!token) return false;
 
     const exportedAt = new Date().toISOString();
@@ -1608,7 +1619,7 @@ gdriveUpsertSyncFile = async (state, manual) => {
 
     /* Last-resort retry with a fresh token */
     if (!_gdriveGetToken()) {
-      const retryToken = await _gdriveEnsureTokenV2();  /* ← v2 */
+      const retryToken = await _gdriveEnsureTokenV2(!manual);  /* ← respect silent flag */
       if (!retryToken) return false;
       const retryId = await _gdriveCreateFile(retryToken, content);
       if (retryId) {
@@ -1793,7 +1804,8 @@ const CloudBackupPanel = ({ state, dispatch }) => {
       try { localStorage.removeItem(LS_GDRIVE_LAST_SYNC); } catch {}
       try { localStorage.removeItem(GDRIVE_LS_FILEID); }   catch {}
 
-      const remote = await gdriveReadSyncFile();
+      // Pass silent=false: user explicitly clicked Pull, so allow OAuth popup if token expired.
+      const remote = await gdriveReadSyncFile(false);
 
       if (!remote || !remote.state) {
         _syncSaveLocal(savedSync);
@@ -5194,7 +5206,9 @@ const _gdriveEnsureToken = async () => {
 
 /* On page load: if a still-valid token exists in localStorage, schedule its
    proactive refresh for the remainder of its lifetime so the app stays
-   authorised across a browser reopen without the user doing anything. */
+   authorised across a browser reopen without the user doing anything.
+   If the token has already expired but a refresh token is stored, kick off
+   a silent background refresh immediately so the first auto-sync doesn't fail. */
 (function _gdriveRestoreRefreshSchedule() {
   try {
     const exp = +(localStorage.getItem(GDRIVE_LS_EXPIRE) || 0);
@@ -5202,6 +5216,17 @@ const _gdriveEnsureToken = async () => {
       const remainingSecs = Math.floor((exp - Date.now()) / 1000);
       _gdriveScheduleTokenRefresh(remainingSecs);
       console.log("[GDrive] Token valid for ~" + Math.round(remainingSecs / 60) + " more min; refresh scheduled.");
+    } else if (_gdriveGetRefreshToken() && _gdriveGetClientSecret()) {
+      /* Token expired while tab was closed, but we have a refresh token.
+         Refresh silently in the background so auto-sync works immediately
+         without showing a login popup. */
+      console.log("[GDrive] Access token expired on startup; refresh token available — refreshing silently…");
+      setTimeout(() => {
+        _gdriveRefreshAccessToken().then(tok => {
+          if (tok) console.log("[GDrive] Startup silent token refresh succeeded.");
+          else console.log("[GDrive] Startup silent token refresh failed — will retry on next sync operation.");
+        });
+      }, 1500); /* slight delay so the app finishes mounting before the network call */
     }
   } catch {}
 })();
@@ -5306,12 +5331,12 @@ const _gdriveMarkWritten = () => {
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
-   gdriveUpsertSyncFile — write the full app state to Drive (Steps 3 & 5).
-   1. Ensure valid token (re-prompt if expired).
-   2. On Android, throttle to max 1 write / 10 s.
-   3. Search for existing file; create if missing, update if found.
+   gdriveUpsertSyncFile — LEGACY V1 (kept for reference only).
+   SUPERSEDED by the V2 implementation in Section 7 above which uses
+   _gdriveEnsureTokenV2 (refresh-token aware + silent-mode support).
+   Renamed to _gdriveUpsertSyncFileV1 to prevent overriding the V2 version.
    ══════════════════════════════════════════════════════════════════════════ */
-var gdriveUpsertSyncFile = async (state) => {
+var _gdriveUpsertSyncFileV1 = async (state) => {
   try {
     if (!cloudSyncSupported()) return false;
     if (!_gdriveCanWrite()) return true; /* throttled — skip silently */
@@ -5393,10 +5418,12 @@ var gdriveUpsertSyncFile = async (state) => {
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
-   gdriveReadSyncFile — read state from Drive (Step 4: Windows boot check).
-   Returns { state, modifiedTime } or null.
+   gdriveReadSyncFile — LEGACY V1 (kept for reference only).
+   SUPERSEDED by the V2 implementation in Section 6 above which uses
+   _gdriveEnsureTokenV2 (refresh-token aware, silent=true by default).
+   Renamed to _gdriveReadSyncFileV1 to prevent overriding the V2 version.
    ══════════════════════════════════════════════════════════════════════════ */
-var gdriveReadSyncFile = async () => {
+var _gdriveReadSyncFileV1 = async () => {
   try {
     if (!cloudSyncSupported()) return null;
     const token = await _gdriveEnsureToken();
