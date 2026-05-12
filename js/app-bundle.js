@@ -13080,6 +13080,9 @@ const Dashboard=React.memo(({data,isMobile})=>{
   };
   const W=(id)=>!hiddenWidgets.includes(id); /* true = widget is visible */
   React.useEffect(()=>{const t=setTimeout(()=>setReady(true),100);return()=>clearTimeout(t);},[]);
+  /* Refs for Net Worth Trend hover — must be at component top level (Rules of Hooks) */
+  const nwSvgRef=React.useRef(null);
+  const nwTipRef=React.useRef(null);
 
   /* ━━ 1. BANKING CORE METRICS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
   const MNAMES=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -13854,9 +13857,9 @@ const Dashboard=React.memo(({data,isMobile})=>{
       const col=chg>=0?"#16a34a":"#ef4444";
       const INRs=v=>{const a=Math.abs(v);if(a>=10000000)return(v<0?"-":"")+"₹"+(a/10000000).toFixed(1)+"Cr";if(a>=100000)return(v<0?"-":"")+"₹"+(a/100000).toFixed(1)+"L";return(v<0?"-":"")+"₹"+(a/1000).toFixed(0)+"K";};
       const gradId="nw_dash_grad";
-      /* hover state via ref to avoid re-renders inside IIFE */
-      const svgRef=React.useRef(null);
-      const tipRef=React.useRef(null);
+      /* hover state — refs are hoisted to component level to satisfy Rules of Hooks */
+      const svgRef=nwSvgRef;
+      const tipRef=nwTipRef;
       const onSvgMove=e=>{
         if(!svgRef.current||!tipRef.current)return;
         const rect=svgRef.current.getBoundingClientRect();
