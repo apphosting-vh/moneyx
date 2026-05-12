@@ -1607,10 +1607,13 @@ const reducer=(s,a)=>{
       const pruned={};
       keys.slice(-90).forEach(k=>{pruned[k]=updated[k];});
       /* Sync currentValue for each fund from the latest EOD snapshot so that
-         per-fund cards and dashboard totals stay consistent with eodNavs data */
+         per-fund cards and dashboard totals stay consistent with eodNavs data.
+         NOTE: Only update currentValue when it is missing or zero — never
+         overwrite a fresh live value that was just set by UPD_MF_NAV. */
       const _latestNavDate=Object.keys(pruned).sort().slice(-1)[0];
       const _latestNavSnap=_latestNavDate?pruned[_latestNavDate]:{};
       const _syncedMf=s.mf.map(m=>{
+        if(m.currentValue&&m.currentValue>0)return m; /* already has a live value — don't overwrite */
         const _navFromSnap=_latestNavSnap[m.schemeCode];
         if(_navFromSnap&&m.units>0){
           return{...m,currentValue:parseFloat((_navFromSnap*m.units).toFixed(2))};
