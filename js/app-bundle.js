@@ -863,7 +863,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.7.6";
+const APP_VERSION="4.7.7";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -36439,6 +36439,7 @@ function App(){
   const[searchOpen,setSearchOpen]=useState(false);
   /* ── Quick-add FAB ── */
   const[quickAddOpen,setQuickAddOpen]=useState(false);
+  const[chatBotOpen,setChatBotOpen]=useState(false);
   const[themeId,setThemeId]=useState(loadTheme);
   const setTheme=id=>{setThemeId(id);applyTheme(id);saveTheme(id);};
   React.useEffect(()=>{applyTheme(themeId);},[]);
@@ -37539,6 +37540,360 @@ function App(){
         });
       })()
     ),
+    /* ── ChatBot ── */
+    !["settings","info"].includes(tab)&&React.createElement(ChatBotFAB,{onClick:()=>setChatBotOpen(true),isOpen:chatBotOpen}),
+    React.createElement(ChatBot,{state:state,dispatch:dispatch,isOpen:chatBotOpen,onClose:()=>setChatBotOpen(false)}),
   );
 }
+/* ═══ CHATBOT CODE — injected ═══ */
+/* ── SVG Icon Helper (renders real SVG DOM, not text) ── */
+const _cbSvgIcon=(svgHtml,extraStyle)=>{
+  const st=Object.assign({display:'inline-flex',alignItems:'center',justifyContent:'center',verticalAlign:'middle'},extraStyle||{});
+  return React.createElement('span',{style:st,dangerouslySetInnerHTML:{__html:svgHtml}});
+};
+const _cbIconChat='<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+const _cbIconClipboard='<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>';
+const _cbIconWarn='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+const _cbIconCheck='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+const _cbIconEdit='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+const _cbIconClose='<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+const _cbIconSuccess='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+const _cbIconCard='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>';
+const _cbIconBank='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M3 10h18"/><path d="M12 3l9 7H3l9-7z"/><path d="M5 10v11"/><path d="M19 10v11"/><path d="M9 10v11"/><path d="M15 10v11"/></svg>';
+const _cbIconCash='<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="12" cy="12" r="4"/><path d="M2 8h2"/><path d="M20 8h2"/><path d="M2 16h2"/><path d="M20 16h2"/></svg>';
+const _cbIconFuel='<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/><path d="M3 22h12"/><path d="M15 10h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2 2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 4"/><path d="M3 22v-3"/><rect x="6" y="8" width="6" height="5" rx="1"/></svg>';
+const _cbIconCart='<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>';
+const _cbIconFood='<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>';
+const _cbIconSalary='<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>';
+const _cbIconArrow='<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+
+/* ── 1. FUZZY ACCOUNT MATCHER ──────────────────────────────────────────── */
+const _cbNormalise=s=>(s||'').toLowerCase().replace(/[^a-z0-9\s]/g,'').replace(/\b(bank|account|card|credit|debit|visa|mastercard|rupay|amex)\b/g,'').replace(/\s+/g,' ').trim();
+const _cbLevenshtein=(a,b)=>{const m=a.length,n=b.length;if(!m)return n;if(!n)return m;const dp=Array.from({length:m+1},()=>Array(n+1).fill(0));for(let i=0;i<=m;i++)dp[i][0]=i;for(let j=0;j<=n;j++)dp[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return dp[m][n];};
+const _cbTokenOverlap=(q,t)=>{const qt=q.split(' ').filter(Boolean);const ts=new Set(t.split(' ').filter(Boolean));if(!qt.length)return 0;let h=0;for(const a of qt)for(const b of ts)if(b.startsWith(a)||a.startsWith(b)){h++;break;};return h/qt.length;};
+const _cbMatchAccount=(text,accounts)=>{
+  if(!text||!accounts||!accounts.length)return null;
+  const q=_cbNormalise(text);if(!q)return null;
+  let best=null,bestScore=0;
+  for(const acc of accounts){
+    const n=_cbNormalise(acc.name),bn=_cbNormalise(acc.bank||''),fn=(n+' '+bn).trim();
+    let score=0;
+    if(n.includes(q)||q.includes(n)){
+      const cov=q.length/Math.max(n.length,1);
+      score=q.includes(n)?0.95:(cov>0.7?0.9:0.7+cov*0.2);
+      score=Math.min(score+(n===q?0.05:0),1);
+    }else{
+      const ov=Math.max(_cbTokenOverlap(q,fn),_cbTokenOverlap(q,n));
+      if(ov>=0.5){const qLen=q.split(' ').filter(Boolean).length;score=Math.min(0.55+ov*0.35+(qLen>1&&ov>=0.8?0.1:0),1);}
+      else if(q.length>=3){const sQ=q.slice(0,Math.min(q.length,6)),sT=fn.slice(0,Math.min(fn.length,6));const d=_cbLevenshtein(sQ,sT);const sim=1-d/Math.max(sQ.length,sT.length);if(sim>=0.7)score=0.5+sim*0.2;}
+    }
+    if(score>=0.5&&score>bestScore){bestScore=score;best={account:acc,confidence:score};}
+  }
+  return best&&best.confidence>=0.5?best:null;
+};
+const _cbMatchAccountMulti=(text,accounts)=>{
+  if(!text||!accounts||!accounts.length)return null;
+  const q=_cbNormalise(text);if(!q)return null;
+  const scored=[];
+  for(const acc of accounts){
+    const n=_cbNormalise(acc.name),bn=_cbNormalise(acc.bank||''),fn=(n+' '+bn).trim();
+    let score=0;
+    if(n.includes(q)||q.includes(n)){
+      const cov=q.length/Math.max(n.length,1);
+      score=q.includes(n)?0.95:(cov>0.7?0.9:0.7+cov*0.2);
+      score=Math.min(score+(n===q?0.05:0),1);
+    }else{
+      const ov=Math.max(_cbTokenOverlap(q,fn),_cbTokenOverlap(q,n));
+      if(ov>=0.5){const qLen=q.split(' ').filter(Boolean).length;score=Math.min(0.55+ov*0.35+(qLen>1&&ov>=0.8?0.1:0),1);}
+      else if(q.length>=3){const sQ=q.slice(0,Math.min(q.length,6)),sT=fn.slice(0,Math.min(fn.length,6));const d=_cbLevenshtein(sQ,sT);const sim=1-d/Math.max(sQ.length,sT.length);if(sim>=0.7)score=0.5+sim*0.2;}
+    }
+    if(score>=0.5)scored.push({account:acc,confidence:score});
+  }
+  if(!scored.length)return null;
+  scored.sort((a,b)=>b.confidence-a.confidence);
+  const top=scored[0],amb=scored.filter(s=>s.confidence>=top.confidence-0.1&&s.account.id!==top.account.id);
+  return{match:top,ambiguous:amb.length>0?amb:null};
+};
+
+/* ── 2. CATEGORY KEYWORD DICTIONARY ───────────────────────────────────── */
+const _cbCatRules=[
+  {k:['petrol','diesel','fuel','gas station','petrol pump','hpcl','bpcl','iocl','refuel'],c:'Transport',s:'Fuel'},
+  {k:['uber','ola','rapido','auto','rickshaw','taxi','cab'],c:'Transport',s:'Cab / Auto'},
+  {k:['metro','bus','train','irctc','local train','bus pass','railway'],c:'Transport',s:'Public Transit'},
+  {k:['bigbasket','grofers','blinkit','zepto','dmart','reliance fresh','grocery','groceries','vegetable','fruit','ration','kirana','milk'],c:'Food',s:'Groceries'},
+  {k:['restaurant','cafe','dine out','dinner','lunch','breakfast','pizza','burger','biryani','mcdonald','kfc','domino','subway','starbucks','bar','pub'],c:'Food',s:'Restaurants'},
+  {k:['swiggy','zomato','food delivery','food order'],c:'Food',s:'Delivery'},
+  {k:['myntra','ajio','meesho','clothing','clothes','shirt','jeans','dress','shoes','fashion','apparel'],c:'Shopping',s:'Clothing'},
+  {k:['amazon','flipkart','croma','reliance digital','vijay sales','electronics','mobile','laptop','headphone','charger','gadget','phone','tablet','tv'],c:'Shopping',s:'Electronics'},
+  {k:['ikea','pepperfry','urban ladder','home decor','furniture','curtain','bedsheet','kitchen','utensil'],c:'Shopping',s:'Home & Decor'},
+  {k:['netflix','amazon prime','hotstar','disney','jiocinema','sonyliv','zee5','youtube premium','spotify','apple music','gaana','jiosaavn','streaming','ott'],c:'Entertainment',s:'OTT / Streaming'},
+  {k:['steam','playstation','xbox','gaming','pubg','free fire','valorant','game'],c:'Entertainment',s:'Gaming'},
+  {k:['bookmyshow','insider','event','concert','movie','cinema','pvr','inox','theatre','show','standup','comedy'],c:'Entertainment',s:'Events'},
+  {k:['electricity','bescom','mseb','tangedco','bses','torrent power','power bill','light bill','electric bill'],c:'Utilities',s:'Electricity'},
+  {k:['water bill','water tax','municipal water','bwssb'],c:'Utilities',s:'Water'},
+  {k:['broadband','wifi','internet','act fibernet','jio fiber','airtel xstream','bsnl fiber','tikona','hathway'],c:'Utilities',s:'Internet'},
+  {k:['mobile bill','phone recharge','airtel','jio','vi recharge','bsnl recharge','mobile recharge','prepaid','postpaid'],c:'Utilities',s:'Mobile'},
+  {k:['rent','house rent','flat rent','room rent'],c:'Housing',s:'Rent'},
+  {k:['maintenance','society maintenance','repair','plumber','electrician','carpenter','painting','renovation','ac service'],c:'Housing',s:'Maintenance'},
+  {k:['lic','life insurance','term insurance','hdfc life','sbi life','icici prudential','max life'],c:'Insurance',s:'Life'},
+  {k:['health insurance','medical insurance','star health','care health','niva bupa','hdfc ergo'],c:'Insurance',s:'Health'},
+  {k:['car insurance','bike insurance','vehicle insurance','motor insurance'],c:'Insurance',s:'Vehicle'},
+  {k:['sip','mutual fund','mf','groww','zerodha','kuvera','paytm money','et money','axis mf','sbi mf','hdfc mf','mirae','ppfas','parag parikh'],c:'Investment',s:'Mutual Fund SIP'},
+  {k:['stock','share','equity','upstox','angel one','icici direct','hdfc securities','intraday','ipo'],c:'Investment',s:'Stocks'},
+  {k:['ppf','nps','public provident fund','national pension','epf','provident fund'],c:'Investment',s:'PPF / NPS'},
+  {k:['flight','airline','air india','indigo','spicejet','vistara','go first','akasa','makemytrip flight','cleartrip','ease my trip'],c:'Travel',s:'Flights'},
+  {k:['hotel','resort','hostel','oyo','treebo','fabhotel','goibibo','booking.com','airbnb','stay','accommodation'],c:'Travel',s:'Hotels'},
+  {k:['local travel','sightseeing','tour','guide','car rental','zoomcar','revv','rental car'],c:'Travel',s:'Local Travel'},
+  {k:['card bill','credit card bill','card payment','cc payment','card due','minimum due','outstanding payment'],c:'Payment',s:'Card Bill'},
+  {k:['emi','loan','loan emi','home loan','car loan','personal loan','education loan','gold loan','emi payment'],c:'Payment',s:'Loan EMI'},
+  {k:['atm','cash withdrawal','atm withdrawal','withdraw cash'],c:'Transfer',s:'ATM Withdrawal'},
+  {k:['transfer','neft','rtgs','imps','upi transfer','fund transfer','bank transfer','sent to','transferred to'],c:'Transfer',s:'Inter-Bank'},
+  {k:['salary','wages','pay','stipend','monthly pay','payroll'],c:'Income',s:'Salary'},
+  {k:['freelance','freelancing','consulting','contract','gig','project payment','client payment'],c:'Income',s:'Freelance'},
+  {k:['interest','fd interest','rd interest','savings interest','deposit interest','bank interest'],c:'Income',s:'Interest'},
+  {k:['dividend','dividends','stock dividend','mf dividend','equity dividend'],c:'Income',s:'Dividends'},
+];
+const _cbMatchCategory=text=>{
+  if(!text)return null;
+  const lo=text.toLowerCase();let best=null,bestSc=0;
+  for(const r of _cbCatRules)for(const kw of r.k){
+    const re=new RegExp('\\b'+kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i');
+    if(re.test(lo)){const sc=0.8+Math.min(kw.length/100,0.2);if(sc>bestSc){bestSc=sc;best={cat:r.c,subcat:r.s,kw};}}
+  }
+  return best;
+};
+
+/* ── 3. TRANSACTION PARSER ─────────────────────────────────────────────── */
+const _cbExtractAmount=text=>{
+  const pats=[/₹\s*(\d[\d,]*\.?\d*)/,/(\d[\d,]*\.?\d*)\s*(?:rs|rupees|inr|₹)/i,/(?:rs|rupees|inr)\s*(\d[\d,]*\.?\d*)/i,/(?:^|\s)(\d[\d,]*\.?\d*)(?:\s|$|,|\.)/];
+  for(const p of pats){const m=text.match(p);if(m){const n=parseFloat(m[1].replace(/,/g,''));if(n>0&&n<100000000)return n;}}
+  return null;
+};
+const _cbMonths={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12',january:'01',february:'02',march:'03',april:'04',june:'06',july:'07',august:'08',september:'09',october:'10',november:'11',december:'12'};
+const _cbTodayISO=()=>{const istMs=Date.now()+(5.5*60*60*1000);return new Date(istMs).toISOString().split('T')[0];};
+const _cbOffsetISO=d=>{const istMs=Date.now()+(5.5*60*60*1000)+d*86400000;return new Date(istMs).toISOString().split('T')[0];};
+const _cbExtractDate=text=>{
+  const lo=text.toLowerCase();
+  if(/\b(today|now|aaj)\b/i.test(lo))return _cbTodayISO();
+  if(/\b(yesterday|kal)\b/i.test(lo))return _cbOffsetISO(-1);
+  if(/\b(day before yesterday|parson)\b/i.test(lo))return _cbOffsetISO(-2);
+  if(/\b(tomorrow)\b/i.test(lo))return _cbOffsetISO(1);
+  const dayOnly=lo.match(/\bon\s+(\d{1,2})(?:st|nd|rd|th)?\b/);
+  if(dayOnly){const d=parseInt(dayOnly[1]);if(d>=1&&d<=31){const n=new Date();return`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}}
+  const mps=Object.keys(_cbMonths).join('|');
+  const dr=new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(${mps})(?:\\s+(\\d{2,4}))?\\b|\\b(${mps})\\s+(\\d{1,2})(?:st|nd|rd|th)?(?:\\s*,?\\s*(\\d{2,4}))?\\b`,'i');
+  const dm=lo.match(dr);
+  if(dm){let day,month,year;
+    if(dm[1]&&dm[2]){day=parseInt(dm[1]);month=_cbMonths[dm[2].toLowerCase()];year=dm[3]?(parseInt(dm[3])<100?2000+parseInt(dm[3]):parseInt(dm[3])):new Date().getFullYear();}
+    else if(dm[5]&&dm[4]){day=parseInt(dm[5]);month=_cbMonths[dm[4].toLowerCase()];year=dm[6]?(parseInt(dm[6])<100?2000+parseInt(dm[6]):parseInt(dm[6])):new Date().getFullYear();}
+    if(day&&month)return`${year}-${month}-${String(day).padStart(2,'0')}`;
+  }
+  const iso=lo.match(/\b(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})\b/);if(iso)return`${iso[1]}-${iso[2].padStart(2,'0')}-${iso[3].padStart(2,'0')}`;
+  const dmy=lo.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})\b/);if(dmy){const y=parseInt(dmy[3])<100?2000+parseInt(dmy[3]):parseInt(dmy[3]);return`${y}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;}
+  return _cbTodayISO();
+};
+const _cbDetectType=(text,cat)=>{
+  const lo=text.toLowerCase();
+  for(const kw of['salary','credited','credit','received','got','income','refund','cashback','bonus','dividend','interest','reimbursement','deposit','gift','prize','earning'])
+    if(new RegExp('\\b'+kw+'\\b','i').test(lo))return'credit';
+  for(const kw of['spent','spend','paid','pay','purchase','bought','debit','bill','charge','fee','subscription','emi','withdrawal','withdraw','donated','tip','fine'])
+    if(new RegExp('\\b'+kw+'\\b','i').test(lo))return'debit';
+  if(cat){if(cat.cat==='Income')return'credit';if(['Housing','Food','Transport','Shopping','Entertainment','Utilities','Insurance','Investment','Travel','Payment'].includes(cat.cat))return'debit';}
+  return'debit';
+};
+const _cbExtractPayee=text=>{
+  const pats=[/\bat\s+([A-Za-z][A-Za-z0-9\s&'.]+?)(?:\s+for\b|\s+on\b|\s+via\b|\s+using\b|$)/i,/\bfrom\s+([A-Za-z][A-Za-z0-9\s&'.]+?)(?:\s+for\b|\s+on\b|\s+via\b|$)/i,/\bto\s+([A-Za-z][A-Za-z0-9\s&'.]+?)(?:\s+for\b|\s+on\b|\s+via\b|$)/i];
+  for(const p of pats){const m=text.match(p);if(m){const p2=m[1].trim();const noise=['the','my','a','an','this','that','rs','rupees','card','account','bank'];if(!noise.includes(p2.toLowerCase())&&p2.length>=2&&p2.length<=50)return p2;}}
+  return null;
+};
+const _cbGenDesc=(text,cat,payee)=>{
+  const cleaned=text.replace(/\b(post|add|spent|spend|paid|pay|record|log|enter|put|mark)\b/gi,'').replace(/\b\d[\d,]*\.?\d*\s*(?:rs|rupees|inr|₹)?/gi,'').replace(/₹\s*\d[\d,]*\.?\d*/g,'').replace(/\b(?:to|on|for|at|from|via|using|with|in|the|my|a|an)\b/gi,'').replace(/\b(?:today|yesterday|tomorrow|now)\b/gi,'').replace(/\b(?:bank|account|card|credit|debit|savings|current)\b/gi,'').replace(/\b(?:icici|hdfc|sbi|axis|kotak|yes bank|idfc|bob|pnb|canara|union|indian bank|bank of baroda)\b/gi,'').replace(/\b(?:visa|mastercard|rupay|amex)\b/gi,'').replace(/\s+/g,' ').trim();
+  if(cleaned.length>=3)return cleaned.charAt(0).toUpperCase()+cleaned.slice(1);
+  if(payee)return payee;
+  if(cat&&cat.subcat)return cat.subcat;
+  if(cat&&cat.cat)return cat.cat;
+  return'Transaction';
+};
+const _cbExtractAccountRef=text=>{
+  return text.replace(/\b(post|add|spent|spend|paid|pay|record|log|enter|put|mark|set|make)\b/gi,'').replace(/₹\s*\d[\d,]*\.?\d*/g,'').replace(/\b\d[\d,]*\.?\d*\b/g,'').replace(/\b(today|yesterday|tomorrow|now|last|next)\b/gi,'').replace(/\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi,'').replace(/\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/gi,'').replace(/\b(to|on|for|at|from|via|using|with|in|the|my|a|an|of)\b/gi,'').replace(/\b(card|account|bank|credit|debit|savings|current)\b/gi,'').replace(/\b(petrol|diesel|fuel|grocery|groceries|rent|emi|salary|food|shopping|travel|entertainment|insurance|investment|utilities|transport|transfer|payment|income)\b/gi,'').replace(/\s+/g,' ').trim()||null;
+};
+const _cbParseTransaction=(text,state)=>{
+  if(!text||!text.trim())return{success:false,error:'Empty input'};
+  const trimmed=text.trim();
+  const amount=_cbExtractAmount(trimmed);
+  if(!amount)return{success:false,error:'Could not detect an amount. Try "400" or "₹400".'};
+  const date=_cbExtractDate(trimmed);
+  const catResult=_cbMatchCategory(trimmed);
+  const type=_cbDetectType(trimmed,catResult);
+  const allAcc=[...(state.banks||[]).map(b=>({id:b.id,name:b.name,bank:b.bank,accType:'bank'})),...(state.cards||[]).map(c=>({id:c.id,name:c.name,bank:c.bank,accType:'card'})),{id:'__cash__',name:'Cash',bank:'',accType:'cash'}];
+  const accText=_cbExtractAccountRef(trimmed);
+  const accMatch=_cbMatchAccountMulti(accText||trimmed,allAcc);
+  let srcId,srcType,accConf=0;
+  const ambiguities=[];
+  if(accMatch){srcId=accMatch.match.account.id;srcType=accMatch.match.account.accType;accConf=accMatch.match.confidence;if(accMatch.ambiguous)ambiguities.push({type:'account',options:[accMatch.match,...accMatch.ambiguous].map(a=>({id:a.account.id,name:a.account.name,type:a.account.accType,confidence:a.confidence}))});}
+  else if(allAcc.length===1){srcId=allAcc[0].id;srcType=allAcc[0].accType;accConf=1;}
+  else{srcId=allAcc[0]?.id;srcType=allAcc[0]?.accType;ambiguities.push({type:'account',options:allAcc.map(a=>({id:a.id,name:a.name,type:a.accType}))});}
+  // Check for card bill payment
+  if(srcType==='card'&&type==='debit'&&/\b(card\s*bill|payment|due|outstanding)\b/i.test(trimmed)){
+    const tx={amount,date,type:'credit',cat:'Payment',subcat:'Card Bill',payee:_cbExtractPayee(trimmed)||'',desc:_cbGenDesc(trimmed,catResult,_cbExtractPayee(trimmed)),status:'Reconciled',srcId,srcType};
+    return{success:true,confidence:0.9,transaction:tx,ambiguities,accountMatch:accMatch?{name:accMatch.match.account.name,confidence:accMatch.match.confidence}:null};
+  }
+  const tx={
+    amount,date,type,
+    cat:catResult?catResult.cat:'Others',
+    subcat:catResult?catResult.subcat:'',
+    payee:_cbExtractPayee(trimmed)||'',
+    desc:_cbGenDesc(trimmed,catResult,_cbExtractPayee(trimmed)),
+    status:'Reconciled',srcId,srcType
+  };
+  let conf=1;
+  if(!catResult)conf*=0.6;
+  if(accConf<0.7)conf*=0.7;
+  if(ambiguities.length)conf*=0.7;
+  if(!tx.payee)conf*=0.9;
+  return{success:true,confidence:conf,transaction:tx,ambiguities,accountMatch:accMatch?{name:accMatch.match.account.name,confidence:accMatch.match.confidence}:null};
+};
+
+/* ── 4. CHATBOT REACT COMPONENT ────────────────────────────────────────── */
+const _cbIsMobile=()=>typeof window!=='undefined'&&window.innerWidth<640;
+
+const _cbMsgBubble=({msg})=>{
+  const isUser=msg.role==='user';
+  return React.createElement('div',{style:{display:'flex',justifyContent:isUser?'flex-end':'flex-start',marginBottom:8,padding:'0 4px'}},
+    React.createElement('div',{style:{maxWidth:'85%',padding:'10px 14px',borderRadius:isUser?'14px 14px 4px 14px':'14px 14px 14px 4px',background:isUser?'var(--accent)':'var(--bg4)',color:isUser?'#fff':'var(--text2)',fontSize:13,lineHeight:1.55,fontFamily:"'DM Sans',sans-serif",whiteSpace:'pre-wrap',wordBreak:'break-word',boxShadow:isUser?'none':'0 1px 3px rgba(0,0,0,.08)'}},msg.text)
+  );
+};
+
+const _cbTxPreview=({parsed,accounts,onConfirm,onCancel,onEdit})=>{
+  const tx=parsed.transaction;
+  const accName=(accounts.find(a=>a.id===tx.srcId)||{}).name||tx.srcId;
+  const catLabel=tx.subcat?tx.cat+' > '+tx.subcat:tx.cat;
+  const typeColor=tx.type==='credit'?'#16a34a':'#ef4444';
+  const typeIcon=tx.type==='credit'?'↓':'↑';
+  const row=(l,v)=>[React.createElement('span',{key:l+'l',style:{color:'var(--text5)'}},l),React.createElement('span',{key:l+'v',style:{color:'var(--text2)'}},v)];
+  return React.createElement('div',{style:{background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:12,padding:'14px 16px',margin:'8px 4px',fontSize:13,fontFamily:"'DM Sans',sans-serif"}},
+    React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:10}},React.createElement('span',{style:{fontSize:18}},_cbSvgIcon(_cbIconClipboard)),React.createElement('span',{style:{fontWeight:600,color:'var(--text2)',fontSize:14}},'Confirm Transaction')),
+    React.createElement('div',{style:{display:'grid',gridTemplateColumns:'auto 1fr',gap:'6px 12px',fontSize:13}},
+      row('Amount',React.createElement('span',{style:{fontWeight:700,color:typeColor,fontFamily:"'Sora',sans-serif"}},typeIcon+' \u20b9'+tx.amount?.toLocaleString('en-IN'))),
+      row('Account',parsed.accountMatch?accName:React.createElement('span',null,accName,' ',_cbSvgIcon(_cbIconWarn))),
+      row('Category',parsed.catMatch?catLabel:React.createElement('span',null,catLabel,' ',_cbSvgIcon(_cbIconWarn))),
+      tx.payee&&row('Payee',tx.payee),
+      row('Date',tx.date),
+      row('Description',tx.desc),
+      row('Status',tx.status),
+    ),
+    parsed.ambiguities.length>0&&React.createElement('div',{style:{marginTop:10,padding:'8px 10px',background:'rgba(234,179,8,.08)',borderRadius:8,fontSize:12,color:'#ca8a04'}},parsed.ambiguities.map((a,i)=>React.createElement('div',{key:i},React.createElement('span',null,_cbSvgIcon(_cbIconWarn,{marginRight:4}),' ',(a.type==='account'?'Multiple accounts match':'Review needed'))))),
+    React.createElement('div',{style:{display:'flex',gap:8,marginTop:12}},
+      React.createElement('button',{onClick:onConfirm,style:{flex:1,padding:'9px 0',borderRadius:8,background:'var(--accent)',color:'#fff',border:'none',fontWeight:600,fontSize:13,cursor:'pointer',fontFamily:"'DM Sans',sans-serif"}},React.createElement('span',null,_cbSvgIcon(_cbIconCheck,{marginRight:4}),'Post Transaction')),
+      React.createElement('button',{onClick:onEdit,style:{padding:'9px 16px',borderRadius:8,background:'transparent',color:'var(--text4)',border:'1px solid var(--border2)',fontWeight:500,fontSize:13,cursor:'pointer',fontFamily:"'DM Sans',sans-serif"}},React.createElement('span',null,_cbSvgIcon(_cbIconEdit,{marginRight:4}),'Edit')),
+      React.createElement('button',{onClick:onCancel,style:{padding:'9px 16px',borderRadius:8,background:'transparent',color:'#ef4444',border:'1px solid rgba(239,68,68,.25)',fontWeight:500,fontSize:13,cursor:'pointer',fontFamily:"'DM Sans',sans-serif"}},_cbSvgIcon(_cbIconClose)),
+    ),
+  );
+};
+
+const _cbAcctPicker=({options,onSelect})=>{
+  return React.createElement('div',{style:{background:'var(--bg3)',border:'1px solid var(--border2)',borderRadius:12,padding:'12px 14px',margin:'8px 4px'}},
+    React.createElement('div',{style:{fontSize:13,fontWeight:600,color:'var(--text3)',marginBottom:8}},'Select account:'),
+    options.map((opt,i)=>React.createElement('button',{key:opt.id||i,onClick:()=>onSelect(opt),style:{display:'block',width:'100%',textAlign:'left',padding:'8px 12px',marginBottom:4,borderRadius:8,background:'var(--bg4)',border:'1px solid var(--border)',color:'var(--text2)',fontSize:13,cursor:'pointer',fontFamily:"'DM Sans',sans-serif"}},
+      React.createElement('span',{style:{fontWeight:600}},opt.name),
+      React.createElement('span',{style:{color:'var(--text5)',marginLeft:8,fontSize:11}},opt.type==='card'?_cbSvgIcon(_cbIconCard):opt.type==='bank'?_cbSvgIcon(_cbIconBank):_cbSvgIcon(_cbIconCash))
+    ))
+  );
+};
+
+const ChatBot=({state,dispatch,isOpen,onClose})=>{
+  const _greet={role:'bot',text:'Hi! Tell me what you spent or earned, and I\'ll post it for you.\n\nExamples:\n\u2022 "Spent 400 on petrol via HDFC card"\n\u2022 "Add salary 85000 to SBI"\n\u2022 "Paid 2500 rent today"',ts:Date.now()};
+  const[msgs,setMsgs]=React.useState([_greet]);
+  const[input,setInput]=React.useState('');
+  const[pendTx,setPendTx]=React.useState(null);
+  const[pendAmb,setPendAmb]=React.useState(null);
+  const[endRef,setEndRef]=React.useState(null);
+  const inpRef=React.useRef(null);
+
+  const accounts=React.useMemo(()=>{
+    const l=[];
+    (state.banks||[]).forEach(b=>l.push({id:b.id,name:b.name,type:'bank'}));
+    (state.cards||[]).forEach(c=>l.push({id:c.id,name:c.name,type:'card'}));
+    l.push({id:'__cash__',name:'Cash',type:'cash'});
+    return l;
+  },[state.banks,state.cards,state.cash]);
+
+  React.useEffect(()=>{endRef?.scrollIntoView({behavior:'smooth'});},[msgs,pendTx,pendAmb,endRef]);
+  React.useEffect(()=>{if(isOpen)setTimeout(()=>inpRef.current?.focus(),100);},[isOpen]);
+
+  const addBot=React.useCallback(t=>setMsgs(p=>[...p,{role:'bot',text:t,ts:Date.now()}]),[]);
+
+  const handleSend=React.useCallback(()=>{
+    const text=input.trim();if(!text)return;
+    setMsgs(p=>[...p,{role:'user',text,ts:Date.now()}]);setInput('');
+    setTimeout(()=>{
+      if(pendAmb){
+        const am=_cbMatchAccount(text,pendAmb.options.map(o=>({...o,accType:o.type})));
+        if(am){
+          const up={...pendTx};up.transaction.srcId=am.account.id;up.transaction.srcType=am.account.accType;up.ambiguities=up.ambiguities.filter(a=>a.type!=='account');setPendTx(up);setPendAmb(null);
+        }else{addBot('I couldn\'t match that. Please type the account name or tap one above.');}
+        return;
+      }
+      try{
+        const parsed=_cbParseTransaction(text,state);
+        if(!parsed.success){addBot(parsed.error||'Sorry, I couldn\'t understand that. Try "Spent 400 on petrol via HDFC card".');return;}
+        const accAmb=parsed.ambiguities.find(a=>a.type==='account'&&a.options?.length>1);
+        if(accAmb&&(!parsed.accountMatch||parsed.accountMatch.confidence<0.6)){setPendTx(parsed);setPendAmb(accAmb);addBot('Which account did you mean?');return;}
+        setPendTx(parsed);
+      }catch(e){addBot('Something went wrong. Please try again.');console.error('[ChatBot]',e);}
+    },200);
+  },[input,state,pendTx,pendAmb,addBot]);
+
+  const handleConfirm=React.useCallback(()=>{
+    if(!pendTx)return;
+    const tx=pendTx.transaction;
+    const txObj={date:tx.date,desc:tx.desc,amount:tx.amount,type:tx.type,cat:tx.cat+(tx.subcat?' > '+tx.subcat:''),payee:tx.payee||'',status:tx.status||'Reconciled',_addedAt:new Date().toISOString()};
+    if(tx.srcType==='bank')dispatch({type:'ADD_BANK_TX',id:tx.srcId,tx:txObj});
+    else if(tx.srcType==='card')dispatch({type:'ADD_CARD_TX',id:tx.srcId,tx:txObj});
+    else if(tx.srcType==='cash'||tx.srcId==='__cash__')dispatch({type:'ADD_CASH_TX',tx:txObj});
+    const accName=(accounts.find(a=>a.id===tx.srcId)||{}).name||tx.srcId;
+    const catLabel=tx.subcat?tx.cat+' > '+tx.subcat:tx.cat;
+    addBot(React.createElement('span',null,_cbSvgIcon(_cbIconSuccess,{marginRight:4}),'Posted! \u20b9'+tx.amount.toLocaleString('en-IN')+(tx.type==='credit'?' to ':' from ')+accName+' ('+catLabel+')'));
+    setPendTx(null);setPendAmb(null);
+  },[pendTx,dispatch,accounts,addBot]);
+
+  const handleCancel=React.useCallback(()=>{setPendTx(null);setPendAmb(null);addBot('Cancelled. What else?');},[addBot]);
+  const handleEdit=React.useCallback(()=>{if(pendTx){setInput(pendTx.raw?.text||'');setPendTx(null);setPendAmb(null);}},[pendTx]);
+  const handleKey=React.useCallback(e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend();}},[handleSend]);
+
+  if(!isOpen)return null;
+  const mob=_cbIsMobile();
+  const qa=[{l:React.createElement('span',null,_cbSvgIcon(_cbIconFuel,{marginRight:4}),'Petrol'),t:'Spent 500 on petrol'},{l:React.createElement('span',null,_cbSvgIcon(_cbIconCart,{marginRight:4}),'Groceries'),t:'Spent 2000 on groceries'},{l:React.createElement('span',null,_cbSvgIcon(_cbIconFood,{marginRight:4}),'Food'),t:'Spent 300 on lunch'},{l:React.createElement('span',null,_cbSvgIcon(_cbIconSalary,{marginRight:4}),'Salary'),t:'Salary credited 85000'}];
+
+  return React.createElement('div',{style:{position:'fixed',bottom:mob?70:16,right:mob?8:16,width:mob?'calc(100vw - 16px)':380,maxHeight:mob?'70vh':520,background:'var(--bg2)',border:'1px solid var(--border2)',borderRadius:16,boxShadow:'0 8px 40px rgba(0,0,0,.25)',display:'flex',flexDirection:'column',zIndex:1300,overflow:'hidden'}},
+    // Header
+    React.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',borderBottom:'1px solid var(--border)',background:'var(--bg3)'}},
+      React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8}},React.createElement('span',{style:{fontSize:18}},_cbSvgIcon(_cbIconChat)),React.createElement('span',{style:{fontWeight:600,fontSize:14,color:'var(--text2)',fontFamily:"'Sora',sans-serif"}},'Transaction Chat')),
+      React.createElement('button',{onClick:onClose,style:{background:'none',border:'none',color:'var(--text5)',fontSize:18,cursor:'pointer',padding:'2px 6px',borderRadius:6}},_cbSvgIcon(_cbIconClose)),
+    ),
+    // Messages
+    React.createElement('div',{style:{flex:1,overflowY:'auto',padding:'12px 8px',display:'flex',flexDirection:'column',minHeight:0}},
+      ...msgs.map((m,i)=>React.createElement(_cbMsgBubble,{key:i,msg:m})),
+      pendTx&&!pendAmb&&React.createElement(_cbTxPreview,{parsed:pendTx,accounts,onConfirm:handleConfirm,onCancel:handleCancel,onEdit:handleEdit}),
+      pendAmb&&React.createElement(_cbAcctPicker,{options:pendAmb.options,onSelect:opt=>{const up={...pendTx};up.transaction.srcId=opt.id;up.transaction.srcType=opt.type;up.ambiguities=up.ambiguities.filter(a=>a.type!=='account');up.accountMatch={name:opt.name,confidence:1};setPendTx(up);setPendAmb(null);}}),
+      React.createElement('div',{ref:el=>setEndRef(el)}),
+    ),
+    // Quick chips (first message only)
+    !pendTx&&!pendAmb&&msgs.length<=2&&React.createElement('div',{style:{display:'flex',gap:6,padding:'4px 12px',flexWrap:'wrap'}},qa.map((q,i)=>React.createElement('button',{key:i,onClick:()=>{setInput(q.t);inpRef.current?.focus();},style:{padding:'5px 10px',borderRadius:16,fontSize:11,background:'var(--bg4)',border:'1px solid var(--border)',color:'var(--text4)',cursor:'pointer',fontFamily:"'DM Sans',sans-serif",whiteSpace:'nowrap'}},q.l))),
+    // Input
+    React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',borderTop:'1px solid var(--border)',background:'var(--bg3)'}},
+      React.createElement('input',{ref:inpRef,type:'text',value:input,onChange:e=>setInput(e.target.value),onKeyDown:handleKey,placeholder:'e.g. "Spent 400 on petrol via HDFC"',style:{flex:1,padding:'9px 12px',borderRadius:10,background:'var(--bg4)',border:'1px solid var(--border)',color:'var(--text2)',fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:'none'}}),
+      React.createElement('button',{onClick:handleSend,disabled:!input.trim(),style:{width:38,height:38,borderRadius:10,background:input.trim()?'var(--accent)':'var(--bg4)',color:'#fff',border:'none',fontSize:16,cursor:input.trim()?'pointer':'default',display:'flex',alignItems:'center',justifyContent:'center',transition:'background .15s'}},_cbSvgIcon(_cbIconArrow)),
+    ),
+  );
+};
+
+const ChatBotFAB=({onClick,isOpen})=>{
+  if(isOpen)return null;
+  const mob=_cbIsMobile();
+  return React.createElement('button',{onClick,title:'Chat to add transaction',style:{position:'fixed',bottom:mob?140:96,right:mob?16:32,width:48,height:48,borderRadius:'50%',background:'var(--accent)',color:'#fff',border:'none',cursor:'pointer',fontSize:22,lineHeight:1,boxShadow:'0 4px 16px var(--accentbg5),0 2px 8px rgba(0,0,0,.2)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1200,transition:'transform .15s, box-shadow .15s'},onMouseEnter:e=>{e.currentTarget.style.transform='scale(1.1)';},onMouseLeave:e=>{e.currentTarget.style.transform='scale(1)';}},_cbSvgIcon(_cbIconChat));
+};
+
+/* ═══ END CHATBOT CODE ═══ */
+
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
