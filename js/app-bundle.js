@@ -38027,15 +38027,22 @@ const _cbParseTransaction=(text,state)=>{
   else{srcId=allAcc[0]?.id;srcType=allAcc[0]?.accType;ambiguities.push({type:'account',options:allAcc.map(a=>({id:a.id,name:a.name,type:a.accType}))});}
   // Check for card bill payment
   if(srcType==='card'&&type==='debit'&&/\b(card\s*bill|payment|due|outstanding)\b/i.test(trimmed)){
-    const tx={amount,date,type:'credit',cat:'Payment',subcat:'Card Bill',payee:_cbExtractPayee(trimmed)||'',desc:_cbGenDesc(trimmed,catResult,_cbExtractPayee(trimmed)),status:'Reconciled',srcId,srcType};
-    return{success:true,confidence:0.9,transaction:tx,ambiguities,accountMatch:accMatch?{name:accMatch.match.account.name,confidence:accMatch.match.confidence}:null};
+    const _cbPayee=_cbExtractPayee(trimmed)||getDefaultPayee(state.categories||[],'Payment::Card Bill')||'';
+    const tx={amount,date,type:'credit',cat:'Payment',subcat:'Card Bill',payee:_cbPayee,desc:_cbGenDesc(trimmed,catResult,_cbPayee),status:'Reconciled',srcId,srcType};
+    return{success:true,confidence:0.9,transaction:tx,ambiguities,catMatch:{cat:'Payment',subcat:'Card Bill'},accountMatch:accMatch?{name:accMatch.match.account.name,confidence:accMatch.match.confidence}:null};
   }
+  // Build canonical category key (e.g. "Food::Groceries") for getDefaultPayee lookup.
+  // If the user typed an explicit payee ("at Reliance Fresh"), use it.
+  // Otherwise fall back to the defaultPayee configured on that category in Settings.
+  const _extractedPayee=_cbExtractPayee(trimmed);
+  const _catFull=catResult?(catResult.cat+(catResult.subcat?'::'+catResult.subcat:'')):'';
+  const _catDefaultPayee=_catFull?getDefaultPayee(state.categories||[],_catFull):'';
   const tx={
     amount,date,type,
     cat:catResult?catResult.cat:'Others',
     subcat:catResult?catResult.subcat:'',
-    payee:_cbExtractPayee(trimmed)||'',
-    desc:_cbGenDesc(trimmed,catResult,_cbExtractPayee(trimmed)),
+    payee:_extractedPayee||_catDefaultPayee||'',
+    desc:_cbGenDesc(trimmed,catResult,_extractedPayee),
     status:'Reconciled',srcId,srcType
   };
   let conf=1;
@@ -38043,7 +38050,7 @@ const _cbParseTransaction=(text,state)=>{
   if(accConf<0.7)conf*=0.7;
   if(ambiguities.length)conf*=0.7;
   if(!tx.payee)conf*=0.9;
-  return{success:true,confidence:conf,transaction:tx,ambiguities,accountMatch:accMatch?{name:accMatch.match.account.name,confidence:accMatch.match.confidence}:null};
+  return{success:true,confidence:conf,transaction:tx,ambiguities,catMatch:catResult?{cat:catResult.cat,subcat:catResult.subcat||''}:null,accountMatch:accMatch?{name:accMatch.match.account.name,confidence:accMatch.match.confidence}:null};
 };
 
 /* ── 4. CHATBOT REACT COMPONENT ────────────────────────────────────────── */
