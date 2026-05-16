@@ -38068,8 +38068,10 @@ const _cbExtractPayee=text=>{
   for(const p of pats){const m=text.match(p);if(m){const p2=m[1].trim();const noise=['the','my','a','an','this','that','rs','rupees','card','account','bank'];if(!noise.includes(p2.toLowerCase())&&p2.length>=2&&p2.length<=50)return p2;}}
   return null;
 };
-const _cbGenDesc=(text,cat,payee)=>{
-  const cleaned=text.replace(/\b(post|add|spent|spend|paid|pay|record|log|enter|put|mark)\b/gi,'').replace(/\b\d[\d,]*\.?\d*\s*(?:rs|rupees|inr|₹)?/gi,'').replace(/₹\s*\d[\d,]*\.?\d*/g,'').replace(/\b(?:to|on|for|at|from|via|using|with|in|the|my|a|an)\b/gi,'').replace(/\b(?:today|yesterday|tomorrow|now)\b/gi,'').replace(/\b(?:bank|account|card|credit|debit|savings|current)\b/gi,'').replace(/\b(?:icici|hdfc|sbi|axis|kotak|yes bank|idfc|bob|pnb|canara|union|indian bank|bank of baroda)\b/gi,'').replace(/\b(?:visa|mastercard|rupay|amex)\b/gi,'').replace(/\s+/g,' ').trim();
+const _cbGenDesc=(text,cat,payee,acc)=>{
+  let cleaned=text.replace(/\b(post|add|spent|spend|paid|pay|record|log|enter|put|mark)\b/gi,'').replace(/\b\d[\d,]*\.?\d*\s*(?:rs|rupees|inr|₹)?/gi,'').replace(/₹\s*\d[\d,]*\.?\d*/g,'').replace(/\b(?:to|on|for|at|from|via|using|with|in|the|my|a|an)\b/gi,'').replace(/\b(?:today|yesterday|tomorrow|now)\b/gi,'').replace(/\b(?:bank|account|card|credit|debit|savings|current)\b/gi,'').replace(/\b(?:icici|hdfc|sbi|axis|kotak|yes bank|idfc|bob|pnb|canara|union|indian bank|bank of baroda)\b/gi,'').replace(/\b(?:visa|mastercard|rupay|amex)\b/gi,'');
+  if(acc){const _esc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');[...(acc.name||'').split(/\s+/),...(acc.bank||'').split(/\s+/)].filter(t=>t.length>1).forEach(tok=>{cleaned=cleaned.replace(new RegExp('\\b'+_esc(tok)+'\\b','gi'),'');});}
+  cleaned=cleaned.replace(/\s+/g,' ').trim();
   if(cleaned.length>=3)return cleaned.replace(/\b\w/g,c=>c.toUpperCase());
   if(payee)return payee;
   if(cat&&cat.subcat)return cat.subcat;
@@ -38110,7 +38112,7 @@ const _cbParseTransaction=(text,state)=>{
   const _cardBillCatOk=_appCats.some(c=>c.name==='Payment'&&(c.subs||[]).some(s=>s.name==='Card Bill'));
   if(_cardBillCatOk&&srcType==='card'&&type==='debit'&&/\b(card\s*bill|card\s*payment|cc\s*payment|bill\s*payment|due|outstanding)\b/i.test(trimmed)){
     const _cbPayee=_cbExtractPayee(trimmed)||getDefaultPayee(_appCats,'Payment::Card Bill')||'';
-    const tx={amount,date,type:'credit',cat:'Payment',subcat:'Card Bill',payee:_cbPayee,desc:_cbGenDesc(trimmed,catResult,_cbPayee),status:'Reconciled',srcId,srcType};
+    const tx={amount,date,type:'credit',cat:'Payment',subcat:'Card Bill',payee:_cbPayee,desc:_cbGenDesc(trimmed,catResult,_cbPayee,accMatch?.match?.account),status:'Reconciled',srcId,srcType};
     return{success:true,confidence:0.9,transaction:tx,ambiguities,catMatch:{cat:'Payment',subcat:'Card Bill'},accountMatch:accMatch?{name:accMatch.match.account.name,confidence:accMatch.match.confidence}:null,raw:{text:trimmed}};
   }
   // Build canonical category key (e.g. "Food::Groceries") for getDefaultPayee lookup.
@@ -38124,7 +38126,7 @@ const _cbParseTransaction=(text,state)=>{
     cat:catResult?catResult.cat:'Others',
     subcat:catResult?catResult.subcat:'',
     payee:_extractedPayee||_catDefaultPayee||'',
-    desc:_cbGenDesc(trimmed,catResult,_extractedPayee),
+    desc:_cbGenDesc(trimmed,catResult,_extractedPayee,accMatch?.match?.account),
     status:'Reconciled',srcId,srcType
   };
   let conf=1;
