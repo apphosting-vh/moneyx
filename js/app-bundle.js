@@ -32484,11 +32484,12 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     const buildMonthData=(mS,mE)=>{
       const actualByCat={};
       const actualInvestByCat={};
+      let taxesActual=0;
       allTxns.filter(t=>t.type==="debit"&&t.date>=mS&&t.date<=mE).forEach(t=>{
         const ct=catClassType(categories,t.cat||"Others");
         if(ct==="Transfer")return;
         const cat=catMainName(t.cat||"Others");
-        if(cat==="Taxes")return;
+        if(cat==="Taxes"){taxesActual+=t.amount;return;}
         if(ct==="Investment"){actualInvestByCat[cat]=(actualInvestByCat[cat]||0)+t.amount;}
         else if(ct!=="Income"){actualByCat[cat]=(actualByCat[cat]||0)+t.amount;}
       });
@@ -32514,7 +32515,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       invCatRows.sort((a,b)=>(b.planned+b.actual)-(a.planned+a.actual));
       const actualInvest=invCatRows.reduce((s,r)=>s+r.actual,0);
       const plannedInvest=invCatRows.reduce((s,r)=>s+r.planned,0);
-      return {catRows,totalPlanned,totalActual,income,actualInvest,plannedInvest,invCatRows};
+      return {catRows,totalPlanned,totalActual,income,actualInvest,plannedInvest,invCatRows,taxesActual};
     };
     /* 12 monthly cards — current month first, then descending (most recent → oldest) */
     const months=[];
@@ -32531,12 +32532,12 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       const yS=fyDates.from,yE=fyDates.to;
       const currentFY=getCurrentIndianFY();
       const isCurrent=fyStartYear===currentFY;
-      const yCatAmt={},yInvAmt={};
+      const yCatAmt={},yInvAmt={};let taxesActual=0;
       allTxns.filter(t=>t.type==="debit"&&t.date>=yS&&t.date<=yE).forEach(t=>{
         const ct=catClassType(categories,t.cat||"Others");
         if(ct==="Transfer")return;
         const cat=catMainName(t.cat||"Others");
-        if(cat==="Taxes")return;
+        if(cat==="Taxes"){taxesActual+=t.amount;return;}
         if(ct==="Investment"){yInvAmt[cat]=(yInvAmt[cat]||0)+t.amount;}
         else if(ct!=="Income"){yCatAmt[cat]=(yCatAmt[cat]||0)+t.amount;}
       });
@@ -32564,7 +32565,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
         const nowMonth=now.getMonth(); // 0=Jan, 3=Apr
         monthsElapsed=nowMonth>=3?(nowMonth-3+1):(nowMonth+9+1); // Apr=1, May=2,...Mar=12
       }
-      return {year:getIndianFYLabel(fyStartYear),fyStartYear,isCurrent,catRows,totalPlanned,totalActual,income,invCatRows,actualInvest,plannedInvest,monthsElapsed,dateFrom:yS,dateTo:yE};
+      return {year:getIndianFYLabel(fyStartYear),fyStartYear,isCurrent,catRows,totalPlanned,totalActual,income,invCatRows,actualInvest,plannedInvest,monthsElapsed,dateFrom:yS,dateTo:yE,taxesActual};
     };
     const currentFY=getCurrentIndianFY();
     const years=[buildYearData(currentFY-2),buildYearData(currentFY-1),buildYearData(currentFY)];
@@ -32573,12 +32574,12 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       const fyDates=getIndianFYDates(fyStartYear);
       const yS=fyDates.from,yE=fyDates.to;
       const isCurrent=fyStartYear===currentFY;
-      const yCatAmt={},yInvAmt={};
+      const yCatAmt={},yInvAmt={};let taxesActual=0;
       allTxns.filter(t=>t.type==="debit"&&t.date>=yS&&t.date<=yE).forEach(t=>{
         const ct=catClassType(categories,t.cat||"Others");
         if(ct==="Transfer")return;
         const cat=catMainName(t.cat||"Others");
-        if(cat==="Taxes")return;
+        if(cat==="Taxes"){taxesActual+=t.amount;return;}
         if(ct==="Investment"){yInvAmt[cat]=(yInvAmt[cat]||0)+t.amount;}
         else if(ct!=="Income"){yCatAmt[cat]=(yCatAmt[cat]||0)+t.amount;}
       });
@@ -32602,7 +32603,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       const plannedInvest=invCatRows.reduce((s,r)=>s+r.planned,0);
       let monthsElapsed=12;
       if(isCurrent){const nowMonth=now.getMonth();monthsElapsed=nowMonth>=3?(nowMonth-3+1):(nowMonth+9+1);}
-      return {year:getIndianFYLabel(fyStartYear),fyStartYear,isCurrent,catRows,totalPlanned,totalActual,income,invCatRows,actualInvest,plannedInvest,monthsElapsed,dateFrom:yS,dateTo:yE};
+      return {year:getIndianFYLabel(fyStartYear),fyStartYear,isCurrent,catRows,totalPlanned,totalActual,income,invCatRows,actualInvest,plannedInvest,monthsElapsed,dateFrom:yS,dateTo:yE,taxesActual};
     };
     const yearsBudget=[buildYearlyBudgetData(currentFY-4),buildYearlyBudgetData(currentFY-3),buildYearlyBudgetData(currentFY-2),buildYearlyBudgetData(currentFY-1),buildYearlyBudgetData(currentFY)];
     return {hasBudgets,hasYearlyBudgets,months,years,yearsBudget};
@@ -32837,7 +32838,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     );
   };
 
-  const BudgetMonthCard=({mName,mYear,catRows,totalPlanned,totalActual,income,isCurrent,actualInvest,plannedInvest,invCatRows,onJumpToLedger,dateFrom,dateTo})=>{
+  const BudgetMonthCard=({mName,mYear,catRows,totalPlanned,totalActual,income,isCurrent,actualInvest,plannedInvest,invCatRows,taxesActual,onJumpToLedger,dateFrom,dateTo})=>{
     const [collapsed,setCollapsed]=React.useState(!isCurrent);
     const isOverAll=totalPlanned>0&&totalActual>totalPlanned;
     const hasAnyPlan=totalPlanned>0;
@@ -32916,6 +32917,16 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
               onJump:onJumpToLedger?()=>onJumpToLedger({cats:new Set([r.cat]),payees:new Set(),dateFrom,dateTo,label:r.cat+" · "+mName+" "+mYear}):undefined}))
           )
         ),
+        /* Excluded section — Taxes */
+        taxesActual>0&&React.createElement("div",{style:{padding:"8px 14px 6px",borderTop:"1px solid var(--border2)",background:"rgba(120,113,108,.04)"}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}},
+            React.createElement("span",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5}},"Excluded"),
+            React.createElement("span",{style:{fontSize:10,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"var(--text4)"}},INR(taxesActual)),
+            React.createElement("span",{style:{fontSize:9,padding:"1px 7px",borderRadius:6,background:"rgba(120,113,108,.1)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},"Taxes — not counted in budget"),
+            onJumpToLedger&&React.createElement("span",{style:{fontSize:10,color:"var(--accent)",cursor:"pointer",marginLeft:"auto",textDecoration:"underline"},
+              onClick:()=>onJumpToLedger({cats:new Set(["Taxes"]),payees:new Set(),dateFrom,dateTo,label:"Taxes · "+mName+" "+mYear})},"View →")
+          )
+        ),
         /* Footer */
         income>0&&React.createElement("div",{style:{padding:"7px 14px",borderTop:"1px solid var(--border2)",background:"var(--bg4)",display:"flex",gap:14,flexWrap:"wrap",alignItems:"center"}},
           React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
@@ -32932,7 +32943,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     );
   };
 
-  const BudgetYearCard=({year,isCurrent,catRows,totalPlanned,totalActual,income,invCatRows,actualInvest,plannedInvest,monthsElapsed,onJumpToLedger,dateFrom,dateTo})=>{
+  const BudgetYearCard=({year,isCurrent,catRows,totalPlanned,totalActual,income,invCatRows,actualInvest,plannedInvest,monthsElapsed,taxesActual,onJumpToLedger,dateFrom,dateTo})=>{
     const [collapsed,setCollapsed]=React.useState(!isCurrent);
     const hasAnyPlan=totalPlanned>0;
     const isOver=hasAnyPlan&&totalActual>totalPlanned;
@@ -33038,6 +33049,16 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
           invCatRows.length>0&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 16px"}},
             invCatRows.map(r=>React.createElement(BudgetCatRow,{key:r.cat,cat:r.cat,planned:r.planned,actual:r.actual,invertLogic:true,
               onJump:onJumpToLedger?()=>onJumpToLedger({cats:new Set([r.cat]),payees:new Set(),dateFrom,dateTo,label:r.cat+" · "+year}):undefined}))
+          )
+        ),
+        /* Excluded section — Taxes */
+        taxesActual>0&&React.createElement("div",{style:{padding:"8px 16px 6px",borderTop:"1px solid var(--border2)",background:"rgba(120,113,108,.04)"}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}},
+            React.createElement("span",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5}},"Excluded"),
+            React.createElement("span",{style:{fontSize:12,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"var(--text4)"}},INR(taxesActual)),
+            React.createElement("span",{style:{fontSize:9,padding:"1px 7px",borderRadius:6,background:"rgba(120,113,108,.1)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},"Taxes — not counted in budget"),
+            onJumpToLedger&&React.createElement("span",{style:{fontSize:10,color:"var(--accent)",cursor:"pointer",marginLeft:"auto",textDecoration:"underline"},
+              onClick:()=>onJumpToLedger({cats:new Set(["Taxes"]),payees:new Set(),dateFrom,dateTo,label:"Taxes · "+year})},"View →")
           )
         ),
         /* Footer */
@@ -33563,6 +33584,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
                         catRows:m.catRows,totalPlanned:m.totalPlanned,totalActual:m.totalActual,
                         income:m.income,isCurrent:m.isCurrent,
                         actualInvest:m.actualInvest,plannedInvest:m.plannedInvest,invCatRows:m.invCatRows,
+                        taxesActual:m.taxesActual||0,
                         dateFrom:m.dateFrom,dateTo:m.dateTo,onJumpToLedger
                       }))
                     ),
@@ -33574,7 +33596,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
                         catRows:y.catRows,totalPlanned:y.totalPlanned,totalActual:y.totalActual,
                         income:y.income,invCatRows:y.invCatRows,
                         actualInvest:y.actualInvest,plannedInvest:y.plannedInvest,
-                        monthsElapsed:y.monthsElapsed,
+                        monthsElapsed:y.monthsElapsed,taxesActual:y.taxesActual||0,
                         dateFrom:y.dateFrom,dateTo:y.dateTo,onJumpToLedger
                       }))
                     )
@@ -33598,7 +33620,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
                         catRows:y.catRows,totalPlanned:y.totalPlanned,totalActual:y.totalActual,
                         income:y.income,invCatRows:y.invCatRows,
                         actualInvest:y.actualInvest,plannedInvest:y.plannedInvest,
-                        monthsElapsed:y.monthsElapsed,
+                        monthsElapsed:y.monthsElapsed,taxesActual:y.taxesActual||0,
                         dateFrom:y.dateFrom,dateTo:y.dateTo,onJumpToLedger
                       }))
                     )
