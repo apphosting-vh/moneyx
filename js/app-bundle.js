@@ -37937,19 +37937,90 @@ const _cbCatRules=[
   {k:['interest','fd interest','rd interest','savings interest','deposit interest','bank interest'],c:'Income',s:'Interest'},
   {k:['dividend','dividends','stock dividend','mf dividend','equity dividend'],c:'Income',s:'Dividends'},
 ];
+/* ── Levenshtein distance between two strings (dynamic programming). ──────
+   Used for fuzzy keyword matching: tolerates typos in user input.          */
+const _cbLev=(a,b)=>{
+  const m=a.length,n=b.length;
+  if(!m)return n;if(!n)return m;
+  /* Optimal String Alignment (restricted Damerau-Levenshtein):
+     counts adjacent transpositions (e.g. "ie"→"ei") as 1 edit, not 2.
+     Needs a 3-row window: pp (i-2), prev (i-1), curr (i). */
+  let pp=null,prev=Array.from({length:n+1},(_,j)=>j);
+  for(let i=1;i<=m;i++){
+    const curr=[i];
+    for(let j=1;j<=n;j++){
+      if(a[i-1]===b[j-1]){curr[j]=prev[j-1];}
+      else{
+        curr[j]=1+Math.min(prev[j],curr[j-1],prev[j-1]);
+        /* Transposition: a[i-2]==b[j-1] && a[i-1]==b[j-2] */
+        if(i>1&&j>1&&pp&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])
+          curr[j]=Math.min(curr[j],pp[j-2]+1);
+      }
+    }
+    pp=prev;prev=curr;
+  }
+  return prev[n];
+};
+/* Max edit distance allowed for a keyword of given length.
+   Very short tokens (≤3 chars) require exact match to avoid false positives
+   (e.g. "ola" ↔ "oli", "atm" ↔ "aim").
+   4–7 chars: 1 edit — covers most single-char typos and plurals.
+   8+ chars : 2 edits — covers common misspellings like "resturant", "grocceries". */
+const _cbMaxEdits=len=>len<=3?0:len<=7?1:2;
+/* Check whether every word in a keyword phrase has a fuzzy match in inputWords.
+   Multi-word keywords ("gas station") require all component words to be present
+   so partial matches don't fire spuriously. */
+const _cbFuzzyKw=(kw,inputWords)=>{
+  const kwWords=kw.toLowerCase().split(/\s+/);
+  return kwWords.every(kwW=>{
+    const max=_cbMaxEdits(kwW.length);
+    if(max===0)return inputWords.includes(kwW);
+    return inputWords.some(iW=>_cbLev(kwW,iW)<=max);
+  });
+};
+/* Fuzzy score: slightly below the exact-match floor so exact always wins.
+   Longer keywords get a small bonus (more specific match). */
+const _cbFuzzySc=(kwLen,base)=>base+Math.min(kwLen/100,base*0.1);
+
 const _cbMatchCategory=(text,trainingData)=>{
   if(!text)return null;
-  const lo=text.toLowerCase();let best=null,bestSc=0;
+  const lo=text.toLowerCase();
+  /* Tokenise input into individual words for fuzzy comparison */
+  const inputWords=lo.split(/[^a-z0-9]+/).filter(Boolean);
+  let best=null,bestSc=0;
   const _tr=trainingData||_cbLoadTraining();
+
+  /* ── Pass 1: custom rules — exact word-boundary match (highest priority) ── */
   for(const r of (_tr.customCatRules||[]))for(const kw of (r.keywords||[])){
     if(!kw.trim())continue;
     const re=new RegExp('\\b'+kw.trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i');
     if(re.test(lo)){const sc=0.95+Math.min(kw.length/100,0.05);if(sc>bestSc){bestSc=sc;best={cat:r.cat,subcat:r.subcat||'',kw,custom:true};}}
   }
   if(best)return best;
+
+  /* ── Pass 2: built-in rules — exact word-boundary match ────────────────── */
   for(const r of _cbCatRules)for(const kw of r.k){
     const re=new RegExp('\\b'+kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i');
     if(re.test(lo)){const sc=0.8+Math.min(kw.length/100,0.2);if(sc>bestSc){bestSc=sc;best={cat:r.c,subcat:r.s,kw};}}
+  }
+  if(best)return best;
+
+  /* ── Pass 3: custom rules — fuzzy (score cap 0.78 < exact floor 0.95) ─── */
+  for(const r of (_tr.customCatRules||[]))for(const kw of (r.keywords||[])){
+    if(!kw.trim())continue;
+    if(_cbFuzzyKw(kw.trim(),inputWords)){
+      const sc=_cbFuzzySc(kw.length,0.75);
+      if(sc>bestSc){bestSc=sc;best={cat:r.cat,subcat:r.subcat||'',kw,custom:true,fuzzy:true};}
+    }
+  }
+  if(best)return best;
+
+  /* ── Pass 4: built-in rules — fuzzy (score cap 0.75 < exact floor 0.80) ─ */
+  for(const r of _cbCatRules)for(const kw of r.k){
+    if(_cbFuzzyKw(kw,inputWords)){
+      const sc=_cbFuzzySc(kw.length,0.62);
+      if(sc>bestSc){bestSc=sc;best={cat:r.c,subcat:r.s,kw,fuzzy:true};}
+    }
   }
   return best;
 };
@@ -37999,7 +38070,7 @@ const _cbExtractPayee=text=>{
 };
 const _cbGenDesc=(text,cat,payee)=>{
   const cleaned=text.replace(/\b(post|add|spent|spend|paid|pay|record|log|enter|put|mark)\b/gi,'').replace(/\b\d[\d,]*\.?\d*\s*(?:rs|rupees|inr|₹)?/gi,'').replace(/₹\s*\d[\d,]*\.?\d*/g,'').replace(/\b(?:to|on|for|at|from|via|using|with|in|the|my|a|an)\b/gi,'').replace(/\b(?:today|yesterday|tomorrow|now)\b/gi,'').replace(/\b(?:bank|account|card|credit|debit|savings|current)\b/gi,'').replace(/\b(?:icici|hdfc|sbi|axis|kotak|yes bank|idfc|bob|pnb|canara|union|indian bank|bank of baroda)\b/gi,'').replace(/\b(?:visa|mastercard|rupay|amex)\b/gi,'').replace(/\s+/g,' ').trim();
-  if(cleaned.length>=3)return cleaned.charAt(0).toUpperCase()+cleaned.slice(1);
+  if(cleaned.length>=3)return cleaned.replace(/\b\w/g,c=>c.toUpperCase());
   if(payee)return payee;
   if(cat&&cat.subcat)return cat.subcat;
   if(cat&&cat.cat)return cat.cat;
