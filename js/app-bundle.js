@@ -32488,6 +32488,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
         const ct=catClassType(categories,t.cat||"Others");
         if(ct==="Transfer")return;
         const cat=catMainName(t.cat||"Others");
+        if(cat==="Taxes")return;
         if(ct==="Investment"){actualInvestByCat[cat]=(actualInvestByCat[cat]||0)+t.amount;}
         else if(ct!=="Income"){actualByCat[cat]=(actualByCat[cat]||0)+t.amount;}
       });
@@ -32500,6 +32501,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       allCatNames.forEach(cat=>{
         const ct=catClassType(categories,cat);
         if(ct==="Transfer"||ct==="Income"||ct==="Investment")return;
+        if(cat==="Taxes")return;
         catRows.push({cat,planned:plans[cat]||0,actual:actualByCat[cat]||0});
       });
       catRows.sort((a,b)=>(b.planned+b.actual)-(a.planned+a.actual));
@@ -32534,6 +32536,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
         const ct=catClassType(categories,t.cat||"Others");
         if(ct==="Transfer")return;
         const cat=catMainName(t.cat||"Others");
+        if(cat==="Taxes")return;
         if(ct==="Investment"){yInvAmt[cat]=(yInvAmt[cat]||0)+t.amount;}
         else if(ct!=="Income"){yCatAmt[cat]=(yCatAmt[cat]||0)+t.amount;}
       });
@@ -32543,6 +32546,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       allCats.forEach(cat=>{
         const ct=catClassType(categories,cat);
         if(ct==="Transfer"||ct==="Income"||ct==="Investment")return;
+        if(cat==="Taxes")return;
         catRows.push({cat,planned:(plans[cat]||0)*12,actual:yCatAmt[cat]||0});
       });
       catRows.sort((a,b)=>(b.planned+b.actual)-(a.planned+a.actual));
@@ -32574,6 +32578,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
         const ct=catClassType(categories,t.cat||"Others");
         if(ct==="Transfer")return;
         const cat=catMainName(t.cat||"Others");
+        if(cat==="Taxes")return;
         if(ct==="Investment"){yInvAmt[cat]=(yInvAmt[cat]||0)+t.amount;}
         else if(ct!=="Income"){yCatAmt[cat]=(yCatAmt[cat]||0)+t.amount;}
       });
@@ -32583,6 +32588,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       allCats.forEach(cat=>{
         const ct=catClassType(categories,cat);
         if(ct==="Transfer"||ct==="Income"||ct==="Investment")return;
+        if(cat==="Taxes")return;
         catRows.push({cat,planned:yPlans[cat]||0,actual:yCatAmt[cat]||0});
       });
       catRows.sort((a,b)=>(b.planned+b.actual)-(a.planned+a.actual));
