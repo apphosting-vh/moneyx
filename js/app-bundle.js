@@ -38086,7 +38086,17 @@ const _cbParseTransaction=(text,state)=>{
   if(!amount)return{success:false,error:'Could not detect an amount. Try "400" or "₹400".'};
   const date=_cbExtractDate(trimmed);
   const _training=_cbLoadTraining();
-  const catResult=_cbMatchCategory(trimmed,_training);
+  const _rawCatResult=_cbMatchCategory(trimmed,_training);
+  /* Validate matched category against the app's actual category list.
+     _cbCatRules uses hardcoded names that may not exist in this user's data,
+     and fuzzy matching can fire on unrelated words.  Any match whose cat (and
+     subcat, if present) isn't found in state.categories is discarded so the
+     transaction falls through to 'Others' rather than showing a made-up name. */
+  const _appCats=state.categories||[];
+  const catResult=_rawCatResult&&_appCats.some(c=>
+    c.name===_rawCatResult.cat&&
+    (!_rawCatResult.subcat||(c.subs||[]).some(s=>s.name===_rawCatResult.subcat))
+  )?_rawCatResult:null;
   const type=_cbDetectType(trimmed,catResult);
   const allAcc=[...(state.banks||[]).map(b=>({id:b.id,name:b.name,bank:b.bank,accType:'bank'})),...(state.cards||[]).map(c=>({id:c.id,name:c.name,bank:c.bank,accType:'card'})),{id:'__cash__',name:'Cash',bank:'',accType:'cash'}];
   const accText=_cbExtractAccountRef(trimmed);
@@ -38096,18 +38106,19 @@ const _cbParseTransaction=(text,state)=>{
   if(accMatch){srcId=accMatch.match.account.id;srcType=accMatch.match.account.accType;accConf=accMatch.match.confidence;if(accMatch.ambiguous)ambiguities.push({type:'account',options:[accMatch.match,...accMatch.ambiguous].map(a=>({id:a.account.id,name:a.account.name,type:a.account.accType,confidence:a.confidence}))});}
   else if(allAcc.length===1){srcId=allAcc[0].id;srcType=allAcc[0].accType;accConf=1;}
   else{srcId=allAcc[0]?.id;srcType=allAcc[0]?.accType;ambiguities.push({type:'account',options:allAcc.map(a=>({id:a.id,name:a.name,type:a.accType}))});}
-  // Check for card bill payment
-  if(srcType==='card'&&type==='debit'&&/\b(card\s*bill|payment|due|outstanding)\b/i.test(trimmed)){
-    const _cbPayee=_cbExtractPayee(trimmed)||getDefaultPayee(state.categories||[],'Payment::Card Bill')||'';
+  // Check for card bill payment — also validate Payment::Card Bill exists in state.categories
+  const _cardBillCatOk=_appCats.some(c=>c.name==='Payment'&&(c.subs||[]).some(s=>s.name==='Card Bill'));
+  if(_cardBillCatOk&&srcType==='card'&&type==='debit'&&/\b(card\s*bill|card\s*payment|cc\s*payment|bill\s*payment|due|outstanding)\b/i.test(trimmed)){
+    const _cbPayee=_cbExtractPayee(trimmed)||getDefaultPayee(_appCats,'Payment::Card Bill')||'';
     const tx={amount,date,type:'credit',cat:'Payment',subcat:'Card Bill',payee:_cbPayee,desc:_cbGenDesc(trimmed,catResult,_cbPayee),status:'Reconciled',srcId,srcType};
-    return{success:true,confidence:0.9,transaction:tx,ambiguities,catMatch:{cat:'Payment',subcat:'Card Bill'},accountMatch:accMatch?{name:accMatch.match.account.name,confidence:accMatch.match.confidence}:null};
+    return{success:true,confidence:0.9,transaction:tx,ambiguities,catMatch:{cat:'Payment',subcat:'Card Bill'},accountMatch:accMatch?{name:accMatch.match.account.name,confidence:accMatch.match.confidence}:null,raw:{text:trimmed}};
   }
   // Build canonical category key (e.g. "Food::Groceries") for getDefaultPayee lookup.
   // If the user typed an explicit payee ("at Reliance Fresh"), use it.
   // Otherwise fall back to the defaultPayee configured on that category in Settings.
   const _extractedPayee=_cbExtractPayee(trimmed);
   const _catFull=catResult?(catResult.cat+(catResult.subcat?'::'+catResult.subcat:'')):'';
-  const _catDefaultPayee=_catFull?getDefaultPayee(state.categories||[],_catFull):'';
+  const _catDefaultPayee=_catFull?getDefaultPayee(_appCats,_catFull):'';
   const tx={
     amount,date,type,
     cat:catResult?catResult.cat:'Others',
@@ -38200,7 +38211,7 @@ const ChatBot=({state,dispatch,isOpen,onClose})=>{
       if(pendAmb){
         const am=_cbMatchAccount(text,pendAmb.options.map(o=>({...o,accType:o.type})));
         if(am){
-          const up={...pendTx};up.transaction.srcId=am.account.id;up.transaction.srcType=am.account.accType;up.ambiguities=up.ambiguities.filter(a=>a.type!=='account');setPendTx(up);setPendAmb(null);
+          const up={...pendTx,transaction:{...pendTx.transaction,srcId:am.account.id,srcType:am.account.accType},ambiguities:pendTx.ambiguities.filter(a=>a.type!=='account')};setPendTx(up);setPendAmb(null);
         }else{addBot('I couldn\'t match that. Please type the account name or tap one above.');}
         return;
       }
@@ -38221,6 +38232,7 @@ const ChatBot=({state,dispatch,isOpen,onClose})=>{
     if(tx.srcType==='bank')dispatch({type:'ADD_BANK_TX',id:tx.srcId,tx:txObj});
     else if(tx.srcType==='card')dispatch({type:'ADD_CARD_TX',id:tx.srcId,tx:txObj});
     else if(tx.srcType==='cash'||tx.srcId==='__cash__')dispatch({type:'ADD_CASH_TX',tx:txObj});
+    else{addBot('⚠ Could not post — no account was selected. Please try again.');setPendTx(null);setPendAmb(null);return;}
     const accName=(accounts.find(a=>a.id===tx.srcId)||{}).name||tx.srcId;
     const catLabel=tx.subcat?tx.cat+' > '+tx.subcat:tx.cat;
     addBot(React.createElement('span',null,_cbSvgIcon(_cbIconSuccess,{marginRight:4}),'Posted! \u20b9'+tx.amount.toLocaleString('en-IN')+(tx.type==='credit'?' to ':' from ')+accName+' ('+catLabel+')'));
@@ -38245,7 +38257,7 @@ const ChatBot=({state,dispatch,isOpen,onClose})=>{
     React.createElement('div',{style:{flex:1,overflowY:'auto',padding:'12px 8px',display:'flex',flexDirection:'column',minHeight:0}},
       ...msgs.map((m,i)=>React.createElement(_cbMsgBubble,{key:i,msg:m})),
       pendTx&&!pendAmb&&React.createElement(_cbTxPreview,{parsed:pendTx,accounts,onConfirm:handleConfirm,onCancel:handleCancel,onEdit:handleEdit}),
-      pendAmb&&React.createElement(_cbAcctPicker,{options:pendAmb.options,onSelect:opt=>{const up={...pendTx};up.transaction.srcId=opt.id;up.transaction.srcType=opt.type;up.ambiguities=up.ambiguities.filter(a=>a.type!=='account');up.accountMatch={name:opt.name,confidence:1};setPendTx(up);setPendAmb(null);}}),
+      pendAmb&&React.createElement(_cbAcctPicker,{options:pendAmb.options,onSelect:opt=>{const up={...pendTx,transaction:{...pendTx.transaction,srcId:opt.id,srcType:opt.type},ambiguities:pendTx.ambiguities.filter(a=>a.type!=='account'),accountMatch:{name:opt.name,confidence:1}};setPendTx(up);setPendAmb(null);}}),
       React.createElement('div',{ref:el=>setEndRef(el)}),
     ),
     // Quick chips (first message only)
