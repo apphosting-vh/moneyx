@@ -38041,13 +38041,13 @@ const _cbExtractDate=text=>{
   if(/\b(day before yesterday|parson)\b/i.test(lo))return _cbOffsetISO(-2);
   if(/\b(tomorrow)\b/i.test(lo))return _cbOffsetISO(1);
   const dayOnly=lo.match(/\bon\s+(\d{1,2})(?:st|nd|rd|th)?\b/);
-  if(dayOnly){const d=parseInt(dayOnly[1]);if(d>=1&&d<=31){const n=new Date();return`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}}
+  if(dayOnly){const d=parseInt(dayOnly[1]);if(d>=1&&d<=31){const n=new Date(Date.now()+(5.5*60*60*1000));return`${n.getUTCFullYear()}-${String(n.getUTCMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}}
   const mps=Object.keys(_cbMonths).join('|');
   const dr=new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(${mps})(?:\\s+(\\d{2,4}))?\\b|\\b(${mps})\\s+(\\d{1,2})(?:st|nd|rd|th)?(?:\\s*,?\\s*(\\d{2,4}))?\\b`,'i');
   const dm=lo.match(dr);
-  if(dm){let day,month,year;
-    if(dm[1]&&dm[2]){day=parseInt(dm[1]);month=_cbMonths[dm[2].toLowerCase()];year=dm[3]?(parseInt(dm[3])<100?2000+parseInt(dm[3]):parseInt(dm[3])):new Date().getFullYear();}
-    else if(dm[5]&&dm[4]){day=parseInt(dm[5]);month=_cbMonths[dm[4].toLowerCase()];year=dm[6]?(parseInt(dm[6])<100?2000+parseInt(dm[6]):parseInt(dm[6])):new Date().getFullYear();}
+  if(dm){let day,month,year;const _istNow=new Date(Date.now()+(5.5*60*60*1000));
+    if(dm[1]&&dm[2]){day=parseInt(dm[1]);month=_cbMonths[dm[2].toLowerCase()];year=dm[3]?(parseInt(dm[3])<100?2000+parseInt(dm[3]):parseInt(dm[3])):_istNow.getUTCFullYear();}
+    else if(dm[5]&&dm[4]){day=parseInt(dm[5]);month=_cbMonths[dm[4].toLowerCase()];year=dm[6]?(parseInt(dm[6])<100?2000+parseInt(dm[6]):parseInt(dm[6])):_istNow.getUTCFullYear();}
     if(day&&month)return`${year}-${month}-${String(day).padStart(2,'0')}`;
   }
   const iso=lo.match(/\b(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})\b/);if(iso)return`${iso[1]}-${iso[2].padStart(2,'0')}-${iso[3].padStart(2,'0')}`;
@@ -38121,7 +38121,7 @@ const _cbParseTransaction=(text,state)=>{
   if(accConf<0.7)conf*=0.7;
   if(ambiguities.length)conf*=0.7;
   if(!tx.payee)conf*=0.9;
-  return{success:true,confidence:conf,transaction:tx,ambiguities,catMatch:catResult?{cat:catResult.cat,subcat:catResult.subcat||''}:null,accountMatch:accMatch?{name:accMatch.match.account.name,confidence:accMatch.match.confidence}:null};
+  return{success:true,confidence:conf,transaction:tx,ambiguities,catMatch:catResult?{cat:catResult.cat,subcat:catResult.subcat||''}:null,accountMatch:accMatch?{name:accMatch.match.account.name,confidence:accMatch.match.confidence}:null,raw:{text:trimmed}};
 };
 
 /* ── 4. CHATBOT REACT COMPONENT ────────────────────────────────────────── */
@@ -38217,7 +38217,7 @@ const ChatBot=({state,dispatch,isOpen,onClose})=>{
   const handleConfirm=React.useCallback(()=>{
     if(!pendTx)return;
     const tx=pendTx.transaction;
-    const txObj={date:tx.date,desc:tx.desc,amount:tx.amount,type:tx.type,cat:tx.cat+(tx.subcat?' > '+tx.subcat:''),payee:tx.payee||'',status:tx.status||'Reconciled',_addedAt:new Date().toISOString()};
+    const txObj={date:tx.date,desc:tx.desc,amount:tx.amount,type:tx.type,cat:tx.cat+(tx.subcat?'::'+tx.subcat:''),payee:tx.payee||'',status:tx.status||'Reconciled',_addedAt:new Date().toISOString()};
     if(tx.srcType==='bank')dispatch({type:'ADD_BANK_TX',id:tx.srcId,tx:txObj});
     else if(tx.srcType==='card')dispatch({type:'ADD_CARD_TX',id:tx.srcId,tx:txObj});
     else if(tx.srcType==='cash'||tx.srcId==='__cash__')dispatch({type:'ADD_CASH_TX',tx:txObj});
