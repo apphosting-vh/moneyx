@@ -1492,7 +1492,7 @@ const reducer=(s,a)=>{
   const nextSn=txs=>txs.reduce((m,t)=>Math.max(m,t._sn||0),0)+1;
   switch(a.type){
     case"ADD_BANK":return{...s,banks:[...s.banks,a.p]};
-    case"ADD_BANK_TX":{const b=s.banks.find(b=>b.id===a.id);const sn=b?nextSn(b.transactions):1;const _acr=applyCatRule(s.catRules||[],a.tx);const _upi=applyUpiEnrichment({...a.tx,...(_acr||{})});const _tx={...a.tx,...(_acr||{}),_sn:sn,...(_upi||{})};return{...s,banks:s.banks.map(b=>b.id===a.id?{...b,balance:b.balance+(_tx.status==="Reconciled"?(_tx.type==="credit"?_tx.amount:-_tx.amount):0),transactions:[...b.transactions,_tx]}:b)};}
+    case"ADD_BANK_TX":{const b=s.banks.find(b=>b.id===a.id);const sn=b?nextSn(b.transactions):1;const _acr=applyCatRule(s.catRules||[],a.tx);const _upi=applyUpiEnrichment({...a.tx,...(_acr||{})});const _tx={...a.tx,...(_acr||{}),_sn:sn,...(_upi||{}),id:(a.tx.id||uid())};return{...s,banks:s.banks.map(b=>b.id===a.id?{...b,balance:b.balance+(_tx.status==="Reconciled"?(_tx.type==="credit"?_tx.amount:-_tx.amount):0),transactions:[...b.transactions,_tx]}:b)};}
     case"UPD_BANK_BAL":return{...s,banks:s.banks.map(b=>b.id===a.id?(a.tx.status==="Reconciled"?{...b,balance:b.balance+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount)}:b):b)};
     case"EDIT_BANK_TX":{const _bwas=a.old.status==="Reconciled";const _bis=a.tx.status==="Reconciled";const _bOld=_bwas?(a.old.type==="credit"?a.old.amount:-a.old.amount):0;const _bNew=_bis?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0;return{...s,banks:s.banks.map(b=>b.id===a.accId?{...b,balance:b.balance+(_bNew-_bOld),transactions:(b.transactions||[]).map(t=>t.id===a.tx.id?a.tx:t)}:b)};}
     case"DEL_BANK_TX":return{...s,banks:s.banks.map(b=>b.id===a.accId?{...b,balance:b.balance-(a.tx.status==="Reconciled"?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0),transactions:(b.transactions||[]).filter(t=>t.id!==a.tx.id)}:b)};
@@ -1566,7 +1566,7 @@ const reducer=(s,a)=>{
       return{...s,cash:{...s.cash,balance:_cashRec}};
     }
     case"ADD_CARD":return{...s,cards:[...s.cards,a.p]};
-    case"ADD_CARD_TX":{const c=s.cards.find(c=>c.id===a.id);const sn=c?nextSn(c.transactions):1;const _acr2=applyCatRule(s.catRules||[],a.tx);const _upi2=applyUpiEnrichment({...a.tx,...(_acr2||{})});const _tx2={...a.tx,...(_acr2||{}),_sn:sn,...(_upi2||{})};return{...s,cards:s.cards.map(c=>c.id===a.id?{...c,outstanding:Math.max(0,c.outstanding+(_tx2.status==="Reconciled"?(_tx2.type==="debit"?_tx2.amount:-_tx2.amount):0)),transactions:[...c.transactions,_tx2]}:c)};}
+    case"ADD_CARD_TX":{const c=s.cards.find(c=>c.id===a.id);const sn=c?nextSn(c.transactions):1;const _acr2=applyCatRule(s.catRules||[],a.tx);const _upi2=applyUpiEnrichment({...a.tx,...(_acr2||{})});const _tx2={...a.tx,...(_acr2||{}),_sn:sn,...(_upi2||{}),id:(a.tx.id||uid())};return{...s,cards:s.cards.map(c=>c.id===a.id?{...c,outstanding:Math.max(0,c.outstanding+(_tx2.status==="Reconciled"?(_tx2.type==="debit"?_tx2.amount:-_tx2.amount):0)),transactions:[...c.transactions,_tx2]}:c)};}
     case"UPD_CARD_BAL":return{...s,cards:s.cards.map(c=>c.id===a.id?(a.tx.status==="Reconciled"?{...c,outstanding:Math.max(0,c.outstanding+(a.tx.type==="debit"?a.tx.amount:-a.tx.amount))}:c):c)};
     case"EDIT_CARD_TX":{const _cwas=a.old.status==="Reconciled";const _cis=a.tx.status==="Reconciled";const _cOld=_cwas?(a.old.type==="debit"?a.old.amount:-a.old.amount):0;const _cNew=_cis?(a.tx.type==="debit"?a.tx.amount:-a.tx.amount):0;return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,outstanding:Math.max(0,c.outstanding+(_cNew-_cOld)),transactions:(c.transactions||[]).map(t=>t.id===a.tx.id?a.tx:t)}:c)};}
     case"DEL_CARD_TX":return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,outstanding:Math.max(0,c.outstanding-(a.tx.status==="Reconciled"?(a.tx.type==="debit"?a.tx.amount:-a.tx.amount):0)),transactions:(c.transactions||[]).filter(t=>t.id!==a.tx.id)}:c)};
@@ -1579,7 +1579,7 @@ const reducer=(s,a)=>{
         sc.accId!==a.id&&sc.srcId!==a.id&&sc.tgtId!==a.id
       ),
     };
-    case"ADD_CASH_TX":{const sn=nextSn(s.cash.transactions);const _caRec=a.tx.status==="Reconciled";const _acr3=applyCatRule(s.catRules||[],a.tx);const _upi3=applyUpiEnrichment({...a.tx,...(_acr3||{})});const _tx3={...a.tx,...(_acr3||{}),_sn:sn,...(_upi3||{})};return{...s,cash:{balance:s.cash.balance+(_caRec?(_tx3.type==="credit"?_tx3.amount:-_tx3.amount):0),transactions:[...s.cash.transactions,_tx3]}};}
+    case"ADD_CASH_TX":{const sn=nextSn(s.cash.transactions);const _caRec=a.tx.status==="Reconciled";const _acr3=applyCatRule(s.catRules||[],a.tx);const _upi3=applyUpiEnrichment({...a.tx,...(_acr3||{})});const _tx3={...a.tx,...(_acr3||{}),_sn:sn,...(_upi3||{}),id:(a.tx.id||uid())};return{...s,cash:{balance:s.cash.balance+(_caRec?(_tx3.type==="credit"?_tx3.amount:-_tx3.amount):0),transactions:[...s.cash.transactions,_tx3]}};}
     case"SET_CASH_BAL":return{...s,cash:{...s.cash,balance:a.val}};
     case"EDIT_CASH_TX":{const _ewas=a.old.status==="Reconciled";const _eis=a.tx.status==="Reconciled";const _eOld=_ewas?(a.old.type==="credit"?a.old.amount:-a.old.amount):0;const _eNew=_eis?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0;return{...s,cash:{...s.cash,balance:s.cash.balance+(_eNew-_eOld),transactions:s.cash.transactions.map(t=>t.id===a.tx.id?a.tx:t)}};}
     case"DEL_CASH_TX":return{...s,cash:{...s.cash,balance:s.cash.balance-(a.tx.status==="Reconciled"?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0),transactions:s.cash.transactions.filter(t=>t.id!==a.tx.id)}};
@@ -10535,6 +10535,46 @@ var loadTxFromIDB=async()=>{
  * clearTxIDB() — wipe all stored transactions (used on Reset All).
  * Returns Promise<boolean>.
  */
+/**
+ * _fixMissingTxIds(idbData) — one-time migration helper.
+ * Walks every transaction in the IDB payload and backfills a uid() for any
+ * transaction whose id is missing, undefined, null, or the string "undefined".
+ * Returns { fixed: idbData (mutated in place), didFix: boolean }.
+ * Safe to call on every boot — it no-ops when all ids are already present.
+ */
+var _fixMissingTxIds=function(idbData){
+  if(!idbData)return{fixed:idbData,didFix:false};
+  var didFix=false;
+  var fixArr=function(arr){
+    if(!Array.isArray(arr))return arr;
+    return arr.map(function(t){
+      if(!t)return t;
+      if(!t.id||t.id==="undefined"){
+        didFix=true;
+        return Object.assign({},t,{id:uid()});
+      }
+      return t;
+    });
+  };
+  /* Fix banks */
+  if(idbData.banks){
+    Object.keys(idbData.banks).forEach(function(bid){
+      idbData.banks[bid]=fixArr(idbData.banks[bid]);
+    });
+  }
+  /* Fix cards */
+  if(idbData.cards){
+    Object.keys(idbData.cards).forEach(function(cid){
+      idbData.cards[cid]=fixArr(idbData.cards[cid]);
+    });
+  }
+  /* Fix cash */
+  if(Array.isArray(idbData.cashTxns)){
+    idbData.cashTxns=fixArr(idbData.cashTxns);
+  }
+  return{fixed:idbData,didFix:didFix};
+};
+
 var clearTxIDB=async()=>{
   try{
     const db=await _txDbOpen();
@@ -10755,12 +10795,29 @@ var usePersistentReducer=(reducer,init)=>{
       );
       if(hasIDBData){
         /* Normal post-migration path: hydrate from IDB */
+        /* ── Backfill any missing ids left by the chatbot bug ── */
+        var _fixResult=_fixMissingTxIds(idbData);
+        if(_fixResult.didFix){
+          console.log("[MM] Backfilling missing transaction ids in IDB…");
+          saveTxToIDB({banks:(cur.banks||[]).map(function(b){return Object.assign({},b,{transactions:_fixResult.fixed.banks[b.id]||b.transactions||[]});}),cards:(cur.cards||[]).map(function(c){return Object.assign({},c,{transactions:_fixResult.fixed.cards[c.id]||c.transactions||[]});}),cash:Object.assign({},cur.cash,{transactions:_fixResult.fixed.cashTxns||[]})}).then(function(ok){if(ok)console.log("[MM] Missing id backfill saved to IDB.");else console.warn("[MM] Missing id backfill save failed.");});
+        }
         console.log("[MM] Hydrating transactions from IndexedDB…");
-        dispatch({type:"HYDRATE_TRANSACTIONS",banks:idbData.banks,cards:idbData.cards,cashTxns:idbData.cashTxns});
+        dispatch({type:"HYDRATE_TRANSACTIONS",banks:_fixResult.fixed.banks,cards:_fixResult.fixed.cards,cashTxns:_fixResult.fixed.cashTxns});
       }else if(hasMemTxns){
         /* One-time migration: IDB is empty but LS had transactions — write them now */
+        /* ── Also backfill any missing ids from the chatbot bug before persisting ── */
+        var _memIdbShape={banks:{},cards:{},cashTxns:(cur.cash&&cur.cash.transactions)||[]};
+        (cur.banks||[]).forEach(function(b){_memIdbShape.banks[b.id]=b.transactions||[];});
+        (cur.cards||[]).forEach(function(c){_memIdbShape.cards[c.id]=c.transactions||[];});
+        var _memFix=_fixMissingTxIds(_memIdbShape);
+        var _curFixed=cur;
+        if(_memFix.didFix){
+          console.log("[MM] Backfilling missing transaction ids during LS→IDB migration…");
+          _curFixed=Object.assign({},cur,{banks:(cur.banks||[]).map(function(b){return Object.assign({},b,{transactions:_memFix.fixed.banks[b.id]||[]});}),cards:(cur.cards||[]).map(function(c){return Object.assign({},c,{transactions:_memFix.fixed.cards[c.id]||[]});}),cash:Object.assign({},cur.cash,{transactions:_memFix.fixed.cashTxns||[]})});
+          dispatch({type:"HYDRATE_TRANSACTIONS",banks:_memFix.fixed.banks,cards:_memFix.fixed.cards,cashTxns:_memFix.fixed.cashTxns});
+        }
         console.log("[MM] Migrating transactions from localStorage → IndexedDB…");
-        saveTxToIDB(cur).then(ok=>{
+        saveTxToIDB(_curFixed).then(ok=>{
           if(ok) console.log("[MM] Transaction migration to IDB complete.");
           else   console.warn("[MM] Transaction migration to IDB failed — will retry on next save.");
         });
@@ -38234,7 +38291,7 @@ const ChatBot=({state,dispatch,isOpen,onClose})=>{
   const handleConfirm=React.useCallback(()=>{
     if(!pendTx)return;
     const tx=pendTx.transaction;
-    const txObj={date:tx.date,desc:tx.desc,amount:tx.amount,type:tx.type,cat:tx.cat+(tx.subcat?'::'+tx.subcat:''),payee:tx.payee||'',status:tx.status||'Reconciled',_addedAt:new Date().toISOString()};
+    const txObj={id:uid(),date:tx.date,desc:tx.desc,amount:tx.amount,type:tx.type,cat:tx.cat+(tx.subcat?'::'+tx.subcat:''),payee:tx.payee||'',status:tx.status||'Reconciled',_addedAt:new Date().toISOString()};
     if(tx.srcType==='bank')dispatch({type:'ADD_BANK_TX',id:tx.srcId,tx:txObj});
     else if(tx.srcType==='card')dispatch({type:'ADD_CARD_TX',id:tx.srcId,tx:txObj});
     else if(tx.srcType==='cash'||tx.srcId==='__cash__')dispatch({type:'ADD_CASH_TX',tx:txObj});
