@@ -863,7 +863,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.7.9";
+const APP_VERSION="4.8.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -5876,6 +5876,7 @@ var gdriveUpsertSyncFile = async (state, manual) => {
     if (!token) return false;
 
     const exportedAt = new Date().toISOString();
+    const _cbTr=(()=>{try{return JSON.parse(localStorage.getItem("mm_v7_chatbot_training")||"{}");} catch{return{};}})();
 
     const payload = {
       version:    8,
@@ -5904,6 +5905,8 @@ var gdriveUpsertSyncFile = async (state, manual) => {
         hasTaxData2627: !!(state.taxData2627),
         hasYearlyBudget: Object.values((state.insightPrefs || {}).yearlyBudgetPlans || {}).some(v => v > 0),
         brokerCashBalance: state.brokerCashBalance || 0,
+        chatbotCatRules: (_cbTr.customCatRules||[]).length,
+        chatbotAliases:  (_cbTr.accountAliases||[]).length,
       },
       data: {
         ...state,
@@ -5922,6 +5925,7 @@ var gdriveUpsertSyncFile = async (state, manual) => {
         catRules:     state.catRules     || [],
         reminders:    state.reminders    || [],
         insightPrefs: { ...EMPTY_STATE().insightPrefs, ...(state.insightPrefs || {}) },
+        chatbotTraining: {customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},
       },
     };
     const content = JSON.stringify(payload, null, 2);
@@ -6201,6 +6205,8 @@ var CloudBackupPanel = ({ state, dispatch }) => {
       try {
         localStorage.setItem(LS_EOD_PRICES, JSON.stringify(_restoreData.eodPrices || {}));
         localStorage.setItem(LS_EOD_NAVS,   JSON.stringify(_restoreData.eodNavs   || {}));
+        if(remote.state.chatbotTraining)
+          localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(remote.state.chatbotTraining));
       } catch {}
       try { await clearTxIDB(); }          catch {}
       try { await saveTxToIDB(_restoreData); } catch {}
@@ -7711,9 +7717,10 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                 const pw2=window.prompt("Confirm password:");
                 if(pw!==pw2){alert("Passwords do not match.");return;}
                 try{
+                  const _cbTr=(()=>{try{return JSON.parse(localStorage.getItem("mm_v7_chatbot_training")||"{}");} catch{return{};}})();
                   const payload={version:8,exportedAt:new Date().toISOString(),
-                    summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,reminders:(state.reminders||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,shareSnapshots:Object.values(state.soldShareSnapshots||{}).reduce((s,a)=>s+a.length,0),eodDays:Object.keys(state.eodPrices||{}).length,eodNavDays:Object.keys(state.eodNavs||{}).length,hasTaxData:!!(state.taxData),hasTaxData2627:!!(state.taxData2627),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),brokerCashBalance:state.brokerCashBalance||0},
-                    data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},soldShareSnapshots:state.soldShareSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,taxData2627:state.taxData2627||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],reminders:state.reminders||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})}}
+                    summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,reminders:(state.reminders||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,shareSnapshots:Object.values(state.soldShareSnapshots||{}).reduce((s,a)=>s+a.length,0),eodDays:Object.keys(state.eodPrices||{}).length,eodNavDays:Object.keys(state.eodNavs||{}).length,hasTaxData:!!(state.taxData),hasTaxData2627:!!(state.taxData2627),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),brokerCashBalance:state.brokerCashBalance||0,chatbotCatRules:(_cbTr.customCatRules||[]).length,chatbotAliases:(_cbTr.accountAliases||[]).length},
+                    data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},soldShareSnapshots:state.soldShareSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,taxData2627:state.taxData2627||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],reminders:state.reminders||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})},chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]}}
                   };
                   const enc=await encryptBackup(payload,pw);
                   const blob=new Blob([JSON.stringify(enc)],{type:"application/json"});
@@ -7729,6 +7736,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
             },"Encrypted Backup"),
             React.createElement(Btn,{onClick:async()=>{
               try{
+                const _cbTr=(()=>{try{return JSON.parse(localStorage.getItem("mm_v7_chatbot_training")||"{}");} catch{return{};}})();
                 const payload={
                   version:8,
                   exportedAt:new Date().toISOString(),
@@ -7755,6 +7763,8 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                     hasTaxData2627:!!(state.taxData2627),
                     hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),
                     brokerCashBalance:state.brokerCashBalance||0,
+                    chatbotCatRules:(_cbTr.customCatRules||[]).length,
+                    chatbotAliases:(_cbTr.accountAliases||[]).length,
                   },
                   data:{
                     ...state,
@@ -7774,6 +7784,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                     catRules:state.catRules||[],
                     reminders:state.reminders||[],
                     insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})},
+                    chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},
                   }
                 };
                 const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
@@ -7856,6 +7867,8 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                           localStorage.setItem(LS_EOD_PRICES,JSON.stringify(_restoreData.eodPrices));
                         if(_restoreData.eodNavs&&Object.keys(_restoreData.eodNavs).length>0)
                           localStorage.setItem(LS_EOD_NAVS,JSON.stringify(_restoreData.eodNavs));
+                        if(d.chatbotTraining)
+                          localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(d.chatbotTraining));
                       }catch{}
                       /* ── Update in-memory React state for the 1.8s before reload ── */
                       dispatch({type:"RESTORE_ALL",data:_restoreData});
@@ -9399,6 +9412,7 @@ var getBackupAgeDays=()=>{const d=getLastBackupDate();if(!d)return Infinity;retu
 
 /* Build a standard backup payload from current state (reusable for manual & auto backup) */
 var buildBackupPayload=async(st)=>{
+  const _cbTraining=(()=>{try{return JSON.parse(localStorage.getItem("mm_v7_chatbot_training")||"{}");} catch{return{};}})();
   return{
     version:8,exportedAt:new Date().toISOString(),
     summary:{
@@ -9417,6 +9431,8 @@ var buildBackupPayload=async(st)=>{
       hasTaxData2627:!!(st.taxData2627),
       hasYearlyBudget:Object.values((st.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),
       brokerCashBalance:st.brokerCashBalance||0,
+      chatbotCatRules:(_cbTraining.customCatRules||[]).length,
+      chatbotAliases:(_cbTraining.accountAliases||[]).length,
     },
     data:{
       ...st,notes:st.notes||[],scheduled:st.scheduled||[],nwSnapshots:st.nwSnapshots||{},
@@ -9426,6 +9442,7 @@ var buildBackupPayload=async(st)=>{
       hiddenTabs:st.hiddenTabs||[],catRules:st.catRules||[],
       reminders:st.reminders||[],
       insightPrefs:{...EMPTY_STATE().insightPrefs,...(st.insightPrefs||{})},
+      chatbotTraining:{customCatRules:_cbTraining.customCatRules||[],accountAliases:_cbTraining.accountAliases||[]},
     }
   };
 };
@@ -10029,6 +10046,7 @@ var _gdriveUpsertSyncFileV1 = async (state) => {
     if (!token) return false;
 
     /* Build the same envelope format as fsaWriteFile */
+    const _cbTrV1=(()=>{try{return JSON.parse(localStorage.getItem("mm_v7_chatbot_training")||"{}");} catch{return{};}})();
     const payload = {
       version: 8,
       exportedAt: new Date().toISOString(),
@@ -10056,6 +10074,8 @@ var _gdriveUpsertSyncFileV1 = async (state) => {
         hasTaxData: !!(state.taxData),
         hasTaxData2627: !!(state.taxData2627),
         hasYearlyBudget: Object.values((state.insightPrefs || {}).yearlyBudgetPlans || {}).some(v => v > 0),
+        chatbotCatRules: (_cbTrV1.customCatRules||[]).length,
+        chatbotAliases:  (_cbTrV1.accountAliases||[]).length,
       },
       data: {
         ...state,
@@ -10075,6 +10095,7 @@ var _gdriveUpsertSyncFileV1 = async (state) => {
         catRules: state.catRules || [],
         reminders: state.reminders || [],
         insightPrefs: { ...EMPTY_STATE().insightPrefs, ...(state.insightPrefs || {}) },
+        chatbotTraining: {customCatRules:_cbTrV1.customCatRules||[],accountAliases:_cbTrV1.accountAliases||[]},
       },
     };
     const content = JSON.stringify(payload);
@@ -10344,6 +10365,7 @@ var fsaVerifyPermission=async(handle)=>{
    returns raw state so callers get the same shape either way. */
 var fsaWriteFile=async(handle,data)=>{
   try{
+    const _cbTr=(()=>{try{return JSON.parse(localStorage.getItem("mm_v7_chatbot_training")||"{}");} catch{return{};}})();
     const payload={
       version:8,
       exportedAt:new Date().toISOString(),
@@ -10371,6 +10393,8 @@ var fsaWriteFile=async(handle,data)=>{
         hasTaxData2627:!!(data.taxData2627),
         hasYearlyBudget:Object.values((data.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),
         brokerCashBalance:(data.brokerCashBalance||0),
+        chatbotCatRules:(_cbTr.customCatRules||[]).length,
+        chatbotAliases:(_cbTr.accountAliases||[]).length,
       },
       data:{
         ...data,
@@ -10390,6 +10414,7 @@ var fsaWriteFile=async(handle,data)=>{
         catRules:data.catRules||[],
         reminders:data.reminders||[],
         insightPrefs:{...EMPTY_STATE().insightPrefs,...(data.insightPrefs||{})},
+        chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},
       }
     };
     const writable=await handle.createWritable();
@@ -10405,11 +10430,15 @@ var fsaReadFile=async(handle)=>{
     const parsed=JSON.parse(text);
     const _def=EMPTY_STATE();
     const _safe=(d)=>({...d,brokerCashBalance:d.brokerCashBalance||0,nwSnapshots:d.nwSnapshots||{},soldShareSnapshots:d.soldShareSnapshots||{},eodPrices:d.eodPrices||{},eodNavs:d.eodNavs||{},historyCache:d.historyCache||{},taxData:d.taxData||null,taxData2627:d.taxData2627||null,re:d.re||[],pf:d.pf||[],goals:d.goals||[],hiddenTabs:d.hiddenTabs||[],catRules:d.catRules||[],reminders:d.reminders||[],insightPrefs:{..._def.insightPrefs,...(d.insightPrefs||{})}});
+    let d=null;
     /* Support both the new envelope format { data:{…} } and the legacy
        raw-state format written by v3.17.0–3.17.2 */
-    if(parsed&&parsed.data&&parsed.data.banks)return _safe(parsed.data);
-    if(parsed&&parsed.banks)return _safe(parsed); // legacy raw state
-    return null;
+    if(parsed&&parsed.data&&parsed.data.banks)d=parsed.data;
+    else if(parsed&&parsed.banks)d=parsed; // legacy raw state
+    if(!d)return null;
+    /* Restore chatbot training data to its own localStorage key */
+    if(d.chatbotTraining){try{localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(d.chatbotTraining));}catch{}}
+    return _safe(d);
   }catch(e){console.warn("[FSA] Read failed:",e);return null;}
 };
 
@@ -29415,6 +29444,8 @@ const FSAStoragePanel=({state,dispatch})=>{
           localStorage.setItem(LS_EOD_PRICES,JSON.stringify(_restoreData.eodPrices));
         if(_restoreData.eodNavs&&Object.keys(_restoreData.eodNavs).length>0)
           localStorage.setItem(LS_EOD_NAVS,JSON.stringify(_restoreData.eodNavs));
+        if(data.chatbotTraining)
+          localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(data.chatbotTraining));
       }catch{}
       /* ── Update in-memory React state ── */
       dispatch({type:"RESTORE_ALL",data:_restoreData});
