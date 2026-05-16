@@ -863,7 +863,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.7.7";
+const APP_VERSION="4.7.9";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -6573,6 +6573,278 @@ var MFXirrRow=({m,dispatch,askDelete})=>{
 };
 
 /* ── SettingsSection, CalculatorSection, NotesSection, ScheduledSection ── */
+
+/* ══════════════════════════════════════════════════════════════════
+   CHATBOT TRAINING PANEL  (Settings → Chatbot Training)
+   Lets users teach the chatbot custom keyword → category mappings
+   and account aliases so fuzzy matching is precise and personal.
+   Data stored in localStorage under LS_CHATBOT_TRAINING.
+   ══════════════════════════════════════════════════════════════════ */
+const _cbLoadTraining=()=>{try{const d=JSON.parse(localStorage.getItem("mm_v7_chatbot_training")||"{}");return{customCatRules:d.customCatRules||[],accountAliases:d.accountAliases||[]};}catch{return{customCatRules:[],accountAliases:[]};}};
+const _cbSaveTraining=d=>{try{localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(d));}catch{}};
+var ChatbotTrainingPanel=({state})=>{
+  const[training,setTraining]=React.useState(()=>_cbLoadTraining());
+  const[testInput,setTestInput]=React.useState('');
+  const[testResult,setTestResult]=React.useState(null);
+  const[activeSection,setActiveSection]=React.useState('cat'); // 'cat' | 'acc' | 'test'
+
+  /* Category rule form state */
+  const[newKw,setNewKw]=React.useState('');
+  const[newCat,setNewCat]=React.useState('');
+  const[newSubcat,setNewSubcat]=React.useState('');
+
+  /* Account alias form state */
+  const[newAlias,setNewAlias]=React.useState('');
+  const[newAccId,setNewAccId]=React.useState('');
+
+  const save=(updated)=>{setTraining(updated);_cbSaveTraining(updated);};
+
+  const allAccounts=React.useMemo(()=>{
+    const l=[];
+    (state.banks||[]).forEach(b=>l.push({id:b.id,name:b.name+' ('+b.bank+')',type:'bank'}));
+    (state.cards||[]).forEach(c=>l.push({id:c.id,name:c.name+' ('+c.bank+')',type:'card'}));
+    l.push({id:'__cash__',name:'Cash',type:'cash'});
+    return l;
+  },[state.banks,state.cards]);
+
+  const allCategories=React.useMemo(()=>{
+    return(state.categories||[]).map(c=>({name:c.name,subs:(c.subs||[]).map(s=>s.name)}));
+  },[state.categories]);
+
+  /* Add a custom category rule */
+  const addCatRule=()=>{
+    const kws=newKw.split(',').map(k=>k.trim()).filter(Boolean);
+    if(!kws.length||!newCat)return;
+    const updated={...training,customCatRules:[...(training.customCatRules||[]),{id:'cr_'+Date.now(),keywords:kws,cat:newCat,subcat:newSubcat}]};
+    save(updated);setNewKw('');setNewCat('');setNewSubcat('');
+  };
+  const delCatRule=id=>save({...training,customCatRules:(training.customCatRules||[]).filter(r=>r.id!==id)});
+
+  /* Add an account alias */
+  const addAlias=()=>{
+    if(!newAlias.trim()||!newAccId)return;
+    const updated={...training,accountAliases:[...(training.accountAliases||[]),{id:'al_'+Date.now(),alias:newAlias.trim(),accountId:newAccId}]};
+    save(updated);setNewAlias('');setNewAccId('');
+  };
+  const delAlias=id=>save({...training,accountAliases:(training.accountAliases||[]).filter(a=>a.id!==id)});
+
+  /* Run the test parser */
+  const runTest=()=>{
+    if(!testInput.trim())return;
+    const parsed=_cbParseTransaction(testInput.trim(),state);
+    setTestResult(parsed);
+  };
+
+  const secBtn=(id,label,icon)=>({
+    onClick:()=>setActiveSection(id),
+    style:{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:13,fontWeight:activeSection===id?700:500,
+      background:activeSection===id?'var(--accent)':'var(--bg4)',
+      color:activeSection===id?'#fff':'var(--text4)',
+      fontFamily:"'DM Sans',sans-serif",display:'flex',alignItems:'center',gap:6,transition:'all .15s'}
+  });
+
+  const rowStyle={display:'grid',gridTemplateColumns:'1fr auto',gap:8,alignItems:'center',padding:'10px 12px',
+    background:'var(--bg4)',border:'1px solid var(--border2)',borderRadius:9,marginBottom:6};
+  const delBtn=(onClick)=>React.createElement('button',{onClick,style:{background:'rgba(239,68,68,.1)',border:'1px solid rgba(239,68,68,.25)',color:'#ef4444',
+    borderRadius:6,padding:'4px 10px',cursor:'pointer',fontSize:12,fontFamily:"'DM Sans',sans-serif",fontWeight:600,whiteSpace:'nowrap'}},'✕ Remove');
+  const inp=(val,set,ph,style={})=>React.createElement('input',{value:val,onChange:e=>set(e.target.value),placeholder:ph,className:'inp',style:{fontSize:13,...style}});
+  const selStyle={fontSize:13,background:'var(--inp-bg)',border:'1px solid var(--border)',borderRadius:8,color:'var(--text)',
+    padding:'9px 13px',fontFamily:"'DM Sans',sans-serif",outline:'none',width:'100%'};
+
+  const catSubs=allCategories.find(c=>c.name===newCat)?.subs||[];
+
+  return React.createElement('div',{className:'fu',style:{maxWidth:760}},
+    /* Header */
+    React.createElement('div',{style:{marginBottom:20}},
+      React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,marginBottom:6}},
+        React.createElement('span',{style:{fontSize:22}},'🤖'),
+        React.createElement('div',null,
+          React.createElement('div',{style:{fontSize:17,fontWeight:700,color:'var(--text)',fontFamily:"'Sora',sans-serif"}},'Chatbot Training'),
+          React.createElement('div',{style:{fontSize:12,color:'var(--text5)',marginTop:2}},'Teach the chatbot your vocabulary — custom keywords for categories and nicknames for accounts.')
+        )
+      )
+    ),
+    /* Section tabs */
+    React.createElement('div',{style:{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}},
+      React.createElement('button',secBtn('cat'),'🏷️ Category Keywords'),
+      React.createElement('button',secBtn('acc'),'🏦 Account Aliases'),
+      React.createElement('button',secBtn('test'),'🧪 Test Parser'),
+    ),
+
+    /* ── CATEGORY RULES ── */
+    activeSection==='cat'&&React.createElement('div',null,
+      React.createElement('div',{style:{fontSize:13,color:'var(--text5)',marginBottom:14,lineHeight:1.7,background:'var(--accentbg2)',border:'1px solid var(--accentbg5)',borderRadius:8,padding:'10px 14px'}},
+        '💡 Add keywords that should always map to a specific category. Separate multiple keywords with commas.',
+        React.createElement('br',null),
+        React.createElement('span',{style:{fontWeight:600,color:'var(--accent)'}},'Example: '),'\"swiggy instamart, bb daily, zepto\" → Food > Groceries'
+      ),
+      /* Add form */
+      React.createElement('div',{style:{background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:12,padding:'16px',marginBottom:16}},
+        React.createElement('div',{style:{fontSize:12,fontWeight:700,color:'var(--text5)',textTransform:'uppercase',letterSpacing:.8,marginBottom:12}},'Add New Rule'),
+        React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr',gap:10}},
+          React.createElement('div',null,
+            React.createElement('label',{style:{fontSize:11,color:'var(--text5)',fontWeight:600,display:'block',marginBottom:4}},'Keywords (comma-separated)'),
+            inp(newKw,setNewKw,'e.g. swiggy instamart, bb daily, fresh basket')
+          ),
+          React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}},
+            React.createElement('div',null,
+              React.createElement('label',{style:{fontSize:11,color:'var(--text5)',fontWeight:600,display:'block',marginBottom:4}},'Category'),
+              React.createElement('select',{value:newCat,onChange:e=>{setNewCat(e.target.value);setNewSubcat('');},style:selStyle},
+                React.createElement('option',{value:''},'Select category…'),
+                allCategories.map(c=>React.createElement('option',{key:c.name,value:c.name},c.name))
+              )
+            ),
+            React.createElement('div',null,
+              React.createElement('label',{style:{fontSize:11,color:'var(--text5)',fontWeight:600,display:'block',marginBottom:4}},'Subcategory (optional)'),
+              React.createElement('select',{value:newSubcat,onChange:e=>setNewSubcat(e.target.value),style:selStyle,disabled:!catSubs.length},
+                React.createElement('option',{value:''},'None'),
+                catSubs.map(s=>React.createElement('option',{key:s,value:s},s))
+              )
+            )
+          ),
+          React.createElement('button',{onClick:addCatRule,disabled:!newKw.trim()||!newCat,
+            style:{padding:'9px 20px',borderRadius:8,border:'none',cursor:(!newKw.trim()||!newCat)?'not-allowed':'pointer',
+              background:(!newKw.trim()||!newCat)?'var(--bg5)':'var(--accent)',
+              color:(!newKw.trim()||!newCat)?'var(--text6)':'#fff',
+              fontSize:13,fontWeight:600,fontFamily:"'DM Sans',sans-serif",transition:'all .15s',alignSelf:'flex-end',width:'fit-content'}},'+ Add Rule')
+        )
+      ),
+      /* Existing rules */
+      (training.customCatRules||[]).length===0
+        ? React.createElement('div',{style:{textAlign:'center',padding:'32px 16px',color:'var(--text6)',fontSize:13,background:'var(--bg4)',borderRadius:12,border:'1px dashed var(--border)'}},
+            'No custom category rules yet. Add your first rule above.')
+        : React.createElement('div',null,
+            React.createElement('div',{style:{fontSize:12,fontWeight:700,color:'var(--text5)',textTransform:'uppercase',letterSpacing:.8,marginBottom:10}},'Your Rules ('+(training.customCatRules||[]).length+')'),
+            (training.customCatRules||[]).map(r=>React.createElement('div',{key:r.id,style:rowStyle},
+              React.createElement('div',null,
+                React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:3}},
+                  (r.keywords||[]).map(kw=>React.createElement('span',{key:kw,style:{background:'var(--accentbg)',border:'1px solid var(--accentbg5)',color:'var(--accent)',borderRadius:5,padding:'2px 8px',fontSize:11,fontWeight:600}},kw))
+                ),
+                React.createElement('span',{style:{fontSize:12,color:'var(--text5)'}},'→ ',React.createElement('strong',{style:{color:'var(--text3)'}},r.cat+(r.subcat?' > '+r.subcat:'')))
+              ),
+              delBtn(()=>delCatRule(r.id))
+            ))
+          )
+    ),
+
+    /* ── ACCOUNT ALIASES ── */
+    activeSection==='acc'&&React.createElement('div',null,
+      React.createElement('div',{style:{fontSize:13,color:'var(--text5)',marginBottom:14,lineHeight:1.7,background:'var(--accentbg2)',border:'1px solid var(--accentbg5)',borderRadius:8,padding:'10px 14px'}},
+        '💡 Map nicknames or shorthand to your exact accounts. The chatbot will always pick the right one.',
+        React.createElement('br',null),
+        React.createElement('span',{style:{fontWeight:600,color:'var(--accent)'}},'Example: '),'\"hdfc\", \"my savings\", \"primary card\" → HDFC Savings Account'
+      ),
+      React.createElement('div',{style:{background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:12,padding:'16px',marginBottom:16}},
+        React.createElement('div',{style:{fontSize:12,fontWeight:700,color:'var(--text5)',textTransform:'uppercase',letterSpacing:.8,marginBottom:12}},'Add New Alias'),
+        React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr auto',gap:10,alignItems:'flex-end'}},
+          React.createElement('div',null,
+            React.createElement('label',{style:{fontSize:11,color:'var(--text5)',fontWeight:600,display:'block',marginBottom:4}},'Alias / Nickname'),
+            inp(newAlias,setNewAlias,'e.g. hdfc, my sbi, primary card')
+          ),
+          React.createElement('div',null,
+            React.createElement('label',{style:{fontSize:11,color:'var(--text5)',fontWeight:600,display:'block',marginBottom:4}},'Maps to Account'),
+            React.createElement('select',{value:newAccId,onChange:e=>setNewAccId(e.target.value),style:selStyle},
+              React.createElement('option',{value:''},'Select account…'),
+              allAccounts.map(a=>React.createElement('option',{key:a.id,value:a.id},a.name))
+            )
+          ),
+          React.createElement('button',{onClick:addAlias,disabled:!newAlias.trim()||!newAccId,
+            style:{padding:'9px 16px',borderRadius:8,border:'none',cursor:(!newAlias.trim()||!newAccId)?'not-allowed':'pointer',
+              background:(!newAlias.trim()||!newAccId)?'var(--bg5)':'var(--accent)',
+              color:(!newAlias.trim()||!newAccId)?'var(--text6)':'#fff',
+              fontSize:13,fontWeight:600,fontFamily:"'DM Sans',sans-serif",transition:'all .15s',whiteSpace:'nowrap',height:40}},'+ Add')
+        )
+      ),
+      (training.accountAliases||[]).length===0
+        ? React.createElement('div',{style:{textAlign:'center',padding:'32px 16px',color:'var(--text6)',fontSize:13,background:'var(--bg4)',borderRadius:12,border:'1px dashed var(--border)'}},
+            'No account aliases yet. Add nicknames above so the chatbot always picks the right account.')
+        : React.createElement('div',null,
+            React.createElement('div',{style:{fontSize:12,fontWeight:700,color:'var(--text5)',textTransform:'uppercase',letterSpacing:.8,marginBottom:10}},'Your Aliases ('+(training.accountAliases||[]).length+')'),
+            (training.accountAliases||[]).map(a=>{
+              const acc=allAccounts.find(ac=>ac.id===a.accountId);
+              return React.createElement('div',{key:a.id,style:rowStyle},
+                React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10}},
+                  React.createElement('span',{style:{background:'var(--accentbg)',border:'1px solid var(--accentbg5)',color:'var(--accent)',borderRadius:5,padding:'3px 10px',fontSize:12,fontWeight:600}},'"'+a.alias+'"'),
+                  React.createElement('span',{style:{color:'var(--text5)',fontSize:13}},'→'),
+                  React.createElement('span',{style:{fontSize:13,fontWeight:600,color:'var(--text3)'}},acc?acc.name:React.createElement('span',{style:{color:'#ef4444'}},'Account not found'))
+                ),
+                delBtn(()=>delAlias(a.id))
+              );
+            })
+          )
+    ),
+
+    /* ── TEST PARSER ── */
+    activeSection==='test'&&React.createElement('div',null,
+      React.createElement('div',{style:{fontSize:13,color:'var(--text5)',marginBottom:14,lineHeight:1.7,background:'var(--accentbg2)',border:'1px solid var(--accentbg5)',borderRadius:8,padding:'10px 14px'}},
+        '🧪 Test exactly how the chatbot interprets your phrases. Your custom rules are active here.'
+      ),
+      React.createElement('div',{style:{background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:12,padding:'16px',marginBottom:16}},
+        React.createElement('div',{style:{fontSize:12,fontWeight:700,color:'var(--text5)',textTransform:'uppercase',letterSpacing:.8,marginBottom:10}},'Test Phrase'),
+        React.createElement('div',{style:{display:'flex',gap:10}},
+          React.createElement('input',{value:testInput,onChange:e=>setTestInput(e.target.value),
+            onKeyDown:e=>e.key==='Enter'&&runTest(),
+            placeholder:'e.g. "Spent 500 on petrol via hdfc"',className:'inp',
+            style:{flex:1,fontSize:13}}),
+          React.createElement('button',{onClick:runTest,disabled:!testInput.trim(),
+            style:{padding:'9px 20px',borderRadius:8,border:'none',cursor:testInput.trim()?'pointer':'not-allowed',
+              background:testInput.trim()?'var(--accent)':'var(--bg5)',color:testInput.trim()?'#fff':'var(--text6)',
+              fontSize:13,fontWeight:600,fontFamily:"'DM Sans',sans-serif",whiteSpace:'nowrap'}},'▶ Run Test')
+        )
+      ),
+      testResult&&React.createElement('div',{style:{background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:12,padding:'16px'}},
+        testResult.success
+          ? React.createElement('div',null,
+              React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,marginBottom:14,color:'#16a34a',fontSize:13,fontWeight:700}},'✅ Successfully parsed'),
+              React.createElement('div',{style:{display:'grid',gridTemplateColumns:'140px 1fr',gap:'8px 16px',fontSize:13}},
+                React.createElement('span',{style:{color:'var(--text5)'}},  'Amount'),  React.createElement('span',{style:{fontWeight:700,color:testResult.transaction.type==='credit'?'#16a34a':'#ef4444'}},  (testResult.transaction.type==='credit'?'↓':'↑')+' ₹'+testResult.transaction.amount?.toLocaleString('en-IN')),
+                React.createElement('span',{style:{color:'var(--text5)'}},  'Date'),    React.createElement('span',{style:{color:'var(--text2)'}},  testResult.transaction.date),
+                React.createElement('span',{style:{color:'var(--text5)'}},  'Category'),React.createElement('div',null,
+                  React.createElement('span',{style:{color:'var(--text2)',fontWeight:600}}, testResult.transaction.cat+(testResult.transaction.subcat?' > '+testResult.transaction.subcat:'')),
+                  testResult.transaction.cat==='Others'&&React.createElement('span',{style:{color:'#f59e0b',marginLeft:6,fontSize:11}},'⚠ No match — add a keyword rule')
+                ),
+                React.createElement('span',{style:{color:'var(--text5)'}},  'Account'),
+                React.createElement('div',null,
+                  React.createElement('span',{style:{color:'var(--text2)',fontWeight:600}},
+                    testResult.accountMatch?testResult.accountMatch.name:'Not matched'
+                  ),
+                  testResult.accountMatch&&React.createElement('span',{style:{color:'var(--text5)',fontSize:11,marginLeft:6}},
+                    '(confidence: '+(testResult.accountMatch.confidence*100).toFixed(0)+'%)'
+                  ),
+                  !testResult.accountMatch&&React.createElement('span',{style:{color:'#f59e0b',marginLeft:6,fontSize:11}},'⚠ Add an account alias')
+                ),
+                testResult.transaction.payee&&[React.createElement('span',{style:{color:'var(--text5)'},key:'pl'},'Payee'),React.createElement('span',{style:{color:'var(--text2)'},key:'pv'},testResult.transaction.payee)],
+                React.createElement('span',{style:{color:'var(--text5)'}},  'Confidence'),
+                React.createElement('div',null,
+                  React.createElement('span',{style:{fontWeight:700,color:testResult.confidence>=0.8?'#16a34a':testResult.confidence>=0.5?'#f59e0b':'#ef4444'}},
+                    (testResult.confidence*100).toFixed(0)+'%'
+                  ),
+                  React.createElement('span',{style:{fontSize:11,color:'var(--text6)',marginLeft:8}},
+                    testResult.confidence>=0.8?'High — good to go!':testResult.confidence>=0.5?'Medium — consider adding training rules':'Low — add keyword rules and account aliases'
+                  )
+                )
+              ),
+              testResult.ambiguities&&testResult.ambiguities.length>0&&React.createElement('div',{style:{marginTop:12,padding:'10px 12px',background:'rgba(245,158,11,.08)',border:'1px solid rgba(245,158,11,.25)',borderRadius:8,fontSize:12,color:'#92400e'}},
+                '⚠ Ambiguous: ',testResult.ambiguities.map(a=>a.type==='account'?'Multiple accounts match — add aliases to disambiguate':'Review needed').join(', ')
+              )
+            )
+          : React.createElement('div',{style:{color:'#ef4444',fontSize:13,fontWeight:600}},'❌ '+testResult.error)
+      ),
+      !testResult&&React.createElement('div',null,
+        React.createElement('div',{style:{fontSize:12,fontWeight:600,color:'var(--text5)',marginBottom:10,textTransform:'uppercase',letterSpacing:.7}},'Quick test samples'),
+        ['Spent 500 on petrol via HDFC','Paid 2000 groceries from SBI savings','Salary 85000 credited','Netflix subscription 649','Zomato 350 food delivery'].map(t=>
+          React.createElement('button',{key:t,onClick:()=>{setTestInput(t);},
+            style:{display:'block',width:'100%',textAlign:'left',padding:'9px 14px',marginBottom:6,borderRadius:8,
+              background:'var(--bg4)',border:'1px solid var(--border)',color:'var(--text4)',
+              fontSize:13,cursor:'pointer',fontFamily:"'DM Sans',sans-serif"}},
+            '▶ '+t)
+        )
+      )
+    )
+  );
+};
+/* ══ END CHATBOT TRAINING PANEL ══ */
+
 var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,onResetAll,isMobile})=>{
   const[stab,setStab]=useState("appearance");
   const[confirm,setConfirm]=useState(null);
@@ -6713,6 +6985,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
     {id:"insightprefs",label:"Insights Config",icon:React.createElement(Icon,{n:"target",size:16})},
     {id:"tabmgmt",     label:"Tab Management",icon:React.createElement(Icon,{n:"tabs",size:16})},
     {id:"backup",label:"Data & Backup",icon:React.createElement(Icon,{n:"save",size:16})},
+    {id:"chatbotTraining",label:"Chatbot Training",icon:React.createElement(Icon,{n:"robot",size:16})},
   ];
 
   const RowActions=({onEdit,onDelete,onAttach,onToggleHidden,isHidden})=>React.createElement("div",{style:{display:"flex",gap:6,flexShrink:0,flexWrap:"wrap",justifyContent:"flex-end"}},
@@ -7296,6 +7569,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
         );
       })(),
 
+      stab==="chatbotTraining"&&React.createElement(ChatbotTrainingPanel,{state}),
       stab==="backup"&&React.createElement("div",{className:"fu"},
         React.createElement("div",{style:{marginBottom:24}},
           React.createElement("h3",{style:{fontFamily:"'Sora',sans-serif",fontSize:18,fontWeight:700,color:"var(--text)"}},"Data & Backup"),
@@ -37591,9 +37865,19 @@ const _cbMatchAccount=(text,accounts)=>{
   }
   return best&&best.confidence>=0.5?best:null;
 };
-const _cbMatchAccountMulti=(text,accounts)=>{
+const _cbMatchAccountMulti=(text,accounts,customAliases)=>{
   if(!text||!accounts||!accounts.length)return null;
   const q=_cbNormalise(text);if(!q)return null;
+  /* Check user-defined aliases first (exact priority match) */
+  const _tr=customAliases||_cbLoadTraining();
+  for(const alias of (_tr.accountAliases||[])){
+    if(!alias.alias||!alias.accountId)continue;
+    const aliasN=_cbNormalise(alias.alias);
+    if(q.includes(aliasN)||aliasN.includes(q)){
+      const acc=accounts.find(a=>a.id===alias.accountId);
+      if(acc)return{match:{account:acc,confidence:1.0},ambiguous:null,aliasMatch:true};
+    }
+  }
   const scored=[];
   for(const acc of accounts){
     const n=_cbNormalise(acc.name),bn=_cbNormalise(acc.bank||''),fn=(n+' '+bn).trim();
@@ -37653,9 +37937,16 @@ const _cbCatRules=[
   {k:['interest','fd interest','rd interest','savings interest','deposit interest','bank interest'],c:'Income',s:'Interest'},
   {k:['dividend','dividends','stock dividend','mf dividend','equity dividend'],c:'Income',s:'Dividends'},
 ];
-const _cbMatchCategory=text=>{
+const _cbMatchCategory=(text,trainingData)=>{
   if(!text)return null;
   const lo=text.toLowerCase();let best=null,bestSc=0;
+  const _tr=trainingData||_cbLoadTraining();
+  for(const r of (_tr.customCatRules||[]))for(const kw of (r.keywords||[])){
+    if(!kw.trim())continue;
+    const re=new RegExp('\\b'+kw.trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i');
+    if(re.test(lo)){const sc=0.95+Math.min(kw.length/100,0.05);if(sc>bestSc){bestSc=sc;best={cat:r.cat,subcat:r.subcat||'',kw,custom:true};}}
+  }
+  if(best)return best;
   for(const r of _cbCatRules)for(const kw of r.k){
     const re=new RegExp('\\b'+kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i');
     if(re.test(lo)){const sc=0.8+Math.min(kw.length/100,0.2);if(sc>bestSc){bestSc=sc;best={cat:r.c,subcat:r.s,kw};}}
@@ -37723,11 +38014,12 @@ const _cbParseTransaction=(text,state)=>{
   const amount=_cbExtractAmount(trimmed);
   if(!amount)return{success:false,error:'Could not detect an amount. Try "400" or "₹400".'};
   const date=_cbExtractDate(trimmed);
-  const catResult=_cbMatchCategory(trimmed);
+  const _training=_cbLoadTraining();
+  const catResult=_cbMatchCategory(trimmed,_training);
   const type=_cbDetectType(trimmed,catResult);
   const allAcc=[...(state.banks||[]).map(b=>({id:b.id,name:b.name,bank:b.bank,accType:'bank'})),...(state.cards||[]).map(c=>({id:c.id,name:c.name,bank:c.bank,accType:'card'})),{id:'__cash__',name:'Cash',bank:'',accType:'cash'}];
   const accText=_cbExtractAccountRef(trimmed);
-  const accMatch=_cbMatchAccountMulti(accText||trimmed,allAcc);
+  const accMatch=_cbMatchAccountMulti(accText||trimmed,allAcc,_training);
   let srcId,srcType,accConf=0;
   const ambiguities=[];
   if(accMatch){srcId=accMatch.match.account.id;srcType=accMatch.match.account.accType;accConf=accMatch.match.confidence;if(accMatch.ambiguous)ambiguities.push({type:'account',options:[accMatch.match,...accMatch.ambiguous].map(a=>({id:a.account.id,name:a.account.name,type:a.account.accType,confidence:a.confidence}))});}
