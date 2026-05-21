@@ -5788,7 +5788,14 @@ var _syncGetLocalEdit = () => {
     return localStorage.getItem(LS_GDRIVE_LAST_SYNC) || "";
   } catch { return ""; }
 };
-var _syncSaveLocalEdit = (ts) => { try { if (ts) localStorage.setItem(LS_LAST_LOCAL_EDIT, ts); } catch {} };
+var _syncSaveLocalEdit = (ts) => {
+  try {
+    if (ts) {
+      localStorage.setItem(LS_LAST_LOCAL_EDIT, ts);
+      window.dispatchEvent(new CustomEvent("mm:local-edit", { detail: { time: ts } }));
+    }
+  } catch {}
+};
 var _syncRemoteTimeFromPayload = (payload) => (payload && (payload.exportedAt || payload.modifiedTime || payload.data?.exportedAt)) || "";
 
 /* Save sync timestamp whenever Drive:pulled fires */
@@ -6031,6 +6038,7 @@ var CloudBackupPanel = ({ state, dispatch }) => {
   const [cidSaved,     setCidSaved]     = React.useState(false);
   const [secretSaved,  setSecretSaved]  = React.useState(false);
   const [lastSync,     setLastSync]     = React.useState(_syncGetLocal);
+  const [localEdit,    setLocalEdit]    = React.useState(_syncGetLocalEdit);
   const [pushMsg,      setPushMsg]      = React.useState("");
   const [pullMsg,      setPullMsg]      = React.useState("");
   const [pushing,      setPushing]      = React.useState(false);
@@ -6042,20 +6050,28 @@ var CloudBackupPanel = ({ state, dispatch }) => {
 
   /* Refresh status when sync events fire */
   React.useEffect(() => {
+    const refreshTimes = () => {
+      setLastSync(_syncGetLocal());
+      setLocalEdit(_syncGetLocalEdit());
+    };
     const onPulled = (e) => {
       if (e && e.detail && e.detail.time) _syncSaveLocal(e.detail.time);
-      setLastSync(_syncGetLocal());
+      refreshTimes();
       setHasRefresh(!!_gdriveGetRefreshToken());
     };
     const onSynced = () => {
-      setLastSync(_syncGetLocal());
+      refreshTimes();
       setHasRefresh(!!_gdriveGetRefreshToken());
     };
     window.addEventListener("gdrive:synced", onSynced);
     window.addEventListener("gdrive:pulled", onPulled);
+    window.addEventListener("mm:local-edit", refreshTimes);
+    const tick = setInterval(refreshTimes, 5000);
     return () => {
       window.removeEventListener("gdrive:synced", onSynced);
       window.removeEventListener("gdrive:pulled", onPulled);
+      window.removeEventListener("mm:local-edit", refreshTimes);
+      clearInterval(tick);
     };
   }, []);
 
@@ -6067,6 +6083,21 @@ var CloudBackupPanel = ({ state, dispatch }) => {
   const hasCid    = cidInput.trim().length > 10;
   const hasSecret = secretInput.trim().length > 0;
   const isConfigured = hasCid;
+  const syncCompare = localEdit && lastSync
+    ? (localEdit === lastSync ? "match" : (localEdit > lastSync ? "local-newer" : "drive-newer"))
+    : "unknown";
+  const syncLabel = syncCompare === "match"
+    ? "Up to date"
+    : syncCompare === "local-newer"
+      ? "Local newer"
+      : syncCompare === "drive-newer"
+        ? "Drive newer"
+        : "Waiting for sync";
+  const syncColor = syncCompare === "match"
+    ? "#16a34a"
+    : syncCompare === "unknown"
+      ? "var(--text5)"
+      : "#b45309";
 
   /* ── Helpers ── */
   const fmtTs = (iso) => {
@@ -6422,11 +6453,27 @@ var CloudBackupPanel = ({ state, dispatch }) => {
       ),
 
       /* Last sync */
-      React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--bg4)", borderRadius: 10, border: "1px solid var(--border2)" } },
-        React.createElement(Icon, { n: "clock", size: 16, col: "var(--text5)" }),
-        React.createElement("div", null,
-          React.createElement("div", { style: { fontSize: 11, color: "var(--text5)" } }, "Last synchronised"),
-          React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: "var(--text3)", marginTop: 2 } }, fmtTs(lastSync))
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 } },
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--bg4)", borderRadius: 10, border: "1px solid var(--border2)" } },
+          React.createElement(Icon, { n: "edit", size: 16, col: "var(--text5)" }),
+          React.createElement("div", null,
+            React.createElement("div", { style: { fontSize: 11, color: "var(--text5)" } }, "Local last edit"),
+            React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: "var(--text3)", marginTop: 2 } }, fmtTs(localEdit))
+          )
+        ),
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--bg4)", borderRadius: 10, border: "1px solid var(--border2)" } },
+          React.createElement(Icon, { n: "cloud", size: 16, col: "var(--text5)" }),
+          React.createElement("div", null,
+            React.createElement("div", { style: { fontSize: 11, color: "var(--text5)" } }, "Google Drive sync file"),
+            React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: "var(--text3)", marginTop: 2 } }, fmtTs(lastSync))
+          )
+        ),
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--bg4)", borderRadius: 10, border: "1px solid var(--border2)" } },
+          React.createElement(Icon, { n: "clock", size: 16, col: syncColor }),
+          React.createElement("div", null,
+            React.createElement("div", { style: { fontSize: 11, color: "var(--text5)" } }, "Timestamp check"),
+            React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: syncColor, marginTop: 2 } }, syncLabel)
+          )
         )
       )
     ),
@@ -38498,7 +38545,6 @@ const ChatBotFAB=({onClick,isOpen})=>{
 /* ═══ END CHATBOT CODE ═══ */
 
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
-
 
 
 
