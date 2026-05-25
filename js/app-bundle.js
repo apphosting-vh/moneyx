@@ -8015,6 +8015,11 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                          Must complete before reload — await both calls. ── */
                       try { await clearTxIDB(); } catch {}
                       try { await saveTxToIDB(_restoreData); } catch {}
+                      /* ── Stamp restore time as the new local-edit anchor so the
+                         Drive boot pull (fires 2 s after reload) sees local >= remote
+                         and does not silently overwrite the freshly restored data. ── */
+                      try { localStorage.setItem(LS_LAST_LOCAL_EDIT, new Date().toISOString()); } catch {}
+                      try { localStorage.removeItem(LS_GDRIVE_LAST_SYNC); } catch {}
                       /* ── Update in-memory React state for the 1.8s before reload ── */
                       dispatch({type:"RESTORE_ALL",data:_restoreData});
                       const s=payload.summary;
@@ -8065,9 +8070,16 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                       localStorage.removeItem(LS_LAST_BACKUP);
                       localStorage.removeItem(LS_LAST_LS_SAVE);
                       localStorage.removeItem(LS_LAST_IDB_SAVE);
-                      /* Clear Drive sync timestamps so a future pull is not blocked
-                         by stale "local is newer" comparisons after factory reset. */
-                      localStorage.removeItem(LS_LAST_LOCAL_EDIT);
+                      localStorage.removeItem(TAX_LS_KEY);
+                      localStorage.removeItem(CALC_LS_KEY);
+                      localStorage.removeItem("mm_v7_chatbot_training");
+                      /* Stamp reset time as the new local-edit anchor.
+                         Removing this key would leave it empty, which makes the
+                         Drive boot-pull guard (remoteTs && localTs && remote<=local)
+                         short-circuit to false — Drive would then pull the old pre-reset
+                         state 2 s after reload, silently undoing the entire reset.
+                         Setting it to NOW ensures local >= any Drive file. */
+                      localStorage.setItem(LS_LAST_LOCAL_EDIT, new Date().toISOString());
                       localStorage.removeItem(LS_GDRIVE_LAST_SYNC);
                       savePinHash("");
                       clearSessionUnlock();
@@ -29615,6 +29627,11 @@ const FSAStoragePanel=({state,dispatch})=>{
          Must complete before reload — await both calls. ── */
       try { await clearTxIDB(); } catch {}
       try { await saveTxToIDB(_restoreData); } catch {}
+      /* ── Stamp restore time as the new local-edit anchor so the
+         Drive boot pull (fires 2 s after reload) sees local >= remote
+         and does not silently overwrite the freshly restored data. ── */
+      try { localStorage.setItem(LS_LAST_LOCAL_EDIT, new Date().toISOString()); } catch {}
+      try { localStorage.removeItem(LS_GDRIVE_LAST_SYNC); } catch {}
       /* ── Update in-memory React state ── */
       dispatch({type:"RESTORE_ALL",data:_restoreData});
       /* ── Request read-write permission (we're inside a user-gesture chain) ── */
@@ -37993,7 +38010,7 @@ function App(){
           React.createElement(ReportsSection,{data:state,isMobile,onJumpToLedger}))),
       React.createElement("div",{style:{display:tab==="settings"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Settings"},
-          React.createElement(SettingsSection,{state,dispatch,themeId,setTheme,fontId,setFont,isMobile,onResetAll:async()=>{_mmResetting=true;dispatch({type:"RESET_ALL"});try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_EOD_PRICES);localStorage.removeItem(LS_EOD_NAVS);localStorage.removeItem(LS_THEME);localStorage.removeItem(TAX_LS_KEY);localStorage.removeItem(LS_LAST_LOCAL_EDIT);localStorage.removeItem(LS_GDRIVE_LAST_SYNC);}catch{}/* Clear transactions from IndexedDB so no stale data survives reload */try{await clearTxIDB();}catch{}setTimeout(()=>window.location.reload(),100);}}))),
+          React.createElement(SettingsSection,{state,dispatch,themeId,setTheme,fontId,setFont,isMobile,onResetAll:async()=>{_mmResetting=true;dispatch({type:"RESET_ALL"});try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_EOD_PRICES);localStorage.removeItem(LS_EOD_NAVS);localStorage.removeItem(LS_THEME);localStorage.removeItem(TAX_LS_KEY);localStorage.removeItem(CALC_LS_KEY);localStorage.removeItem("mm_v7_chatbot_training");/* Stamp reset time so Drive boot pull cannot undo the reset */localStorage.setItem(LS_LAST_LOCAL_EDIT,new Date().toISOString());localStorage.removeItem(LS_GDRIVE_LAST_SYNC);}catch{}/* Clear transactions from IndexedDB so no stale data survives reload */try{await clearTxIDB();}catch{}setTimeout(()=>window.location.reload(),100);}}))),
       React.createElement("div",{style:{display:tab==="info"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"About"},
           React.createElement(InfoSection,{isMobile}))),
