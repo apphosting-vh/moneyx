@@ -14054,6 +14054,28 @@ const Dashboard=React.memo(({data,isMobile})=>{
   const todayStr = TODAY();
   const thisMonth= todayStr.substr(0,7);
 
+  /* ━━ NET LIQUID POSITION (THIS MONTH) ━━━━━━━━━━━━━━━━━━━━━━━━
+     Sum of active scheduled debit transactions whose nextDate falls
+     within the current calendar month, on bank or cash accounts only
+     (card-account debits just increase card outstanding, they don't
+     directly drain bank/cash).  Transfers are excluded because money
+     moves between accounts — net bank+cash position is unchanged.    */
+  const scheduledThisMonth=React.useMemo(()=>
+    (data.scheduled||[]).filter(sc=>
+      sc.status==="active" &&
+      sc.nextDate &&
+      sc.nextDate.substr(0,7)===thisMonth
+    )
+  ,[data.scheduled,thisMonth]);
+
+  const scheduledOutflowThisMonth=React.useMemo(()=>
+    scheduledThisMonth
+      .filter(sc=>sc.ledgerType==="debit"&&!sc.isTransfer&&(sc.accType==="bank"||sc.accType==="cash"))
+      .reduce((s,sc)=>s+sc.amount,0)
+  ,[scheduledThisMonth]);
+
+  const netLiquidPostSched = bTotal + cashBal - scheduledOutflowThisMonth;
+
   /* ━━ 2. ALL BANKING TRANSACTIONS (banks + cards + cash) ━━━ */
   const allBankTx=React.useMemo(()=>[
     ...data.banks.flatMap(b=>(b.transactions||[]).filter(t=>!isAnyTransfer(t,data.categories)).map(t=>({...t,_bid:b.id,_src:b.name,_srcType:"bank",_col:"#0e7490"}))),
@@ -14241,6 +14263,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
       React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:2}},
         [
           {id:"accounts",   label:"Account Cards"},
+          {id:"netliquid",  label:"Net Liquid Position — This Month"},
           {id:"kpi",        label:"KPI Strip (Income / Expenses)"},
           {id:"cashflow",   label:"Cash Flow Chart"},
           {id:"catspend",   label:"Category Spend"},
@@ -14452,6 +14475,125 @@ const Dashboard=React.memo(({data,isMobile})=>{
           );
         })()
       )
+    ),
+
+    /* ══ B2: NET LIQUID POSITION — THIS MONTH ═══════════════════ */
+    W("netliquid")&&React.createElement("div",{className:"db-card",style:{
+      padding:isMobile?"14px 16px":"18px 24px",
+      position:"relative",overflow:"hidden",
+      background:"var(--card)",border:"1px solid var(--border)",borderRadius:16,
+    }},
+      /* decorative blobs */
+      React.createElement("div",{style:{position:"absolute",top:-40,right:-40,width:140,height:140,borderRadius:"50%",background:netLiquidPostSched>=0?"rgba(16,185,129,.08)":"rgba(239,68,68,.07)",pointerEvents:"none"}}),
+      React.createElement("div",{style:{position:"absolute",bottom:-30,left:"30%",width:100,height:100,borderRadius:"50%",background:"rgba(99,102,241,.05)",pointerEvents:"none"}}),
+
+      /* ── Header row ── */
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14,zIndex:1,position:"relative"}},
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:1,marginBottom:4}},
+            "Net Liquid Position · "+new Date().toLocaleString("en-IN",{month:"long",year:"numeric"})
+          ),
+          React.createElement("div",{style:{display:"flex",alignItems:"baseline",gap:10,flexWrap:"wrap"}},
+            React.createElement("div",{style:{fontSize:isMobile?26:36,fontFamily:"'Sora',sans-serif",fontWeight:800,color:netLiquidPostSched>=0?"var(--accent)":"#ef4444",lineHeight:1,letterSpacing:"-1px"}},
+              INR(netLiquidPostSched)
+            ),
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",fontWeight:500}},
+              "after scheduled obligations"
+            )
+          )
+        ),
+        /* Status badge */
+        React.createElement("div",{style:{
+          padding:"4px 10px",borderRadius:20,fontSize:10,fontWeight:700,letterSpacing:.3,flexShrink:0,
+          background:netLiquidPostSched>=0?"rgba(16,185,129,.12)":"rgba(239,68,68,.12)",
+          color:netLiquidPostSched>=0?"#10b981":"#ef4444",
+          border:`1px solid ${netLiquidPostSched>=0?"rgba(16,185,129,.25)":"rgba(239,68,68,.25)"}`,
+        }},netLiquidPostSched>=0?"✓ Solvent":"⚠ Shortfall")
+      ),
+
+      /* ── Equation row ── */
+      React.createElement("div",{style:{
+        display:"flex",flexWrap:"wrap",gap:isMobile?8:16,alignItems:"center",
+        padding:"10px 14px",borderRadius:10,
+        background:"var(--bg3)",border:"1px solid var(--border2)",
+        marginBottom:scheduledThisMonth.filter(sc=>sc.ledgerType==="debit"&&!sc.isTransfer&&(sc.accType==="bank"||sc.accType==="cash")).length>0?14:0,
+        zIndex:1,position:"relative",
+      }},
+        /* Bank + Cash */
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
+          React.createElement("div",{style:{fontSize:8,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Bank + Cash"),
+          React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#0e7490"}},INR(bTotal+cashBal))
+        ),
+        /* minus sign */
+        React.createElement("div",{style:{fontSize:18,color:"var(--text5)",fontWeight:300,lineHeight:1}},
+          scheduledOutflowThisMonth>0?"−":"−"
+        ),
+        /* Scheduled outflows */
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
+          React.createElement("div",{style:{fontSize:8,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Scheduled Outflows"),
+          React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:scheduledOutflowThisMonth>0?"#ef4444":"var(--text4)"}},INR(scheduledOutflowThisMonth))
+        ),
+        /* equals sign */
+        React.createElement("div",{style:{fontSize:18,color:"var(--text5)",fontWeight:300,lineHeight:1}},"="),
+        /* Result */
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
+          React.createElement("div",{style:{fontSize:8,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Net Available"),
+          React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:netLiquidPostSched>=0?"var(--accent)":"#ef4444"}},INR(netLiquidPostSched))
+        )
+      ),
+
+      /* ── Scheduled transaction breakdown ── */
+      (()=>{
+        const items=scheduledThisMonth.filter(sc=>sc.ledgerType==="debit"&&!sc.isTransfer&&(sc.accType==="bank"||sc.accType==="cash"));
+        if(!items.length)return React.createElement("div",{style:{
+          zIndex:1,position:"relative",
+          fontSize:11,color:"var(--text6)",fontStyle:"italic",
+          padding:"8px 0 0",display:"flex",alignItems:"center",gap:6,
+        }},React.createElement(Icon,{n:"check",size:12,col:"var(--text6)"}),
+          "No scheduled outflows this month — full Bank + Cash balance is liquid."
+        );
+        return React.createElement("div",{style:{zIndex:1,position:"relative"}},
+          React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,marginBottom:7}},
+            items.length+" Scheduled Obligation"+(items.length!==1?"s":"")+" this month"
+          ),
+          React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:5}},
+            items.map((sc,i)=>{
+              const allAcc=[
+                ...data.banks.map(b=>({id:b.id,name:b.name})),
+                {id:"__cash__",name:"Cash"},
+              ];
+              const accName=allAcc.find(a=>a.id===sc.accId)?.name||(sc.accType==="cash"?"Cash":sc.accId);
+              const isPast=sc.nextDate<todayStr;
+              const isToday=sc.nextDate===todayStr;
+              return React.createElement("div",{key:sc.id||i,style:{
+                display:"flex",justifyContent:"space-between",alignItems:"center",
+                padding:"6px 10px",borderRadius:8,
+                background:"var(--bg3)",
+                border:"1px solid "+(isToday?"rgba(251,146,60,.3)":isPast?"rgba(239,68,68,.15)":"var(--border2)"),
+              }},
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,minWidth:0,flex:1}},
+                  React.createElement("div",{style:{
+                    width:6,height:6,borderRadius:"50%",flexShrink:0,
+                    background:isToday?"#fb923c":isPast?"#ef4444":"#6366f1",
+                  }}),
+                  React.createElement("div",{style:{minWidth:0}},
+                    React.createElement("div",{style:{fontSize:11,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
+                      sc.desc||sc.payee||"Scheduled"
+                    ),
+                    React.createElement("div",{style:{fontSize:9,color:"var(--text5)"}},
+                      accName+" · "+dmyFmt(sc.nextDate)+(isToday?" · Today":isPast?" · Due":"")+
+                      (sc.frequency&&sc.frequency!=="once"?" · "+sc.frequency.charAt(0).toUpperCase()+sc.frequency.slice(1):"")
+                    )
+                  )
+                ),
+                React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:12,color:"#ef4444",flexShrink:0,marginLeft:8}},
+                  "−"+INR(sc.amount)
+                )
+              );
+            })
+          )
+        );
+      })()
     ),
 
     /* ══ C: THIS MONTH KPI STRIP ════════════════════════════════ */
