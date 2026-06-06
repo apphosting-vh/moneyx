@@ -14055,11 +14055,13 @@ const Dashboard=React.memo(({data,isMobile})=>{
   const thisMonth= todayStr.substr(0,7);
 
   /* ━━ NET LIQUID POSITION (THIS MONTH) ━━━━━━━━━━━━━━━━━━━━━━━━
-     Sum of active scheduled debit transactions whose nextDate falls
-     within the current calendar month, on bank or cash accounts only
-     (card-account debits just increase card outstanding, they don't
-     directly drain bank/cash).  Transfers are excluded because money
-     moves between accounts — net bank+cash position is unchanged.    */
+     Outflows = all active scheduled transactions whose nextDate falls
+     within the current calendar month that will drain bank or cash:
+       • Regular debits  (ledgerType="debit", isTransfer=false)
+       • Transfers OUT   (isTransfer=true — source accType bank/cash;
+                          e.g. card bill payments, inter-bank moves)
+     accType for transfers refers to the SOURCE account, so the
+     bank/cash guard correctly captures money leaving liquid accounts. */
   const scheduledThisMonth=React.useMemo(()=>
     (data.scheduled||[]).filter(sc=>
       sc.status==="active" &&
@@ -14070,7 +14072,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
 
   const scheduledOutflowThisMonth=React.useMemo(()=>
     scheduledThisMonth
-      .filter(sc=>sc.ledgerType==="debit"&&!sc.isTransfer&&(sc.accType==="bank"||sc.accType==="cash"))
+      .filter(sc=>sc.ledgerType==="debit"&&(sc.accType==="bank"||sc.accType==="cash"))
       .reduce((s,sc)=>s+sc.amount,0)
   ,[scheduledThisMonth]);
 
@@ -14516,7 +14518,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
         display:"flex",flexWrap:"wrap",gap:isMobile?8:16,alignItems:"center",
         padding:"10px 14px",borderRadius:10,
         background:"var(--bg3)",border:"1px solid var(--border2)",
-        marginBottom:scheduledThisMonth.filter(sc=>sc.ledgerType==="debit"&&!sc.isTransfer&&(sc.accType==="bank"||sc.accType==="cash")).length>0?14:0,
+        marginBottom:scheduledThisMonth.filter(sc=>sc.ledgerType==="debit"&&(sc.accType==="bank"||sc.accType==="cash")).length>0?14:0,
         zIndex:1,position:"relative",
       }},
         /* Bank + Cash */
@@ -14544,7 +14546,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
 
       /* ── Scheduled transaction breakdown ── */
       (()=>{
-        const items=scheduledThisMonth.filter(sc=>sc.ledgerType==="debit"&&!sc.isTransfer&&(sc.accType==="bank"||sc.accType==="cash"));
+        const items=scheduledThisMonth.filter(sc=>sc.ledgerType==="debit"&&(sc.accType==="bank"||sc.accType==="cash"));
         if(!items.length)return React.createElement("div",{style:{
           zIndex:1,position:"relative",
           fontSize:11,color:"var(--text6)",fontStyle:"italic",
@@ -14561,8 +14563,11 @@ const Dashboard=React.memo(({data,isMobile})=>{
               const allAcc=[
                 ...data.banks.map(b=>({id:b.id,name:b.name})),
                 {id:"__cash__",name:"Cash"},
+                ...data.cards.map(c=>({id:c.id,name:c.name})),
               ];
-              const accName=allAcc.find(a=>a.id===sc.accId)?.name||(sc.accType==="cash"?"Cash":sc.accId);
+              const srcName=allAcc.find(a=>a.id===(sc.isTransfer?(sc.srcId||sc.accId):sc.accId))?.name||(sc.accType==="cash"?"Cash":sc.accId);
+              const tgtName=sc.isTransfer?allAcc.find(a=>a.id===sc.tgtId)?.name:null;
+              const accLabel=sc.isTransfer&&tgtName?srcName+" → "+tgtName:srcName;
               const isPast=sc.nextDate<todayStr;
               const isToday=sc.nextDate===todayStr;
               return React.createElement("div",{key:sc.id||i,style:{
@@ -14581,8 +14586,8 @@ const Dashboard=React.memo(({data,isMobile})=>{
                       sc.desc||sc.payee||"Scheduled"
                     ),
                     React.createElement("div",{style:{fontSize:9,color:"var(--text5)"}},
-                      accName+" · "+dmyFmt(sc.nextDate)+(isToday?" · Today":isPast?" · Due":"")+
-                      (sc.frequency&&sc.frequency!=="once"?" · "+sc.frequency.charAt(0).toUpperCase()+sc.frequency.slice(1):"")
+                      accLabel+" · "+dmyFmt(sc.nextDate)+(isToday?" · Today":isPast?" · Due":"")+
+                      (sc.frequency&&sc.frequency!=="once"?" · "+sc.frequency.charAt(0).toUpperCase()+sc.frequency.slice(1):"")+(sc.isTransfer?" · Transfer":"")
                     )
                   )
                 ),
