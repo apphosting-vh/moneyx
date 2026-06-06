@@ -863,7 +863,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.8.2";
+const APP_VERSION="4.9.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -5337,17 +5337,37 @@ var useNotifications = (state, dispatch) => {
     });
   }, []);
 
-  /* Listen for messages from the SW (reminder actions taken on notifications) */
+  /* Listen for messages from the SW (reminder actions + auto-backup trigger) */
   React.useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
     const handler = event => {
       const msg = event.data;
-      if (!msg || msg.type !== "REMINDER_ACTION") return;
-      if (msg.action === "complete") dispatch({ type: "COMPLETE_REMINDER", id: msg.reminderId });
-      if (msg.action === "skip")     dispatch({ type: "SKIP_REMINDER",     id: msg.reminderId });
-      if (msg.action === "postpone") dispatch({ type: "POSTPONE_REMINDER", id: msg.reminderId, date: msg.date });
+      if (!msg) return;
+      if (msg.type === "REMINDER_ACTION") {
+        if (msg.action === "complete") dispatch({ type: "COMPLETE_REMINDER", id: msg.reminderId });
+        if (msg.action === "skip")     dispatch({ type: "SKIP_REMINDER",     id: msg.reminderId });
+        if (msg.action === "postpone") dispatch({ type: "POSTPONE_REMINDER", id: msg.reminderId, date: msg.date });
+      }
+      /* SW periodicSync nudge: run the daily auto-backup if not done yet today */
+      if (msg.type === "TRIGGER_AUTO_BACKUP") {
+        try {
+          if (window._gdriveAutoBackup && stateRef.current) {
+            window._gdriveAutoBackup(stateRef.current).catch(() => {});
+          }
+        } catch {}
+      }
     };
     navigator.serviceWorker.addEventListener("message", handler);
+    /* Register the daily-backup periodic sync tag with the SW */
+    try {
+      if (window.__swReg) {
+        window.__swReg.active && window.__swReg.active.postMessage({ type: "REGISTER_BACKUP_SYNC" });
+      } else {
+        navigator.serviceWorker.ready.then(reg => {
+          reg.active && reg.active.postMessage({ type: "REGISTER_BACKUP_SYNC" });
+        }).catch(() => {});
+      }
+    } catch {}
     return () => navigator.serviceWorker.removeEventListener("message", handler);
   }, [dispatch]);
 
@@ -6024,6 +6044,188 @@ var gdriveUpsertSyncFile = async (state, manual) => {
 
 
 /* ══════════════════════════════════════════════════════════════════════════
+   SECTION 7b — DAILY AUTO-BACKUP
+   ──────────────────────────────────────────────────────────────────────────
+   Creates a separate dated backup file on Google Drive once per calendar day.
+   File name format: finsight-backup-YYYY-MM-DD_HH-MM-SS.json
+   Stored under a "finsight-backups/" folder concept (actually Drive root with
+   a dated name prefix so they stay grouped in Drive UI).
+   Uses existing _gdriveEnsureTokenV2 / _gdriveCreateFile infrastructure.
+
+   localStorage keys:
+   • mm_auto_backup_date   — ISO date string (YYYY-MM-DD) of last successful backup
+   • mm_auto_backup_time   — full ISO timestamp of last successful backup
+   • mm_auto_backup_status — "ok" | "failed" | "pending"
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var LS_AUTO_BACKUP_DATE   = "mm_auto_backup_date";
+var LS_AUTO_BACKUP_TIME   = "mm_auto_backup_time";
+var LS_AUTO_BACKUP_STATUS = "mm_auto_backup_status";
+var LS_AUTO_BACKUP_FILE   = "mm_auto_backup_file";   /* last backup filename */
+
+/* IST-aware today string (YYYY-MM-DD) — mirrors _fmtLS used elsewhere */
+var _autoBackupTodayIST = () => {
+  const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+};
+
+var _autoBackupGetLastDate   = () => { try { return localStorage.getItem(LS_AUTO_BACKUP_DATE)   || ""; } catch { return ""; } };
+var _autoBackupGetLastTime   = () => { try { return localStorage.getItem(LS_AUTO_BACKUP_TIME)   || ""; } catch { return ""; } };
+var _autoBackupGetStatus     = () => { try { return localStorage.getItem(LS_AUTO_BACKUP_STATUS) || ""; } catch { return ""; } };
+var _autoBackupGetFile       = () => { try { return localStorage.getItem(LS_AUTO_BACKUP_FILE)   || ""; } catch { return ""; } };
+var _autoBackupSetOk   = (ts, fname) => {
+  try {
+    localStorage.setItem(LS_AUTO_BACKUP_DATE,   _autoBackupTodayIST());
+    localStorage.setItem(LS_AUTO_BACKUP_TIME,   ts);
+    localStorage.setItem(LS_AUTO_BACKUP_STATUS, "ok");
+    localStorage.setItem(LS_AUTO_BACKUP_FILE,   fname);
+  } catch {}
+};
+var _autoBackupSetFailed = () => {
+  try { localStorage.setItem(LS_AUTO_BACKUP_STATUS, "failed"); } catch {}
+};
+var _autoBackupSetPending = () => {
+  try { localStorage.setItem(LS_AUTO_BACKUP_STATUS, "pending"); } catch {}
+};
+
+/* Build a dated backup filename in IST */
+var _autoBackupFilename = () => {
+  const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+  const pad = n => String(n).padStart(2, "0");
+  const ds = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  const ts = `${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+  return `finsight-backup-${ds}_${ts}.json`;
+};
+
+/* Create a new (always-new) file on Drive — never overwrites, each backup is
+   a distinct timestamped file.  Returns fileId or "" on failure. */
+var _autoBackupCreateFile = async (token, filename, content) => {
+  try {
+    const metadata = { name: filename, parents: ["root"] };
+    const boundary = "finsight_ab_" + Date.now();
+    const body = [
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`,
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${content}\r\n`,
+      `--${boundary}--`,
+    ].join("");
+    const r = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": `multipart/related; boundary=${boundary}`,
+      },
+      body,
+    });
+    if (!r.ok) {
+      if (r.status === 401 || r.status === 403) _gdriveClearToken();
+      return "";
+    }
+    const j = await r.json();
+    return j.id || "";
+  } catch { return ""; }
+};
+
+/**
+ * gdriveAutoBackup — silently creates one dated backup file per calendar day.
+ * Call on app launch.  No-ops if:
+ *   • GDrive is not configured / no Client ID
+ *   • Today's backup already succeeded
+ *   • Token cannot be obtained silently
+ */
+var gdriveAutoBackup = async (state) => {
+  try {
+    /* Guard: Drive must be configured */
+    if (!cloudSyncSupported()) return;
+    const cid = (() => { try { return localStorage.getItem("mm_gdrive_cid") || ""; } catch { return ""; } })();
+    if (!cid || cid.length < 10) return;
+
+    /* Guard: only once per calendar day (IST) */
+    const today = _autoBackupTodayIST();
+    if (_autoBackupGetLastDate() === today && _autoBackupGetStatus() === "ok") {
+      console.log("[AutoBackup] Already completed for today (" + today + "). Skipping.");
+      return;
+    }
+
+    _autoBackupSetPending();
+    console.log("[AutoBackup] Starting daily backup for", today, "…");
+
+    /* Obtain token silently — never show a popup for background backup */
+    const token = await _gdriveEnsureTokenV2(/* silent */ true);
+    if (!token) {
+      console.log("[AutoBackup] No token available silently — deferring backup.");
+      _autoBackupSetFailed();
+      return;
+    }
+
+    const exportedAt = new Date().toISOString();
+    const filename   = _autoBackupFilename();
+
+    const _cbTr = (() => { try { return JSON.parse(localStorage.getItem("mm_v7_chatbot_training") || "{}"); } catch { return {}; } })();
+    const payload = {
+      version:        8,
+      exportedAt,
+      backupType:     "auto-daily",
+      backupDate:     today,
+      autoSave:       true,
+      cloudSync:      false,
+      summary: {
+        bankAccounts: (state.banks  || []).length,
+        bankTxns:     (state.banks  || []).reduce((s, b) => s + (b.transactions || []).length, 0),
+        cardAccounts: (state.cards  || []).length,
+        cardTxns:     (state.cards  || []).reduce((s, c) => s + (c.transactions || []).length, 0),
+        cashTxns:     ((state.cash  || {}).transactions || []).length,
+        loans:        (state.loans  || []).length,
+        mf:           (state.mf     || []).length,
+        shares:       (state.shares || []).length,
+        fd:           (state.fd     || []).length,
+        categories:   (state.categories || []).length,
+        payees:       (state.payees    || []).length,
+        scheduled:    (state.scheduled || []).length,
+        notes:        (state.notes     || []).length,
+        reminders:    (state.reminders || []).length,
+      },
+      data: {
+        ...state,
+        notes:        state.notes        || [],
+        scheduled:    state.scheduled    || [],
+        nwSnapshots:  state.nwSnapshots  || {},
+        eodPrices:    state.eodPrices    || {},
+        eodNavs:      state.eodNavs      || {},
+        historyCache: state.historyCache || {},
+        taxData:      state.taxData      || null,
+        taxData2627:  state.taxData2627  || null,
+        re:           state.re           || [],
+        pf:           state.pf           || [],
+        goals:        state.goals        || [],
+        hiddenTabs:   state.hiddenTabs   || [],
+        catRules:     state.catRules     || [],
+        reminders:    state.reminders    || [],
+        insightPrefs: { ...EMPTY_STATE().insightPrefs, ...(state.insightPrefs || {}) },
+        chatbotTraining: { customCatRules: _cbTr.customCatRules||[], accountAliases: _cbTr.accountAliases||[] },
+      },
+    };
+
+    const content = JSON.stringify(payload, null, 2);
+    const fileId  = await _autoBackupCreateFile(token, filename, content);
+
+    if (fileId) {
+      _autoBackupSetOk(exportedAt, filename);
+      console.log("[AutoBackup] ✓ Backup saved to Drive:", filename, "(id:", fileId + ")");
+      window.dispatchEvent(new CustomEvent("mm:auto-backup-done", { detail: { date: today, time: exportedAt, filename } }));
+    } else {
+      _autoBackupSetFailed();
+      console.warn("[AutoBackup] ✗ Failed to create backup file on Drive.");
+    }
+  } catch (e) {
+    _autoBackupSetFailed();
+    console.warn("[AutoBackup] Error:", e);
+  }
+};
+
+/* Expose for boot hook in App component */
+window._gdriveAutoBackup = gdriveAutoBackup;
+
+/* ══════════════════════════════════════════════════════════════════════════
    SECTION 8 — CloudBackupPanel
    ──────────────────────────────────────────────────────────────────────────
    Settings → Cloud Backup tab.
@@ -6047,6 +6249,13 @@ var CloudBackupPanel = ({ state, dispatch }) => {
   const [tokenOk,      setTokenOk]      = React.useState(false);
   const [hasRefresh,   setHasRefresh]   = React.useState(() => !!_gdriveGetRefreshToken());
   const [showSecret,   setShowSecret]   = React.useState(false);
+  /* Auto-backup state */
+  const [abDate,       setAbDate]       = React.useState(_autoBackupGetLastDate);
+  const [abTime,       setAbTime]       = React.useState(_autoBackupGetLastTime);
+  const [abStatus,     setAbStatus]     = React.useState(_autoBackupGetStatus);
+  const [abFile,       setAbFile]       = React.useState(_autoBackupGetFile);
+  const [abRunning,    setAbRunning]    = React.useState(false);
+  const [abMsg,        setAbMsg]        = React.useState("");
 
   /* Refresh status when sync events fire */
   React.useEffect(() => {
@@ -6063,14 +6272,26 @@ var CloudBackupPanel = ({ state, dispatch }) => {
       refreshTimes();
       setHasRefresh(!!_gdriveGetRefreshToken());
     };
+    const refreshAbStatus = () => {
+      setAbDate(_autoBackupGetLastDate());
+      setAbTime(_autoBackupGetLastTime());
+      setAbStatus(_autoBackupGetStatus());
+      setAbFile(_autoBackupGetFile());
+    };
+    const onAbDone = (e) => {
+      refreshAbStatus();
+      setAbRunning(false);
+    };
     window.addEventListener("gdrive:synced", onSynced);
     window.addEventListener("gdrive:pulled", onPulled);
     window.addEventListener("mm:local-edit", refreshTimes);
-    const tick = setInterval(refreshTimes, 5000);
+    window.addEventListener("mm:auto-backup-done", onAbDone);
+    const tick = setInterval(() => { refreshTimes(); refreshAbStatus(); }, 5000);
     return () => {
       window.removeEventListener("gdrive:synced", onSynced);
       window.removeEventListener("gdrive:pulled", onPulled);
       window.removeEventListener("mm:local-edit", refreshTimes);
+      window.removeEventListener("mm:auto-backup-done", onAbDone);
       clearInterval(tick);
     };
   }, []);
@@ -6290,6 +6511,38 @@ var CloudBackupPanel = ({ state, dispatch }) => {
       setPulling(false);
       setTimeout(() => setPullMsg(""), 5000);
     }
+  };
+
+  /* ── Manual auto-backup trigger ── */
+  const handleManualBackup = async () => {
+    if (!hasCid) { setAbMsg("✗ Enter your Google Client ID first."); return; }
+    setAbRunning(true);
+    setAbMsg("Running backup to Google Drive…");
+    /* Force a fresh backup by temporarily clearing the date guard */
+    const savedDate = _autoBackupGetLastDate();
+    const savedStatus = _autoBackupGetStatus();
+    try { localStorage.removeItem(LS_AUTO_BACKUP_DATE); } catch {}
+    try {
+      await gdriveAutoBackup(state);
+      const newStatus = _autoBackupGetStatus();
+      if (newStatus === "ok") {
+        setAbDate(_autoBackupGetLastDate());
+        setAbTime(_autoBackupGetLastTime());
+        setAbStatus("ok");
+        setAbFile(_autoBackupGetFile());
+        setAbMsg("✓ Backup created successfully!");
+      } else {
+        /* Restore previous guard so we do not break the daily schedule */
+        try { if (savedDate) localStorage.setItem(LS_AUTO_BACKUP_DATE, savedDate); } catch {}
+        try { if (savedStatus) localStorage.setItem(LS_AUTO_BACKUP_STATUS, savedStatus); } catch {}
+        setAbMsg("✗ Backup failed — check Drive credentials.");
+      }
+    } catch (e) {
+      try { if (savedDate) localStorage.setItem(LS_AUTO_BACKUP_DATE, savedDate); } catch {}
+      setAbMsg("✗ " + (e.message || "Unknown error"));
+    }
+    setAbRunning(false);
+    setTimeout(() => setAbMsg(""), 6000);
   };
 
   /* ── Sub-components ── */
@@ -6560,6 +6813,120 @@ var CloudBackupPanel = ({ state, dispatch }) => {
         pushMsg && React.createElement("div", { style: { fontSize: 13, color: pushMsg.startsWith("✓") ? "#16a34a" : pushMsg.startsWith("✗") ? "#ef4444" : "var(--text4)", marginBottom: pullMsg ? 6 : 0 } }, pushMsg),
         pullMsg && React.createElement("div", { style: { fontSize: 13, color: pullMsg.startsWith("✓") ? "#16a34a" : pullMsg.startsWith("✗") ? "#ef4444" : "var(--text4)" } }, pullMsg)
       )
+    ),
+
+    /* ── Daily Auto-Backup Status ── */
+    isConfigured && React.createElement(Card, { sx: { marginBottom: 16, border: abStatus === "ok" && abDate === _autoBackupTodayIST() ? "1px solid rgba(22,163,74,.30)" : abStatus === "failed" ? "1px solid rgba(245,158,11,.30)" : "1px solid var(--border)", background: abStatus === "ok" && abDate === _autoBackupTodayIST() ? "rgba(22,163,74,.04)" : "var(--bg3)" } },
+
+      /* Header row */
+      React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 10 } },
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } },
+          React.createElement("div", { style: {
+            width: 34, height: 34, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
+            background: abStatus === "ok" && abDate === _autoBackupTodayIST() ? "rgba(22,163,74,.12)" : "var(--accentbg2)",
+            border: "1px solid " + (abStatus === "ok" && abDate === _autoBackupTodayIST() ? "rgba(22,163,74,.30)" : "var(--accentbg5)"),
+            fontSize: 16,
+          } }, "🗄️"),
+          React.createElement("div", null,
+            React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: "var(--text2)", fontFamily: "'Sora',sans-serif" } }, "Daily Auto-Backup"),
+            React.createElement("div", { style: { fontSize: 11, color: "var(--text5)", marginTop: 1 } }, "One automatic backup to Drive each day")
+          )
+        ),
+        /* Status badge */
+        React.createElement("div", { style: {
+          display: "inline-flex", alignItems: "center", gap: 6,
+          padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+          background: abStatus === "ok" && abDate === _autoBackupTodayIST()
+            ? "rgba(22,163,74,.12)"
+            : abStatus === "pending"
+              ? "rgba(14,165,233,.12)"
+              : abStatus === "failed"
+                ? "rgba(245,158,11,.12)"
+                : "var(--bg4)",
+          color: abStatus === "ok" && abDate === _autoBackupTodayIST()
+            ? "#16a34a"
+            : abStatus === "pending"
+              ? "var(--accent)"
+              : abStatus === "failed"
+                ? "#b45309"
+                : "var(--text5)",
+          border: "1px solid " + (abStatus === "ok" && abDate === _autoBackupTodayIST()
+            ? "rgba(22,163,74,.30)"
+            : abStatus === "pending"
+              ? "var(--accentbg5)"
+              : abStatus === "failed"
+                ? "rgba(245,158,11,.30)"
+                : "var(--border2)"),
+        } },
+          abStatus === "ok" && abDate === _autoBackupTodayIST() ? "✓ Done Today"
+            : abStatus === "pending" ? "⏳ In Progress"
+              : abStatus === "failed" ? "⚠ Not Yet"
+                : "○ Not Run"
+        )
+      ),
+
+      /* Info grid */
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginBottom: 14 } },
+
+        /* Last backup date */
+        React.createElement("div", { style: { padding: "10px 13px", background: "var(--bg4)", borderRadius: 10, border: "1px solid var(--border2)" } },
+          React.createElement("div", { style: { fontSize: 10, color: "var(--text5)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 } }, "Last Backup Date"),
+          React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: "var(--text2)" } },
+            abDate ? abDate : "Never"
+          ),
+          abDate && abDate === _autoBackupTodayIST() && React.createElement("div", { style: { fontSize: 10, color: "#16a34a", marginTop: 2 } }, "✓ Today's backup done")
+        ),
+
+        /* Last backup time */
+        React.createElement("div", { style: { padding: "10px 13px", background: "var(--bg4)", borderRadius: 10, border: "1px solid var(--border2)" } },
+          React.createElement("div", { style: { fontSize: 10, color: "var(--text5)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 } }, "Last Backup Time"),
+          React.createElement("div", { style: { fontSize: 12, fontWeight: 600, color: "var(--text2)" } },
+            abTime ? ((() => { try { return new Date(abTime).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }); } catch { return abTime; } })()) : "—"
+          )
+        ),
+
+        /* File name */
+        React.createElement("div", { style: { padding: "10px 13px", background: "var(--bg4)", borderRadius: 10, border: "1px solid var(--border2)" } },
+          React.createElement("div", { style: { fontSize: 10, color: "var(--text5)", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 } }, "Backup File"),
+          React.createElement("div", { style: { fontSize: 10, fontFamily: "monospace", color: "var(--accent)", wordBreak: "break-all", lineHeight: 1.4 } },
+            abFile ? abFile : "—"
+          )
+        ),
+      ),
+
+      /* How it works note */
+      React.createElement("div", { style: { background: "var(--accentbg2)", border: "1px solid var(--accentbg5)", borderRadius: 9, padding: "9px 13px", fontSize: 12, color: "var(--text4)", lineHeight: 1.65, marginBottom: 14 } },
+        React.createElement("span", { style: { fontWeight: 600, color: "var(--accent)" } }, "ℹ️ How it works: "),
+        "Each time you open the app, it silently creates one dated backup file on your Drive (e.g. ",
+        React.createElement("code", { style: { fontSize: 11, color: "var(--text3)", background: "var(--bg4)", borderRadius: 4, padding: "1px 5px" } }, "finsight-backup-YYYY-MM-DD_HH-MM-SS.json"),
+        "). This is separate from the live sync file. Backups run in the background with no popup or interaction needed."
+      ),
+
+      /* Manual trigger button */
+      React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" } },
+        React.createElement("button", {
+          onClick: handleManualBackup,
+          disabled: abRunning || !hasCid,
+          style: {
+            display: "inline-flex", alignItems: "center", gap: 8,
+            padding: "9px 18px", fontSize: 13, fontWeight: 600,
+            background: abRunning ? "var(--accentbg2)" : "rgba(14,165,233,.13)",
+            border: "1px solid rgba(14,165,233,.35)", color: "var(--accent)",
+            borderRadius: 9, cursor: abRunning || !hasCid ? "not-allowed" : "pointer",
+            fontFamily: "'DM Sans',sans-serif", transition: "all .2s",
+            opacity: !hasCid ? 0.5 : 1,
+          }
+        },
+          abRunning
+            ? React.createElement("span", { className: "spinr" }, React.createElement(Icon, { n: "refresh", size: 14 }))
+            : React.createElement(Icon, { n: "cloud", size: 14 }),
+          abRunning ? "Creating backup…" : "☁ Backup Now"
+        ),
+        abDate && abDate === _autoBackupTodayIST() && !abRunning && React.createElement("span", { style: { fontSize: 12, color: "#16a34a" } }, "✓ Today's backup already saved")
+      ),
+
+      /* Status message */
+      abMsg && React.createElement("div", { style: { marginTop: 10, fontSize: 13, color: abMsg.startsWith("✓") ? "#16a34a" : abMsg.startsWith("✗") ? "#ef4444" : "var(--text4)" } }, abMsg)
     ),
 
     /* ── Disconnect ── */
@@ -11091,7 +11458,19 @@ var usePersistentReducer=(reducer,init)=>{
     };
 
     /* Immediate pull on launch (both platforms) */
-    const _bootTimer=setTimeout(()=>{pullFromDrive().finally(()=>{_bootPullCompletedRef.current=true;});}, 2000);
+    /* Immediate pull on launch (both platforms) */
+    const _bootTimer=setTimeout(()=>{pullFromDrive().finally(()=>{
+      _bootPullCompletedRef.current=true;
+      /* Daily auto-backup: runs 4 s after boot pull finishes, to avoid racing with sync */
+      setTimeout(()=>{
+        try {
+          const _abState = stateRef.current;
+          if (_abState && window._gdriveAutoBackup) {
+            window._gdriveAutoBackup(_abState).catch(()=>{});
+          }
+        } catch {}
+      }, 4000);
+    });}, 2000);
 
     /* On Android: poll every 30 s for remote changes while the app is open */
     if(_isAndroidDevice()){
@@ -11103,6 +11482,37 @@ var usePersistentReducer=(reducer,init)=>{
       if(_pollTimer)clearInterval(_pollTimer);
     };
   },[]); // run exactly once on mount
+
+  /* ── Daily auto-backup: tab-focus + online triggers (desktop Chrome fallback) ──
+     Fires gdriveAutoBackup whenever:
+       • The tab becomes visible again (user switches back to the tab)
+       • The browser comes back online (network reconnected)
+     Both are no-ops if today's backup already succeeded.
+     A 2-second debounce avoids rapid re-fires on quick tab switches.       */
+  React.useEffect(() => {
+    let _abFocusTimer = null;
+    const _runBackup = () => {
+      if (_abFocusTimer) clearTimeout(_abFocusTimer);
+      _abFocusTimer = setTimeout(() => {
+        try {
+          if (window._gdriveAutoBackup && stateRef.current) {
+            window._gdriveAutoBackup(stateRef.current).catch(() => {});
+          }
+        } catch {}
+      }, 2000);
+    };
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') _runBackup();
+    };
+    const onOnline = () => _runBackup();
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('online', onOnline);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('online', onOnline);
+      if (_abFocusTimer) clearTimeout(_abFocusTimer);
+    };
+  }, []); // run exactly once on mount
 
   /* ── Debounced save to localStorage + IDB + FSA ── */
   const _ric=typeof requestIdleCallback==="function"?requestIdleCallback:(cb)=>setTimeout(cb,1);
