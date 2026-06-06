@@ -14337,18 +14337,13 @@ const Dashboard=React.memo(({data,isMobile})=>{
         onMouseEnter:e=>{e.currentTarget.style.color="#25d366";e.currentTarget.style.borderColor="#25d366";},
         onMouseLeave:e=>{e.currentTarget.style.color="var(--text5)";e.currentTarget.style.borderColor="var(--border2)";},
       },React.createElement(Icon,{n:"upload",size:16}),!isMobile&&React.createElement("span",null,"Share")),
-      /* Greeting + liquid balance */
-      React.createElement("div",{style:{zIndex:1,flex:"1 1 180px"}},
-        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:4,letterSpacing:.3}},greeting+" · "+dateStr),
-        React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:1.1,marginBottom:5}},"Net Liquid Position"),
-        React.createElement("div",{style:{fontSize:isMobile?28:42,fontFamily:"'Sora',sans-serif",fontWeight:800,color:netLiquid>=0?"var(--accent)":"#ef4444",lineHeight:1,letterSpacing:"-1px"}},INR(netLiquid)),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:6}},"Banks + Cash − Card Dues")
-      ),
-      /* Account balance breakdown bars */
-      React.createElement("div",{style:{zIndex:1,flex:"1 1 240px",display:"flex",flexDirection:"column",gap:8,justifyContent:"center"}},
-        React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,marginBottom:2}},"Balance Breakdown"),
-        /* Segmented bar */
-        React.createElement("div",{style:{height:8,borderRadius:4,overflow:"hidden",display:"flex",gap:.5,background:"var(--border)"}},
+      /* ── Balance Breakdown (takes full left/centre space) ── */
+      React.createElement("div",{style:{zIndex:1,flex:"1 1 320px",display:"flex",flexDirection:"column",gap:10,justifyContent:"center"}},
+        /* greeting line — compact, top of block */
+        React.createElement("div",{style:{fontSize:12,color:"var(--text5)",letterSpacing:.3,marginBottom:2}},greeting+" · "+dateStr),
+        React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",textTransform:"uppercase",letterSpacing:.9,marginBottom:4}},"Balance Breakdown"),
+        /* Segmented bar — taller */
+        React.createElement("div",{style:{height:14,borderRadius:6,overflow:"hidden",display:"flex",gap:.5,background:"var(--border)"}},
           [
             {l:"Banks",v:bTotal,c:"#0e7490"},
             {l:"Cash",v:cashBal,c:"var(--accent)"},
@@ -14359,39 +14354,44 @@ const Dashboard=React.memo(({data,isMobile})=>{
             return w>0.5?React.createElement("div",{key:i,title:seg.l+": "+INR(seg.v),style:{width:w+"%",height:"100%",background:seg.c}}):null;
           })
         ),
-        /* Legend */
-        React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:"5px 16px"}},
+        /* Legend — larger amounts */
+        React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:"8px 24px",marginTop:2}},
           [
-            {l:"Banks",v:bTotal,c:"#0e7490",n:data.banks.length+" accounts"},
+            {l:"Banks",v:bTotal,c:"#0e7490",n:data.banks.length+" account"+(data.banks.length!==1?"s":"")},
             {l:"Cash",v:cashBal,c:"var(--accent)",n:"physical"},
-            cDebt>0&&{l:"Card Dues",v:cDebt,c:"#c2410c",n:data.cards.length+" cards",neg:true},
+            cDebt>0&&{l:"Card Dues",v:cDebt,c:"#c2410c",n:data.cards.length+" card"+(data.cards.length!==1?"s":""),neg:true},
           ].filter(Boolean).map((item,i)=>
-            React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",gap:5}},
-              React.createElement("span",{style:{width:7,height:7,borderRadius:2,background:item.c,display:"inline-block",flexShrink:0}}),
+            React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",gap:7}},
+              React.createElement("span",{style:{width:9,height:9,borderRadius:2,background:item.c,display:"inline-block",flexShrink:0}}),
               React.createElement("div",null,
-                React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}}," "+item.l+" "),
-                React.createElement("span",{style:{fontSize:10,fontFamily:"'Sora',sans-serif",fontWeight:700,color:item.neg?"#c2410c":item.c}},(item.neg?"−":"")+INR(item.v)),
-                React.createElement("span",{style:{fontSize:9,color:"var(--text6)"}}," · "+item.n)
+                React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:1}},item.l+" · "+item.n),
+                React.createElement("div",{style:{fontSize:isMobile?15:19,fontFamily:"'Sora',sans-serif",fontWeight:800,color:item.neg?"#c2410c":item.c,lineHeight:1}},(item.neg?"−":"")+INR(item.v))
               )
             )
           )
         )
       ),
-      /* Right stats: card utilisation + tx count */
-      React.createElement("div",{style:{zIndex:1,display:"flex",flexDirection:"column",gap:10,justifyContent:"center",flexShrink:0}},
+      /* ── Right stats: card utilisation + tx count — bigger ── */
+      React.createElement("div",{style:{zIndex:1,display:"flex",flexDirection:"column",gap:14,justifyContent:"center",flexShrink:0}},
         cLimit>0&&React.createElement("div",null,
-          React.createElement("div",{style:{fontSize:9,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,marginBottom:4}},"Credit Utilisation"),
-          React.createElement("div",{style:{width:isMobile?120:150,height:6,borderRadius:3,background:"var(--border)",overflow:"hidden",marginBottom:3}},
-            (()=>{const u=Math.min((cDebt/cLimit)*100,100);const uc=u>80?"#ef4444":u>50?"#c2410c":"#16a34a";return React.createElement("div",{style:{width:u+"%",height:"100%",background:uc,borderRadius:3}});})()
+          React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",textTransform:"uppercase",letterSpacing:.7,marginBottom:7}},"Credit Utilisation"),
+          React.createElement("div",{style:{width:isMobile?150:210,height:10,borderRadius:5,background:"var(--border)",overflow:"hidden",marginBottom:6}},
+            (()=>{const u=Math.min((cDebt/cLimit)*100,100);const uc=u>80?"#ef4444":u>50?"#c2410c":"#16a34a";return React.createElement("div",{style:{width:u+"%",height:"100%",background:uc,borderRadius:5}});})()
           ),
-          React.createElement("div",{style:{fontSize:9,color:"var(--text4)",display:"flex",justifyContent:"space-between",width:isMobile?120:150}},
-            React.createElement("span",null,(cLimit>0?((cDebt/cLimit)*100).toFixed(0):0)+"% used"),
-            React.createElement("span",null,"avail "+INR(cLimit-cDebt))
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",width:isMobile?150:210,gap:12}},
+            React.createElement("div",null,
+              React.createElement("div",{style:{fontSize:9,color:"var(--text5)",marginBottom:2}},"Used"),
+              React.createElement("div",{style:{fontSize:isMobile?13:16,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text3)"}},(cLimit>0?((cDebt/cLimit)*100).toFixed(0):0)+"%")
+            ),
+            React.createElement("div",{style:{textAlign:"right"}},
+              React.createElement("div",{style:{fontSize:9,color:"var(--text5)",marginBottom:2}},"Available"),
+              React.createElement("div",{style:{fontSize:isMobile?13:16,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#16a34a"}},INR(cLimit-cDebt))
+            )
           )
         ),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},
-          React.createElement("span",{style:{fontWeight:700,color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},allBankTx.length),
-          " total transactions"
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:isMobile?18:24,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text2)",lineHeight:1}},allBankTx.length.toLocaleString("en-IN")),
+          React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"total transactions")
         )
       )
     ),
