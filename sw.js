@@ -14,7 +14,7 @@
    • Pending actions written to IDB so the app can reconcile on next open
    ══════════════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'finsights-v4-8-2';
+const CACHE_NAME = 'finsights-v4-9-0';
 const MAX_RUNTIME_CACHE_ENTRIES = 80;
 const MAX_CACHE_AGE_MS = 30 * 24 * 3600 * 1000; // 30 days
 
@@ -25,7 +25,8 @@ const STORE_REMINDERS = "reminders";
 const STORE_PENDING   = "pending_actions";
 const STORE_FIRED     = "fired_today";
 
-const PERIODIC_SYNC_TAG = "finsight-check-reminders";
+const PERIODIC_SYNC_TAG        = "finsight-check-reminders";
+const PERIODIC_SYNC_TAG_BACKUP = "finsight-daily-backup";
 const NOTIF_ICON        = "./icons/icon-192.png";
 const NOTIF_BADGE       = "./icons/icon-192.png";
 
@@ -401,6 +402,18 @@ self.addEventListener('periodicsync', event => {
     console.log('[SW] periodicSync: checking reminders…');
     event.waitUntil(checkRemindersAndNotify());
   }
+  /* Daily backup periodicSync — forwards TRIGGER_AUTO_BACKUP to open clients.
+     The app's gdriveAutoBackup() runs in the page, not the SW, because it
+     needs the full app state and the Google OAuth token stored in localStorage.
+     The SW simply nudges open tabs to run the backup if they haven't yet. */
+  if (event.tag === PERIODIC_SYNC_TAG_BACKUP) {
+    console.log('[SW] periodicSync: triggering daily backup check…');
+    event.waitUntil(
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+        clients.forEach(c => c.postMessage({ type: 'TRIGGER_AUTO_BACKUP' }));
+      })
+    );
+  }
 });
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -471,6 +484,24 @@ self.addEventListener('message', event => {
   /* App asks SW to check reminders right now (called on app open / focus) */
   if (data.type === 'CHECK_REMINDERS_NOW') {
     event.waitUntil(checkRemindersAndNotify());
+  }
+
+  /* App registers the daily-backup periodic sync tag on first load */
+  if (data.type === 'REGISTER_BACKUP_SYNC') {
+    event.waitUntil(
+      (async () => {
+        try {
+          if ('periodicSync' in self.registration) {
+            await self.registration.periodicSync.register(PERIODIC_SYNC_TAG_BACKUP, {
+              minInterval: 22 * 60 * 60 * 1000, /* 22 hours */
+            });
+            console.log('[SW] Daily backup periodicSync registered.');
+          }
+        } catch (e) {
+          console.log('[SW] periodicSync registration failed (expected on desktop/iOS):', e.message);
+        }
+      })()
+    );
   }
 });
 
