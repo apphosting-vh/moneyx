@@ -36288,12 +36288,15 @@ const TAX_LS_KEY = "itr3_ay2627_v1";
     return tax;
   };
 
-  /** Surcharge rate on total income */
-  const scRate = inc =>
-    inc > 50000000 ? 0.37 :
-    inc > 20000000 ? 0.25 :
-    inc > 10000000 ? 0.15 :
-    inc > 5000000  ? 0.10 : 0;
+  /**
+   * Surcharge rate on total income, regime-aware.
+   * Budget 2023 (Sec 115BAC): under New Regime the 37% surcharge slab is removed;
+   * max surcharge = 25% (income > ₹2 Cr).  Old Regime retains 37% for income > ₹5 Cr.
+   */
+  const scRate = (inc, reg) =>
+    reg === "new"
+      ? (inc > 20000000 ? 0.25 : inc > 10000000 ? 0.15 : inc > 5000000 ? 0.10 : 0)
+      : (inc > 50000000 ? 0.37 : inc > 20000000 ? 0.25 : inc > 10000000 ? 0.15 : inc > 5000000 ? 0.10 : 0);
 
   /* ─────────────────────────────────────────────────────
      87A REBATE — FY 2025-26
@@ -36308,8 +36311,10 @@ const TAX_LS_KEY = "itr3_ay2627_v1";
   const REBATE_OLD_THRESHOLD = 500000;  // ₹5 L
   const REBATE_OLD_MAX       = 12500;   // ₹12,500
 
-  /** Standard deduction under New Regime: ₹75,000 (unchanged) */
-  const STD_DED_NEW = 75000;
+  /* NOTE: Standard deduction u/s 16(ia) (₹75,000) is available only to salaried
+     individuals and pensioners.  ITR-3 filers with presumptive / business income
+     are NOT eligible for the standard deduction under either regime.  No STD_DED
+     constant is defined here; new-regime totDed is therefore ₹0. */
 
   /* ─────────────────────────────────────────────────────
      ADVANCE TAX INSTALMENTS — FY 2025-26
@@ -36571,38 +36576,69 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
   const otherSrc = (f.savingsInt - savDed) + f.depositInt + f.dividend;
   // debtMFNet is slab-taxed normal income — included in grossNorm, NOT in specialInc
   const grossNorm = f.presumptive + otherSrc + debtMFNet;
+  // New regime: no standard deduction for ITR-3 (not salaried) → totDed = 0.
+  // Old regime: Chapter VI-A deductions (80C + 80D + other).
   const totDed = regime === "old"
     ? Math.min(f.ded80C, 150000) + Math.min(f.ded80D, 25000) + f.dedOther
-    : STD_DED_NEW;
+    : 0;
   const netNorm    = Math.max(0, grossNorm - totDed);
   const specialInc = stcgNet + ltcgTaxable + buybackAmt;
   const grossTotal = netNorm + specialInc;
 
-  const computeTax = (reg) => {
-    const slabs = reg === "new" ? NEW_SLABS : OLD_SLABS;
-    const normTax = slabTax(netNorm, slabs);
+  const computeTax = (reg, overrideNetNorm, overrideGrossTotal) => {
+    /* When called for the alt-regime comparison, callers pass the correct net normal income
+       and gross total recomputed under the alt regime's deduction set.  The current-regime
+       call passes nothing and uses the module-level values. */
+    const _netNorm    = overrideNetNorm    ?? netNorm;
+    const _grossTotal = overrideGrossTotal ?? grossTotal;
+
+    const slabs   = reg === "new" ? NEW_SLABS : OLD_SLABS;
+    const normTax = slabTax(_netNorm, slabs);
     let rebate = 0, marginalRelief = 0;
     if (reg === "new") {
-      if (grossTotal <= REBATE_NEW_THRESHOLD) {
+      if (_grossTotal <= REBATE_NEW_THRESHOLD) {
         rebate = Math.min(normTax, REBATE_NEW_MAX);
       } else {
-        const excess = grossTotal - REBATE_NEW_THRESHOLD;
+        const excess = _grossTotal - REBATE_NEW_THRESHOLD;
         if (normTax > excess) marginalRelief = normTax - excess;
       }
     } else {
-      if (grossTotal <= REBATE_OLD_THRESHOLD) rebate = Math.min(normTax, REBATE_OLD_MAX);
+      if (_grossTotal <= REBATE_OLD_THRESHOLD) rebate = Math.min(normTax, REBATE_OLD_MAX);
     }
     const normTaxAfterRebate = Math.max(0, normTax - rebate - marginalRelief);
-    const specialTax  = stcgTax + ltcgTax + buybackTax;
-    const taxBeforeSC = normTaxAfterRebate + specialTax;
-    const sc   = taxBeforeSC * scRate(grossTotal);
+
+    /* Surcharge — regime-aware and income-type-aware:
+       • Sec 112A(9): surcharge on LTCG u/s 112A is capped at 15%.
+       • Sec 111A(2): surcharge on STCG u/s 111A is capped at 15%.
+       • Under New Regime (Budget 2023): overall surcharge cap is 25% (37% slab removed).
+       Compute surcharge separately for normal income and special-rate income. */
+    const fullSCRate    = scRate(_grossTotal, reg);
+    const cappedSCRate  = Math.min(fullSCRate, 0.15); // LTCG/STCG cap
+    const sc_normal     = normTaxAfterRebate * fullSCRate;
+    const sc_special    = (stcgTax + ltcgTax + buybackTax) * cappedSCRate;
+    const sc            = sc_normal + sc_special;
+    const specialTax    = stcgTax + ltcgTax + buybackTax;
+    const taxBeforeSC   = normTaxAfterRebate + specialTax;
     const txsc = taxBeforeSC + sc;
     const cess = txsc * 0.04;
     return { normTax, rebate, marginalRelief, normTaxAfterRebate, stcgTax, ltcgTax, buybackTax, taxBeforeSC, sc, txsc, cess, liability: txsc + cess };
   };
 
+  /* ── Alt-regime income recomputation ──
+     The regime comparison must use the alt regime's own deduction set and
+     savDed so that netNorm and grossTotal are consistent with that regime.     */
+  const altRegime = regime === "new" ? "old" : "new";
+  const altSavDed   = altRegime === "old" ? Math.min(f.savingsInt, 10000) : 0;
+  const altOtherSrc = (f.savingsInt - altSavDed) + f.depositInt + f.dividend;
+  const altGrossNorm = f.presumptive + altOtherSrc + debtMFNet;
+  const altTotDed = altRegime === "old"
+    ? Math.min(f.ded80C, 150000) + Math.min(f.ded80D, 25000) + f.dedOther
+    : 0;
+  const altNetNorm    = Math.max(0, altGrossNorm - altTotDed);
+  const altGrossTotal = altNetNorm + specialInc;
+
   const cur = React.useMemo(() => computeTax(regime), [regime, netNorm, grossTotal, stcgTax, ltcgTax, buybackTax, debtMFNet]);
-  const alt = React.useMemo(() => computeTax(regime === "new" ? "old" : "new"), [regime, netNorm, grossTotal, stcgTax, ltcgTax, buybackTax, debtMFNet]);
+  const alt = React.useMemo(() => computeTax(altRegime, altNetNorm, altGrossTotal), [regime, altNetNorm, altGrossTotal, stcgTax, ltcgTax, buybackTax, debtMFNet]);
 
   const { normTax, rebate, marginalRelief, stcgTax:s20t, ltcgTax:l125t, taxBeforeSC, sc, cess, liability } = cur;
 
@@ -36656,7 +36692,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
         const wb = XLSX.utils.book_new();
         const ed = buildExportData();
         const hasBuyback = cfg.hasBuyback && ed.buybackAmt > 0;
-        const regimeLabel = regime === "new" ? "Std. Deduction ₹75,000" : (cfg.actLabel ? "Chapter VIII" : "Chapter VI-A");
+        const regimeLabel = regime === "new" ? "No deductions (ITR-3 / New Regime)" : (cfg.actLabel ? "Chapter VIII" : "Chapter VI-A");
         const secSTCG = cfg.actLabel ? "196" : "111A";
         const secLTCG = cfg.actLabel ? "198" : "112A";
         const secRebate = cfg.actLabel ? "155" : "87A";
@@ -36826,7 +36862,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
         if(ed.savingsInt>0)   incomeRows.push(["Savings Bank Interest", fmtNum(ed.savingsInt), ed.savDed>0?fmtNum(ed.savDed)+" (" + (cfg.actLabel ? "§153" : "80TTA") + ")":"—", fmtNum(ed.savingsInt-ed.savDed)]);
         if(ed.depositInt>0)   incomeRows.push(["Deposit Interest (FD/PO/Co-op)", fmtNum(ed.depositInt), "—", fmtNum(ed.depositInt)]);
         if(ed.dividend>0)     incomeRows.push(["Dividend Income", fmtNum(ed.dividend), "—", fmtNum(ed.dividend)]);
-        incomeRows.push(["Less: Deductions", "", fmtNum(ed.totDed), ""]);
+        if(ed.totDed > 0) incomeRows.push(["Less: Deductions (" + (cfg.actLabel ? "Ch. VIII" : "Ch. VI-A") + ")", "", fmtNum(ed.totDed), ""]);
         incomeRows.push(["NET NORMAL INCOME (slab taxed)", "", "", fmtNum(ed.netNorm)]);
         incomeRows.push(["GROSS TOTAL INCOME", "", "", fmtNum(ed.grossTotal)]);
 
@@ -37386,7 +37422,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
               {buybackAmt > 0 && <div className="brow"><span className="bl">Buyback Proceeds <span className="brate">20%</span></span><span className="bv">{fmt(buybackAmt)}</span></div>}
               {f.presumptive > 0 && <div className="brow"><span className="bl">Presumptive 44AD/44ADA</span><span className="bv">{fmt(f.presumptive)}</span></div>}
               {otherSrc > 0 && <div className="brow"><span className="bl">Other Sources</span><span className="bv">{fmt(otherSrc)}</span></div>}
-              {totDed > 0 && <div className="brow"><span className="bl" style={{color:"var(--itr-green)"}}>(-) {regime==="new"?"Std. Deduction (₹75K)":(cfg.actLabel?"Ch. VIII Deductions":"Ch. VI-A Deductions")}</span><span className="bv" style={{color:"var(--itr-green)"}}>-{fmt(totDed)}</span></div>}
+              {totDed > 0 && <div className="brow"><span className="bl" style={{color:"var(--itr-green)"}}>(-) {cfg.actLabel?"Ch. VIII Deductions":"Ch. VI-A Deductions"}</span><span className="bv" style={{color:"var(--itr-green)"}}>-{fmt(totDed)}</span></div>}
 
               <div className="divider" />
               <div className="srow"><span className="sl">Gross Total Income</span><span className="sv">{fmt(grossTotal)}</span></div>
