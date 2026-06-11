@@ -863,7 +863,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.9.0";
+const APP_VERSION="4.10.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -36379,16 +36379,16 @@ const FY_CONFIGS = {
   },
   "2627": {
     lsKey: "itr3_ay2728_v1",
-    ay: "AY 2027-28 (FY 2026-27)",
-    ayShort: "AY 2027–28",
-    ayTag: "AY 2027–28",
+    ay: "Tax Year 2027-28 (FY 2026-27)",
+    ayShort: "TY 2027–28",
+    ayTag: "TY 2027–28",
     fyLabel: "FY 2026-27",
-    chipSec: "§ 111A · 112A · 44AD/44ADA",
-    chipAy: "AY 2027–28",
-    actLabel: "Income Tax Act 2025",
+    chipSec: "§ 196 · 198 · 58",
+    chipAy: "TY 2027–28",
+    actLabel: "Income Tax Act, 2025",
     bannerTag: "Budget 2026",
-    bannerHtml: "<strong>No slab changes for FY 2026-27:</strong> All tax rates, rebates &amp; exemption limits unchanged from FY 2025-26. New Regime: Nil (0–4L) · 5% (4–8L) · 10% (8–12L) · 15% (12–16L) · 20% (16–20L) · 25% (20–24L) · 30% (above 24L). &nbsp;87A rebate ₹60,000 (new regime, income ≤ ₹12L) · STCG 111A: <strong>20%</strong> · LTCG 112A: <strong>12.5%</strong> (₹1.25L exempt). &nbsp;<strong>New for AY 2027-28:</strong> Share buyback proceeds taxed as capital gains @ 20%. One-time LTCL (up to 31 Mar 2026) may be set off against STCG. &nbsp;<strong>Income Tax Act 2025</strong> replaces IT Act 1961 from 1 Apr 2026. Revised return deadline extended to 31 March (with fee).",
-    disclaimer: "Estimation tool for FY 2026-27 (AY 2027-28) under Income Tax Act 2025. 234B interest estimated from 1 Apr 2027 to current date. Buyback tax classification (STCG vs other) may depend on specific transaction terms — consult your CA. The one-time LTCL vs STCG set-off (u/s 74) applies only to losses incurred up to 31 Mar 2026 — verify eligibility of specific holdings with your CA. Revised return can be filed up to 31 March 2028, with a fee of ₹5,000 (income > ₹5L) or ₹1,000 (income ≤ ₹5L). Not tax advice — consult a qualified CA / tax advisor before filing.",
+    bannerHtml: "<strong>No slab changes for FY 2026-27:</strong> All tax rates, rebates &amp; exemption limits unchanged from FY 2025-26. New Regime: Nil (0–4L) · 5% (4–8L) · 10% (8–12L) · 15% (12–16L) · 20% (16–20L) · 25% (20–24L) · 30% (above 24L). &nbsp;Rebate u/s 155 ₹60,000 (new regime, income ≤ ₹12L) · STCG u/s 196: <strong>20%</strong> · LTCG u/s 198: <strong>12.5%</strong> (₹1.25L exempt). &nbsp;<strong>New for Tax Year 2027-28:</strong> Share buyback proceeds taxed as capital gains @ 20%. One-time LTCL (up to 31 Mar 2026) may be set off against STCG. &nbsp;<strong>Income Tax Act, 2025</strong> replaces IT Act 1961 from 1 Apr 2026. Revised return deadline extended to 31 March (with fee).",
+    disclaimer: "Estimation tool for FY 2026-27 (Tax Year 2027-28) under Income Tax Act, 2025. Interest u/s 424 estimated from 1 Apr 2027 to current date. Buyback tax classification (STCG vs other) may depend on specific transaction terms — consult your CA. The one-time LTCL vs STCG set-off (u/s 74) applies only to losses incurred up to 31 Mar 2026 — verify eligibility of specific holdings with your CA. Revised return can be filed up to 31 March 2028, with a fee of ₹5,000 (income > ₹5L) or ₹1,000 (income ≤ ₹5L). Not tax advice — consult a qualified CA / tax advisor before filing.",
     dateMin: "2026-04-01", dateMax: "2027-03-31",
     advTaxDueText: "≥ 15% by <strong>15 Jun 2026</strong>&nbsp;&nbsp;·&nbsp;&nbsp;≥ 45% by <strong>15 Sep 2026</strong><br />&nbsp;• ≥ 75% by <strong>15 Dec 2026</strong>&nbsp;&nbsp;·&nbsp;&nbsp;100% by <strong>15 Mar 2027</strong>",
     advTaxDateFrom: "2027-04-01",
@@ -36399,19 +36399,19 @@ const FY_CONFIGS = {
       { lbl:"3rd Instalment", date:"2026-12-15", cum:0.75, mo:3 },
       { lbl:"4th Instalment", date:"2027-03-15", cum:1.00, mo:1 },
     ],
-    stcgInfoHtml: "<strong>FY 2026-27 rate: 20%</strong> flat on net STCG u/s 111A — unchanged from FY 2025-26. STCG is <em>not</em> eligible for Section 87A rebate even if total income ≤ ₹12L.<br/><strong>One-time AY 2027-28 provision:</strong> Long-term capital losses (LTCL) incurred <em>up to 31 March 2026</em> may be set off against STCG in AY 2027-28 only (u/s 74). Enter the carried LTCL below to apply this one-time relief.",
+    stcgInfoHtml: "<strong>FY 2026-27 rate: 20%</strong> flat on net STCG u/s 196 — unchanged from FY 2025-26. STCG is <em>not</em> eligible for rebate u/s 155 even if total income ≤ ₹12L.<br/><strong>One-time Tax Year 2027-28 provision:</strong> Long-term capital losses (LTCL) incurred <em>up to 31 March 2026</em> may be set off against STCG in TY 2027-28 only (u/s 74). Enter the carried LTCL below to apply this one-time relief.",
     stcgSub: "STT-paid Equity / Equity-oriented MF — 20% flat · entire FY 2026-27",
-    ltcgInfoHtml: "<strong>FY 2026-27:</strong> LTCG u/s 112A taxed at <strong>12.5%</strong> on gains exceeding <strong>₹1,25,000</strong> (unchanged from FY 2025-26). No indexation. Grandfathering still applies — enter FMV on 31 Jan 2018 as deemed cost for pre-Feb 2018 acquisitions. LTCL from FY 2026-27 can only be set off against LTCG (not STCG). Surcharge on LTCG capped at 15%.",
+    ltcgInfoHtml: "<strong>FY 2026-27:</strong> LTCG u/s 198 taxed at <strong>12.5%</strong> on gains exceeding <strong>₹1,25,000</strong> (unchanged from FY 2025-26). No indexation. Grandfathering still applies — enter FMV on 31 Jan 2018 as deemed cost for pre-Feb 2018 acquisitions. LTCL from FY 2026-27 can only be set off against LTCG (not STCG). Surcharge on LTCG capped at 15%.",
     ltcgSub: "STT-paid Equity / Equity-oriented MF — 12.5% flat, ₹1,25,000 exemption",
-    presumptiveInfoHtml: "<strong>Sec 44AD:</strong> 8% of eligible turnover (6% for digital/banking receipts) for businesses with turnover ≤ ₹3 Cr (if ≤ 5% cash receipts). Unchanged for FY 2026-27. &nbsp;<strong>Sec 44ADA:</strong> 50% of gross receipts for eligible professionals with receipts ≤ ₹75L. Enter the <em>net presumptive income</em> already computed at the applicable %.",
+    presumptiveInfoHtml: "<strong>Sec 58 (erstwhile 44AD):</strong> 8% of eligible turnover (6% for digital/banking receipts) for businesses with turnover ≤ ₹3 Cr (if ≤ 5% cash receipts). Unchanged for FY 2026-27. &nbsp;<strong>Sec 58 (erstwhile 44ADA):</strong> 50% of gross receipts for eligible professionals with receipts ≤ ₹75L. Enter the <em>net presumptive income</em> already computed at the applicable %.",
     deductionsSub: "Available under Old Tax Regime only — limits unchanged for FY 2026-27",
-    exportNamePrefix: "ITR3_Tax_AY2027-28",
-    excelSheets: "3 sheets · AY 2027-28",
+    exportNamePrefix: "ITR3_Tax_TY2027-28",
+    excelSheets: "3 sheets · TY 2027-28",
     hasPDF: true,
     hasLtclSetoff: true,
     hasBuyback: true,
     bannerSavedNote: false,
-    cessNote: "* Rounded · 234B/C interest estimated · 234B from 1 Apr 2027",
+    cessNote: "* Rounded · Interest u/s 424/425 estimated · 424 from 1 Apr 2027",
     slabLabel: "FY 2026-27",
   },
 };
@@ -36643,7 +36643,10 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
         const wb = XLSX.utils.book_new();
         const ed = buildExportData();
         const hasBuyback = cfg.hasBuyback && ed.buybackAmt > 0;
-        const regimeLabel = regime === "new" ? "Std. Deduction ₹75,000" : "Chapter VI-A";
+        const regimeLabel = regime === "new" ? "Std. Deduction ₹75,000" : (cfg.actLabel ? "Chapter VIII" : "Chapter VI-A");
+        const secSTCG = cfg.actLabel ? "196" : "111A";
+        const secLTCG = cfg.actLabel ? "198" : "112A";
+        const secRebate = cfg.actLabel ? "155" : "87A";
 
         /* Sheet 1: Tax Summary */
         const sumData = [
@@ -36652,10 +36655,10 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
           ["", "", "", ""],
           ["INCOME SUMMARY", "", "", ""],
           ["Head of Income", "Gross Amount (₹)", "Deductions/Exempt (₹)", "Net Taxable (₹)"],
-          ["STCG u/s 111A @ 20%", ed.stcgGain, ed.stcgLoss + (ed.ltclApplied||0), ed.stcgNet],
-          ["LTCG u/s 112A @ 12.5%", ed.ltcgGain, ed.ltcgExempt, ed.ltcgTaxable],
+          ["STCG u/s " + secSTCG + " @ 20%", ed.stcgGain, ed.stcgLoss + (ed.ltclApplied||0), ed.stcgNet],
+          ["LTCG u/s " + secLTCG + " @ 12.5%", ed.ltcgGain, ed.ltcgExempt, ed.ltcgTaxable],
           ...(hasBuyback ? [["Share Buyback Proceeds @ 20% (Budget 2026)", ed.buybackAmt, "", ed.buybackAmt]] : []),
-          ["Presumptive Income (44AD/44ADA)", ed.presumptive, "", ed.presumptive],
+          ["Presumptive Income (" + (cfg.actLabel ? "§58" : "44AD/44ADA") + ")", ed.presumptive, "", ed.presumptive],
           ["Savings Bank Interest", ed.savingsInt, ed.savDed, ed.savingsInt - ed.savDed],
           ["Deposit Interest (FD/PO/Co-op)", ed.depositInt, "", ed.depositInt],
           ["Dividend Income", ed.dividend, "", ed.dividend],
@@ -36669,11 +36672,11 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
           ["TAX COMPUTATION", "", "", ""],
           ["Particulars", "", "Amount (₹)", ""],
           ["Slab Tax on Normal Income", "", R(ed.normTax), ""],
-          ["Tax on STCG u/s 111A @ 20%", "", R(ed.stcgTaxComp), ""],
-          ["Tax on LTCG u/s 112A @ 12.5%", "", R(ed.ltcgTaxComp), ""],
+          ["Tax on STCG u/s " + secSTCG + " @ 20%", "", R(ed.stcgTaxComp), ""],
+          ["Tax on LTCG u/s " + secLTCG + " @ 12.5%", "", R(ed.ltcgTaxComp), ""],
           ...(hasBuyback ? [["Tax on Buyback Proceeds @ 20%", "", R(ed.buybackTax), ""]] : []),
           ["Tax Before Rebate", "", R(ed.normTax + ed.stcgTaxComp + ed.ltcgTaxComp + (ed.buybackTax||0)), ""],
-          ...(ed.rebate > 0 ? [["Less: Rebate u/s 87A", "", -R(ed.rebate), ""]] : []),
+          ...(ed.rebate > 0 ? [["Less: Rebate u/s " + secRebate, "", -R(ed.rebate), ""]] : []),
           ...(ed.marginalRelief > 0 ? [["Less: Marginal Relief", "", -R(ed.marginalRelief), ""]] : []),
           ...(ed.sc > 0 ? [["Add: Surcharge", "", R(ed.sc), ""]] : []),
           ["Add: Health & Education Cess @ 4%", "", R(ed.cess), ""],
@@ -36682,7 +36685,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
           ["TAX CREDITS & PAYMENTS", "", "", ""],
           ["Less: Total TDS Deducted", "", -R(ed.totalTDS), ""],
           ["Less: Total Advance Tax Paid", "", -R(ed.totalAT), ""],
-          ...(ed.totPenalty > 0 ? [["Add: Interest u/s 234B + 234C (estimated)", "", R(ed.totPenalty), ""]] : []),
+          ...(ed.totPenalty > 0 ? [["Add: Interest u/s " + (cfg.actLabel ? "424 + 425" : "234B + 234C") + " (estimated)", "", R(ed.totPenalty), ""]] : []),
           ["NET TAX PAYABLE (self-assessment)", "", R(ed.netPayable), ""],
           ["Effective Tax Rate", "", ed.effRate + "%", ""],
         ];
@@ -36714,7 +36717,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
           ["", "", "", ""],
           ["TOTAL ADVANCE TAX PAID", "", ed.totalAT, ""],
           ["", "", "", ""],
-          ["INSTALMENT-WISE 234C ANALYSIS", "", "", "", "", "", ""],
+          ["INSTALMENT-WISE " + (cfg.actLabel ? "§425" : "234C") + " ANALYSIS", "", "", "", "", "", ""],
           ["Instalment", "Due Date", "Required (₹)", "Paid by Date (₹)", "Shortfall (₹)", "234C Interest (₹)", "Status"],
           ...ed.instRows.map(r => [
             r.lbl, r.date, R(r.req), R(r.paid), R(r.shortfall), R(r.intAmt),
@@ -36722,13 +36725,13 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
           ]),
           ["", "", "", "", "", "", ""],
           ["INTEREST SUMMARY", "", "", "", "", "", ""],
-          ["Interest u/s 234C (instalment shortfall)", "", R(ed.int234C), "", "", "", ""],
-          ["Interest u/s 234B", "", R(ed.int234B), "", "", "", ""],
+          ["Interest u/s " + (cfg.actLabel ? "425" : "234C") + " (instalment shortfall)", "", R(ed.int234C), "", "", "", ""],
+          ["Interest u/s " + (cfg.actLabel ? "424" : "234B") + "", "", R(ed.int234B), "", "", "", ""],
           ["TOTAL ESTIMATED INTEREST", "", R(ed.totPenalty), "", "", "", ""],
         ];
         const ws3 = XLSX.utils.aoa_to_sheet(atData);
         ws3["!cols"] = [{wch:22},{wch:14},{wch:18},{wch:18},{wch:16},{wch:20},{wch:12}];
-        XLSX.utils.book_append_sheet(wb, ws3, "Advance Tax & 234C");
+        XLSX.utils.book_append_sheet(wb, ws3, cfg.actLabel ? "Advance Tax & §425" : "Advance Tax & 234C");
 
         XLSX.writeFile(wb, cfg.exportNamePrefix + ".xlsx");
       } catch(e) { console.error(e); alert("Excel export failed: " + e.message); }
@@ -36753,6 +36756,9 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
         const NAVY=[27,58,107], NAVY_L=[232,238,248], GREEN=[26,122,80], GREEN_L=[232,245,239],
               RED=[185,28,28], RED_L=[253,240,238], SAFF=[217,119,6], SAFF_L=[254,243,226],
               WHITE=[255,255,255], DKGREY=[74,85,114], LGREY=[216,223,233];
+        const pdfSecSTCG = cfg.actLabel ? "196" : "111A";
+        const pdfSecLTCG = cfg.actLabel ? "198" : "112A";
+        const pdfSecRebate = cfg.actLabel ? "155" : "87A";
 
         const addPageHeader = () => {
           doc.setFillColor(...NAVY); doc.rect(0,0,PW,22,"F");
@@ -36798,11 +36804,11 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
         /* Income summary */
         sectionHead("A.  Income Summary");
         const incomeRows = [];
-        if(ed.stcgNet>0)     incomeRows.push(["STCG u/s 111A (20% flat)", fmtNum(ed.stcgGain), fmtNum(ed.stcgLoss+(ed.ltclApplied||0)), fmtNum(ed.stcgNet)]);
-        if(ed.ltcgNet>0)     incomeRows.push(["LTCG u/s 112A (12.5% flat)", fmtNum(ed.ltcgGain), fmtNum(ed.ltcgExempt)+" (exempt)", fmtNum(ed.ltcgTaxable)]);
+        if(ed.stcgNet>0)     incomeRows.push(["STCG u/s " + pdfSecSTCG + " (20% flat)", fmtNum(ed.stcgGain), fmtNum(ed.stcgLoss+(ed.ltclApplied||0)), fmtNum(ed.stcgNet)]);
+        if(ed.ltcgNet>0)     incomeRows.push(["LTCG u/s " + pdfSecLTCG + " (12.5% flat)", fmtNum(ed.ltcgGain), fmtNum(ed.ltcgExempt)+" (exempt)", fmtNum(ed.ltcgTaxable)]);
         if(hasBuyback)        incomeRows.push(["Share Buyback Proceeds @ 20%", fmtNum(ed.buybackAmt), "", fmtNum(ed.buybackAmt)]);
-        if(ed.presumptive>0)  incomeRows.push(["Presumptive Income (44AD/44ADA)", "—", "—", fmtNum(ed.presumptive)]);
-        if(ed.savingsInt>0)   incomeRows.push(["Savings Bank Interest", fmtNum(ed.savingsInt), ed.savDed>0?fmtNum(ed.savDed)+" (80TTA)":"—", fmtNum(ed.savingsInt-ed.savDed)]);
+        if(ed.presumptive>0)  incomeRows.push(["Presumptive Income (" + (cfg.actLabel ? "§58" : "44AD/44ADA") + ")", "—", "—", fmtNum(ed.presumptive)]);
+        if(ed.savingsInt>0)   incomeRows.push(["Savings Bank Interest", fmtNum(ed.savingsInt), ed.savDed>0?fmtNum(ed.savDed)+" (" + (cfg.actLabel ? "§153" : "80TTA") + ")":"—", fmtNum(ed.savingsInt-ed.savDed)]);
         if(ed.depositInt>0)   incomeRows.push(["Deposit Interest (FD/PO/Co-op)", fmtNum(ed.depositInt), "—", fmtNum(ed.depositInt)]);
         if(ed.dividend>0)     incomeRows.push(["Dividend Income", fmtNum(ed.dividend), "—", fmtNum(ed.dividend)]);
         incomeRows.push(["Less: Deductions", "", fmtNum(ed.totDed), ""]);
@@ -36830,12 +36836,12 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
         sectionHead("B.  Tax Computation");
         const taxRows = [
           ["Slab Tax on Normal Income", fmtNum(ed.normTax)],
-          ["Tax on STCG u/s 111A @ 20%", fmtNum(ed.stcgTaxComp)],
-          ["Tax on LTCG u/s 112A @ 12.5%", fmtNum(ed.ltcgTaxComp)],
+          ["Tax on STCG u/s " + pdfSecSTCG + " @ 20%", fmtNum(ed.stcgTaxComp)],
+          ["Tax on LTCG u/s " + pdfSecLTCG + " @ 12.5%", fmtNum(ed.ltcgTaxComp)],
           ...(hasBuyback ? [["Tax on Buyback Proceeds @ 20%", fmtNum(ed.buybackTax)]] : []),
           ["Tax Before Rebate / Relief", fmtNum(ed.normTax + ed.stcgTaxComp + ed.ltcgTaxComp + (ed.buybackTax||0))],
         ];
-        if(ed.rebate>0)         taxRows.push(["Less: Rebate u/s 87A", "(" + fmtNum(ed.rebate) + ")"]);
+        if(ed.rebate>0)         taxRows.push(["Less: Rebate u/s " + pdfSecRebate, "(" + fmtNum(ed.rebate) + ")"]);
         if(ed.marginalRelief>0) taxRows.push(["Less: Marginal Relief", "(" + fmtNum(ed.marginalRelief) + ")"]);
         if(ed.sc>0)             taxRows.push(["Add: Surcharge", fmtNum(ed.sc)]);
         taxRows.push(["Add: Health & Education Cess @ 4%", fmtNum(ed.cess)]);
@@ -36861,7 +36867,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
           ["Less: Total TDS Deducted", "(" + fmtNum(ed.totalTDS) + ")"],
           ["Less: Total Advance Tax Paid", "(" + fmtNum(ed.totalAT) + ")"],
         ];
-        if(ed.totPenalty>0) creditRows.push(["Add: Interest u/s 234B + 234C", fmtNum(ed.totPenalty)]);
+        if(ed.totPenalty>0) creditRows.push(["Add: Interest u/s " + (cfg.actLabel ? "424 + 425" : "234B + 234C"), fmtNum(ed.totPenalty)]);
         creditRows.push(["NET TAX PAYABLE", fmtNum(ed.netPayable)]);
         creditRows.push(["Effective Tax Rate", ed.effRate + "%"]);
 
@@ -36929,12 +36935,12 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
         }
 
         /* 234C Analysis */
-        sectionHead("G.  234C Analysis — " + cfg.fyLabel);
+        sectionHead("G.  " + (cfg.actLabel ? "§425" : "234C") + " Analysis — " + cfg.fyLabel);
         const instR = ed.instRows.map(r=>[r.lbl,r.date,fmtNum(R(r.req)),fmtNum(R(r.paid)),
           r.shortfall>0?fmtNum(R(r.shortfall)):"—", r.intAmt>0?fmtNum(R(r.intAmt)):"—",
           r.shortfall<=0?"On Time":r.paid>0?"Partial":"Short"]);
-        instR.push(["","","","","",fmtNum(ed.int234C),"234C Total"]);
-        if(ed.int234B>0) instR.push(["Interest u/s 234B","","","","",fmtNum(ed.int234B),"234B"]);
+        instR.push(["","","","","",fmtNum(ed.int234C),cfg.actLabel ? "§425 Total" : "234C Total"]);
+        if(ed.int234B>0) instR.push(["Interest u/s " + (cfg.actLabel ? "424" : "234B"),"","","","",fmtNum(ed.int234B),cfg.actLabel ? "§424" : "234B"]);
         instR.push(["TOTAL ESTIMATED INTEREST","","","","",fmtNum(ed.totPenalty),""]);
 
         doc.autoTable({
@@ -36960,7 +36966,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
         doc.setFontSize(7); doc.setFont("helvetica","bold"); doc.setTextColor(...DKGREY);
         doc.text("DISCLAIMER", 17, y+5);
         doc.setFont("helvetica","normal"); doc.setTextColor(130,140,160);
-        doc.text("For estimation purposes only. 234B/234C interest is approximate. Consult a qualified CA.", 17, y+9);
+        doc.text("For estimation purposes only. " + (cfg.actLabel ? "§424/§425" : "234B/234C") + " interest is approximate. Consult a qualified CA.", 17, y+9);
 
         const total = doc.getNumberOfPages();
         for (let i=1;i<=total;i++){doc.setPage(i);addPageFooter(i,total);}
@@ -36970,13 +36976,16 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
     }).catch(e => { alert("Could not load export library — check your connection."); setPdfLoading(false); });
   };
 
-  /* ── AY 2027-28 specific: extra notes for Excel export ── */
+  /* ── TY 2027-28 specific: extra notes for Excel export ── */
   const extraNotes = cfg.hasBuyback ? [
     ["", "", "", ""],
     ["KEY FY 2026-27 NOTES", "", "", ""],
-    ["Income Tax Act 2025 in effect from 1 Apr 2026", "", "", ""],
+    ["Income Tax Act, 2025 in effect from 1 Apr 2026 (replaces IT Act 1961)", "", "", ""],
+    ["Assessment Year / Previous Year replaced by 'Tax Year' concept", "", "", ""],
     ["Share buyback proceeds taxed as capital gains (Budget 2026)", "", "", ""],
-    ["One-time: LTCL up to 31 Mar 2026 can offset STCG in AY 2027-28", "", "", ""],
+    ["One-time: LTCL up to 31 Mar 2026 can offset STCG in TY 2027-28", "", "", ""],
+    ["Key section mapping: §111A→§196 · §112A→§198 · §87A→§155 · §44AD/ADA→§58", "", "", ""],
+    ["§80C→§123 · §80D→§126 · §80TTA→§153 · §234B→§424 · §234C→§425", "", "", ""],
   ] : [];
 
   /* ══════════════════════════════════════════════════════
@@ -37018,12 +37027,12 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
       <div className="main">
         <div className="left-col">
 
-          {/* STCG u/s 111A @ 20% */}
+          {/* STCG u/s 196 (erstwhile 111A) @ 20% */}
           <div className="card">
             <div className="card-hdr">
               <div className="cicon ci-saffron">↗</div>
               <div>
-                <div className="c-ttl">Short Term Capital Gains (u/s 111A)</div>
+                <div className="c-ttl">Short Term Capital Gains (u/s {cfg.actLabel ? "196" : "111A"})</div>
                 <div className="c-sub">{cfg.stcgSub}</div>
               </div>
               <span className="ctag ct-saffron">20% flat</span>
@@ -37033,7 +37042,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
               <div className={`fg ${cfg.hasLtclSetoff ? "fg3" : "fg2"}`}>
                 <F label="Gross STCG (Total Gains)" fk="stcgGain" />
                 <F label="STCG Losses for Set-off" fk="stcgLoss" />
-                {cfg.hasLtclSetoff && <F label="LTCL Carried (up to 31 Mar 2026)" fk="ltcl_setoff" note="One-time u/s 74 — AY 2027-28 only" />}
+                {cfg.hasLtclSetoff && <F label="LTCL Carried (up to 31 Mar 2026)" fk="ltcl_setoff" note="One-time u/s 74 — TY 2027-28 only" />}
               </div>
               {cfg.hasLtclSetoff && ltclApplied > 0 && (
                 <div className="nbox nb-green" style={{marginTop:8}}>
@@ -37047,12 +37056,12 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
             </div>
           </div>
 
-          {/* LTCG u/s 112A @ 12.5% */}
+          {/* LTCG u/s 198 (erstwhile 112A) @ 12.5% */}
           <div className="card">
             <div className="card-hdr">
               <div className="cicon ci-green">₹</div>
               <div>
-                <div className="c-ttl">Long Term Capital Gains u/s 112A</div>
+                <div className="c-ttl">Long Term Capital Gains u/s {cfg.actLabel ? "198" : "112A"}</div>
                 <div className="c-sub">{cfg.ltcgSub}</div>
               </div>
               <span className="ctag ct-green">12.5% flat</span>
@@ -37080,13 +37089,13 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
                 <div className="cicon ci-red">↺</div>
                 <div>
                   <div className="c-ttl">Share Buyback Proceeds — Capital Gains</div>
-                  <div className="c-sub">New for AY 2027-28 — buyback taxed in shareholder's hands @ 20% (Budget 2026)</div>
+                  <div className="c-sub">New for TY 2027-28 — buyback taxed in shareholder's hands @ 20% (Budget 2026)</div>
                 </div>
                 <span className="ctag ct-saffron">20% · New</span>
               </div>
               <div className="card-body">
                 <div className="nbox nb-blue">
-                  <strong>Budget 2026 — effective FY 2026-27:</strong> Buyback proceeds from domestic listed companies are now taxed as <strong>capital gains in the shareholder's hands</strong>. These gains are classified as STCG (u/s 111A at 20%) if shares were listed and STT-paid. The cost of acquisition can be claimed as a capital loss and carried forward for up to 8 assessment years.
+                  <strong>Budget 2026 — effective FY 2026-27:</strong> Buyback proceeds from domestic listed companies are now taxed as <strong>capital gains in the shareholder's hands</strong>. These gains are classified as STCG (u/s {cfg.actLabel ? "196 (erstwhile 111A)" : "111A"} at 20%) if shares were listed and STT-paid. The cost of acquisition can be claimed as a capital loss and carried forward for up to 8 {cfg.actLabel ? "tax years" : "assessment years"}.
                 </div>
                 <div className="fg fg1">
                   <F label="Buyback Consideration Received (sale proceeds)" fk="buyback" />
@@ -37107,7 +37116,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
               <div className="cicon ci-blue">B</div>
               <div>
                 <div className="c-ttl">Presumptive Business / Professional Income</div>
-                <div className="c-sub">Section 44AD (Business) / 44ADA (Profession)</div>
+                <div className="c-sub">{cfg.actLabel ? "Section 58 (erstwhile 44AD/44ADA)" : "Section 44AD (Business) / 44ADA (Profession)"}</div>
               </div>
               <span className="ctag ct-blue">Slab rates</span>
             </div>
@@ -37124,14 +37133,14 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
             <div className="card-hdr">
               <div className="cicon ci-saffron">₹</div>
               <div>
-                <div className="c-ttl">Income from Other Sources</div>
+                <div className="c-ttl">{cfg.actLabel ? "Income from Residuary Sources" : "Income from Other Sources"}</div>
                 <div className="c-sub">Interest &amp; Dividend — taxable at applicable slab rates</div>
               </div>
               <span className="ctag ct-saffron">Slab rates</span>
             </div>
             <div className="card-body">
               <div className="fg fg3">
-                <F label="Savings Bank Interest" fk="savingsInt" note="80TTA upto ₹10K (Old)" />
+                <F label="Savings Bank Interest" fk="savingsInt" note={cfg.actLabel ? "§153 upto ₹10K (Old)" : "80TTA upto ₹10K (Old)"} />
                 <F label="Deposit Interest" fk="depositInt" note="FD / PO / Co-op" />
                 <F label="Dividend Income" fk="dividend" note="Equity / MF" />
               </div>
@@ -37150,16 +37159,16 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
               <div className="card-hdr">
                 <div className="cicon ci-green">✓</div>
                 <div>
-                  <div className="c-ttl">Chapter VI-A Deductions</div>
+                  <div className="c-ttl">{cfg.actLabel ? "Chapter VIII Deductions" : "Chapter VI-A Deductions"}</div>
                   <div className="c-sub">{cfg.deductionsSub}</div>
                 </div>
                 <span className="ctag ct-green">Old Regime</span>
               </div>
               <div className="card-body">
                 <div className="fg fg3">
-                  <F label="80C — Max ₹1.5L" fk="ded80C" note="PPF/ELSS/LIC" />
-                  <F label="80D — Max ₹25K" fk="ded80D" note="Health Insurance" />
-                  <F label="Other — 80E/80G etc." fk="dedOther" />
+                  <F label={cfg.actLabel ? "§123 (erstwhile 80C) — Max ₹1.5L" : "80C — Max ₹1.5L"} fk="ded80C" note="PPF/ELSS/LIC" />
+                  <F label={cfg.actLabel ? "§126 (erstwhile 80D) — Max ₹25K" : "80D — Max ₹25K"} fk="ded80D" note="Health Insurance" />
+                  <F label={cfg.actLabel ? "Other — §129/133 etc." : "Other — 80E/80G etc."} fk="dedOther" />
                 </div>
                 <div className="ibar">
                   <span className="pill p-green">Total Deductions: {fmt(totDed)}</span>
@@ -37216,16 +37225,16 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
               <div className="cicon ci-orange">₹</div>
               <div>
                 <div className="c-ttl">Advance Tax Payments</div>
-                <div className="c-sub">Each challan date is used to compute Sec 234B &amp; 234C interest</div>
+                <div className="c-sub">Each challan date is used to compute Interest u/s {cfg.actLabel ? "424 &amp; 425" : "234B &amp; 234C"}</div>
               </div>
-              <span className="ctag ct-saffron">234B · 234C</span>
+              <span className="ctag ct-saffron">{cfg.actLabel ? "§424 · §425" : "234B · 234C"}</span>
             </div>
             <div className="card-body">
               <div className="nbox nb-warn">
                 <strong>Advance Tax Due Dates — {cfg.fyLabel}:</strong><br />
                 &nbsp;• {cfg.advTaxDueText}<br />
-                Short / late payment attracts <strong>1% per month</strong> u/s 234C.
-                Failing to pay ≥ 90% of assessed tax as advance tax attracts 234B interest from {cfg.advTaxDateFrom.replace("-04-01"," Apr " + cfg.advTaxDateFrom.slice(0,4))}.
+                Short / late payment attracts <strong>1% per month</strong> u/s {cfg.actLabel ? "425" : "234C"}.
+                Failing to pay ≥ 90% of assessed tax as advance tax attracts {cfg.actLabel ? "§424" : "234B"} interest from {cfg.advTaxDateFrom.replace("-04-01"," Apr " + cfg.advTaxDateFrom.slice(0,4))}.
               </div>
               {atRows.map((e, i) => (
                 <div key={e.id} className="entry-row">
@@ -37266,13 +37275,13 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
                 <div style={{marginTop:16}}>
                   <button className="coll-btn" onClick={() => setShow234(!show234)}>
                     <span className={`chevron${show234 ? " open" : ""}`}>▶</span>
-                    Instalment-wise 234C Analysis — {cfg.fyLabel}
+                    Instalment-wise {cfg.actLabel ? "§425" : "234C"} Analysis — {cfg.fyLabel}
                   </button>
                   {show234 && (
                     <>
                       <table className="inst-tbl">
                         <thead>
-                          <tr><th>Instalment</th><th>Due Date</th><th>Required</th><th>Paid by Date</th><th>Shortfall</th><th>234C Int.</th><th>Status</th></tr>
+                          <tr><th>Instalment</th><th>Due Date</th><th>Required</th><th>Paid by Date</th><th>Shortfall</th><th>{cfg.actLabel ? "§425 Int." : "234C Int."}</th><th>Status</th></tr>
                         </thead>
                         <tbody>
                           {instRows.map((r, i) => {
@@ -37299,14 +37308,14 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
                       {totPenalty > 0 && (
                         <div className="pen-box">
                           <div className="pen-title">⚠️ Estimated Interest / Penalty</div>
-                          {int234C > 0 && <div className="pen-row"><span className="pl">Interest u/s 234C — Instalment shortfall</span><span className="pv">{fmt(R(int234C))}</span></div>}
-                          {int234B > 0 && <div className="pen-row"><span className="pl">Interest u/s 234B — {cfg.sec234BLabel}</span><span className="pv">{fmt(R(int234B))}</span></div>}
+                          {int234C > 0 && <div className="pen-row"><span className="pl">Interest u/s {cfg.actLabel ? "425" : "234C"} — Instalment shortfall</span><span className="pv">{fmt(R(int234C))}</span></div>}
+                          {int234B > 0 && <div className="pen-row"><span className="pl">Interest u/s {cfg.actLabel ? "424" : "234B"} — {cfg.sec234BLabel}</span><span className="pv">{fmt(R(int234B))}</span></div>}
                           <div className="pen-row"><span className="pl">Total Estimated Interest</span><span className="pv">{fmt(R(totPenalty))}</span></div>
                         </div>
                       )}
                       {totPenalty <= 0 && (totalAT > 0 || totalTDS > 0) && (
                         <div className="nbox nb-green" style={{marginTop:10,marginBottom:0}}>
-                          <strong>✓ No 234B / 234C interest</strong> — Advance tax is on schedule and sufficient.
+                          <strong>✓ No {cfg.actLabel ? "§424/§425" : "234B/234C"} interest</strong> — Advance tax is on schedule and sufficient.
                         </div>
                       )}
                     </>
@@ -37331,14 +37340,14 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
               </div>
 
               <div className="btitle">Income Summary</div>
-              {stcgNet > 0 && <div className="brow"><span className="bl">STCG u/s 111A <span className="brate">20%</span></span><span className="bv">{fmt(stcgNet)}</span></div>}
+              {stcgNet > 0 && <div className="brow"><span className="bl">STCG u/s {cfg.actLabel ? "196" : "111A"} <span className="brate">20%</span></span><span className="bv">{fmt(stcgNet)}</span></div>}
               {cfg.hasLtclSetoff && ltclApplied > 0 && <div className="brow"><span className="bl" style={{color:"var(--itr-green)"}}>(-) LTCL One-time Set-off</span><span className="bv" style={{color:"var(--itr-green)"}}>-{fmt(ltclApplied)}</span></div>}
-              {ltcgTaxable > 0 && <div className="brow"><span className="bl">LTCG u/s 112A <span className="brate">12.5%</span></span><span className="bv">{fmt(ltcgTaxable)}</span></div>}
+              {ltcgTaxable > 0 && <div className="brow"><span className="bl">LTCG u/s {cfg.actLabel ? "198" : "112A"} <span className="brate">12.5%</span></span><span className="bv">{fmt(ltcgTaxable)}</span></div>}
               {ltcgExempt > 0 && <div className="brow"><span className="bl" style={{color:"var(--itr-green)"}}>LTCG Exempt (₹1.25L)</span><span className="bv" style={{color:"var(--itr-green)"}}>-{fmt(ltcgExempt)}</span></div>}
               {buybackAmt > 0 && <div className="brow"><span className="bl">Buyback Proceeds <span className="brate">20%</span></span><span className="bv">{fmt(buybackAmt)}</span></div>}
               {f.presumptive > 0 && <div className="brow"><span className="bl">Presumptive 44AD/44ADA</span><span className="bv">{fmt(f.presumptive)}</span></div>}
               {otherSrc > 0 && <div className="brow"><span className="bl">Other Sources</span><span className="bv">{fmt(otherSrc)}</span></div>}
-              {totDed > 0 && <div className="brow"><span className="bl" style={{color:"var(--itr-green)"}}>(-) {regime==="new"?"Std. Deduction (₹75K)":"Ch. VI-A Deductions"}</span><span className="bv" style={{color:"var(--itr-green)"}}>-{fmt(totDed)}</span></div>}
+              {totDed > 0 && <div className="brow"><span className="bl" style={{color:"var(--itr-green)"}}>(-) {regime==="new"?"Std. Deduction (₹75K)":(cfg.actLabel?"Ch. VIII Deductions":"Ch. VI-A Deductions")}</span><span className="bv" style={{color:"var(--itr-green)"}}>-{fmt(totDed)}</span></div>}
 
               <div className="divider" />
               <div className="srow"><span className="sl">Gross Total Income</span><span className="sv">{fmt(grossTotal)}</span></div>
@@ -37356,7 +37365,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
                 <span className="sv">{fmt(normTax + s20t + l125t + buybackTax)}</span>
               </div>
 
-              {rebate > 0 && <div className="srow s-green"><span className="sl">(-) Rebate u/s 87A<small>{regime==="new"?"Max ₹60K if income ≤ ₹12L":"Max ₹12.5K if income ≤ ₹5L"}</small></span><span className="sv">-{fmt(rebate)}</span></div>}
+              {rebate > 0 && <div className="srow s-green"><span className="sl">(-) Rebate u/s {cfg.actLabel ? "155" : "87A"}<small>{regime==="new"?"Max ₹60K if income ≤ ₹12L":"Max ₹12.5K if income ≤ ₹5L"}</small></span><span className="sv">-{fmt(rebate)}</span></div>}
               {marginalRelief > 0 && <div className="srow s-green"><span className="sl">(-) Marginal Relief</span><span className="sv">-{fmt(marginalRelief)}</span></div>}
               {sc > 0 && <div className="srow"><span className="sl">(+) Surcharge</span><span className="sv">{fmt(sc)}</span></div>}
               <div className="srow"><span className="sl">(+) H&amp;E Cess<small>4% on tax + surcharge</small></span><span className="sv">{fmt(cess)}</span></div>
@@ -37365,7 +37374,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
 
               {totalTDS > 0 && <div className="srow s-green" style={{marginTop:4}}><span className="sl">(-) TDS Deducted</span><span className="sv">-{fmt(totalTDS)}</span></div>}
               {totalAT > 0 && <div className="srow s-green"><span className="sl">(-) Advance Tax Paid</span><span className="sv">-{fmt(totalAT)}</span></div>}
-              {totPenalty > 0 && <div className="srow s-red"><span className="sl">(+) Interest 234B/234C<small>estimated</small></span><span className="sv">+{fmt(R(totPenalty))}</span></div>}
+              {totPenalty > 0 && <div className="srow s-red"><span className="sl">(+) Interest {cfg.actLabel ? "§424/§425" : "234B/234C"}<small>estimated</small></span><span className="sv">+{fmt(R(totPenalty))}</span></div>}
 
               <div className="big-tax">
                 <div className="bt-lbl">Net Tax Payable</div>
@@ -37373,8 +37382,8 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
                 <div className="bt-eff">Effective Rate: {effRate}%</div>
               </div>
 
-              {rebate > 0 && grossTotal <= REBATE_NEW_THRESHOLD && regime === "new" && <div className="rebate-note">✓ Full 87A Rebate (₹60K) — Zero slab tax · Income ≤ ₹12L</div>}
-              {rebate > 0 && regime === "old" && <div className="rebate-note">✓ Rebate u/s 87A — Income ≤ ₹5L</div>}
+              {rebate > 0 && grossTotal <= REBATE_NEW_THRESHOLD && regime === "new" && <div className="rebate-note">✓ Full Rebate u/s {cfg.actLabel ? "155" : "87A"} (₹60K) — Zero slab tax · Income ≤ ₹12L</div>}
+              {rebate > 0 && regime === "old" && <div className="rebate-note">✓ Rebate u/s {cfg.actLabel ? "155" : "87A"} — Income ≤ ₹5L</div>}
               {marginalRelief > 0 && <div className="marginal-note">Marginal Relief applied — Income slightly above ₹12L threshold</div>}
               <div className="cess-note">{cfg.cessNote}</div>
 
@@ -37450,7 +37459,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
               )}
             </div>
             <div style={{fontSize:10,color:"var(--itr-text3)",marginTop:9,lineHeight:1.5}}>
-              <strong style={{color:"var(--itr-text2)"}}>Excel</strong> — Tax Summary, TDS Credits, Advance Tax &amp; 234C Analysis.
+              <strong style={{color:"var(--itr-text2)"}}>Excel</strong> — Tax Summary, TDS Credits, Advance Tax &amp; {cfg.actLabel ? "§425" : "234C"} Analysis.
               {cfg.hasPDF && <><br/><strong style={{color:"var(--itr-text2)"}}>PDF</strong> — A4 report with income summary, tax workings, regime comparison.</>}
             </div>
           </div>
@@ -37479,7 +37488,7 @@ TaxEstimatorSection = React.memo(TaxEstimatorSection);
 const TaxEstimatorWrapper = ({ taxData, taxData2627, dispatch }) => {
   const tabs = [
     { id:"fy2526", label:"FY 2025-26", sub:"AY 2026-27 · Current Filing", badge:"Current", badgeColor:"var(--accent)", badgeBg:"var(--accentbg)", badgeBd:"var(--accent)44" },
-    { id:"fy2627", label:"FY 2026-27", sub:"AY 2027-28 · Plan Ahead",    badge:"New",     badgeColor:"#6d28d9",       badgeBg:"rgba(109,40,217,.12)", badgeBd:"rgba(109,40,217,.28)" },
+    { id:"fy2627", label:"FY 2026-27", sub:"TY 2027-28 · Plan Ahead",    badge:"New",     badgeColor:"#6d28d9",       badgeBg:"rgba(109,40,217,.12)", badgeBd:"rgba(109,40,217,.28)" },
   ];
 
   const [fyTab, setFyTab] = useState(() => {
