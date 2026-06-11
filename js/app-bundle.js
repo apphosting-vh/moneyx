@@ -36657,7 +36657,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
   const int234B = React.useMemo(
     () => calc234BFor(liability, totalTDS, atRows, cfg.advTaxDateFrom), [liability, totalTDS, JSON.stringify(atRows)]);
   const totPenalty = int234B + int234C;
-  const netPayable = Math.max(0, liability - totalTDS - totalAT - totalSAT);
+  const netPayable = liability - totalTDS - totalAT - totalSAT; /* negative = refund due */
   const effRate    = grossTotal > 0 ? ((liability / grossTotal) * 100).toFixed(1) : "0.0";
   const altLabel   = regime === "new" ? "Old Regime" : "New Regime";
   const curLabel   = regime === "new" ? "New Regime" : "Old Regime";
@@ -36743,7 +36743,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
           ["Less: Total Advance Tax Paid", "", -R(ed.totalAT), ""],
           ...(ed.totalSAT > 0 ? [["Less: Self Assessment Tax Paid", "", -R(ed.totalSAT), ""]] : []),
           ...(ed.totPenalty > 0 ? [["Add: Interest u/s " + (cfg.actLabel ? "424 + 425" : "234B + 234C") + " (estimated)", "", R(ed.totPenalty), ""]] : []),
-          ["NET TAX PAYABLE (self-assessment)", "", R(ed.netPayable), ""],
+          [ed.netPayable < 0 ? "EXCESS TAX PAID — REFUND DUE" : "NET TAX PAYABLE (self-assessment)", "", R(ed.netPayable), ""],
           ["Effective Tax Rate", "", ed.effRate + "%", ""],
         ];
         const ws1 = XLSX.utils.aoa_to_sheet(sumData);
@@ -36941,7 +36941,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
         ];
         if(ed.totalSAT>0) creditRows.push(["Less: Self Assessment Tax Paid", "(" + fmtNum(ed.totalSAT) + ")"]);
         if(ed.totPenalty>0) creditRows.push(["Add: Interest u/s " + (cfg.actLabel ? "424 + 425" : "234B + 234C"), fmtNum(ed.totPenalty)]);
-        creditRows.push(["NET TAX PAYABLE", fmtNum(ed.netPayable)]);
+        creditRows.push([ed.netPayable < 0 ? "EXCESS TAX — REFUND DUE" : "NET TAX PAYABLE", (ed.netPayable < 0 ? "(" : "") + fmtNum(Math.abs(ed.netPayable)) + (ed.netPayable < 0 ? ") CR" : "")]);
         creditRows.push(["Effective Tax Rate", ed.effRate + "%"]);
 
         doc.autoTable({
@@ -36952,6 +36952,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
           columnStyles: {0:{cellWidth:138},1:{cellWidth:32,halign:"right"}},
           didParseCell: (data) => {
             if(String(data.cell.raw||"").startsWith("NET TAX")){data.cell.styles.fontStyle="bold";data.cell.styles.fillColor=[27,58,107];data.cell.styles.textColor=[255,255,255];}
+            if(String(data.cell.raw||"").startsWith("EXCESS TAX")){data.cell.styles.fontStyle="bold";data.cell.styles.fillColor=[22,163,74];data.cell.styles.textColor=[255,255,255];}
             if(String(data.cell.raw||"").includes("Less:")){data.cell.styles.textColor=GREEN;}
             if(String(data.cell.raw||"").includes("234")){data.cell.styles.textColor=RED;}
           },
@@ -37538,11 +37539,18 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
               {totalSAT > 0 && <div className="srow s-green"><span className="sl">(-) Self Assessment Tax<small>Challan 280 / MH 300</small></span><span className="sv">-{fmt(totalSAT)}</span></div>}
               {totPenalty > 0 && <div className="srow s-red"><span className="sl">(+) Interest {cfg.actLabel ? "§424/§425" : "234B/234C"}<small>estimated</small></span><span className="sv">+{fmt(R(totPenalty))}</span></div>}
 
-              <div className="big-tax">
-                <div className="bt-lbl">Net Tax Payable</div>
-                <div className="bt-amt">{fmt(R(netPayable + totPenalty))}</div>
-                <div className="bt-eff">Effective Rate: {effRate}%</div>
-              </div>
+              {(() => {
+                const net = R(netPayable + totPenalty);
+                const isRefund = net < 0;
+                return (
+                  <div className="big-tax" style={isRefund ? {background:"var(--g-lt,#e8f8f1)",border:"1.5px solid var(--green,#16a34a)"} : {}}>
+                    <div className="bt-lbl" style={isRefund ? {color:"var(--green,#16a34a)"} : {}}>{isRefund ? "Excess Tax Paid — Refund Due" : "Net Tax Payable"}</div>
+                    <div className="bt-amt" style={isRefund ? {color:"var(--green,#16a34a)"} : {}}>{isRefund ? "−" + fmt(Math.abs(net)) : fmt(net)}</div>
+                    <div className="bt-eff">Effective Rate: {effRate}%</div>
+                    {isRefund && <div className="bt-sub" style={{marginTop:4,fontSize:"0.78rem",color:"var(--green,#16a34a)",opacity:0.85}}>You can claim this as an ITR refund · Total Paid {fmt(totalTDS+totalAT+totalSAT)} vs Liability {fmt(R(liability))}</div>}
+                  </div>
+                );
+              })()}
 
               {rebate > 0 && grossTotal <= REBATE_NEW_THRESHOLD && regime === "new" && <div className="rebate-note">✓ Full Rebate u/s {cfg.actLabel ? "155" : "87A"} (₹60K) — Zero slab tax · Income ≤ ₹12L</div>}
               {rebate > 0 && regime === "old" && <div className="rebate-note">✓ Rebate u/s {cfg.actLabel ? "155" : "87A"} — Income ≤ ₹5L</div>}
