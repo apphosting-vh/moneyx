@@ -36372,7 +36372,7 @@ const FY_CONFIGS = {
     presumptiveInfoHtml: "<strong>Sec 44AD:</strong> 8% of eligible turnover (6% for digital/banking receipts) for businesses with turnover ≤ ₹3 Cr (limit enhanced in Budget 2025 for those with ≤5% cash receipts). &nbsp;<strong>Sec 44ADA:</strong> 50% of gross receipts for eligible professionals with receipts ≤ ₹75L. Enter the <em>net presumptive income</em> already computed at the applicable %.",
     deductionsSub: "Available under Old Tax Regime only",
     exportNamePrefix: "ITR3_Tax_AY2026-27",
-    excelSheets: "5 sheets · full detail",
+    excelSheets: "6 sheets · full detail",
     hasPDF: true,
     hasLtclSetoff: false,
     hasBuyback: false,
@@ -36409,7 +36409,7 @@ const FY_CONFIGS = {
     presumptiveInfoHtml: "<strong>Sec 58 (erstwhile 44AD):</strong> 8% of eligible turnover (6% for digital/banking receipts) for businesses with turnover ≤ ₹3 Cr (if ≤ 5% cash receipts). Unchanged for FY 2026-27. &nbsp;<strong>Sec 58 (erstwhile 44ADA):</strong> 50% of gross receipts for eligible professionals with receipts ≤ ₹75L. Enter the <em>net presumptive income</em> already computed at the applicable %.",
     deductionsSub: "Available under Old Tax Regime only — limits unchanged for FY 2026-27",
     exportNamePrefix: "ITR3_Tax_TY2027-28",
-    excelSheets: "3 sheets · TY 2027-28",
+    excelSheets: "4 sheets · TY 2027-28",
     hasPDF: true,
     hasLtclSetoff: true,
     hasBuyback: true,
@@ -36494,12 +36494,13 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
   const [f, setF]           = useState({ ...DEFAULT_F, ...(saved?.f ?? {}) });
   const [tdsRows, setTds]   = useState(saved?.tdsRows?.length ? saved.tdsRows : [{ id:uid(), deductor:"", amount:"", date:"" }]);
   const [atRows, setAt]     = useState(saved?.atRows?.length ? saved.atRows : [{ id:uid(), amount:"", date:"", ref:"" }]);
+  const [satRows, setSat]   = useState(saved?.satRows?.length ? saved.satRows : [{ id:uid(), amount:"", date:"", ref:"" }]);
 
   /* Auto-save */
   const isFirstRender = React.useRef(true);
   React.useEffect(() => {
     if (isFirstRender.current) { isFirstRender.current = false; return; }
-    const payload = { regime, f, tdsRows, atRows };
+    const payload = { regime, f, tdsRows, atRows, satRows };
     if (dispatch) {
       if (fyKey === "2526") dispatch({ type:"SET_TAX_DATA", data: payload });
       else if (fyKey === "2627") dispatch({ type:"SET_TAX_DATA_2627", data: payload });
@@ -36508,7 +36509,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
     setSaveStatus("saved");
     const t = setTimeout(() => setSaveStatus("idle"), 1800);
     return () => clearTimeout(t);
-  }, [regime, f, tdsRows, atRows]);
+  }, [regime, f, tdsRows, atRows, satRows]);
 
   /* External sync (only for current FY that syncs with MM state) */
   const prevTaxDataRef = React.useRef(taxData);
@@ -36522,11 +36523,13 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
       setF({ ...DEFAULT_F, ...(taxData.f ?? {}) });
       setTds(taxData.tdsRows?.length ? taxData.tdsRows : [{ id:uid(), deductor:"", amount:"", date:"" }]);
       setAt(taxData.atRows?.length ? taxData.atRows : [{ id:uid(), amount:"", date:"", ref:"" }]);
+      setSat(taxData.satRows?.length ? taxData.satRows : [{ id:uid(), amount:"", date:"", ref:"" }]);
     } else {
       setRegime("new");
       setF({ ...DEFAULT_F });
       setTds([{ id:uid(), deductor:"", amount:"", date:"" }]);
       setAt([{ id:uid(), amount:"", date:"", ref:"" }]);
+      setSat([{ id:uid(), amount:"", date:"", ref:"" }]);
     }
   }, [taxData]);
 
@@ -36541,6 +36544,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
     setF({ ...DEFAULT_F });
     setTds([{ id:uid(), deductor:"", amount:"", date:"" }]);
     setAt([{ id:uid(), amount:"", date:"", ref:"" }]);
+    setSat([{ id:uid(), amount:"", date:"", ref:"" }]);
     setSaveStatus("cleared");
     setTimeout(() => setSaveStatus("idle"), 2000);
   };
@@ -36552,6 +36556,9 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
   const addAt  = () => setAt(p => [...p, { id:uid(), amount:"", date:"", ref:"" }]);
   const delAt  = id => setAt(p => p.filter(e => e.id !== id));
   const upAt   = (id,k,v) => setAt(p => p.map(e => e.id===id ? {...e,[k]:v} : e));
+  const addSat = () => setSat(p => [...p, { id:uid(), amount:"", date:"", ref:"" }]);
+  const delSat = id => setSat(p => p.filter(e => e.id !== id));
+  const upSat  = (id,k,v) => setSat(p => p.map(e => e.id===id ? {...e,[k]:v} : e));
 
   /* ── CORE COMPUTATIONS ── */
   const stcgGross = Math.max(0, f.stcgGain - f.stcgLoss);
@@ -36642,6 +36649,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
 
   const totalTDS = tdsRows.reduce((s, e) => s + pn(e.amount), 0);
   const totalAT  = atRows.reduce((s, e) => s + pn(e.amount), 0);
+  const totalSAT = satRows.reduce((s, e) => s + pn(e.amount), 0);
   const netTaxAT = Math.max(0, liability - totalTDS);
 
   const { rows:instRows, total:int234C } = React.useMemo(
@@ -36649,7 +36657,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
   const int234B = React.useMemo(
     () => calc234BFor(liability, totalTDS, atRows, cfg.advTaxDateFrom), [liability, totalTDS, JSON.stringify(atRows)]);
   const totPenalty = int234B + int234C;
-  const netPayable = Math.max(0, liability - totalTDS - totalAT);
+  const netPayable = Math.max(0, liability - totalTDS - totalAT - totalSAT);
   const effRate    = grossTotal > 0 ? ((liability / grossTotal) * 100).toFixed(1) : "0.0";
   const altLabel   = regime === "new" ? "Old Regime" : "New Regime";
   const curLabel   = regime === "new" ? "New Regime" : "Old Regime";
@@ -36673,11 +36681,11 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
     grossNorm, netNorm, specialInc, grossTotal,
     normTax, rebate, marginalRelief, stcgTaxComp: s20t, ltcgTaxComp: l125t,
     taxBeforeSC, sc, cess, liability,
-    totalTDS, totalAT, totPenalty: R(totPenalty), int234B: R(int234B), int234C: R(int234C),
+    totalTDS, totalAT, totalSAT, totPenalty: R(totPenalty), int234B: R(int234B), int234C: R(int234C),
     netPayable: R(netPayable + totPenalty), effRate,
     newLiability: regime==="new" ? R(cur.liability) : R(alt.liability),
     oldLiability: regime==="old" ? R(cur.liability) : R(alt.liability),
-    tdsRows, atRows, instRows,
+    tdsRows, atRows, satRows, instRows,
   });
 
   /* ── EXCEL EXPORT ── */
@@ -36733,6 +36741,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
           ["TAX CREDITS & PAYMENTS", "", "", ""],
           ["Less: Total TDS Deducted", "", -R(ed.totalTDS), ""],
           ["Less: Total Advance Tax Paid", "", -R(ed.totalAT), ""],
+          ...(ed.totalSAT > 0 ? [["Less: Self Assessment Tax Paid", "", -R(ed.totalSAT), ""]] : []),
           ...(ed.totPenalty > 0 ? [["Add: Interest u/s " + (cfg.actLabel ? "424 + 425" : "234B + 234C") + " (estimated)", "", R(ed.totPenalty), ""]] : []),
           ["NET TAX PAYABLE (self-assessment)", "", R(ed.netPayable), ""],
           ["Effective Tax Rate", "", ed.effRate + "%", ""],
@@ -36780,6 +36789,20 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
         const ws3 = XLSX.utils.aoa_to_sheet(atData);
         ws3["!cols"] = [{wch:22},{wch:14},{wch:18},{wch:18},{wch:16},{wch:20},{wch:12}];
         XLSX.utils.book_append_sheet(wb, ws3, cfg.actLabel ? "Advance Tax & §425" : "Advance Tax & 234C");
+
+        /* Sheet 4: Self Assessment Tax */
+        const satData = [
+          ["SELF ASSESSMENT TAX PAYMENTS — " + ed.ay, "", "", ""],
+          ["(Paid after FY close when filing ITR — challan 280, minor head 300)", "", "", ""],
+          ["", "", "", ""],
+          ["#", "Amount (₹)", "Date of Payment", "Challan / BSR No."],
+          ...ed.satRows.map((e, i) => [i+1, pn(e.amount), e.date||"—", e.ref||"—"]),
+          ["", "", "", ""],
+          ["TOTAL SELF ASSESSMENT TAX PAID", "", ed.totalSAT, ""],
+        ];
+        const ws4 = XLSX.utils.aoa_to_sheet(satData);
+        ws4["!cols"] = [{wch:5},{wch:22},{wch:20},{wch:30}];
+        XLSX.utils.book_append_sheet(wb, ws4, "Self Assessment Tax");
 
         XLSX.writeFile(wb, cfg.exportNamePrefix + ".xlsx");
       } catch(e) { console.error(e); alert("Excel export failed: " + e.message); }
@@ -36916,6 +36939,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
           ["Less: Total TDS Deducted", "(" + fmtNum(ed.totalTDS) + ")"],
           ["Less: Total Advance Tax Paid", "(" + fmtNum(ed.totalAT) + ")"],
         ];
+        if(ed.totalSAT>0) creditRows.push(["Less: Self Assessment Tax Paid", "(" + fmtNum(ed.totalSAT) + ")"]);
         if(ed.totPenalty>0) creditRows.push(["Add: Interest u/s " + (cfg.actLabel ? "424 + 425" : "234B + 234C"), fmtNum(ed.totPenalty)]);
         creditRows.push(["NET TAX PAYABLE", fmtNum(ed.netPayable)]);
         creditRows.push(["Effective Tax Rate", ed.effRate + "%"]);
@@ -36983,8 +37007,21 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
           y = doc.lastAutoTable.finalY + 8;
         }
 
+        /* Self Assessment Tax */
+        if (ed.satRows.some(e=>pn(e.amount)>0)) {
+          sectionHead("G.  Self Assessment Tax Payments");
+          const satR = ed.satRows.filter(e=>pn(e.amount)>0).map((e,i)=>[i+1,fmtNum(pn(e.amount)),e.date||"—",e.ref||"—"]);
+          satR.push(["",fmtNum(ed.totalSAT),"TOTAL",""]);
+          doc.autoTable({ startY:y, head:[["#","Amount (₹)","Date","Challan/BSR"]], body:satR,
+            margin:{left:14,right:14}, styles:{fontSize:8.5,cellPadding:2.8,lineColor:LGREY,lineWidth:0.2,textColor:DKGREY},
+            headStyles:{fillColor:NAVY_L,textColor:NAVY,fontStyle:"bold"},
+            columnStyles:{0:{cellWidth:10},1:{cellWidth:40,halign:"right"},2:{cellWidth:40,halign:"center"},3:{cellWidth:80}},
+          });
+          y = doc.lastAutoTable.finalY + 8;
+        }
+
         /* 234C Analysis */
-        sectionHead("G.  " + (cfg.actLabel ? "§425" : "234C") + " Analysis — " + cfg.fyLabel);
+        sectionHead("H.  " + (cfg.actLabel ? "§425" : "234C") + " Analysis — " + cfg.fyLabel);
         const instR = ed.instRows.map(r=>[r.lbl,r.date,fmtNum(R(r.req)),fmtNum(R(r.paid)),
           r.shortfall>0?fmtNum(R(r.shortfall)):"—", r.intAmt>0?fmtNum(R(r.intAmt)):"—",
           r.shortfall<=0?"On Time":r.paid>0?"Partial":"Short"]);
@@ -37339,6 +37376,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
                 <div className="ibar">
                   <span className="pill p-green">Total AT Paid: {fmt(totalAT)}</span>
                   <span className="pill p-navy">Total Credited (TDS+AT): {fmt(totalTDS + totalAT)}</span>
+                  {totalSAT > 0 && <span className="pill p-green">Incl. SAT: {fmt(totalTDS + totalAT + totalSAT)}</span>}
                 </div>
               )}
 
@@ -37397,6 +37435,56 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
             </div>
           </div>
 
+          {/* SELF ASSESSMENT TAX ENTRIES */}
+          <div className="card">
+            <div className="card-hdr">
+              <div className="cicon ci-navy" style={{background:"var(--itr-navy-lt)",border:"1px solid var(--accentbg5)"}}>S</div>
+              <div>
+                <div className="c-ttl">Self Assessment Tax Payments</div>
+                <div className="c-sub">Tax paid while filing ITR (Challan 280, Minor Head 300) — deducted from total liability</div>
+              </div>
+              <span className="ctag ct-navy">Challan 280</span>
+            </div>
+            <div className="card-body">
+              <div className="nbox nb-blue">
+                <strong>What is Self Assessment Tax?</strong> After accounting for TDS and Advance Tax, if there is still a balance tax payable, you pay it as <strong>Self Assessment Tax</strong> (SAT) via Challan 280 (Minor Head 300) at the time of filing your ITR. SAT paid here is deducted from total tax liability just like TDS and Advance Tax.
+              </div>
+              {satRows.map((e, i) => (
+                <div key={e.id} className="entry-row">
+                  <div className="entry-lbl">Self Assessment Tax Challan #{i+1}</div>
+                  <div className="egrid4">
+                    <div className="field">
+                      <label>Payment Amount</label>
+                      <div className="iw">
+                        <span className="ipfx">₹</span>
+                        <input className="inp" type="number" placeholder="0"
+                          value={e.amount} onChange={ev => upSat(e.id,"amount",ev.target.value)} />
+                      </div>
+                    </div>
+                    <div className="field">
+                      <label>Date of Payment</label>
+                      <input className="inp-date" type="date"
+                        value={e.date} onChange={ev => upSat(e.id,"date",ev.target.value)} />
+                    </div>
+                    <div className="field">
+                      <label>Challan / BSR No. <em>optional</em></label>
+                      <input className="inp-text" type="text" placeholder="BSR / Challan no."
+                        value={e.ref} onChange={ev => upSat(e.id,"ref",ev.target.value)} />
+                    </div>
+                    {satRows.length > 1 && <button className="del-btn" onClick={() => delSat(e.id)}>✕</button>}
+                  </div>
+                </div>
+              ))}
+              <button className="add-btn" onClick={addSat}>＋ Add SAT Challan</button>
+              {totalSAT > 0 && (
+                <div className="ibar">
+                  <span className="pill p-navy">Total SAT Paid: {fmt(totalSAT)}</span>
+                  <span className="pill p-green">Total Credits (TDS+AT+SAT): {fmt(totalTDS + totalAT + totalSAT)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
         </div>{/* end left-col */}
 
         {/* RIGHT PANEL */}
@@ -37447,6 +37535,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
 
               {totalTDS > 0 && <div className="srow s-green" style={{marginTop:4}}><span className="sl">(-) TDS Deducted</span><span className="sv">-{fmt(totalTDS)}</span></div>}
               {totalAT > 0 && <div className="srow s-green"><span className="sl">(-) Advance Tax Paid</span><span className="sv">-{fmt(totalAT)}</span></div>}
+              {totalSAT > 0 && <div className="srow s-green"><span className="sl">(-) Self Assessment Tax<small>Challan 280 / MH 300</small></span><span className="sv">-{fmt(totalSAT)}</span></div>}
               {totPenalty > 0 && <div className="srow s-red"><span className="sl">(+) Interest {cfg.actLabel ? "§424/§425" : "234B/234C"}<small>estimated</small></span><span className="sv">+{fmt(R(totPenalty))}</span></div>}
 
               <div className="big-tax">
@@ -37532,7 +37621,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
               )}
             </div>
             <div style={{fontSize:10,color:"var(--itr-text3)",marginTop:9,lineHeight:1.5}}>
-              <strong style={{color:"var(--itr-text2)"}}>Excel</strong> — Tax Summary, TDS Credits, Advance Tax &amp; {cfg.actLabel ? "§425" : "234C"} Analysis.
+              <strong style={{color:"var(--itr-text2)"}}>Excel</strong> — Tax Summary, TDS Credits, Advance Tax, Self Assessment Tax &amp; {cfg.actLabel ? "§425" : "234C"} Analysis.
               {cfg.hasPDF && <><br/><strong style={{color:"var(--itr-text2)"}}>PDF</strong> — A4 report with income summary, tax workings, regime comparison.</>}
             </div>
           </div>
