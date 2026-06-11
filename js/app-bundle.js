@@ -36420,6 +36420,7 @@ const FY_CONFIGS = {
 const buildDefaultF = (cfg) => {
   const base = {
     stcgGain:0, stcgLoss:0,
+    debtMFGain:0,
     ltcgGain:0, ltcgLoss:0, ltcgGF:0,
     presumptive:0,
     savingsInt:0, depositInt:0, dividend:0,
@@ -36457,7 +36458,14 @@ const calc234BFor = (liability, tds, atEntries, fromDateStr) => {
   const from = new Date(fromDateStr);
   const now = new Date();
   if (now < from) return 0;
-  const months = Math.max(1, Math.ceil((now - from) / (1000*60*60*24*30)));
+  // Count calendar months; any part of a month counts as a full month (per Sec 234B).
+  // Using 30-day approximation over-counts in months with 31 days (e.g. Jul–Aug gives
+  // 121 days / 30 = 5 months instead of the correct 4).
+  let months = (now.getFullYear() - from.getFullYear()) * 12
+             + (now.getMonth() - from.getMonth());
+  // If there is any residual day beyond the same calendar-day boundary, add one more month.
+  if (now.getDate() > from.getDate()) months += 1;
+  months = Math.max(1, months);
   return shortfall * 0.01 * months;
 };
 
@@ -36548,6 +36556,9 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
   const stcgNet = Math.max(0, stcgGross - ltclApplied);
   const stcgTax = stcgNet * 0.20;
 
+  // Debt MF STCG — taxed at slab rate (not flat rate), added to normal income
+  const debtMFNet = Math.max(0, pn(f.debtMFGain));
+
   const ltcgNet     = Math.max(0, (f.ltcgGain - f.ltcgGF) - f.ltcgLoss);
   const ltcgExempt  = Math.min(125000, ltcgNet);
   const ltcgTaxable = Math.max(0, ltcgNet - ltcgExempt);
@@ -36558,7 +36569,8 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
 
   const savDed   = regime === "old" ? Math.min(f.savingsInt, 10000) : 0;
   const otherSrc = (f.savingsInt - savDed) + f.depositInt + f.dividend;
-  const grossNorm = f.presumptive + otherSrc;
+  // debtMFNet is slab-taxed normal income — included in grossNorm, NOT in specialInc
+  const grossNorm = f.presumptive + otherSrc + debtMFNet;
   const totDed = regime === "old"
     ? Math.min(f.ded80C, 150000) + Math.min(f.ded80D, 25000) + f.dedOther
     : STD_DED_NEW;
@@ -36589,8 +36601,8 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
     return { normTax, rebate, marginalRelief, normTaxAfterRebate, stcgTax, ltcgTax, buybackTax, taxBeforeSC, sc, txsc, cess, liability: txsc + cess };
   };
 
-  const cur = React.useMemo(() => computeTax(regime), [regime, netNorm, grossTotal, stcgTax, ltcgTax, buybackTax]);
-  const alt = React.useMemo(() => computeTax(regime === "new" ? "old" : "new"), [regime, netNorm, grossTotal, stcgTax, ltcgTax, buybackTax]);
+  const cur = React.useMemo(() => computeTax(regime), [regime, netNorm, grossTotal, stcgTax, ltcgTax, buybackTax, debtMFNet]);
+  const alt = React.useMemo(() => computeTax(regime === "new" ? "old" : "new"), [regime, netNorm, grossTotal, stcgTax, ltcgTax, buybackTax, debtMFNet]);
 
   const { normTax, rebate, marginalRelief, stcgTax:s20t, ltcgTax:l125t, taxBeforeSC, sc, cess, liability } = cur;
 
@@ -36617,6 +36629,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
   const buildExportData = () => ({
     regime: curLabel, ay: cfg.ay, generated: new Date().toLocaleString("en-IN"),
     stcgGain: f.stcgGain, stcgLoss: f.stcgLoss, stcgNet, stcgTax,
+    debtMFNet,
     ltcgGain: f.ltcgGain, ltcgGF: f.ltcgGF, ltcgLoss: f.ltcgLoss,
     ltcgNet, ltcgExempt, ltcgTaxable, ltcgTax,
     ltclApplied, buybackAmt, buybackTax,
@@ -36656,6 +36669,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
           ["INCOME SUMMARY", "", "", ""],
           ["Head of Income", "Gross Amount (₹)", "Deductions/Exempt (₹)", "Net Taxable (₹)"],
           ["STCG u/s " + secSTCG + " @ 20%", ed.stcgGain, ed.stcgLoss + (ed.ltclApplied||0), ed.stcgNet],
+          ...(ed.debtMFNet > 0 ? [["STCG — Debt Mutual Funds (slab rate)", ed.debtMFNet, "", ed.debtMFNet]] : []),
           ["LTCG u/s " + secLTCG + " @ 12.5%", ed.ltcgGain, ed.ltcgExempt, ed.ltcgTaxable],
           ...(hasBuyback ? [["Share Buyback Proceeds @ 20% (Budget 2026)", ed.buybackAmt, "", ed.buybackAmt]] : []),
           ["Presumptive Income (" + (cfg.actLabel ? "§58" : "44AD/44ADA") + ")", ed.presumptive, "", ed.presumptive],
@@ -36718,7 +36732,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
           ["TOTAL ADVANCE TAX PAID", "", ed.totalAT, ""],
           ["", "", "", ""],
           ["INSTALMENT-WISE " + (cfg.actLabel ? "§425" : "234C") + " ANALYSIS", "", "", "", "", "", ""],
-          ["Instalment", "Due Date", "Required (₹)", "Paid by Date (₹)", "Shortfall (₹)", "234C Interest (₹)", "Status"],
+          ["Instalment", "Due Date", "Required (₹)", "Paid by Date (₹)", "Shortfall (₹)", (cfg.actLabel ? "§425 Interest (₹)" : "234C Interest (₹)"), "Status"],
           ...ed.instRows.map(r => [
             r.lbl, r.date, R(r.req), R(r.paid), R(r.shortfall), R(r.intAmt),
             r.shortfall <= 0 ? "On Time" : r.paid > 0 ? "Partial" : "Short"
@@ -36805,6 +36819,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
         sectionHead("A.  Income Summary");
         const incomeRows = [];
         if(ed.stcgNet>0)     incomeRows.push(["STCG u/s " + pdfSecSTCG + " (20% flat)", fmtNum(ed.stcgGain), fmtNum(ed.stcgLoss+(ed.ltclApplied||0)), fmtNum(ed.stcgNet)]);
+        if(ed.debtMFNet>0)   incomeRows.push(["STCG — Debt Mutual Funds (slab rate)", fmtNum(ed.debtMFNet), "—", fmtNum(ed.debtMFNet)]);
         if(ed.ltcgNet>0)     incomeRows.push(["LTCG u/s " + pdfSecLTCG + " (12.5% flat)", fmtNum(ed.ltcgGain), fmtNum(ed.ltcgExempt)+" (exempt)", fmtNum(ed.ltcgTaxable)]);
         if(hasBuyback)        incomeRows.push(["Share Buyback Proceeds @ 20%", fmtNum(ed.buybackAmt), "", fmtNum(ed.buybackAmt)]);
         if(ed.presumptive>0)  incomeRows.push(["Presumptive Income (" + (cfg.actLabel ? "§58" : "44AD/44ADA") + ")", "—", "—", fmtNum(ed.presumptive)]);
@@ -36945,14 +36960,14 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
 
         doc.autoTable({
           startY:y,
-          head:[["Instalment","Due Date","Required (₹)","Paid (₹)","Shortfall (₹)","234C Int. (₹)","Status"]],
+          head:[["Instalment","Due Date","Required (₹)","Paid (₹)","Shortfall (₹)",(cfg.actLabel ? "§425 Int. (₹)" : "234C Int. (₹)"),"Status"]],
           body:instR, margin:{left:14,right:14},
           styles:{fontSize:8,cellPadding:2.5,lineColor:LGREY,lineWidth:0.2,textColor:DKGREY},
           headStyles:{fillColor:NAVY_L,textColor:NAVY,fontStyle:"bold",fontSize:8},
           columnStyles:{0:{cellWidth:32},1:{cellWidth:22,halign:"center"},2:{cellWidth:26,halign:"right"},3:{cellWidth:26,halign:"right"},4:{cellWidth:24,halign:"right"},5:{cellWidth:24,halign:"right"},6:{cellWidth:20,halign:"center"}},
           didParseCell: (data) => {
             if(data.cell.raw==="On Time"){data.cell.styles.textColor=GREEN;data.cell.styles.fontStyle="bold";}
-            if(data.cell.raw==="Short"||data.cell.raw==="234C Total"||data.cell.raw==="234B"){data.cell.styles.textColor=RED;}
+            if(data.cell.raw==="Short"||data.cell.raw==="234C Total"||data.cell.raw==="§425 Total"||data.cell.raw==="234B"||data.cell.raw==="§424"){data.cell.styles.textColor=RED;}
             if(data.cell.raw==="Partial"){data.cell.styles.textColor=SAFF;}
             if(String(data.cell.raw||"").startsWith("TOTAL ESTIMATED")){data.cell.styles.fontStyle="bold";data.cell.styles.fillColor=RED_L;}
           },
@@ -37006,7 +37021,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
             <span className="hchip">{cfg.chipSec}</span>
             <span className="hchip new">{cfg.chipAy}</span>
             {cfg.actLabel && <span className="hchip">{cfg.actLabel}</span>}
-            <span className="hchip">⚠️ 234B · 234C Interest</span>
+            <span className="hchip">⚠️ {cfg.actLabel ? "§424 · §425 Interest" : "234B · 234C Interest"}</span>
           </div>
         </div>
       </div>
@@ -37052,6 +37067,29 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
               <div className="ibar">
                 <span className="pill p-navy">Net Taxable: {fmt(stcgNet)}</span>
                 <span className="pill p-red">Tax @ 20%: {fmt(stcgTax)}</span>
+              </div>
+
+              {/* Debt Mutual Fund STCG — slab rate */}
+              <div style={{marginTop:16,paddingTop:14,borderTop:"1px solid var(--itr-border)"}}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                  <div>
+                    <div className="c-ttl" style={{fontSize:13}}>STCG — Debt Mutual Funds</div>
+                    <div className="c-sub" style={{fontSize:11}}>Debt / Non-equity MF, FoFs, Gold MF — taxed at applicable slab rate</div>
+                  </div>
+                  <span className="ctag ct-blue">Slab rate</span>
+                </div>
+                <div className="nbox nb-blue" style={{marginBottom:10,fontSize:12}}>
+                  <strong>Post Finance Act 2023:</strong> STCG from Debt Mutual Funds (and other non-equity MFs with &lt;35% equity) is taxed at your applicable <strong>slab rate</strong> — not at a flat 15%/20%. These gains are added to your total income and taxed like interest income. No flat-rate benefit applies regardless of holding period.
+                </div>
+                <div className="fg fg1">
+                  <F label="Net STCG from Debt / Non-equity MF" fk="debtMFGain" note="enter net gain after set-off of debt MF losses" />
+                </div>
+                {debtMFNet > 0 && (
+                  <div className="ibar">
+                    <span className="pill p-navy">Added to Normal Income: {fmt(debtMFNet)}</span>
+                    <span className="pill p-blue">Taxed at Slab Rate</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -37342,6 +37380,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
               <div className="btitle">Income Summary</div>
               {stcgNet > 0 && <div className="brow"><span className="bl">STCG u/s {cfg.actLabel ? "196" : "111A"} <span className="brate">20%</span></span><span className="bv">{fmt(stcgNet)}</span></div>}
               {cfg.hasLtclSetoff && ltclApplied > 0 && <div className="brow"><span className="bl" style={{color:"var(--itr-green)"}}>(-) LTCL One-time Set-off</span><span className="bv" style={{color:"var(--itr-green)"}}>-{fmt(ltclApplied)}</span></div>}
+              {debtMFNet > 0 && <div className="brow"><span className="bl">STCG Debt MF <span className="brate">Slab</span></span><span className="bv">{fmt(debtMFNet)}</span></div>}
               {ltcgTaxable > 0 && <div className="brow"><span className="bl">LTCG u/s {cfg.actLabel ? "198" : "112A"} <span className="brate">12.5%</span></span><span className="bv">{fmt(ltcgTaxable)}</span></div>}
               {ltcgExempt > 0 && <div className="brow"><span className="bl" style={{color:"var(--itr-green)"}}>LTCG Exempt (₹1.25L)</span><span className="bv" style={{color:"var(--itr-green)"}}>-{fmt(ltcgExempt)}</span></div>}
               {buybackAmt > 0 && <div className="brow"><span className="bl">Buyback Proceeds <span className="brate">20%</span></span><span className="bv">{fmt(buybackAmt)}</span></div>}
