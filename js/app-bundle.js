@@ -1116,7 +1116,8 @@ const buildCatOptions=(categories)=>{
     });
 };
 
-const calcFDMaturity=(principal,ratePercent,startDate,maturityDate)=>{
+/* compoundFreq: "quarterly" (default) | "half-yearly" | "annually" */
+const calcFDMaturity=(principal,ratePercent,startDate,maturityDate,compoundFreq)=>{
   if(!principal||!ratePercent||!startDate||!maturityDate)return principal||0;
   const start=new Date(startDate),end=new Date(maturityDate);
   if(isNaN(start.getTime())||isNaN(end.getTime()))return principal||0;
@@ -1124,7 +1125,8 @@ const calcFDMaturity=(principal,ratePercent,startDate,maturityDate)=>{
   if(days<=0)return principal||0;
   const years=days/365;
   const r=ratePercent/100;
-  const maturity=principal*Math.pow(1+r/4,4*years);
+  const n=compoundFreq==="annually"?1:compoundFreq==="half-yearly"?2:4;
+  const maturity=principal*Math.pow(1+r/n,n*years);
   return Math.round(maturity);
 };
 
@@ -1150,12 +1152,13 @@ const calcFDValueToday=(f)=>{
        otherwise compute from formula. Respect user-entered maturityAmount directly
        even if lower than principal (e.g. after TDS deduction). */
     if(f.maturityAmount&&f.maturityAmount>0)return f.maturityAmount;
-    return Math.max(calcFDMaturity(f.amount,f.rate,f.startDate,f.maturityDate),f.amount);
+    return Math.max(calcFDMaturity(f.amount,f.rate,f.startDate,f.maturityDate,f.compoundFreq),f.amount);
   }
   if(today<=start)return f.amount; /* not started yet */
   /* In-progress: accrue from startDate to today */
   const elapsedYears=Math.max(0,(today-start)/(365*24*3600*1000));
-  const accrued=f.amount*Math.pow(1+(f.rate/100)/4,4*elapsedYears);
+  const n=f.compoundFreq==="annually"?1:f.compoundFreq==="half-yearly"?2:4;
+  const accrued=f.amount*Math.pow(1+(f.rate/100)/n,n*elapsedYears);
   return Math.max(Math.round(accrued),f.amount);
 };
 
@@ -23372,7 +23375,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
   const[mfF,setMfF]=useState({name:"",schemeCode:"",units:"",avgNav:"",invested:"",notes:""});
   const[shF,setShF]=useState({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:""});
   const[shAddingTrade,setShAddingTrade]=useState(false); /* true while fetching chart for past trade */
-  const[fdF,setFdF]=useState({bank:"",amount:"",rate:"",startDate:TODAY(),maturityDate:"",maturityAmount:"",notes:""});
+  const[fdF,setFdF]=useState({bank:"",amount:"",rate:"",startDate:TODAY(),maturityDate:"",maturityAmount:"",compoundFreq:"quarterly",notes:""});
   const[editFd,setEditFd]=useState(null);
   const[editMf,setEditMf]=useState(null);   /* MF entry being edited */
   const[reF,setReF]=useState({title:"",acquisitionCost:"",acquisitionDate:TODAY(),currentValue:"",notes:""});
@@ -24710,20 +24713,37 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
     open&&tab==="fd"&&React.createElement(Modal,{title:"Add Fixed Deposit",onClose:()=>setOpen(false),w:480},
       React.createElement(Field,{label:"Bank / Institution"},React.createElement("input",{className:"inp",placeholder:"e.g. HDFC Bank",value:fdF.bank,onChange:e=>setFdF(p=>({...p,bank:e.target.value}))})),
       React.createElement("div",{className:"grid-2col"},
-        React.createElement(Field,{label:"Principal (₹)"},React.createElement("input",{className:"inp",type:"number",placeholder:"0",value:fdF.amount,onChange:e=>{const v=e.target.value;setFdF(p=>{const mat=calcFDMaturity(+v,+p.rate,p.startDate,p.maturityDate);return{...p,amount:v,maturityAmount:mat>0?mat:""}});}})),
-        React.createElement(Field,{label:"Rate (% p.a.)"},React.createElement("input",{className:"inp",type:"number",placeholder:"7.0",value:fdF.rate,onChange:e=>{const v=e.target.value;setFdF(p=>{const mat=calcFDMaturity(+p.amount,+v,p.startDate,p.maturityDate);return{...p,rate:v,maturityAmount:mat>0?mat:""}});}})),
-        React.createElement(Field,{label:"Start Date"},React.createElement("input",{className:"inp",type:"date",value:fdF.startDate,onChange:e=>{const v=e.target.value;setFdF(p=>{const mat=calcFDMaturity(+p.amount,+p.rate,v,p.maturityDate);return{...p,startDate:v,maturityAmount:mat>0?mat:""}});}})),
-        React.createElement(Field,{label:"Maturity Date"},React.createElement("input",{className:"inp",type:"date",value:fdF.maturityDate,onChange:e=>{const v=e.target.value;setFdF(p=>{const mat=calcFDMaturity(+p.amount,+p.rate,p.startDate,v);return{...p,maturityDate:v,maturityAmount:mat>0?mat:""}});}}))
+        React.createElement(Field,{label:"Principal (₹)"},React.createElement("input",{className:"inp",type:"number",placeholder:"0",value:fdF.amount,onChange:e=>{const v=e.target.value;setFdF(p=>{const mat=calcFDMaturity(+v,+p.rate,p.startDate,p.maturityDate,p.compoundFreq);return{...p,amount:v,maturityAmount:mat>0?mat:""}});}})),
+        React.createElement(Field,{label:"Rate (% p.a.)"},React.createElement("input",{className:"inp",type:"number",placeholder:"7.0",value:fdF.rate,onChange:e=>{const v=e.target.value;setFdF(p=>{const mat=calcFDMaturity(+p.amount,+v,p.startDate,p.maturityDate,p.compoundFreq);return{...p,rate:v,maturityAmount:mat>0?mat:""}});}})),
+        React.createElement(Field,{label:"Start Date"},React.createElement("input",{className:"inp",type:"date",value:fdF.startDate,onChange:e=>{const v=e.target.value;setFdF(p=>{const mat=calcFDMaturity(+p.amount,+p.rate,v,p.maturityDate,p.compoundFreq);return{...p,startDate:v,maturityAmount:mat>0?mat:""}});}})),
+        React.createElement(Field,{label:"Maturity Date"},React.createElement("input",{className:"inp",type:"date",value:fdF.maturityDate,onChange:e=>{const v=e.target.value;setFdF(p=>{const mat=calcFDMaturity(+p.amount,+p.rate,p.startDate,v,p.compoundFreq);return{...p,maturityDate:v,maturityAmount:mat>0?mat:""}});}}))
       ),
-      React.createElement(Field,{label:"Maturity Amount (₹) -- auto-calculated, quarterly compounding"},
+      React.createElement(Field,{label:"Compounding Frequency"},
+        React.createElement("div",{style:{display:"flex",gap:6}},
+          ["quarterly","half-yearly","annually"].map(freq=>
+            React.createElement("button",{
+              key:freq,
+              onClick:()=>setFdF(p=>{const mat=calcFDMaturity(+p.amount,+p.rate,p.startDate,p.maturityDate,freq);return{...p,compoundFreq:freq,maturityAmount:mat>0?mat:p.maturityAmount};}),
+              style:{
+                flex:1,padding:"7px 4px",borderRadius:7,cursor:"pointer",fontSize:12,fontFamily:"'DM Sans',sans-serif",fontWeight:600,
+                border:fdF.compoundFreq===freq?"2px solid #0e7490":"2px solid var(--brd)",
+                background:fdF.compoundFreq===freq?"rgba(14,116,144,.12)":"var(--surface2)",
+                color:fdF.compoundFreq===freq?"#0e7490":"var(--text3)",
+                transition:"all .15s"
+              }
+            },freq==="quarterly"?"Quarterly":freq==="half-yearly"?"Half-Yearly":"Annually")
+          )
+        )
+      ),
+      React.createElement(Field,{label:"Maturity Amount (₹) -- auto-calculated"},
         React.createElement("input",{className:"inp",type:"number",placeholder:"Auto-calculated",value:fdF.maturityAmount,onChange:e=>setFdF(p=>({...p,maturityAmount:e.target.value}))}),
         fdF.amount&&fdF.rate&&fdF.startDate&&fdF.maturityDate&&React.createElement("div",{style:{fontSize:11,color:"#16a34a",marginTop:5}},
-          "Interest earned: "+INR((+fdF.maturityAmount||0)-(+fdF.amount||0))+" (quarterly compounding)"
+          "Interest earned: "+INR((+fdF.maturityAmount||0)-(+fdF.amount||0))+" ("+(fdF.compoundFreq==="annually"?"annual":fdF.compoundFreq==="half-yearly"?"half-yearly":"quarterly")+" compounding)"
         )
       ),
       React.createElement(Field,{label:"Notes (optional)"},React.createElement("textarea",{className:"inp",placeholder:"Auto-renewal, nominee, branch, receipt number…",value:fdF.notes,onChange:e=>setFdF(p=>({...p,notes:e.target.value})),style:{resize:"vertical",minHeight:60,lineHeight:1.6,fontSize:12}})),
       React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,marginTop:4}},
-        React.createElement(Btn,{onClick:()=>{if(!fdF.bank||!fdF.amount)return;dispatch({type:"ADD_FD",p:{id:uid(),...fdF,amount:+fdF.amount,rate:+fdF.rate,maturityAmount:+fdF.maturityAmount||calcFDMaturity(+fdF.amount,+fdF.rate,fdF.startDate,fdF.maturityDate)}});setFdF({bank:"",amount:"",rate:"",startDate:TODAY(),maturityDate:"",maturityAmount:"",notes:""});setOpen(false);},sx:{flex:"1 1 auto",justifyContent:"center"}},"Add FD"),
+        React.createElement(Btn,{onClick:()=>{if(!fdF.bank||!fdF.amount)return;dispatch({type:"ADD_FD",p:{id:uid(),...fdF,amount:+fdF.amount,rate:+fdF.rate,maturityAmount:+fdF.maturityAmount||calcFDMaturity(+fdF.amount,+fdF.rate,fdF.startDate,fdF.maturityDate,fdF.compoundFreq)}});setFdF({bank:"",amount:"",rate:"",startDate:TODAY(),maturityDate:"",maturityAmount:"",compoundFreq:"quarterly",notes:""});setOpen(false);},sx:{flex:"1 1 auto",justifyContent:"center"}},"Add FD"),
         React.createElement(Btn,{v:"secondary",onClick:()=>setOpen(false)},"Cancel")
       )
     ),
@@ -24838,22 +24858,39 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
       ),
       React.createElement("div",{className:"grid-2col"},
         React.createElement(Field,{label:"Principal (₹)"},
-          React.createElement("input",{className:"inp",type:"number",placeholder:"0",value:editFd.amount,onChange:e=>{const v=e.target.value;setEditFd(p=>{const mat=calcFDMaturity(+v,+p.rate,p.startDate,p.maturityDate);return{...p,amount:v,maturityAmount:mat>0?mat:p.maturityAmount};});}})
+          React.createElement("input",{className:"inp",type:"number",placeholder:"0",value:editFd.amount,onChange:e=>{const v=e.target.value;setEditFd(p=>{const mat=calcFDMaturity(+v,+p.rate,p.startDate,p.maturityDate,p.compoundFreq||"quarterly");return{...p,amount:v,maturityAmount:mat>0?mat:p.maturityAmount};});}})
         ),
         React.createElement(Field,{label:"Rate (% p.a.)"},
-          React.createElement("input",{className:"inp",type:"number",placeholder:"7.0",value:editFd.rate,onChange:e=>{const v=e.target.value;setEditFd(p=>{const mat=calcFDMaturity(+p.amount,+v,p.startDate,p.maturityDate);return{...p,rate:v,maturityAmount:mat>0?mat:p.maturityAmount};});}})
+          React.createElement("input",{className:"inp",type:"number",placeholder:"7.0",value:editFd.rate,onChange:e=>{const v=e.target.value;setEditFd(p=>{const mat=calcFDMaturity(+p.amount,+v,p.startDate,p.maturityDate,p.compoundFreq||"quarterly");return{...p,rate:v,maturityAmount:mat>0?mat:p.maturityAmount};});}})
         ),
         React.createElement(Field,{label:"Start Date"},
-          React.createElement("input",{className:"inp",type:"date",value:editFd.startDate,onChange:e=>{const v=e.target.value;setEditFd(p=>{const mat=calcFDMaturity(+p.amount,+p.rate,v,p.maturityDate);return{...p,startDate:v,maturityAmount:mat>0?mat:p.maturityAmount};});}})
+          React.createElement("input",{className:"inp",type:"date",value:editFd.startDate,onChange:e=>{const v=e.target.value;setEditFd(p=>{const mat=calcFDMaturity(+p.amount,+p.rate,v,p.maturityDate,p.compoundFreq||"quarterly");return{...p,startDate:v,maturityAmount:mat>0?mat:p.maturityAmount};});}})
         ),
         React.createElement(Field,{label:"Maturity Date"},
-          React.createElement("input",{className:"inp",type:"date",value:editFd.maturityDate,onChange:e=>{const v=e.target.value;setEditFd(p=>{const mat=calcFDMaturity(+p.amount,+p.rate,p.startDate,v);return{...p,maturityDate:v,maturityAmount:mat>0?mat:p.maturityAmount};});}})
+          React.createElement("input",{className:"inp",type:"date",value:editFd.maturityDate,onChange:e=>{const v=e.target.value;setEditFd(p=>{const mat=calcFDMaturity(+p.amount,+p.rate,p.startDate,v,p.compoundFreq||"quarterly");return{...p,maturityDate:v,maturityAmount:mat>0?mat:p.maturityAmount};});}})
         )
       ),
-      React.createElement(Field,{label:"Maturity Amount (₹) — auto-calculated, quarterly compounding"},
+      React.createElement(Field,{label:"Compounding Frequency"},
+        React.createElement("div",{style:{display:"flex",gap:6}},
+          ["quarterly","half-yearly","annually"].map(freq=>
+            React.createElement("button",{
+              key:freq,
+              onClick:()=>setEditFd(p=>{const mat=calcFDMaturity(+p.amount,+p.rate,p.startDate,p.maturityDate,freq);return{...p,compoundFreq:freq,maturityAmount:mat>0?mat:p.maturityAmount};}),
+              style:{
+                flex:1,padding:"7px 4px",borderRadius:7,cursor:"pointer",fontSize:12,fontFamily:"'DM Sans',sans-serif",fontWeight:600,
+                border:(editFd.compoundFreq||"quarterly")===freq?"2px solid #0e7490":"2px solid var(--brd)",
+                background:(editFd.compoundFreq||"quarterly")===freq?"rgba(14,116,144,.12)":"var(--surface2)",
+                color:(editFd.compoundFreq||"quarterly")===freq?"#0e7490":"var(--text3)",
+                transition:"all .15s"
+              }
+            },freq==="quarterly"?"Quarterly":freq==="half-yearly"?"Half-Yearly":"Annually")
+          )
+        )
+      ),
+      React.createElement(Field,{label:"Maturity Amount (₹) — auto-calculated"},
         React.createElement("input",{className:"inp",type:"number",placeholder:"Auto-calculated",value:editFd.maturityAmount,onChange:e=>setEditFd(p=>({...p,maturityAmount:e.target.value}))}),
         editFd.amount&&editFd.rate&&editFd.startDate&&editFd.maturityDate&&React.createElement("div",{style:{fontSize:11,color:"#16a34a",marginTop:5}},
-          "Interest earned: "+INR((+editFd.maturityAmount||0)-(+editFd.amount||0))+" (quarterly compounding)"
+          "Interest earned: "+INR((+editFd.maturityAmount||0)-(+editFd.amount||0))+" ("+((editFd.compoundFreq||"quarterly")==="annually"?"annual":(editFd.compoundFreq||"quarterly")==="half-yearly"?"half-yearly":"quarterly")+" compounding)"
         )
       ),
       React.createElement(Field,{label:"Notes (optional)"},
@@ -24862,7 +24899,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
       React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,marginTop:4}},
         React.createElement(Btn,{onClick:()=>{
           if(!editFd.bank||!editFd.amount)return;
-          dispatch({type:"EDIT_FD",p:{...editFd,amount:+editFd.amount,rate:+editFd.rate,maturityAmount:+editFd.maturityAmount||calcFDMaturity(+editFd.amount,+editFd.rate,editFd.startDate,editFd.maturityDate)}});
+          dispatch({type:"EDIT_FD",p:{...editFd,amount:+editFd.amount,rate:+editFd.rate,compoundFreq:editFd.compoundFreq||"quarterly",maturityAmount:+editFd.maturityAmount||calcFDMaturity(+editFd.amount,+editFd.rate,editFd.startDate,editFd.maturityDate,editFd.compoundFreq||"quarterly")}});
           setEditFd(null);
         },sx:{flex:"1 1 auto",justifyContent:"center"}},"Save Changes"),
         React.createElement(Btn,{v:"secondary",onClick:()=>setEditFd(null)},"Cancel")
