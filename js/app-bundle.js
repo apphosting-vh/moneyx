@@ -22943,31 +22943,38 @@ const MultiTimeframePerformance=({shares,soldShareSnapshots={}})=>{
               React.createElement("div",{onClick:()=>setSelectedMonth(null),style:{fontSize:10,color:"var(--text6)",cursor:"pointer",padding:"3px 8px",borderRadius:6,background:"var(--bg4)"},"aria-label":"Close"},"✕")
             ),
             React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
-              React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2.2fr 1.3fr 1.3fr 1fr 1fr",gap:8,padding:"6px 10px",borderRadius:"8px 8px 0 0",background:"var(--bg4)",fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.4}},
+              React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1.1fr 1.1fr 1fr 1fr 0.9fr 1fr",gap:6,padding:"6px 10px",borderRadius:"8px 8px 0 0",background:"var(--bg4)",fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.4}},
                 React.createElement("div",null,"Ticker / Company"),
                 React.createElement("div",null,"Buy Date"),
                 React.createElement("div",null,"Sell Date"),
+                React.createElement("div",{style:{textAlign:"right"}},"Buy Value"),
+                React.createElement("div",{style:{textAlign:"right"}},"Sell Value"),
                 React.createElement("div",{style:{textAlign:"right"}},"Return %"),
                 React.createElement("div",{style:{textAlign:"right"}},"P&L")
               ),
               tradesByMonth[selectedMonth].map((t,idx)=>{
                 const isGain=t.pnl>=0;
                 const _abs=Math.abs(t.pnl);const _pStr=(_abs>=100000?(t.pnl/100000).toFixed(2)+"L":_abs>=1000?(t.pnl/1000).toFixed(1)+"K":t.pnl.toFixed(0));
-                return React.createElement("div",{key:t.id||idx,style:{display:"grid",gridTemplateColumns:"2.2fr 1.3fr 1.3fr 1fr 1fr",gap:8,padding:"8px 10px",borderRadius:idx===tradesByMonth[selectedMonth].length-1?"0 0 8px 8px":0,background:idx%2===0?"var(--bg3)":"var(--bg4)",fontSize:11,alignItems:"center",borderTop:"1px solid var(--border)"}},
+                return React.createElement("div",{key:t.id||idx,style:{display:"grid",gridTemplateColumns:"2fr 1.1fr 1.1fr 1fr 1fr 0.9fr 1fr",gap:6,padding:"8px 10px",borderRadius:idx===tradesByMonth[selectedMonth].length-1?"0 0 8px 8px":0,background:idx%2===0?"var(--bg3)":"var(--bg4)",fontSize:11,alignItems:"center",borderTop:"1px solid var(--border)"}},
                   React.createElement("div",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
                     React.createElement("div",{style:{fontWeight:600,color:"var(--text3)",fontSize:11}},t.ticker||"—"),
                     React.createElement("div",{style:{fontSize:9,color:"var(--text6)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.company||"")
                   ),
                   React.createElement("div",{style:{fontSize:10,color:"var(--text5)",fontFamily:"'DM Mono',monospace"}},t.buyDate||"—"),
                   React.createElement("div",{style:{fontSize:10,color:"var(--text5)",fontFamily:"'DM Mono',monospace"}},t.sellDate||"—"),
+                  React.createElement("div",{style:{textAlign:"right",fontSize:10,color:"var(--text4)",fontFamily:"'DM Mono',monospace"}},INR(t.buyAmt)),
+                  React.createElement("div",{style:{textAlign:"right",fontSize:10,color:"var(--text4)",fontFamily:"'DM Mono',monospace"}},INR(t.sellAmt)),
                   React.createElement("div",{style:{textAlign:"right",fontWeight:600,fontFamily:"'Sora',sans-serif",fontSize:10,color:isGain?"#16a34a":"#ef4444"}},ret(t.returnPct)),
                   React.createElement("div",{style:{textAlign:"right",fontWeight:700,fontFamily:"'Sora',sans-serif",fontSize:11,color:isGain?"#16a34a":"#ef4444"}},(isGain?"+":"-")+"₹"+_pStr)
                 );
               })
             ),
-            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8,padding:"6px 10px",background:"var(--bg4)",borderRadius:8,fontSize:10}},
-              React.createElement("span",{style:{color:"var(--text5)",fontWeight:600}},"Month Total"),
-              React.createElement("span",{style:{fontWeight:800,fontFamily:"'Sora',sans-serif",fontSize:12,color:(tradesByMonth[selectedMonth].reduce((s,t)=>s+t.pnl,0)>=0)?"#16a34a":"#ef4444"}},
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1.1fr 1.1fr 1fr 1fr 0.9fr 1fr",gap:6,marginTop:8,padding:"8px 10px",background:"var(--bg4)",borderRadius:8,fontSize:10,alignItems:"center"}},
+              React.createElement("span",{style:{color:"var(--text5)",fontWeight:700,gridColumn:"1 / 4"}},"Month Total"),
+              React.createElement("span",{style:{textAlign:"right",fontFamily:"'DM Mono',monospace",fontSize:10,color:"var(--text4)"}},INR(tradesByMonth[selectedMonth].reduce((s,t)=>s+t.buyAmt,0))),
+              React.createElement("span",{style:{textAlign:"right",fontFamily:"'DM Mono',monospace",fontSize:10,color:"var(--text4)"}},INR(tradesByMonth[selectedMonth].reduce((s,t)=>s+t.sellAmt,0))),
+              React.createElement("span",{style:{textAlign:"right"}},""),
+              React.createElement("span",{style:{textAlign:"right",fontWeight:800,fontFamily:"'Sora',sans-serif",fontSize:12,color:(tradesByMonth[selectedMonth].reduce((s,t)=>s+t.pnl,0)>=0)?"#16a34a":"#ef4444"}},
                 (tradesByMonth[selectedMonth].reduce((s,t)=>s+t.pnl,0)>=0?"+":"")+INR(tradesByMonth[selectedMonth].reduce((s,t)=>s+t.pnl,0))
               )
             )
