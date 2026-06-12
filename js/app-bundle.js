@@ -1131,12 +1131,17 @@ const calcFDMaturity=(principal,ratePercent,startDate,maturityDate,compoundFreq)
 };
 
 /* ──────────────────────────────────────────────────────────────────────────
-   calcFDValueToday — current accrued value of an FD as of today.
+   calcFDValueToday — current accrued value of an FD as of today (IST).
    • FD not started yet (startDate > today) → returns principal.
    • FD already matured (maturityDate ≤ today) → returns the full maturity
-     amount (uses stored maturityAmount if accurate, otherwise re-computes).
-   • FD in-progress → returns principal × (1 + r/4)^(4 × elapsed_years)
-     using quarterly compounding, matching Indian bank convention.
+     amount (uses stored maturityAmount if set, otherwise re-computes).
+   • FD in-progress → principal × (1 + r/n)^completedPeriods
+     using only fully completed compounding periods (matches Indian bank
+     practice — interest is credited at period end, not continuously).
+     compoundFreq on the FD object controls n: quarterly=4, half-yearly=2,
+     annually=1; defaults to quarterly.
+   All date comparisons use IST (UTC+5:30) to avoid UTC-midnight drift that
+   would misclassify a matured FD for up to 5.5 hours after maturity date.
    Always returns at least the principal (never less).
    Used for net worth, portfolio value, and asset allocation.
    Do NOT use for "Total Principal" labels or XIRR cost-basis.
@@ -1144,21 +1149,23 @@ const calcFDMaturity=(principal,ratePercent,startDate,maturityDate,compoundFreq)
 const calcFDValueToday=(f)=>{
   if(!f||!f.amount||f.amount<=0)return 0;
   if(!f.startDate||!f.maturityDate||!(f.rate>0))return f.amount;
-  const today=new Date();
-  const start=new Date(f.startDate);
-  const maturity=new Date(f.maturityDate);
-  if(today>=maturity){
-    /* Already matured — use stored maturityAmount if available (accounts for TDS),
-       otherwise compute from formula. Respect user-entered maturityAmount directly
-       even if lower than principal (e.g. after TDS deduction). */
+  /* Use IST date string (YYYY-MM-DD) for all comparisons — same timezone the
+     user picked their dates in.  Avoids UTC-midnight drift (up to 5.5 hr). */
+  const todayIST=new Date(Date.now()+(5.5*60*60*1000)).toISOString().split("T")[0];
+  if(todayIST>=f.maturityDate){
+    /* Already matured — use stored maturityAmount if available (accounts for TDS).
+       Respect user-entered maturityAmount directly even if lower than principal. */
     if(f.maturityAmount&&f.maturityAmount>0)return f.maturityAmount;
     return Math.max(calcFDMaturity(f.amount,f.rate,f.startDate,f.maturityDate,f.compoundFreq),f.amount);
   }
-  if(today<=start)return f.amount; /* not started yet */
-  /* In-progress: accrue from startDate to today */
-  const elapsedYears=Math.max(0,(today-start)/(365*24*3600*1000));
+  if(todayIST<=f.startDate)return f.amount; /* not started yet */
+  /* In-progress: count only fully completed compounding periods.
+     Banks credit interest at each compounding date, not continuously, so
+     using a fractional exponent would overstate the current account value. */
+  const elapsedDays=Math.round((new Date(todayIST+"T00:00:00Z")-new Date(f.startDate+"T00:00:00Z"))/(1000*60*60*24));
   const n=f.compoundFreq==="annually"?1:f.compoundFreq==="half-yearly"?2:4;
-  const accrued=f.amount*Math.pow(1+(f.rate/100)/n,n*elapsedYears);
+  const completedPeriods=Math.floor(elapsedDays*n/365);
+  const accrued=f.amount*Math.pow(1+(f.rate/100)/n,completedPeriods);
   return Math.max(Math.round(accrued),f.amount);
 };
 
