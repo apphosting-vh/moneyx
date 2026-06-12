@@ -22813,15 +22813,17 @@ const MultiTimeframePerformance=({shares,soldShareSnapshots={}})=>{
     return list.sort((a,b)=>(a.sellDate||"").localeCompare(b.sellDate||""));
   },[shares,soldShareSnapshots]);
 
+  const closedTrades=React.useMemo(()=>trades.filter(t=>t.type==="sold"),[trades]);
+
   const monthlyData=React.useMemo(()=>{
     const map={};
-    trades.forEach(t=>{
+    closedTrades.forEach(t=>{
       const month=(t.sellDate||t.buyDate||"").slice(0,7);if(!month)return;
       if(!map[month])map[month]={month,pnl:0,count:0,winners:0,losers:0};
       map[month].pnl+=t.pnl;map[month].count++;if(t.pnl>0)map[month].winners++;if(t.pnl<0)map[month].losers++;
     });
     return Object.values(map).sort((a,b)=>a.month.localeCompare(b.month));
-  },[trades]);
+  },[closedTrades]);
 
   const streaks=React.useMemo(()=>{
     if(!monthlyData.length)return{maxWin:0,maxLoss:0,curStreak:0,curType:"none",consecMonths:[]};
@@ -22846,13 +22848,13 @@ const MultiTimeframePerformance=({shares,soldShareSnapshots={}})=>{
 
   const weeklyData=React.useMemo(()=>{
     const map={};
-    trades.forEach(t=>{
+    closedTrades.forEach(t=>{
       const d=new Date((t.sellDate||t.buyDate)+"T12:00:00");const ws=new Date(d);ws.setDate(d.getDate()-d.getDay());const wk=ws.toISOString().slice(0,10);
       if(!map[wk])map[wk]={week:wk,pnl:0,count:0,trades:[]};
       map[wk].pnl+=t.pnl;map[wk].count++;map[wk].trades.push(t);
     });
     return Object.values(map).sort((a,b)=>a.week.localeCompare(b.week));
-  },[trades]);
+  },[closedTrades]);
 
   const bestWeek=weeklyData.reduce((best,w)=>!best||w.pnl>best.pnl?w:best,null);
   const worstWeek=weeklyData.reduce((worst,w)=>!worst||w.pnl<worst.pnl?w:worst,null);
@@ -22865,10 +22867,20 @@ const MultiTimeframePerformance=({shares,soldShareSnapshots={}})=>{
     return{rows:years.map(y=>({year:y,months:months.map(m=>byYear[y]?.[m]||null)})),maxAbs};
   },[monthlyData]);
 
-  if(!trades.length)return React.createElement("div",{style:{textAlign:"center",padding:"48px 20px"}},
+  const [selectedMonth,setSelectedMonth]=useState(null);
+  const tradesByMonth=React.useMemo(()=>{
+    const map={};
+    closedTrades.forEach(t=>{
+      const mk=(t.sellDate||t.buyDate||"").slice(0,7);if(!mk)return;
+      if(!map[mk])map[mk]=[];map[mk].push(t);
+    });
+    return map;
+  },[closedTrades]);
+
+  if(!closedTrades.length)return React.createElement("div",{style:{textAlign:"center",padding:"48px 20px"}},
     React.createElement("div",{style:{fontSize:40,marginBottom:12,color:"var(--text6)"}},React.createElement(Icon,{n:"invest",size:40})),
-    React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text3)",marginBottom:4}},"No Trade Data"),
-    React.createElement("div",{style:{fontSize:13,color:"var(--text6)"}},"Add shares or save snapshots to see multi-timeframe performance.")
+    React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text3)",marginBottom:4}},"No Closed Trades Yet"),
+    React.createElement("div",{style:{fontSize:13,color:"var(--text6)"}},"Sell shares or save snapshots to see multi-timeframe P&L analysis.")
   );
 
   return React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:20}},
@@ -22900,23 +22912,65 @@ const MultiTimeframePerformance=({shares,soldShareSnapshots={}})=>{
       ),
       heatmapData.rows.length===0
         ?React.createElement("div",{style:{textAlign:"center",padding:"40px",fontSize:12,color:"var(--text6)"}},"No monthly data")
-        :React.createElement("div",{style:{overflowX:"auto"}},
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"50px repeat(12,1fr)",gap:3,minWidth:500}},
-            React.createElement("div",{style:{fontSize:9,color:"var(--text6)",fontWeight:700}},""),
-            ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map(m=>React.createElement("div",{key:m,style:{fontSize:9,color:"var(--text6)",fontWeight:700,textAlign:"center",padding:"4px 0"}},m)),
-            heatmapData.rows.map(r=>React.createElement(React.Fragment,{key:r.year},
-              React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",display:"flex",alignItems:"center"}},r.year),
-              r.months.map((m,i)=>{
-                if(!m)return React.createElement("div",{key:i,style:{background:"var(--bg5)",borderRadius:4,minHeight:32}});
-                const intensity=Math.min(Math.abs(m.pnl)/heatmapData.maxAbs,1);
-                const bg=m.pnl>=0?`rgba(22,163,74,${(0.08+intensity*0.35).toFixed(2)})`:`rgba(239,68,68,${(0.08+intensity*0.35).toFixed(2)})`;
-                const _pnlAbs=Math.abs(m.pnl);const _pnlStr=(m.pnl>=0?"+":"")+(_pnlAbs>=100000?(m.pnl/100000).toFixed(1)+"L":_pnlAbs>=1000?(m.pnl/1000).toFixed(0)+"K":m.pnl.toFixed(0));
-                return React.createElement("div",{key:i,title:m.month+": "+INR(m.pnl)+" ("+m.count+" trades)",style:{background:bg,borderRadius:4,minHeight:32,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:"default"}},
-                  React.createElement("div",{style:{fontSize:10,fontWeight:700,fontFamily:"'Sora',sans-serif",color:m.pnl>=0?"#16a34a":"#ef4444"}},_pnlStr),
-                  React.createElement("div",{style:{fontSize:8,color:"var(--text6)"}},m.count)
+        :React.createElement("div",null,
+          React.createElement("div",{style:{overflowX:"auto"}},
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"50px repeat(12,1fr)",gap:3,minWidth:500}},
+              React.createElement("div",{style:{fontSize:9,color:"var(--text6)",fontWeight:700}},""),
+              ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map(m=>React.createElement("div",{key:m,style:{fontSize:9,color:"var(--text6)",fontWeight:700,textAlign:"center",padding:"4px 0"}},m)),
+              heatmapData.rows.map(r=>React.createElement(React.Fragment,{key:r.year},
+                React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",display:"flex",alignItems:"center"}},r.year),
+                r.months.map((m,i)=>{
+                  if(!m)return React.createElement("div",{key:i,style:{background:"var(--bg5)",borderRadius:4,minHeight:32}});
+                  const intensity=Math.min(Math.abs(m.pnl)/heatmapData.maxAbs,1);
+                  const bg=m.pnl>=0?`rgba(22,163,74,${(0.08+intensity*0.35).toFixed(2)})`:`rgba(239,68,68,${(0.08+intensity*0.35).toFixed(2)})`;
+                  const _pnlAbs=Math.abs(m.pnl);const _pnlStr=(m.pnl>=0?"+":"")+(_pnlAbs>=100000?(m.pnl/100000).toFixed(1)+"L":_pnlAbs>=1000?(m.pnl/1000).toFixed(0)+"K":m.pnl.toFixed(0));
+                  const isSelected=selectedMonth===m.month;
+                  return React.createElement("div",{key:i,onClick:()=>setSelectedMonth(isSelected?null:m.month),title:m.month+": "+INR(m.pnl)+" ("+m.count+" trades) — click to inspect",style:{background:bg,borderRadius:4,minHeight:32,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:"pointer",outline:isSelected?"2px solid var(--accent)":"none",outlineOffset:isSelected?1:"none",transition:"outline .12s,transform .1s",transform:isSelected?"scale(1.06)":"scale(1)"}},
+                    React.createElement("div",{style:{fontSize:10,fontWeight:700,fontFamily:"'Sora',sans-serif",color:m.pnl>=0?"#16a34a":"#ef4444"}},_pnlStr),
+                    React.createElement("div",{style:{fontSize:8,color:"var(--text6)"}},m.count)
+                  );
+                })
+              ))
+            )
+          ),
+          selectedMonth&&tradesByMonth[selectedMonth]&&React.createElement("div",{style:{marginTop:14,borderTop:"1px solid var(--border)",paddingTop:14}},
+            React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}},
+              React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",display:"flex",alignItems:"center",gap:6}},
+                React.createElement(Icon,{n:"list",size:14,color:"var(--accent)"}),
+                (()=>{const d=new Date(selectedMonth+"-01T12:00:00");return d.toLocaleString("en-IN",{month:"long",year:"numeric"});})(),
+                React.createElement("span",{style:{fontSize:11,fontWeight:500,color:"var(--text5)",marginLeft:4}},tradesByMonth[selectedMonth].length+" trade"+(tradesByMonth[selectedMonth].length!==1?"s":""))
+              ),
+              React.createElement("div",{onClick:()=>setSelectedMonth(null),style:{fontSize:10,color:"var(--text6)",cursor:"pointer",padding:"3px 8px",borderRadius:6,background:"var(--bg4)"},"aria-label":"Close"},"✕")
+            ),
+            React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+              React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2.2fr 1.3fr 1.3fr 1fr 1fr",gap:8,padding:"6px 10px",borderRadius:"8px 8px 0 0",background:"var(--bg4)",fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.4}},
+                React.createElement("div",null,"Ticker / Company"),
+                React.createElement("div",null,"Buy Date"),
+                React.createElement("div",null,"Sell Date"),
+                React.createElement("div",{style:{textAlign:"right"}},"Return %"),
+                React.createElement("div",{style:{textAlign:"right"}},"P&L")
+              ),
+              tradesByMonth[selectedMonth].map((t,idx)=>{
+                const isGain=t.pnl>=0;
+                const _abs=Math.abs(t.pnl);const _pStr=(_abs>=100000?(t.pnl/100000).toFixed(2)+"L":_abs>=1000?(t.pnl/1000).toFixed(1)+"K":t.pnl.toFixed(0));
+                return React.createElement("div",{key:t.id||idx,style:{display:"grid",gridTemplateColumns:"2.2fr 1.3fr 1.3fr 1fr 1fr",gap:8,padding:"8px 10px",borderRadius:idx===tradesByMonth[selectedMonth].length-1?"0 0 8px 8px":0,background:idx%2===0?"var(--bg3)":"var(--bg4)",fontSize:11,alignItems:"center",borderTop:"1px solid var(--border)"}},
+                  React.createElement("div",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
+                    React.createElement("div",{style:{fontWeight:600,color:"var(--text3)",fontSize:11}},t.ticker||"—"),
+                    React.createElement("div",{style:{fontSize:9,color:"var(--text6)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.company||"")
+                  ),
+                  React.createElement("div",{style:{fontSize:10,color:"var(--text5)",fontFamily:"'DM Mono',monospace"}},t.buyDate||"—"),
+                  React.createElement("div",{style:{fontSize:10,color:"var(--text5)",fontFamily:"'DM Mono',monospace"}},t.sellDate||"—"),
+                  React.createElement("div",{style:{textAlign:"right",fontWeight:600,fontFamily:"'Sora',sans-serif",fontSize:10,color:isGain?"#16a34a":"#ef4444"}},ret(t.returnPct)),
+                  React.createElement("div",{style:{textAlign:"right",fontWeight:700,fontFamily:"'Sora',sans-serif",fontSize:11,color:isGain?"#16a34a":"#ef4444"}},(isGain?"+":"-")+"₹"+_pStr)
                 );
               })
-            ))
+            ),
+            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8,padding:"6px 10px",background:"var(--bg4)",borderRadius:8,fontSize:10}},
+              React.createElement("span",{style:{color:"var(--text5)",fontWeight:600}},"Month Total"),
+              React.createElement("span",{style:{fontWeight:800,fontFamily:"'Sora',sans-serif",fontSize:12,color:(tradesByMonth[selectedMonth].reduce((s,t)=>s+t.pnl,0)>=0)?"#16a34a":"#ef4444"}},
+                (tradesByMonth[selectedMonth].reduce((s,t)=>s+t.pnl,0)>=0?"+":"")+INR(tradesByMonth[selectedMonth].reduce((s,t)=>s+t.pnl,0))
+              )
+            )
           )
         )
     ),
@@ -22963,7 +23017,7 @@ const MultiTimeframePerformance=({shares,soldShareSnapshots={}})=>{
     ),
     React.createElement("div",{style:{padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
       React.createElement("strong",{style:{color:"var(--accent)"}},"Methodology: "),
-      "Monthly P&L heatmap aggregates all trades by sell-date month. Colour intensity scales from light (small P&L) to deep (large P&L). Streaks count consecutive profitable or unprofitable months. Best/worst weeks aggregate by week starting Sunday. Active holdings use current price as exit. All amounts net of brokerage."
+      "Monthly P&L heatmap aggregates closed (sold) trades by sell-date month. Active holdings are excluded — only realised P&L is shown. Colour intensity scales from light (small P&L) to deep (large P&L). Streaks count consecutive profitable or unprofitable months. Best/worst weeks aggregate by week starting Sunday. All amounts net of brokerage."
     )
   );
 };
