@@ -863,7 +863,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.10.0";
+const APP_VERSION="4.12.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1016,7 +1016,7 @@ const Icon=({n,size=16,col,style={}})=>{
 };
 
 /* Expose to window so the always-fresh self-version-check (in <head>) can read it */
-window.__MM_APP_VERSION = "4.12.0 - Dashboard Enhanced + Portfolio Allocation";
+window.__MM_APP_VERSION = APP_VERSION;
 /* helpers for category tree */
 const catColor=(cats,name)=>{
   for(const c of cats){if(c.name===name)return c.color;for(const sc of c.subs)if(sc.name===name)return c.color;}
@@ -14028,56 +14028,6 @@ const FinancialCalendar=({data,isMobile})=>{
         )
       );
     })
-  );
-};
-
-/* ── Portfolio Allocation Widget (High-ROI Phase 1) ── */
-const PortfolioAllocation = ({mf, shares, fd, re, brokerCashBalance=0}) => {
-  const totalMF = (mf||[]).reduce((s, m) => s + (m.currentValue || m.units * (m.nav||m.avgNav||0) || m.invested || 0), 0);
-  const totalShares = (shares||[]).reduce((s, sh) => s + sh.qty * (sh.currentPrice || sh.buyPrice || 0), 0) + (brokerCashBalance||0);
-  const totalFD = (fd||[]).reduce((s, f) => s + calcFDValueToday(f), 0);
-  const totalRE = (re||[]).reduce((s, r) => s + (r.currentValue || r.acquisitionCost || 0), 0);
-
-  const equity = Math.round(totalMF * 0.65 + totalShares * 0.95);
-  const debt = Math.round(totalMF * 0.35 + totalFD);
-  const cash = brokerCashBalance||0;
-  const realEstate = totalRE;
-
-  const totalPortfolio = equity + debt + cash + realEstate || 1;
-  const allocation = [
-    { name: "Equity", value: equity, target: 60, color: "#16a34a", pct: Math.round(equity / totalPortfolio * 100) },
-    { name: "Debt / FD", value: debt, target: 25, color: "#6d28d9", pct: Math.round(debt / totalPortfolio * 100) },
-    { name: "Cash", value: cash, target: 5, color: "#0891b2", pct: Math.round(cash / totalPortfolio * 100) },
-    { name: "Real Estate", value: realEstate, target: 10, color: "#c2410c", pct: Math.round(realEstate / totalPortfolio * 100) }
-  ];
-
-  const drifts = allocation.filter(a => Math.abs(a.pct - a.target) > 8);
-
-  return React.createElement("div",{style:{margin:"16px 0 8px"}},
-    React.createElement("div",{style:{background:"var(--bg3)",border:"1px solid var(--border2)",borderRadius:16,padding:16}},
-      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
-        React.createElement("div",{style:{fontSize:15,fontWeight:700,color:"var(--text)"}},"Portfolio Allocation"),
-        React.createElement("div",{style:{fontSize:12,color:"var(--text5)"}},"vs Target %")
-      ),
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(220px,1fr))",gap:16}},
-        allocation.map((a,i) => React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",gap:12}},
-          React.createElement("div",{style:{width:36,height:36,borderRadius:"50%",background:a.color,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:13,fontWeight:700}},a.pct+"%"),
-          React.createElement("div",{style:{flex:1}},
-            React.createElement("div",{style:{fontWeight:600,fontSize:13}},a.name),
-            React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},a.value.toLocaleString('en-IN')+" ₹")
-          ),
-          React.createElement("div",{style:{textAlign:"right",minWidth:60}},
-            React.createElement("div",{style:{fontSize:12,color: Math.abs(a.pct - a.target)>8 ? "#ef4444" : "#16a34a",fontWeight:500}},
-              a.pct + "% (" + (a.pct - a.target) + ")"
-            )
-          )
-        ))
-      ),
-      drifts.length > 0 && React.createElement("div",{style:{marginTop:16,padding:12,background:"rgba(239,68,68,0.08)",borderRadius:10,border:"1px solid rgba(239,68,68,0.2)",fontSize:13}},
-        React.createElement("strong",null,"Rebalancing Opportunity:"),
-        React.createElement("ul",{style:{margin:"6px 0 0 20px",padding:0}}, drifts.map((d,i)=>React.createElement("li",{key:i,style:{marginBottom:2}}, d.name + " drift " + Math.abs(d.pct - d.target) + "%")))
-      )
-    )
   );
 };
 
