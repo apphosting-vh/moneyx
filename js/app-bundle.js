@@ -5587,7 +5587,7 @@ var GlobalNotificationSync = ({ state, dispatch }) => {
    Additional fixes carried over from v2:
    ① gdriveReadSyncFile  — exportedAt from payload root; timestamp guard
    ② gdriveUpsertSyncFile — persists write timestamp to localStorage
-   ③ CloudBackupPanel    — fully defined with Client ID + Client Secret UI
+   ③ CloudBackupPanel    — uses a built-in Client ID; credential fields are hidden
    ④ gdrive:pulled event — persists remote exportedAt on pull
    ══════════════════════════════════════════════════════════════════════════ */
 
@@ -5599,14 +5599,25 @@ var GlobalNotificationSync = ({ state, dispatch }) => {
 var GDRIVE_LS_REFRESH_TOKEN  = "mm_gdrive_refresh_token";
 var GDRIVE_LS_CLIENT_SECRET  = "mm_gdrive_client_secret";
 var GDRIVE_TOKEN_ENDPOINT    = "https://oauth2.googleapis.com/token";
+var GDRIVE_BUILTIN_CLIENT_ID = "769525551930-5d645morj103efjqp7baq95b3629k38h.apps.googleusercontent.com";
+var GDRIVE_BUILTIN_CLIENT_SECRET = "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";
+var _gdriveGetClientId = () => {
+  try {
+    return GDRIVE_BUILTIN_CLIENT_ID || localStorage.getItem("mm_gdrive_cid") || "";
+  } catch { return GDRIVE_BUILTIN_CLIENT_ID || ""; }
+};
 
 /* ── Read / write / clear the stored refresh token ── */
 var _gdriveGetRefreshToken  = () => { try { return localStorage.getItem(GDRIVE_LS_REFRESH_TOKEN) || ""; } catch { return ""; } };
 var _gdriveSetRefreshToken  = (rt) => { try { if (rt) localStorage.setItem(GDRIVE_LS_REFRESH_TOKEN, rt); } catch {} };
 var _gdriveClearRefreshToken = () => { try { localStorage.removeItem(GDRIVE_LS_REFRESH_TOKEN); } catch {} };
 
-/* ── Read / write the client secret ── */
-var _gdriveGetClientSecret  = () => { try { return localStorage.getItem(GDRIVE_LS_CLIENT_SECRET) || ""; } catch { return ""; } };
+/* ── Read the client secret ── */
+var _gdriveGetClientSecret  = () => {
+  try {
+    return GDRIVE_BUILTIN_CLIENT_SECRET || localStorage.getItem(GDRIVE_LS_CLIENT_SECRET) || "";
+  } catch { return GDRIVE_BUILTIN_CLIENT_SECRET || ""; }
+};
 
 /* ── Build the redirect_uri Google expects (origin only for SPAs) ── */
 var _gdriveRedirectUri = () => window.location.origin;
@@ -5625,7 +5636,7 @@ var _gdriveRedirectUri = () => window.location.origin;
  * @returns {{ access_token, refresh_token, expires_in } | null}
  */
 var _gdriveExchangeCodeForTokens = async (authCode) => {
-  const cid    = (function(){ try { return localStorage.getItem("mm_gdrive_cid") || ""; } catch { return ""; } })();
+  const cid    = _gdriveGetClientId();
   const secret = _gdriveGetClientSecret();
   if (!cid || !secret || !authCode) return null;
 
@@ -5663,7 +5674,7 @@ var _gdriveExchangeCodeForTokens = async (authCode) => {
  */
 var _gdriveRefreshAccessToken = async () => {
   const refreshToken = _gdriveGetRefreshToken();
-  const cid          = (function(){ try { return localStorage.getItem("mm_gdrive_cid") || ""; } catch { return ""; } })();
+  const cid          = _gdriveGetClientId();
   const secret       = _gdriveGetClientSecret();
 
   if (!refreshToken || !cid || !secret) return "";
@@ -5718,14 +5729,14 @@ var _gdriveRefreshAccessToken = async () => {
  * Opens the Google consent screen via GIS initCodeClient (Code flow).
  * On success, exchanges the code for tokens and stores the refresh token.
  *
- * Requires: Client ID + Client Secret to be saved.
+ * Requires the built-in Client ID and a locally saved Client Secret.
  * Falls back gracefully if the user cancels or the exchange fails.
  *
  * @returns {string} — access token, or "" on failure
  */
 var gdriveRequestTokenWithRefresh = () => new Promise((resolve) => {
   try {
-    const cid = (function(){ try { return localStorage.getItem("mm_gdrive_cid") || ""; } catch { return ""; } })();
+    const cid = _gdriveGetClientId();
     if (!cid || typeof google === "undefined" || !google.accounts?.oauth2) {
       resolve(""); return;
     }
@@ -6163,7 +6174,7 @@ var gdriveAutoBackup = async (state) => {
   try {
     /* Guard: Drive must be configured */
     if (!cloudSyncSupported()) return;
-    const cid = (() => { try { return localStorage.getItem("mm_gdrive_cid") || ""; } catch { return ""; } })();
+    const cid = _gdriveGetClientId();
     if (!cid || cid.length < 10) return;
 
     /* Guard: only once per calendar day (IST) */
@@ -6269,15 +6280,11 @@ window._gdriveAutoBackup = gdriveAutoBackup;
    ──────────────────────────────────────────────────────────────────────────
    Settings → Cloud Backup tab.
    v3 additions:
-   • Client Secret field (required for refresh token flow)
+   • Built-in Client ID + Client Secret status
    • Refresh Token status indicator
    • "Re-authorise" button to force a new Code flow consent
    ══════════════════════════════════════════════════════════════════════════ */
 var CloudBackupPanel = ({ state, dispatch }) => {
-  const [cidInput,     setCidInput]     = React.useState(() => { try { return localStorage.getItem("mm_gdrive_cid") || ""; } catch { return ""; } });
-  const [secretInput,  setSecretInput]  = React.useState(() => { try { return localStorage.getItem(GDRIVE_LS_CLIENT_SECRET) || ""; } catch { return ""; } });
-  const [cidSaved,     setCidSaved]     = React.useState(false);
-  const [secretSaved,  setSecretSaved]  = React.useState(false);
   const [lastSync,     setLastSync]     = React.useState(_syncGetLocal);
   const [localEdit,    setLocalEdit]    = React.useState(_syncGetLocalEdit);
   const [pushMsg,      setPushMsg]      = React.useState("");
@@ -6287,7 +6294,6 @@ var CloudBackupPanel = ({ state, dispatch }) => {
   const [reauthing,    setReauthing]    = React.useState(false);
   const [tokenOk,      setTokenOk]      = React.useState(false);
   const [hasRefresh,   setHasRefresh]   = React.useState(() => !!_gdriveGetRefreshToken());
-  const [showSecret,   setShowSecret]   = React.useState(false);
   /* Auto-backup state */
   const [abDate,       setAbDate]       = React.useState(_autoBackupGetLastDate);
   const [abTime,       setAbTime]       = React.useState(_autoBackupGetLastTime);
@@ -6340,8 +6346,8 @@ var CloudBackupPanel = ({ state, dispatch }) => {
     setTokenOk(!_gdriveTokenExpired() && !!_gdriveGetToken());
   }, []);
 
-  const hasCid    = cidInput.trim().length > 10;
-  const hasSecret = secretInput.trim().length > 0;
+  const hasCid    = _gdriveGetClientId().trim().length > 10;
+  const hasSecret = _gdriveGetClientSecret().trim().length > 0;
   const isConfigured = hasCid;
   const syncCompare = localEdit && lastSync
     ? (localEdit === lastSync ? "match" : (localEdit > lastSync ? "local-newer" : "drive-newer"))
@@ -6370,35 +6376,6 @@ var CloudBackupPanel = ({ state, dispatch }) => {
     } catch { return iso; }
   };
 
-  /* ── Save Client ID ── */
-  const saveCid = () => {
-    const newCid = cidInput.trim();
-    try {
-      const oldCid = localStorage.getItem("mm_gdrive_cid") || "";
-      if (oldCid && oldCid !== newCid) {
-        /* Client ID changed — wipe all auth state so user re-authorises */
-        localStorage.removeItem(GDRIVE_LS_TOKEN);
-        localStorage.removeItem(GDRIVE_LS_EXPIRE);
-        localStorage.removeItem(GDRIVE_LS_FILEID);
-        _gdriveClearRefreshToken();
-        setTokenOk(false);
-        setHasRefresh(false);
-      }
-      localStorage.setItem("mm_gdrive_cid", newCid);
-    } catch {}
-    setCidSaved(true);
-    setTimeout(() => setCidSaved(false), 2500);
-  };
-
-  /* ── Save Client Secret ── */
-  const saveSecret = () => {
-    try {
-      localStorage.setItem(GDRIVE_LS_CLIENT_SECRET, secretInput.trim());
-    } catch {}
-    setSecretSaved(true);
-    setTimeout(() => setSecretSaved(false), 2500);
-  };
-
   /* ── Clear all credentials ── */
   const clearCreds = () => {
     if (!window.confirm("Disconnect Google Drive? Sync will stop until you reconnect.")) return;
@@ -6410,8 +6387,6 @@ var CloudBackupPanel = ({ state, dispatch }) => {
       localStorage.removeItem(GDRIVE_LS_FILEID);
       _gdriveClearRefreshToken();
     } catch {}
-    setCidInput("");
-    setSecretInput("");
     setTokenOk(false);
     setHasRefresh(false);
     setPushMsg("Disconnected.");
@@ -6624,84 +6599,31 @@ var CloudBackupPanel = ({ state, dispatch }) => {
       React.createElement("ul", { style: { paddingLeft: 18, margin: 0 } },
         React.createElement("li", null, React.createElement("strong", null, "On launch"), " — both devices compare Drive's timestamp with local. If Drive is newer, data is automatically restored."),
         React.createElement("li", null, React.createElement("strong", null, "After changes"), " — data is automatically pushed to Drive within seconds of any edit."),
-        React.createElement("li", null, React.createElement("strong", null, "Token refresh"), " — once a Client Secret is saved, the app silently renews access tokens using the stored refresh token — no popups after the first sign-in."),
+        React.createElement("li", null, React.createElement("strong", null, "Token refresh"), " — the built-in OAuth credentials are used automatically. After Authorise Token stores a refresh token, renewals happen silently."),
         React.createElement("li", null, React.createElement("strong", null, "Conflict resolution"), " — last-writer-wins. The device that saved most recently takes precedence.")
       )
     ),
 
-    /* ── Google Client ID ── */
+    /* ── Built-in Google OAuth credentials ── */
     React.createElement(Card, { sx: { marginBottom: 16 } },
-      React.createElement("div", { style: subHdr }, "Google OAuth Client ID"),
-      React.createElement("p", { style: { fontSize: 12, color: "var(--text5)", marginBottom: 12, lineHeight: 1.6 } },
-        "Create an OAuth 2.0 Client ID at ",
-        React.createElement("a", { href: "https://console.cloud.google.com/apis/credentials", target: "_blank", rel: "noopener", style: { color: "var(--accent)", textDecoration: "underline" } }, "console.cloud.google.com"),
-        " → Credentials. Set Application type to \"Web application\"."
-      ),
-      React.createElement("div", { style: { display: "flex", gap: 10, alignItems: "flex-end", flexWrap: "wrap" } },
-        React.createElement(Field, { label: "Client ID", sx: { flex: "1 1 300px", marginBottom: 0 } },
-          React.createElement("input", {
-            className: "inp", type: "text",
-            placeholder: "e.g. 123456789-abc.apps.googleusercontent.com",
-            value: cidInput,
-            onChange: e => { setCidInput(e.target.value); setCidSaved(false); },
-            style: { fontFamily: "monospace", fontSize: 12 },
-          })
-        ),
-        React.createElement(Btn, {
-          onClick: saveCid, disabled: !cidInput.trim(),
-          sx: { minWidth: 110, justifyContent: "center", flexShrink: 0 },
-        }, cidSaved ? "✓ Saved" : "Save Client ID")
-      ),
-      hasCid && React.createElement("div", { style: { marginTop: 10, display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#16a34a" } },
+      React.createElement("div", { style: subHdr }, "Google OAuth"),
+      React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } },
         React.createElement(StatusDot, { on: true }),
-        "Client ID configured"
-      )
-    ),
-
-    /* ── Client Secret ── */
-    React.createElement(Card, { sx: { marginBottom: 16 } },
-      React.createElement("div", { style: subHdr }, "OAuth Client Secret"),
-      React.createElement("p", { style: { fontSize: 12, color: "var(--text5)", marginBottom: 12, lineHeight: 1.6 } },
-        "Required for the refresh token flow. Found alongside the Client ID in Google Cloud Console. ",
-        React.createElement("strong", { style: { color: "var(--text4)" } }, "Stored only on this device"),
-        " and sent exclusively to ",
-        React.createElement("code", { style: { fontSize: 11 } }, "oauth2.googleapis.com"),
-        "."
+        React.createElement("div", { style: { flex: 1, minWidth: 220 } },
+          React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: "#16a34a", marginBottom: 2 } }, "OAuth credentials built in"),
+          React.createElement("div", { style: { fontSize: 11, color: "var(--text5)", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, _gdriveGetClientId())
+        )
       ),
-      React.createElement("div", { style: { display: "flex", gap: 10, alignItems: "flex-end", flexWrap: "wrap" } },
-        React.createElement(Field, { label: "Client Secret", sx: { flex: "1 1 260px", marginBottom: 0 } },
-          React.createElement("div", { style: { position: "relative" } },
-            React.createElement("input", {
-              className: "inp",
-              type: showSecret ? "text" : "password",
-              placeholder: "GOCSPX-…",
-              value: secretInput,
-              onChange: e => { setSecretInput(e.target.value); setSecretSaved(false); },
-              style: { fontFamily: "monospace", fontSize: 12, paddingRight: 36 },
-            }),
-            React.createElement("button", {
-              onClick: () => setShowSecret(v => !v),
-              style: {
-                position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
-                background: "none", border: "none", cursor: "pointer",
-                color: "var(--text5)", fontSize: 12, padding: "2px 4px",
-              },
-              title: showSecret ? "Hide" : "Show"
-            }, showSecret ? "🙈" : "👁")
-          )
-        ),
-        React.createElement(Btn, {
-          onClick: saveSecret, disabled: !secretInput.trim(),
-          sx: { minWidth: 130, justifyContent: "center", flexShrink: 0 },
-        }, secretSaved ? "✓ Saved" : "Save Secret")
+      React.createElement("p", { style: { fontSize: 12, color: "var(--text5)", marginBottom: 12, lineHeight: 1.6 } },
+        "Credential entry fields are hidden. Use the Authorise Token action below to connect Google Drive."
       ),
       hasSecret && React.createElement("div", { style: { marginTop: 10, display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#16a34a" } },
         React.createElement(StatusDot, { on: true }),
-        "Client Secret configured — refresh token flow enabled"
+        "Client Secret built in — refresh-token flow enabled."
       ),
       !hasSecret && React.createElement("div", { style: { marginTop: 10, fontSize: 12, color: "#b45309", display: "flex", alignItems: "center", gap: 6 } },
         React.createElement(StatusDot, { warn: true }),
-        "Without a secret the app will show an OAuth popup every hour."
+        "Client Secret missing."
       )
     ),
 
@@ -6794,7 +6716,7 @@ var CloudBackupPanel = ({ state, dispatch }) => {
           reauthing
             ? React.createElement("span", { className: "spinr" }, React.createElement(Icon, { n: "refresh", size: 14 }))
             : React.createElement(Icon, { n: "unlock", size: 14 }),
-          reauthing ? "Authorising…" : hasRefresh ? "🔄 Re-Authorise Drive" : "🔑 Authorise & Store Refresh Token"
+          reauthing ? "Authorising…" : hasRefresh ? "Re-Authorise Token" : "Authorise Token"
         ),
         hasRefresh && React.createElement("span", { style: { fontSize: 12, color: "#16a34a" } }, "✓ Refresh token already stored")
       )
@@ -6972,7 +6894,7 @@ var CloudBackupPanel = ({ state, dispatch }) => {
     isConfigured && React.createElement(Card, { sx: { border: "1px solid rgba(239,68,68,.2)", background: "rgba(239,68,68,.03)", marginBottom: 16 } },
       React.createElement("div", { style: { fontSize: 12, color: "#ef4444", textTransform: "uppercase", letterSpacing: 0.7, fontWeight: 600, marginBottom: 6 } }, "Disconnect Google Drive"),
       React.createElement("p", { style: { fontSize: 13, color: "var(--text4)", marginBottom: 14, lineHeight: 1.7 } },
-        "Removes Client ID, Client Secret, access token, and refresh token from this device. Your ",
+        "Removes local Google Drive tokens and any previously saved local Client Secret from this device. Your ",
         React.createElement("code", { style: { fontSize: 12, color: "var(--text3)", background: "var(--bg4)", borderRadius: 4, padding: "1px 5px" } }, "finsight-sync.json"),
         " file on Google Drive is not deleted."
       ),
@@ -6985,26 +6907,10 @@ var CloudBackupPanel = ({ state, dispatch }) => {
         React.createElement(Icon, { n: "info", size: 14 }), " Setup Guide"
       ),
       React.createElement("ol", { style: { paddingLeft: 18, fontSize: 12, color: "var(--text4)", lineHeight: 2.1 } },
-        React.createElement("li", null, "Go to ", React.createElement("a", { href: "https://console.cloud.google.com", target: "_blank", rel: "noopener", style: { color: "var(--accent)" } }, "Google Cloud Console"), " → Create or select a project → Enable \"Google Drive API\"."),
-        React.createElement("li", null, "APIs & Services → Credentials → Create → \"OAuth 2.0 Client ID\""),
-        React.createElement("li", null, "Application type: \"Web application\""),
-        React.createElement("li", null,
-          "Authorised JavaScript origins: add your app's domain (e.g. ",
-          React.createElement("code", { style: { fontSize: 11, color: "var(--text3)" } }, "https://yourapp.example.com"), ")."
-        ),
-        React.createElement("li", null,
-          React.createElement("strong", null, "New for refresh tokens — "),
-          "Authorised redirect URIs: also add your app's origin (the same URL). This is required for the token exchange step."
-        ),
-        React.createElement("li", null, "Download / view the credential — copy both the ", React.createElement("strong", null, "Client ID"), " and the ", React.createElement("strong", null, "Client Secret"), " and paste them in the fields above."),
-        React.createElement("li", null, "Click \"Authorise & Store Refresh Token\" — this opens Google's consent screen ", React.createElement("em", null, "once"), ". After that, access tokens are renewed automatically."),
-        React.createElement("li", null, "Click \"Push to Drive\" to create your first sync file — then repeat on your other device."),
-        React.createElement("li", null,
-          React.createElement("strong", null, "Note: "),
-          "If Google's consent screen didn't offer \"offline\" access (no refresh token was returned), revoke the app's access in ",
-          React.createElement("a", { href: "https://myaccount.google.com/permissions", target: "_blank", rel: "noopener", style: { color: "var(--accent)" } }, "myaccount.google.com/permissions"),
-          ", then click \"Re-Authorise Drive\" here."
-        )
+        React.createElement("li", null, "The Google OAuth Client ID is built into this app, so no credential entry is required."),
+        React.createElement("li", null, "Click \"Push to Drive\" or \"Pull from Drive\" — Google OAuth will open when access is needed."),
+        React.createElement("li", null, "Approve Drive access for this app. It only uses the ", React.createElement("code", { style: { fontSize: 11, color: "var(--text3)" } }, "drive.file"), " scope."),
+        React.createElement("li", null, "Click \"Push to Drive\" to create your first sync file — then repeat on your other device.")
       )
     )
   );
@@ -8578,7 +8484,7 @@ var StorageSyncPanel=()=>{
   const absDiff=(a,b)=>(a&&b)?Math.abs(new Date(a)-new Date(b)):null;
 
   /* ── Sync calculations ── */
-  const driveConfigured=!!(function(){try{return localStorage.getItem("mm_gdrive_cid");}catch{return null;}}());
+  const driveConfigured=!!_gdriveGetClientId();
   const lsIdbDiff=absDiff(ts.ls,ts.idb);
   const lsIdbOk  =!!(ts.ls&&ts.idb&&lsIdbDiff< 15000);
   const lsIdbWarn=!!(ts.ls&&ts.idb&&lsIdbDiff>=15000&&lsIdbDiff<120000);
@@ -10419,7 +10325,7 @@ var _gdriveTokenExpired = () => {
    No UI is shown at any point. */
 var gdriveRequestTokenSilent = () => new Promise((resolve) => {
   try {
-    const cid = (function(){try{return localStorage.getItem("mm_gdrive_cid")||"";}catch{return "";}})();
+    const cid = _gdriveGetClientId();
     if (!cid || typeof google === "undefined" || !google.accounts?.oauth2) { resolve(""); return; }
     const client = google.accounts.oauth2.initTokenClient({
       client_id: cid,
@@ -10443,7 +10349,7 @@ var gdriveRequestTokenSilent = () => new Promise((resolve) => {
 var gdriveRequestToken = () => new Promise((resolve) => {
   try {
     const client = google.accounts.oauth2.initTokenClient({
-      client_id: (function(){try{return localStorage.getItem("mm_gdrive_cid")||"";}catch{return "";}})(),
+      client_id: _gdriveGetClientId(),
       scope: "https://www.googleapis.com/auth/drive.file",
       callback: (resp) => {
         if (resp && resp.access_token) {
