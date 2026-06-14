@@ -14305,6 +14305,13 @@ const Dashboard=React.memo(({data,isMobile})=>{
           {id:"moneysummary",label:"Monthly Summary (Where did my money go?)"},
           {id:"nwdonut",    label:"Net Worth Donut Chart"},
           {id:"budgetalerts",label:"Budget Alerts"},
+          {id:"needsattention",label:"Needs Attention"},
+          {id:"runway",     label:"Liquidity Runway"},
+          {id:"invpulse",   label:"Investment Pulse"},
+          {id:"taxwatch",   label:"Capital Gains / Tax Watch"},
+          {id:"subscriptions",label:"Subscription Radar"},
+          {id:"cardoptimizer",label:"Credit Card Cycle Optimizer"},
+          {id:"datahealth", label:"Data Health"},
           {id:"fincalendar",label:"Financial Calendar (60-day obligations)"},
         ].map(w=>React.createElement("label",{key:w.id,style:{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderRadius:8,cursor:"pointer",background:W(w.id)?"transparent":"rgba(239,68,68,.04)",border:"1px solid "+(W(w.id)?"var(--border2)":"rgba(239,68,68,.15)"),transition:"all .15s"}},
           React.createElement("input",{type:"checkbox",checked:W(w.id),onChange:()=>toggleWidget(w.id),style:{width:15,height:15,accentColor:"var(--accent)",cursor:"pointer",flexShrink:0}}),
@@ -15707,6 +15714,292 @@ const Dashboard=React.memo(({data,isMobile})=>{
     })()
 
     ,
+    /* ══ M0: NEEDS ATTENTION ═════════════════════════════════════ */
+    W("needsattention")&&(()=>{
+      const uncats=allBankTx.filter(t=>!t.cat||catMainName(t.cat||"")==="Others").slice(0,5);
+      const overdue=(data.scheduled||[]).filter(s=>s.status==="active"&&s.nextDate&&s.nextDate<todayStr).slice(0,5);
+      const staleShares=(data.shares||[]).filter(sh=>{
+        if(!sh.priceTs)return true;
+        const age=(Date.now()-new Date(sh.priceTs).getTime())/86400000;
+        return !isFinite(age)||age>3;
+      }).slice(0,5);
+      const snapKeys=Object.keys(data.nwSnapshots||{}).sort();
+      const lastSnap=snapKeys[snapKeys.length-1]||"";
+      const curSnapKey=thisMonth;
+      const missingSnap=lastSnap!==curSnapKey;
+      const budgetHot=[];
+      const plans=data.insightPrefs?.budgetPlans||{};
+      Object.entries(plans).forEach(([cat,plan])=>{
+        if(!plan||plan<=0)return;
+        const ct=catClassType(data.categories,cat);
+        if(ct==="Income"||ct==="Transfer"||ct==="Investment"||cat==="Taxes")return;
+        const spent=catEntries.find(([c])=>c===cat)?.[1]||0;
+        if(spent/plan>=.9)budgetHot.push({cat,spent,plan,pct:spent/plan*100});
+      });
+      const items=[
+        ...overdue.map(x=>({kind:"Overdue",txt:x.desc||x.payee||"Scheduled item",sub:dmyFmt(x.nextDate)+" · "+INR(x.amount),col:"#ef4444"})),
+        ...uncats.map(x=>({kind:"Categorise",txt:x.desc||x.payee||"Transaction",sub:dmyFmt(x.date)+" · "+INR(x.amount),col:"#b45309"})),
+        ...budgetHot.sort((a,b)=>b.pct-a.pct).slice(0,4).map(x=>({kind:x.pct>=100?"Budget over":"Budget hot",txt:x.cat,sub:INR(x.spent)+" of "+INR(x.plan),col:x.pct>=100?"#ef4444":"#c2410c"})),
+        ...staleShares.map(x=>({kind:"Price stale",txt:x.company||x.ticker||"Share",sub:x.priceTs?"Last updated "+new Date(x.priceTs).toLocaleDateString("en-IN"):"No live price yet",col:"#6d28d9"})),
+        ...(missingSnap?[{kind:"Snapshot",txt:"Net worth snapshot missing",sub:"Save "+curSnapKey+" snapshot",col:"#0e7490"}]:[])
+      ].slice(0,8);
+      return React.createElement("div",{className:"db-card"},
+        SL("Needs Attention",items.length?items.length+" item"+(items.length!==1?"s":"")+" to review":"All clear"),
+        items.length
+          ?React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(2,1fr)",gap:8}},
+            items.map((it,i)=>React.createElement("div",{key:i,style:{display:"flex",gap:9,alignItems:"center",padding:"9px 11px",borderRadius:10,background:it.col+"0f",border:"1px solid "+it.col+"33"}},
+              React.createElement("div",{style:{width:8,height:8,borderRadius:"50%",background:it.col,flexShrink:0}}),
+              React.createElement("div",{style:{minWidth:0,flex:1}},
+                React.createElement("div",{style:{fontSize:9,fontWeight:800,color:it.col,textTransform:"uppercase",letterSpacing:.6}},it.kind),
+                React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},it.txt),
+                React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:1}},it.sub)
+              )
+            ))
+          )
+          :React.createElement("div",{style:{padding:"20px 0",textAlign:"center",color:"#16a34a",fontSize:13,fontWeight:600}},React.createElement(Icon,{n:"check",size:14,style:{verticalAlign:"middle",marginRight:5}}),"No urgent cleanup needed")
+      );
+    })(),
+
+    /* ══ M1: LIQUIDITY RUNWAY ═══════════════════════════════════ */
+    W("runway")&&(()=>{
+      const avgExp=monthlyFlow.length?monthlyFlow.slice(-6).reduce((s,m)=>s+m.exp,0)/monthlyFlow.length:curMD.exp;
+      const liquidNow=bTotal+cashBal+(data.brokerCashBalance||0)-cDebt;
+      const runway=avgExp>0?liquidNow/avgExp:null;
+      const col=runway==null?"var(--text4)":runway>=6?"#16a34a":runway>=3?"#b45309":"#ef4444";
+      const pct=runway==null?0:Math.min(runway/6*100,100);
+      return React.createElement("div",{className:"db-card"},
+        SL("Liquidity Runway","Bank + cash + broker cash minus card dues"),
+        React.createElement("div",{style:{display:"flex",gap:16,alignItems:"center",flexWrap:"wrap"}},
+          React.createElement("div",{style:{minWidth:170,flex:"1 1 190px"}},
+            React.createElement("div",{style:{fontSize:34,fontFamily:"'Sora',sans-serif",fontWeight:800,color:col,lineHeight:1}},runway==null?"--":runway.toFixed(1)+" mo"),
+            React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:5}},avgExp>0?"based on "+INR(Math.round(avgExp))+" avg monthly expense":"Need expense history to calculate runway")
+          ),
+          React.createElement("div",{style:{flex:"2 1 280px"}},
+            React.createElement("div",{style:{height:10,borderRadius:8,background:"var(--border)",overflow:"hidden",marginBottom:8}},
+              React.createElement("div",{style:{height:"100%",width:pct+"%",background:col,borderRadius:8,transition:"width 1s ease"}})
+            ),
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}},
+              [
+                ["Liquid",INR(liquidNow),liquidNow>=0?"#16a34a":"#ef4444"],
+                ["Bank + Cash",INR(bTotal+cashBal),"#0e7490"],
+                ["Broker Cash",INR(data.brokerCashBalance||0),"#6d28d9"],
+                ["Card Dues","-"+INR(cDebt),"#ef4444"],
+              ].map(([l,v,c])=>React.createElement("div",{key:l,style:{padding:"7px 9px",borderRadius:8,background:"var(--bg5)",border:"1px solid var(--border2)"}},
+                React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},l),
+                React.createElement("div",{style:{fontSize:12,fontWeight:800,color:c,fontFamily:"'Sora',sans-serif",marginTop:2}},v)
+              ))
+            )
+          )
+        )
+      );
+    })(),
+
+    /* ══ M2: INVESTMENT PULSE ═══════════════════════════════════ */
+    W("invpulse")&&(()=>{
+      const mfV=data.mf.filter(m=>m.units>0).reduce((s,m)=>s+(m.currentValue||m.invested),0);
+      const mfCost=data.mf.filter(m=>m.units>0).reduce((s,m)=>s+(m.invested||0),0);
+      const shV=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
+      const shCost=data.shares.reduce((s,sh)=>s+sh.qty*sh.buyPrice,0);
+      const fdV=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
+      const total=mfV+shV+fdV+(data.brokerCashBalance||0);
+      const cost=mfCost+shCost+data.fd.reduce((s,f)=>s+(+f.amount||0),0)+(data.brokerCashBalance||0);
+      const pnl=total-cost;
+      const movers=(data.shares||[]).map(sh=>{
+        const cost=sh.qty*sh.buyPrice,val=sh.qty*sh.currentPrice;
+        return{...sh,pnl:val-cost,pct:cost>0?(val-cost)/cost*100:0};
+      }).sort((a,b)=>Math.abs(b.pct)-Math.abs(a.pct)).slice(0,4);
+      const stale=(data.shares||[]).filter(sh=>!sh.priceTs||((Date.now()-new Date(sh.priceTs).getTime())/86400000)>3).length;
+      return React.createElement("div",{className:"db-card"},
+        SL("Investment Pulse","MF + shares + FD + broker cash"),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"1.1fr 1.5fr",gap:14}},
+          React.createElement("div",{style:{padding:"12px 14px",borderRadius:12,background:pnl>=0?"rgba(22,163,74,.07)":"rgba(239,68,68,.07)",border:"1px solid "+(pnl>=0?"rgba(22,163,74,.2)":"rgba(239,68,68,.2)")}},
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,marginBottom:4}},"Portfolio Value"),
+            React.createElement("div",{style:{fontSize:24,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text)"}},INR(total)),
+            React.createElement("div",{style:{fontSize:12,fontWeight:700,color:pnl>=0?"#16a34a":"#ef4444",marginTop:4}},(pnl>=0?"+":"")+INR(pnl)+" · "+(cost>0?(pnl/cost*100).toFixed(1):"0.0")+"%"),
+            stale>0&&React.createElement("div",{style:{fontSize:10,color:"#b45309",marginTop:8}},stale+" share price"+(stale!==1?"s":"")+" stale")
+          ),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(2,1fr)",gap:8}},
+            [
+              ["Mutual Funds",mfV,mfV-mfCost,"#6d28d9"],
+              ["Shares",shV,shV-shCost,"#16a34a"],
+              ["Fixed Deposits",fdV,fdV-data.fd.reduce((s,f)=>s+(+f.amount||0),0),"#0e7490"],
+              ["Broker Cash",data.brokerCashBalance||0,0,"#b45309"],
+            ].map(([l,v,g,c])=>React.createElement("div",{key:l,style:{padding:"8px 10px",borderRadius:9,background:"var(--bg5)",border:"1px solid var(--border2)"}},
+              React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginBottom:2}},l),
+              React.createElement("div",{style:{fontSize:13,fontWeight:800,color:c,fontFamily:"'Sora',sans-serif"}},INR(v)),
+              g!==0&&React.createElement("div",{style:{fontSize:10,color:g>=0?"#16a34a":"#ef4444"}},(g>=0?"+":"")+INR(g))
+            ))
+          )
+        ),
+        movers.length>0&&React.createElement("div",{style:{display:"flex",gap:8,overflowX:"auto",marginTop:10,paddingBottom:2}},
+          movers.map(m=>React.createElement("div",{key:m.id,style:{minWidth:135,padding:"8px 10px",borderRadius:9,background:m.pnl>=0?"rgba(22,163,74,.06)":"rgba(239,68,68,.06)",border:"1px solid "+(m.pnl>=0?"rgba(22,163,74,.18)":"rgba(239,68,68,.18)")}},
+            React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},m.company||m.ticker),
+            React.createElement("div",{style:{fontSize:12,fontWeight:800,color:m.pnl>=0?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif",marginTop:2}},(m.pnl>=0?"+":"")+m.pct.toFixed(1)+"%"),
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},INR(m.pnl))
+          ))
+        )
+      );
+    })(),
+
+    /* ══ M3: CAPITAL GAINS / TAX WATCH ═════════════════════════ */
+    W("taxwatch")&&(()=>{
+      const cg=computeCapitalGains(data.shares||[],data.mf||[]);
+      const near=(data.shares||[]).filter(sh=>sh.buyDate).map(sh=>{
+        const days=Math.floor((new Date(todayStr+"T12:00:00")-new Date(sh.buyDate+"T12:00:00"))/86400000);
+        return{...sh,days,toLtcg:366-days,gain:sh.qty*(sh.currentPrice-sh.buyPrice)};
+      }).filter(x=>x.toLtcg>0&&x.toLtcg<=60&&x.gain>0).sort((a,b)=>a.toLtcg-b.toLtcg).slice(0,4);
+      const losses=(data.shares||[]).map(sh=>({name:sh.company||sh.ticker,loss:sh.qty*(sh.currentPrice-sh.buyPrice)})).filter(x=>x.loss<0).sort((a,b)=>a.loss-b.loss).slice(0,3);
+      return React.createElement("div",{className:"db-card"},
+        SL("Capital Gains / Tax Watch","Estimated only · not tax advice"),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)",gap:8,marginBottom:10}},
+          [
+            ["STCG Gain",cg.stcgGain||0,"#c2410c"],
+            ["LTCG Gain",cg.ltcgGain||0,"#16a34a"],
+            ["Est. Tax",cg.totalTax||0,"#ef4444"],
+            ["Losses",Math.abs(cg.stcgLoss||0)+Math.abs(cg.ltcgLoss||0),"#0e7490"],
+          ].map(([l,v,c])=>React.createElement("div",{key:l,style:{padding:"9px 10px",borderRadius:9,background:c+"0d",border:"1px solid "+c+"2e"}},
+            React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},l),
+            React.createElement("div",{style:{fontSize:14,fontWeight:800,color:c,fontFamily:"'Sora',sans-serif",marginTop:2}},INR(Math.round(v)))
+          ))
+        ),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:10}},
+          React.createElement("div",{style:{padding:"9px 11px",borderRadius:10,background:"var(--bg5)",border:"1px solid var(--border2)"}},
+            React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.6,marginBottom:6}},"Near LTCG"),
+            near.length?near.map(x=>React.createElement("div",{key:x.id,style:{display:"flex",justifyContent:"space-between",fontSize:11,padding:"3px 0",gap:8}},
+              React.createElement("span",{style:{color:"var(--text3)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},x.company||x.ticker),
+              React.createElement("span",{style:{color:"#16a34a",fontWeight:700,whiteSpace:"nowrap"}},x.toLtcg+"d · "+INR(x.gain))
+            )):React.createElement("div",{style:{fontSize:11,color:"var(--text6)"}},"No profitable holdings within 60 days of LTCG")
+          ),
+          React.createElement("div",{style:{padding:"9px 11px",borderRadius:10,background:"var(--bg5)",border:"1px solid var(--border2)"}},
+            React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.6,marginBottom:6}},"Loss Harvest Candidates"),
+            losses.length?losses.map(x=>React.createElement("div",{key:x.name,style:{display:"flex",justifyContent:"space-between",fontSize:11,padding:"3px 0",gap:8}},
+              React.createElement("span",{style:{color:"var(--text3)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},x.name),
+              React.createElement("span",{style:{color:"#ef4444",fontWeight:700,whiteSpace:"nowrap"}},INR(x.loss))
+            )):React.createElement("div",{style:{fontSize:11,color:"var(--text6)"}},"No unrealised share losses")
+          )
+        )
+      );
+    })(),
+
+    /* ══ M4: SUBSCRIPTION / RECURRING SPEND RADAR ══════════════ */
+    W("subscriptions")&&(()=>{
+      const txs=allBankTx.filter(t=>t.type==="debit"&&t.payee&&t.amount>0).sort((a,b)=>a.date.localeCompare(b.date));
+      const byPayee={};
+      txs.forEach(t=>{const k=(t.payee||"").trim();if(!byPayee[k])byPayee[k]=[];byPayee[k].push(t);});
+      const subs=Object.entries(byPayee).map(([payee,arr])=>{
+        if(arr.length<2)return null;
+        const recent=arr.slice(-4);
+        const avg=recent.reduce((s,t)=>s+t.amount,0)/recent.length;
+        const dates=recent.map(t=>new Date(t.date+"T12:00:00"));
+        const gaps=[];for(let i=1;i<dates.length;i++)gaps.push((dates[i]-dates[i-1])/86400000);
+        const avgGap=gaps.length?gaps.reduce((s,g)=>s+g,0)/gaps.length:0;
+        const stable=recent.every(t=>Math.abs(t.amount-avg)/avg<.25);
+        if(!(avgGap>=25&&avgGap<=38&&stable))return null;
+        const last=recent[recent.length-1];
+        const next=new Date(last.date+"T12:00:00");next.setDate(next.getDate()+Math.round(avgGap||30));
+        return{payee,avg,last,nextDate:next.toISOString().slice(0,10),count:arr.length};
+      }).filter(Boolean).sort((a,b)=>b.avg-a.avg).slice(0,8);
+      const total=subs.reduce((s,x)=>s+x.avg,0);
+      return React.createElement("div",{className:"db-card"},
+        SL("Subscription Radar",subs.length+" recurring debit"+(subs.length!==1?"s":"")+" detected"),
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10,flexWrap:"wrap",gap:8}},
+          React.createElement("div",{style:{fontSize:24,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#b45309"}},INR(Math.round(total))),
+          React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},"estimated monthly recurring spend")
+        ),
+        subs.length?React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(2,1fr)",gap:7}},
+          subs.map(s=>React.createElement("div",{key:s.payee,style:{display:"flex",justifyContent:"space-between",gap:10,padding:"8px 10px",borderRadius:9,background:"var(--bg5)",border:"1px solid var(--border2)"}},
+            React.createElement("div",{style:{minWidth:0}},
+              React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},s.payee),
+              React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"next around "+dmyFmt(s.nextDate)+" · "+s.count+" hits")
+            ),
+            React.createElement("div",{style:{fontSize:12,fontWeight:800,color:"#b45309",fontFamily:"'Sora',sans-serif",whiteSpace:"nowrap"}},INR(Math.round(s.avg)))
+          ))
+        ):React.createElement("div",{style:{fontSize:12,color:"var(--text6)",padding:"14px 0",textAlign:"center"}},"No stable monthly recurring debits detected yet")
+      );
+    })(),
+
+    /* ══ M5: CREDIT CARD CYCLE OPTIMIZER ═══════════════════════ */
+    W("cardoptimizer")&&(()=>{
+      const cards=(data.cards||[]).map(c=>{
+        const now=new Date();const bd=+c.billingDay||1;const dd=+c.dueDay||bd;
+        const cycleStart=new Date(now.getFullYear(),now.getMonth(),bd);
+        if(now.getDate()<=bd)cycleStart.setMonth(cycleStart.getMonth()-1);
+        const nextStatement=new Date(cycleStart);nextStatement.setMonth(nextStatement.getMonth()+1);
+        const dueDate=dd>bd?new Date(nextStatement.getFullYear(),nextStatement.getMonth(),dd):new Date(nextStatement.getFullYear(),nextStatement.getMonth()+1,dd);
+        const fmt=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+        const util=c.limit>0?c.outstanding/c.limit*100:0;
+        const stmtIn=Math.ceil((nextStatement-now)/86400000);
+        const dueIn=Math.ceil((dueDate-now)/86400000);
+        return{...c,util,stmtDate:fmt(nextStatement),dueDate:fmt(dueDate),stmtIn,dueIn,available:(c.limit||0)-(c.outstanding||0)};
+      }).sort((a,b)=>(b.dueIn-a.dueIn)||(b.available-a.available));
+      const best=cards.filter(c=>c.available>0&&c.util<75)[0]||cards[0];
+      if(!cards.length)return null;
+      return React.createElement("div",{className:"db-card"},
+        SL("Credit Card Cycle Optimizer",best?"Best card to use today: "+best.name:"Card cycle planning"),
+        best&&React.createElement("div",{style:{padding:"11px 14px",borderRadius:11,background:"rgba(14,116,144,.07)",border:"1px solid rgba(14,116,144,.22)",marginBottom:10,display:"flex",justifyContent:"space-between",gap:10,alignItems:"center"}},
+          React.createElement("div",{style:{minWidth:0}},
+            React.createElement("div",{style:{fontSize:14,fontWeight:800,color:"#0e7490",fontFamily:"'Sora',sans-serif",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},best.name),
+            React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},"Statement in "+best.stmtIn+"d · due in "+best.dueIn+"d")
+          ),
+          React.createElement("div",{style:{textAlign:"right",flexShrink:0}},
+            React.createElement("div",{style:{fontSize:13,fontWeight:800,color:"#16a34a",fontFamily:"'Sora',sans-serif"}},INR(best.available)),
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"available")
+          )
+        ),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(2,1fr)",gap:8}},
+          cards.map(c=>{
+            const col=c.util>80?"#ef4444":c.util>50?"#c2410c":"#16a34a";
+            return React.createElement("div",{key:c.id,style:{padding:"8px 10px",borderRadius:9,background:"var(--bg5)",border:"1px solid var(--border2)"}},
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",gap:8,marginBottom:5}},
+                React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},c.name),
+                React.createElement("span",{style:{fontSize:11,fontWeight:800,color:col,fontFamily:"'Sora',sans-serif",whiteSpace:"nowrap"}},c.util.toFixed(0)+"%")
+              ),
+              React.createElement("div",{style:{height:4,borderRadius:3,background:"var(--border)",overflow:"hidden",marginBottom:5}},
+                React.createElement("div",{style:{height:"100%",width:Math.min(c.util,100)+"%",background:col,borderRadius:3}})
+              ),
+              React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"Stmt "+dmyFmt(c.stmtDate)+" · Due "+dmyFmt(c.dueDate)+" · avail "+INR(c.available))
+            );
+          })
+        )
+      );
+    })(),
+
+    /* ══ M6: DATA HEALTH ═══════════════════════════════════════ */
+    W("datahealth")&&(()=>{
+      const uncats=allBankTx.filter(t=>!t.cat||catMainName(t.cat||"")==="Others").length;
+      const stale=(data.shares||[]).filter(sh=>!sh.priceTs||((Date.now()-new Date(sh.priceTs).getTime())/86400000)>3).length;
+      const snapKeys=Object.keys(data.nwSnapshots||{}).sort();
+      const lastSnap=snapKeys[snapKeys.length-1]||"";
+      const noBudgets=!Object.values(data.insightPrefs?.budgetPlans||{}).some(v=>v>0)&&!Object.values(data.insightPrefs?.yearlyBudgetPlans||{}).some(v=>v>0);
+      const noReminders=!(data.reminders||[]).some(r=>r.status==="active");
+      let backupAge=null;try{const ts=localStorage.getItem("mm_last_backup_ts")||localStorage.getItem("mm_backup_last_ts");if(ts)backupAge=Math.floor((Date.now()-new Date(ts).getTime())/86400000);}catch{}
+      const checks=[
+        {l:"Uncategorised",v:uncats,ok:uncats===0,sub:uncats+" txns need category"},
+        {l:"Share Prices",v:stale,ok:stale===0,sub:stale?"Refresh stale prices":"Fresh"},
+        {l:"NW Snapshot",v:lastSnap,ok:lastSnap===thisMonth,sub:lastSnap?("Last: "+lastSnap):"None saved"},
+        {l:"Budgets",v:noBudgets?1:0,ok:!noBudgets,sub:noBudgets?"No budget plan set":"Configured"},
+        {l:"Reminders",v:noReminders?1:0,ok:!noReminders,sub:noReminders?"No active reminders":"Active"},
+        {l:"Backup",v:backupAge,ok:backupAge!==null&&backupAge<=30,sub:backupAge===null?"No backup timestamp found":backupAge+" days ago"},
+      ];
+      const score=Math.round(checks.filter(c=>c.ok).length/checks.length*100);
+      const col=score>=80?"#16a34a":score>=55?"#b45309":"#ef4444";
+      return React.createElement("div",{className:"db-card"},
+        SL("Data Health","Completeness and freshness checks"),
+        React.createElement("div",{style:{display:"flex",gap:14,alignItems:"center",flexWrap:"wrap"}},
+          React.createElement("div",{style:{width:86,height:86,borderRadius:"50%",border:"8px solid "+col+"33",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",flexShrink:0}},
+            React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:col,lineHeight:1}},score),
+            React.createElement("div",{style:{fontSize:9,color:"var(--text5)",marginTop:2}},"score")
+          ),
+          React.createElement("div",{style:{flex:1,display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(3,1fr)",gap:8}},
+            checks.map(c=>React.createElement("div",{key:c.l,style:{padding:"8px 10px",borderRadius:9,background:c.ok?"rgba(22,163,74,.05)":"rgba(239,68,68,.05)",border:"1px solid "+(c.ok?"rgba(22,163,74,.16)":"rgba(239,68,68,.18)")}},
+              React.createElement("div",{style:{fontSize:10,fontWeight:800,color:c.ok?"#16a34a":"#ef4444",textTransform:"uppercase",letterSpacing:.5}},(c.ok?"✓ ":"! ")+c.l),
+              React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},c.sub)
+            ))
+          )
+        )
+      );
+    })(),
+
     /* ══ M: FINANCIAL CALENDAR ══ */
     W("fincalendar")&&React.createElement("div",{className:"db-card"},
       React.createElement("div",{style:{marginBottom:12}},
