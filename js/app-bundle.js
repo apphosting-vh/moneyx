@@ -863,7 +863,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.10.0";
+const APP_VERSION="4.10.1";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1731,6 +1731,11 @@ const reducer=(s,a)=>{
       const merged=[...(s.mfTxns||[]),newTxn];
       const derivedMf=_deriveMfHoldings(merged,s.mf||[]);
       return{...s,mfTxns:merged,mf:derivedMf};
+    }
+    case"EDIT_MF_TXN":{
+      const updated=(s.mfTxns||[]).map(t=>t.id===a.txn.id?{...t,...a.txn}:t);
+      const derivedMf=_deriveMfHoldings(updated,s.mf||[]);
+      return{...s,mfTxns:updated,mf:derivedMf};
     }
     case"DEL_MF_TXN":{
       const filtered=(s.mfTxns||[]).filter(t=>t.id!==a.id);
@@ -16606,6 +16611,24 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose})=>{
   const[showAdd,setShowAdd]=useState(false);
   const[addForm,setAddForm]=useState({orderType:"buy",date:getISTDateStr?getISTDateStr():(new Date().toISOString().split("T")[0]),amount:"",nav:""});
   const[addError,setAddError]=useState("");
+  const[editTxnId,setEditTxnId]=useState(null);
+  const[editForm,setEditForm]=useState({orderType:"buy",date:"",amount:"",nav:"",folio:""});
+  const[confirmDelId,setConfirmDelId]=useState(null);
+  const startEdit=t=>{
+    setEditTxnId(t.id);
+    setEditForm({orderType:t.orderType||"buy",date:t.date||"",amount:t.amount?String(t.amount):"",nav:t.nav?String(t.nav):"",folio:t.folio||""});
+  };
+  const cancelEdit=()=>{setEditTxnId(null);setEditForm({orderType:"buy",date:"",amount:"",nav:"",folio:""});};
+  const saveEdit=()=>{
+    const amt=parseFloat(editForm.amount);
+    const navP=parseFloat(editForm.nav);
+    if(!amt||amt<=0||!navP||navP<=0||!editForm.date)return;
+    const units=parseFloat((amt/navP).toFixed(4));
+    dispatch({type:"EDIT_MF_TXN",txn:{id:editTxnId,fundName,date:editForm.date,orderType:editForm.orderType,amount:amt,nav:navP,units,folio:editForm.folio||""}});
+    cancelEdit();
+  };
+  const confirmDelete=t=>{setConfirmDelId(t.id);};
+  const executeDelete=()=>{if(confirmDelId){dispatch({type:"DEL_MF_TXN",id:confirmDelId});setConfirmDelId(null);}};
   const txns=(mfTxns||[])
     .filter(t=>t.fundName===fundName)
     .sort((a,b)=>(a.date||"").localeCompare(b.date||""));
@@ -16660,13 +16683,28 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose})=>{
     ),
     /* Transaction table */
     React.createElement("div",{style:{border:"1px solid var(--border)",borderRadius:10,overflowX:"auto",overflowY:"hidden",WebkitOverflowScrolling:"touch"}},
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"minmax(80px,95px) minmax(45px,55px) minmax(70px,90px) minmax(65px,80px) minmax(80px,100px) minmax(80px,100px)",background:"var(--bg4)",padding:"8px 12px",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,borderBottom:"1px solid var(--border)"}},
-        ["Date","Type","Units","NAV","Amount","Folio"].map(h=>React.createElement("div",{key:h,style:{textAlign:h==="Date"||h==="Folio"?"left":"right"}},h))
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"minmax(80px,95px) minmax(45px,55px) minmax(70px,90px) minmax(65px,80px) minmax(80px,100px) minmax(80px,100px) 60px",background:"var(--bg4)",padding:"8px 12px",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,borderBottom:"1px solid var(--border)"}},
+        ["Date","Type","Units","NAV","Amount","Folio",""].map(h=>React.createElement("div",{key:h,style:{textAlign:h==="Date"||h==="Folio"?"left":"right"}},h))
       ),
       React.createElement("div",{style:{maxHeight:400,overflowY:"auto"}},
         txns.map((t,i)=>{
           const isBuy=t.orderType==="buy";
-          return React.createElement("div",{key:t.id||i,style:{display:"grid",gridTemplateColumns:"minmax(80px,95px) minmax(45px,55px) minmax(70px,90px) minmax(65px,80px) minmax(80px,100px) minmax(80px,100px)",padding:"7px 12px",borderBottom:"1px solid var(--border2)",background:i%2?"rgba(255,255,255,.014)":"transparent",fontSize:12,alignItems:"center"}},
+          const isEditing=editTxnId===t.id;
+          if(isEditing)return React.createElement("div",{key:t.id||i,style:{display:"grid",gridTemplateColumns:"minmax(80px,95px) minmax(45px,55px) minmax(70px,90px) minmax(65px,80px) minmax(80px,100px) minmax(80px,100px) 60px",padding:"4px 6px",borderBottom:"1px solid var(--accent)",background:"var(--accentbg)",fontSize:12,alignItems:"center",gap:2}},
+            React.createElement("input",{type:"date",value:editForm.date,onChange:e=>setEditForm(f=>({...f,date:e.target.value})),style:{width:"100%",padding:"3px 5px",border:"1px solid var(--border)",borderRadius:5,fontSize:11,background:"var(--inp-bg)",color:"var(--text)",outline:"none"}}),
+            React.createElement("div",{style:{display:"flex",gap:3}},
+              ["buy","sell"].map(t2=>React.createElement("button",{key:t2,onClick:()=>setEditForm(f=>({...f,orderType:t2})),style:{flex:1,padding:"3px 0",borderRadius:4,fontSize:9,fontWeight:700,cursor:"pointer",border:"1px solid "+(editForm.orderType===t2?(t2==="buy"?"#16a34a":"#ef4444"):"var(--border2)"),background:editForm.orderType===t2?(t2==="buy"?"rgba(22,163,74,.12)":"rgba(239,68,68,.12)"):"transparent",color:editForm.orderType===t2?(t2==="buy"?"#16a34a":"#ef4444"):"var(--text5)"}},t2==="buy"?"B":"S"))
+            ),
+            React.createElement("input",{type:"number",value:editForm.amount,onChange:e=>setEditForm(f=>({...f,amount:e.target.value})),style:{width:"100%",padding:"3px 5px",border:"1px solid var(--border)",borderRadius:5,fontSize:11,textAlign:"right",background:"var(--inp-bg)",color:"var(--text)",outline:"none"},min:"0",step:"0.01"}),
+            React.createElement("input",{type:"number",value:editForm.nav,onChange:e=>setEditForm(f=>({...f,nav:e.target.value})),style:{width:"100%",padding:"3px 5px",border:"1px solid var(--border)",borderRadius:5,fontSize:11,textAlign:"right",background:"var(--inp-bg)",color:"var(--text)",outline:"none"},min:"0",step:"0.0001"}),
+            React.createElement("div",{style:{textAlign:"right",fontSize:10,color:"var(--text5)"}},editForm.amount&&editForm.nav&&parseFloat(editForm.amount)>0&&parseFloat(editForm.nav)>0?(parseFloat(editForm.amount)/parseFloat(editForm.nav)).toFixed(3):"--"),
+            React.createElement("input",{type:"text",value:editForm.folio,onChange:e=>setEditForm(f=>({...f,folio:e.target.value})),style:{width:"100%",padding:"3px 5px",border:"1px solid var(--border)",borderRadius:5,fontSize:11,textAlign:"right",background:"var(--inp-bg)",color:"var(--text)",outline:"none"}}),
+            React.createElement("div",{style:{display:"flex",gap:2}},
+              React.createElement("button",{onClick:saveEdit,title:"Save",style:{padding:"3px 5px",border:"none",borderRadius:4,background:"#16a34a",color:"#fff",cursor:"pointer",fontSize:11,lineHeight:1}},String.fromCharCode(10003)),
+              React.createElement("button",{onClick:cancelEdit,title:"Cancel",style:{padding:"3px 5px",border:"none",borderRadius:4,background:"var(--text5)",color:"#fff",cursor:"pointer",fontSize:11,lineHeight:1}},"✕")
+            )
+          );
+          return React.createElement("div",{key:t.id||i,style:{display:"grid",gridTemplateColumns:"minmax(80px,95px) minmax(45px,55px) minmax(70px,90px) minmax(65px,80px) minmax(80px,100px) minmax(80px,100px) 60px",padding:"7px 12px",borderBottom:"1px solid var(--border2)",background:i%2?"rgba(255,255,255,.014)":"transparent",fontSize:12,alignItems:"center"}},
             React.createElement("div",{style:{color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},t.date||"--"),
             React.createElement("div",null,
               React.createElement("span",{style:{
@@ -16679,7 +16717,11 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose})=>{
             React.createElement("div",{style:{textAlign:"right",color:isBuy?"#16a34a":"#ef4444",fontWeight:600,fontFamily:"'Sora',sans-serif"}},(isBuy?"+":"-")+(+t.units||0).toFixed(3)),
             React.createElement("div",{style:{textAlign:"right",color:"var(--text4)"}},t.nav?"₹"+Number(t.nav).toFixed(4):"--"),
             React.createElement("div",{style:{textAlign:"right",color:"var(--text3)",fontWeight:600}},INR(+t.amount||0)),
-            React.createElement("div",{style:{textAlign:"right",color:"var(--text5)",fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.folio||"--")
+            React.createElement("div",{style:{textAlign:"right",color:"var(--text5)",fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.folio||"--"),
+            React.createElement("div",{style:{display:"flex",gap:4,justifyContent:"center"}},
+              React.createElement("button",{onClick:()=>startEdit(t),title:"Edit",style:{padding:"3px 5px",border:"none",borderRadius:4,background:"var(--accent)",color:"#fff",cursor:"pointer",fontSize:10,lineHeight:1}},"✎"),
+              React.createElement("button",{onClick:()=>confirmDelete(t),title:"Delete",style:{padding:"3px 5px",border:"none",borderRadius:4,background:"#ef4444",color:"#fff",cursor:"pointer",fontSize:10,lineHeight:1}},"🗑")
+            )
           );
         })
       )
@@ -16721,6 +16763,17 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose})=>{
     React.createElement("div",{style:{marginTop:14,display:"flex",justifyContent:"space-between",alignItems:"center"}},
       dispatch?React.createElement(Btn,{v:"primary",onClick:()=>setShowAdd(true)},"+ Add Transaction"):null,
       React.createElement(Btn,{v:"secondary",onClick:onClose},"Close")
+    ),
+    /* ── Delete confirmation ── */
+    confirmDelId&&React.createElement("div",{style:{position:"fixed",inset:0,zIndex:99999,background:"rgba(0,0,0,.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:20}},
+      React.createElement("div",{style:{background:"var(--modal-bg)",borderRadius:14,padding:"22px 24px",maxWidth:380,width:"100%",boxShadow:"0 8px 40px rgba(0,0,0,.35)",border:"1px solid var(--border)"}},
+        React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",marginBottom:6,fontFamily:"'Sora',sans-serif"}},"Delete Transaction?"),
+        React.createElement("div",{style:{fontSize:12,color:"var(--text4)",marginBottom:16,lineHeight:1.6}},"This will permanently remove this transaction and auto-adjust the mutual fund holding value."),
+        React.createElement("div",{style:{display:"flex",gap:8,justifyContent:"flex-end"}},
+          React.createElement(Btn,{v:"secondary",onClick:()=>setConfirmDelId(null)},"Cancel"),
+          React.createElement(Btn,{v:"danger",onClick:executeDelete},"Delete")
+        )
+      )
     )
   );
 });
