@@ -14104,7 +14104,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
 
   const scheduledOutflowThisMonth=React.useMemo(()=>
     scheduledThisMonth
-      .filter(sc=>sc.ledgerType==="debit"&&(sc.accType==="bank"||sc.accType==="cash"))
+      .filter(sc=>sc.ledgerType==="debit")
       .reduce((s,sc)=>s+sc.amount,0)
   ,[scheduledThisMonth]);
 
@@ -14123,7 +14123,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
   ,[data.scheduled,todayStr,next90Date]);
   const scheduledOutflowNext90=React.useMemo(()=>
     scheduledNext90
-      .filter(sc=>sc.ledgerType==="debit"&&(sc.accType==="bank"||sc.accType==="cash"))
+      .filter(sc=>sc.ledgerType==="debit")
       .reduce((s,sc)=>s+sc.amount,0)
   ,[scheduledNext90]);
   const netLiquidPostSched90 = bTotal + cashBal - scheduledOutflowNext90;
@@ -14141,7 +14141,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
   ,[data.scheduled,todayStr,next180Date]);
   const scheduledOutflowNext180=React.useMemo(()=>
     scheduledNext180
-      .filter(sc=>sc.ledgerType==="debit"&&(sc.accType==="bank"||sc.accType==="cash"))
+      .filter(sc=>sc.ledgerType==="debit")
       .reduce((s,sc)=>s+sc.amount,0)
   ,[scheduledNext180]);
   const netLiquidPostSched180 = bTotal + cashBal - scheduledOutflowNext180;
@@ -14724,7 +14724,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
         display:"flex",flexWrap:"wrap",gap:isMobile?8:16,alignItems:"center",
         padding:"10px 14px",borderRadius:10,
         background:"var(--bg3)",border:"1px solid var(--border2)",
-        marginBottom:scheduledThisMonth.filter(sc=>sc.ledgerType==="debit"&&(sc.accType==="bank"||sc.accType==="cash")).length>0?14:0,
+        marginBottom:scheduledThisMonth.filter(sc=>sc.ledgerType==="debit").length>0?14:0,
         zIndex:1,position:"relative",
       }},
         /* Bank + Cash */
@@ -14752,7 +14752,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
 
       /* ── Scheduled transaction breakdown ── */
       (()=>{
-        const items=scheduledThisMonth.filter(sc=>sc.ledgerType==="debit"&&(sc.accType==="bank"||sc.accType==="cash"));
+        const items=scheduledThisMonth.filter(sc=>sc.ledgerType==="debit");
         if(!items.length)return React.createElement("div",{style:{
           zIndex:1,position:"relative",
           fontSize:11,color:"var(--text6)",fontStyle:"italic",
@@ -14862,8 +14862,8 @@ const Dashboard=React.memo(({data,isMobile})=>{
 
       React.createElement("div",{style:{zIndex:1,position:"relative",fontSize:10,color:"var(--text5)",paddingTop:8,display:"flex",alignItems:"center",gap:6}},
         React.createElement(Icon,{n:"calendar",size:12,col:"var(--text5)"}),
-        scheduledNext90.filter(sc=>sc.ledgerType==="debit"&&(sc.accType==="bank"||sc.accType==="cash")).length+" scheduled outflow"+
-        (scheduledNext90.filter(sc=>sc.ledgerType==="debit"&&(sc.accType==="bank"||sc.accType==="cash")).length!==1?"s":"")+
+        scheduledNext90.filter(sc=>sc.ledgerType==="debit").length+" scheduled outflow"+
+        (scheduledNext90.filter(sc=>sc.ledgerType==="debit").length!==1?"s":"")+
         " within 90 days"
       )
     ),
@@ -14923,8 +14923,8 @@ const Dashboard=React.memo(({data,isMobile})=>{
 
       React.createElement("div",{style:{zIndex:1,position:"relative",fontSize:10,color:"var(--text5)",paddingTop:8,display:"flex",alignItems:"center",gap:6}},
         React.createElement(Icon,{n:"calendar",size:12,col:"var(--text5)"}),
-        scheduledNext180.filter(sc=>sc.ledgerType==="debit"&&(sc.accType==="bank"||sc.accType==="cash")).length+" scheduled outflow"+
-        (scheduledNext180.filter(sc=>sc.ledgerType==="debit"&&(sc.accType==="bank"||sc.accType==="cash")).length!==1?"s":"")+
+        scheduledNext180.filter(sc=>sc.ledgerType==="debit").length+" scheduled outflow"+
+        (scheduledNext180.filter(sc=>sc.ledgerType==="debit").length!==1?"s":"")+
         " within 180 days"
       )
     ),
