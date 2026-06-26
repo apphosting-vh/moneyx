@@ -863,7 +863,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.10.1";
+const APP_VERSION="4.10.2";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -14110,6 +14110,48 @@ const Dashboard=React.memo(({data,isMobile})=>{
 
   const netLiquidPostSched = bTotal + cashBal - scheduledOutflowThisMonth;
 
+  /* ━━ NET LIQUID POSITION (NEXT 3 MONTHS) ━━━━━━━━━━━━━━━━━━━ */
+  const next3Months = React.useMemo(()=>{
+    const months=[];
+    for(let i=0;i<3;i++){
+      const d=new Date(+thisMonth.slice(0,4),+thisMonth.slice(5)-1+i,1);
+      months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));
+    }
+    return months;
+  },[thisMonth]);
+  const scheduledNext3Months=React.useMemo(()=>
+    (data.scheduled||[]).filter(sc=>
+      sc.status==="active"&&sc.nextDate&&next3Months.includes(sc.nextDate.substr(0,7))
+    )
+  ,[data.scheduled,next3Months]);
+  const scheduledOutflowNext3Months=React.useMemo(()=>
+    scheduledNext3Months
+      .filter(sc=>sc.ledgerType==="debit"&&(sc.accType==="bank"||sc.accType==="cash"))
+      .reduce((s,sc)=>s+sc.amount,0)
+  ,[scheduledNext3Months]);
+  const netLiquidPostSched3 = bTotal + cashBal - scheduledOutflowNext3Months;
+
+  /* ━━ NET LIQUID POSITION (NEXT 6 MONTHS) ━━━━━━━━━━━━━━━━━━━ */
+  const next6Months = React.useMemo(()=>{
+    const months=[];
+    for(let i=0;i<6;i++){
+      const d=new Date(+thisMonth.slice(0,4),+thisMonth.slice(5)-1+i,1);
+      months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));
+    }
+    return months;
+  },[thisMonth]);
+  const scheduledNext6Months=React.useMemo(()=>
+    (data.scheduled||[]).filter(sc=>
+      sc.status==="active"&&sc.nextDate&&next6Months.includes(sc.nextDate.substr(0,7))
+    )
+  ,[data.scheduled,next6Months]);
+  const scheduledOutflowNext6Months=React.useMemo(()=>
+    scheduledNext6Months
+      .filter(sc=>sc.ledgerType==="debit"&&(sc.accType==="bank"||sc.accType==="cash"))
+      .reduce((s,sc)=>s+sc.amount,0)
+  ,[scheduledNext6Months]);
+  const netLiquidPostSched6 = bTotal + cashBal - scheduledOutflowNext6Months;
+
   /* ━━ 2. ALL BANKING TRANSACTIONS (banks + cards + cash) ━━━ */
   const allBankTx=React.useMemo(()=>[
     ...data.banks.flatMap(b=>(b.transactions||[]).filter(t=>!isAnyTransfer(t,data.categories)).map(t=>({...t,_bid:b.id,_src:b.name,_srcType:"bank",_col:"#0e7490"}))),
@@ -14298,6 +14340,8 @@ const Dashboard=React.memo(({data,isMobile})=>{
         [
           {id:"accounts",   label:"Account Cards"},
           {id:"netliquid",  label:"Net Liquid Position — This Month"},
+          {id:"netliquid3", label:"Net Liquid Position — Next 3 Months"},
+          {id:"netliquid6", label:"Net Liquid Position — Next 6 Months"},
           {id:"kpi",        label:"KPI Strip (Income / Expenses)"},
           {id:"cashflow",   label:"Cash Flow Chart"},
           {id:"catspend",   label:"Category Spend"},
@@ -14767,6 +14811,128 @@ const Dashboard=React.memo(({data,isMobile})=>{
           )
         );
       })()
+    ),
+
+    /* ══ B3: NET LIQUID POSITION — NEXT 3 MONTHS ════════════════ */
+    W("netliquid3")&&React.createElement("div",{className:"db-card",style:{
+      padding:isMobile?"14px 16px":"18px 24px",
+      position:"relative",overflow:"hidden",
+      background:"var(--card)",border:"1px solid var(--border)",borderRadius:16,
+    }},
+      React.createElement("div",{style:{position:"absolute",top:-40,right:-40,width:140,height:140,borderRadius:"50%",background:netLiquidPostSched3>=0?"rgba(16,185,129,.08)":"rgba(239,68,68,.07)",pointerEvents:"none"}}),
+      React.createElement("div",{style:{position:"absolute",bottom:-30,left:"30%",width:100,height:100,borderRadius:"50%",background:"rgba(99,102,241,.05)",pointerEvents:"none"}}),
+
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14,zIndex:1,position:"relative"}},
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:1,marginBottom:4}},
+            "Net Liquid Position · Next 3 Months"
+          ),
+          React.createElement("div",{style:{display:"flex",alignItems:"baseline",gap:10,flexWrap:"wrap"}},
+            React.createElement("div",{style:{fontSize:isMobile?26:36,fontFamily:"'Sora',sans-serif",fontWeight:800,color:netLiquidPostSched3>=0?"var(--accent)":"#ef4444",lineHeight:1,letterSpacing:"-1px"}},
+              INR(netLiquidPostSched3)
+            ),
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",fontWeight:500}},
+              "after scheduled obligations"
+            )
+          )
+        ),
+        React.createElement("div",{style:{
+          padding:"4px 10px",borderRadius:20,fontSize:10,fontWeight:700,letterSpacing:.3,flexShrink:0,
+          background:netLiquidPostSched3>=0?"rgba(16,185,129,.12)":"rgba(239,68,68,.12)",
+          color:netLiquidPostSched3>=0?"#10b981":"#ef4444",
+          border:`1px solid ${netLiquidPostSched3>=0?"rgba(16,185,129,.25)":"rgba(239,68,68,.25)"}`,
+        }},netLiquidPostSched3>=0?"✓ Solvent":"⚠ Shortfall")
+      ),
+
+      React.createElement("div",{style:{
+        display:"flex",flexWrap:"wrap",gap:isMobile?8:16,alignItems:"center",
+        padding:"10px 14px",borderRadius:10,
+        background:"var(--bg3)",border:"1px solid var(--border2)",
+        zIndex:1,position:"relative",
+      }},
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
+          React.createElement("div",{style:{fontSize:8,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Bank + Cash"),
+          React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#0e7490"}},INR(bTotal+cashBal))
+        ),
+        React.createElement("div",{style:{fontSize:18,color:"var(--text5)",fontWeight:300,lineHeight:1}},"−"),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
+          React.createElement("div",{style:{fontSize:8,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Scheduled Outflows"),
+          React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:scheduledOutflowNext3Months>0?"#ef4444":"var(--text4)"}},INR(scheduledOutflowNext3Months))
+        ),
+        React.createElement("div",{style:{fontSize:18,color:"var(--text5)",fontWeight:300,lineHeight:1}},"="),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
+          React.createElement("div",{style:{fontSize:8,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Net Available"),
+          React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:netLiquidPostSched3>=0?"var(--accent)":"#ef4444"}},INR(netLiquidPostSched3))
+        )
+      ),
+
+      React.createElement("div",{style:{zIndex:1,position:"relative",fontSize:10,color:"var(--text5)",paddingTop:8,display:"flex",alignItems:"center",gap:6}},
+        React.createElement(Icon,{n:"calendar",size:12,col:"var(--text5)"}),
+        scheduledNext3Months.filter(sc=>sc.ledgerType==="debit"&&(sc.accType==="bank"||sc.accType==="cash")).length+" scheduled outflow"+
+        (scheduledNext3Months.filter(sc=>sc.ledgerType==="debit"&&(sc.accType==="bank"||sc.accType==="cash")).length!==1?"s":"")+
+        " across "+next3Months.length+" months"
+      )
+    ),
+
+    /* ══ B4: NET LIQUID POSITION — NEXT 6 MONTHS ════════════════ */
+    W("netliquid6")&&React.createElement("div",{className:"db-card",style:{
+      padding:isMobile?"14px 16px":"18px 24px",
+      position:"relative",overflow:"hidden",
+      background:"var(--card)",border:"1px solid var(--border)",borderRadius:16,
+    }},
+      React.createElement("div",{style:{position:"absolute",top:-40,right:-40,width:140,height:140,borderRadius:"50%",background:netLiquidPostSched6>=0?"rgba(16,185,129,.08)":"rgba(239,68,68,.07)",pointerEvents:"none"}}),
+      React.createElement("div",{style:{position:"absolute",bottom:-30,left:"30%",width:100,height:100,borderRadius:"50%",background:"rgba(99,102,241,.05)",pointerEvents:"none"}}),
+
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14,zIndex:1,position:"relative"}},
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:1,marginBottom:4}},
+            "Net Liquid Position · Next 6 Months"
+          ),
+          React.createElement("div",{style:{display:"flex",alignItems:"baseline",gap:10,flexWrap:"wrap"}},
+            React.createElement("div",{style:{fontSize:isMobile?26:36,fontFamily:"'Sora',sans-serif",fontWeight:800,color:netLiquidPostSched6>=0?"var(--accent)":"#ef4444",lineHeight:1,letterSpacing:"-1px"}},
+              INR(netLiquidPostSched6)
+            ),
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",fontWeight:500}},
+              "after scheduled obligations"
+            )
+          )
+        ),
+        React.createElement("div",{style:{
+          padding:"4px 10px",borderRadius:20,fontSize:10,fontWeight:700,letterSpacing:.3,flexShrink:0,
+          background:netLiquidPostSched6>=0?"rgba(16,185,129,.12)":"rgba(239,68,68,.12)",
+          color:netLiquidPostSched6>=0?"#10b981":"#ef4444",
+          border:`1px solid ${netLiquidPostSched6>=0?"rgba(16,185,129,.25)":"rgba(239,68,68,.25)"}`,
+        }},netLiquidPostSched6>=0?"✓ Solvent":"⚠ Shortfall")
+      ),
+
+      React.createElement("div",{style:{
+        display:"flex",flexWrap:"wrap",gap:isMobile?8:16,alignItems:"center",
+        padding:"10px 14px",borderRadius:10,
+        background:"var(--bg3)",border:"1px solid var(--border2)",
+        zIndex:1,position:"relative",
+      }},
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
+          React.createElement("div",{style:{fontSize:8,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Bank + Cash"),
+          React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#0e7490"}},INR(bTotal+cashBal))
+        ),
+        React.createElement("div",{style:{fontSize:18,color:"var(--text5)",fontWeight:300,lineHeight:1}},"−"),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
+          React.createElement("div",{style:{fontSize:8,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Scheduled Outflows"),
+          React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:scheduledOutflowNext6Months>0?"#ef4444":"var(--text4)"}},INR(scheduledOutflowNext6Months))
+        ),
+        React.createElement("div",{style:{fontSize:18,color:"var(--text5)",fontWeight:300,lineHeight:1}},"="),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
+          React.createElement("div",{style:{fontSize:8,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Net Available"),
+          React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:netLiquidPostSched6>=0?"var(--accent)":"#ef4444"}},INR(netLiquidPostSched6))
+        )
+      ),
+
+      React.createElement("div",{style:{zIndex:1,position:"relative",fontSize:10,color:"var(--text5)",paddingTop:8,display:"flex",alignItems:"center",gap:6}},
+        React.createElement(Icon,{n:"calendar",size:12,col:"var(--text5)"}),
+        scheduledNext6Months.filter(sc=>sc.ledgerType==="debit"&&(sc.accType==="bank"||sc.accType==="cash")).length+" scheduled outflow"+
+        (scheduledNext6Months.filter(sc=>sc.ledgerType==="debit"&&(sc.accType==="bank"||sc.accType==="cash")).length!==1?"s":"")+
+        " across "+next6Months.length+" months"
+      )
     ),
 
     /* ══ C: THIS MONTH KPI STRIP ════════════════════════════════ */
