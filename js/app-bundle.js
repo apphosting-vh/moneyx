@@ -863,7 +863,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.10.2";
+const APP_VERSION="4.10.3";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -39862,6 +39862,7 @@ const _cbCatRules=[
   {k:['freelance','freelancing','consulting','contract','gig','project payment','client payment'],c:'Income',s:'Freelance'},
   {k:['interest','fd interest','rd interest','savings interest','deposit interest','bank interest'],c:'Income',s:'Interest'},
   {k:['dividend','dividends','stock dividend','mf dividend','equity dividend'],c:'Income',s:'Dividends'},
+  {k:['commission','bonus','incentive','gratuity','performance bonus'],c:'Income',s:'Bonus & Commission'},
 ];
 /* ── Levenshtein distance between two strings (dynamic programming). ──────
    Used for fuzzy keyword matching: tolerates typos in user input.          */
@@ -39982,11 +39983,14 @@ const _cbExtractDate=text=>{
 };
 const _cbDetectType=(text,cat)=>{
   const lo=text.toLowerCase();
-  for(const kw of['salary','credited','credit','received','got','income','refund','cashback','bonus','dividend','interest','reimbursement','deposit','gift','prize','earning'])
+  for(const kw of['salary','credited','credit','received','got','income','refund','cashback','bonus','dividend','interest','reimbursement','deposit','gift','prize','earning','commission','incentive','consulting','consultation'])
     if(new RegExp('\\b'+kw+'\\b','i').test(lo))return'credit';
-  for(const kw of['spent','spend','paid','pay','purchase','bought','debit','bill','charge','fee','subscription','emi','withdrawal','withdraw','donated','tip','fine'])
+  if(cat){
+    if(cat.cat==='Income')return'credit';
+    if(['Housing','Food','Transport','Shopping','Entertainment','Utilities','Insurance','Investment','Travel','Payment'].includes(cat.cat))return'debit';
+  }
+  for(const kw of['spent','spend','paid','purchase','bought','debit','bill','charge','subscription','emi','withdrawal','withdraw','donated','tip','fine'])
     if(new RegExp('\\b'+kw+'\\b','i').test(lo))return'debit';
-  if(cat){if(cat.cat==='Income')return'credit';if(['Housing','Food','Transport','Shopping','Entertainment','Utilities','Insurance','Investment','Travel','Payment'].includes(cat.cat))return'debit';}
   return'debit';
 };
 const _cbExtractPayee=text=>{
