@@ -6180,20 +6180,15 @@ var _autoBackupEnsureFolder = async (token) => {
       }
     }
 
-    /* Not found — create it */
+    /* Not found — create it (simple JSON POST — folders have no content) */
     const metadata = { name: "Finsight Daily Backups", mimeType: "application/vnd.google-apps.folder", parents: ["root"] };
-    const boundary = "finsight_folder_" + Date.now();
-    const body = [
-      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`,
-      `--${boundary}--`,
-    ].join("");
     const cr = await fetch("https://www.googleapis.com/drive/v3/files?fields=id,name", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
-        "Content-Type": `multipart/related; boundary=${boundary}`,
+        "Content-Type": "application/json",
       },
-      body,
+      body: JSON.stringify(metadata),
     });
     if (cr.ok) {
       const cj = await cr.json();
