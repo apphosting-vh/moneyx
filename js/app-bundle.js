@@ -863,7 +863,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.10.3";
+const APP_VERSION="4.10.4";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -6090,10 +6090,11 @@ var gdriveUpsertSyncFile = async (state, manual) => {
    • mm_auto_backup_status — "ok" | "failed" | "pending"
    ══════════════════════════════════════════════════════════════════════════ */
 
-var LS_AUTO_BACKUP_DATE   = "mm_auto_backup_date";
-var LS_AUTO_BACKUP_TIME   = "mm_auto_backup_time";
-var LS_AUTO_BACKUP_STATUS = "mm_auto_backup_status";
-var LS_AUTO_BACKUP_FILE   = "mm_auto_backup_file";   /* last backup filename */
+var LS_AUTO_BACKUP_DATE      = "mm_auto_backup_date";
+var LS_AUTO_BACKUP_TIME      = "mm_auto_backup_time";
+var LS_AUTO_BACKUP_STATUS    = "mm_auto_backup_status";
+var LS_AUTO_BACKUP_FILE      = "mm_auto_backup_file";   /* last backup filename */
+var LS_AUTO_BACKUP_FOLDER_ID = "mm_auto_backup_folder"; /* "Finsight Daily Backups" folder id */
 
 /* IST-aware today string (YYYY-MM-DD) — mirrors _fmtLS used elsewhere */
 var _autoBackupTodayIST = () => {
@@ -6131,9 +6132,9 @@ var _autoBackupFilename = () => {
 
 /* Create a new (always-new) file on Drive — never overwrites, each backup is
    a distinct timestamped file.  Returns fileId or "" on failure. */
-var _autoBackupCreateFile = async (token, filename, content) => {
+var _autoBackupCreateFile = async (token, filename, content, parentId) => {
   try {
-    const metadata = { name: filename, parents: ["root"] };
+    const metadata = { name: filename, parents: [parentId || "root"] };
     const boundary = "finsight_ab_" + Date.now();
     const body = [
       `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`,
@@ -6154,6 +6155,54 @@ var _autoBackupCreateFile = async (token, filename, content) => {
     }
     const j = await r.json();
     return j.id || "";
+  } catch { return ""; }
+};
+
+/* Find or create the "Finsight Daily Backups" folder on Drive.
+   Caches the folder id in localStorage so subsequent calls are instant. */
+var _autoBackupEnsureFolder = async (token) => {
+  try {
+    const cached = (() => { try { return localStorage.getItem(LS_AUTO_BACKUP_FOLDER_ID) || ""; } catch { return ""; } })();
+    if (cached) return cached;
+
+    /* Search for existing folder */
+    const q = encodeURIComponent("name='Finsight Daily Backups' and mimeType='application/vnd.google-apps.folder' and trashed=false and 'root' in parents");
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&pageSize=5&fields=files(id,name)&spaces=drive`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (r.ok) {
+      const j = await r.json();
+      const files = j.files || [];
+      if (files.length > 0) {
+        try { localStorage.setItem(LS_AUTO_BACKUP_FOLDER_ID, files[0].id); } catch {}
+        return files[0].id;
+      }
+    }
+
+    /* Not found — create it */
+    const metadata = { name: "Finsight Daily Backups", mimeType: "application/vnd.google-apps.folder", parents: ["root"] };
+    const boundary = "finsight_folder_" + Date.now();
+    const body = [
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`,
+      `--${boundary}--`,
+    ].join("");
+    const cr = await fetch("https://www.googleapis.com/drive/v3/files?fields=id,name", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": `multipart/related; boundary=${boundary}`,
+      },
+      body,
+    });
+    if (cr.ok) {
+      const cj = await cr.json();
+      if (cj.id) {
+        try { localStorage.setItem(LS_AUTO_BACKUP_FOLDER_ID, cj.id); } catch {}
+        return cj.id;
+      }
+    }
+    return "";
   } catch { return ""; }
 };
 
@@ -6250,7 +6299,8 @@ var gdriveAutoBackup = async (state) => {
     };
 
     const content = JSON.stringify(payload, null, 2);
-    const fileId  = await _autoBackupCreateFile(token, filename, content);
+    const folderId = await _autoBackupEnsureFolder(token);
+    const fileId   = await _autoBackupCreateFile(token, filename, content, folderId);
 
     if (fileId) {
       _autoBackupSetOk(exportedAt, filename);
