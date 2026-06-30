@@ -17144,6 +17144,59 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,swpPlan,banks,mf
           React.createElement(Btn,{v:"danger",onClick:executeDelete},"Delete")
         )
       )
+    ),
+    /* ── SWP (Systematic Withdrawal Plan) form ── */
+    showSwpForm&&React.createElement("div",{style:{marginTop:14,padding:14,background:"var(--bg4)",borderRadius:10,border:"1px solid var(--border2)"}},
+      React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",textTransform:"uppercase",letterSpacing:.6,marginBottom:10}},"Set up Systematic Withdrawal Plan (SWP)"),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
+        React.createElement(Field,{label:"Redemption Amount (₹)"},
+          React.createElement("input",{type:"number",className:"inp",value:swpForm.amount,onChange:e=>setSwpForm(f=>({...f,amount:e.target.value})),placeholder:"e.g. 5000",min:"0",step:"0.01"})
+        ),
+        React.createElement(Field,{label:"Frequency"},
+          React.createElement("select",{className:"inp",value:swpForm.frequency,onChange:e=>setSwpForm(f=>({...f,frequency:e.target.value}))},
+            React.createElement("option",{value:"once"},"One Time"),
+            React.createElement("option",{value:"monthly"},"Monthly"),
+            React.createElement("option",{value:"quarterly"},"Quarterly"),
+            React.createElement("option",{value:"yearly"},"Yearly")
+          )
+        ),
+        React.createElement(Field,{label:"First Redemption Date"},
+          React.createElement("input",{type:"date",className:"inp",value:swpForm.nextDate,onChange:e=>setSwpForm(f=>({...f,nextDate:e.target.value}))})
+        ),
+        React.createElement(Field,{label:"End Date (optional)"},
+          React.createElement("input",{type:"date",className:"inp",value:swpForm.endDate,onChange:e=>setSwpForm(f=>({...f,endDate:e.target.value}))})
+        ),
+        React.createElement(Field,{label:"Target Bank Account"},
+          React.createElement("select",{className:"inp",value:swpForm.targetAccId,onChange:e=>setSwpForm(f=>({...f,targetAccId:e.target.value}))},
+            React.createElement("option",{value:""},"— Select —"),
+            (banks||[]).map(b=>React.createElement("option",{key:b.id,value:b.id},b.name+" (₹"+Number(b.balance).toLocaleString()+")"))
+          )
+        )
+      ),
+      React.createElement("div",{style:{display:"flex",gap:8,marginTop:12,justifyContent:"flex-end"}},
+        React.createElement(Btn,{v:"secondary",onClick:()=>{setShowSwpForm(false);setSwpForm({amount:"",frequency:"monthly",nextDate:"",endDate:"",targetAccId:""});}},"Cancel"),
+        React.createElement(Btn,{v:"primary",onClick:()=>{
+          const amt=parseFloat(swpForm.amount);
+          if(!amt||amt<=0||!swpForm.nextDate||!swpForm.targetAccId)return;
+          dispatch({type:"ADD_SWP_PLAN",p:{fundName,amount:amt,frequency:swpForm.frequency,nextDate:swpForm.nextDate,endDate:swpForm.endDate||null,targetAccId:swpForm.targetAccId,status:"active",lastExecuted:null,executionHistory:[]}});
+          setShowSwpForm(false);
+          setSwpForm({amount:"",frequency:"monthly",nextDate:"",endDate:"",targetAccId:""});
+        }},"Create SWP")
+      ),
+      /* Existing SWP plans for this fund */
+      thisFundSwp.length>0&&React.createElement("div",{style:{marginTop:12}},
+        React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.6,marginBottom:6}},"Existing SWP Plans"),
+        thisFundSwp.map(s=>React.createElement("div",{key:s.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 10px",background:"var(--bg3)",borderRadius:8,marginBottom:5,border:"1px solid var(--border2)"}},
+          React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:11,fontWeight:600,color:"var(--text2)"}},INR(s.amount)+" · "+(s.frequency||"monthly").charAt(0).toUpperCase()+(s.frequency||"monthly").slice(1)),
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"Next: "+(s.nextDate||"--")+" · "+(s.status==="active"?"Active":s.status))
+          ),
+          React.createElement("div",{style:{display:"flex",gap:4}},
+            s.status==="active"?React.createElement("button",{onClick:()=>{if(confirm("Pause this SWP?"))dispatch({type:"EDIT_SWP_PLAN",p:{id:s.id,status:"paused"}});},style:{padding:"3px 7px",border:"none",borderRadius:4,background:"#b45309",color:"#fff",cursor:"pointer",fontSize:10}},"Pause"):React.createElement("button",{onClick:()=>{dispatch({type:"EDIT_SWP_PLAN",p:{id:s.id,status:"active"}});},style:{padding:"3px 7px",border:"none",borderRadius:4,background:"#16a34a",color:"#fff",cursor:"pointer",fontSize:10}},"Resume"),
+            React.createElement("button",{onClick:()=>{if(confirm("Delete this SWP plan?"))dispatch({type:"DEL_SWP_PLAN",id:s.id});},style:{padding:"3px 7px",border:"none",borderRadius:4,background:"#ef4444",color:"#fff",cursor:"pointer",fontSize:10}},"Delete")
+          )
+        ))
+      )
     )
   );
 });
@@ -19239,59 +19292,6 @@ const MarketTicker=React.memo(()=>{
           );
         })
     ),
-    /* ── SWP (Systematic Withdrawal Plan) form ── */
-    showSwpForm&&React.createElement("div",{style:{marginTop:14,padding:14,background:"var(--bg4)",borderRadius:10,border:"1px solid var(--border2)"}},
-      React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",textTransform:"uppercase",letterSpacing:.6,marginBottom:10}},"Set up Systematic Withdrawal Plan (SWP)"),
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
-        React.createElement(Field,{label:"Redemption Amount (₹)"},
-          React.createElement("input",{type:"number",className:"inp",value:swpForm.amount,onChange:e=>setSwpForm(f=>({...f,amount:e.target.value})),placeholder:"e.g. 5000",min:"0",step:"0.01"})
-        ),
-        React.createElement(Field,{label:"Frequency"},
-          React.createElement("select",{className:"inp",value:swpForm.frequency,onChange:e=>setSwpForm(f=>({...f,frequency:e.target.value}))},
-            React.createElement("option",{value:"once"},"One Time"),
-            React.createElement("option",{value:"monthly"},"Monthly"),
-            React.createElement("option",{value:"quarterly"},"Quarterly"),
-            React.createElement("option",{value:"yearly"},"Yearly")
-          )
-        ),
-        React.createElement(Field,{label:"First Redemption Date"},
-          React.createElement("input",{type:"date",className:"inp",value:swpForm.nextDate,onChange:e=>setSwpForm(f=>({...f,nextDate:e.target.value}))})
-        ),
-        React.createElement(Field,{label:"End Date (optional)"},
-          React.createElement("input",{type:"date",className:"inp",value:swpForm.endDate,onChange:e=>setSwpForm(f=>({...f,endDate:e.target.value}))})
-        ),
-        React.createElement(Field,{label:"Target Bank Account"},
-          React.createElement("select",{className:"inp",value:swpForm.targetAccId,onChange:e=>setSwpForm(f=>({...f,targetAccId:e.target.value}))},
-            React.createElement("option",{value:""},"— Select —"),
-            (banks||[]).map(b=>React.createElement("option",{key:b.id,value:b.id},b.name+" (₹"+Number(b.balance).toLocaleString()+")"))
-          )
-        )
-      ),
-      React.createElement("div",{style:{display:"flex",gap:8,marginTop:12,justifyContent:"flex-end"}},
-        React.createElement(Btn,{v:"secondary",onClick:()=>{setShowSwpForm(false);setSwpForm({amount:"",frequency:"monthly",nextDate:"",endDate:"",targetAccId:""});}},"Cancel"),
-        React.createElement(Btn,{v:"primary",onClick:()=>{
-          const amt=parseFloat(swpForm.amount);
-          if(!amt||amt<=0||!swpForm.nextDate||!swpForm.targetAccId)return;
-          dispatch({type:"ADD_SWP_PLAN",p:{fundName,amount:amt,frequency:swpForm.frequency,nextDate:swpForm.nextDate,endDate:swpForm.endDate||null,targetAccId:swpForm.targetAccId,status:"active",lastExecuted:null,executionHistory:[]}});
-          setShowSwpForm(false);
-          setSwpForm({amount:"",frequency:"monthly",nextDate:"",endDate:"",targetAccId:""});
-        }},"Create SWP")
-      ),
-      /* Existing SWP plans for this fund */
-      thisFundSwp.length>0&&React.createElement("div",{style:{marginTop:12}},
-        React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.6,marginBottom:6}},"Existing SWP Plans"),
-        thisFundSwp.map(s=>React.createElement("div",{key:s.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 10px",background:"var(--bg3)",borderRadius:8,marginBottom:5,border:"1px solid var(--border2)"}},
-          React.createElement("div",null,
-            React.createElement("div",{style:{fontSize:11,fontWeight:600,color:"var(--text2)"}},INR(s.amount)+" · "+(s.frequency||"monthly").charAt(0).toUpperCase()+(s.frequency||"monthly").slice(1)),
-            React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"Next: "+(s.nextDate||"--")+" · "+(s.status==="active"?"Active":s.status))
-          ),
-          React.createElement("div",{style:{display:"flex",gap:4}},
-            s.status==="active"?React.createElement("button",{onClick:()=>{if(confirm("Pause this SWP?"))dispatch({type:"EDIT_SWP_PLAN",p:{id:s.id,status:"paused"}});},style:{padding:"3px 7px",border:"none",borderRadius:4,background:"#b45309",color:"#fff",cursor:"pointer",fontSize:10}},"Pause"):React.createElement("button",{onClick:()=>{dispatch({type:"EDIT_SWP_PLAN",p:{id:s.id,status:"active"}});},style:{padding:"3px 7px",border:"none",borderRadius:4,background:"#16a34a",color:"#fff",cursor:"pointer",fontSize:10}},"Resume"),
-            React.createElement("button",{onClick:()=>{if(confirm("Delete this SWP plan?"))dispatch({type:"DEL_SWP_PLAN",id:s.id});},style:{padding:"3px 7px",border:"none",borderRadius:4,background:"#ef4444",color:"#fff",cursor:"pointer",fontSize:10}},"Delete")
-          )
-        ))
-      )
-    )
   );
 });
 
