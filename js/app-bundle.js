@@ -1937,6 +1937,11 @@ const reducer=(s,a)=>{
       const _runDate=getISTDateStr();
       /* ── SWP: handle entirely separate (MF redemption + bank credit) ── */
       if(sc.isSwp){
+        const _addWorkDays=(d,n)=>{
+          const dt=new Date(d+"T12:00:00");let a=0;
+          while(a<n){dt.setDate(dt.getDate()+1);if(dt.getDay()!==0&&dt.getDay()!==6)a++;}
+          return dt.toISOString().split("T")[0];
+        };
         const _fund=(s.mf||[]).find(m=>m.name===sc.fundName);
         if(!_fund)return s;
         const _nav=_fund.nav>0?_fund.nav:(_fund.avgNav||0);
@@ -1948,7 +1953,8 @@ const reducer=(s,a)=>{
         let ns={...s,mfTxns:_allTxns,mf:_deriveMfHoldings(_allTxns,s.mf||[])};
         const _tgtBank=(s.banks||[]).find(b=>b.id===sc.targetAccId);
         if(_tgtBank){
-          const _creditTx={id:uid(),date:_runDate,desc:sc.desc||("SWP: "+sc.fundName),payee:sc.payee||"Systematic Withdrawal",amount:sc.amount,cat:sc.cat||"Transfer",txType:"Deposit",tags:sc.tags||"",status:"Reconciled",txNum:"",notes:sc.notes||("Auto-credited from SWP redemption of "+sc.fundName),type:"credit",_sn:nextSn(_tgtBank.transactions),_addedAt:new Date().toISOString()};
+          const _creditDate=_addWorkDays(_runDate,2);
+          const _creditTx={id:uid(),date:_creditDate,desc:sc.desc||("SWP: "+sc.fundName),payee:sc.payee||"Systematic Withdrawal",amount:sc.amount,cat:sc.cat||"Transfer",txType:"Deposit",tags:sc.tags||"",status:"Reconciled",txNum:"",notes:(sc.notes||"Auto-credited from SWP redemption of "+sc.fundName)+" (T+2)",type:"credit",_sn:nextSn(_tgtBank.transactions),_addedAt:new Date().toISOString()};
           ns={...ns,banks:ns.banks.map(b=>b.id===sc.targetAccId?{...b,balance:b.balance+sc.amount,transactions:[...b.transactions,_creditTx]}:b)};
         }
         const _advSwp=(d,freq)=>{
