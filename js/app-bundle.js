@@ -760,7 +760,6 @@ const EMPTY_STATE=()=>({
   re:[],
   pf:[],
   loans:[],
-  swpPlan:[],
   notes:[],
   goals:[],
   nwSnapshots:{},
@@ -1933,24 +1932,53 @@ const reducer=(s,a)=>{
       return{...sc,...a.p,anchorDay:newAnchor};
     })};
     case"EXECUTE_SCHEDULED":{
-      /* Fire scheduled tx into the target account and mark as lastExecuted */
       const sc=a.sc;
+      if(!sc||sc.status!=="active"||!sc.nextDate)return s;
+      const _runDate=getISTDateStr();
+      /* ── SWP: handle entirely separate (MF redemption + bank credit) ── */
+      if(sc.isSwp){
+        const _fund=(s.mf||[]).find(m=>m.name===sc.fundName);
+        if(!_fund)return s;
+        const _nav=_fund.nav>0?_fund.nav:(_fund.avgNav||0);
+        if(!_nav||_nav<=0)return s;
+        const _units=parseFloat((sc.amount/_nav).toFixed(4));
+        if(_units<=0)return s;
+        const _sellTxn={id:uid(),fundName:sc.fundName,date:_runDate,orderType:"sell",amount:sc.amount,nav:_nav,units:_units,tag:"SWP"};
+        const _allTxns=[...(s.mfTxns||[]),_sellTxn];
+        let ns={...s,mfTxns:_allTxns,mf:_deriveMfHoldings(_allTxns,s.mf||[])};
+        const _tgtBank=(s.banks||[]).find(b=>b.id===sc.targetAccId);
+        if(_tgtBank){
+          const _creditTx={id:uid(),date:_runDate,desc:"SWP: "+sc.fundName,payee:"Systematic Withdrawal",amount:sc.amount,cat:"Transfer",txType:"Deposit",tags:"",status:"Reconciled",txNum:"",notes:"Auto-credited from SWP redemption of "+sc.fundName,type:"credit",_sn:nextSn(_tgtBank.transactions),_addedAt:new Date().toISOString()};
+          ns={...ns,banks:ns.banks.map(b=>b.id===sc.targetAccId?{...b,balance:b.balance+sc.amount,transactions:[...b.transactions,_creditTx]}:b)};
+        }
+        const _advSwp=(d,freq)=>{
+          const dt=new Date(d+"T12:00:00");
+          const origDay=sc.anchorDay||dt.getDate();
+          if(freq==="daily")dt.setDate(dt.getDate()+1);
+          else if(freq==="weekly")dt.setDate(dt.getDate()+7);
+          else if(freq==="monthly"){dt.setDate(1);dt.setMonth(dt.getMonth()+1);dt.setDate(Math.min(origDay,new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate()));}
+          else if(freq==="quarterly"){dt.setDate(1);dt.setMonth(dt.getMonth()+3);dt.setDate(Math.min(origDay,new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate()));}
+          else if(freq==="yearly"){dt.setDate(1);dt.setFullYear(dt.getFullYear()+1);dt.setDate(Math.min(origDay,new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate()));}
+          return dt.toISOString().split("T")[0];
+        };
+        const _isOnce=sc.frequency==="once";
+        const _newNext=_isOnce?null:_advSwp(sc.nextDate,sc.frequency);
+        const _expired=_isOnce||(sc.endDate&&_newNext>sc.endDate);
+        ns={...ns,scheduled:(ns.scheduled||[]).map(x=>x.id===sc.id?{...x,lastExecuted:_runDate,nextDate:_expired?null:_newNext,status:_expired?"completed":"active",executionHistory:[...(x.executionHistory||[]),{scheduledDate:sc.nextDate,executedDate:_runDate,amount:sc.amount}]}:x)};
+        return ns;
+      }
+      /* ── Regular scheduled execution ── */
       const baseTx={id:uid(),date:sc.nextDate,desc:sc.desc,payee:sc.payee,amount:sc.amount,
         cat:sc.cat||"Transfer",txType:sc.txType,tags:sc.tags||"",
         status:"Reconciled",txNum:"",notes:sc.notes||("Scheduled: "+sc.desc),_addedAt:new Date().toISOString()};
       let ns={...s};
-
       if(sc.isTransfer){
-        /* BUG-8 FIX: resolve source type/ID deterministically from state, not from
-           potentially stale fallback fields. If srcAccType is missing, look up the
-           actual account to determine its type. */
         const srcId=sc.srcId||sc.accId;
         const _srcIsBank=s.banks.some(b=>b.id===srcId);
         const _srcIsCard=s.cards.some(c=>c.id===srcId);
         const srcType=sc.srcAccType||(_srcIsBank?"bank":_srcIsCard?"card":"cash");
         const tgtType=sc.tgtAccType;
         const tgtId=sc.tgtId;
-        /* Compute _sn for source and target before building txs */
         const _srcTxs=srcType==="bank"?(s.banks.find(b=>b.id===srcId)||{transactions:[]}).transactions
                      :srcType==="card"?(s.cards.find(c=>c.id===srcId)||{transactions:[]}).transactions
                      :s.cash.transactions;
@@ -1959,17 +1987,14 @@ const reducer=(s,a)=>{
                      :tgtType==="cash"?s.cash.transactions:[];
         const debitTx={...baseTx,type:"debit",_sn:nextSn(_srcTxs)};
         const creditTx={...baseTx,id:uid(),type:"credit",desc:sc.desc||"Transfer In",_sn:nextSn(_tgtTxs)};
-        /* Debit source */
         if(srcType==="bank")   ns={...ns,banks:ns.banks.map(b=>b.id===srcId?{...b,balance:b.balance-sc.amount,transactions:[...b.transactions,debitTx]}:b)};
         else if(srcType==="cash") ns={...ns,cash:{...ns.cash,balance:ns.cash.balance-sc.amount,transactions:[...ns.cash.transactions,debitTx]}};
         else if(srcType==="card") ns={...ns,cards:ns.cards.map(c=>c.id===srcId?{...c,outstanding:c.outstanding+sc.amount,transactions:[...c.transactions,debitTx]}:c)};
-        /* Credit target */
         if(tgtType==="bank")   ns={...ns,banks:ns.banks.map(b=>b.id===tgtId?{...b,balance:b.balance+sc.amount,transactions:[...b.transactions,creditTx]}:b)};
         else if(tgtType==="cash") ns={...ns,cash:{...ns.cash,balance:ns.cash.balance+sc.amount,transactions:[...ns.cash.transactions,creditTx]}};
         else if(tgtType==="card") ns={...ns,cards:ns.cards.map(c=>c.id===tgtId?{...c,outstanding:Math.max(0,c.outstanding-sc.amount),transactions:[...c.transactions,{...creditTx,desc:sc.desc||"Card Payment"}]}:c)};
         else if(tgtType==="loan") ns={...ns,loans:ns.loans.map(l=>l.id===tgtId?{...l,outstanding:Math.max(0,l.outstanding-sc.amount)}:l)};
       }else{
-        /* Regular (non-transfer) scheduled transaction */
         const _accTxs=sc.accType==="bank"?(s.banks.find(b=>b.id===sc.accId)||{transactions:[]}).transactions
                      :sc.accType==="card"?(s.cards.find(c=>c.id===sc.accId)||{transactions:[]}).transactions
                      :s.cash.transactions;
@@ -1978,12 +2003,8 @@ const reducer=(s,a)=>{
         else if(sc.accType==="card") ns={...ns,cards:ns.cards.map(c=>c.id===sc.accId?{...c,outstanding:Math.max(0,c.outstanding+(tx.type==="debit"?tx.amount:-tx.amount)),transactions:[...c.transactions,tx]}:c)};
         else if(sc.accType==="cash") ns={...ns,cash:{...ns.cash,balance:ns.cash.balance+(tx.type==="credit"?tx.amount:-tx.amount),transactions:[...ns.cash.transactions,tx]}};
       }
-
-      /* Advance nextDate based on frequency — uses anchorDay (stored at creation)
-         so day-31 entries stay end-of-month and never drift down to day-28/29/30. */
       const advance=(d,freq)=>{
         const dt=new Date(d+"T12:00:00");
-        /* anchorDay: the original creation day, e.g. 31 for "last day of month" */
         const origDay=sc.anchorDay||dt.getDate();
         if(freq==="daily")     dt.setDate(dt.getDate()+1);
         else if(freq==="weekly")    dt.setDate(dt.getDate()+7);
@@ -1995,58 +2016,7 @@ const reducer=(s,a)=>{
       const isOnce=sc.frequency==="once";
       const newNext=isOnce?null:advance(sc.nextDate,sc.frequency);
       const expired=isOnce||(sc.endDate&&newNext>sc.endDate);
-      /* lastExecuted = IST date (actual run date), not sc.nextDate (scheduled date).
-         This ensures the lastExecuted !== today guard works correctly on the same day,
-         and completed cards show when the transaction actually ran. */
-      const _runDate=getISTDateStr();
       ns={...ns,scheduled:(ns.scheduled||[]).map(x=>x.id===sc.id?{...x,lastExecuted:_runDate,nextDate:expired?null:newNext,status:expired?"completed":"active",executionHistory:[...(x.executionHistory||[]),{scheduledDate:sc.nextDate,executedDate:_runDate,amount:sc.amount}]}:x)};
-      return ns;
-    }
-    /* ══════════════════════════════════════════════════════════════════
-       SWP (Systematic Withdrawal Plan) reducer actions
-       ══════════════════════════════════════════════════════════════════ */
-    case"ADD_SWP_PLAN":return{...s,swpPlan:[...(s.swpPlan||[]),{...a.p,id:uid(),anchorDay:a.p.anchorDay||new Date((a.p.nextDate||TODAY())+"T12:00:00").getDate()}]};
-    case"EDIT_SWP_PLAN":return{...s,swpPlan:(s.swpPlan||[]).map(x=>{
-      if(x.id!==a.p.id)return x;
-      const newAnchor=a.p.nextDate?new Date(a.p.nextDate+"T12:00:00").getDate():x.anchorDay;
-      return{...x,...a.p,anchorDay:newAnchor};
-    })};
-    case"DEL_SWP_PLAN":return{...s,swpPlan:(s.swpPlan||[]).filter(x=>x.id!==a.id)};
-    case"EXECUTE_SWP":{
-      const swp=a.swp;
-      if(!swp||swp.status!=="active")return s;
-      /* Find the fund to resolve NAV */
-      const fund=(s.mf||[]).find(m=>m.name===swp.fundName);
-      if(!fund)return s;
-      const nav=fund.nav>0?fund.nav:fund.avgNav;
-      if(!nav||nav<=0)return s;
-      const units=parseFloat((swp.amount/nav).toFixed(4));
-      if(units<=0||units>fund.units)return s;
-      /* 1. Add sell transaction to mfTxns */
-      const sellTxn={id:uid(),fundName:swp.fundName,date:swp.nextDate,orderType:"sell",amount:swp.amount,nav,units};
-      const newMfTxns=[...(s.mfTxns||[]),sellTxn];
-      const derivedMf=_deriveMfHoldings(newMfTxns,s.mf||[]);
-      let ns={...s,mfTxns:newMfTxns,mf:derivedMf};
-      /* 2. Credit target bank account */
-      const tgtBank=(s.banks||[]).find(b=>b.id===swp.targetAccId);
-      if(tgtBank){
-        const creditTx={id:uid(),date:swp.nextDate,desc:"SWP: "+swp.fundName,payee:"Systematic Withdrawal",amount:swp.amount,cat:"Transfer",txType:"Deposit",tags:"",status:"Reconciled",txNum:"",notes:"Auto-credited from SWP redemption of "+swp.fundName,type:"credit",_sn:nextSn(tgtBank.transactions),_addedAt:new Date().toISOString()};
-        ns={...ns,banks:ns.banks.map(b=>b.id===swp.targetAccId?{...b,balance:b.balance+swp.amount,transactions:[...b.transactions,creditTx]}:b)};
-      }
-      /* 3. Advance nextDate using same anchorDay logic as scheduled */
-      const advance=(d,freq)=>{
-        const dt=new Date(d+"T12:00:00");
-        const origDay=swp.anchorDay||dt.getDate();
-        if(freq==="monthly"){dt.setDate(1);dt.setMonth(dt.getMonth()+1);dt.setDate(Math.min(origDay,new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate()));}
-        else if(freq==="quarterly"){dt.setDate(1);dt.setMonth(dt.getMonth()+3);dt.setDate(Math.min(origDay,new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate()));}
-        else if(freq==="yearly"){dt.setDate(1);dt.setFullYear(dt.getFullYear()+1);dt.setDate(Math.min(origDay,new Date(dt.getFullYear(),dt.getMonth()+1,0).getDate()));}
-        return dt.toISOString().split("T")[0];
-      };
-      const isOnce=swp.frequency==="once";
-      const newNext=isOnce?null:advance(swp.nextDate,swp.frequency);
-      const expired=isOnce||(swp.endDate&&newNext>swp.endDate);
-      const _runDate=getISTDateStr();
-      ns={...ns,swpPlan:(ns.swpPlan||[]).map(x=>x.id===swp.id?{...x,lastExecuted:_runDate,nextDate:expired?null:newNext,status:expired?"completed":"active",executionHistory:[...(x.executionHistory||[]),{scheduledDate:swp.nextDate,executedDate:_runDate,amount:swp.amount,units,nav}]}:x)};
       return ns;
     }
     /* Transfer: debit source, credit target -- supports bank/cash/card */
@@ -9248,7 +9218,7 @@ var NotesSection=React.memo(({notes=[],dispatch})=>{
 /* ══════════════════════════════════════════════════════════════════════════
    SCHEDULED TRANSACTIONS SECTION
    ══════════════════════════════════════════════════════════════════════════ */
-var ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,payees=_EA,dispatch,swpPlan=[],mf=[]})=>{
+var ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,payees=_EA,dispatch})=>{
   const[editSc,setEditSc]=useState(null);
   const[execConfirm,setExecConfirm]=useState(null);
   const[delScConfirm,setDelScConfirm]=useState(null);
@@ -9554,6 +9524,9 @@ var ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,paye
         React.createElement("select",{className:"inp",value:f.accId,onChange:onAccChange},accOptions)
       ),
 
+      /* Fund name (SWP only) */
+      editSc&&editSc.isSwp&&F("Mutual Fund",React.createElement("div",{style:{padding:"8px 12px",background:"rgba(109,40,217,.08)",borderRadius:7,border:"1px solid rgba(109,40,217,.2)",fontSize:13,fontWeight:600,color:"#6d28d9"}},editSc.fundName)),
+
       /* Tx type */
       F("Type",React.createElement("select",{className:"inp",value:f.txType,onChange:e=>{
         setF(p=>({...p,txType:e.target.value,srcId:p.accId,tgtId:""}));
@@ -9652,7 +9625,7 @@ var ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,paye
       React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}},
         React.createElement("div",{style:{flex:1,minWidth:0}},
           React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}},
-            React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text)"}},sc.desc||sc.payee||"Scheduled Transaction"),
+            React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},sc.desc||sc.payee||"Scheduled Transaction",sc.isSwp&&React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"1px 5px",borderRadius:4,background:"rgba(109,40,217,.12)",color:"#6d28d9",border:"1px solid rgba(109,40,217,.25)"}},"SWP")),
             !isCompleted&&React.createElement("button",{
               onClick:toggleExecMode,
               title:isManual?"Manual: will NOT auto-execute. Click to switch to Auto.":"Auto: executes automatically when due. Click to switch to Manual.",
@@ -10049,71 +10022,7 @@ var ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,paye
       React.createElement("span",{style:{fontSize:12,color:"var(--text6)"}},
         completedInstances.length+" completed execution"+(completedInstances.length>1?"s are":" is")+" hidden. Use the checkbox above to show."
       )
-    ),
-
-    /* ══ SYSTEMATIC WITHDRAWAL PLANS (SWP) ══ */
-    (()=>{
-      const today=TODAY();
-      const allSwp=swpPlan||[];
-      if(!allSwp.length)return null;
-      const dueSwp=allSwp.filter(s=>s.status==="active"&&s.nextDate&&s.nextDate<=today);
-      const activeSwp=allSwp.filter(s=>s.status==="active"&&s.nextDate&&s.nextDate>today);
-      const pausedSwp=allSwp.filter(s=>s.status==="paused");
-      const completedSwp=allSwp.filter(s=>s.status==="completed");
-      const fundName=(m)=>m?.name||"Unknown Fund";
-      const renderSwpCard=(s)=>React.createElement("div",{key:s.id,style:{padding:"12px 14px",background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,borderLeft:"3px solid "+(s.nextDate&&s.nextDate<=today?"#ef4444":s.status==="paused"?"#b45309":"#6d28d9")}},
-        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}},
-          React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text2)"}},"SWP: "+s.fundName),
-          React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#16a34a"}},"+"+INR(s.amount))
-        ),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginBottom:4}},
-          (s.frequency==="once"?"One Time":(s.frequency||"monthly").charAt(0).toUpperCase()+(s.frequency||"monthly").slice(1))+" withdrawal · Target: "+(banks.find(b=>b.id===s.targetAccId)?.name||"Unknown Bank")
-        ),
-        React.createElement("div",{style:{display:"flex",gap:10,fontSize:10,color:"var(--text6)",marginBottom:6}},
-          React.createElement("span",null,"Next: "+(s.nextDate||"--")),
-          React.createElement("span",null,"Last: "+(s.lastExecuted||"Never")),
-          s.endDate?React.createElement("span",null,"Ends: "+s.endDate):null
-        ),
-        React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
-          s.status==="active"?React.createElement(React.Fragment,null,
-            React.createElement(Btn,{v:"success",sz:"sm",onClick:()=>dispatch({type:"EXECUTE_SWP",swp:s})},"Execute Now"),
-            React.createElement(Btn,{v:"secondary",sz:"sm",onClick:()=>dispatch({type:"EDIT_SWP_PLAN",p:{id:s.id,status:"paused"}})},"Pause")
-          ):s.status==="paused"?React.createElement(Btn,{v:"primary",sz:"sm",onClick:()=>dispatch({type:"EDIT_SWP_PLAN",p:{id:s.id,status:"active"}})},"Resume"):null,
-          React.createElement(Btn,{v:"danger",sz:"sm",onClick:()=>{if(confirm("Delete this SWP plan?"))dispatch({type:"DEL_SWP_PLAN",id:s.id});}},"Delete")
-        ),
-        s.executionHistory&&s.executionHistory.length>0?React.createElement("div",{style:{marginTop:6,fontSize:9,color:"var(--text6)"}},"Past executions: "+s.executionHistory.length):null
-      );
-      return React.createElement("div",{style:{marginTop:20}},
-        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10,fontSize:12,fontWeight:700,color:"#6d28d9",textTransform:"uppercase",letterSpacing:.7}},
-          React.createElement(Icon,{n:"calendar",size:14,col:"#6d28d9"}),
-          "Systematic Withdrawal Plans ("+allSwp.length+")"
-        ),
-        dueSwp.length>0&&React.createElement(React.Fragment,null,
-          React.createElement("div",{style:{fontSize:10,color:"#ef4444",fontWeight:600,marginBottom:6}},"Due Now — "+dueSwp.length+" plan"+(dueSwp.length!==1?"s":"")),
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:10,marginBottom:12}},
-            dueSwp.map(renderSwpCard)
-          )
-        ),
-        activeSwp.length>0&&React.createElement(React.Fragment,null,
-          React.createElement("div",{style:{fontSize:10,color:"var(--text5)",fontWeight:600,marginBottom:6}},"Upcoming — "+activeSwp.length+" plan"+(activeSwp.length!==1?"s":"")),
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:10,marginBottom:12}},
-            activeSwp.map(renderSwpCard)
-          )
-        ),
-        pausedSwp.length>0&&React.createElement(React.Fragment,null,
-          React.createElement("div",{style:{fontSize:10,color:"#b45309",fontWeight:600,marginBottom:6}},"Paused — "+pausedSwp.length+" plan"+(pausedSwp.length!==1?"s":"")),
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:10,marginBottom:12}},
-            pausedSwp.map(renderSwpCard)
-          )
-        ),
-        completedSwp.length>0&&React.createElement(React.Fragment,null,
-          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontWeight:600,marginBottom:6}},"Completed — "+completedSwp.length+" plan"+(completedSwp.length!==1?"s":"")),
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:10}},
-            completedSwp.map(renderSwpCard)
-          )
-        )
-      );
-    })()
+    )
   );
 });
 
@@ -16971,7 +16880,7 @@ const ImportMFTxnsModal=({onImport,onClose})=>{
 };
 
 /* ── MF TRANSACTIONS PANEL — shows all buy/sell txns for a specific fund ── */
-const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,swpPlan,banks,mf})=>{
+const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,scheduled,banks,mf})=>{
   const[showAdd,setShowAdd]=useState(false);
   const[addForm,setAddForm]=useState({orderType:"buy",date:getISTDateStr?getISTDateStr():(new Date().toISOString().split("T")[0]),amount:"",nav:""});
   const[addError,setAddError]=useState("");
@@ -16980,7 +16889,7 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,swpPlan,banks,mf
   const[confirmDelId,setConfirmDelId]=useState(null);
   const[showSwpForm,setShowSwpForm]=useState(false);
   const[swpForm,setSwpForm]=useState({amount:"",frequency:"monthly",nextDate:"",endDate:"",targetAccId:""});
-  const thisFundSwp=React.useMemo(()=>(swpPlan||[]).filter(s=>s.fundName===fundName),[swpPlan,fundName]);
+  const thisFundSwp=React.useMemo(()=>(scheduled||[]).filter(s=>s.isSwp&&s.fundName===fundName),[scheduled,fundName]);
   const startEdit=t=>{
     setEditTxnId(t.id);
     setEditForm({orderType:t.orderType||"buy",date:t.date||"",amount:t.amount?String(t.amount):"",nav:t.nav?String(t.nav):"",folio:t.folio||""});
@@ -17073,13 +16982,14 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,swpPlan,banks,mf
           );
           return React.createElement("div",{key:t.id||i,style:{display:"grid",gridTemplateColumns:"minmax(80px,95px) minmax(45px,55px) minmax(70px,90px) minmax(65px,80px) minmax(80px,100px) minmax(80px,100px) 60px",padding:"7px 12px",borderBottom:"1px solid var(--border2)",background:i%2?"rgba(255,255,255,.014)":"transparent",fontSize:12,alignItems:"center"}},
             React.createElement("div",{style:{color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},t.date||"--"),
-            React.createElement("div",null,
+            React.createElement("div",{style:{display:"flex",gap:4,alignItems:"center"}},
               React.createElement("span",{style:{
                 fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:5,
                 background:isBuy?"rgba(22,163,74,.12)":"rgba(239,68,68,.12)",
                 color:isBuy?"#16a34a":"#ef4444",
                 border:"1px solid "+(isBuy?"rgba(22,163,74,.25)":"rgba(239,68,68,.25)")
-              }},isBuy?"BUY":"SELL")
+              }},isBuy?"BUY":"SELL"),
+              t.tag==="SWP"&&React.createElement("span",{style:{fontSize:8,fontWeight:700,padding:"1px 5px",borderRadius:4,background:"rgba(109,40,217,.12)",color:"#6d28d9",border:"1px solid rgba(109,40,217,.25)"}},"SWP")
             ),
             React.createElement("div",{style:{textAlign:"right",color:isBuy?"#16a34a":"#ef4444",fontWeight:600,fontFamily:"'Sora',sans-serif"}},(isBuy?"+":"-")+(+t.units||0).toFixed(3)),
             React.createElement("div",{style:{textAlign:"right",color:"var(--text4)"}},t.nav?"₹"+Number(t.nav).toFixed(4):"--"),
@@ -17178,7 +17088,7 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,swpPlan,banks,mf
         React.createElement(Btn,{v:"primary",onClick:()=>{
           const amt=parseFloat(swpForm.amount);
           if(!amt||amt<=0||!swpForm.nextDate||!swpForm.targetAccId)return;
-          dispatch({type:"ADD_SWP_PLAN",p:{fundName,amount:amt,frequency:swpForm.frequency,nextDate:swpForm.nextDate,endDate:swpForm.endDate||null,targetAccId:swpForm.targetAccId,status:"active",lastExecuted:null,executionHistory:[]}});
+          const _bank=(banks||[]).find(b=>b.id===swpForm.targetAccId);dispatch({type:"ADD_SCHEDULED",p:{desc:"SWP: "+fundName,amount:amt,ledgerType:"credit",accId:swpForm.targetAccId,accName:_bank?(_bank.name||_bank.bank||""):"",accType:"bank",frequency:swpForm.frequency,nextDate:swpForm.nextDate,endDate:swpForm.endDate||null,cat:"Transfer",payee:"Systematic Withdrawal",notes:"Auto SWP redemption from "+fundName,tags:"",txType:"Deposit",executionMode:"auto",isSwp:true,fundName,targetAccId:swpForm.targetAccId,status:"active",lastExecuted:null,executionHistory:[]}});
           setShowSwpForm(false);
           setSwpForm({amount:"",frequency:"monthly",nextDate:"",endDate:"",targetAccId:""});
         }},"Create SWP")
@@ -17192,8 +17102,8 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,swpPlan,banks,mf
             React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"Next: "+(s.nextDate||"--")+" · "+(s.status==="active"?"Active":s.status))
           ),
           React.createElement("div",{style:{display:"flex",gap:4}},
-            s.status==="active"?React.createElement("button",{onClick:()=>{if(confirm("Pause this SWP?"))dispatch({type:"EDIT_SWP_PLAN",p:{id:s.id,status:"paused"}});},style:{padding:"3px 7px",border:"none",borderRadius:4,background:"#b45309",color:"#fff",cursor:"pointer",fontSize:10}},"Pause"):React.createElement("button",{onClick:()=>{dispatch({type:"EDIT_SWP_PLAN",p:{id:s.id,status:"active"}});},style:{padding:"3px 7px",border:"none",borderRadius:4,background:"#16a34a",color:"#fff",cursor:"pointer",fontSize:10}},"Resume"),
-            React.createElement("button",{onClick:()=>{if(confirm("Delete this SWP plan?"))dispatch({type:"DEL_SWP_PLAN",id:s.id});},style:{padding:"3px 7px",border:"none",borderRadius:4,background:"#ef4444",color:"#fff",cursor:"pointer",fontSize:10}},"Delete")
+            s.status==="active"?React.createElement("button",{onClick:()=>{if(confirm("Pause this SWP?"))dispatch({type:"EDIT_SCHEDULED",p:{id:s.id,status:"paused"}});},style:{padding:"3px 7px",border:"none",borderRadius:4,background:"#b45309",color:"#fff",cursor:"pointer",fontSize:10}},"Pause"):React.createElement("button",{onClick:()=>{dispatch({type:"EDIT_SCHEDULED",p:{id:s.id,status:"active"}});},style:{padding:"3px 7px",border:"none",borderRadius:4,background:"#16a34a",color:"#fff",cursor:"pointer",fontSize:10}},"Resume"),
+            React.createElement("button",{onClick:()=>{if(confirm("Delete this SWP plan?"))dispatch({type:"DEL_SCHEDULED",id:s.id});},style:{padding:"3px 7px",border:"none",borderRadius:4,background:"#ef4444",color:"#fff",cursor:"pointer",fontSize:10}},"Delete")
           )
         ))
       )
@@ -24284,7 +24194,7 @@ const SwingHoldOptimizer=({shares,soldShareSnapshots={}})=>{
   );
 };
 
-const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},historyCache={},soldShareSnapshots={},brokerCashBalance=0,banks=[],swpPlan=[]})=>{
+const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},historyCache={},soldShareSnapshots={},brokerCashBalance=0,banks=[],scheduled=[]})=>{
   const[tab,setTab]=useState(defaultTab);const[open,setOpen]=useState(false);const[navLoad,setNavLoad]=useState(false);
   const[sharesSubTab,setSharesSubTab]=useState("holdings"); /* "holdings" | "profitability" | "timeholding" | "winloss" | "capitaleff" | "behavioural" | "timing" | "risk" | "pattern" | "drawdown" | "multitime" | "frequency" | "swing" */
   React.useEffect(()=>{setTab(defaultTab);},[defaultTab]);
@@ -25898,7 +25808,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
       mfTxns:mfTxns,
       dispatch,
       onClose:()=>setViewTxnsFund(null),
-      swpPlan, banks, mf
+      scheduled, banks, mf
     }),
     /* ── Add PF modal */
     open&&tab==="pf"&&React.createElement(Modal,{title:"Add Provident Fund Account",onClose:()=>setOpen(false),w:500},
@@ -38960,14 +38870,7 @@ function App(){
     if(due.length>0){
       due.forEach(sc=>dispatch({type:"EXECUTE_SCHEDULED",sc}));
     }
-    /* Auto-execute due SWP (Systematic Withdrawal Plan) entries */
-    const dueSwp=(state.swpPlan||[]).filter(swp=>
-      swp.status==="active"&&swp.nextDate&&swp.nextDate<=today&&swp.lastExecuted!==today
-    );
-    if(dueSwp.length>0){
-      dueSwp.forEach(swp=>dispatch({type:"EXECUTE_SWP",swp}));
-    }
-  },[idbHydrated,state.scheduled,state.swpPlan]);
+  },[idbHydrated,state.scheduled]);
 
   /* ── Notification check: on mount and tab focus ── */
   const _stateRef=React.useRef(state);
@@ -39868,7 +39771,7 @@ function App(){
       /* InvestSection: five sub-tabs reuse the same component with different
          defaultTab — keep the && pattern so each sub-tab mounts independently */
       tab==="inv_mf"&&React.createElement(ErrorBoundary,{name:"Mutual Funds"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0,banks:state.banks,swpPlan:state.swpPlan||[]})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0,banks:state.banks,scheduled:state.scheduled||[]})),
       tab==="inv_shares"&&React.createElement(ErrorBoundary,{name:"Shares"},
         React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"shares",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       tab==="inv_fd"&&React.createElement(ErrorBoundary,{name:"Fixed Deposits"},
@@ -39894,7 +39797,7 @@ function App(){
           React.createElement(CalculatorSection,null))),
       React.createElement("div",{style:{display:tab==="scheduled"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Scheduled"},
-          React.createElement(ScheduledSection,{scheduled:state.scheduled||_EA,banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees||_EA,dispatch,swpPlan:state.swpPlan||[],mf:state.mf||[]}))),
+          React.createElement(ScheduledSection,{scheduled:state.scheduled||_EA,banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees||_EA,dispatch}))),
       React.createElement("div",{style:{display:tab==="unified_ledger"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"All Transactions"},
           React.createElement(UnifiedLedgerSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees,isMobile,initialFilter:jumpFilter,onClearJump,onJumpToTx}))),
