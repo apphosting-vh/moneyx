@@ -863,7 +863,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="5.1.0";
+const APP_VERSION="5.2.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1948,7 +1948,7 @@ const reducer=(s,a)=>{
         let ns={...s,mfTxns:_allTxns,mf:_deriveMfHoldings(_allTxns,s.mf||[])};
         const _tgtBank=(s.banks||[]).find(b=>b.id===sc.targetAccId);
         if(_tgtBank){
-          const _creditTx={id:uid(),date:_runDate,desc:"SWP: "+sc.fundName,payee:"Systematic Withdrawal",amount:sc.amount,cat:"Transfer",txType:"Deposit",tags:"",status:"Reconciled",txNum:"",notes:"Auto-credited from SWP redemption of "+sc.fundName,type:"credit",_sn:nextSn(_tgtBank.transactions),_addedAt:new Date().toISOString()};
+          const _creditTx={id:uid(),date:_runDate,desc:sc.desc||("SWP: "+sc.fundName),payee:sc.payee||"Systematic Withdrawal",amount:sc.amount,cat:sc.cat||"Transfer",txType:"Deposit",tags:sc.tags||"",status:"Reconciled",txNum:"",notes:sc.notes||("Auto-credited from SWP redemption of "+sc.fundName),type:"credit",_sn:nextSn(_tgtBank.transactions),_addedAt:new Date().toISOString()};
           ns={...ns,banks:ns.banks.map(b=>b.id===sc.targetAccId?{...b,balance:b.balance+sc.amount,transactions:[...b.transactions,_creditTx]}:b)};
         }
         const _advSwp=(d,freq)=>{
@@ -9246,7 +9246,8 @@ var ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,paye
   };
   const FREQ_C={once:"#b45309",daily:"#dc2626",weekly:"#c2410c",monthly:"#16a34a",quarterly:"#0e7490",yearly:"#6d28d9"};
   const today=TODAY();
-  const due=scheduled.filter(sc=>sc.status==="active"&&sc.nextDate&&sc.nextDate<=today);
+  /* T+1 for SWP: NAV declared at night, so execute only if nextDate < today */
+  const due=scheduled.filter(sc=>sc.status==="active"&&sc.nextDate&&(sc.isSwp?sc.nextDate<today:sc.nextDate<=today));
   const active=scheduled.filter(sc=>sc.status==="active"&&sc.nextDate&&sc.nextDate>today);
   const completed=scheduled.filter(sc=>sc.status==="completed"||!sc.nextDate);
   /* Flat list of all individual execution instances from every scheduled tx (active + expired), newest-first */
@@ -38864,8 +38865,9 @@ function App(){
   React.useEffect(()=>{
     if(!idbHydrated)return;
     const today=TODAY();
+    /* T+1 for SWP: NAV declared at night, so execute only if nextDate < today */
     const due=(state.scheduled||[]).filter(sc=>
-      sc.status==="active"&&sc.nextDate&&sc.nextDate<=today&&sc.lastExecuted!==today&&(sc.executionMode||"auto")==="auto"
+      sc.status==="active"&&sc.nextDate&&sc.lastExecuted!==today&&(sc.executionMode||"auto")==="auto"&&(sc.isSwp?sc.nextDate<today:sc.nextDate<=today)
     );
     if(due.length>0){
       due.forEach(sc=>dispatch({type:"EXECUTE_SCHEDULED",sc}));
