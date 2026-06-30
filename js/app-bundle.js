@@ -863,7 +863,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="4.10.4";
+const APP_VERSION="5.0.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -14153,7 +14153,13 @@ const Dashboard=React.memo(({data,isMobile})=>{
       .reduce((s,sc)=>s+sc.amount,0)
   ,[scheduledThisMonth]);
 
-  const netLiquidPostSched = bTotal + cashBal - scheduledOutflowThisMonth;
+  const scheduledInflowThisMonth=React.useMemo(()=>
+    scheduledThisMonth
+      .filter(sc=>sc.ledgerType==="credit")
+      .reduce((s,sc)=>s+sc.amount,0)
+  ,[scheduledThisMonth]);
+
+  const netLiquidPostSched = bTotal + cashBal + scheduledInflowThisMonth - scheduledOutflowThisMonth;
 
   /* ━━ NET LIQUID POSITION (NEXT 90 DAYS) ━━━━━━━━━━━━━━━━━━━━━ */
   const next90Date = React.useMemo(()=>{
@@ -14171,7 +14177,12 @@ const Dashboard=React.memo(({data,isMobile})=>{
       .filter(sc=>sc.ledgerType==="debit")
       .reduce((s,sc)=>s+sc.amount,0)
   ,[scheduledNext90]);
-  const netLiquidPostSched90 = bTotal + cashBal - scheduledOutflowNext90;
+  const scheduledInflowNext90=React.useMemo(()=>
+    scheduledNext90
+      .filter(sc=>sc.ledgerType==="credit")
+      .reduce((s,sc)=>s+sc.amount,0)
+  ,[scheduledNext90]);
+  const netLiquidPostSched90 = bTotal + cashBal + scheduledInflowNext90 - scheduledOutflowNext90;
 
   /* ━━ NET LIQUID POSITION (NEXT 180 DAYS) ━━━━━━━━━━━━━━━━━━━━ */
   const next180Date = React.useMemo(()=>{
@@ -14189,7 +14200,12 @@ const Dashboard=React.memo(({data,isMobile})=>{
       .filter(sc=>sc.ledgerType==="debit")
       .reduce((s,sc)=>s+sc.amount,0)
   ,[scheduledNext180]);
-  const netLiquidPostSched180 = bTotal + cashBal - scheduledOutflowNext180;
+  const scheduledInflowNext180=React.useMemo(()=>
+    scheduledNext180
+      .filter(sc=>sc.ledgerType==="credit")
+      .reduce((s,sc)=>s+sc.amount,0)
+  ,[scheduledNext180]);
+  const netLiquidPostSched180 = bTotal + cashBal + scheduledInflowNext180 - scheduledOutflowNext180;
 
   /* ━━ 2. ALL BANKING TRANSACTIONS (banks + cards + cash) ━━━ */
   const allBankTx=React.useMemo(()=>[
@@ -14786,6 +14802,13 @@ const Dashboard=React.memo(({data,isMobile})=>{
           React.createElement("div",{style:{fontSize:8,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Scheduled Outflows"),
           React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:scheduledOutflowThisMonth>0?"#ef4444":"var(--text4)"}},INR(scheduledOutflowThisMonth))
         ),
+        /* plus sign */
+        React.createElement("div",{style:{fontSize:18,color:"var(--text5)",fontWeight:300,lineHeight:1}},"+"),
+        /* Scheduled inflows */
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
+          React.createElement("div",{style:{fontSize:8,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Scheduled Inflows"),
+          React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:scheduledInflowThisMonth>0?"#16a34a":"var(--text4)"}},INR(scheduledInflowThisMonth))
+        ),
         /* equals sign */
         React.createElement("div",{style:{fontSize:18,color:"var(--text5)",fontWeight:300,lineHeight:1}},"="),
         /* Result */
@@ -14797,57 +14820,65 @@ const Dashboard=React.memo(({data,isMobile})=>{
 
       /* ── Scheduled transaction breakdown ── */
       (()=>{
-        const items=scheduledThisMonth.filter(sc=>sc.ledgerType==="debit");
-        if(!items.length)return React.createElement("div",{style:{
+        const debitItems=scheduledThisMonth.filter(sc=>sc.ledgerType==="debit");
+        const creditItems=scheduledThisMonth.filter(sc=>sc.ledgerType==="credit");
+        const allAcc=[
+          ...data.banks.map(b=>({id:b.id,name:b.name})),
+          {id:"__cash__",name:"Cash"},
+          ...data.cards.map(c=>({id:c.id,name:c.name})),
+        ];
+        if(!debitItems.length&&!creditItems.length)return React.createElement("div",{style:{
           zIndex:1,position:"relative",
           fontSize:11,color:"var(--text6)",fontStyle:"italic",
           padding:"8px 0 0",display:"flex",alignItems:"center",gap:6,
         }},React.createElement(Icon,{n:"check",size:12,col:"var(--text6)"}),
-          "No scheduled outflows this month — full Bank + Cash balance is liquid."
+          "No scheduled transactions this month — full Bank + Cash balance is liquid."
         );
-        return React.createElement("div",{style:{zIndex:1,position:"relative"}},
-          React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,marginBottom:7}},
-            items.length+" Scheduled Obligation"+(items.length!==1?"s":"")+" this month"
-          ),
-          React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:5}},
-            items.map((sc,i)=>{
-              const allAcc=[
-                ...data.banks.map(b=>({id:b.id,name:b.name})),
-                {id:"__cash__",name:"Cash"},
-                ...data.cards.map(c=>({id:c.id,name:c.name})),
-              ];
-              const srcName=allAcc.find(a=>a.id===(sc.isTransfer?(sc.srcId||sc.accId):sc.accId))?.name||(sc.accType==="cash"?"Cash":sc.accId);
-              const tgtName=sc.isTransfer?allAcc.find(a=>a.id===sc.tgtId)?.name:null;
-              const accLabel=sc.isTransfer&&tgtName?srcName+" → "+tgtName:srcName;
-              const isPast=sc.nextDate<todayStr;
-              const isToday=sc.nextDate===todayStr;
-              return React.createElement("div",{key:sc.id||i,style:{
-                display:"flex",justifyContent:"space-between",alignItems:"center",
-                padding:"6px 10px",borderRadius:8,
-                background:"var(--bg3)",
-                border:"1px solid "+(isToday?"rgba(251,146,60,.3)":isPast?"rgba(239,68,68,.15)":"var(--border2)"),
-              }},
-                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,minWidth:0,flex:1}},
-                  React.createElement("div",{style:{
-                    width:6,height:6,borderRadius:"50%",flexShrink:0,
-                    background:isToday?"#fb923c":isPast?"#ef4444":"#6366f1",
-                  }}),
-                  React.createElement("div",{style:{minWidth:0}},
-                    React.createElement("div",{style:{fontSize:11,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
-                      sc.desc||sc.payee||"Scheduled"
-                    ),
-                    React.createElement("div",{style:{fontSize:9,color:"var(--text5)"}},
-                      accLabel+" · "+dmyFmt(sc.nextDate)+(isToday?" · Today":isPast?" · Due":"")+
-                      (sc.frequency&&sc.frequency!=="once"?" · "+sc.frequency.charAt(0).toUpperCase()+sc.frequency.slice(1):"")+(sc.isTransfer?" · Transfer":"")
+        const renderItems=(items,isInflow)=>{
+          if(!items.length)return null;
+          return React.createElement("div",{style:{marginTop:isInflow?8:0}},
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,marginBottom:7}},
+              items.length+(isInflow?" Scheduled Inflow":" Scheduled Obligation")+(items.length!==1?"s":"")+" this month"
+            ),
+            React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:5}},
+              items.map((sc,i)=>{
+                const srcName=allAcc.find(a=>a.id===(sc.isTransfer?(sc.srcId||sc.accId):sc.accId))?.name||(sc.accType==="cash"?"Cash":sc.accId);
+                const tgtName=sc.isTransfer?allAcc.find(a=>a.id===sc.tgtId)?.name:null;
+                const accLabel=sc.isTransfer&&tgtName?srcName+" → "+tgtName:srcName;
+                const isPast=sc.nextDate<todayStr;
+                const isToday=sc.nextDate===todayStr;
+                return React.createElement("div",{key:sc.id||i,style:{
+                  display:"flex",justifyContent:"space-between",alignItems:"center",
+                  padding:"6px 10px",borderRadius:8,
+                  background:"var(--bg3)",
+                  border:"1px solid "+(isToday?"rgba(251,146,60,.3)":isPast?"rgba(239,68,68,.15)":"var(--border2)"),
+                }},
+                  React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,minWidth:0,flex:1}},
+                    React.createElement("div",{style:{
+                      width:6,height:6,borderRadius:"50%",flexShrink:0,
+                      background:isToday?"#fb923c":isPast?"#ef4444":"#6366f1",
+                    }}),
+                    React.createElement("div",{style:{minWidth:0}},
+                      React.createElement("div",{style:{fontSize:11,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
+                        sc.desc||sc.payee||"Scheduled"
+                      ),
+                      React.createElement("div",{style:{fontSize:9,color:"var(--text5)"}},
+                        accLabel+" · "+dmyFmt(sc.nextDate)+(isToday?" · Today":isPast?" · Due":"")+
+                        (sc.frequency&&sc.frequency!=="once"?" · "+sc.frequency.charAt(0).toUpperCase()+sc.frequency.slice(1):"")+(sc.isTransfer?" · Transfer":"")
+                      )
                     )
+                  ),
+                  React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:12,color:isInflow?"#16a34a":"#ef4444",flexShrink:0,marginLeft:8}},
+                    isInflow?"+"+INR(sc.amount):"−"+INR(sc.amount)
                   )
-                ),
-                React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:12,color:"#ef4444",flexShrink:0,marginLeft:8}},
-                  "−"+INR(sc.amount)
-                )
-              );
-            })
-          )
+                );
+              })
+            )
+          );
+        };
+        return React.createElement("div",{style:{zIndex:1,position:"relative"}},
+          renderItems(debitItems,false),
+          renderItems(creditItems,true)
         );
       })()
     ),
@@ -14898,6 +14929,11 @@ const Dashboard=React.memo(({data,isMobile})=>{
           React.createElement("div",{style:{fontSize:8,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Scheduled Outflows"),
           React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:scheduledOutflowNext90>0?"#ef4444":"var(--text4)"}},INR(scheduledOutflowNext90))
         ),
+        React.createElement("div",{style:{fontSize:18,color:"var(--text5)",fontWeight:300,lineHeight:1}},"+"),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
+          React.createElement("div",{style:{fontSize:8,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Scheduled Inflows"),
+          React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:scheduledInflowNext90>0?"#16a34a":"var(--text4)"}},INR(scheduledInflowNext90))
+        ),
         React.createElement("div",{style:{fontSize:18,color:"var(--text5)",fontWeight:300,lineHeight:1}},"="),
         React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
           React.createElement("div",{style:{fontSize:8,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Net Available"),
@@ -14907,8 +14943,11 @@ const Dashboard=React.memo(({data,isMobile})=>{
 
       React.createElement("div",{style:{zIndex:1,position:"relative",fontSize:10,color:"var(--text5)",paddingTop:8,display:"flex",alignItems:"center",gap:6}},
         React.createElement(Icon,{n:"calendar",size:12,col:"var(--text5)"}),
-        scheduledNext90.filter(sc=>sc.ledgerType==="debit").length+" scheduled outflow"+
+        scheduledNext90.filter(sc=>sc.ledgerType==="debit").length+" outflow"+
         (scheduledNext90.filter(sc=>sc.ledgerType==="debit").length!==1?"s":"")+
+        (scheduledNext90.filter(sc=>sc.ledgerType==="credit").length
+          ?", "+scheduledNext90.filter(sc=>sc.ledgerType==="credit").length+" inflow"+(scheduledNext90.filter(sc=>sc.ledgerType==="credit").length!==1?"s":"")
+          :"")+
         " within 90 days"
       )
     ),
@@ -14959,6 +14998,11 @@ const Dashboard=React.memo(({data,isMobile})=>{
           React.createElement("div",{style:{fontSize:8,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Scheduled Outflows"),
           React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:scheduledOutflowNext180>0?"#ef4444":"var(--text4)"}},INR(scheduledOutflowNext180))
         ),
+        React.createElement("div",{style:{fontSize:18,color:"var(--text5)",fontWeight:300,lineHeight:1}},"+"),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
+          React.createElement("div",{style:{fontSize:8,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Scheduled Inflows"),
+          React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:scheduledInflowNext180>0?"#16a34a":"var(--text4)"}},INR(scheduledInflowNext180))
+        ),
         React.createElement("div",{style:{fontSize:18,color:"var(--text5)",fontWeight:300,lineHeight:1}},"="),
         React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
           React.createElement("div",{style:{fontSize:8,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Net Available"),
@@ -14968,8 +15012,11 @@ const Dashboard=React.memo(({data,isMobile})=>{
 
       React.createElement("div",{style:{zIndex:1,position:"relative",fontSize:10,color:"var(--text5)",paddingTop:8,display:"flex",alignItems:"center",gap:6}},
         React.createElement(Icon,{n:"calendar",size:12,col:"var(--text5)"}),
-        scheduledNext180.filter(sc=>sc.ledgerType==="debit").length+" scheduled outflow"+
+        scheduledNext180.filter(sc=>sc.ledgerType==="debit").length+" outflow"+
         (scheduledNext180.filter(sc=>sc.ledgerType==="debit").length!==1?"s":"")+
+        (scheduledNext180.filter(sc=>sc.ledgerType==="credit").length
+          ?", "+scheduledNext180.filter(sc=>sc.ledgerType==="credit").length+" inflow"+(scheduledNext180.filter(sc=>sc.ledgerType==="credit").length!==1?"s":"")
+          :"")+
         " within 180 days"
       )
     ),
