@@ -863,7 +863,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="5.2.0";
+const APP_VERSION="5.3.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -10502,7 +10502,7 @@ var gdriveRequestTokenSilent = () => new Promise((resolve) => {
     const client = google.accounts.oauth2.initTokenClient({
       client_id: cid,
       scope: "https://www.googleapis.com/auth/drive.file",
-      prompt: "",           // empty string = no consent screen, no account picker
+      prompt: "none",       // "none" = no consent screen, no account picker
       callback: (resp) => {
         if (resp && resp.access_token) {
           _gdriveSetToken(resp.access_token, resp.expires_in);
@@ -10513,7 +10513,7 @@ var gdriveRequestTokenSilent = () => new Promise((resolve) => {
       },
       error_callback: () => resolve(""),
     });
-    client.requestAccessToken({ prompt: "" });
+    client.requestAccessToken({ prompt: "none" });
   } catch { resolve(""); }
 });
 
