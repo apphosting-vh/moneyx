@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════════════
-   finsight — Service Worker  (v2 — full offline support + push notifications)
+   finsight — Service Worker  (v3 — full offline support + push notifications)
    ══════════════════════════════════════════════════════════════════════════
    Strategies:
    • Navigation / HTML  → network-first, fallback to cache, fallback to /
@@ -14,7 +14,7 @@
    • Pending actions written to IDB so the app can reconcile on next open
    ══════════════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'finsights-v5-2-0';
+const CACHE_NAME = 'finsights-v5-3-0';
 const MAX_RUNTIME_CACHE_ENTRIES = 80;
 const MAX_CACHE_AGE_MS = 30 * 24 * 3600 * 1000; // 30 days
 
