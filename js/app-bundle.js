@@ -286,7 +286,10 @@ const fetchTickerPrice=async(rawTicker)=>{
 /* Indexes to show — matched by indexSymbol from NSE API response */
 const MARKET_INDEX_MAP=[
   {nseKey:"NIFTY 50",          name:"Nifty 50",          group:"Broad"},
+  {nseKey:"NIFTY 100",         name:"Nifty 100",         group:"Broad"},
   {nseKey:"NIFTY MIDCAP 50",   name:"Nifty Midcap 50",   group:"Broad"},
+  {nseKey:"NIFTY MIDCAP 100",  name:"Nifty Midcap 100",  group:"Broad"},
+  {nseKey:"NIFTY MIDCAP 150",  name:"Nifty Midcap 150",  group:"Broad"},
   {nseKey:"NIFTY SMLCAP 100",  name:"Nifty Smallcap 100",group:"Broad"},
   {nseKey:"NIFTY BANK",        name:"Bank Nifty",         group:"Sector"},
   {nseKey:"NIFTY IT",          name:"Nifty IT",           group:"Sector"},
@@ -316,9 +319,11 @@ const fetchMarketIndices=async()=>{
     /* ── 1. NSE India API for all Indian indexes (single request) ── */
     const nseUrl="https://www.nseindia.com/api/allIndices";
     const nseProxies=[
+      "https://corsproxy.io/?"+encodeURIComponent(nseUrl),
       "https://api.cors.lol/?url="+encodeURIComponent(nseUrl),
       "https://cors.eu.org/"+nseUrl,
       "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(nseUrl),
+      "https://api.allorigins.win/raw?url="+encodeURIComponent(nseUrl),
     ];
     let nseData=null;
     for(const proxyUrl of nseProxies){
@@ -708,6 +713,7 @@ const INIT=()=>({
   soldShareSnapshots:{},
   eodPrices:{},
   eodNavs:{},
+  eodIndices:{},
   historyCache:{},
   hiddenTabs:[],
   taxData:null,
@@ -766,6 +772,7 @@ const EMPTY_STATE=()=>({
   soldShareSnapshots:{},
   eodPrices:{},
   eodNavs:{},
+  eodIndices:{},
   historyCache:{},
   hiddenTabs:[],
   taxData:null,
@@ -863,7 +870,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="5.3.0";
+const APP_VERSION="5.4.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1631,6 +1638,15 @@ const reducer=(s,a)=>{
         return m;
       });
       return{...s,eodNavs:pruned,mf:_syncedMf};
+    }
+    /* ── Market index EOD snapshots (Nifty etc.) ── */
+    case"SET_EOD_INDICES":{
+      const _isoIdxDate=mfNavDateToISO(a.date)||a.date;
+      const updatedIdx={...normalizeEodNavKeys(s.eodIndices||{}),[_isoIdxDate]:a.indices};
+      const idxKeys=Object.keys(updatedIdx).sort();
+      const prunedIdx={};
+      idxKeys.slice(-90).forEach(k=>{prunedIdx[k]=updatedIdx[k];});
+      return{...s,eodIndices:prunedIdx};
     }
     case"SET_BROKER_CASH":return{...s,brokerCashBalance:a.amount};
     case"ADD_SHARE":return{...s,shares:[...s.shares,a.p]};
@@ -24201,7 +24217,7 @@ const SwingHoldOptimizer=({shares,soldShareSnapshots={}})=>{
   );
 };
 
-const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},historyCache={},soldShareSnapshots={},brokerCashBalance=0,banks=[],scheduled=[]})=>{
+const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},eodIndices={},historyCache={},soldShareSnapshots={},brokerCashBalance=0,banks=[],scheduled=[]})=>{
   const[tab,setTab]=useState(defaultTab);const[open,setOpen]=useState(false);const[navLoad,setNavLoad]=useState(false);
   const[sharesSubTab,setSharesSubTab]=useState("holdings"); /* "holdings" | "profitability" | "timeholding" | "winloss" | "capitaleff" | "behavioural" | "timing" | "risk" | "pattern" | "drawdown" | "multitime" | "frequency" | "swing" */
   React.useEffect(()=>{setTab(defaultTab);},[defaultTab]);
@@ -24246,6 +24262,59 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
       if(navDateISO)dispatch({type:"SET_EOD_NAVS",date:navDateISO,navs:navsByCode});
     }
     setNavLoad(false);
+    /* ── Fetch market indices EOD snapshot (runs after spinner clears) ── */
+    setTimeout(async()=>{
+      try{
+        let idxData=await fetchMarketIndices();
+        const KEY_INDICES=["NIFTY 50","NIFTY 100","NIFTY MIDCAP 50","NIFTY MIDCAP 100","NIFTY MIDCAP 150","NIFTY SMLCAP 100","NIFTY BANK","NIFTY AUTO","NIFTY IT","NIFTY PHARMA"];
+        const _store=d=>{
+          const indexSnap={};
+          d.forEach(idx=>{
+            if(KEY_INDICES.includes(idx.symbol)&&idx.price>0){
+              indexSnap[idx.symbol]=idx.price;
+              if(idx.prevClose>0)indexSnap[idx.symbol+"_pc"]=idx.prevClose;
+            }
+          });
+          if(Object.keys(indexSnap).length>0){
+            dispatch({type:"SET_EOD_INDICES",date:getISTDateStr(),indices:indexSnap});
+            return true;
+          }
+          return false;
+        };
+        if(idxData&&idxData.length&&_store(idxData))return;
+        /* Fallback: Yahoo Finance v7 quote endpoint (all 10 indices in one call) */
+        const ySymToKey={"^NSEI":"NIFTY 50","^CNX100":"NIFTY 100","^NSEMDCP50":"NIFTY MIDCAP 50","^NSEMDCP100":"NIFTY MIDCAP 100","^CRSLDX":"NIFTY MIDCAP 150","^CNXSMALL":"NIFTY SMLCAP 100","^NSEBANK":"NIFTY BANK","^CNXAUTO":"NIFTY AUTO","^CNXIT":"NIFTY IT","^CNXPHARMA":"NIFTY PHARMA"};
+        const yTickers=Object.keys(ySymToKey).join(",");
+        const yProxies=[
+          u=>"https://corsproxy.io/?"+encodeURIComponent(u),
+          u=>"https://api.cors.lol/?url="+encodeURIComponent(u),
+        ];
+        const yHosts=["query1.finance.yahoo.com","query2.finance.yahoo.com"];
+        const yResults=[];
+        for(const host of yHosts){
+          for(const mkP of yProxies){
+            try{
+              const url="https://"+host+"/v7/finance/quote?symbols="+encodeURIComponent(yTickers)+"&fields=regularMarketPrice,previousClose";
+              const r=await _fetchX(mkP(url),{},10000);if(!r.ok)continue;
+              const txt=await _readBody(r,8000);
+              let json;try{json=JSON.parse(txt);}catch{continue;}
+              const p=json?.contents?JSON.parse(json.contents):json;
+              const items=p?.quoteResponse?.result||[];
+              if(!items.length)continue;
+              items.forEach(q=>{
+                const key=ySymToKey[q.symbol];
+                const price=parseFloat(q?.regularMarketPrice)||parseFloat(q?.previousClose);
+                const prevClose=parseFloat(q?.previousClose);
+                if(key&&price>0)yResults.push({symbol:key,price,prevClose:prevClose>0?prevClose:null});
+              });
+              if(yResults.length>0)break;
+            }catch{}
+          }
+          if(yResults.length>0)break;
+        }
+        if(yResults.length>0)_store(yResults);
+      }catch(e){}
+    },50);
   };
 
   /* ── Live price fetch — delegates to shared fetchTickerPrice helper ── */
@@ -24797,6 +24866,92 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
       );
       })() /* close IIFE for zero-unit filter */
     ),
+    /* ── NAV change vs Nifty benchmark comparison table ──
+         Uses latest eodIndices entry which stores close + prevClose per index,
+         so a single date entry gives the full day's change. This avoids date
+         alignment issues between NAV dates and index data.
+
+         Handles three states:
+           • No data yet   → prompt to refresh NAV
+           • 1 NAV snap    → shows benchmarks + "second snapshot needed" prompt
+           • 2+ NAV snaps  → full table with fund rows                          */
+    tab==="mf"&&(()=>{
+      const _normIdx=normalizeEodNavKeys(eodIndices||{});
+      const _idxDates=Object.keys(_normIdx).sort();
+      const _idxLatest=_idxDates.slice(-1)[0];
+      const _idxSnap=_idxLatest?(_normIdx[_idxLatest]||{}):{};
+      const _normTbl=normalizeEodNavKeys(eodNavs||{});
+      const _tblDates=Object.keys(_normTbl).sort();
+      const _navD1=_tblDates.slice(-1)[0];
+      const _navD2=_tblDates.slice(-2,-1)[0];
+      const _fundCount=mf.filter(m=>m.units>0).length;
+      /* Track whether we have enough data for fund rows vs just benchmarks */
+      const _hasIndexData=_idxLatest&&Object.keys(_idxSnap).some(k=>!k.endsWith("_pc"));
+      const _hasNavPair=_navD1&&_navD2&&!!_fundCount;
+      const _idxKeys=["NIFTY 50","NIFTY 100","NIFTY MIDCAP 50","NIFTY MIDCAP 100","NIFTY MIDCAP 150","NIFTY SMLCAP 100","NIFTY BANK","NIFTY AUTO","NIFTY IT","NIFTY PHARMA"];
+      const _idxLabels=["Nifty 50","Nifty 100","Midcap 50","Midcap 100","Midcap 150","Smallcap 100","Bank","Auto","IT","Pharma"];
+      const _idxChgs=_idxKeys.map((k,i)=>{
+        const close=_idxSnap[k];
+        const prev=_idxSnap[k+"_pc"];
+        return{label:_idxLabels[i],chgPct:close&&prev&&prev>0?((close-prev)/prev*100):null};
+      });
+      /* Build fund rows only when we have 2+ NAV dates */
+      const _fundChgs=_hasNavPair?(function(){
+        const _ah=mf.filter(m=>m.units>0);
+        return _ah.map(m=>{
+          const l=(_normTbl[_navD1]||{})[m.schemeCode];
+          const p=(_normTbl[_navD2]||{})[m.schemeCode];
+          if(!l||!p||p<=0)return null;
+          return{name:m.name,chgPct:((l-p)/p*100)};
+        }).filter(Boolean).sort((a,b)=>b.chgPct-a.chgPct);
+      })():[];
+      const _fmtD=(iso)=>{if(!iso)return"--";const p=iso.split("-");const M=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return p.length===3?p[2]+" "+M[parseInt(p[1],10)-1]+" "+p[0]:iso;};
+      const _col=(v)=>v!==null&&v!==undefined?(v>=0?"#16a34a":"#ef4444"):"var(--text5)";
+      const _pct=(v)=>v!==null&&v!==undefined?(v>=0?"▲ +":"▼ ")+Math.abs(v).toFixed(2)+"%":"—";
+      const _sn=(n)=>{const r=n.replace(/\s*-\s*(direct|regular)\s*(growth|idcw|dividend).*/i,"").replace(/\s*fund$/i,"").trim();return r.length>25?r.slice(0,23)+"…":r;};
+      const _showNavDate=_navD1||"--";
+      const _showIdxDate=_idxLatest||"--";
+      /* ── Determine subtitle ── */
+      let _subtitle="NAV: "+_fmtD(_showNavDate)+" · Nifty: "+_fmtD(_showIdxDate);
+      if(!_hasIndexData&&!_hasNavPair)_subtitle="Refresh NAV to see comparison";
+      else if(!_hasNavPair&&_fundCount>0)_subtitle=_subtitle+" · Fund rows appear after 2nd NAV refresh";
+      return React.createElement(Card,{sx:{marginBottom:14,overflow:"hidden"}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7,padding:"14px 16px 8px",borderBottom:"1px solid var(--border2)"}},
+          React.createElement("div",{style:{width:3,height:14,borderRadius:2,background:"#6d28d9",flexShrink:0}}),
+          React.createElement("span",{style:{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:"var(--text5)"}},"NAV Change vs Nifty Benchmarks"),
+          React.createElement("span",{style:{fontSize:9,color:"var(--text6)",fontWeight:400,marginLeft:"auto",whiteSpace:"nowrap"}},_subtitle)
+        ),
+        React.createElement("div",{style:{overflowX:"auto",WebkitOverflowScrolling:"touch"}},
+          React.createElement("div",{style:{minWidth:850}},
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,background:"var(--bg5)",borderBottom:"2px solid var(--border)",fontSize:9,fontWeight:700,color:"var(--accent)",textTransform:"uppercase",letterSpacing:.5}},
+              React.createElement("div",{style:{padding:"7px 10px"}},"Fund"),
+              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"NAV"),
+              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"N50"),
+              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"N100"),
+              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"MC50"),
+              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"MC100"),
+              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"MC150"),
+              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"SC100"),
+              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"BANK"),
+              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"AUTO"),
+              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"IT"),
+              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"PHAR")
+            ),
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,background:"rgba(109,40,217,.04)",borderBottom:"1px solid var(--border2)",fontSize:10,fontWeight:600}},
+              React.createElement("div",{style:{padding:"7px 10px",color:"var(--text5)",fontStyle:"italic"}},"Benchmark"),
+              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:"var(--text6)"}},"—"),
+              _idxChgs.map(idx=>React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct),fontWeight:700}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
+            ),
+            _fundChgs.length>0?_fundChgs.map(f=>React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,borderBottom:"1px solid var(--border2)",fontSize:10,":last-child":{borderBottom:"none"}}},
+              React.createElement("div",{style:{padding:"7px 10px",color:"var(--text2)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},_sn(f.name)),
+              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(f.chgPct),fontWeight:600}},(f.chgPct>=0?"▲ +":"▼ ")+Math.abs(f.chgPct).toFixed(2)+"%"),
+              _idxChgs.map(idx=>React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
+            )):_hasNavPair||!_fundCount?null:React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr",gap:0,padding:"16px 10px",fontSize:10,color:"var(--text6)",textAlign:"center",fontStyle:"italic"}},
+              "Refresh NAV again tomorrow to see per-fund day-over-day changes.")
+          )
+        )
+      );
+    })(),
     /* ── Market Indices Ticker ── */
     tab==="shares"&&React.createElement(MarketTicker),
     /* ── Shares sub-tab bar ── */
@@ -38899,10 +39054,12 @@ function App(){
   const _eodRef=React.useRef(state.eodPrices);
   const _mfRef=React.useRef(state.mf);
   const _eodNavsRef=React.useRef(state.eodNavs);
+  const _eodIdxRef=React.useRef(state.eodIndices);
   React.useEffect(()=>{_sharesRef.current=state.shares;},[state.shares]);
   React.useEffect(()=>{_eodRef.current=state.eodPrices;},[state.eodPrices]);
   React.useEffect(()=>{_mfRef.current=state.mf;},[state.mf]);
   React.useEffect(()=>{_eodNavsRef.current=state.eodNavs;},[state.eodNavs]);
+  React.useEffect(()=>{_eodIdxRef.current=state.eodIndices;},[state.eodIndices]);
   React.useEffect(()=>{
     const doEODSnap=async()=>{
       try{
@@ -38956,6 +39113,55 @@ function App(){
             }
           }
         }
+        /* ── Market index EOD snapshot ── */
+        try{
+          if(_eodIdxRef.current&&_eodIdxRef.current[today])return;
+          const KEY_INDICES=["NIFTY 50","NIFTY 100","NIFTY MIDCAP 50","NIFTY MIDCAP 100","NIFTY MIDCAP 150","NIFTY SMLCAP 100","NIFTY BANK","NIFTY AUTO","NIFTY IT","NIFTY PHARMA"];
+          const _storeIdx=d=>{
+            const idxSnap={};
+            d.forEach(idx=>{
+              if(KEY_INDICES.includes(idx.symbol)&&idx.price>0){
+                idxSnap[idx.symbol]=idx.price;
+                if(idx.prevClose>0)idxSnap[idx.symbol+"_pc"]=idx.prevClose;
+              }
+            });
+            if(Object.keys(idxSnap).length>0){dispatch({type:"SET_EOD_INDICES",date:today,indices:idxSnap});return true;}
+            return false;
+          };
+          let idxRes=await fetchMarketIndices();
+          if(idxRes&&idxRes.length&&_storeIdx(idxRes))return;
+          /* Fallback: Yahoo Finance v7 quote endpoint (all indices in one call) */
+          const ySymToKey={"^NSEI":"NIFTY 50","^CNX100":"NIFTY 100","^NSEMDCP50":"NIFTY MIDCAP 50","^NSEMDCP100":"NIFTY MIDCAP 100","^CRSLDX":"NIFTY MIDCAP 150","^CNXSMALL":"NIFTY SMLCAP 100","^NSEBANK":"NIFTY BANK","^CNXAUTO":"NIFTY AUTO","^CNXIT":"NIFTY IT","^CNXPHARMA":"NIFTY PHARMA"};
+          const yTickers=Object.keys(ySymToKey).join(",");
+          const yProxies=[
+            u=>"https://corsproxy.io/?"+encodeURIComponent(u),
+            u=>"https://api.cors.lol/?url="+encodeURIComponent(u),
+          ];
+          const yHosts=["query1.finance.yahoo.com","query2.finance.yahoo.com"];
+          const yResults=[];
+          for(const host of yHosts){
+            for(const mkP of yProxies){
+              try{
+                const url="https://"+host+"/v7/finance/quote?symbols="+encodeURIComponent(yTickers)+"&fields=regularMarketPrice,previousClose";
+                const r=await _fetchX(mkP(url),{},10000);if(!r.ok)continue;
+                const txt=await _readBody(r,8000);
+                let json;try{json=JSON.parse(txt);}catch{continue;}
+                const p=json?.contents?JSON.parse(json.contents):json;
+                const items=p?.quoteResponse?.result||[];
+                if(!items.length)continue;
+                items.forEach(q=>{
+                  const key=ySymToKey[q.symbol];
+                  const price=parseFloat(q?.regularMarketPrice)||parseFloat(q?.previousClose);
+                  const prevClose=parseFloat(q?.previousClose);
+                  if(key&&price>0)yResults.push({symbol:key,price,prevClose:prevClose>0?prevClose:null});
+                });
+                if(yResults.length>0)break;
+              }catch{}
+            }
+            if(yResults.length>0)break;
+          }
+          if(yResults.length>0)_storeIdx(yResults);
+        }catch(e){}
       }catch(e){console.warn("[MM] EOD snapshot error:",e);}
     };
     doEODSnap();
@@ -39779,15 +39985,15 @@ function App(){
       /* InvestSection: five sub-tabs reuse the same component with different
          defaultTab — keep the && pattern so each sub-tab mounts independently */
       tab==="inv_mf"&&React.createElement(ErrorBoundary,{name:"Mutual Funds"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0,banks:state.banks,scheduled:state.scheduled||[]})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0,banks:state.banks,scheduled:state.scheduled||[]})),
       tab==="inv_shares"&&React.createElement(ErrorBoundary,{name:"Shares"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"shares",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"shares",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       tab==="inv_fd"&&React.createElement(ErrorBoundary,{name:"Fixed Deposits"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"fd",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"fd",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       tab==="inv_re"&&React.createElement(ErrorBoundary,{name:"Real Estate"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"re",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"re",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       tab==="inv_pf"&&React.createElement(ErrorBoundary,{name:"Provident Fund"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"pf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"pf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       React.createElement("div",{style:{display:tab==="loans"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Loans"},
           React.createElement(LoanSection,{loans:state.loans,dispatch,allBanks:state.banks,allCards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees,isMobile}))),
