@@ -870,7 +870,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="5.4.0";
+const APP_VERSION="5.5.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -39046,10 +39046,9 @@ function App(){
     return()=>document.removeEventListener("visibilitychange",onFocus);
   },[]);
 
-  /* ── AUTO EOD SNAPSHOT — runs silently after NSE close (15:30 IST) ──────────
-     Uses refs so the interval always reads the latest state without restarting.
-     Fires once on mount then every 5 min. No user interaction required.
-     ─────────────────────────────────────────────────────────────────────────── */
+  /* ── AUTO EOD FETCH — silently fetches NAVs, share prices & market indices
+     on every launch + every 5 min. Uses refs to avoid double-fetch if data
+     already exists for today's date or NAV date. No user action required.    */
   const _sharesRef=React.useRef(state.shares);
   const _eodRef=React.useRef(state.eodPrices);
   const _mfRef=React.useRef(state.mf);
@@ -39064,8 +39063,6 @@ function App(){
     const doEODSnap=async()=>{
       try{
         if(!navigator.onLine)return;
-        /* Only after NSE close (15:30 IST) on trading weekdays */
-        if(!isAfterNSEClose()||!isTradingWeekday())return;
         const today=getISTDateStr();
 
         /* ── Share price EOD snapshot ── */
