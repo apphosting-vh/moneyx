@@ -887,7 +887,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="5.7.0";
+const APP_VERSION="5.8.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -2462,7 +2462,7 @@ const StatCard=({label,val,sub,col="var(--accent)",icon})=>React.createElement(C
   sub&&React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:5}},sub)
 );
 const Modal=({title,onClose,children,w=480})=>React.createElement("div",{className:"modal-bd",onClick:onClose,style:{position:"fixed",top:0,right:0,bottom:0,left:0,zIndex:1000,overflowY:"auto",overflowX:"hidden",WebkitOverflowScrolling:"touch"}},
-  React.createElement("div",{style:{display:"flex",justifyContent:"center",alignItems:"flex-start",minHeight:"100vh",padding:"24px 12px 32px 12px",boxSizing:"border-box"}},
+  React.createElement("div",{style:{display:"flex",justifyContent:"center",alignItems:"center",minHeight:"100dvh",padding:"24px 12px",boxSizing:"border-box"}},
     React.createElement("div",{className:"fu",onClick:e=>e.stopPropagation(),style:{background:"var(--modal-bg)",border:"1px solid var(--border)",borderRadius:14,padding:"20px 18px",width:"100%",maxWidth:w,boxSizing:"border-box",flexShrink:0}},
       React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,gap:8}},
         React.createElement("h3",{style:{color:"var(--accent)",fontFamily:"'Sora',sans-serif",fontSize:16,fontWeight:700,lineHeight:1.3,minWidth:0,flex:1}},title),
