@@ -805,29 +805,13 @@ const _EA=Object.freeze([]);   /* stable empty-array fallback  */
 const _EO=Object.freeze({});   /* stable empty-object fallback */
 
 const THEMES=[
-  {id:"sky",         name:"Sky Blue",    desc:"Airy light sky-blue",       dark:false, preview:["#f0f9ff","#0ea5e9","#bae6fd","#0284c7"]},
-  {id:"slate",       name:"Slate",       desc:"Cool blue-grey minimal",    dark:false, preview:["#f4f6f8","#4a6888","#bcc8d8","#385470"]},
-  {id:"nordic",      name:"Nordic",      desc:"Crisp cool steel blue",     dark:false, preview:["#f4f7f9","#3a6888","#b8ccdc","#2c5272"]},
-  {id:"moss",        name:"Moss",        desc:"Deep earthy olive moss",    dark:false, preview:["#f5f8f3","#526e3c","#bcd0b0","#3e5830"]},
-  {id:"mint",        name:"Mint",        desc:"Fresh cool emerald mint",   dark:false, preview:["#f2fbf8","#1a8a68","#a8d8c8","#147054"]},
-  {id:"rose",        name:"Rose",        desc:"Soft warm pink rose",       dark:false, preview:["#fef2f2","#e11d48","#f5d0d0","#be123c"]},
-  {id:"lavender",    name:"Lavender",    desc:"Light purple lavender",     dark:false, preview:["#f8f6ff","#7c3aed","#ddd8f5","#6d28d9"]},
-  {id:"sunset",      name:"Sunset",      desc:"Warm orange sunset",        dark:false, preview:["#fff8f0","#ea580c","#f8e0c8","#c2410c"]},
-  {id:"ocean",       name:"Ocean",       desc:"Deep teal ocean",           dark:false, preview:["#f0fafc","#0891b2","#c8ecf0","#0e7490"]},
-  {id:"coral",       name:"Coral",       desc:"Vibrant warm coral pink",   dark:false, preview:["#fff0ee","#e11d48","#fcc8c0","#be123c"]},
-  {id:"electric",    name:"Electric",    desc:"Bright electric blue",      dark:false, preview:["#eef4ff","#2563eb","#b8d0f8","#1d4ed8"]},
-  {id:"lime",        name:"Lime",        desc:"Vivid lime green",          dark:false, preview:["#f1fae8","#65a30d","#c8e4ac","#4d7c08"]},
-  {id:"tangerine",   name:"Tangerine",   desc:"Warm bold tangerine",       dark:false, preview:["#fff7ed","#ea580c","#fac8a8","#c2410c"]},
-  {id:"fuchsia",     name:"Fuchsia",     desc:"Bold vibrant fuchsia",      dark:false, preview:["#fdf2ff","#d946ef","#f0ccf0","#c026d3"]},
-  {id:"sky-dark",    name:"Sky Dark",    desc:"Deep space blue",           dark:true,  preview:["#070b12","#38bdf8","#1e3a5a","#0ea5e9"]},
-  {id:"slate-dark",  name:"Slate Dark",  desc:"Charcoal steel",            dark:true,  preview:["#080b10","#6a8aaa","#28344a","#4a6888"]},
-  {id:"nordic-dark", name:"Nordic Dark", desc:"Midnight arctic",           dark:true,  preview:["#070c12","#5a8aaa","#22364e","#3a6888"]},
-  {id:"moss-dark",   name:"Moss Dark",   desc:"Deep forest",               dark:true,  preview:["#080c06","#6e9a52","#2a3e26","#526e3c"]},
-  {id:"mint-dark",   name:"Mint Dark",   desc:"Dark emerald",              dark:true,  preview:["#060e0c","#2ab888","#1e4236","#1a8a68"]},
+  {id:"sky",    name:"Sky Blue", desc:"Airy light sky-blue",    dark:false, preview:["#f0f9ff","#0ea5e9","#bae6fd","#0284c7"]},
+  {id:"slate",  name:"Slate",    desc:"Cool blue-grey minimal", dark:false, preview:["#f4f6f8","#4a6888","#bcc8d8","#385470"]},
+  {id:"nordic", name:"Nordic",   desc:"Crisp cool steel blue",  dark:false, preview:["#f4f7f9","#3a6888","#b8ccdc","#2c5272"]},
+  {id:"moss",   name:"Moss",     desc:"Deep earthy olive moss", dark:false, preview:["#f5f8f3","#526e3c","#bcd0b0","#3e5830"]},
+  {id:"mint",   name:"Mint",     desc:"Fresh cool emerald mint",dark:false, preview:["#f2fbf8","#1a8a68","#a8d8c8","#147054"]},
 ];
-const loadTheme=()=>{try{const t=localStorage.getItem(LS_THEME);if(t&&THEMES.find(th=>th.id===t))return t;}catch{}const mq=window.matchMedia("(prefers-color-scheme: dark)");return mq&&mq.matches?"sky-dark":"electric";};
-const saveTheme=id=>{try{localStorage.setItem(LS_THEME,id);}catch{}};
-const applyTheme=id=>{document.documentElement.setAttribute("data-theme",id);if(id.endsWith("-dark")){document.documentElement.style.setProperty("color-scheme","dark");}else{document.documentElement.style.removeProperty("color-scheme");}setTimeout(syncPAL,0);};
+const applyTheme=id=>{document.documentElement.setAttribute("data-theme",id);};
 
 /* ── FONT SYSTEM ─────────────────────────────────────────────────────────
    5 most popular fonts for financial apps in 2026.
@@ -880,14 +864,13 @@ const applyFont=id=>{
   document.documentElement.style.setProperty("--font-body",font.stack);
 };
 
-let PAL=["#b45309","#0e7490","#16a34a","#6d28d9","#c2410c","#be185d","#1d4ed8","#059669"];
-const syncPAL=()=>{const g=getComputedStyle(document.documentElement);const c=[1,2,3,4,5,6].map(i=>g.getPropertyValue(`--chart-${i}`).trim()).filter(Boolean);if(c.length)PAL=c;};
+const PAL=["#b45309","#0e7490","#16a34a","#6d28d9","#c2410c","#be185d","#1d4ed8","#059669"];
 const CAT_C={Income:"#16a34a",Housing:"#0e7490",Insurance:"#6d28d9",Food:"#c2410c",Transport:"#1d4ed8",Utilities:"#be185d",Shopping:"#b45309",Entertainment:"#059669",Investment:"#16a34a",Travel:"#0e7490",Payment:"#0891b2",Transfer:"#1d4ed8",Others:"#475569"};
 const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak Mahindra Bank","Punjab National Bank","Bank of Baroda","Yes Bank","IndusInd Bank","Federal Bank","Other"];
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="5.9.0";
+const APP_VERSION="5.5.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -2461,13 +2444,15 @@ const StatCard=({label,val,sub,col="var(--accent)",icon})=>React.createElement(C
   React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:700,color:col,lineHeight:1.2}},val),
   sub&&React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:5}},sub)
 );
-const Modal=({title,onClose,children,w=480})=>React.createElement("div",{className:"modal-bd",onClick:onClose,style:{position:"fixed",top:0,right:0,bottom:0,left:0,zIndex:1000,display:"flex",flexDirection:"column",alignItems:"center",overflowY:"auto",overflowX:"hidden",WebkitOverflowScrolling:"touch",padding:"5vh 12px"}},
-    React.createElement("div",{className:"fu",onClick:e=>e.stopPropagation(),style:{margin:"auto",background:"var(--modal-bg)",border:"1px solid var(--border)",borderRadius:14,padding:"20px 18px",width:"100%",maxWidth:w,boxSizing:"border-box",flexShrink:0}},
+const Modal=({title,onClose,children,w=480})=>React.createElement("div",{className:"modal-bd",onClick:onClose,style:{position:"fixed",top:0,right:0,bottom:0,left:0,background:"rgba(0,0,0,.78)",zIndex:1000,overflowY:"auto",overflowX:"hidden",WebkitOverflowScrolling:"touch"}},
+  React.createElement("div",{style:{display:"flex",justifyContent:"center",alignItems:"flex-start",minHeight:"100vh",padding:"24px 12px 32px 12px",boxSizing:"border-box"}},
+    React.createElement("div",{className:"fu",onClick:e=>e.stopPropagation(),style:{background:"var(--modal-bg)",border:"1px solid var(--border)",borderRadius:14,padding:"20px 18px",width:"100%",maxWidth:w,boxSizing:"border-box",flexShrink:0}},
       React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,gap:8}},
         React.createElement("h3",{style:{color:"var(--accent)",fontFamily:"'Sora',sans-serif",fontSize:16,fontWeight:700,lineHeight:1.3,minWidth:0,flex:1}},title),
         React.createElement("button",{onClick:onClose,style:{background:"none",border:"none",color:"var(--text5)",cursor:"pointer",fontSize:26,lineHeight:1,padding:"8px 12px",minWidth:44,minHeight:44,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,borderRadius:8,transition:"background .15s"},onMouseEnter:e=>{e.currentTarget.style.background="var(--accentbg2)";},onMouseLeave:e=>{e.currentTarget.style.background="transparent";}},"×")
       ),children
     )
+  )
 );
 const Field=({label,children,sx={}})=>React.createElement("div",{style:{marginBottom:13,...sx}},
   React.createElement("label",{style:{display:"block",color:"var(--text5)",fontSize:11,textTransform:"uppercase",letterSpacing:.5,marginBottom:5}},label),children
@@ -10355,9 +10340,13 @@ var _saveEodCaches=(state)=>{
   }catch{}
 };
 
+var loadTheme=()=>{
+  try{return localStorage.getItem(LS_THEME)||"ocean";}catch{return "ocean";}
+};
 
-
-
+var saveTheme=(id)=>{
+  try{localStorage.setItem(LS_THEME,id);}catch{}
+};
 
 /* ── PIN SECURITY ─────────────────────────────────────────────────────────── */
 /* Hash a PIN string with SHA-256; returns lowercase hex string */
@@ -13573,15 +13562,11 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
               ):null;
               const daysUntilDue=dueDate?Math.ceil((dueDate-now)/(86400000)):null;
               const fmtD=d=>`${d.getDate()}/${d.getMonth()+1}`;
-              const _dFmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;const cycleSpend=(c.transactions||[]).filter(t=>t.type==="debit"&&t.date>=_dFmt(cycleStart)&&t.date<=_dFmt(cycleEnd)).reduce((s,t)=>s+t.amount,0);const cycleOutstanding=Math.max(0,(c.transactions||[]).filter(t=>t.status==="Reconciled"&&t.date<=_dFmt(cycleEnd)).reduce((s,t)=>s+(t.type==="debit"?t.amount:-t.amount),0));
+              const _dFmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;const cycleSpend=(c.transactions||[]).filter(t=>t.type==="debit"&&t.date>=_dFmt(cycleStart)&&t.date<=_dFmt(cycleEnd)).reduce((s,t)=>s+t.amount,0);
               return React.createElement("div",{style:{marginTop:8,padding:"7px 9px",borderRadius:8,background:"var(--bg5)",border:"1px solid var(--border2)",fontSize:10}},
                 React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:3}},
                   React.createElement("span",{style:{color:"var(--text5)"}},"Cycle: "+fmtD(cycleStart)+" – "+fmtD(cycleEnd)),
                   React.createElement("span",{style:{color:"var(--accent)",fontWeight:600}},"Spent: "+INR(cycleSpend))
-                ),
-                React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:3,fontSize:9}},
-                  React.createElement("span",{style:{color:"var(--text4)"}},"Outstanding on cycle end"),
-                  React.createElement("span",{style:{color:"#c2410c",fontWeight:700}},""+INR(cycleOutstanding))
                 ),
                 dueDate&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5}},
                   React.createElement("span",{style:{color:daysUntilDue!==null&&daysUntilDue<=5?"#ef4444":daysUntilDue!==null&&daysUntilDue<=10?"#c2410c":"#16a34a",fontWeight:600}},
@@ -14099,11 +14084,11 @@ const FinancialCalendar=({data,isMobile})=>{
     if(now.getDate()<=bd)cs.setMonth(cs.getMonth()-1);
     const ns=new Date(cs);ns.setMonth(ns.getMonth()+1);
     const due=dd>bd?new Date(ns.getFullYear(),ns.getMonth(),dd):new Date(ns.getFullYear(),ns.getMonth()+1,dd);
-    const _fmtLocal=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;const ds=_fmtLocal(due);const _nsStr=_fmtLocal(ns);const cycleDue=Math.max(0,(card.transactions||[]).filter(t=>t.status==="Reconciled"&&t.date<_nsStr).reduce((s,t)=>s+(t.type==="debit"?t.amount:-t.amount),0));
+    const _fmtLocal=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;const ds=_fmtLocal(due);
     if(ds>=todayStr&&ds<=horizonStr)
       events.push({date:ds,icon:React.createElement(Icon,{n:"card",size:18}),label:card.name+" payment due",
-        sub:"Outstanding: "+INRc(cycleDue||0),
-        amount:cycleDue||0,aCol:"#ef4444",aSign:"−",col:"#c2410c"});
+        sub:"Outstanding: "+INRc(card.outstanding||0),
+        amount:card.outstanding||0,aCol:"#ef4444",aSign:"−",col:"#c2410c"});
   });
   (data.fd||[]).filter(f=>f.maturityDate&&f.maturityDate>=todayStr&&f.maturityDate<=horizonStr).forEach(f=>{
     const m=f.maturityAmount&&f.maturityAmount>f.amount?f.maturityAmount:f.amount;
@@ -15364,7 +15349,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
             ?new Date(nextStatement.getFullYear(),nextStatement.getMonth(),dd)
             :new Date(nextStatement.getFullYear(),nextStatement.getMonth()+1,dd);
           const dl=Math.ceil((dueDate-now)/86400000);
-          const _fmtD=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;const _nsStr2=_fmtD(nextStatement);const cycleDue2=Math.max(0,(c.transactions||[]).filter(t=>t.status==="Reconciled"&&t.date<_nsStr2).reduce((s,t)=>s+(t.type==="debit"?t.amount:-t.amount),0));return{...c,dueDate:_fmtD(dueDate),daysLeft:dl,cycleDue:cycleDue2};
+          const _fmtD=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;return{...c,dueDate:_fmtD(dueDate),daysLeft:dl};
         })
         .filter(c=>c.daysLeft>=0)
         .sort((a,b)=>a.daysLeft-b.daysLeft);
@@ -15393,7 +15378,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
                 )
               ),
               React.createElement("div",{style:{textAlign:"right",flexShrink:0}},
-                React.createElement("div",{style:{fontSize:14,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#c2410c"}},INR(c.cycleDue||c.outstanding)),
+                React.createElement("div",{style:{fontSize:14,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#c2410c"}},INR(c.outstanding)),
                 React.createElement("div",{style:{fontSize:9,color:"var(--text5)"}},c.daysLeft<=1?"Pay now":"outstanding")
               )
             );
@@ -32089,12 +32074,11 @@ function checkAndFireNotifications(state){
     const ns=new Date(bd);ns.setMonth(ns.getMonth()+1);
     const due=new Date(card.dueDay>card.billingDay?ns.getFullYear():(ns.getMonth()===11?ns.getFullYear()+1:ns.getFullYear()),
       card.dueDay>card.billingDay?ns.getMonth():((ns.getMonth()+1)%12),card.dueDay);
-    const _nsFmt=fmtD(ns);const _notifDue=Math.max(0,(card.transactions||[]).filter(t=>t.status==="Reconciled"&&t.date<_nsFmt).reduce((s,t)=>s+(t.type==="debit"?t.amount:-t.amount),0));
     const dl=Math.round((due-today)/86400000);
     if(dl>=0&&dl<=prefs.cardDays){
       const tag="card_"+card.id+"_"+fmtD(due);
       fire(tag,"Card Bill Due"+(dl===0?" Today":dl===1?" Tomorrow":" in "+dl+" days"),
-        card.name+" — Outstanding: "+INR(_notifDue));
+        card.name+" — Outstanding: "+INR(card.outstanding));
     }
   });
 
