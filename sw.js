@@ -9,7 +9,7 @@
 
    Push Notifications:
    • periodicSync (Chrome Android) → fires checkRemindersAndNotify() in background
-   • CHECK_REMINDERS_NOW message   → same check triggered by the app when open
+   • CHECK_REMINDERS_NOW message   → same check triggered by the app when opens
    • notificationclick             → handles Done / Skip / Open actions
    • Pending actions written to IDB so the app can reconcile on next open
    ══════════════════════════════════════════════════════════════════════════ */
