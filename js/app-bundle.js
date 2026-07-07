@@ -1,3 +1,4 @@
+const NIFTY50_HISTORY={"2017-01-31":8879.6,"2017-02-28":9173.75,"2017-03-31":9304.05,"2017-04-30":9621.25,"2017-05-31":9520.9,"2017-06-30":10077.1,"2017-07-31":9917.9,"2017-08-31":9788.6,"2017-09-30":10335.3,"2017-10-31":10226.55,"2017-11-30":10530.7,"2017-12-31":11027.7,"2018-01-31":10492.85,"2018-02-28":10113.7,"2018-03-31":10739.35,"2018-04-30":10736.15,"2018-05-31":10714.3,"2018-06-30":11356.5,"2018-07-31":11680.5,"2018-08-31":10930.45,"2018-09-30":10386.6,"2018-10-31":10876.75,"2018-11-30":10862.55,"2018-12-31":10830.95,"2019-01-31":10792.5,"2019-02-28":11623.9,"2019-03-31":11748.15,"2019-04-30":11922.8,"2019-05-31":11788.85,"2019-06-30":11118,"2019-07-31":11023.25,"2019-08-31":11474.45,"2019-09-30":11877.45,"2019-10-31":12056.05,"2019-11-30":12168.45,"2019-12-31":11962.1,"2020-01-31":11201.75,"2020-02-29":8597.75,"2020-03-31":9859.9,"2020-04-30":9580.3,"2020-05-31":10302.1,"2020-06-30":11073.45,"2020-07-31":11387.5,"2020-08-31":11247.55,"2020-09-30":11642.4,"2020-10-31":12968.95,"2020-11-30":13981.75,"2020-12-31":13634.6,"2021-01-31":14529.15,"2021-02-28":14690.7,"2021-03-31":14631.1,"2021-04-30":15582.8,"2021-05-31":15721.5,"2021-06-30":15763.05,"2021-07-31":17132.2,"2021-08-31":17618.15,"2021-09-30":17671.65,"2021-10-31":16983.2,"2021-11-30":17354.05,"2021-12-31":17339.85,"2022-01-31":16793.9,"2022-02-28":17464.75,"2022-03-31":17102.55,"2022-04-30":16584.55,"2022-05-31":15780.25,"2022-06-30":17158.25,"2022-07-31":17759.3,"2022-08-31":17094.35,"2022-09-30":18012.2,"2022-10-31":18758.35,"2022-11-30":18105.3,"2022-12-31":17662.15,"2023-01-31":17303.95,"2023-02-28":17359.75,"2023-03-31":18065,"2023-04-30":18534.4,"2023-05-31":19189.05,"2023-06-30":19753.8,"2023-07-31":19253.8,"2023-08-31":19638.3,"2023-09-30":19079.6,"2023-10-31":20133.15,"2023-11-30":21731.4,"2023-12-31":21725.7,"2024-01-31":21982.8,"2024-02-29":22326.9,"2024-03-31":22604.85,"2024-04-30":22530.7,"2024-05-31":24010.6,"2024-06-30":24951.15,"2024-07-31":25235.9,"2024-08-31":25810.85,"2024-09-30":24205.35,"2024-10-31":24131.1,"2024-11-30":23644.8,"2024-12-31":23508.4,"2025-01-31":22124.7,"2025-02-28":23519.35,"2025-03-31":24334.2,"2025-04-30":24750.7,"2025-05-31":25517.05,"2025-06-30":24768.35,"2025-07-31":24426.85,"2025-08-31":24611.1,"2025-09-30":25722.1,"2025-10-31":26202.95,"2025-11-30":26129.6,"2025-12-31":25320.65,"2026-01-31":25178.65,"2026-02-28":22331.4,"2026-03-31":23997.55,"2026-04-30":23547.75,"2026-05-31":23865.75,"2026-06-30":24270.85,"2026-07-07":24398.7};
 ﻿/* ── Utilities, hooks, formatting, price/NAV fetchers ── */
 const{useState,useReducer,useRef,useEffect,useCallback,useMemo,useDeferredValue}=React;
 /* ══════════════════════════════════════════════════════════════════════════
@@ -887,7 +888,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="5.8.0";
+const APP_VERSION="6.0.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -18726,9 +18727,63 @@ const FDTimeline=({fd})=>{
    • Solid green/red line + fill    → holding value (green = gain, red = loss)
    • Hover crosshair shows date, CoA, holding value and gain/loss %
    ══════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   fetchNiftyLive — fetch the latest Nifty 50 value from Yahoo Finance (^NSEI)
+   via the same CORS-proxy pattern used elsewhere. Falls back silently to null
+   so the embedded history is used unchanged when offline / blocked.
+   ══════════════════════════════════════════════════════════════════════════ */
+let _niftyLiveCache=null;   /* {value, date} */
+let _niftyLivePromise=null;
+const fetchNiftyLive=async()=>{
+  if(_niftyLiveCache)return _niftyLiveCache;
+  if(_niftyLivePromise)return _niftyLivePromise;
+  const run=async()=>{
+    const period2=Math.floor(Date.now()/1000);
+    const period1=period2-60*60*24*7; /* last 7 days is enough for the latest close */
+    const yUrl="https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?period1="+period1+"&period2="+period2+"&interval=1d";
+    const proxies=[
+      "https://api.cors.lol/?url="+encodeURIComponent(yUrl),
+      "https://corsproxy.io/?"+encodeURIComponent(yUrl),
+      "https://cors.eu.org/"+yUrl,
+      "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(yUrl),
+    ];
+    for(const p of proxies){
+      try{
+        const r=await _fetchX(p,{},10000);if(!r.ok)continue;
+        const txt=await _readBody(r,8000);
+        let json;try{json=JSON.parse(_unwrap(txt));}catch{continue;}
+        const res=json&&json.chart&&json.chart.result&&json.chart.result[0];
+        if(!res)continue;
+        const ts=res.timestamp, q=res.indicators&&res.indicators.quote&&res.indicators.quote[0];
+        if(!ts||!q||!q.close)continue;
+        let idx=ts.length-1;
+        while(idx>0&&(q.close[idx]==null))idx--;
+        const close=q.close[idx];
+        const t=ts[idx];
+        if(close==null)continue;
+        const dt=new Date(t*1000);
+        const iso=dt.toISOString().slice(0,10);
+        _niftyLiveCache={value:Math.round(close*100)/100,date:iso};
+        return _niftyLiveCache;
+      }catch(e){}
+    }
+    return null;
+  };
+  _niftyLivePromise=run().finally(()=>{_niftyLivePromise=null;});
+  return _niftyLivePromise;
+};
+
 const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const svgRef=React.useRef(null);
   const[hoverIdx,setHoverIdx]=React.useState(null);
+  const[niftyLive,setNiftyLive]=React.useState(_niftyLiveCache);
+
+  React.useEffect(()=>{
+    let alive=true;
+    fetchNiftyLive().then(v=>{if(alive&&v)setNiftyLive(v);}).catch(()=>{});
+    return()=>{alive=false;};
+  },[]);
 
   /* ── Build timeline data points ── */
   const dataPoints=React.useMemo(()=>{
@@ -18825,6 +18880,49 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const costAreaPath=costPath+` L${xFn(dataPoints.length-1)},${baseY} L${xFn(0)},${baseY} Z`;
   const valAreaPath=valPath+` L${xFn(dataPoints.length-1)},${baseY} L${xFn(0)},${baseY} Z`;
 
+  /* ── Nifty 50 overlay (secondary right axis, index points) ──
+     Build an independent time-series mapped onto the chart's full date domain
+     so the line always spans the entire portfolio period (Jan 2017 to now),
+     independent of how sparse/irregular the portfolio transaction dates are. ── */
+  const _toTime=iso=>{const p=iso.split("-");return Date.UTC(+p[0],+p[1]-1,+p[2]);};
+  /* Merge live Nifty value into the embedded history so the line extends to the
+     most recent close (fetched at runtime). Replaces any same-date entry. */
+  const niftyHist={...NIFTY50_HISTORY};
+  if(niftyLive&&niftyLive.value){
+    const ld=niftyLive.date;
+    let _replaced=false;
+    for(const k of Object.keys(niftyHist)){if(k===ld){niftyHist[k]=niftyLive.value;_replaced=true;break;}}
+    if(!_replaced)niftyHist[ld]=niftyLive.value;
+  }
+  const domStart=_toTime(dataPoints[0].rawDate);
+  const domEnd=_toTime(dataPoints[dataPoints.length-1].rawDate);
+  const domSpan=(domEnd-domStart)||1;
+  const _xTime=iso=>padL+(chartW*(_toTime(iso)-domStart)/domSpan);
+  const histEntries=Object.keys(niftyHist)
+    .filter(d=>_toTime(d)>=domStart&&_toTime(d)<=domEnd)
+    .sort()
+    .map(d=>[ _xTime(d), niftyHist[d] ]);
+  const niftyHasData=histEntries.length>=2;
+  const niftyRawMn=niftyHasData?Math.min(...histEntries.map(e=>e[1])):0;
+  const niftyRawMx=niftyHasData?Math.max(...histEntries.map(e=>e[1])):1;
+  const niftyPadV=(niftyRawMx-niftyRawMn)*0.10||1;
+  const niftyMn=Math.max(0,niftyRawMn-niftyPadV);
+  const niftyMx=niftyRawMx+niftyPadV;
+  const niftyRange=niftyMx-niftyMn||1;
+  const yFnN=v=>padT+chartH*(1-(v-niftyMn)/niftyRange);
+  const niftyXY=histEntries.map(([x,v])=>[x,yFnN(v)]);
+  const niftyPath=niftyXY.length>=2?smoothPath(niftyXY):"";
+  const niftyColor="#2563eb";
+  const niftyTicks=Array.from({length:nTicks},(_,i)=>niftyRawMn+(niftyRawMx-niftyRawMn)/(nTicks-1)*i);
+  if(niftyTicks.length)niftyTicks[nTicks-1]=niftyRawMx;
+  /* Per-portfolio-point Nifty value for hover tooltip (nearest history date <= point date) */
+  const _histSorted=Object.keys(niftyHist).sort();
+  const niftyValsAt=dataPoints.map(dp=>{
+    let best=null;
+    for(const hd of _histSorted){if(_toTime(hd)<=_toTime(dp.rawDate))best=niftyHist[hd];else break;}
+    return best;
+  });
+
   const last=dataPoints[dataPoints.length-1];
   const isGain=last.value>=last.cost;
   const totalGainPct=last.cost>0?((last.value-last.cost)/last.cost*100):0;
@@ -18876,7 +18974,9 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const hx=hoverIdx!==null?xFn(hoverIdx):null;
   const hyV=hoverIdx!==null?yFn(dataPoints[hoverIdx].value):null;
   const hyC=hoverIdx!==null?yFn(dataPoints[hoverIdx].cost):null;
-  const tipW=230,tipH=110;
+  const hN=hoverIdx!==null&&niftyValsAt[hoverIdx]!=null?niftyValsAt[hoverIdx]:null;
+  const hyN=hoverIdx!==null&&hN!=null?yFnN(hN):null;
+  const tipW=230,tipH=128;
   const tipX=hx!==null?(hx+tipW+padR+4>W?hx-tipW-14:hx+14):0;
   const tipY=hyV!==null?Math.max(padT,Math.min(padT+chartH-tipH,hyV-tipH/2)):0;
 
@@ -18939,6 +19039,16 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         ),
         React.createElement("span",null,"Holding Value ("+(isGain?"in profit":"in loss")+")")
       ),
+      niftyHasData&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7}},
+        React.createElement("svg",{width:28,height:12,style:{overflow:"visible"}},
+          React.createElement("line",{x1:0,y1:6,x2:28,y2:6,stroke:"#2563eb",strokeWidth:2,strokeDasharray:"5,3",strokeLinecap:"round"})
+        ),
+        React.createElement("span",null,"Nifty 50 (index points)"),
+        React.createElement("span",{style:{marginLeft:6,fontSize:8,fontWeight:700,padding:"1px 6px",borderRadius:5,
+          background:niftyLive?"rgba(37,99,235,.12)":"rgba(120,120,120,.12)",
+          color:niftyLive?"#2563eb":"var(--text6)",border:"1px solid "+(niftyLive?"rgba(37,99,235,.3)":"var(--border2)")}},
+          niftyLive?"LIVE":"cached")
+      ),
       React.createElement("div",{style:{marginLeft:"auto",fontSize:10,color:"var(--text6)",fontStyle:"italic"}},
         dataPoints.length+" data points · "+mfTxns.length+" transactions"
       )
@@ -18997,6 +19107,13 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
           fill:"var(--text5)",fontSize:9.5,fontWeight:600},INRshort(v))
       )),
 
+      /* Nifty 50 right-axis labels (index points) */
+      niftyHasData&&niftyTicks.map((v,i)=>React.createElement("g",{key:"pev_yn"+i},
+        React.createElement("text",{x:W-padR+6,y:yFnN(v)+3.5,textAnchor:"start",
+          fill:"#2563eb",fontSize:9.5,fontWeight:600,opacity:.85},
+          Math.round(v).toLocaleString("en-IN"))
+      )),
+
       /* Area fills (clipped) */
       React.createElement("g",{clipPath:"url(#pev_clip)"},
         React.createElement("path",{d:costAreaPath,fill:"url(#pev_cost_g)"}),
@@ -19012,6 +19129,11 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
       React.createElement("path",{d:valPath,fill:"none",stroke:valColor,strokeWidth:2.5,
         strokeLinejoin:"round",strokeLinecap:"round",
         style:{filter:`drop-shadow(0 0 4px ${valColor}80)`},
+        clipPath:"url(#pev_clip)"}),
+
+      /* Nifty 50 overlay line — blue dashed, secondary axis */
+      niftyHasData&&React.createElement("path",{d:niftyPath,fill:"none",stroke:niftyColor,strokeWidth:1.8,
+        strokeDasharray:"7,4",strokeLinejoin:"round",strokeLinecap:"round",opacity:.85,
         clipPath:"url(#pev_clip)"}),
 
       /* Milestone markers (peak / trough) */
@@ -19057,11 +19179,14 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         /* Rings behind dots */
         React.createElement("circle",{cx:hx,cy:hyC,r:9,fill:"#f59e0b",opacity:.12}),
         React.createElement("circle",{cx:hx,cy:hyV,r:9,fill:valColor,opacity:.15}),
+        hyN!==null&&React.createElement("circle",{cx:hx,cy:hyN,r:9,fill:niftyColor,opacity:.13}),
         /* Cost dot */
         React.createElement("circle",{cx:hx,cy:hyC,r:5,fill:"#f59e0b",stroke:"var(--modal-bg)",strokeWidth:2.5}),
         /* Value dot */
         React.createElement("circle",{cx:hx,cy:hyV,r:5.5,
           fill:valColor,stroke:"var(--modal-bg)",strokeWidth:2.5}),
+        hyN!==null&&React.createElement("circle",{cx:hx,cy:hyN,r:4.5,
+          fill:niftyColor,stroke:"var(--modal-bg)",strokeWidth:2.5}),
         /* Tooltip */
         React.createElement("g",null,
           /* Drop shadow */
@@ -19096,6 +19221,14 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
           React.createElement("text",{x:tipX+14,y:tipY+81,fill:"var(--text5)",fontSize:9.5,fontWeight:600,letterSpacing:.3},"COST OF ACQUISITION"),
           React.createElement("text",{x:tipX+14,y:tipY+97,fill:"#d97706",fontSize:13,fontWeight:700},
             INRfmt(Math.round(hp.cost))),
+          /* Nifty row */
+          hN!==null&&React.createElement(React.Fragment,null,
+            React.createElement("line",{x1:tipX+10,y1:tipY+105,x2:tipX+tipW-10,y2:tipY+105,
+              stroke:"var(--border2)",strokeWidth:.8,opacity:.6}),
+            React.createElement("text",{x:tipX+14,y:tipY+119,fill:"#2563eb",fontSize:9.5,fontWeight:600,letterSpacing:.3},"NIFTY 50"),
+            React.createElement("text",{x:tipX+14,y:tipY+124,fill:"#2563eb",fontSize:13,fontWeight:700},
+              Math.round(hN).toLocaleString("en-IN"))
+          ),
           /* Net */
           (()=>{
             const nd=hp.value-hp.cost;
