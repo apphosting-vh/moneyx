@@ -888,7 +888,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="6.0.0";
+const APP_VERSION="6.1.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -25028,22 +25028,33 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
     tab==="mf"&&(()=>{
       const _normIdx=normalizeEodNavKeys(eodIndices||{});
       const _idxDates=Object.keys(_normIdx).sort();
-      const _idxLatest=_idxDates.slice(-1)[0];
-      const _idxSnap=_idxLatest?(_normIdx[_idxLatest]||{}):{};
       const _normTbl=normalizeEodNavKeys(eodNavs||{});
       const _tblDates=Object.keys(_normTbl).sort();
       const _navD1=_tblDates.slice(-1)[0];
       const _navD2=_tblDates.slice(-2,-1)[0];
       const _fundCount=mf.filter(m=>m.units>0).length;
-      /* Track whether we have enough data for fund rows vs just benchmarks */
-      const _hasIndexData=_idxLatest&&Object.keys(_idxSnap).some(k=>!k.endsWith("_pc"));
       const _hasNavPair=_navD1&&_navD2&&!!_fundCount;
       const _idxKeys=["NIFTY 50","NIFTY 100","NIFTY MIDCAP 50","NIFTY MIDCAP 100","NIFTY MIDCAP 150","NIFTY SMLCAP 100","NIFTY BANK","NIFTY AUTO","NIFTY IT","NIFTY PHARMA"];
       const _idxLabels=["Nifty 50","Nifty 100","Midcap 50","Midcap 100","Midcap 150","Smallcap 100","Bank","Auto","IT","Pharma"];
+      /* Index value as of the market close on/before a given date — indices are
+         published at close, just like NAVs, so we anchor to the latest index
+         snapshot on or before each NAV date. This guarantees the Nifty column
+         reflects the SAME past market close as the fund's NAV (never today's
+         live value), so NAV % and Nifty % are always comparable for one day. */
+      const _idxValOnOrBefore=(iso,k)=>{
+        if(!iso)return null;
+        let best=null;
+        for(const d of _idxDates){if(d<=iso){const v=(_normIdx[d]||{})[k];if(v&&v>0)best=v;}else break;}
+        return best;
+      };
       const _idxChgs=_idxKeys.map((k,i)=>{
-        const close=_idxSnap[k];
-        const prev=_idxSnap[k+"_pc"];
-        return{label:_idxLabels[i],chgPct:close&&prev&&prev>0?((close-prev)/prev*100):null};
+        let chgPct=null;
+        if(_navD1&&_navD2){
+          const c1=_idxValOnOrBefore(_navD1,k);
+          const c2=_idxValOnOrBefore(_navD2,k);
+          if(c1&&c2&&c2>0)chgPct=((c1-c2)/c2*100);
+        }
+        return{label:_idxLabels[i],chgPct:chgPct!==null?Math.round(chgPct*100)/100:null};
       });
       /* Build fund rows only when we have 2+ NAV dates */
       const _fundChgs=_hasNavPair?(function(){
@@ -25060,10 +25071,13 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
       const _pct=(v)=>v!==null&&v!==undefined?(v>=0?"▲ +":"▼ ")+Math.abs(v).toFixed(2)+"%":"—";
       const _sn=(n)=>{const r=n.replace(/\s*-\s*(direct|regular)\s*(growth|idcw|dividend).*/i,"").replace(/\s*fund$/i,"").trim();return r.length>25?r.slice(0,23)+"…":r;};
       const _showNavDate=_navD1||"--";
-      const _showIdxDate=_idxLatest||"--";
+      /* Both NAV and Nifty are anchored to the same NAV date pair (past close),
+         so the subtitle shows that single shared period. */
+      const _idxHasData=_idxChgs.some(c=>c.chgPct!==null);
       /* ── Determine subtitle ── */
-      let _subtitle="NAV: "+_fmtD(_showNavDate)+" · Nifty: "+_fmtD(_showIdxDate);
-      if(!_hasIndexData&&!_hasNavPair)_subtitle="Refresh NAV to see comparison";
+      let _subtitle="NAV & Nifty: "+(_navD2?(_fmtD(_navD2)+" → "):"")+_fmtD(_navD1);
+      if(!_idxHasData&&!_hasNavPair)_subtitle="Refresh NAV to see comparison";
+      else if(_hasNavPair&&!_idxHasData)_subtitle=_subtitle+" · Nifty history not yet captured for these dates";
       else if(!_hasNavPair&&_fundCount>0)_subtitle=_subtitle+" · Fund rows appear after 2nd NAV refresh";
       return React.createElement(Card,{sx:{marginBottom:14,overflow:"hidden"}},
         React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7,padding:"14px 16px 8px",borderBottom:"1px solid var(--border2)"}},
