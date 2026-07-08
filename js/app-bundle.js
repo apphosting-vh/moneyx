@@ -24809,37 +24809,130 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
               )
             )
           ),
-          /* ── NAV Progress: Avg Buy NAV → Current NAV per fund ── */
-          mf.filter(m=>m.units>0).some(m=>m.avgNav>0&&m.nav>0)&&React.createElement(Card,{sx:{marginBottom:4}},
-            React.createElement("div",{style:{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:"var(--text5)",marginBottom:12,paddingBottom:6,borderBottom:"1px solid var(--border2)"}},"NAV Progress — Avg Buy NAV vs Current NAV"),
-            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:10}},
-              mf.filter(m=>m.units>0&&m.avgNav>0&&m.nav>0).map(m=>{
-                const pct=(m.nav-m.avgNav)/m.avgNav*100;
-                const barW=Math.min(100,Math.abs(pct));
-                const col=pct>=0?"#16a34a":"#ef4444";
-                const bgCol=pct>=0?"rgba(22,163,74,.07)":"rgba(239,68,68,.07)";
-                const borderCol=pct>=0?"rgba(22,163,74,.18)":"rgba(239,68,68,.18)";
-                const raw=m.name.replace(/\s*-\s*(direct|regular)\s*(growth|idcw|dividend).*/i,"").replace(/\s*fund$/i,"").trim();
-                const dn=raw.length>22?raw.slice(0,20)+"…":raw;
-                return React.createElement("div",{key:m.id,style:{padding:"10px 12px",background:bgCol,borderRadius:9,border:"1px solid "+borderCol}},
-                  React.createElement("div",{style:{fontSize:11,fontWeight:600,color:"var(--text3)",marginBottom:6,lineHeight:1.3}},dn),
-                  React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,marginBottom:5}},
-                    React.createElement("span",{style:{color:"var(--text5)"}},"Avg ₹"+Number(m.avgNav).toFixed(2)),
-                    React.createElement("span",{style:{color:"#0e7490",fontWeight:600}},"Now ₹"+Number(m.nav).toFixed(2))
-                  ),
-                  React.createElement("div",{style:{height:5,background:"var(--bg4)",borderRadius:3,overflow:"hidden",marginBottom:5}},
-                    React.createElement("div",{style:{height:"100%",width:barW+"%",background:col,borderRadius:3,minWidth:pct!==0?3:0}})
-                  ),
-                  React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
-                    React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},(m.units||0).toFixed(3)+" units"),
-                    React.createElement("span",{style:{fontSize:12,fontWeight:700,color:col}},(pct>=0?"+":"")+pct.toFixed(2)+"%")
-                  )
-                );
-              })
-            )
-          )
         );
       })(),
+          tab==="mf"&&(()=>{
+            const _normIdx=normalizeEodNavKeys(eodIndices||{});
+            const _idxDates=Object.keys(_normIdx).sort();
+            const _normTbl=normalizeEodNavKeys(eodNavs||{});
+            const _tblDates=Object.keys(_normTbl).sort();
+            const _navD1=_tblDates.slice(-1)[0];
+            const _navD2=_tblDates.slice(-2,-1)[0];
+            const _fundCount=mf.filter(m=>m.units>0).length;
+            const _hasNavPair=_navD1&&_navD2&&!!_fundCount;
+            const _idxKeys=["NIFTY 50","NIFTY 100","NIFTY MIDCAP 50","NIFTY MIDCAP 100","NIFTY MIDCAP 150","NIFTY SMLCAP 100","NIFTY BANK","NIFTY AUTO","NIFTY IT","NIFTY PHARMA"];
+            const _idxLabels=["Nifty 50","Nifty 100","Midcap 50","Midcap 100","Midcap 150","Smallcap 100","Bank","Auto","IT","Pharma"];
+            /* Index value as of the market close on/before a given date — indices are
+               published at close, just like NAVs, so we anchor to the latest index
+               snapshot on or before each NAV date. This guarantees the Nifty column
+               reflects the SAME past market close as the fund's NAV (never today's
+               live value), so NAV % and Nifty % are always comparable for one day. */
+            const _idxValOnOrBefore=(iso,k)=>{
+              if(!iso)return null;
+              let best=null;
+              for(const d of _idxDates){if(d<=iso){const v=(_normIdx[d]||{})[k];if(v&&v>0)best=v;}else break;}
+              return best;
+            };
+            const _idxChgs=_idxKeys.map((k,i)=>{
+              let chgPct=null;
+              if(_navD1&&_navD2){
+                const c1=_idxValOnOrBefore(_navD1,k);
+                const c2=_idxValOnOrBefore(_navD2,k);
+                if(c1&&c2&&c2>0)chgPct=((c1-c2)/c2*100);
+              }
+              return{label:_idxLabels[i],chgPct:chgPct!==null?Math.round(chgPct*100)/100:null};
+            });
+            /* Build fund rows only when we have 2+ NAV dates */
+            const _fundChgs=_hasNavPair?(function(){
+              const _ah=mf.filter(m=>m.units>0);
+              return _ah.map(m=>{
+                const l=(_normTbl[_navD1]||{})[m.schemeCode];
+                const p=(_normTbl[_navD2]||{})[m.schemeCode];
+                if(!l||!p||p<=0)return null;
+                return{name:m.name,chgPct:((l-p)/p*100)};
+              }).filter(Boolean).sort((a,b)=>b.chgPct-a.chgPct);
+            })():[];
+            /* Net portfolio value change over the SAME navD2 → navD1 period.
+               Sum units × NAV for every active fund at each date. */
+            const _netPort=()=>{
+              const _ah=mf.filter(m=>m.units>0);
+              let v1=0,v2=0;
+              _ah.forEach(m=>{
+                const l=(_normTbl[_navD1]||{})[m.schemeCode];
+                const p=(_normTbl[_navD2]||{})[m.schemeCode];
+                if(l&&l>0)v1+=m.units*l;
+                if(p&&p>0)v2+=m.units*p;
+              });
+              return{v1,v2};
+            };
+            const _net=_hasNavPair?_netPort():{v1:0,v2:0};
+            const _netChgAbs=_net.v1-_net.v2;
+            const _netChgPct=_net.v2>0?(_netChgAbs/_net.v2*100):null;
+            const _fmtD=(iso)=>{if(!iso)return"--";const p=iso.split("-");const M=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return p.length===3?p[2]+" "+M[parseInt(p[1],10)-1]+" "+p[0]:iso;};
+            const _col=(v)=>v!==null&&v!==undefined?(v>=0?"#16a34a":"#ef4444"):"var(--text5)";
+            const _pct=(v)=>v!==null&&v!==undefined?(v>=0?"▲ +":"▼ ")+Math.abs(v).toFixed(2)+"%":"—";
+            const _sn=(n)=>{const r=n.replace(/\s*-\s*(direct|regular)\s*(growth|idcw|dividend).*/i,"").replace(/\s*fund$/i,"").trim();return r.length>25?r.slice(0,23)+"…":r;};
+            const _showNavDate=_navD1||"--";
+            /* Both NAV and Nifty are anchored to the same NAV date pair (past close),
+               so the subtitle shows that single shared period. */
+            const _idxHasData=_idxChgs.some(c=>c.chgPct!==null);
+            /* ── Determine subtitle ── */
+            let _subtitle="NAV & Nifty: "+(_navD2?(_fmtD(_navD2)+" → "):"")+_fmtD(_navD1);
+            if(!_idxHasData&&!_hasNavPair)_subtitle="Refresh NAV to see comparison";
+            else if(_hasNavPair&&!_idxHasData)_subtitle=_subtitle+" · Nifty history not yet captured for these dates";
+            else if(!_hasNavPair&&_fundCount>0)_subtitle=_subtitle+" · Fund rows appear after 2nd NAV refresh";
+            return React.createElement(Card,{sx:{marginBottom:14,overflow:"hidden"}},
+              React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7,padding:"14px 16px 8px",borderBottom:"1px solid var(--border2)"}},
+                React.createElement("div",{style:{width:3,height:14,borderRadius:2,background:"#6d28d9",flexShrink:0}}),
+                React.createElement("span",{style:{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:"var(--text5)"}},"NAV Change vs Nifty Benchmarks"),
+                React.createElement("span",{style:{fontSize:9,color:"var(--text6)",fontWeight:400,marginLeft:"auto",whiteSpace:"nowrap"}},_subtitle)
+              ),
+              React.createElement("div",{style:{overflowX:"auto",WebkitOverflowScrolling:"touch"}},
+                React.createElement("div",{style:{minWidth:850}},
+                  React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,background:"var(--bg5)",borderBottom:"2px solid var(--border)",fontSize:9,fontWeight:700,color:"var(--accent)",textTransform:"uppercase",letterSpacing:.5}},
+                    React.createElement("div",{style:{padding:"7px 10px"}},"Fund"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"NAV"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"N50"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"N100"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"MC50"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"MC100"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"MC150"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"SC100"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"BANK"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"AUTO"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"IT"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"PHAR")
+                  ),
+                  React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,background:"rgba(109,40,217,.04)",borderBottom:"1px solid var(--border2)",fontSize:10,fontWeight:600}},
+                    React.createElement("div",{style:{padding:"7px 10px",color:"var(--text5)",fontStyle:"italic"}},"Benchmark"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:"var(--text6)"}},"—"),
+                    _idxChgs.map(idx=>React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct),fontWeight:700}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
+                  ),
+                  _fundChgs.length>0?_fundChgs.map(f=>React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,borderBottom:"1px solid var(--border2)",fontSize:10,":last-child":{borderBottom:"none"}}},
+                    React.createElement("div",{style:{padding:"7px 10px",color:"var(--text2)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},_sn(f.name)),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(f.chgPct),fontWeight:600}},(f.chgPct>=0?"▲ +":"▼ ")+Math.abs(f.chgPct).toFixed(2)+"%"),
+                    _idxChgs.map(idx=>React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
+                  )):_hasNavPair||!_fundCount?null:React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr",gap:0,padding:"16px 10px",fontSize:10,color:"var(--text6)",textAlign:"center",fontStyle:"italic"}},
+                    "Refresh NAV again tomorrow to see per-fund day-over-day changes.")
+                  ),
+                  /* ── Summary: Net Portfolio Change (value % + rupees) ── */
+                  _hasNavPair&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,borderTop:"2px solid var(--border)",background:"rgba(109,40,217,.07)",fontSize:10,fontWeight:700}},
+                    React.createElement("div",{style:{padding:"8px 10px",color:"#6d28d9"}},"Net Portfolio"),
+                    React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:_col(_netChgPct),display:"flex",flexDirection:"column",alignItems:"flex-end",lineHeight:1.25}},
+                      React.createElement("span",null,_netChgPct!==null?_pct(_netChgPct):"—"),
+                      React.createElement("span",{style:{fontSize:9,fontWeight:600,opacity:.85}},_netChgAbs!==0?INR(_netChgAbs):"")
+                    ),
+                    _idxChgs.map(()=>React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:"var(--text6)"}},"—"))
+                  ),
+                  /* ── Summary: Net Indices Change (same period) ── */
+                  React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,background:"rgba(37,99,235,.06)",borderBottom:"1px solid var(--border2)",fontSize:10,fontWeight:700}},
+                    React.createElement("div",{style:{padding:"8px 10px",color:"#2563eb"}},"Net Indices"),
+                    React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:"var(--text6)"}},"—"),
+                    _idxChgs.map(idx=>React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
+                  )
+              )
+            );
+          })(),
       /* ── Portfolio Evolution Chart — always visible when txns are imported ── */
       (mfTxns||[]).length>=2&&React.createElement(Card,{sx:{marginBottom:14}},
         React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:8}},
@@ -24853,6 +24946,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         ),
         React.createElement(MFPortfolioEvolutionChart,{mfTxns:mfTxns,mf:mf.filter(m=>m.units>0)})
       ),
+
       /* Filter out zero-unit (fully sold) holdings */
       (()=>{
         const activeMf=mf.filter(m=>m.units>0);
@@ -25025,128 +25119,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
            • No data yet   → prompt to refresh NAV
            • 1 NAV snap    → shows benchmarks + "second snapshot needed" prompt
            • 2+ NAV snaps  → full table with fund rows                          */
-    tab==="mf"&&(()=>{
-      const _normIdx=normalizeEodNavKeys(eodIndices||{});
-      const _idxDates=Object.keys(_normIdx).sort();
-      const _normTbl=normalizeEodNavKeys(eodNavs||{});
-      const _tblDates=Object.keys(_normTbl).sort();
-      const _navD1=_tblDates.slice(-1)[0];
-      const _navD2=_tblDates.slice(-2,-1)[0];
-      const _fundCount=mf.filter(m=>m.units>0).length;
-      const _hasNavPair=_navD1&&_navD2&&!!_fundCount;
-      const _idxKeys=["NIFTY 50","NIFTY 100","NIFTY MIDCAP 50","NIFTY MIDCAP 100","NIFTY MIDCAP 150","NIFTY SMLCAP 100","NIFTY BANK","NIFTY AUTO","NIFTY IT","NIFTY PHARMA"];
-      const _idxLabels=["Nifty 50","Nifty 100","Midcap 50","Midcap 100","Midcap 150","Smallcap 100","Bank","Auto","IT","Pharma"];
-      /* Index value as of the market close on/before a given date — indices are
-         published at close, just like NAVs, so we anchor to the latest index
-         snapshot on or before each NAV date. This guarantees the Nifty column
-         reflects the SAME past market close as the fund's NAV (never today's
-         live value), so NAV % and Nifty % are always comparable for one day. */
-      const _idxValOnOrBefore=(iso,k)=>{
-        if(!iso)return null;
-        let best=null;
-        for(const d of _idxDates){if(d<=iso){const v=(_normIdx[d]||{})[k];if(v&&v>0)best=v;}else break;}
-        return best;
-      };
-      const _idxChgs=_idxKeys.map((k,i)=>{
-        let chgPct=null;
-        if(_navD1&&_navD2){
-          const c1=_idxValOnOrBefore(_navD1,k);
-          const c2=_idxValOnOrBefore(_navD2,k);
-          if(c1&&c2&&c2>0)chgPct=((c1-c2)/c2*100);
-        }
-        return{label:_idxLabels[i],chgPct:chgPct!==null?Math.round(chgPct*100)/100:null};
-      });
-      /* Build fund rows only when we have 2+ NAV dates */
-      const _fundChgs=_hasNavPair?(function(){
-        const _ah=mf.filter(m=>m.units>0);
-        return _ah.map(m=>{
-          const l=(_normTbl[_navD1]||{})[m.schemeCode];
-          const p=(_normTbl[_navD2]||{})[m.schemeCode];
-          if(!l||!p||p<=0)return null;
-          return{name:m.name,chgPct:((l-p)/p*100)};
-        }).filter(Boolean).sort((a,b)=>b.chgPct-a.chgPct);
-      })():[];
-      /* Net portfolio value change over the SAME navD2 → navD1 period.
-         Sum units × NAV for every active fund at each date. */
-      const _netPort=()=>{
-        const _ah=mf.filter(m=>m.units>0);
-        let v1=0,v2=0;
-        _ah.forEach(m=>{
-          const l=(_normTbl[_navD1]||{})[m.schemeCode];
-          const p=(_normTbl[_navD2]||{})[m.schemeCode];
-          if(l&&l>0)v1+=m.units*l;
-          if(p&&p>0)v2+=m.units*p;
-        });
-        return{v1,v2};
-      };
-      const _net=_hasNavPair?_netPort():{v1:0,v2:0};
-      const _netChgAbs=_net.v1-_net.v2;
-      const _netChgPct=_net.v2>0?(_netChgAbs/_net.v2*100):null;
-      const _fmtD=(iso)=>{if(!iso)return"--";const p=iso.split("-");const M=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return p.length===3?p[2]+" "+M[parseInt(p[1],10)-1]+" "+p[0]:iso;};
-      const _col=(v)=>v!==null&&v!==undefined?(v>=0?"#16a34a":"#ef4444"):"var(--text5)";
-      const _pct=(v)=>v!==null&&v!==undefined?(v>=0?"▲ +":"▼ ")+Math.abs(v).toFixed(2)+"%":"—";
-      const _sn=(n)=>{const r=n.replace(/\s*-\s*(direct|regular)\s*(growth|idcw|dividend).*/i,"").replace(/\s*fund$/i,"").trim();return r.length>25?r.slice(0,23)+"…":r;};
-      const _showNavDate=_navD1||"--";
-      /* Both NAV and Nifty are anchored to the same NAV date pair (past close),
-         so the subtitle shows that single shared period. */
-      const _idxHasData=_idxChgs.some(c=>c.chgPct!==null);
-      /* ── Determine subtitle ── */
-      let _subtitle="NAV & Nifty: "+(_navD2?(_fmtD(_navD2)+" → "):"")+_fmtD(_navD1);
-      if(!_idxHasData&&!_hasNavPair)_subtitle="Refresh NAV to see comparison";
-      else if(_hasNavPair&&!_idxHasData)_subtitle=_subtitle+" · Nifty history not yet captured for these dates";
-      else if(!_hasNavPair&&_fundCount>0)_subtitle=_subtitle+" · Fund rows appear after 2nd NAV refresh";
-      return React.createElement(Card,{sx:{marginBottom:14,overflow:"hidden"}},
-        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7,padding:"14px 16px 8px",borderBottom:"1px solid var(--border2)"}},
-          React.createElement("div",{style:{width:3,height:14,borderRadius:2,background:"#6d28d9",flexShrink:0}}),
-          React.createElement("span",{style:{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:"var(--text5)"}},"NAV Change vs Nifty Benchmarks"),
-          React.createElement("span",{style:{fontSize:9,color:"var(--text6)",fontWeight:400,marginLeft:"auto",whiteSpace:"nowrap"}},_subtitle)
-        ),
-        React.createElement("div",{style:{overflowX:"auto",WebkitOverflowScrolling:"touch"}},
-          React.createElement("div",{style:{minWidth:850}},
-            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,background:"var(--bg5)",borderBottom:"2px solid var(--border)",fontSize:9,fontWeight:700,color:"var(--accent)",textTransform:"uppercase",letterSpacing:.5}},
-              React.createElement("div",{style:{padding:"7px 10px"}},"Fund"),
-              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"NAV"),
-              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"N50"),
-              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"N100"),
-              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"MC50"),
-              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"MC100"),
-              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"MC150"),
-              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"SC100"),
-              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"BANK"),
-              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"AUTO"),
-              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"IT"),
-              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"PHAR")
-            ),
-            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,background:"rgba(109,40,217,.04)",borderBottom:"1px solid var(--border2)",fontSize:10,fontWeight:600}},
-              React.createElement("div",{style:{padding:"7px 10px",color:"var(--text5)",fontStyle:"italic"}},"Benchmark"),
-              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:"var(--text6)"}},"—"),
-              _idxChgs.map(idx=>React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct),fontWeight:700}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
-            ),
-            _fundChgs.length>0?_fundChgs.map(f=>React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,borderBottom:"1px solid var(--border2)",fontSize:10,":last-child":{borderBottom:"none"}}},
-              React.createElement("div",{style:{padding:"7px 10px",color:"var(--text2)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},_sn(f.name)),
-              React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(f.chgPct),fontWeight:600}},(f.chgPct>=0?"▲ +":"▼ ")+Math.abs(f.chgPct).toFixed(2)+"%"),
-              _idxChgs.map(idx=>React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
-            )):_hasNavPair||!_fundCount?null:React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr",gap:0,padding:"16px 10px",fontSize:10,color:"var(--text6)",textAlign:"center",fontStyle:"italic"}},
-              "Refresh NAV again tomorrow to see per-fund day-over-day changes.")
-            ),
-            /* ── Summary: Net Portfolio Change (value % + rupees) ── */
-            _hasNavPair&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,borderTop:"2px solid var(--border)",background:"rgba(109,40,217,.07)",fontSize:10,fontWeight:700}},
-              React.createElement("div",{style:{padding:"8px 10px",color:"#6d28d9"}},"Net Portfolio"),
-              React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:_col(_netChgPct),display:"flex",flexDirection:"column",alignItems:"flex-end",lineHeight:1.25}},
-                React.createElement("span",null,_netChgPct!==null?_pct(_netChgPct):"—"),
-                React.createElement("span",{style:{fontSize:9,fontWeight:600,opacity:.85}},_netChgAbs!==0?INR(_netChgAbs):"")
-              ),
-              _idxChgs.map(()=>React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:"var(--text6)"}},"—"))
-            ),
-            /* ── Summary: Net Indices Change (same period) ── */
-            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,background:"rgba(37,99,235,.06)",borderBottom:"1px solid var(--border2)",fontSize:10,fontWeight:700}},
-              React.createElement("div",{style:{padding:"8px 10px",color:"#2563eb"}},"Net Indices"),
-              React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:"var(--text6)"}},"—"),
-              _idxChgs.map(idx=>React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
-            )
-        )
-      );
-    })(),
+
     /* ── Market Indices Ticker ── */
     tab==="shares"&&React.createElement(MarketTicker),
     /* ── Shares sub-tab bar ── */
