@@ -25066,6 +25066,22 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
           return{name:m.name,chgPct:((l-p)/p*100)};
         }).filter(Boolean).sort((a,b)=>b.chgPct-a.chgPct);
       })():[];
+      /* Net portfolio value change over the SAME navD2 → navD1 period.
+         Sum units × NAV for every active fund at each date. */
+      const _netPort=()=>{
+        const _ah=mf.filter(m=>m.units>0);
+        let v1=0,v2=0;
+        _ah.forEach(m=>{
+          const l=(_normTbl[_navD1]||{})[m.schemeCode];
+          const p=(_normTbl[_navD2]||{})[m.schemeCode];
+          if(l&&l>0)v1+=m.units*l;
+          if(p&&p>0)v2+=m.units*p;
+        });
+        return{v1,v2};
+      };
+      const _net=_hasNavPair?_netPort():{v1:0,v2:0};
+      const _netChgAbs=_net.v1-_net.v2;
+      const _netChgPct=_net.v2>0?(_netChgAbs/_net.v2*100):null;
       const _fmtD=(iso)=>{if(!iso)return"--";const p=iso.split("-");const M=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return p.length===3?p[2]+" "+M[parseInt(p[1],10)-1]+" "+p[0]:iso;};
       const _col=(v)=>v!==null&&v!==undefined?(v>=0?"#16a34a":"#ef4444"):"var(--text5)";
       const _pct=(v)=>v!==null&&v!==undefined?(v>=0?"▲ +":"▼ ")+Math.abs(v).toFixed(2)+"%":"—";
@@ -25112,7 +25128,22 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
               _idxChgs.map(idx=>React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
             )):_hasNavPair||!_fundCount?null:React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr",gap:0,padding:"16px 10px",fontSize:10,color:"var(--text6)",textAlign:"center",fontStyle:"italic"}},
               "Refresh NAV again tomorrow to see per-fund day-over-day changes.")
-          )
+            ),
+            /* ── Summary: Net Portfolio Change (value % + rupees) ── */
+            _hasNavPair&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,borderTop:"2px solid var(--border)",background:"rgba(109,40,217,.07)",fontSize:10,fontWeight:700}},
+              React.createElement("div",{style:{padding:"8px 10px",color:"#6d28d9"}},"Net Portfolio"),
+              React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:_col(_netChgPct),display:"flex",flexDirection:"column",alignItems:"flex-end",lineHeight:1.25}},
+                React.createElement("span",null,_netChgPct!==null?_pct(_netChgPct):"—"),
+                React.createElement("span",{style:{fontSize:9,fontWeight:600,opacity:.85}},_netChgAbs!==0?INR(_netChgAbs):"")
+              ),
+              _idxChgs.map(()=>React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:"var(--text6)"}},"—"))
+            ),
+            /* ── Summary: Net Indices Change (same period) ── */
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,background:"rgba(37,99,235,.06)",borderBottom:"1px solid var(--border2)",fontSize:10,fontWeight:700}},
+              React.createElement("div",{style:{padding:"8px 10px",color:"#2563eb"}},"Net Indices"),
+              React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:"var(--text6)"}},"—"),
+              _idxChgs.map(idx=>React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
+            )
         )
       );
     })(),
