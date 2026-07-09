@@ -888,7 +888,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="6.1.0";
+const APP_VERSION="6.2.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -5849,7 +5849,25 @@ var gdriveRequestTokenWithRefresh = () => new Promise((resolve) => {
  * silent = true  → background / auto-sync: only cached token, refresh token exchange, or
  *                  GIS browser-session silent refresh.  NEVER shows a popup.
  * silent = false → user-initiated (Push, Pull, Sync Now): full chain including popup. */
+var _gdriveAuthInProgress = false;
 var _gdriveEnsureTokenV2 = async (silent = false) => {
+  /* ── Concurrency guard: prevent multiple simultaneous callers from each
+         opening their own popup (the root cause of the Android popup loop). ── */
+  if (_gdriveAuthInProgress) {
+    console.log("[GDrive] Auth already in progress — waiting for existing request.");
+    /* Poll every 200 ms until the in-flight request finishes (max 10 s) */
+    for (let i = 0; i < 50; i++) {
+      await new Promise(r => setTimeout(r, 200));
+      if (!_gdriveAuthInProgress) break;
+    }
+    /* After waiting, return whatever token is now cached (if any) */
+    const tok = _gdriveGetToken();
+    if (tok && !_gdriveTokenExpired()) return tok;
+    return "";
+  }
+  _gdriveAuthInProgress = true;
+
+  try {
   /* ── Step 1: cached access token still valid ── */
   let tok = _gdriveGetToken();
   if (tok && !_gdriveTokenExpired()) return tok;
@@ -5871,14 +5889,20 @@ var _gdriveEnsureTokenV2 = async (silent = false) => {
   }
 
   /* ── Step 4: interactive popup — Code flow (gives back a refresh token) ── */
+  _gdriveLastPopupTime = Date.now();
   if (_gdriveGetClientSecret()) {
     tok = await gdriveRequestTokenWithRefresh();
     if (tok) return tok;
   }
 
   /* ── Step 5: fallback — Token flow (no refresh token; same as pre-v3) ── */
+  _gdriveLastPopupTime = Date.now();
   tok = await gdriveRequestToken();
   return tok;
+
+  } finally {
+    _gdriveAuthInProgress = false;
+  }
 };
 
 
@@ -10472,6 +10496,21 @@ var _isAndroidDevice = () => {
   return /Android/i.test(navigator.userAgent);
 };
 
+/* Is the app running as an installed PWA / TWA (standalone display mode)? */
+var _isStandalonePWA = () => {
+  try { return window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; }
+  catch { return false; }
+};
+
+/* ── Popup cooldown: prevents the GIS silent-auth popup from re-appearing
+   in rapid succession on Android where prompt:"none" still opens a popup
+   when third-party cookies are blocked in standalone PWA / TWA mode.
+   The cooldown is 10 seconds — long enough to break the visibility-change
+   re-trigger loop but short enough that a genuine user-initiated auth
+   request is not delayed noticeably. ── */
+var _gdriveLastPopupTime = 0;
+var GDRIVE_POPUP_COOLDOWN_MS = 10000;
+
 /* ── Token helpers ── */
 var _gdriveGetToken = () => {
   try { return localStorage.getItem(GDRIVE_LS_TOKEN) || ""; } catch { return ""; }
@@ -10524,11 +10563,37 @@ var _gdriveTokenExpired = () => {
 /* Silent token refresh — uses the browser's existing Google session cookie.
    Resolves with a token string on success, or "" if the Google session itself
    has expired (in which case the interactive popup fallback will be used).
-   No UI is shown at any point. */
+   No UI is shown at any point.
+
+   *** ANDROID PWA FIX ***
+   On Android in standalone / TWA mode, third-party cookies are blocked by
+   default.  The GIS library cannot verify the Google session without them,
+   so even with prompt:"none" it opens a popup — defeating the "silent"
+   purpose and causing an infinite popup loop (visibility-change re-triggers
+   the same silent call).  We detect this case and bail out immediately so
+   the caller can fall through to the interactive popup path instead.        */
 var gdriveRequestTokenSilent = () => new Promise((resolve) => {
   try {
     const cid = (function(){try{return localStorage.getItem("mm_gdrive_cid")||"";}catch{return "";}})();
     if (!cid || typeof google === "undefined" || !google.accounts?.oauth2) { resolve(""); return; }
+
+    /* On Android standalone PWA / TWA, prompt:"none" still opens a popup
+       because third-party cookies are blocked.  Skip silently so the caller
+       falls through to the interactive path (one popup, not an infinite loop). */
+    if (_isAndroidDevice() && _isStandalonePWA()) {
+      console.log("[GDrive] Skipping GIS silent auth on Android standalone — cookies blocked, prompt:none opens a popup.");
+      resolve("");
+      return;
+    }
+
+    /* Popup cooldown: if a popup was shown very recently, skip to avoid
+       the rapid-popup cascade (e.g. visibility-change re-trigger).       */
+    if (Date.now() - _gdriveLastPopupTime < GDRIVE_POPUP_COOLDOWN_MS) {
+      console.log("[GDrive] Skipping GIS silent auth — popup cooldown active.");
+      resolve("");
+      return;
+    }
+
     const client = google.accounts.oauth2.initTokenClient({
       client_id: cid,
       scope: "https://www.googleapis.com/auth/drive.file",
