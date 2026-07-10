@@ -888,7 +888,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="6.4.0";
+const APP_VERSION="6.5.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1013,6 +1013,7 @@ const Icon=({n,size=16,col,style={}})=>{
     case"layers":return svg(p("M12 2 2 7l10 5 10-5-10-5z"),pl("2 17 12 22 22 17"),pl("2 12 12 17 22 12"));
     case"party":return svg(p("M5.8 11.3L2 22l10.7-3.79"),p("M4 3h.01M22 8h.01M15 2h.01M22 20h.01M22 2l-2.24.75a2.9 2.9 0 00-1.96 3.12v0c.1.86-.57 1.63-1.44 1.63h-.38c-.86 0-1.32.956-.75 1.63l.21.27c.47.59.43 1.43-.1 1.97l0 0c-.51.51-1.33.53-1.86.05L12 10"),p("M14.5 5.5l-5 5"));
     case"checklist":return svg(p("M9 11l3 3L22 4"),p("M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"));
+    case"star":return svg(E("polygon",{points:"12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2",fill:col||"currentColor",stroke:"none"}));
     // ── Classification type icons ─────────────────────────────────────────
     case"classIncome":return svg(               // billfold wallet — where money lands
       r(2,8,20,14,4),                             // wallet outer body
@@ -3656,6 +3657,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
   const cancelLP=()=>{if(lpRef.current)clearTimeout(lpRef.current);};
   const toggleOne=(id)=>{setSelectedIds(prev=>{const n=new Set(prev);n.has(id)?n.delete(id):n.add(id);return n;});};
   const massUpdate=(status)=>{if(onMassUpdateStatus&&selectedIds.size>0){onMassUpdateStatus(new Set(selectedIds),status);clearSelection();}};
+  const toggleStar=()=>{if(selectedIds.size===0||!onEdit)return;selectedIds.forEach(id=>{const tx=transactions.find(t=>t.id===id);if(tx)onEdit({...tx,_starred:!tx._starred},tx);});clearSelection();};
   const COL_STATUS={Reconciled:"R",Unreconciled:"U",Void:"V",Duplicate:"D","Follow Up":"F"};
   const labelSt={display:"block",color:"var(--text5)",fontSize:11,textTransform:"uppercase",letterSpacing:.5,marginBottom:5};
   const flatCatsLedger=flatCats(categories||[]);
@@ -3751,6 +3753,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
             ),
             /* Row 2: date + badges */
             React.createElement("div",{style:{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}},
+              tx._starred&&React.createElement("span",{style:{fontSize:12,color:"#d97706",display:"inline-flex",alignItems:"center",gap:2}},React.createElement(Icon,{n:"star",size:12,col:"#d97706"})),
               React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},dmyFmt(tx.date)),
               tx.cat&&React.createElement("span",{style:{fontSize:10,color:catCol,background:catCol+"18",borderRadius:10,padding:"1px 7px",fontWeight:500}},catDisplayName(tx.cat)),
               tx.status&&tx.status!=="Unreconciled"&&React.createElement("span",{style:{fontSize:10,color:STATUS_C[tx.status],background:STATUS_C[tx.status]+"22",borderRadius:10,padding:"1px 7px"}},(STATUS_ICON[tx.status]||"")+" "+tx.status),
@@ -3767,6 +3770,16 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
               }),
               /* Edit / Delete action buttons — mobile */
               React.createElement("div",{style:{display:"flex",gap:8,marginTop:8}},
+                React.createElement("button",{
+                  onClick:e=>{e.stopPropagation();if(onEdit)onEdit({...tx,_starred:!tx._starred},tx);},
+                  style:{
+                    flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,
+                    padding:"8px 12px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,
+                    background:tx._starred?"rgba(217,119,6,.15)":"rgba(217,119,6,.08)",
+                    border:"1px solid "+(tx._starred?"#d97706":"rgba(217,119,6,.3)"),
+                    color:"#d97706",fontFamily:"'DM Sans',sans-serif"
+                  }
+                },React.createElement(Icon,{n:"star",size:14,col:"#d97706"}),tx._starred?"Unstar":"Star"),
                 React.createElement("button",{
                   onClick:e=>{e.stopPropagation();setEditTx(tx);},
                   style:{
@@ -4050,8 +4063,8 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
           title:"Select / deselect all visible"
         })
       ),
-      /* Reconcile */
-      React.createElement("div",{style:{padding:"9px 4px"}}),
+      /* Reconcile + Star */
+      React.createElement("div",{style:{padding:"9px 4px",display:"flex",alignItems:"center",justifyContent:"center",gap:2,fontSize:9,color:"var(--text6)"}},"✓ ★"),
       /* SN — click to reset to default date-desc */
       React.createElement("div",{
         style:{padding:"9px 4px",cursor:"pointer",color:sortKey==="date"?"var(--accent)":"var(--text5)"},
@@ -4169,9 +4182,10 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
               style:{width:13,height:13,accentColor:"var(--accent)",cursor:"pointer"}
             })
           ),
-          /* Reconcile tick */
-          React.createElement("div",{style:{padding:"4px 4px",display:"flex",alignItems:"center",justifyContent:"center"}},
-            isReconciled&&React.createElement("span",{style:{color:"#16a34a",fontSize:13,fontWeight:700}},"✓")
+          /* Reconcile tick + Star */
+          React.createElement("div",{style:{padding:"4px 4px",display:"flex",alignItems:"center",justifyContent:"center",gap:2}},
+            isReconciled&&React.createElement("span",{style:{color:"#16a34a",fontSize:13,fontWeight:700}},"✓"),
+            tx._starred&&React.createElement("span",{style:{color:"#d97706",fontSize:13,fontWeight:700,textShadow:"0 0 4px rgba(217,119,6,.3)"}},React.createElement(Icon,{n:"star",size:13,col:"#d97706"}))
           ),
           /* SN */
           React.createElement("div",{style:{padding:"4px 4px",fontSize:12,color:"var(--text5)",fontFamily:"'Sora',sans-serif"}},globalIdx),
@@ -4293,6 +4307,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
       selectedCount>0
         ?React.createElement(React.Fragment,null,
             React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--accent)",marginRight:4}},selectedCount+" selected"),
+            React.createElement("button",{onClick:toggleStar,style:tbBtn("#d97706","rgba(217,119,6,.12)")},"★ Assign Star"),
             React.createElement("button",{onClick:()=>setBulkCatOpen(true),style:tbBtn("#6d28d9","rgba(109,40,217,.12)")},"Categorize"),
             React.createElement("button",{onClick:()=>massUpdate("Reconciled"),style:tbBtn("#16a34a","rgba(22,163,74,.15)")},"✓ Mark Reconciled"),
             React.createElement("button",{onClick:()=>massUpdate("Unreconciled"),style:tbBtn("#b45309","rgba(180,83,9,.12)")},"○ Mark Unreconciled"),
@@ -11924,6 +11939,7 @@ const useKbdList=(count,onEnter)=>{
 const StickyHd=({children,style={}})=>React.createElement("div",{className:"mm-sticky-hd",style},children);
 
 const WHATS_NEW=[
+  {icon:"star",t:"Star transactions",d:"Mark important transactions with a golden star in Bank, Card, and Cash ledgers."},
   {icon:"sparkles",t:"Redesigned navigation icons",d:"All 22 nav items got cohesive line-style icons."},
   {icon:"zap",t:"Command palette (⌘K)",d:"Search, jump to any screen, add transactions, switch theme."},
   {icon:"loader",t:"Loading skeletons",d:"Dashboards now show elegant shimmer placeholders."},

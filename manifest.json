@@ -3,7 +3,7 @@
   "short_name": "finsight",
   "description": "Offline personal finance management — banks, cards, investments, loans, and more. 100% on-device, zero cloud.",
   "id": "com.vivekhh.finsight",
-  "version": "6.3.0",
+  "version": "6.5.0",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
