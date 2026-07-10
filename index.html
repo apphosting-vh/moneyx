@@ -1242,6 +1242,38 @@ button:focus-visible,a:focus-visible,[role="button"]:focus-visible,select:focus-
   .mm-has-botnav{ padding-bottom:76px!important }
 }
 select.inp option{background:var(--inp-opt)}
+/* ── Theme crossfade — smooth color transition on theme switch ── */
+html,body,.sidebar-panel,.mm-card,.mm-statcard,.db-card,.accard,.fu,.modal-bg,input,select,button,textarea{
+  transition:background-color .35s ease,color .35s ease,border-color .35s ease,box-shadow .35s ease;
+}
+/* ── Toast host ── */
+.mm-toast-host{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2000;display:flex;flex-direction:column;gap:10px;align-items:center;pointer-events:none;width:max-content;max-width:92vw}
+.mm-toast{display:flex;align-items:center;gap:12px;pointer-events:auto;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:11px 14px;box-shadow:0 10px 30px rgba(0,0,0,.25);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);animation:undoSlideUp .25s ease}
+.mm-toast-msg{flex:1;min-width:0}
+.mm-toast-undo{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:600;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:filter .15s}
+.mm-toast-undo:hover{filter:brightness(1.08)}
+.mm-toast-close{background:transparent;border:none;color:var(--text5);cursor:pointer;font-size:18px;line-height:1;padding:2px 6px;border-radius:6px}
+.mm-toast-close:hover{color:var(--text)}
+/* ── Sticky subheaders ── */
+.mm-sticky-hd{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:10px 2px;margin:0 -2px}
+/* ── Account avatar (themed monogram) ── */
+.mm-avatar{display:inline-flex;align-items:center;justify-content:center;border-radius:11px;font-family:'Sora',sans-serif;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.4px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+/* ── Chart polish ── */
+.mm-chart-area{transition:opacity .4s ease;animation:mm-area-in .6s ease both}
+.mm-chart-line{transition:stroke-dashoffset 1.1s cubic-bezier(.4,0,.2,1);stroke-dasharray:1400;stroke-dashoffset:1400;animation:mm-line-draw 1.1s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes mm-line-draw{to{stroke-dashoffset:0}}
+@keyframes mm-area-in{from{opacity:0}to{opacity:1}}
+.mm-chart-bar{transition:height .7s cubic-bezier(.34,1.3,.64,1),transform .2s ease;transform-origin:bottom;cursor:pointer}
+.mm-chart-bar:hover{filter:brightness(1.12)}
+.mm-chart-bar.active{filter:brightness(1.2) saturate(1.1)}
+.mm-chart-tip{position:absolute;pointer-events:none;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 9px;font-size:11px;font-family:'DM Sans',sans-serif;color:var(--text);white-space:nowrap;box-shadow:var(--shadow-md);z-index:30;transform:translate(-50%,-115%)}
+/* ── Empty-state illustration ── */
+.mm-empty-art{opacity:.9;margin-bottom:14px}
+/* ── prefers-reduced-motion: neutralize all non-essential motion ── */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+  .mm-skel{animation:none!important;background:var(--bg4)!important}
+}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes slideIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}

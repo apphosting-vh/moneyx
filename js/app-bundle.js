@@ -1,4 +1,4 @@
-const NIFTY50_HISTORY={"2017-01-31":8879.6,"2017-02-28":9173.75,"2017-03-31":9304.05,"2017-04-30":9621.25,"2017-05-31":9520.9,"2017-06-30":10077.1,"2017-07-31":9917.9,"2017-08-31":9788.6,"2017-09-30":10335.3,"2017-10-31":10226.55,"2017-11-30":10530.7,"2017-12-31":11027.7,"2018-01-31":10492.85,"2018-02-28":10113.7,"2018-03-31":10739.35,"2018-04-30":10736.15,"2018-05-31":10714.3,"2018-06-30":11356.5,"2018-07-31":11680.5,"2018-08-31":10930.45,"2018-09-30":10386.6,"2018-10-31":10876.75,"2018-11-30":10862.55,"2018-12-31":10830.95,"2019-01-31":10792.5,"2019-02-28":11623.9,"2019-03-31":11748.15,"2019-04-30":11922.8,"2019-05-31":11788.85,"2019-06-30":11118,"2019-07-31":11023.25,"2019-08-31":11474.45,"2019-09-30":11877.45,"2019-10-31":12056.05,"2019-11-30":12168.45,"2019-12-31":11962.1,"2020-01-31":11201.75,"2020-02-29":8597.75,"2020-03-31":9859.9,"2020-04-30":9580.3,"2020-05-31":10302.1,"2020-06-30":11073.45,"2020-07-31":11387.5,"2020-08-31":11247.55,"2020-09-30":11642.4,"2020-10-31":12968.95,"2020-11-30":13981.75,"2020-12-31":13634.6,"2021-01-31":14529.15,"2021-02-28":14690.7,"2021-03-31":14631.1,"2021-04-30":15582.8,"2021-05-31":15721.5,"2021-06-30":15763.05,"2021-07-31":17132.2,"2021-08-31":17618.15,"2021-09-30":17671.65,"2021-10-31":16983.2,"2021-11-30":17354.05,"2021-12-31":17339.85,"2022-01-31":16793.9,"2022-02-28":17464.75,"2022-03-31":17102.55,"2022-04-30":16584.55,"2022-05-31":15780.25,"2022-06-30":17158.25,"2022-07-31":17759.3,"2022-08-31":17094.35,"2022-09-30":18012.2,"2022-10-31":18758.35,"2022-11-30":18105.3,"2022-12-31":17662.15,"2023-01-31":17303.95,"2023-02-28":17359.75,"2023-03-31":18065,"2023-04-30":18534.4,"2023-05-31":19189.05,"2023-06-30":19753.8,"2023-07-31":19253.8,"2023-08-31":19638.3,"2023-09-30":19079.6,"2023-10-31":20133.15,"2023-11-30":21731.4,"2023-12-31":21725.7,"2024-01-31":21982.8,"2024-02-29":22326.9,"2024-03-31":22604.85,"2024-04-30":22530.7,"2024-05-31":24010.6,"2024-06-30":24951.15,"2024-07-31":25235.9,"2024-08-31":25810.85,"2024-09-30":24205.35,"2024-10-31":24131.1,"2024-11-30":23644.8,"2024-12-31":23508.4,"2025-01-31":22124.7,"2025-02-28":23519.35,"2025-03-31":24334.2,"2025-04-30":24750.7,"2025-05-31":25517.05,"2025-06-30":24768.35,"2025-07-31":24426.85,"2025-08-31":24611.1,"2025-09-30":25722.1,"2025-10-31":26202.95,"2025-11-30":26129.6,"2025-12-31":25320.65,"2026-01-31":25178.65,"2026-02-28":22331.4,"2026-03-31":23997.55,"2026-04-30":23547.75,"2026-05-31":23865.75,"2026-06-30":24270.85,"2026-07-07":24398.7};
+﻿const NIFTY50_HISTORY={"2017-01-31":8879.6,"2017-02-28":9173.75,"2017-03-31":9304.05,"2017-04-30":9621.25,"2017-05-31":9520.9,"2017-06-30":10077.1,"2017-07-31":9917.9,"2017-08-31":9788.6,"2017-09-30":10335.3,"2017-10-31":10226.55,"2017-11-30":10530.7,"2017-12-31":11027.7,"2018-01-31":10492.85,"2018-02-28":10113.7,"2018-03-31":10739.35,"2018-04-30":10736.15,"2018-05-31":10714.3,"2018-06-30":11356.5,"2018-07-31":11680.5,"2018-08-31":10930.45,"2018-09-30":10386.6,"2018-10-31":10876.75,"2018-11-30":10862.55,"2018-12-31":10830.95,"2019-01-31":10792.5,"2019-02-28":11623.9,"2019-03-31":11748.15,"2019-04-30":11922.8,"2019-05-31":11788.85,"2019-06-30":11118,"2019-07-31":11023.25,"2019-08-31":11474.45,"2019-09-30":11877.45,"2019-10-31":12056.05,"2019-11-30":12168.45,"2019-12-31":11962.1,"2020-01-31":11201.75,"2020-02-29":8597.75,"2020-03-31":9859.9,"2020-04-30":9580.3,"2020-05-31":10302.1,"2020-06-30":11073.45,"2020-07-31":11387.5,"2020-08-31":11247.55,"2020-09-30":11642.4,"2020-10-31":12968.95,"2020-11-30":13981.75,"2020-12-31":13634.6,"2021-01-31":14529.15,"2021-02-28":14690.7,"2021-03-31":14631.1,"2021-04-30":15582.8,"2021-05-31":15721.5,"2021-06-30":15763.05,"2021-07-31":17132.2,"2021-08-31":17618.15,"2021-09-30":17671.65,"2021-10-31":16983.2,"2021-11-30":17354.05,"2021-12-31":17339.85,"2022-01-31":16793.9,"2022-02-28":17464.75,"2022-03-31":17102.55,"2022-04-30":16584.55,"2022-05-31":15780.25,"2022-06-30":17158.25,"2022-07-31":17759.3,"2022-08-31":17094.35,"2022-09-30":18012.2,"2022-10-31":18758.35,"2022-11-30":18105.3,"2022-12-31":17662.15,"2023-01-31":17303.95,"2023-02-28":17359.75,"2023-03-31":18065,"2023-04-30":18534.4,"2023-05-31":19189.05,"2023-06-30":19753.8,"2023-07-31":19253.8,"2023-08-31":19638.3,"2023-09-30":19079.6,"2023-10-31":20133.15,"2023-11-30":21731.4,"2023-12-31":21725.7,"2024-01-31":21982.8,"2024-02-29":22326.9,"2024-03-31":22604.85,"2024-04-30":22530.7,"2024-05-31":24010.6,"2024-06-30":24951.15,"2024-07-31":25235.9,"2024-08-31":25810.85,"2024-09-30":24205.35,"2024-10-31":24131.1,"2024-11-30":23644.8,"2024-12-31":23508.4,"2025-01-31":22124.7,"2025-02-28":23519.35,"2025-03-31":24334.2,"2025-04-30":24750.7,"2025-05-31":25517.05,"2025-06-30":24768.35,"2025-07-31":24426.85,"2025-08-31":24611.1,"2025-09-30":25722.1,"2025-10-31":26202.95,"2025-11-30":26129.6,"2025-12-31":25320.65,"2026-01-31":25178.65,"2026-02-28":22331.4,"2026-03-31":23997.55,"2026-04-30":23547.75,"2026-05-31":23865.75,"2026-06-30":24270.85,"2026-07-07":24398.7};
 ﻿/* ── Utilities, hooks, formatting, price/NAV fetchers ── */
 const{useState,useReducer,useRef,useEffect,useCallback,useMemo,useDeferredValue}=React;
 /* ══════════════════════════════════════════════════════════════════════════
@@ -888,7 +888,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="6.3.0";
+const APP_VERSION="6.4.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -2482,8 +2482,13 @@ const Field=({label,children,sx={}})=>React.createElement("div",{style:{marginBo
   React.createElement("label",{style:{display:"block",color:"var(--text5)",fontSize:10.5,fontWeight:600,textTransform:"uppercase",letterSpacing:.7,marginBottom:6}},label),children
 );
 const HR=()=>React.createElement("div",{style:{borderTop:"1px solid var(--border2)",margin:"16px 0"}});
-const Empty=({icon,text})=>React.createElement("div",{style:{textAlign:"center",padding:"48px 20px",color:"var(--text6)"}},
-  icon&&React.createElement("div",{style:{margin:"0 auto 14px",display:"flex",alignItems:"center",justifyContent:"center",width:56,height:56,borderRadius:16,background:"var(--accentbg2)",color:"var(--text5)",opacity:.9}},icon),
+const _EMPTY_ART={
+  search:'<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/><line x1="8" y1="11" x2="14" y2="11"/></svg>',
+  empty:'<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>',
+  inbox:'<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.5h13l3.5 6.5v5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-5z"/></svg>',
+};
+const Empty=({icon,text,art="empty"})=>React.createElement("div",{className:"mm-empty",style:{textAlign:"center",padding:"48px 20px",color:"var(--text6)"}},
+  React.createElement("div",{className:"mm-empty-art",style:{display:"flex",alignItems:"center",justifyContent:"center",width:56,height:56,margin:"0 auto 14px",borderRadius:16,background:"var(--accentbg2)",color:"var(--text5)",opacity:.9},dangerouslySetInnerHTML:{__html:_EMPTY_ART[art]||_EMPTY_ART.empty}}),
   React.createElement("div",{style:{fontSize:13.5,lineHeight:1.5}},text)
 );
 
@@ -11844,6 +11849,105 @@ var usePersistentReducer=(reducer,init)=>{
 };
 
 /* ── APP SHELL ────────────────────────────────────────────────────────────── */
+
+/* ════════════ SHARED POLISH HELPERS ════════════ */
+/* Deterministic gradient pair from a string (account name, etc.) */
+const _AV_GRADS=[
+  ["#6366f1","#8b5cf6"],["#0ea5e9","#22d3ee"],["#10b981","#34d399"],
+  ["#f59e0b","#fbbf24"],["#ef4444","#f97316"],["#ec4899","#f472b6"],
+  ["#14b8a6","#2dd4bf"],["#8b5cf6","#a78bfa"],["#3b82f6","#60a5fa"],
+  ["#f43f5e","#fb7185"],["#84cc16","#a3e635"],["#06b6d4","#67e8f9"],
+];
+function colorFromName(name){
+  try{
+    const s=String(name||"x");let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;
+    return _AV_GRADS[h%_AV_GRADS.length];
+  }catch{return _AV_GRADS[0];}
+}
+/* Animated count-up number */
+function useCountUp(value,dur=600){
+  const[disp,setDisp]=React.useState(value);
+  const fromRef=React.useRef(value),rafRef=React.useRef(0);
+  React.useEffect(()=>{
+    const reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if(reduce){setDisp(value);return;}
+    const from=fromRef.current,to=Number(value)||0,start=performance.now();
+    cancelAnimationFrame(rafRef.current);
+    const tick=now=>{
+      const p=Math.min(1,(now-start)/(dur||600));
+      const e=1-Math.pow(1-p,3);
+      setDisp(from+(to-from)*e);
+      if(p<1)rafRef.current=requestAnimationFrame(tick);
+      else fromRef.current=to;
+    };
+    rafRef.current=requestAnimationFrame(tick);
+    return()=>cancelAnimationFrame(rafRef.current);
+  },[value,dur]);
+  return disp;
+}
+const CountUp=({value,fmt=v=>String(Math.round(v)),dur,className,style={}})=>{
+  const d=useCountUp(value,dur);
+  return React.createElement("span",{className:className,style:style},fmt(d));
+};
+/* Themed account avatar (monogram) */
+const Avatar=({name,size=40,radius=11,fontSize})=>{
+  const[g0,g1]=colorFromName(name);
+  const id="av"+Math.abs((name||"x").split("").reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7)).toString(36);
+  const initials=String(name||"?").trim().split(/\s+/).slice(0,2).map(w=>w[0]||"").join("").toUpperCase()||"?";
+  const fs=fontSize||Math.round(size*0.4);
+  return React.createElement("span",{className:"mm-avatar",style:{width:size,height:size,borderRadius:radius,fontSize:fs,background:"linear-gradient(135deg,"+g0+","+g1+")"},"aria-hidden":"true"},initials);
+};
+/* Toast host */
+const ToastHost=({toasts,onUndo,onClose})=>React.createElement("div",{className:"mm-toast-host","aria-live":"polite",role:"status"},
+  toasts.map(t=>React.createElement("div",{key:t.id,className:"mm-toast",role:"alert"},
+    React.createElement("div",{className:"mm-toast-msg"},t.msg),
+    t.undo&&React.createElement("button",{className:"mm-toast-undo",onClick:()=>onUndo(t.id)},"Undo"),
+    React.createElement("button",{className:"mm-toast-close",onClick:()=>onClose(t.id),"aria-label":"Dismiss"},"×")
+  ))
+);
+/* Sticky subheader */
+/* Reusable keyboard-navigable list (arrow keys + Enter) */
+const useKbdList=(count,onEnter)=>{
+  const[idx,setIdx]=React.useState(-1);
+  const onKeyDown=e=>{
+    if(count<=0)return;
+    if(e.key==="ArrowDown"){e.preventDefault();setIdx(i=>Math.min(count-1,(i<0?-1:i)+1));}
+    else if(e.key==="ArrowUp"){e.preventDefault();setIdx(i=>Math.max(0,(i<0?count:0)-1));}
+    else if(e.key==="Home"){e.preventDefault();setIdx(0);}
+    else if(e.key==="End"){e.preventDefault();setIdx(count-1);}
+    else if(e.key==="Enter"){if(idx>=0&&idx<count)onEnter(idx);}
+  };
+  return[idx,setIdx,onKeyDown];
+};
+/* "What's New" modal — shown once per version bump */
+/* Sticky subheader */
+const StickyHd=({children,style={}})=>React.createElement("div",{className:"mm-sticky-hd",style},children);
+
+const WHATS_NEW=[
+  {icon:"sparkles",t:"Redesigned navigation icons",d:"All 22 nav items got cohesive line-style icons."},
+  {icon:"zap",t:"Command palette (⌘K)",d:"Search, jump to any screen, add transactions, switch theme."},
+  {icon:"loader",t:"Loading skeletons",d:"Dashboards now show elegant shimmer placeholders."},
+  {icon:"smartphone",t:"Mobile bottom bar",d:"Primary destinations are one tap away on phones."},
+  {icon:"a11y",t:"Accessibility pass",d:"Focus rings, aria-labels, and reduced-motion support."},
+];
+const WhatsNewModal=({onClose})=>{
+  const body=React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:12}},
+    WHATS_NEW.map(f=>React.createElement("div",{key:f.t,style:{display:"flex",gap:12,alignItems:"flex-start",padding:"10px 12px",borderRadius:12,background:"var(--bg5)"}},
+      React.createElement("div",{style:{flexShrink:0,width:34,height:34,borderRadius:10,background:"var(--accentbg2)",color:"var(--accent)",display:"flex",alignItems:"center",justifyContent:"center"}},React.createElement(Icon,{n:f.icon,size:18})),
+      React.createElement("div",null,
+        React.createElement("div",{style:{fontSize:13.5,fontWeight:600,color:"var(--text)"}},f.t),
+        React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginTop:2,lineHeight:1.5}},f.d)
+      )
+    ))
+  );
+  return React.createElement(Modal,{title:"✨ What's new in v"+APP_VERSION,onClose,w:440},
+    body,
+    React.createElement("div",{style:{marginTop:18,display:"flex",justifyContent:"flex-end"}},
+      React.createElement(Btn,{onClick:onClose},"Awesome")
+    )
+  );
+};
+
 /* ── NAV ICONS -- pixel-perfect 16×16 stroke SVGs, inherit color via currentColor ── */
 var NavIcon=({id,size=16})=>{
   const s={width:size,height:size,viewBox:"0 0 16 16",fill:"none",stroke:"currentColor",strokeWidth:1.5,strokeLinecap:"round",strokeLinejoin:"round",display:"block",flexShrink:0};
@@ -13291,9 +13395,12 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
                     style:{width:22,height:22,borderRadius:5,border:"1px solid var(--border)",background:bIdx===banks.length-1?"transparent":"var(--accentbg2)",color:bIdx===banks.length-1?"var(--text6)":"var(--accent)",cursor:bIdx===banks.length-1?"not-allowed":"pointer",fontSize:12,lineHeight:1,fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",padding:0}
                   },"▼")
                 ),
-                React.createElement("div",{style:{minWidth:0,flex:1}},
-                  React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",lineHeight:1.3}},b.name),
-                  React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",marginTop:2}},b.bank)
+                React.createElement("div",{style:{minWidth:0,flex:1,display:"flex",alignItems:"center",gap:10}},
+                  React.createElement(Avatar,{name:b.name,size:38,radius:11}),
+                  React.createElement("div",{style:{minWidth:0,flex:1}},
+                    React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",lineHeight:1.3}},b.name),
+                    React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",marginTop:2}},b.bank)
+                  )
                 )
               ),
               !reorderMode&&React.createElement(Badge,{ch:b.type,col:"#0e7490"}),
@@ -13512,9 +13619,12 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
                     style:{width:22,height:22,borderRadius:5,border:"1px solid var(--border)",background:cIdx===cards.length-1?"transparent":"var(--accentbg2)",color:cIdx===cards.length-1?"var(--text6)":"var(--accent)",cursor:cIdx===cards.length-1?"not-allowed":"pointer",fontSize:12,lineHeight:1,fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",padding:0}
                   },"▼")
                 ),
-                React.createElement("div",{style:{minWidth:0,flex:1}},
-                  React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text)"}},c.name),
-                  React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},c.bank)
+                React.createElement("div",{style:{minWidth:0,flex:1,display:"flex",alignItems:"center",gap:10}},
+                  React.createElement(Avatar,{name:c.name,size:38,radius:11}),
+                  React.createElement("div",{style:{minWidth:0,flex:1}},
+                    React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text)"}},c.name),
+                    React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},c.bank)
+                  )
                 )
               ),
               !reorderMode&&React.createElement("span",{style:{fontSize:22}},React.createElement(Icon,{n:"card",size:18})),
@@ -13707,8 +13817,8 @@ const CashSection=React.memo(({cash,dispatch,categories,payees,allBanks,allCards
   const catMap=cash.transactions.filter(t=>t.type==="debit").reduce((a,t)=>{const k=catMainName(t.cat||"Others");a[k]=(a[k]||0)+t.amount;return a;},{});
   const pieData=Object.entries(catMap).map(([name,value])=>({name,value}));
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",height:"100%"}},
-    React.createElement("div",{style:{marginBottom:16,display:"flex",alignItems:"stretch",gap:13}},
-      React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#4ade80",flexShrink:0}}),
+    React.createElement("div",{style:{marginBottom:16,display:"flex",alignItems:"center",gap:13}},
+      React.createElement(Avatar,{name:"Cash",size:42,radius:12,fontSize:17}),
       React.createElement("div",null,
         React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:23,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"Cash Account"),
         React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},"Physical cash and cash-based transactions")
@@ -14146,7 +14256,7 @@ const FinancialCalendar=({data,isMobile})=>{
   );
 };
 
-const Dashboard=React.memo(({data,isMobile})=>{
+const Dashboard=React.memo(({data,isMobile,onJumpToTx})=>{
   const[ready,setReady]=useState(false);
   const[txTab,setTxTab]=useState("all"); /* account id or "all" */
   const[showPayeeAnalytics,setShowPayeeAnalytics]=useState(false);
@@ -14380,6 +14490,9 @@ const Dashboard=React.memo(({data,isMobile})=>{
 
   /* ━━ 11. CASH FLOW SVG BAR CHART ━━━━━━━━━━━━━━━━━━━━━━━━━ */
   const CashFlowChart=(()=>{
+    const[active,setActive]=React.useState(-1);
+    const wrapRef=React.useRef(null);
+    const[tip,setTip]=React.useState({x:0,y:0});
     if(!monthlyFlow.length)return null;
     const W=460,H=140,pL=6,pR=6,pT=10,pB=32;
     const cW=W-pL-pR,cH=H-pT-pB,n=monthlyFlow.length;
@@ -14387,27 +14500,41 @@ const Dashboard=React.memo(({data,isMobile})=>{
     const grpW=cW/n,bW=Math.min(grpW*0.32,14);
     const bh=v=>Math.max(v>0?(v/maxV)*cH:0,v>0?2:0);
     const xC=i=>pL+i*grpW+grpW/2;
-    return React.createElement("svg",{width:"100%",viewBox:`0 0 ${W} ${H}`,style:{display:"block",overflow:"visible"}},
-      React.createElement("defs",null,
-        React.createElement("linearGradient",{id:"gInc",x1:"0",y1:"0",x2:"0",y2:"1"},
-          React.createElement("stop",{offset:"0%",stopColor:"#16a34a",stopOpacity:.9}),
-          React.createElement("stop",{offset:"100%",stopColor:"#16a34a",stopOpacity:.55})),
-        React.createElement("linearGradient",{id:"gExp",x1:"0",y1:"0",x2:"0",y2:"1"},
-          React.createElement("stop",{offset:"0%",stopColor:"#ef4444",stopOpacity:.85}),
-          React.createElement("stop",{offset:"100%",stopColor:"#ef4444",stopOpacity:.5}))
+    const gId="gInc_"+n+"_"+monthlyFlow[0].label.replace(/\W/g,"");
+    const gExp="gExp_"+n+"_"+monthlyFlow[0].label.replace(/\W/g,"");
+    return React.createElement("div",{ref:wrapRef,style:{position:"relative"}},
+      React.createElement("svg",{width:"100%",viewBox:`0 0 ${W} ${H}`,style:{display:"block",overflow:"visible"}},
+        React.createElement("defs",null,
+          React.createElement("linearGradient",{id:gId,x1:"0",y1:"0",x2:"0",y2:"1"},
+            React.createElement("stop",{offset:"0%",stopColor:"#16a34a",stopOpacity:.9}),
+            React.createElement("stop",{offset:"100%",stopColor:"#16a34a",stopOpacity:.55})),
+          React.createElement("linearGradient",{id:gExp,x1:"0",y1:"0",x2:"0",y2:"1"},
+            React.createElement("stop",{offset:"0%",stopColor:"#ef4444",stopOpacity:.85}),
+            React.createElement("stop",{offset:"100%",stopColor:"#ef4444",stopOpacity:.5}))
+        ),
+        [.25,.5,.75,1].map((f,i)=>React.createElement("line",{key:i,
+          x1:pL,y1:pT+cH*(1-f),x2:W-pR,y2:pT+cH*(1-f),
+          stroke:"var(--border2)",strokeWidth:.6,strokeDasharray:"3,3"})),
+        monthlyFlow.map((d,i)=>{
+          const cx=xC(i),by=pT+cH;
+          const ih=bh(d.inc),eh=bh(d.exp);
+          const onEnter=()=>{
+            setActive(i);
+            const svgWrap=wrapRef.current;const pr=svgWrap?svgWrap.getBoundingClientRect():null;
+            if(pr){const sx=(cx/W)*pr.width;setTip({x:sx,y:(by-eh)/H*pr.height});}
+          };
+          return React.createElement("g",{key:i,onMouseEnter:onEnter,onMouseLeave:()=>setActive(-1)},
+            d.inc>0&&React.createElement("rect",{x:cx-bW-1.5,y:by-ih,width:bW,height:ih,rx:3,fill:`url(#${gId})`,className:"mm-chart-bar"+(active===i?" active":"")}),
+            d.exp>0&&React.createElement("rect",{x:cx+1.5,y:by-eh,width:bW,height:eh,rx:3,fill:`url(#${gExp})`,className:"mm-chart-bar"+(active===i?" active":"")}),
+            React.createElement("text",{x:cx,y:H-10,textAnchor:"middle",fill:"var(--text5)",fontSize:8,fontFamily:"'DM Sans',sans-serif"},d.label)
+          );
+        })
       ),
-      [.25,.5,.75,1].map((f,i)=>React.createElement("line",{key:i,
-        x1:pL,y1:pT+cH*(1-f),x2:W-pR,y2:pT+cH*(1-f),
-        stroke:"var(--border2)",strokeWidth:.6,strokeDasharray:"3,3"})),
-      monthlyFlow.map((d,i)=>{
-        const cx=xC(i),by=pT+cH;
-        const ih=bh(d.inc),eh=bh(d.exp);
-        return React.createElement("g",{key:i},
-          d.inc>0&&React.createElement("rect",{x:cx-bW-1.5,y:by-ih,width:bW,height:ih,rx:3,fill:"url(#gInc)"}),
-          d.exp>0&&React.createElement("rect",{x:cx+1.5,y:by-eh,width:bW,height:eh,rx:3,fill:"url(#gExp)"}),
-          React.createElement("text",{x:cx,y:H-10,textAnchor:"middle",fill:"var(--text5)",fontSize:8,fontFamily:"'DM Sans',sans-serif"},d.label)
-        );
-      })
+      active>=0&&React.createElement("div",{className:"mm-chart-tip",style:{left:tip.x,top:tip.y}},
+        React.createElement("div",{style:{fontWeight:700,marginBottom:2}},monthlyFlow[active].label),
+        React.createElement("div",{style:{color:"#16a34a"}},"Income: "+INR(monthlyFlow[active].inc)),
+        React.createElement("div",{style:{color:"#ef4444"}},"Expense: "+INR(monthlyFlow[active].exp))
+      )
     );
   })();
 
@@ -14417,7 +14544,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
   const dateStr=new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"});
 
   /* Section label */
-  const SL=(t,sub)=>React.createElement("div",{style:{marginBottom:14}},
+  const SL=(t,sub)=>React.createElement("div",{className:"mm-sticky-hd",style:{marginBottom:14}},
     React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",textTransform:"uppercase",letterSpacing:.9,display:"flex",alignItems:"center",gap:6}},
       React.createElement("div",{style:{width:3,height:13,borderRadius:2,background:"var(--accent)",flexShrink:0}}),t),
     sub&&React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2,paddingLeft:9}},sub)
@@ -14511,10 +14638,9 @@ const Dashboard=React.memo(({data,isMobile})=>{
         backgroundImage:"radial-gradient(circle,var(--border) 1.2px,transparent 1.2px)",
         backgroundSize:"22px 22px",
       }}),
-
       /* ── Absolute action buttons ── */
       React.createElement("button",{
-        onClick:()=>setShowWidgetMgr(true),title:"Customize dashboard sections",aria-label:"Customize dashboard sections",
+        onClick:()=>setShowWidgetMgr(true),title:"Customize dashboard sections","aria-label":"Customize dashboard sections",
         style:{position:"absolute",top:13,right:13,zIndex:2,padding:"5px 11px",borderRadius:8,
           border:"1px solid var(--border2)",background:"var(--bg4)",color:"var(--text5)",cursor:"pointer",
           fontSize:11,fontFamily:"'DM Sans',sans-serif",fontWeight:600,display:"flex",alignItems:"center",gap:4,
@@ -14523,7 +14649,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
         onMouseLeave:e=>{e.currentTarget.style.color="var(--text5)";e.currentTarget.style.borderColor="var(--border2)";},
       },React.createElement(Icon,{n:"settings",size:13}),!isMobile&&React.createElement("span",null,"Customize")),
       React.createElement("button",{
-        onClick:()=>setShareOpen(true),title:"Share this month's summary",aria-label:"Share this month's summary",
+        onClick:()=>setShareOpen(true),title:"Share this month's summary","aria-label":"Share this month's summary",
         style:{position:"absolute",top:13,right:isMobile?56:136,zIndex:2,padding:"5px 11px",borderRadius:8,
           border:"1px solid var(--border2)",background:"var(--bg4)",color:"var(--text5)",cursor:"pointer",
           fontSize:11,fontFamily:"'DM Sans',sans-serif",fontWeight:600,display:"flex",alignItems:"center",gap:4,
@@ -14735,10 +14861,13 @@ const Dashboard=React.memo(({data,isMobile})=>{
             display:"flex",flexDirection:"column",gap:6,padding:"12px 14px"
           }},
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
-              React.createElement("div",{style:{minWidth:0,flex:1}},
-                React.createElement("div",{style:{fontSize:8,color:"#0e7490",fontWeight:700,textTransform:"uppercase",letterSpacing:.6}},b.type),
-                React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}},b.name),
-                React.createElement("div",{style:{fontSize:8,color:"var(--text5)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},b.bank)
+              React.createElement("div",{style:{minWidth:0,flex:1,display:"flex",alignItems:"center",gap:8}},
+                React.createElement(Avatar,{name:b.name,size:30,radius:9,fontSize:12}),
+                React.createElement("div",{style:{minWidth:0,flex:1}},
+                  React.createElement("div",{style:{fontSize:8,color:"#0e7490",fontWeight:700,textTransform:"uppercase",letterSpacing:.6}},b.type),
+                  React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}},b.name),
+                  React.createElement("div",{style:{fontSize:8,color:"var(--text5)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},b.bank)
+                )
               ),
               Sparkline(b.transactions,"#0e7490")
             ),
@@ -14762,10 +14891,13 @@ const Dashboard=React.memo(({data,isMobile})=>{
             display:"flex",flexDirection:"column",gap:6,padding:"12px 14px"
           }},
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
-              React.createElement("div",{style:{minWidth:0,flex:1}},
-                React.createElement("div",{style:{fontSize:8,color:"#c2410c",fontWeight:700,textTransform:"uppercase",letterSpacing:.6}},"Credit Card"),
-                React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}},c.name),
-                React.createElement("div",{style:{fontSize:8,color:"var(--text5)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},c.bank)
+              React.createElement("div",{style:{minWidth:0,flex:1,display:"flex",alignItems:"center",gap:8}},
+                React.createElement(Avatar,{name:c.name,size:30,radius:9,fontSize:12}),
+                React.createElement("div",{style:{minWidth:0,flex:1}},
+                  React.createElement("div",{style:{fontSize:8,color:"#c2410c",fontWeight:700,textTransform:"uppercase",letterSpacing:.6}},"Credit Card"),
+                  React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}},c.name),
+                  React.createElement("div",{style:{fontSize:8,color:"var(--text5)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},c.bank)
+                )
               ),
               Sparkline(c.transactions,"#c2410c")
             ),
@@ -14787,9 +14919,12 @@ const Dashboard=React.memo(({data,isMobile})=>{
             display:"flex",flexDirection:"column",gap:6,padding:"12px 14px"
           }},
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
-              React.createElement("div",null,
-                React.createElement("div",{style:{fontSize:8,color:"var(--accent)",fontWeight:700,textTransform:"uppercase",letterSpacing:.6}},"Cash"),
-                React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text2)",marginTop:1}},"Physical Cash")
+              React.createElement("div",{style:{minWidth:0,flex:1,display:"flex",alignItems:"center",gap:8}},
+                React.createElement(Avatar,{name:"Cash",size:30,radius:9,fontSize:12}),
+                React.createElement("div",null,
+                  React.createElement("div",{style:{fontSize:8,color:"var(--accent)",fontWeight:700,textTransform:"uppercase",letterSpacing:.6}},"Cash"),
+                  React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text2)",marginTop:1}},"Physical Cash")
+                )
               ),
               Sparkline(data.cash.transactions,"var(--accent)")
             ),
@@ -15082,10 +15217,10 @@ const Dashboard=React.memo(({data,isMobile})=>{
     /* ══ C: THIS MONTH KPI STRIP ════════════════════════════════ */
     W("kpi")&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)",gap:10}},
       ...[
-        {label:"Income",val:INR(curMD.inc),col:"#16a34a",icon:React.createElement(Icon,{n:"classIncome",size:16}),sub:incDelta!==null?((incDelta>=0?"↑ ":"↓ ")+INR(Math.abs(incDelta))+" vs last mo"):data.banks.length+" bank accounts",delay:0},
-        {label:"Expenses",val:INR(curMD.exp),col:"#ef4444",icon:React.createElement(Icon,{n:"classExpense",size:16}),sub:expDelta!==null?((expDelta>=0?"↑ ":"↓ ")+INR(Math.abs(expDelta))+" vs last mo"):data.cards.length+" cards + cash",delay:60},
-        {label:"Net Saved",val:INR(curMD.inc-curMD.exp),col:curMD.inc-curMD.exp>=0?"#16a34a":"#ef4444",icon:"=",sub:"income − expenses",delay:120},
-        {label:"Savings Rate",val:savingsRate.toFixed(1)+"%",col:savingsRate>=30?"#16a34a":savingsRate>=15?"#b45309":"#ef4444",icon:React.createElement(Icon,{n:"target",size:18}),sub:savingsRate>=30?"Excellent":savingsRate>=15?"On track":"Below target",delay:180},
+        {label:"Income",val:React.createElement(CountUp,{value:curMD.inc,dur:650,fmt:v=>INR(v)}),col:"#16a34a",icon:React.createElement(Icon,{n:"classIncome",size:16}),sub:incDelta!==null?((incDelta>=0?"↑ ":"↓ ")+INR(Math.abs(incDelta))+" vs last mo"):data.banks.length+" bank accounts",delay:0},
+        {label:"Expenses",val:React.createElement(CountUp,{value:curMD.exp,dur:650,fmt:v=>INR(v)}),col:"#ef4444",icon:React.createElement(Icon,{n:"classExpense",size:16}),sub:expDelta!==null?((expDelta>=0?"↑ ":"↓ ")+INR(Math.abs(expDelta))+" vs last mo"):data.cards.length+" cards + cash",delay:60},
+        {label:"Net Saved",val:React.createElement(CountUp,{value:curMD.inc-curMD.exp,dur:650,fmt:v=>INR(v)}),col:curMD.inc-curMD.exp>=0?"#16a34a":"#ef4444",icon:"=",sub:"income − expenses",delay:120},
+        {label:"Savings Rate",val:React.createElement(CountUp,{value:savingsRate,dur:650,fmt:v=>v.toFixed(1)+"%"}),col:savingsRate>=30?"#16a34a":savingsRate>=15?"#b45309":"#ef4444",icon:React.createElement(Icon,{n:"target",size:18}),sub:savingsRate>=30?"Excellent":savingsRate>=15?"On track":"Below target",delay:180},
       ].map(({label,val,col,icon,sub,delay})=>
         React.createElement("div",{key:label,style:{
           background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,
@@ -15196,36 +15331,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
         recentFiltered.length===0
           ?React.createElement("div",{style:{textAlign:"center",padding:"28px 0",color:"var(--text6)",fontSize:12,display:"flex",flexDirection:"column",gap:8,alignItems:"center"}},
               React.createElement("span",{style:{fontSize:24}},React.createElement(Icon,{n:"report",size:18})),"No transactions")
-          :recentFiltered.map((tx,i)=>{
-            const isCredit=tx.type==="credit";
-            const col=catColor(data.categories,catMainName(tx.cat||""));
-            return React.createElement("div",{key:tx.id+i,className:"db-txrow"},
-              /* Type icon */
-              React.createElement("div",{style:{
-                width:32,height:32,borderRadius:10,flexShrink:0,
-                background:isCredit?"rgba(22,163,74,.1)":"rgba(239,68,68,.07)",
-                border:"1px solid "+(isCredit?"rgba(22,163,74,.2)":"rgba(239,68,68,.18)"),
-                display:"flex",alignItems:"center",justifyContent:"center",
-                fontSize:13,color:isCredit?"#16a34a":"#ef4444",fontWeight:800
-              }},isCredit?"↑":"↓"),
-              /* Description + meta */
-              React.createElement("div",{style:{flex:1,minWidth:0}},
-                React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
-                  tx.desc||tx.payee||"—"),
-                React.createElement("div",{style:{display:"flex",gap:5,alignItems:"center",marginTop:2,flexWrap:"nowrap",overflow:"hidden"}},
-                  React.createElement("span",{style:{fontSize:9,color:tx._col,fontWeight:700,flexShrink:0,
-                    background:tx._col+"15",borderRadius:6,padding:"1px 6px"}},tx._src),
-                  tx.payee&&React.createElement("span",{style:{fontSize:9,color:"var(--text5)",flexShrink:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},tx.payee),
-                  tx.cat&&React.createElement("span",{style:{fontSize:9,color:col,background:col+"18",borderRadius:6,padding:"1px 6px",flexShrink:0}},catDisplayName(tx.cat))
-                )
-              ),
-              /* Date + amount */
-              React.createElement("div",{style:{textAlign:"right",flexShrink:0,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}},
-                React.createElement("div",{style:{fontSize:13,fontWeight:700,color:isCredit?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif"}},(isCredit?"+":"−")+INR(tx.amount)),
-                React.createElement("div",{style:{fontSize:9,color:"var(--text6)"}},dmyFmt(tx.date))
-              )
-            );
-          })
+          :React.createElement(RecentTxnList,{txns:recentFiltered,onJumpToTx:(t)=>{onJumpToTx&&onJumpToTx(t._bid==="__cash__"?"cash":t._accType,t._bid,t.id);}})
       ),
 
       /* E2: Top payees + this-month savings ring */
@@ -15506,8 +15612,8 @@ const Dashboard=React.memo(({data,isMobile})=>{
                 React.createElement("stop",{offset:"100%",stopColor:col,stopOpacity:.02})
               )
             ),
-            React.createElement("polygon",{points:fillPts,fill:"url(#"+gradId+")"}),
-            React.createElement("polyline",{points:ptStr,fill:"none",stroke:col,strokeWidth:2.5,strokeLinejoin:"round",strokeLinecap:"round"}),
+            React.createElement("polygon",{points:fillPts,fill:"url(#"+gradId+")",className:"mm-chart-area"}),
+            React.createElement("polyline",{points:ptStr,fill:"none",stroke:col,strokeWidth:2.5,strokeLinejoin:"round",strokeLinecap:"round",className:"mm-chart-line"}),
             React.createElement("circle",{cx:cx(pts.length-1),cy:cy(pts[pts.length-1].nw),r:4,fill:col}),
             [0,Math.floor(pts.length/2),pts.length-1].filter((v,i,a)=>a.indexOf(v)===i).map(i=>
               React.createElement("text",{key:i,x:cx(i),y:H-1,textAnchor:i===0?"start":i===pts.length-1?"end":"middle",fill:"var(--text6)",fontSize:9},pts[i].lbl)
@@ -16428,10 +16534,14 @@ const SplitTxModal=({tx,categories,onSave,onClose})=>{
    Fuzzy-searches all transactions, accounts, notes and payees. Click any
    result to jump directly to it.
    ══════════════════════════════════════════════════════════════════════════ */
-const GlobalSearchModal=({state,onClose,onJumpToTx,setTab})=>{
+const GlobalSearchModal=({state,onClose,onJumpToTx,setTab,setTheme,setQuickAddOpen,onWhatsNew})=>{
   const[q,setQ]=useState("");
   const[debouncedQ,setDebouncedQ]=useState("");
   const inputRef=React.useRef(null);
+  const listRef=React.useRef(null);
+  const[,force]=React.useReducer(x=>x+1,0);
+  const activeRef=React.useRef(0);
+  const setActive=i=>{activeRef.current=i;force();};
 
   /* Auto-focus on open */
   React.useEffect(()=>{
@@ -16439,20 +16549,25 @@ const GlobalSearchModal=({state,onClose,onJumpToTx,setTab})=>{
     return()=>clearTimeout(t);
   },[]);
 
-  /* Escape to close */
+  /* Escape / arrow navigation */
   React.useEffect(()=>{
-    const handler=e=>{if(e.key==="Escape")onClose();};
+    const handler=e=>{
+      if(e.key==="Escape"){onClose();return;}
+      if(e.key==="ArrowDown"){e.preventDefault();setActive(Math.min(items.length-1,activeRef.current+1));}
+      else if(e.key==="ArrowUp"){e.preventDefault();setActive(Math.max(0,activeRef.current-1));}
+      else if(e.key==="Enter"){e.preventDefault();const it=items[activeRef.current];if(it)execute(it);}
+    };
     document.addEventListener("keydown",handler);
     return()=>document.removeEventListener("keydown",handler);
-  },[onClose]);
+  });
 
-  /* Fix 3 — 150ms debounce: input updates instantly, scan fires once per typing burst */
+  /* 200ms debounce for the scan */
   React.useEffect(()=>{
     const t=setTimeout(()=>setDebouncedQ(q),200);
     return()=>clearTimeout(t);
   },[q]);
 
-  /* Fix 1 — Pre-flatten transactions once, only when account data changes */
+  /* Pre-flatten transactions once */
   const allTxFlat=React.useMemo(()=>{
     const out=[];
     state.banks.forEach(b=>(b.transactions||[]).forEach(t=>out.push({...t,_accId:b.id,_accName:b.name,_accType:"bank"})));
@@ -16461,8 +16576,8 @@ const GlobalSearchModal=({state,onClose,onJumpToTx,setTab})=>{
     return out;
   },[state.banks,state.cards,state.cash]);
 
-  /* Fix 2 — Narrow memo deps: only the six slices this search actually reads */
   const qLow=debouncedQ.toLowerCase().trim();
+  const qLowLive=q.toLowerCase().trim();
   const results=React.useMemo(()=>{
     if(!qLow||qLow.length<2)return{txns:[],accounts:[],notes:[],payees:[]};
     const match=s=>(s||"").toLowerCase().includes(qLow);
@@ -16480,12 +16595,51 @@ const GlobalSearchModal=({state,onClose,onJumpToTx,setTab})=>{
   },[qLow,allTxFlat,state.notes,state.payees,state.banks,state.cards]);
 
   const total=results.txns.length+results.accounts.length+results.notes.length+results.payees.length;
-  /* Use the live (non-debounced) q for the input display, debounced only for the scan */
-  const qLowLive=q.toLowerCase().trim();
-  const rowStyle={display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 18px",borderBottom:"1px solid var(--border2)",cursor:"pointer",transition:"background .1s"};
-  const hoverOn=e=>e.currentTarget.style.background="var(--accentbg2)";
-  const hoverOff=e=>e.currentTarget.style.background="transparent";
-  const SecHd=({label,count})=>React.createElement("div",{style:{padding:"6px 18px 3px",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,background:"var(--bg5)",borderBottom:"1px solid var(--border2)"}},label+(count?" ("+count+(count===20?"+":"")+")":""));
+
+  /* Command list (navigation + actions + themes) */
+  const commands=React.useMemo(()=>{
+    const nav=(window.__mm_visibleNAV||[]).map(n=>({kind:"cmd",icon:n.id,label:"Go to "+n.label,action:()=>setTab(n.id)}));
+    const acts=[
+      {kind:"cmd",icon:"plus",label:"Quick Add Transaction",action:()=>{setQuickAddOpen&&setQuickAddOpen(true);}},
+      {kind:"cmd",icon:"sparkles",label:"What's new in this version",action:()=>{onWhatsNew&&onWhatsNew();}},
+    ];
+    const themes=(window.THEMES||[]).map(t=>({kind:"cmd",icon:"palette",label:"Theme: "+t.name,action:()=>{setTheme&&setTheme(t.id);}}));
+    return[...nav,...acts,...themes];
+  },[setTab,setQuickAddOpen,setTheme,onWhatsNew]);
+
+  /* Flat list for keyboard nav (commands first, then results) */
+  const items=React.useMemo(()=>{
+    if(!qLowLive||qLowLive.length<2)return commands;
+    const out=[];
+    results.txns.forEach(t=>out.push({kind:"txn",data:t}));
+    results.accounts.forEach(a=>out.push({kind:"acc",data:a}));
+    results.notes.forEach(n=>out.push({kind:"note",data:n}));
+    results.payees.forEach(p=>out.push({kind:"payee",data:p}));
+    return out;
+  },[qLowLive,commands,results]);
+
+  /* Keep active index in range when list changes */
+  React.useEffect(()=>{if(activeRef.current>items.length-1)activeRef.current=Math.max(0,items.length-1);force();},[items]);
+  /* Scroll active into view */
+  React.useEffect(()=>{
+    const el=listRef.current&&listRef.current.querySelector('[data-idx="'+activeRef.current+'"]');
+    if(el)el.scrollIntoView({block:"nearest"});
+  },[activeRef.current,items]);
+
+  const execute=it=>{
+    if(!it)return;
+    if(it.kind==="cmd"){it.action();onClose();return;}
+    if(it.kind==="txn"){onJumpToTx&&onJumpToTx(it.data._accType,it.data._accId,it.data.id);onClose();return;}
+    if(it.kind==="acc"){setTab(it.data._type==="bank"?"banks":"cards");onClose();return;}
+    if(it.kind==="note"){setTab("notes");onClose();return;}
+    if(it.kind==="payee"){setTab("unified_ledger");onClose();return;}
+  };
+
+  const rowStyle=active=>{const base={display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 18px",borderBottom:"1px solid var(--border2)",cursor:"pointer",transition:"background .1s",background:active?"var(--accentbg2)":null};return base;};
+  const hoverOn=e=>{if(e.currentTarget.getAttribute("data-idx")!=activeRef.current)e.currentTarget.style.background="var(--accentbg2)";};
+  const hoverOff=e=>{if(e.currentTarget.getAttribute("data-idx")!=activeRef.current)e.currentTarget.style.background="transparent";};
+  const SecHd=({label,count})=>React.createElement("div",{style:{padding:"6px 18px 3px",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,background:"var(--bg5)",borderBottom:"1px solid var(--border2)"}},label+(count?" ("+count+(count>=20?"+":"")+")":""));
+
   return React.createElement("div",{
     style:{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.72)",zIndex:1200,display:"flex",flexDirection:"column",alignItems:"center",paddingTop:60,paddingLeft:8,paddingRight:8,boxSizing:"border-box"},
     onClick:onClose
@@ -16499,20 +16653,28 @@ const GlobalSearchModal=({state,onClose,onJumpToTx,setTab})=>{
         React.createElement("span",{style:{fontSize:17,flexShrink:0,opacity:.6}},React.createElement(Icon,{n:"search",size:16})),
         React.createElement("input",{
           ref:inputRef,value:q,onChange:e=>setQ(e.target.value),
-          placeholder:"Search transactions, accounts, notes, payees…",
+          placeholder:"Search, jump to a screen, switch theme, add txn…",
           style:{flex:1,background:"transparent",border:"none",outline:"none",fontSize:15,color:"var(--text)",fontFamily:"'DM Sans',sans-serif"},
+          "aria-label":"Command palette search"
         }),
         q&&React.createElement("button",{onClick:()=>{setQ("");setDebouncedQ("");},style:{background:"none",border:"none",color:"var(--text5)",cursor:"pointer",fontSize:20,lineHeight:1,padding:"8px 10px",minWidth:44,minHeight:44,display:"inline-flex",alignItems:"center",justifyContent:"center",borderRadius:8}},"×"),
-        React.createElement("kbd",{style:{fontSize:10,background:"var(--bg5)",border:"1px solid var(--border)",borderRadius:5,padding:"2px 7px",color:"var(--text5)",flexShrink:0,whiteSpace:"nowrap"}},"Esc to close")
+        React.createElement("kbd",{style:{fontSize:10,background:"var(--bg5)",border:"1px solid var(--border)",borderRadius:5,padding:"2px 7px",color:"var(--text5)",flexShrink:0,whiteSpace:"nowrap"}},"Esc")
       ),
       /* Results */
-      React.createElement("div",{style:{overflowY:"auto",flex:1}},
+      React.createElement("div",{ref:listRef,style:{overflowY:"auto",flex:1}},
         (!qLowLive||qLowLive.length<2)
-          ?React.createElement("div",{style:{padding:"36px 20px",textAlign:"center",color:"var(--text5)",fontSize:13}},
-              React.createElement("div",{style:{fontSize:30,marginBottom:10,opacity:.5}},"⌕"),
-              "Type at least 2 characters to search"
+          ?React.createElement("div",null,
+              commands.length>0&&React.createElement(SecHd,{label:"Commands"}),
+              commands.map((c,i)=>React.createElement("div",{key:"cmd"+i,"data-idx":i,style:rowStyle(activeRef.current===i),
+                onClick:()=>execute(c),onMouseEnter:()=>setActive(i),onMouseLeave:hoverOff},
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1,overflow:"hidden"}},
+                  React.createElement("span",{style:{fontSize:18,flexShrink:0,color:"var(--text5)"}},React.createElement(Icon,{n:c.icon,size:18})),
+                  React.createElement("div",{style:{fontSize:13,fontWeight:500,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},c.label)
+                ),
+                React.createElement("kbd",{style:{fontSize:10,background:"var(--bg5)",border:"1px solid var(--border)",borderRadius:5,padding:"2px 7px",color:"var(--text6)",flexShrink:0}},"↵")
+              ))
             )
-          :total===0&&debouncedQ===q /* only show "no results" once debounce has settled */
+          :total===0&&debouncedQ===q
           ?React.createElement("div",{style:{padding:"36px 20px",textAlign:"center",color:"var(--text5)",fontSize:13}},
               React.createElement("div",{style:{fontSize:30,marginBottom:10,opacity:.5}},React.createElement(Icon,{n:"search",size:16})),
               "No results for \""+q+"\""
@@ -16520,8 +16682,8 @@ const GlobalSearchModal=({state,onClose,onJumpToTx,setTab})=>{
           :React.createElement(React.Fragment,null,
               results.txns.length>0&&React.createElement("div",null,
                 React.createElement(SecHd,{label:"Transactions",count:results.txns.length}),
-                results.txns.map(t=>React.createElement("div",{key:t.id,style:rowStyle,
-                  onClick:()=>{onJumpToTx(t._accType,t._accId,t.id);onClose();},onMouseEnter:hoverOn,onMouseLeave:hoverOff},
+                results.txns.map((t,i)=>{const idx=commands.length+i;return React.createElement("div",{key:t.id,"data-idx":idx,style:rowStyle(activeRef.current===idx),
+                  onClick:()=>execute({kind:"txn",data:t}),onMouseEnter:()=>setActive(idx),onMouseLeave:hoverOff},
                   React.createElement("div",{style:{minWidth:0,flex:1}},
                     React.createElement("div",{style:{fontSize:13,fontWeight:500,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.desc||t.payee||"—"),
                     React.createElement("div",{style:{display:"flex",gap:8,marginTop:2,fontSize:11,color:"var(--text5)",flexWrap:"wrap"}},
@@ -16535,12 +16697,12 @@ const GlobalSearchModal=({state,onClose,onJumpToTx,setTab})=>{
                     React.createElement("div",{style:{fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:t.type==="credit"?"#16a34a":"#ef4444"}},(t.type==="credit"?"+":"-")+INR(t.amount)),
                     React.createElement("span",{style:{fontSize:9,padding:"1px 6px",borderRadius:8,background:t._accType==="bank"?"#0e74901a":t._accType==="card"?"#c2410c1a":"var(--accentbg2)",color:t._accType==="bank"?"#0e7490":t._accType==="card"?"#c2410c":"var(--accent)",marginTop:2,display:"inline-block"}},t._accType==="bank"?React.createElement(Icon,{n:"bank",size:18}):t._accType==="card"?React.createElement(Icon,{n:"card",size:18}):React.createElement(Icon,{n:"cash",size:18}))
                   )
-                ))
+                );})
               ),
               results.accounts.length>0&&React.createElement("div",null,
                 React.createElement(SecHd,{label:"Accounts"}),
-                results.accounts.map(a=>React.createElement("div",{key:a.id,style:rowStyle,
-                  onClick:()=>{setTab(a._type==="bank"?"banks":"cards");onClose();},onMouseEnter:hoverOn,onMouseLeave:hoverOff},
+                results.accounts.map((a,i)=>{const idx=commands.length+results.txns.length+i;return React.createElement("div",{key:a.id,"data-idx":idx,style:rowStyle(activeRef.current===idx),
+                  onClick:()=>execute({kind:"acc",data:a}),onMouseEnter:()=>setActive(idx),onMouseLeave:hoverOff},
                   React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
                     React.createElement("span",{style:{fontSize:20}},(a._type==="bank"?React.createElement(Icon,{n:"bank",size:18}):React.createElement(Icon,{n:"card",size:18}))),
                     React.createElement("div",null,
@@ -16549,32 +16711,32 @@ const GlobalSearchModal=({state,onClose,onJumpToTx,setTab})=>{
                     )
                   ),
                   React.createElement("div",{style:{fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:a._type==="bank"?"#0e7490":"#c2410c"}},INR(a._type==="bank"?a.balance:a.outstanding))
-                ))
+                );})
               ),
               results.notes.length>0&&React.createElement("div",null,
                 React.createElement(SecHd,{label:"Notes"}),
-                results.notes.map(n=>React.createElement("div",{key:n.id,style:{...rowStyle,gap:12},
-                  onClick:()=>{setTab("notes");onClose();},onMouseEnter:hoverOn,onMouseLeave:hoverOff},
+                results.notes.map((n,i)=>{const idx=commands.length+results.txns.length+results.accounts.length+i;return React.createElement("div",{key:n.id,"data-idx":idx,style:{...rowStyle(activeRef.current===idx),gap:12},
+                  onClick:()=>execute({kind:"note",data:n}),onMouseEnter:()=>setActive(idx),onMouseLeave:hoverOff},
                   React.createElement("span",{style:{fontSize:16,flexShrink:0}},React.createElement(Icon,{n:"edit",size:16})),
                   React.createElement("div",{style:{minWidth:0,flex:1}},
                     React.createElement("div",{style:{fontSize:13,fontWeight:500,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},n.title||"Note"),
                     n.body&&React.createElement("div",{style:{fontSize:11,color:"var(--text5)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},n.body)
                   )
-                ))
+                );})
               ),
               results.payees.length>0&&React.createElement("div",null,
                 React.createElement(SecHd,{label:"Payees"}),
-                results.payees.map(p=>React.createElement("div",{key:p.id,style:{...rowStyle,gap:12},
-                  onClick:()=>{setTab("unified_ledger");onClose();},onMouseEnter:hoverOn,onMouseLeave:hoverOff},
+                results.payees.map((p,i)=>{const idx=commands.length+results.txns.length+results.accounts.length+results.notes.length+i;return React.createElement("div",{key:p.id,"data-idx":idx,style:{...rowStyle(activeRef.current===idx),gap:12},
+                  onClick:()=>execute({kind:"payee",data:p}),onMouseEnter:()=>setActive(idx),onMouseLeave:hoverOff},
                   React.createElement("span",{style:{fontSize:16,flexShrink:0}},React.createElement(Icon,{n:"user",size:18})),
                   React.createElement("div",{style:{fontSize:13,fontWeight:500,color:"var(--text)"}},p.name)
-                ))
+                );})
               )
             )
       ),
       /* Footer hint */
       React.createElement("div",{style:{padding:"7px 18px",borderTop:"1px solid var(--border2)",display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",background:"var(--bg5)"}},
-        React.createElement("span",null,"↵ jump to result"),
+        React.createElement("span",null,"↑↓ navigate · ↵ select"),
         React.createElement("span",null,"Ctrl+K / ⌘K to reopen")
       )
     )
@@ -17381,8 +17543,44 @@ const CapitalGainsCard=({shares,mf,dispatch})=>{
   );
 };
 
+/* Keyboard-navigable recent-transactions list (↑↓ navigate, ↵ jump) */
+const RecentTxnList=React.memo(({txns,onJumpToTx})=>{
+  const[idx,setIdx,onKeyDown]=useKbdList(txns.length,i=>{
+    const t=txns[i];if(!t)return;
+    if(onJumpToTx)onJumpToTx(t._bid==="__cash__"?"cash":t._accType,t._bid,t.id);
+  });
+  if(!txns||!txns.length)return null;
+  const go=t=>{if(onJumpToTx)onJumpToTx(t._bid==="__cash__"?"cash":t._accType,t._bid,t.id);};
+  return React.createElement("div",{role:"listbox",tabIndex:0,"aria-label":"Recent transactions",onKeyDown,
+    style:{outline:"none"}},
+    txns.map((tx,i)=>{
+      const isCredit=tx.type==="credit";
+      const col=tx._col||"var(--text5)";
+      const active=idx===i;
+      return React.createElement("div",{key:tx.id+i,role:"option","aria-selected":active,"data-kidx":i,
+        onClick:()=>go(tx),onMouseEnter:()=>setIdx(i),tabIndex:-1,
+        style:{display:"flex",alignItems:"center",gap:10,padding:"9px 4px",borderRadius:8,
+          cursor:"pointer",background:active?"var(--accentbg2)":"transparent",transition:"background .12s",
+          borderBottom:"1px solid var(--border2)"}},
+        React.createElement("div",{style:{width:30,height:30,borderRadius:9,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,
+          background:isCredit?"rgba(22,163,74,.1)":"rgba(239,68,68,.07)",border:"1px solid "+(isCredit?"rgba(22,163,74,.2)":"rgba(239,68,68,.18)"),color:isCredit?"#16a34a":"#ef4444"}},isCredit?"↑":"↓"),
+        React.createElement("div",{style:{flex:1,minWidth:0}},
+          React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},tx.desc||tx.payee||"—"),
+          React.createElement("div",{style:{display:"flex",gap:5,alignItems:"center",marginTop:2,fontSize:9,flexWrap:"nowrap",overflow:"hidden"}},
+            React.createElement("span",{style:{fontWeight:700,color:tx._col,background:tx._col+"15",borderRadius:6,padding:"1px 6px"}},tx._src),
+            tx.cat&&React.createElement("span",{style:{color:col,background:col+"18",borderRadius:6,padding:"1px 6px"}},catDisplayName(tx.cat))
+          )
+        ),
+        React.createElement("div",{style:{textAlign:"right",flexShrink:0,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}},
+          React.createElement("div",{style:{fontSize:13,fontWeight:700,color:isCredit?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif"}},(isCredit?"+":"−")+INR(tx.amount)),
+          React.createElement("div",{style:{fontSize:9,color:"var(--text6)"}},dmyFmt(tx.date))
+        )
+      );
+    })
+  );
+});
+
 const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobile,eodPrices={},eodNavs={},brokerCashBalance=0})=>{
-  /* ── Refresh state ── */
   const[refreshing,setRefreshing]=useState(false);
   const[refreshStatus,setRefreshStatus]=useState(null); /* {ok,msg,ts,navOk,sharesOk} */
 
@@ -24365,7 +24563,9 @@ const SwingHoldOptimizer=({shares,soldShareSnapshots={}})=>{
   );
 };
 
-const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},eodIndices={},historyCache={},soldShareSnapshots={},brokerCashBalance=0,banks=[],scheduled=[]})=>{
+const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},eodIndices={},historyCache={},soldShareSnapshots={},brokerCashBalance=0,banks=[],scheduled=[],isMobile})=>{
+  const[ready,setReady]=useState(false);
+  React.useEffect(()=>{const t=setTimeout(()=>setReady(true),120);return()=>clearTimeout(t);},[]);
   const[tab,setTab]=useState(defaultTab);const[open,setOpen]=useState(false);const[navLoad,setNavLoad]=useState(false);
   const[sharesSubTab,setSharesSubTab]=useState("holdings"); /* "holdings" | "profitability" | "timeholding" | "winloss" | "capitaleff" | "behavioural" | "timing" | "risk" | "pattern" | "drawdown" | "multitime" | "frequency" | "swing" */
   React.useEffect(()=>{setTab(defaultTab);},[defaultTab]);
@@ -24540,6 +24740,17 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
     pf:{title:"Provident Funds",sub:"Total Balance: ",subVal:INR(pfBalance),subCol:"#0f766e",addLabel:"+ Add PF Account",bar:"#34d399"},
   };
   const cfg=CFG[tab]||CFG.mf;
+  if(!ready)return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",gap:14}},
+    React.createElement("div",{style:{display:"flex",alignItems:"center",gap:13,marginBottom:16}},
+      React.createElement(Skeleton,{w:42,h:42,r:12}),
+      React.createElement("div",{style:{flex:1}},React.createElement(Skeleton,{w:"40%",h:16,style:{marginBottom:8}}),React.createElement(Skeleton,{w:"25%",h:10}))
+    ),
+    React.createElement("div",{style:{display:"flex",gap:8,marginBottom:14}},
+      React.createElement(Skeleton,{w:80,h:30,r:10}),React.createElement(Skeleton,{w:80,h:30,r:10}),React.createElement(Skeleton,{w:80,h:30,r:10})),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)",gap:12}},
+      React.createElement(SkeletonStat,null),React.createElement(SkeletonStat,null),React.createElement(SkeletonStat,null),React.createElement(SkeletonStat,null)),
+    React.createElement("div",{className:"mm-card",style:{padding:18,borderRadius:14}},React.createElement(Skeleton,{h:160}))
+  );
   return React.createElement("div",{className:"fu"},
     /* ── Page header */
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
@@ -30893,6 +31104,8 @@ const REPORT_TREE=[
 ];
 
 const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
+  const[ready,setReady]=useState(false);
+  React.useEffect(()=>{const t=setTimeout(()=>setReady(true),140);return()=>clearTimeout(t);},[]);
   const[showRptNav,setShowRptNav]=useState(false);
   const[activeRpt,setActiveRpt]=useState("cashflow");
   const[expanded,setExpanded]=useState({categories:true});
@@ -31101,6 +31314,15 @@ const InsightPrefsPanel=({state,dispatch})=>{
       hint&&React.createElement("div",{style:{fontSize:11,color:"var(--text6)",marginTop:3,lineHeight:1.5}},hint)
     );
 
+  if(!ready)return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",gap:14}},
+    React.createElement("div",{style:{display:"flex",alignItems:"center",gap:13,marginBottom:16}},
+      React.createElement(Skeleton,{w:42,h:42,r:12}),
+      React.createElement("div",{style:{flex:1}},React.createElement(Skeleton,{w:"40%",h:16,style:{marginBottom:8}}),React.createElement(Skeleton,{w:"25%",h:10}))
+    ),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(3,1fr)",gap:12}},
+      React.createElement(SkeletonStat,null),React.createElement(SkeletonStat,null),React.createElement(SkeletonStat,null)),
+    React.createElement("div",{className:"mm-card",style:{padding:18,borderRadius:14}},React.createElement(Skeleton,{h:200}))
+  );
   return React.createElement("div",{className:"fu"},
     React.createElement("div",{style:{marginBottom:24,display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}},
       React.createElement("div",null,
@@ -39160,6 +39382,26 @@ function App(){
   },[dispatch]);
   /* Wire the ref so the wrapped dispatch can call pushUndo */
   _undoPushRef.current=pushUndo;
+  /* ── Toast system ── */
+  const[toasts,setToasts]=useState([]);
+  const toastIdRef=React.useRef(1);
+  const pushToast=React.useCallback((msg,opts={})=>{
+    const id=toastIdRef.current++;
+    setToasts(ts=>[...ts,{id,msg,undo:!!opts.undo}]);
+    const ttl=opts.ttl||(opts.undo?6000:3200);
+    setTimeout(()=>setToasts(ts=>ts.filter(x=>x.id!==id)),ttl);
+    return id;
+  },[]);
+  const dismissToast=React.useCallback(id=>setToasts(ts=>ts.filter(x=>x.id!==id)),[]);
+  /* pushUndo already surfaces via the undo toast block below (ToastHost) */
+  /* ── "What's New" — show once per version ── */
+  const[whatsNew,setWhatsNew]=useState(false);
+  React.useEffect(()=>{
+    try{
+      const seen=localStorage.getItem("mm_seen_version");
+      if(seen!==APP_VERSION){setWhatsNew(true);localStorage.setItem("mm_seen_version",APP_VERSION);}
+    }catch{}
+  },[]);
   /* ── Global search ── */
   const[searchOpen,setSearchOpen]=useState(false);
   /* ── Quick-add FAB ── */
@@ -39992,7 +40234,7 @@ function App(){
           React.createElement("button",{
             className:"nb nb-icon-only"+(isActive?" nb-icon-active":""),
             onClick:()=>setTab(n.id),
-            title:n.label,aria-label:n.label,aria-current:isActive?"page":undefined,
+            title:n.label,"aria-label":n.label,"aria-current":isActive?"page":undefined,
             style:{
               border:"none",cursor:"pointer",
               "--nic":NAV_COLORS[n.id]||"var(--accent)",
@@ -40053,7 +40295,7 @@ function App(){
       /* Collapse chevron button */
       React.createElement("button",{
         onClick:toggleNav,
-        title:"Collapse sidebar",aria-label:"Collapse sidebar",
+        title:"Collapse sidebar","aria-label":"Collapse sidebar",
         style:{
           background:"transparent",border:"1px solid var(--border2)",
           borderRadius:8,color:"var(--text6)",cursor:"pointer",
@@ -40090,7 +40332,7 @@ function App(){
           React.createElement("span",{style:{fontSize:9,fontWeight:700,letterSpacing:1.2,color:"var(--text6)",textTransform:"uppercase",whiteSpace:"nowrap"}},n.label),
           React.createElement("div",{style:{flex:1,height:1,background:"var(--border2)"}})
         );
-        return React.createElement("button",{key:n.id,className:"nb"+(tab===n.id?" nb-full-active":""),onClick:()=>setTab(n.id),aria-label:n.label,aria-current:tab===n.id?"page":undefined,style:{
+        return React.createElement("button",{key:n.id,className:"nb"+(tab===n.id?" nb-full-active":""),onClick:()=>setTab(n.id),"aria-label":n.label,"aria-current":tab===n.id?"page":undefined,style:{
           display:"flex",alignItems:"center",gap:10,width:"100%",
           padding:"10px 12px",borderRadius:10,border:"none",cursor:"pointer",marginBottom:2,
           fontFamily:"'DM Sans',sans-serif",fontSize:13,
@@ -40258,32 +40500,21 @@ function App(){
       && React.createElement(GlobalNotificationSync,{state,dispatch}),
     /* Reminder Toast Manager */
     tab==="dashboard"&&React.createElement(ReminderToastManager,{state,dispatch}),
-    /* ── Undo Toast ── */
-    undoSnap&&React.createElement("div",{style:{
-      position:"fixed",bottom:isMobile?88:28,left:"50%",transform:"translateX(-50%)",
-      zIndex:1100,animation:"undoSlideUp .25s ease forwards",
-      background:"#1a2a3a",border:"1px solid rgba(2,132,199,.4)",
-      borderRadius:14,padding:"11px 18px",display:"flex",alignItems:"center",gap:14,
-      boxShadow:"0 8px 32px rgba(0,0,0,.45)",minWidth:240,maxWidth:400,
-      fontFamily:"'DM Sans',sans-serif"
-    }},
-      React.createElement("span",{style:{fontSize:13,color:"rgba(255,255,255,.85)",flex:1}},"Last action deleted • undo within 6 s"),
-      React.createElement("button",{onClick:doUndo,style:{
-        padding:"6px 16px",borderRadius:8,border:"1px solid rgba(2,132,199,.6)",
-        background:"rgba(2,132,199,.2)",color:"#38bdf8",cursor:"pointer",
-        fontSize:12,fontWeight:700,fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap"
-      }},"↩ Undo"),
-      React.createElement("button",{onClick:()=>setUndoSnap(null),style:{
-        background:"none",border:"none",color:"rgba(255,255,255,.35)",cursor:"pointer",
-        fontSize:18,lineHeight:1,padding:"8px 10px",minWidth:44,minHeight:44,display:"inline-flex",alignItems:"center",justifyContent:"center"
-      }},"×")
-    ),
-    /* ── Global Search Modal ── */
+    /* ── Toasts (incl. undo) ── */
+    React.createElement(ToastHost,{
+      toasts:undoSnap?[{id:"_undo",msg:"Last action removed — undo within 6 s",undo:true},...toasts]:toasts,
+      onUndo:id=>{ if(id==="_undo"){doUndo();} else {dismissToast(id);} },
+      onClose:id=>{ if(id==="_undo"){setUndoSnap(null);} else {dismissToast(id);} }
+    }),
+    /* ── "What's New" modal (once per version) ── */
+    whatsNew&&React.createElement(WhatsNewModal,{onClose:()=>setWhatsNew(false)}),
+    /* ── Global Search Modal (⌘K command palette) ── */
     searchOpen&&React.createElement(GlobalSearchModal,{
       state,
       onClose:()=>setSearchOpen(false),
       onJumpToTx:(accType,accId,txId)=>{onJumpToTx(accType,accId,txId);},
-      setTab
+      setTab,setTheme,setQuickAddOpen,
+      onWhatsNew:()=>{setWhatsNew(true);}
     }),
     /* ── Quick-Add FAB ── */
     !["settings","info"].includes(tab)&&React.createElement(React.Fragment,null,
