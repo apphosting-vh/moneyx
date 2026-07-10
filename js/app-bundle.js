@@ -888,7 +888,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="6.2.0";
+const APP_VERSION="6.3.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -910,7 +910,12 @@ const SVGIpoly=(points,opts={})=>React.createElement("svg",{
 },React.createElement("polyline",{points}));
 
 // Icon component — modern Lucide-inspired 24×24 stroke icons
+const _ICON_NAV_MAP={bank:"banks",card:"cards",cash:"cash",loan:"loans",invest:"inv_dash",chart:"inv_mf",pie:"inv_mf",stocks:"inv_shares",calendar:"calendar",target:"goals",home:"inv_re",building:"banks",report:"reports",receipt:"tax_est",lightbulb:"insights",hash:"calculator",inv_pf:"inv_pf"};
 const Icon=({n,size=16,col,style={}})=>{
+  /* Unify in-content iconography with the sidebar NavIcon language */
+  if(_ICON_NAV_MAP[n]&&typeof NavIcon!=="undefined"){
+    return React.createElement("span",{style:{display:"inline-flex",verticalAlign:"middle",color:col||undefined,...style}},React.createElement(NavIcon,{id:_ICON_NAV_MAP[n],size}));
+  }
   const S={width:size,height:size,viewBox:"0 0 24 24",fill:"none",stroke:col||"currentColor",strokeWidth:1.8,strokeLinecap:"round",strokeLinejoin:"round",style:{display:"inline-block",verticalAlign:"middle",...style}};
   const E=(t,p)=>React.createElement(t,p);
   const svg=(...k)=>React.createElement("svg",S,...k);
@@ -2448,23 +2453,24 @@ const SvgBar=({data,h=155})=>{
 
 /* ── SHARED UI ───────────────────────────────────────────────────────────── */
 const Btn=({children,onClick,v="primary",sz="md",disabled,sx={}})=>{
-  const S={sm:{padding:"6px 13px",fontSize:12},md:{padding:"9px 17px",fontSize:14}};
-  const V={primary:{background:"var(--accentbg)",border:"1px solid var(--accent)88",color:"var(--accent)"},secondary:{background:"var(--bg3)",border:"1px solid var(--border)",color:"var(--text3)"},success:{background:"rgba(22,163,74,.13)",border:"1px solid rgba(22,163,74,.35)",color:"#16a34a"},danger:{background:"rgba(239,68,68,.12)",border:"1px solid rgba(239,68,68,.3)",color:"#ef4444"}};
-  return React.createElement("button",{onClick,disabled,style:{display:"inline-flex",alignItems:"center",gap:6,borderRadius:8,cursor:disabled?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:500,transition:"all .2s",opacity:disabled?.5:1,...S[sz],...V[v],...sx}},children);
+  const S={sm:{padding:"7px 14px",fontSize:12},md:{padding:"10px 18px",fontSize:14}};
+  const V={primary:{background:"var(--accentbg)",border:"1px solid var(--accent)66",color:"var(--accent)"},secondary:{background:"var(--bg3)",border:"1px solid var(--border)",color:"var(--text3)"},success:{background:"rgba(22,163,74,.13)",border:"1px solid rgba(22,163,74,.35)",color:"#16a34a"},danger:{background:"rgba(239,68,68,.12)",border:"1px solid rgba(239,68,68,.3)",color:"#ef4444"}};
+  return React.createElement("button",{onClick,disabled,className:"mm-btn",style:{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:7,borderRadius:10,cursor:disabled?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:600,letterSpacing:.1,transition:"transform .15s ease,box-shadow .2s ease,background .2s ease,border-color .2s ease",opacity:disabled?.5:1,...S[sz],...V[v],...sx}},children);
 };
-const Badge=({ch,col="var(--accent)"})=>React.createElement("span",{style:{background:`${col}1a`,color:col,border:`1px solid ${col}35`,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600,whiteSpace:"nowrap"}},ch);
-const Card=({children,sx={},cn=""})=>React.createElement("div",{className:cn,style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,padding:20,...sx}},children);
-const StatCard=({label,val,sub,col="var(--accent)",icon})=>React.createElement(Card,{sx:{flex:"1 1 150px",minWidth:150}},
-  React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}},
-    React.createElement("span",{style:{fontSize:11,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.6}},label),
-    React.createElement("span",{style:{display:"flex",alignItems:"center",opacity:.6,color:"var(--text4)"}},icon)
+const Badge=({ch,col="var(--accent)"})=>React.createElement("span",{style:{background:`${col}14`,color:col,border:`1px solid ${col}30`,borderRadius:999,padding:"3px 11px",fontSize:11,fontWeight:600,letterSpacing:.2,whiteSpace:"nowrap"}},ch);
+const Card=({children,sx={},cn=""})=>React.createElement("div",{className:("mm-card "+cn).trim(),style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:16,padding:20,boxShadow:"var(--shadow-sm)",transition:"box-shadow .25s ease,border-color .2s ease,transform .2s ease",...sx}},children);
+const StatCard=({label,val,sub,col="var(--accent)",icon})=>React.createElement(Card,{cn:"mm-statcard",sx:{flex:"1 1 150px",minWidth:150,position:"relative",overflow:"hidden"}},
+  React.createElement("div",{style:{position:"absolute",top:0,left:0,bottom:0,width:3,background:col,opacity:.85}}),
+  React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,gap:8}},
+    React.createElement("span",{style:{fontSize:10.5,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,fontWeight:600}},label),
+    icon&&React.createElement("span",{style:{display:"flex",alignItems:"center",justifyContent:"center",width:30,height:30,borderRadius:9,background:`${col}14`,color:col,flexShrink:0}},icon)
   ),
-  React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:700,color:col,lineHeight:1.2}},val),
-  sub&&React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:5}},sub)
+  React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:700,color:col,lineHeight:1.15,letterSpacing:-.3}},val),
+  sub&&React.createElement("div",{style:{fontSize:11.5,color:"var(--text5)",marginTop:6}},sub)
 );
 const Modal=({title,onClose,children,w=480})=>React.createElement("div",{className:"modal-bd",onClick:onClose,style:{position:"fixed",top:0,right:0,bottom:0,left:0,zIndex:1000,overflowY:"auto",overflowX:"hidden",WebkitOverflowScrolling:"touch"}},
   React.createElement("div",{style:{display:"flex",justifyContent:"center",alignItems:"center",minHeight:"100dvh",padding:"24px 12px",boxSizing:"border-box"}},
-    React.createElement("div",{className:"fu",onClick:e=>e.stopPropagation(),style:{background:"var(--modal-bg)",border:"1px solid var(--border)",borderRadius:14,padding:"20px 18px",width:"100%",maxWidth:w,boxSizing:"border-box",flexShrink:0}},
+    React.createElement("div",{className:"fu",onClick:e=>e.stopPropagation(),style:{background:"var(--modal-bg)",border:"1px solid var(--border)",borderRadius:18,padding:"22px 20px",width:"100%",maxWidth:w,boxSizing:"border-box",flexShrink:0,boxShadow:"var(--shadow-lg)"}},
       React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,gap:8}},
         React.createElement("h3",{style:{color:"var(--accent)",fontFamily:"'Sora',sans-serif",fontSize:16,fontWeight:700,lineHeight:1.3,minWidth:0,flex:1}},title),
         React.createElement("button",{onClick:onClose,style:{background:"none",border:"none",color:"var(--text5)",cursor:"pointer",fontSize:26,lineHeight:1,padding:"8px 12px",minWidth:44,minHeight:44,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,borderRadius:8,transition:"background .15s"},onMouseEnter:e=>{e.currentTarget.style.background="var(--accentbg2)";},onMouseLeave:e=>{e.currentTarget.style.background="transparent";}},"×")
@@ -2472,13 +2478,21 @@ const Modal=({title,onClose,children,w=480})=>React.createElement("div",{classNa
     )
   )
 );
-const Field=({label,children,sx={}})=>React.createElement("div",{style:{marginBottom:13,...sx}},
-  React.createElement("label",{style:{display:"block",color:"var(--text5)",fontSize:11,textTransform:"uppercase",letterSpacing:.5,marginBottom:5}},label),children
+const Field=({label,children,sx={}})=>React.createElement("div",{style:{marginBottom:14,...sx}},
+  React.createElement("label",{style:{display:"block",color:"var(--text5)",fontSize:10.5,fontWeight:600,textTransform:"uppercase",letterSpacing:.7,marginBottom:6}},label),children
 );
-const HR=()=>React.createElement("div",{style:{borderTop:"1px solid var(--border)",margin:"14px 0"}});
-const Empty=({icon,text})=>React.createElement("div",{style:{textAlign:"center",padding:"36px 20px",color:"var(--text6)"}},
-  React.createElement("div",{style:{marginBottom:10,display:"flex",justifyContent:"center",opacity:.45}},icon),
-  React.createElement("div",{style:{fontSize:13}},text)
+const HR=()=>React.createElement("div",{style:{borderTop:"1px solid var(--border2)",margin:"16px 0"}});
+const Empty=({icon,text})=>React.createElement("div",{style:{textAlign:"center",padding:"48px 20px",color:"var(--text6)"}},
+  icon&&React.createElement("div",{style:{margin:"0 auto 14px",display:"flex",alignItems:"center",justifyContent:"center",width:56,height:56,borderRadius:16,background:"var(--accentbg2)",color:"var(--text5)",opacity:.9}},icon),
+  React.createElement("div",{style:{fontSize:13.5,lineHeight:1.5}},text)
+);
+
+/* ── Skeleton loader primitives ── */
+const Skeleton=({w,h,r,style={}})=>React.createElement("div",{className:"mm-skel",style:{width:w||"100%",height:h||12,borderRadius:r||8,...style}});
+const SkeletonStat=()=>React.createElement("div",{className:"mm-card mm-statcard",style:{padding:18}},
+  React.createElement(Skeleton,{w:54,h:12}),
+  React.createElement(Skeleton,{w:"70%",h:24,style:{marginTop:12,marginBottom:10}}),
+  React.createElement(Skeleton,{w:90,h:8})
 );
 
 /* ── STATUS CONFIG ────────────────────────────────────────────────────── */
@@ -7708,7 +7722,10 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
       )
     ),
     !isMobile&&React.createElement("div",{style:{width:200,minWidth:200,display:"flex",flexDirection:"column",gap:2,paddingRight:16,borderRight:"1px solid #0d1e32",marginRight:24}},
-      React.createElement("div",{style:{fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.8,marginBottom:12,paddingLeft:4}},"Settings"),
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12,paddingLeft:4}},
+        React.createElement("div",{style:{width:3,height:14,borderRadius:2,background:"#93c5fd",flexShrink:0}}),
+        React.createElement("div",{style:{fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.8}},"Settings")
+      ),
       STABS.map(t=>React.createElement(SectionTab,{key:t.id,id:t.id,active:stab===t.id,label:t.label,icon:t.icon,onClick:setStab}))
     ),
 
@@ -9171,16 +9188,18 @@ var NotesSection=React.memo(({notes=[],dispatch})=>{
     }),
     /* ── Header */
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}},
-      React.createElement("div",null,
-        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:700,color:"var(--text)"}},"Notes"),
-        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},
+      React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+        React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#6ee7b7",flexShrink:0}}),
+        React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:23,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"Notes"),
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},
           notes.length+" note"+(notes.length!==1?"s":""),
           notes.filter(n=>n.reminder&&!n.reminderDismissed).length>0&&
             React.createElement("span",{style:{marginLeft:8,fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:10,background:"rgba(180,83,9,.18)",color:"#b45309",border:"1px solid rgba(180,83,9,.35)"}},
               ""+notes.filter(n=>n.reminder&&!n.reminderDismissed).length+" reminder"+(notes.filter(n=>n.reminder&&!n.reminderDismissed).length!==1?"s":"")
             )
         )
-      ),
+      )),
       React.createElement(Btn,{onClick:openAdd},"+ New Note")
     ),
 
@@ -9803,10 +9822,12 @@ var ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,paye
 
     /* ── Header row */
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16,gap:12,flexWrap:"wrap"}},
-      React.createElement("div",null,
-        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:700,color:"var(--text)"}},"Scheduled Transactions"),
-        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},"Schedule recurring or future-dated transactions across all accounts.")
-      ),
+      React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+        React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#a78bfa",flexShrink:0}}),
+        React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:23,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"Scheduled Transactions"),
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},"Schedule recurring or future-dated transactions across all accounts.")
+      )),
       React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}},
         React.createElement(Btn,{onClick:()=>setAddScOpen(true),sx:{gap:6,whiteSpace:"nowrap"}},"+ Add Scheduled"),
         /* Completed toggle checkbox */
@@ -11826,189 +11847,82 @@ var usePersistentReducer=(reducer,init)=>{
 /* ── NAV ICONS -- pixel-perfect 16×16 stroke SVGs, inherit color via currentColor ── */
 var NavIcon=({id,size=16})=>{
   const s={width:size,height:size,viewBox:"0 0 16 16",fill:"none",stroke:"currentColor",strokeWidth:1.5,strokeLinecap:"round",strokeLinejoin:"round",display:"block",flexShrink:0};
+  const g=(...k)=>React.createElement("svg",s,...k);
+  const P=d=>React.createElement("path",{d});
+  const L=(x1,y1,x2,y2)=>React.createElement("line",{x1,y1,x2,y2});
+  const C=(cx,cy,r,f)=>React.createElement("circle",{cx,cy,r,...(f?{fill:"currentColor",stroke:"none"}:{})});
+  const R=(x,y,w,h,rx)=>React.createElement("rect",{x,y,width:w,height:h,rx:rx==null?1.4:rx});
+  const PL=(pts,extra)=>React.createElement("polyline",{points:pts,...(extra||{})});
+  const T=t=>React.createElement("text",{x:8,y:10.8,textAnchor:"middle",fontSize:6.5,fontWeight:700,fill:"currentColor",stroke:"none",fontFamily:"sans-serif"},t);
   switch(id){
-    /* ── Dashboard: 2×2 rounded tiles ── */
+    /* ── Dashboard: one large panel + two stacked tiles ── */
     case"dashboard":
-      return React.createElement("svg",s,
-        React.createElement("rect",{x:1.5,y:1.5,width:5.5,height:5.5,rx:1.2}),
-        React.createElement("rect",{x:9,y:1.5,width:5.5,height:5.5,rx:1.2}),
-        React.createElement("rect",{x:1.5,y:9,width:5.5,height:5.5,rx:1.2}),
-        React.createElement("rect",{x:9,y:9,width:5.5,height:5.5,rx:1.2})
-      );
-    /* ── Banks: roof triangle + 3 columns + base bar ── */
+      return g(R(2,2,5.5,12,1.5),R(9,2,5,5,1.5),R(9,8.5,5,5.5,1.5));
+    /* ── Banks: roof + three columns + base ── */
     case"banks":
-      return React.createElement("svg",s,
-        React.createElement("path",{d:"M1.5 6.5L8 2l6.5 4.5H1.5z"}),
-        React.createElement("line",{x1:3.5,y1:6.5,x2:3.5,y2:11.5}),
-        React.createElement("line",{x1:8,y1:6.5,x2:8,y2:11.5}),
-        React.createElement("line",{x1:12.5,y1:6.5,x2:12.5,y2:11.5}),
-        React.createElement("line",{x1:1.5,y1:11.5,x2:14.5,y2:11.5}),
-        React.createElement("line",{x1:1.5,y1:13.5,x2:14.5,y2:13.5})
-      );
-    /* ── Cards: card body + stripe + chip ── */
+      return g(P("M2 6.3 8 2.3 14 6.3"),L(4,7,4,12.2),L(8,7,8,12.2),L(12,7,12,12.2),L(2.2,12.6,13.8,12.6));
+    /* ── Cards: rounded card + magstripe + chip ── */
     case"cards":
-      return React.createElement("svg",s,
-        React.createElement("rect",{x:1.5,y:3.5,width:13,height:9,rx:1.5}),
-        React.createElement("line",{x1:1.5,y1:7,x2:14.5,y2:7}),
-        React.createElement("rect",{x:3,y:9,width:3,height:2,rx:.6})
-      );
-    /* ── Cash: banknote rectangle + centre circle + corner dots ── */
+      return g(R(1.5,3.5,13,9,1.9),L(1.5,6.9,14.5,6.9),R(3.4,9.2,3,2,0.6));
+    /* ── Cash: modern wallet + button pocket ── */
     case"cash":
-      return React.createElement("svg",s,
-        React.createElement("rect",{x:1.5,y:4.5,width:13,height:7,rx:1.3}),
-        React.createElement("circle",{cx:8,cy:8,r:1.9}),
-        React.createElement("circle",{cx:4,cy:8,r:.6,fill:"currentColor",stroke:"none"}),
-        React.createElement("circle",{cx:12,cy:8,r:.6,fill:"currentColor",stroke:"none"})
-      );
-    /* ── Loans: document + diagonal % ── */
+      return g(R(1.5,3.8,13,8.6,2),P("M14.5 7.6H11.4a1.5 1.5 0 000 3h3.1"),C(11.9,9.1,0.7,true));
+    /* ── Loans: percent in a circle (interest) ── */
     case"loans":
-      return React.createElement("svg",s,
-        React.createElement("path",{d:"M9.5 1.5H4a1.2 1.2 0 00-1.2 1.2v10.6a1.2 1.2 0 001.2 1.2h8a1.2 1.2 0 001.2-1.2V5.2z"}),
-        React.createElement("polyline",{points:"9.5,1.5 9.5,5.2 13.2,5.2"}),
-        React.createElement("line",{x1:5.5,y1:11,x2:10.5,y2:7}),
-        React.createElement("circle",{cx:6,cy:7.5,r:.9}),
-        React.createElement("circle",{cx:10,cy:10.5,r:.9})
-      );
-    /* ── Scheduled: calendar + clock face ── */
+      return g(C(8,8,6),L(5.6,10.4,10.4,5.6),C(6.2,6.2,0.95),C(9.8,9.8,0.95));
+    /* ── Scheduled: calendar + clock ── */
     case"scheduled":
-      return React.createElement("svg",s,
-        React.createElement("rect",{x:2,y:3,width:12,height:11,rx:1.4}),
-        React.createElement("line",{x1:5.5,y1:1.5,x2:5.5,y2:4.5}),
-        React.createElement("line",{x1:10.5,y1:1.5,x2:10.5,y2:4.5}),
-        React.createElement("line",{x1:2,y1:7,x2:14,y2:7}),
-        React.createElement("circle",{cx:8,cy:10.5,r:2.4}),
-        React.createElement("polyline",{points:"8,9.2 8,10.5 9.2,11.4"})
-      );
-    /* ── All Transactions: 3 clean horizontal rows ── */
+      return g(R(1.8,3,12.4,11,1.6),L(5,1.6,5,4.2),L(11,1.6,11,4.2),L(1.8,6.8,14.2,6.8),C(8,10.6,2.5),PL("8,9.3 8,10.6 9.5,11.3"));
+    /* ── All Transactions: up/down flow arrows ── */
     case"unified_ledger":
-      return React.createElement("svg",s,
-        React.createElement("line",{x1:1.5,y1:4,x2:14.5,y2:4}),
-        React.createElement("line",{x1:1.5,y1:8,x2:14.5,y2:8}),
-        React.createElement("line",{x1:1.5,y1:12,x2:10.5,y2:12}),
-        React.createElement("circle",{cx:1.5,cy:4,r:.9,fill:"currentColor",stroke:"none"}),
-        React.createElement("circle",{cx:1.5,cy:8,r:.9,fill:"currentColor",stroke:"none"}),
-        React.createElement("circle",{cx:1.5,cy:12,r:.9,fill:"currentColor",stroke:"none"})
-      );
-    /* ── Invest overview: rising trend + arrow ── */
+      return g(P("M5 13.2V4.2"),PL("2.6,6.6 5,4.2 7.4,6.6"),P("M11 2.8v9"),PL("8.6,9.4 11,11.8 13.4,9.4"));
+    /* ── Investments overview: rising trend + arrow ── */
     case"inv_dash":
-      return React.createElement("svg",s,
-        React.createElement("polyline",{points:"1.5,12 5,7.5 8.5,9.5 13.5,4"}),
-        React.createElement("polyline",{points:"10.5,4 13.5,4 13.5,7"})
-      );
-    /* ── Mutual Funds: 4 ascending bars ── */
+      return g(PL("1.8,11.5 5.6,7.6 8.6,9.6 14,4.2"),PL("10.6,4.2 14,4.2 14,7.6"));
+    /* ── Mutual Funds: donut allocation ── */
     case"inv_mf":
-      return React.createElement("svg",s,
-        React.createElement("rect",{x:1.5,y:10.5,width:2.5,height:3.5,rx:.6}),
-        React.createElement("rect",{x:5.5,y:7.5,width:2.5,height:6.5,rx:.6}),
-        React.createElement("rect",{x:9.5,y:4.5,width:2.5,height:9.5,rx:.6}),
-        React.createElement("line",{x1:1.5,y1:14,x2:14.5,y2:14})
-      );
+      return g(C(8,8,5.4),C(8,8,2.1),L(8,2.6,8,5.9),L(12.9,9.4,10.2,8.5));
     /* ── Shares: candlestick chart ── */
     case"inv_shares":
-      return React.createElement("svg",s,
-        React.createElement("line",{x1:4,y1:2.5,x2:4,y2:13.5}),
-        React.createElement("rect",{x:2.5,y:5,width:3,height:5.5,rx:.5}),
-        React.createElement("line",{x1:9,y1:1.5,x2:9,y2:12}),
-        React.createElement("rect",{x:7.5,y:4.5,width:3,height:4,rx:.5}),
-        React.createElement("line",{x1:13.5,y1:4,x2:13.5,y2:14}),
-        React.createElement("rect",{x:12,y:6.5,width:3,height:5,rx:.5})
-      );
-    /* ── Fixed Deposit: clock (time-locked) ── */
+      return g(L(4,2.6,4,13.4),R(2.7,5,2.6,5,0.5),L(9,2,9,12),R(7.7,4.4,2.6,4,0.5),L(13,4,13,14),R(11.7,6.4,2.6,5,0.5));
+    /* ── Fixed Deposit: padlock (locked-in) ── */
     case"inv_fd":
-      return React.createElement("svg",s,
-        React.createElement("circle",{cx:8,cy:8.5,r:5.5}),
-        React.createElement("polyline",{points:"8,5.5 8,8.5 10.5,10"}),
-        React.createElement("line",{x1:6,y1:2,x2:10,y2:2})
-      );
-    /* ── Real Estate: clean house silhouette ── */
+      return g(P("M5.5 7V5.2a2.5 2.5 0 015 0V7"),R(3.6,7,8.8,6.4,1.6),C(8,9.7,0.95),L(8,10.5,8,11.5));
+    /* ── Real Estate: house with door ── */
     case"inv_re":
-      return React.createElement("svg",s,
-        React.createElement("path",{d:"M1.5 8.5L8 2.5l6.5 6V14H10v-4H6v4H1.5z"}),
-        React.createElement("line",{x1:1.5,y1:14,x2:14.5,y2:14})
-      );
-    /* ── Provident Fund: shield with ₹ — secure, government-backed savings ── */
+      return g(P("M2.2 8 8 2.6 13.8 8"),P("M3.6 7.1V13.4H12.4V7.1"),R(6.7,9.6,2.6,3.8,0.4),L(2.2,13.6,13.8,13.6));
+    /* ── Provident Fund: shield + rupee ── */
     case"inv_pf":
-      return React.createElement("svg",s,
-        React.createElement("path",{d:"M8 1.5L2 4v5c0 3.2 2.6 5.8 6 6.5 3.4-.7 6-3.3 6-6.5V4L8 1.5z"}),
-        React.createElement("text",{x:8,y:11,textAnchor:"middle",fontSize:6.5,fontWeight:700,fill:"currentColor",stroke:"none",fontFamily:"sans-serif"},"₹")
-      );
-    /* ── Calendar: grid with highlighted day ── */
+      return g(P("M8 1.8 2.6 4v4.6c0 3 2.3 5.2 5.4 6 3.1-.8 5.4-3 5.4-6V4L8 1.8Z"),T("\u20B9"));
+    /* ── Calendar: grid + highlighted day ── */
     case"calendar":
-      return React.createElement("svg",s,
-        React.createElement("rect",{x:1.5,y:3,width:13,height:11.5,rx:1.4}),
-        React.createElement("line",{x1:5.5,y1:1.5,x2:5.5,y2:4.5}),
-        React.createElement("line",{x1:10.5,y1:1.5,x2:10.5,y2:4.5}),
-        React.createElement("line",{x1:1.5,y1:7,x2:14.5,y2:7}),
-        React.createElement("circle",{cx:8,cy:10.5,r:1.2,fill:"currentColor",stroke:"none"})
-      );
-    /* ── Goals: concentric target rings + dot ── */
+      return g(R(1.8,3,12.4,11.5,1.6),L(5,1.6,5,4.3),L(11,1.6,11,4.3),L(1.8,7,14.2,7),C(8,10.7,1.3,true));
+    /* ── Goals: concentric target ── */
     case"goals":
-      return React.createElement("svg",s,
-        React.createElement("circle",{cx:8,cy:8,r:6}),
-        React.createElement("circle",{cx:8,cy:8,r:3.5}),
-        React.createElement("circle",{cx:8,cy:8,r:1,fill:"currentColor",stroke:"none"})
-      );
-    /* ── Insights: ascending bars + dashed trend ── */
+      return g(C(8,8,6),C(8,8,3.3),C(8,8,1,true));
+    /* ── Insights: lightbulb (ideas) ── */
     case"insights":
-      return React.createElement("svg",s,
-        React.createElement("rect",{x:1.5,y:10,width:3,height:4,rx:.6}),
-        React.createElement("rect",{x:6.5,y:6.5,width:3,height:7.5,rx:.6}),
-        React.createElement("rect",{x:11.5,y:3,width:3,height:11,rx:.6}),
-        React.createElement("polyline",{points:"3,9.5 8,6 13,2.5",strokeDasharray:"2,1.5"})
-      );
-    /* ── Notes: document + 2 text lines ── */
+      return g(P("M5.2 10a4 4 0 116 0c-.5.5-.9 1-1 1.8H6.2c-.1-.8-.5-1.3-1-1.8Z"),L(6.5,13,9.5,13),L(7,14.2,9,14.2));
+    /* ── Notes: document + folded corner + lines ── */
     case"notes":
-      return React.createElement("svg",s,
-        React.createElement("path",{d:"M10.5 1.5H3.8a1.2 1.2 0 00-1.2 1.2v10.6a1.2 1.2 0 001.2 1.2h8.4a1.2 1.2 0 001.2-1.2V5.2z"}),
-        React.createElement("polyline",{points:"10.5,1.5 10.5,5.2 13.4,5.2"}),
-        React.createElement("line",{x1:5,y1:8,x2:11,y2:8}),
-        React.createElement("line",{x1:5,y1:10.5,x2:8.5,y2:10.5})
-      );
-    /* ── Calculator: body + display + 6 keys ── */
+      return g(P("M10.3 2H4.2a1.3 1.3 0 00-1.3 1.3v9.4a1.3 1.3 0 001.3 1.3h7.6a1.3 1.3 0 001.3-1.3V4.7Z"),PL("10.3,2 10.3,4.7 13,4.7"),L(5,8,11,8),L(5,10.5,8.5,10.5));
+    /* ── Calculator: body + display + keys ── */
     case"calculator":
-      return React.createElement("svg",s,
-        React.createElement("rect",{x:2.5,y:1.5,width:11,height:13,rx:1.6}),
-        React.createElement("rect",{x:4.5,y:3.2,width:7,height:2.8,rx:.7,fill:"currentColor",opacity:.2,stroke:"none"}),
-        React.createElement("circle",{cx:5.5,cy:8.5,r:.85,fill:"currentColor",stroke:"none"}),
-        React.createElement("circle",{cx:8,cy:8.5,r:.85,fill:"currentColor",stroke:"none"}),
-        React.createElement("circle",{cx:10.5,cy:8.5,r:.85,fill:"currentColor",stroke:"none"}),
-        React.createElement("circle",{cx:5.5,cy:11.5,r:.85,fill:"currentColor",stroke:"none"}),
-        React.createElement("circle",{cx:8,cy:11.5,r:.85,fill:"currentColor",stroke:"none"}),
-        React.createElement("circle",{cx:10.5,cy:11.5,r:.85,fill:"currentColor",stroke:"none"})
-      );
-    /* ── Reports: document + embedded bar chart ── */
+      return g(R(2.7,1.6,10.6,12.8,1.8),R(4.4,3.2,7.2,2.6,0.6),C(5.6,8.6,0.85,true),C(8,8.6,0.85,true),C(10.4,8.6,0.85,true),C(5.6,11.4,0.85,true),C(8,11.4,0.85,true),C(10.4,11.4,0.85,true));
+    /* ── Reports: document + bar chart ── */
     case"reports":
-      return React.createElement("svg",s,
-        React.createElement("path",{d:"M9.5 1.5H4a1.2 1.2 0 00-1.2 1.2v10.6a1.2 1.2 0 001.2 1.2h8a1.2 1.2 0 001.2-1.2V5.2z"}),
-        React.createElement("polyline",{points:"9.5,1.5 9.5,5.2 13.2,5.2"}),
-        React.createElement("rect",{x:5,y:9.5,width:1.5,height:3,rx:.4}),
-        React.createElement("rect",{x:7.5,y:8,width:1.5,height:4.5,rx:.4}),
-        React.createElement("rect",{x:10,y:6.5,width:1.5,height:6,rx:.4})
-      );
-    /* ── Settings: gear — circle + 8 spokes ── */
+      return g(P("M9.5 2H4.2a1.3 1.3 0 00-1.3 1.3v9.4a1.3 1.3 0 001.3 1.3h7.6a1.3 1.3 0 001.3-1.3V5.2Z"),PL("9.5,2 9.5,5.2 12.8,5.2"),R(5,9.5,1.4,3,0.4),R(7.6,8,1.4,4.5,0.4),R(10.2,6.8,1.4,5.7,0.4));
+    /* ── Settings: gear ── */
     case"settings":
-      return React.createElement("svg",s,
-        React.createElement("circle",{cx:8,cy:8,r:2.4}),
-        React.createElement("path",{d:"M8 1.5v1.3M8 13.2v1.3M1.5 8h1.3M13.2 8h1.3M3.4 3.4l.95.95M11.65 11.65l.95.95M3.4 12.6l.95-.95M11.65 4.35l.95-.95"})
-      );
-    /* ── Info: circled lowercase i ── */
+      return g(C(8,8,2.3),P("M8 1.4v1.4M8 13.2v1.4M1.4 8h1.4M13.2 8h1.4M3.3 3.3l1 1M11.7 11.7l1 1M3.3 12.7l1-1M11.7 4.3l1-1"));
+    /* ── Info: circled i ── */
     case"info":
-      return React.createElement("svg",s,
-        React.createElement("circle",{cx:8,cy:8,r:6.2}),
-        React.createElement("line",{x1:8,y1:7,x2:8,y2:11.5}),
-        React.createElement("circle",{cx:8,cy:4.8,r:.85,fill:"currentColor",stroke:"none"})
-      );
-    /* ── Tax Estimator: receipt + % lines ── */
+      return g(C(8,8,6.2),L(8,7.2,8,11.4),C(8,4.9,0.85,true));
+    /* ── Tax Estimator: receipt + percent ── */
     case"tax_est":
-      return React.createElement("svg",s,
-        React.createElement("path",{d:"M11 1.5H5a1.2 1.2 0 00-1.2 1.2v10.6a1.2 1.2 0 001.2 1.2h6a1.2 1.2 0 001.2-1.2V2.7a1.2 1.2 0 00-1.2-1.2z"}),
-        React.createElement("line",{x1:5.5,y1:5,x2:10.5,y2:5}),
-        React.createElement("line",{x1:5.5,y1:10.5,x2:10.5,y2:7}),
-        React.createElement("circle",{cx:6.2,cy:7.2,r:.85}),
-        React.createElement("circle",{cx:9.8,cy:10.2,r:.85})
-      );
+      return g(P("M4 2h8v11.6l-1.3-.9-1.3.9-1.3-.9-1.3.9-1.3-.9-1.3.9Z"),L(5.8,4.8,10.2,4.8),L(6.2,9.6,9.8,6.4),C(6.7,7,0.7),C(9.3,9.4,0.7));
     default:
-      return React.createElement("svg",s,React.createElement("circle",{cx:8,cy:8,r:5}));
+      return g(C(8,8,5));
   }
 };
 
@@ -13329,10 +13243,12 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}},
       React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,minWidth:0}},
         isMobile&&mobileView==="detail"&&React.createElement("button",{onClick:()=>setMobileView("list"),style:{background:"transparent",border:"1px solid var(--border)",borderRadius:8,color:"var(--accent)",cursor:"pointer",fontSize:13,padding:"5px 10px",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap",flexShrink:0}},"← Back"),
-        React.createElement("div",null,
-          React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,color:"var(--text)"}},isMobile&&mobileView==="detail"?(selD?.name||"Transactions"):"Bank Accounts"),
-          !(isMobile&&mobileView==="detail")&&React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},"Total: ",React.createElement("span",{style:{color:"#0e7490",fontWeight:600}},INR(banks.reduce((s,b)=>s+b.balance,0))))
-        )
+        React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+          React.createElement("div",{style:{width:4,minHeight:isMobile?30:40,borderRadius:3,background:"#38bdf8",flexShrink:0}}),
+          React.createElement("div",null,
+          React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},isMobile&&mobileView==="detail"?(selD?.name||"Transactions"):"Bank Accounts"),
+          !(isMobile&&mobileView==="detail")&&React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},"Total: ",React.createElement("span",{style:{color:"#0e7490",fontWeight:600}},INR(banks.reduce((s,b)=>s+b.balance,0))))
+        ))
       ),
       !(isMobile&&mobileView==="detail")&&React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center"}},
         banks.length>1&&React.createElement("button",{
@@ -13550,10 +13466,12 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}},
       React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,minWidth:0}},
         isMobile&&mobileView==="detail"&&React.createElement("button",{onClick:()=>setMobileView("list"),style:{background:"transparent",border:"1px solid var(--border)",borderRadius:8,color:"var(--accent)",cursor:"pointer",fontSize:13,padding:"5px 10px",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap",flexShrink:0}},"← Back"),
-        React.createElement("div",null,
-          React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,color:"var(--text)"}},isMobile&&mobileView==="detail"?(selD?.name||"Transactions"):"Credit Cards"),
-          !(isMobile&&mobileView==="detail")&&React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},"Outstanding: ",React.createElement("span",{style:{color:"#c2410c",fontWeight:600}},INR(cards.reduce((s,c)=>s+c.outstanding,0))))
-        )
+        React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+          React.createElement("div",{style:{width:4,minHeight:isMobile?30:40,borderRadius:3,background:"#f472b6",flexShrink:0}}),
+          React.createElement("div",null,
+          React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},isMobile&&mobileView==="detail"?(selD?.name||"Transactions"):"Credit Cards"),
+          !(isMobile&&mobileView==="detail")&&React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},"Outstanding: ",React.createElement("span",{style:{color:"#c2410c",fontWeight:600}},INR(cards.reduce((s,c)=>s+c.outstanding,0))))
+        ))
       ),
       !(isMobile&&mobileView==="detail")&&React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center"}},
         cards.length>1&&React.createElement("button",{
@@ -13789,9 +13707,12 @@ const CashSection=React.memo(({cash,dispatch,categories,payees,allBanks,allCards
   const catMap=cash.transactions.filter(t=>t.type==="debit").reduce((a,t)=>{const k=catMainName(t.cat||"Others");a[k]=(a[k]||0)+t.amount;return a;},{});
   const pieData=Object.entries(catMap).map(([name,value])=>({name,value}));
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",height:"100%"}},
-    React.createElement("div",{style:{marginBottom:16}},
-      React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:700,color:"var(--text)"}},"Cash Account"),
-      React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},"Physical cash and cash-based transactions")
+    React.createElement("div",{style:{marginBottom:16,display:"flex",alignItems:"stretch",gap:13}},
+      React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#4ade80",flexShrink:0}}),
+      React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:23,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"Cash Account"),
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},"Physical cash and cash-based transactions")
+      )
     ),
     React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"1fr 1fr 1fr",gap:12,marginBottom:16}},
       React.createElement(Card,{sx:{background:"var(--card)"}},
@@ -14512,6 +14433,15 @@ const Dashboard=React.memo(({data,isMobile})=>{
   };
 
   /* ━━ RENDER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  if(!ready)return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",gap:14,padding:isMobile?4:0}},
+    React.createElement(SkeletonStat,null),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)",gap:14}},
+      React.createElement(SkeletonStat,null),React.createElement(SkeletonStat,null),
+      React.createElement(SkeletonStat,null),React.createElement(SkeletonStat,null)),
+    React.createElement("div",{className:"mm-card",style:{padding:18,borderRadius:14}},
+      React.createElement(Skeleton,{w:"40%",h:16,style:{marginBottom:14}}),
+      React.createElement(Skeleton,{h:140}))
+  );
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",gap:14}},
     /* Share Summary Modal */
     shareOpen&&React.createElement(ShareSummaryModal,{data,allBankTx,thisMonth,onClose:()=>setShareOpen(false)}),
@@ -14584,7 +14514,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
 
       /* ── Absolute action buttons ── */
       React.createElement("button",{
-        onClick:()=>setShowWidgetMgr(true),title:"Customize dashboard sections",
+        onClick:()=>setShowWidgetMgr(true),title:"Customize dashboard sections",aria-label:"Customize dashboard sections",
         style:{position:"absolute",top:13,right:13,zIndex:2,padding:"5px 11px",borderRadius:8,
           border:"1px solid var(--border2)",background:"var(--bg4)",color:"var(--text5)",cursor:"pointer",
           fontSize:11,fontFamily:"'DM Sans',sans-serif",fontWeight:600,display:"flex",alignItems:"center",gap:4,
@@ -14593,7 +14523,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
         onMouseLeave:e=>{e.currentTarget.style.color="var(--text5)";e.currentTarget.style.borderColor="var(--border2)";},
       },React.createElement(Icon,{n:"settings",size:13}),!isMobile&&React.createElement("span",null,"Customize")),
       React.createElement("button",{
-        onClick:()=>setShareOpen(true),title:"Share this month's summary",
+        onClick:()=>setShareOpen(true),title:"Share this month's summary",aria-label:"Share this month's summary",
         style:{position:"absolute",top:13,right:isMobile?56:136,zIndex:2,padding:"5px 11px",borderRadius:8,
           border:"1px solid var(--border2)",background:"var(--bg4)",color:"var(--text5)",cursor:"pointer",
           fontSize:11,fontFamily:"'DM Sans',sans-serif",fontWeight:600,display:"flex",alignItems:"center",gap:4,
@@ -14608,8 +14538,9 @@ const Dashboard=React.memo(({data,isMobile})=>{
         /* Greeting */
         React.createElement("div",{style:{
           paddingRight:isMobile?100:176,marginBottom:isMobile?14:18,
-          display:"flex",alignItems:"baseline",gap:8,flexWrap:"wrap",
+          display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",
         }},
+          React.createElement("span",{style:{width:4,height:16,borderRadius:3,background:"#fbbf24",flexShrink:0,display:"inline-block"}}),
           React.createElement("span",{style:{fontSize:isMobile?12:14,fontWeight:600,color:"var(--text3)",letterSpacing:.1}},greeting),
           React.createElement("span",{style:{fontSize:isMobile?11:12,color:"var(--text5)",letterSpacing:.2}},"· "+dateStr)
         ),
@@ -17692,10 +17623,12 @@ const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobil
   return React.createElement("div",{className:"fu"},
     /* ── Page title */
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:refreshStatus?10:20,flexWrap:"wrap",gap:10}},
-      React.createElement("div",null,
-        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:700,color:"var(--text)"}},"Investment Dashboard"),
+      React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+        React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#2dd4bf",flexShrink:0}}),
+        React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:23,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"Investment Dashboard"),
         React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4}},"Portfolio overview · "+new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}))
-      ),
+      )),
       React.createElement(Btn,{v:"success",sz:"sm",onClick:refreshAll,disabled:refreshing},
         refreshing
           ? React.createElement(React.Fragment,null,React.createElement("span",{className:"spinr"},"⟳")," Refreshing…")
@@ -24600,20 +24533,22 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
   const pfInterest=pfBalance-pfTotalContrib;
   /* Dynamic section config based on active tab */
   const CFG={
-    mf:{title:"Mutual Funds",sub:"Portfolio: ",subVal:INR(mfTotal),subCol:"#6d28d9",addLabel:"+ Add Fund"},
-    shares:{title:"Shares",sub:"Market Value: ",subVal:INR(shVal),subCol:"#16a34a",addLabel:"+ Add Share"},
-    fd:{title:"Fixed Deposits",sub:"Value Today: ",subVal:INR(fdTodayTotal),subCol:"#b45309",addLabel:"+ Add FD"},
-    re:{title:"Real Estate",sub:"Portfolio Value: ",subVal:INR(re.reduce((s,r)=>s+(r.currentValue||r.acquisitionCost),0)),subCol:"#c2410c",addLabel:"+ Add Property"},
-    pf:{title:"Provident Funds",sub:"Total Balance: ",subVal:INR(pfBalance),subCol:"#0f766e",addLabel:"+ Add PF Account"},
+    mf:{title:"Mutual Funds",sub:"Portfolio: ",subVal:INR(mfTotal),subCol:"#6d28d9",addLabel:"+ Add Fund",bar:"#a3e635"},
+    shares:{title:"Shares",sub:"Market Value: ",subVal:INR(shVal),subCol:"#16a34a",addLabel:"+ Add Share",bar:"#facc15"},
+    fd:{title:"Fixed Deposits",sub:"Value Today: ",subVal:INR(fdTodayTotal),subCol:"#b45309",addLabel:"+ Add FD",bar:"#7dd3fc"},
+    re:{title:"Real Estate",sub:"Portfolio Value: ",subVal:INR(re.reduce((s,r)=>s+(r.currentValue||r.acquisitionCost),0)),subCol:"#c2410c",addLabel:"+ Add Property",bar:"#e879f9"},
+    pf:{title:"Provident Funds",sub:"Total Balance: ",subVal:INR(pfBalance),subCol:"#0f766e",addLabel:"+ Add PF Account",bar:"#34d399"},
   };
   const cfg=CFG[tab]||CFG.mf;
   return React.createElement("div",{className:"fu"},
     /* ── Page header */
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
-      React.createElement("div",null,
-        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:700,color:"var(--text)"}},cfg.title),
-        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},cfg.sub,React.createElement("span",{style:{color:cfg.subCol,fontWeight:600}},cfg.subVal))
-      ),
+      React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+        React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:cfg.bar,flexShrink:0}}),
+        React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:23,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},cfg.title),
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},cfg.sub,React.createElement("span",{style:{color:cfg.subCol,fontWeight:600}},cfg.subVal))
+      )),
       React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",justifyContent:"flex-end"}},
         tab==="mf"&&React.createElement(Btn,{v:"secondary",sz:"sm",onClick:()=>setImportMFOpen(true),sx:{fontSize:12}},"⬆ Import Excel"),
         tab==="mf"&&React.createElement(Btn,{v:"secondary",sz:"sm",onClick:()=>setImportTxnsOpen(true),sx:{fontSize:12,borderColor:"rgba(109,40,217,.4)",color:"#6d28d9",background:"rgba(109,40,217,.08)"}},"⬆ Import Txns"),
@@ -26648,13 +26583,15 @@ const LoanSection=React.memo(({loans,dispatch,allBanks=[],allCards=[],cash,isMob
   return React.createElement("div",{className:"fu"},
     /* Header */
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
-      React.createElement("div",null,
-        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:700,color:"var(--text)"}},"Loan Accounts"),
-        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},
+      React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+        React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#fb923c",flexShrink:0}}),
+        React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:23,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"Loan Accounts"),
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},
           "Outstanding: ",React.createElement("span",{style:{color:"#ef4444",fontWeight:600}},INR(tot)),
           " · Monthly EMI: ",React.createElement("span",{style:{color:"#c2410c",fontWeight:600}},INR(totalEmi))
         )
-      ),
+      )),
       React.createElement(Btn,{onClick:()=>setOpen(true)},"+ Add Loan")
     ),
 
@@ -31088,7 +31025,10 @@ const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
     ),
     !isMobile&&React.createElement("div",{style:{width:218,minWidth:218,display:"flex",flexDirection:"column",paddingRight:14,borderRight:"1px solid var(--border2)",marginRight:22,overflowY:"auto"}},
       React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,paddingLeft:4,paddingTop:2}},
-        React.createElement("div",{style:{fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.8,fontWeight:600}},"Reports"),
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+          React.createElement("div",{style:{width:3,height:14,borderRadius:2,background:"#fde68a",flexShrink:0}}),
+          React.createElement("div",{style:{fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.8,fontWeight:600}},"Reports")
+        ),
         React.createElement("button",{
           onClick:()=>setExportOpen(true),
           title:"Export summary report to Excel or PDF",
@@ -32803,10 +32743,12 @@ const CalendarSection=React.memo(({banks,cards,cash,categories,isMobile})=>{
   return React.createElement("div",{className:"fu"},
     /* Header */
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10,marginBottom:14}},
-      React.createElement("div",null,
-        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,color:"var(--text)"}},"Calendar"),
+      React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+        React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#f87171",flexShrink:0}}),
+        React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"Calendar"),
         React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:2}},"Daily transaction view — click any day to see details")
-      ),
+      )),
       React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
         React.createElement("select",{value:accFilter,onChange:e=>setAccFilter(e.target.value),className:"inp",style:{fontSize:12,padding:"5px 10px",width:"auto"}},
           accOpts.map(o=>React.createElement("option",{key:o.id,value:o.id},o.label))
@@ -33369,9 +33311,11 @@ const UnifiedLedgerSection=React.memo(({banks,cards,cash,categories,payees,isMob
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",height:"100%"}},
     /* Page header */
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:initialFilter?8:16,flexWrap:"wrap",gap:12}},
-      React.createElement("div",null,
-        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:700,color:"var(--text)"}},"All Transactions"),
-        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},
+      React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+        React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#818cf8",flexShrink:0}}),
+        React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:23,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"All Transactions"),
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},
           allTxns.length+" transactions · ",
           React.createElement("span",{style:{color:"#0e7490",fontWeight:600}},banks.length+" bank"+(banks.length!==1?"s":"")),
           " + ",
@@ -33379,7 +33323,7 @@ const UnifiedLedgerSection=React.memo(({banks,cards,cash,categories,payees,isMob
           " + ",
           React.createElement("span",{style:{color:"#16a34a",fontWeight:600}},"cash")
         )
-      ),
+      )),
       SummaryBar
     ),
     initialFilter&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"8px 14px",background:"var(--accentbg)",border:"1px solid var(--accent)",borderRadius:9,fontSize:12,color:"var(--accent)",fontWeight:500,marginBottom:12}},
@@ -33791,10 +33735,12 @@ const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],ca
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",height:"100%",overflowY:"auto"}},
     /* Header row */
     React.createElement("div",{style:{marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}},
-      React.createElement("div",null,
-        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,color:"var(--text)"}},"Financial Goals"),
-        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},"Allocate your investment portfolio to life goals")
-      ),
+      React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+        React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#fb7185",flexShrink:0}}),
+        React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"Financial Goals"),
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},"Allocate your investment portfolio to life goals")
+      )),
       React.createElement(Btn,{onClick:()=>{setEditGoal(null);setGf(EMPTY_GOAL);setAddOpen(true);}},"+ New Goal")
     ),
 
@@ -36153,9 +36099,12 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
   ];
 
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",height:"100%",overflowY:"auto"}},
-    React.createElement("div",{style:{marginBottom:14}},
-      React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,color:"var(--text)"}},"Insights"),
-      React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},"Family finance intelligence — spend, FIRE planning, emergency readiness, savings trends & calculators")
+    React.createElement("div",{style:{marginBottom:14,display:"flex",alignItems:"stretch",gap:13}},
+      React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#c084fc",flexShrink:0}}),
+      React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"Insights"),
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},"Family finance intelligence — spend, FIRE planning, emergency readiness, savings trends & calculators")
+      )
     ),
     React.createElement("div",{style:{display:"flex",gap:4,marginBottom:18,background:"var(--bg4)",borderRadius:10,padding:4,overflowX:"auto",flexShrink:0,flexWrap:"nowrap"}},
       STABS.map(t=>React.createElement("button",{key:t.id,onClick:()=>setStab(t.id),style:tabBtn(t.id)},t.label))
@@ -37312,9 +37261,12 @@ const InsightCalculators=({isMobile})=>{
 
   return React.createElement("div",{style:{paddingBottom:20}},
     /* header */
-    React.createElement("div",{style:{marginBottom:16}},
-      React.createElement("h3",{style:{fontFamily:"'Sora',sans-serif",fontSize:16,fontWeight:700,color:"var(--text)",marginBottom:3}},"Financial Calculators"),
-      React.createElement("p",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.6}},"Interactive calculators for retirement planning, child education, and systematic withdrawal. All calculations happen locally — no data leaves your device.")
+    React.createElement("div",{style:{marginBottom:16,display:"flex",alignItems:"stretch",gap:13}},
+      React.createElement("div",{style:{width:4,minHeight:38,borderRadius:3,background:"#67e8f9",flexShrink:0}}),
+      React.createElement("div",null,
+        React.createElement("h3",{style:{fontFamily:"'Sora',sans-serif",fontSize:16,fontWeight:700,letterSpacing:-.3,color:"var(--text)",marginBottom:3}},"Financial Calculators"),
+        React.createElement("p",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.6}},"Interactive calculators for retirement planning, child education, and systematic withdrawal. All calculations happen locally — no data leaves your device.")
+      )
     ),
     /* sub-tabs */
     React.createElement("div",{style:{display:"flex",gap:4,marginBottom:18,background:"var(--bg4)",borderRadius:10,padding:4,flexWrap:"nowrap",overflowX:"auto",flexShrink:0}},
@@ -37364,9 +37316,12 @@ const InfoSection=React.memo(({isMobile})=>{
   return React.createElement("div",{style:{maxWidth:720,paddingBottom:32}},
 
     /* ── Page header ── */
-    React.createElement("div",{style:{marginBottom:22}},
-      React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?18:22,fontWeight:800,color:"var(--text)",marginBottom:4}},"App Information"),
-      React.createElement("p",{style:{fontSize:13,color:"var(--text5)",lineHeight:1.6,margin:0}},"Developer details, copyright, and terms of authorised use for finsight.")
+    React.createElement("div",{style:{marginBottom:22,display:"flex",alignItems:"stretch",gap:13}},
+      React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#bef264",flexShrink:0}}),
+      React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?18:22,fontWeight:800,letterSpacing:-.4,color:"var(--text)",marginBottom:4}},"App Information"),
+        React.createElement("p",{style:{fontSize:13,color:"var(--text5)",lineHeight:1.6,margin:0}},"Developer details, copyright, and terms of authorised use for finsight.")
+      )
     ),
 
     /* ── Developer Card ── */
@@ -40037,7 +39992,7 @@ function App(){
           React.createElement("button",{
             className:"nb nb-icon-only"+(isActive?" nb-icon-active":""),
             onClick:()=>setTab(n.id),
-            title:n.label,
+            title:n.label,aria-label:n.label,aria-current:isActive?"page":undefined,
             style:{
               border:"none",cursor:"pointer",
               "--nic":NAV_COLORS[n.id]||"var(--accent)",
@@ -40098,7 +40053,7 @@ function App(){
       /* Collapse chevron button */
       React.createElement("button",{
         onClick:toggleNav,
-        title:"Collapse sidebar",
+        title:"Collapse sidebar",aria-label:"Collapse sidebar",
         style:{
           background:"transparent",border:"1px solid var(--border2)",
           borderRadius:8,color:"var(--text6)",cursor:"pointer",
@@ -40135,7 +40090,7 @@ function App(){
           React.createElement("span",{style:{fontSize:9,fontWeight:700,letterSpacing:1.2,color:"var(--text6)",textTransform:"uppercase",whiteSpace:"nowrap"}},n.label),
           React.createElement("div",{style:{flex:1,height:1,background:"var(--border2)"}})
         );
-        return React.createElement("button",{key:n.id,className:"nb"+(tab===n.id?" nb-full-active":""),onClick:()=>setTab(n.id),style:{
+        return React.createElement("button",{key:n.id,className:"nb"+(tab===n.id?" nb-full-active":""),onClick:()=>setTab(n.id),aria-label:n.label,aria-current:tab===n.id?"page":undefined,style:{
           display:"flex",alignItems:"center",gap:10,width:"100%",
           padding:"10px 12px",borderRadius:10,border:"none",cursor:"pointer",marginBottom:2,
           fontFamily:"'DM Sans',sans-serif",fontSize:13,
@@ -40173,6 +40128,34 @@ function App(){
     )
   );
 
+  /* ── Mobile bottom tab bar — primary destinations ── */
+  const MobileBottomNav=({tab,setTab})=>{
+    const items=[
+      {id:"dashboard",label:"Home"},
+      {id:"banks",label:"Banks"},
+      {id:"cards",label:"Cards"},
+      {id:"inv_dash",label:"Invest"},
+      {id:"more",label:"More"},
+    ];
+    return React.createElement("nav",{className:"mm-botnav","aria-label":"Primary"},
+      items.map(it=>{
+        const active=it.id==="more"?(["cash","loans","scheduled","unified_ledger","calendar","goals","insights","tax_est","notes","calculator","reports","settings","info"].includes(tab)):(tab===it.id);
+        const col=NAV_COLORS[it.id]||"var(--accent)";
+        return React.createElement("button",{
+          key:it.id,className:"mm-botnav-item"+(active?" active":""),
+          style:it.id==="more"?{}:{"--nic":col,"--nic-glow":NAV_COLORS[it.id]?hexAlpha(NAV_COLORS[it.id],.32):"var(--accentbg5)"},
+          onClick:()=>{ if(it.id==="more"){ setTab("settings"); } else { setTab(it.id); } },
+          "aria-current":active?"page":undefined,
+        },
+          it.id==="more"
+            ?React.createElement(NavIcon,{id:"settings",size:21})
+            :React.createElement(NavIcon,{id:it.id,size:21}),
+          React.createElement("span",null,it.label)
+        );
+      })
+    );
+  };
+
   /* ── PIN guard: all hooks above, conditional render below ── */
   if(locked)return React.createElement(PinLockScreen,{onUnlock});
 
@@ -40180,7 +40163,7 @@ function App(){
     React.createElement("div",{style:{display:"flex",height:"100vh",background:"var(--bg)"}},
     isMobile?React.createElement(SidebarCollapsed):(navCollapsed?React.createElement(SidebarCollapsed):React.createElement(SidebarFull)),
     React.createElement("div",{
-      className:isMobile?"mobile-content-panel":"",
+      className:isMobile?"mobile-content-panel mm-has-botnav":"",
       style:{
         flex:1,overflowY:"auto",
         padding:isMobile?"14px 10px 32px":"24px 24px 40px",
@@ -40310,7 +40293,7 @@ function App(){
         title:"Quick Add Transaction (global)",
         style:{
           position:"fixed",
-          bottom:isMobile?80:32,right:isMobile?16:32,
+          bottom:isMobile?86:32,right:isMobile?16:32,
           width:52,height:52,borderRadius:"50%",
           background:"var(--accent)",color:"#fff",
           border:"none",cursor:"pointer",
@@ -40362,6 +40345,8 @@ function App(){
     /* ── ChatBot ── */
     !["settings","info"].includes(tab)&&React.createElement(ChatBotFAB,{onClick:()=>setChatBotOpen(true),isOpen:chatBotOpen}),
     React.createElement(ChatBot,{state:state,dispatch:dispatch,isOpen:chatBotOpen,onClose:()=>setChatBotOpen(false)}),
+    /* ── Mobile bottom tab bar ── */
+    isMobile&&React.createElement(MobileBottomNav,{tab,setTab}),
   );
 }
 /* ═══ CHATBOT CODE — injected ═══ */

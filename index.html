@@ -321,6 +321,10 @@ body{
   --chart-1:#0ea5e9;--chart-2:#f59e0b;--chart-3:#10b981;--chart-4:#8b5cf6;--chart-5:#ef4444;--chart-6:#06b6d4;
   --shadow-sm:0 1px 3px rgba(0,0,0,.04);--shadow-md:0 4px 16px rgba(0,0,0,.06);--shadow-lg:0 8px 32px rgba(0,0,0,.08);
   --fs-xs:10px;--fs-sm:12px;--fs-base:14px;--fs-lg:18px;--fs-xl:24px;--fs-2xl:32px;
+  /* ── Spacing scale (4/8/12/16/24/32) ── */
+  --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:24px;--sp-6:32px;
+  /* ── Radius scale ── */
+  --r-sm:8px;--r-md:10px;--r-lg:14px;--r-xl:18px;--r-pill:999px;
 }
 
 /* ── SKY BLUE THEME ── */
@@ -1192,9 +1196,51 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-body);}
 ::-webkit-scrollbar-track{background:var(--scrolltrack)}
 ::-webkit-scrollbar-thumb{background:var(--scrollbar);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--scrollbar2)}
-.inp{width:100%;box-sizing:border-box;background:var(--inp-bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px 13px;font-family:var(--font-body);font-size:14px;outline:none;transition:border-color .2s,background .3s,color .3s}
+.inp{width:100%;box-sizing:border-box;background:var(--inp-bg);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:10px 14px;font-family:var(--font-body);font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s,background .3s,color .3s}
+.inp:hover{border-color:var(--border3)}
 .inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accentbg3)}
 .inp::placeholder{color:var(--text5)}
+/* ── Shared modern UI polish — applies across all navigation screens ── */
+.mm-card{ -webkit-tap-highlight-color:transparent }
+.mm-statcard{ transition:transform .2s ease, box-shadow .25s ease, border-color .2s ease }
+.mm-statcard:hover{ transform:translateY(-2px); box-shadow:var(--shadow-md); border-color:var(--border3) }
+.mm-btn:hover:not([disabled]){ transform:translateY(-1px); box-shadow:var(--shadow-sm); filter:saturate(1.05) }
+.mm-btn:active:not([disabled]){ transform:translateY(0) scale(.98) }
+.mm-btn:focus-visible{ outline:none; box-shadow:0 0 0 3px var(--accentbg3) }
+/* ── Accessibility: visible keyboard focus rings across interactive elements ── */
+.inp:focus-visible{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accentbg3) }
+.nb:focus-visible{ outline:none; box-shadow:0 0 0 2px var(--accent); border-radius:10px }
+button:focus-visible,a:focus-visible,[role="button"]:focus-visible,select:focus-visible{ outline:2px solid var(--accent); outline-offset:2px }
+/* ── Loading skeletons: shimmer placeholder ── */
+@keyframes mmShimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.mm-skel{
+  position:relative;border-radius:8px;
+  background:linear-gradient(90deg,var(--bg4) 25%,var(--bg5) 37%,var(--bg4) 63%);
+  background-size:200% 100%;animation:mmShimmer 1.4s ease-in-out infinite;
+}
+/* ── Mobile bottom tab bar ── */
+.mm-botnav{ display:none }
+@media(max-width:768px){
+  .mm-botnav{
+    display:flex;position:fixed;left:0;right:0;bottom:0;z-index:900;
+    background:var(--bg3);border-top:1px solid var(--border);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));
+    box-shadow:0 -4px 20px rgba(0,0,0,.10);
+  }
+  .mm-botnav-item{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    background:transparent;border:none;cursor:pointer;padding:5px 2px;border-radius:10px;
+    color:var(--text5);font-family:'DM Sans',sans-serif;font-size:9.5px;font-weight:600;
+    letter-spacing:.1px;transition:color .18s,background .18s;min-width:0;
+  }
+  .mm-botnav-item span{ max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap }
+  .mm-botnav-item svg{ transition:transform .2s cubic-bezier(.34,1.56,.64,1) }
+  .mm-botnav-item.active{ color:var(--nic,var(--accent)) }
+  .mm-botnav-item.active svg{ transform:scale(1.16);filter:drop-shadow(0 0 4px var(--nic-glow,var(--accentbg5))) }
+  .mm-botnav-item:active{ background:var(--accentbg2) }
+  /* Lift content above the bottom bar */
+  .mm-has-botnav{ padding-bottom:76px!important }
+}
 select.inp option{background:var(--inp-opt)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes slideIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
@@ -1308,6 +1354,13 @@ textarea.inp{resize:vertical}
 .nb-full-active>svg,.nb-full-active [data-nav-icon]{
   filter:drop-shadow(0 0 5px var(--nic-glow));
 }
+/* ── Active nav icon micro-interaction: subtle scale + stroke bump + pop ── */
+.nb svg{transition:transform .2s cubic-bezier(.34,1.56,.64,1),stroke-width .2s ease,filter .2s ease}
+.nb-full-active>svg,.nb-icon-active svg{transform:scale(1.14);stroke-width:1.9}
+.nb-icon-active svg{filter:drop-shadow(0 0 5px var(--nic-glow))}
+.nb-full-active>svg,.nb-icon-active svg{animation:navPop .34s cubic-bezier(.34,1.56,.64,1)}
+@keyframes navPop{0%{transform:scale(.86)}55%{transform:scale(1.22)}100%{transform:scale(1.14)}}
+.nb:not(.nb-full-active):not(.nb-icon-active):hover svg{transform:scale(1.08)}
 @media(max-width:768px){
   .mobile-content-panel{padding:14px 10px 32px!important;}
   /* Toolbar wraps on mobile */
