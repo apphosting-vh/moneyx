@@ -888,7 +888,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="6.5.0";
+const APP_VERSION="6.6.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -11940,6 +11940,7 @@ const StickyHd=({children,style={}})=>React.createElement("div",{className:"mm-s
 
 const WHATS_NEW=[
   {icon:"star",t:"Star transactions",d:"Mark important transactions with a golden star in Bank, Card, and Cash ledgers."},
+  {icon:"sparkles",t:"Hero card animations",d:"Dashboard hero cards now fade in with a subtle staggered entrance animation."},
   {icon:"sparkles",t:"Redesigned navigation icons",d:"All 22 nav items got cohesive line-style icons."},
   {icon:"zap",t:"Command palette (⌘K)",d:"Search, jump to any screen, add transactions, switch theme."},
   {icon:"loader",t:"Loading skeletons",d:"Dashboards now show elegant shimmer placeholders."},
@@ -24816,6 +24817,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         borderRadius:14,padding:"18px 22px",
         display:"flex",alignItems:"center",gap:18,flexWrap:"wrap",
         position:"relative",overflow:"hidden",
+        animation:"heroAppear .42s ease both",
       }},
         /* Left accent bar */
         React.createElement("div",{style:{position:"absolute",left:0,top:0,bottom:0,width:4,background:"linear-gradient(180deg,#0e7490,#06b6d4)",borderRadius:"16px 0 0 16px"}}),
@@ -24961,7 +24963,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         const fmtDateLabel=(iso)=>{if(!iso)return"--";const p=iso.split("-");const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return p.length===3?p[2]+" "+MON[parseInt(p[1],10)-1]+" "+p[0]:iso;};
         return React.createElement("div",{style:{marginBottom:16}},
           /* ── Hero card ── */
-          React.createElement(Card,{sx:{marginBottom:12,background:"linear-gradient(135deg,var(--card2),var(--card))",position:"relative",overflow:"hidden"}},
+          React.createElement(Card,{sx:{marginBottom:12,background:"linear-gradient(135deg,var(--card2),var(--card))",position:"relative",overflow:"hidden",animation:"heroAppear .42s ease both"}},
             /* decorative glow blob */
             React.createElement("div",{style:{position:"absolute",right:-30,top:-30,width:160,height:160,borderRadius:"50%",background:"rgba(109,40,217,.07)",pointerEvents:"none"}}),
             /* ── Label ── */
@@ -33408,6 +33410,7 @@ const UnifiedLedgerSection=React.memo(({banks,cards,cash,categories,payees,isMob
     display:"flex",alignItems:"center",justifyContent:"space-between",
     gap:isMobile?10:20,flexWrap:"wrap",
     position:"relative",overflow:"hidden",flexShrink:0,
+    animation:"heroAppear .42s ease both",
   }},
     /* Decorative background pulse */
     React.createElement("div",{style:{
@@ -34527,7 +34530,7 @@ const NetWorthInsightTab=({banks,cards,cash,mf,shares,fd,re,loans,categories,pre
     ),
 
     /* ── Hero card: NW total + full breakdown ── */
-    React.createElement("div",{style:{background:"var(--networth-bg)",border:"1px solid var(--border)",borderRadius:16,padding:"18px 20px",marginBottom:16}},
+    React.createElement("div",{style:{background:"var(--networth-bg)",border:"1px solid var(--border)",borderRadius:16,padding:"18px 20px",marginBottom:16,animation:"heroAppear .42s ease both"}},
 
       /* Top row: NW number + Assets/Liabilities totals */
       React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:16,alignItems:"flex-start",marginBottom:18}},
@@ -36191,7 +36194,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       ?React.createElement(Empty,{icon:React.createElement(Icon,{n:"beach",size:18}),text:"Add at least 3 months of expense transactions to calculate your FIRE number and retirement timeline."})
       :React.createElement(React.Fragment,null,
         /* ── FIRE Number hero ── */
-        React.createElement("div",{style:{background:"linear-gradient(135deg,var(--accent),#1d4ed8)",borderRadius:16,padding:"20px 24px",marginBottom:16,color:"#fff",position:"relative",overflow:"hidden"}},
+        React.createElement("div",{style:{background:"linear-gradient(135deg,var(--accent),#1d4ed8)",borderRadius:16,padding:"20px 24px",marginBottom:16,color:"#fff",position:"relative",overflow:"hidden",animation:"heroAppear .42s ease both"}},
           React.createElement("div",{style:{position:"absolute",right:-20,top:-20,fontSize:100,opacity:.07}},React.createElement(Icon,{n:"beach",size:18})),
           React.createElement("div",{style:{fontSize:12,fontWeight:600,textTransform:"uppercase",letterSpacing:1,opacity:.8,marginBottom:6}},"Your FIRE Number (4% rule · 25× annual expenses)"),
           React.createElement("div",{style:{fontSize:isMobile?28:38,fontFamily:"'Sora',sans-serif",fontWeight:800,marginBottom:6}},INR(Math.round(fireData.fireNumber))),
@@ -37271,7 +37274,7 @@ const InsightCalculators=({isMobile})=>{
       React.createElement("div",{style:{flex:"1 1 280px",minWidth:0}},
         eduResult?React.createElement("div",null,
           /* hero */
-          React.createElement("div",{style:{background:"linear-gradient(135deg,#6d28d9,#0e7490)",borderRadius:14,padding:"18px 20px",marginBottom:12,color:"#fff",position:"relative",overflow:"hidden"}},
+          React.createElement("div",{style:{background:"linear-gradient(135deg,#6d28d9,#0e7490)",borderRadius:14,padding:"18px 20px",marginBottom:12,color:"#fff",position:"relative",overflow:"hidden",animation:"heroAppear .42s ease both"}},
             React.createElement("div",{style:{position:"absolute",right:-10,top:-10,fontSize:80,opacity:.07}},React.createElement(Icon,{n:"education",size:18})),
             React.createElement("div",{style:{fontSize:11,opacity:.8,textTransform:"uppercase",letterSpacing:1,marginBottom:6}},"Required Monthly SIP · Goal in "+eduResult.years+" years"),
             React.createElement("div",{style:{fontSize:isMobile?26:34,fontFamily:"'Sora',sans-serif",fontWeight:900,marginBottom:4}},INR(Math.round(eduResult.reqSip))),
@@ -37439,7 +37442,7 @@ const InsightCalculators=({isMobile})=>{
       React.createElement("div",{style:{flex:"1 1 280px",minWidth:0}},
         retResult?React.createElement("div",null,
           /* hero corpus */
-          React.createElement("div",{style:{background:"linear-gradient(135deg,#c2410c,#b45309)",borderRadius:14,padding:"18px 20px",marginBottom:12,color:"#fff",position:"relative",overflow:"hidden"}},
+          React.createElement("div",{style:{background:"linear-gradient(135deg,#c2410c,#b45309)",borderRadius:14,padding:"18px 20px",marginBottom:12,color:"#fff",position:"relative",overflow:"hidden",animation:"heroAppear .42s ease both"}},
             React.createElement("div",{style:{position:"absolute",right:-10,top:-10,fontSize:80,opacity:.07}},React.createElement(Icon,{n:"beach",size:18})),
             React.createElement("div",{style:{fontSize:11,opacity:.8,textTransform:"uppercase",letterSpacing:1,marginBottom:6}},"Corpus Required at Age "+ret.retirementAge),
             React.createElement("div",{style:{fontSize:isMobile?26:34,fontFamily:"'Sora',sans-serif",fontWeight:900,marginBottom:4}},INR(retResult.corpusNeeded)),
