@@ -31932,8 +31932,8 @@ const RptCategoryDrillDown=({data,from,to})=>{
         React.createElement(StatCard,{label:"Total Amount",val:INR(Math.round(totalAmt)),sub:isDebit?"Total spend":"Total income",col:isDebit?"#ef4444":"#16a34a",icon:React.createElement(Icon,{n:isDebit?"expense":"income",size:18})}),
         React.createElement(StatCard,{label:"Avg/Transaction",val:INR(Math.round(avgTx)),sub:"Mean transaction amount",col:"#0e7490",icon:React.createElement(Icon,{n:"target",size:18})})
       ),
-      React.createElement(Card2,{sx:{marginBottom:16}},
-        React.createElement(SHead,{t:"Monthly Trend — "+selected,s:months.length+" months of data in selected range"}),
+      React.createElement(Card,{sx:{marginBottom:16}},
+        React.createElement("div",{style:{marginBottom:12}},React.createElement("div",{style:{fontWeight:600,fontSize:14,color:"var(--text3)"}},"Monthly Trend — "+selected),React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginTop:2}},months.length+" months of data in selected range")),
         React.createElement("div",{style:{display:"flex",gap:4,alignItems:"flex-end",height:110,marginBottom:6}},
           months.map((m,i)=>{
             const amt=isDebit?monthly[m].exp:monthly[m].inc;
@@ -31948,8 +31948,8 @@ const RptCategoryDrillDown=({data,from,to})=>{
           React.createElement("span",null,months[0]),React.createElement("span",null,months[months.length-1])
         )
       ),
-      subList.length>0&&React.createElement(Card2,{sx:{marginBottom:16}},
-        React.createElement(SHead,{t:"Sub-Category Breakdown",s:"How spending splits across sub-categories"}),
+      subList.length>0&&React.createElement(Card,{sx:{marginBottom:16}},
+        React.createElement("div",{style:{marginBottom:12}},React.createElement("div",{style:{fontWeight:600,fontSize:14,color:"var(--text3)"}},"Sub-Category Breakdown"),React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginTop:2}},"How spending splits across sub-categories")),
         React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
           subList.map(([sub,amt])=>{
             const pct=totalAmt>0?(amt/totalAmt*100):0;
@@ -31965,8 +31965,8 @@ const RptCategoryDrillDown=({data,from,to})=>{
           })
         )
       ),
-      topPayees.length>0&&React.createElement(Card2,{sx:{marginBottom:16}},
-        React.createElement(SHead,{t:"Top Payees",s:"Merchants/payees where this category money goes"}),
+      topPayees.length>0&&React.createElement(Card,{sx:{marginBottom:16}},
+        React.createElement("div",{style:{marginBottom:12}},React.createElement("div",{style:{fontWeight:600,fontSize:14,color:"var(--text3)"}},"Top Payees"),React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginTop:2}},"Merchants/payees where this category money goes")),
         React.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:12}},
           React.createElement("thead",null,React.createElement("tr",null,
             ["#","Payee","Amount","%"].map(h=>React.createElement("th",{key:h,style:{textAlign:h==="#"?"left":"right",padding:"6px 8px",color:"var(--text5)",fontWeight:600,borderBottom:"1px solid var(--border)"}},h))
@@ -31984,8 +31984,8 @@ const RptCategoryDrillDown=({data,from,to})=>{
           )
         )
       ),
-      anomalies.length>0&&React.createElement(Card2,null,
-        React.createElement(SHead,{t:"Potential Anomalies",s:"Transactions significantly above average in this category"}),
+      anomalies.length>0&&React.createElement(Card,null,
+        React.createElement("div",{style:{marginBottom:12}},React.createElement("div",{style:{fontWeight:600,fontSize:14,color:"var(--text3)"}},"Potential Anomalies"),React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginTop:2}},"Transactions significantly above average in this category")),
         React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
           anomalies.map((t,i)=>
             React.createElement("div",{key:i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<anomalies.length-1?"1px solid var(--border)":"none"}},
