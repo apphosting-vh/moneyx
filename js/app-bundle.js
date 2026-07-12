@@ -826,7 +826,7 @@ const THEMES=[
   {id:"moss-dark",   name:"Moss Dark",   desc:"Deep forest",               dark:true,  preview:["#080c06","#6e9a52","#2a3e26","#526e3c"]},
   {id:"mint-dark",   name:"Mint Dark",   desc:"Dark emerald",              dark:true,  preview:["#060e0c","#2ab888","#1e4236","#1a8a68"]},
 ];
-const loadTheme=()=>{try{const t=localStorage.getItem(LS_THEME);if(t&&THEMES.find(th=>th.id===t))return t;}catch{}const mq=window.matchMedia("(prefers-color-scheme: dark)");return mq&&mq.matches?"sky-dark":"sky";};
+const loadTheme=()=>{try{const t=localStorage.getItem(LS_THEME);if(t&&THEMES.find(th=>th.id===t))return t;}catch{}const mq=window.matchMedia("(prefers-color-scheme: dark)");return mq&&mq.matches?"sky-dark":"electric";};
 const saveTheme=id=>{try{localStorage.setItem(LS_THEME,id);}catch{}};
 const applyTheme=id=>{document.documentElement.setAttribute("data-theme",id);if(id.endsWith("-dark")){document.documentElement.style.setProperty("color-scheme","dark");}else{document.documentElement.style.removeProperty("color-scheme");}setTimeout(syncPAL,0);};
 
@@ -888,7 +888,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="6.6.0";
+const APP_VERSION="6.7.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -2476,9 +2476,10 @@ const Modal=({title,onClose,children,w=480})=>React.createElement("div",{classNa
         React.createElement("h3",{style:{color:"var(--accent)",fontFamily:"'Sora',sans-serif",fontSize:16,fontWeight:700,lineHeight:1.3,minWidth:0,flex:1}},title),
         React.createElement("button",{onClick:onClose,style:{background:"none",border:"none",color:"var(--text5)",cursor:"pointer",fontSize:26,lineHeight:1,padding:"8px 12px",minWidth:44,minHeight:44,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,borderRadius:8,transition:"background .15s"},onMouseEnter:e=>{e.currentTarget.style.background="var(--accentbg2)";},onMouseLeave:e=>{e.currentTarget.style.background="transparent";}},"×")
       ),children
-    )
-  )
-);
+      )
+    ),
+
+  );
 const Field=({label,children,sx={}})=>React.createElement("div",{style:{marginBottom:14,...sx}},
   React.createElement("label",{style:{display:"block",color:"var(--text5)",fontSize:10.5,fontWeight:600,textTransform:"uppercase",letterSpacing:.7,marginBottom:6}},label),children
 );
@@ -31100,6 +31101,769 @@ const RptGstTds=({data,from,to,onExportPDF})=>{
   );
 };
 
+/* ══ NEW REPORT: BUDGET VS ACTUALS ═════════════════════════════════════════ */
+const RptBudgetVsActual=({data,from,to,onExportPDF})=>{
+  const[accFilter,setAccFilter]=useState("all");
+  const[view,setView]=useState("snapshot");
+  const[budgetMode,setBudgetMode]=useState("auto");
+  const allTx=collectTx(data,from,to,accFilter);
+  const mPlans=data.insightPrefs?.budgetPlans||{};
+  const yPlans=data.insightPrefs?.yearlyBudgetPlans||{};
+  const hasMonthly=Object.values(mPlans).some(v=>v>0);
+  const hasYearly=Object.values(yPlans).some(v=>v>0);
+  const hasBudgets=hasMonthly||hasYearly;
+
+  /* Compute number of months in the date range for budget scaling */
+  const numMonths=React.useMemo(()=>{
+    const fD=new Date(from+"T00:00:00");
+    const tD=new Date(to+"T00:00:00");
+    return Math.max(1,(tD.getFullYear()-fD.getFullYear())*12+(tD.getMonth()-fD.getMonth())+1);
+  },[from,to]);
+
+  /* Group actuals by month and category */
+  const monthly={};
+  allTx.forEach(t=>{
+    const k=t.date.substr(0,7);
+    const ct=catClassType(data.categories,t.cat||"Others");
+    if(ct==="Transfer"||ct==="Income"||ct==="Investment"||ct==="Others")return;
+    if(t.type!=="debit")return;
+    const cat=catMainName(t.cat||"Others");
+    if(cat==="Taxes")return;
+    if(!monthly[k])monthly[k]={};
+    monthly[k][cat]=(monthly[k][cat]||0)+t.amount;
+  });
+  const months=Object.keys(monthly).sort();
+  const allCats=new Set();
+  months.forEach(m=>Object.keys(monthly[m]).forEach(c=>allCats.add(c)));
+
+  /* Resolve effective budget per category:
+     "auto"  → yearly if set, else monthly (scaled to range)
+     "monthly" → monthly × numMonths
+     "yearly"  → yearly × numMonths/12 (fractional year) */
+  const resolvePlanned=(cat)=>{
+    if(budgetMode==="monthly")return(mPlans[cat]||0)*numMonths;
+    if(budgetMode==="yearly")return(yPlans[cat]||0)*numMonths/12;
+    /* auto: prefer yearly if set, else monthly */
+    if((yPlans[cat]||0)>0)return yPlans[cat]*numMonths/12;
+    return(mPlans[cat]||0)*numMonths;
+  };
+
+  const catList=[...allCats].sort();
+  const catRows=catList.map(cat=>{
+    const planned=resolvePlanned(cat);
+    const monthlyBudget=mPlans[cat]||0;
+    const yearlyBudget=yPlans[cat]||0;
+    let totalActual=0;
+    months.forEach(m=>{totalActual+=(monthly[m][cat]||0);});
+    const avgPerMonth=months.length>0?totalActual/months.length:0;
+    const variance=planned>0?((totalActual-planned)/planned)*100:0;
+    return{cat,planned,monthlyBudget,yearlyBudget,totalActual,avgPerMonth,variance,
+      monthlyData:months.map(m=>monthly[m]?.[cat]||0),
+      budgetSource:(yPlans[cat]||0)>0?"yearly":(mPlans[cat]||0)>0?"monthly":"none"};
+  }).filter(r=>r.planned>0||r.totalActual>0).sort((a,b)=>b.totalActual-a.totalActual);
+
+  const totalPlanned=catRows.reduce((s,r)=>s+r.planned,0);
+  const totalActual=catRows.reduce((s,r)=>s+r.totalActual,0);
+  const overallVariance=totalPlanned>0?((totalActual-totalPlanned)/totalPlanned)*100:0;
+  const overBudget=catRows.filter(r=>r.planned>0&&r.totalActual>r.planned).length;
+  const underBudget=catRows.filter(r=>r.planned>0&&r.totalActual<=r.planned).length;
+  const hmRows=catRows.filter(r=>r.planned>0).map(r=>({label:r.cat,col:r.totalActual>r.planned?"#ef4444":"#16a34a",data:months.reduce((o,m,i)=>{o[m]=r.monthlyData[i];return o;},{})}));
+
+  /* Label for the budget scaling */
+  const rangeLabel=numMonths===1?"1 month":numMonths+" months";
+  const budgetModeLabel=budgetMode==="auto"?(hasYearly?"Yearly":"Monthly"):(budgetMode==="monthly"?"Monthly":"Yearly");
+
+  if(!hasBudgets)return React.createElement("div",{className:"fu"},
+    React.createElement(RptHeader,{title:"Budget vs Actuals",desc:"Compare planned budgets with actual spending per category",icon:React.createElement(Icon,{n:"checklist",size:18})}),
+    React.createElement(Card,null,
+      React.createElement(Empty,{art:"empty",text:"No budgets set yet. Go to Settings → Insight Preferences → Budget Planning to set monthly or yearly budgets for your expense categories."})
+    )
+  );
+
+  return React.createElement("div",{className:"fu"},
+    React.createElement(RptHeader,{title:"Budget vs Actuals",desc:"Compare planned budgets with actual spending. Budgets auto-scale to the selected timeframe \u2014 monthly budgets multiply by months, yearly budgets prorate.",icon:React.createElement(Icon,{n:"checklist",size:18})}),
+    React.createElement(RptCtrlBar,{onExportPDF},
+      React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Account:"),
+      React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
+      React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4,marginLeft:12}},"Budget:"),
+      React.createElement("div",{style:{display:"inline-flex",borderRadius:6,border:"1px solid var(--border)",overflow:"hidden",marginLeft:4}},
+        ["auto","monthly","yearly"].map(mode=>React.createElement("button",{key:mode,onClick:()=>setBudgetMode(mode),
+          style:{padding:"3px 10px",fontSize:10,fontWeight:600,border:"none",cursor:"pointer",
+            background:budgetMode===mode?"var(--accent)":"transparent",
+            color:budgetMode===mode?"#fff":"var(--text5)"}},mode==="auto"?"Auto":mode==="monthly"?"Monthly":"Yearly"))
+      ),
+      React.createElement("span",{style:{marginLeft:8,fontSize:10,color:"var(--text6)",lineHeight:"22px"}},"\u00B7 "+rangeLabel+"\u00B7 Budget: "+INR(totalPlanned)),
+      React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
+    ),
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement(StatCard,{label:"Total Budget ("+rangeLabel+")",val:INR(totalPlanned),col:"#6d28d9",sub:budgetModeLabel+" budgets \u00D7 "+rangeLabel,icon:React.createElement(Icon,{n:"checklist",size:18})}),
+      React.createElement(StatCard,{label:"Total Spent",val:INR(totalActual),col:overallVariance>0?"#ef4444":"#16a34a",icon:React.createElement(Icon,{n:"classExpense",size:18})}),
+      React.createElement(StatCard,{label:"Variance",val:(overallVariance>0?"+":"")+overallVariance.toFixed(1)+"%",col:overallVariance>0?"#ef4444":"#16a34a",sub:overallVariance>0?"Over budget":"Under budget",icon:React.createElement(Icon,{n:overallVariance>0?"trenddown":"checkcircle",size:18})}),
+      React.createElement(StatCard,{label:"Categories",val:overBudget+"/"+catRows.filter(r=>r.planned>0).length+" over",col:overBudget>0?"#ef4444":"#16a34a",sub:underBudget+" under budget",icon:React.createElement(Icon,{n:"category",size:18})})
+    ),
+    view==="snapshot"&&React.createElement("div",null,
+      React.createElement(Card,{sx:{marginBottom:14}},
+        React.createElement(SvgGroupBar,{data:catRows.filter(r=>r.planned>0).slice(0,10).map(r=>({label:r.cat.length>8?r.cat.slice(0,8)+"…":r.cat,v1:r.planned,v2:r.totalActual})),h:160,color1:"#6d28d9",color2:"#ef4444",label1:"Budget ("+rangeLabel+")",label2:"Actual"})
+      ),
+      catRows.filter(r=>r.planned>0).map(r=>{
+        const pct=Math.min(100,r.planned>0?(r.totalActual/r.planned)*100:0);
+        const isOver=r.totalActual>r.planned;
+        const catObj=data.categories.find(c=>c.name===r.cat);
+        const col=catObj?.color||(isOver?"#ef4444":"#16a34a");
+        return React.createElement(Card,{key:r.cat,sx:{marginBottom:10}},
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+              React.createElement("span",{style:{width:10,height:10,borderRadius:"50%",background:col,display:"inline-block",flexShrink:0}}),
+              React.createElement("span",{style:{fontSize:13,fontWeight:600,color:"var(--text2)"}},r.cat),
+              React.createElement("span",{style:{fontSize:9,fontWeight:600,padding:"1px 6px",borderRadius:6,
+                background:r.budgetSource==="yearly"?"rgba(109,40,217,.1)":"rgba(180,83,9,.1)",
+                color:r.budgetSource==="yearly"?"#6d28d9":"#b45309"}},
+                r.budgetSource==="yearly"?"Yearly":"Monthly")
+            ),
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+              React.createElement("span",{style:{fontSize:12,color:"var(--text5)"}},INR(r.totalActual)+" / "+INR(r.planned)),
+              React.createElement("span",{style:{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:8,background:isOver?"#ef444418":"#16a34a18",color:isOver?"#ef4444":"#16a34a"}},isOver?"+"+((r.totalActual-r.planned)/r.planned*100).toFixed(0)+"%":(((r.planned-r.totalActual)/r.planned)*100).toFixed(0)+"% left")
+            )
+          ),
+          React.createElement("div",{style:{height:8,background:"var(--bg5)",borderRadius:4,overflow:"hidden",marginBottom:4}},
+            React.createElement("div",{style:{height:"100%",width:Math.min(100,pct)+"%",background:isOver?"#ef4444":"#16a34a",borderRadius:4,transition:"width .4s ease"}})
+          ),
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)"}},
+            React.createElement("span",null,"Avg/month: "+INR(r.avgPerMonth)),
+            React.createElement("span",null,
+              r.budgetSource==="yearly"
+                ?"Monthly budget: "+INR(r.yearlyBudget/12)+"\u00B7 "+pct.toFixed(0)+"% of "+rangeLabel+" budget"
+                :"Monthly budget: "+INR(r.monthlyBudget)+"\u00B7 "+pct.toFixed(0)+"% of "+rangeLabel+" budget")
+          )
+        );
+      })
+    ),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflowY:"hidden",overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1.5fr repeat("+Math.min(months.length,6)+",minmax(70px,1fr)) 100px 100px 80px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},
+        React.createElement("span",null,"Category"),
+        ...months.slice(-6).map(m=>React.createElement("span",{key:m,style:{textAlign:"right"}},MONTH_NAMES[parseInt(m.slice(5))-1])),
+        React.createElement("span",{style:{textAlign:"right"}},"Budget ("+rangeLabel+")"),
+        React.createElement("span",{style:{textAlign:"right"}},"Actual"),
+        React.createElement("span",{style:{textAlign:"right"}},"Var %")
+      ),
+      catRows.length===0&&React.createElement(Empty,{text:"No budget data for this period"}),
+      catRows.map(r=>{
+        const isOver=r.planned>0&&r.totalActual>r.planned;
+        return React.createElement("div",{key:r.cat,className:"tr",style:{display:"grid",gridTemplateColumns:"1.5fr repeat("+Math.min(months.length,6)+",minmax(70px,1fr)) 100px 100px 80px",padding:"9px 14px",borderBottom:"1px solid var(--border2)"}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,fontSize:12,color:"var(--text2)",fontWeight:500}},
+            React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:isOver?"#ef4444":"var(--accent)",flexShrink:0,display:"inline-block"}}),
+            React.createElement("span",null,r.cat),
+            React.createElement("span",{style:{fontSize:8,fontWeight:600,padding:"0px 4px",borderRadius:4,marginLeft:2,
+              background:r.budgetSource==="yearly"?"rgba(109,40,217,.1)":"rgba(180,83,9,.1)",
+              color:r.budgetSource==="yearly"?"#6d28d9":"#b45309"}},
+              r.budgetSource==="yearly"?"Y":"M")
+          ),
+          ...months.slice(-6).map((m,i)=>React.createElement("div",{key:m,style:{textAlign:"right",fontSize:11,color:r.monthlyData[months.indexOf(m)]>0?"var(--text3)":"var(--text7)",fontWeight:r.monthlyData[months.indexOf(m)]>0?600:400}},r.monthlyData[months.indexOf(m)]>0?INR(r.monthlyData[months.indexOf(m)]):"—")),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"#6d28d9",fontWeight:600}},r.planned>0?INR(r.planned):"—"),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,color:isOver?"#ef4444":"#16a34a",fontWeight:700}},INR(r.totalActual)),
+          React.createElement("div",{style:{textAlign:"right",fontSize:11,fontWeight:700,color:isOver?"#ef4444":"#16a34a"}},r.planned>0?(r.variance>0?"+":"")+r.variance.toFixed(0)+"%":"—")
+        );
+      }),
+      catRows.length>0&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1.5fr repeat("+Math.min(months.length,6)+",minmax(70px,1fr)) 100px 100px 80px",padding:"10px 14px",borderTop:"2px solid var(--border)",background:"var(--bg4)"}},
+        React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text3)"}},INR(totalActual)+" / "+INR(totalPlanned)),
+        ...months.slice(-6).map(m=>React.createElement("div",{key:m,style:{textAlign:"right",fontSize:11,fontWeight:700,color:"var(--accent)"}})),
+        React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:"#6d28d9"}},INR(totalPlanned)),
+        React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:overallVariance>0?"#ef4444":"#16a34a"}},INR(totalActual)),
+        React.createElement("div",{style:{textAlign:"right",fontSize:11,fontWeight:700,color:overallVariance>0?"#ef4444":"#16a34a"}},(overallVariance>0?"+":"")+overallVariance.toFixed(0)+"%")
+      )
+    ),
+    view==="heatmap"&&React.createElement(HeatGrid,{rows:hmRows,months,rowLabel:"Category",
+      hint:"Actual spending per category per month. Colour intensity = relative spend within each row."})
+  );
+};
+
+/* ══ NEW REPORT: SAVINGS RATE TREND ════════════════════════════════════════ */
+const RptSavingsRate=({data,from,to,onExportPDF})=>{
+  const[accFilter,setAccFilter]=useState("all");
+  const[view,setView]=useState("snapshot");
+  const allTx=collectTx(data,from,to,accFilter);
+  const target=data.insightPrefs?.savingsRateTarget||30;
+  const monthly={};
+  allTx.forEach(t=>{
+    const k=t.date.substr(0,7);
+    const ct=catClassType(data.categories,t.cat||"Others");
+    if(ct==="Transfer")return;
+    const d=txCatDelta(t,ct);
+    if(!monthly[k])monthly[k]={inc:0,exp:0,inv:0};
+    if(ct==="Income")monthly[k].inc+=d;
+    else if(ct==="Investment")monthly[k].inv+=d;
+    else if(ct==="Expense"||ct==="Others")monthly[k].exp+=d;
+  });
+  const months=Object.keys(monthly).sort();
+  const mData=months.map(m=>{
+    const v=monthly[m];
+    const savings=v.inc-v.exp;
+    const savingsRate=v.inc>0?Math.max(0,Math.min(100,(savings/v.inc)*100)):0;
+    return{month:m,savings,savingsRate,inc:v.inc,exp:v.exp,inv:v.inv};
+  });
+  const avgRate=mData.length>0?mData.reduce((s,m)=>s+m.savingsRate,0)/mData.length:0;
+  const totalInc=mData.reduce((s,m)=>s+m.inc,0);
+  const totalExp=mData.reduce((s,m)=>s+m.exp,0);
+  const totalInv=mData.reduce((s,m)=>s+m.inv,0);
+  const overallRate=totalInc>0?Math.max(0,((totalInc-totalExp)/totalInc)*100):0;
+  const aboveTarget=mData.filter(m=>m.savingsRate>=target).length;
+  const maxRate=Math.max(...mData.map(m=>m.savingsRate),target+10);
+  const trendData=mData.map(m=>({label:MONTH_NAMES[parseInt(m.month.slice(5))-1],value:m.savingsRate}));
+  const hmRows=[
+    {label:"Savings Rate %",col:"#16a34a",data:months.reduce((o,m,i)=>{o[m]=mData[i].savingsRate;return o;},{})},
+    {label:"Income",col:"#16a34a",data:months.reduce((o,m,i)=>{o[m]=mData[i].inc;return o;},{})},
+    {label:"Expenses",col:"#ef4444",data:months.reduce((o,m,i)=>{o[m]=mData[i].exp;return o;},{})},
+    {label:"Investments",col:"#6d28d9",data:months.reduce((o,m,i)=>{o[m]=mData[i].inv;return o;},{})},
+  ];
+  return React.createElement("div",{className:"fu"},
+    React.createElement(RptHeader,{title:"Savings Rate Trend",desc:"Track your monthly savings rate (Income − Expenses) / Income over time",icon:React.createElement(Icon,{n:"activity",size:18})}),
+    React.createElement(RptCtrlBar,{onExportPDF},
+      React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Account:"),
+      React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
+      React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
+    ),
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement(StatCard,{label:"Avg Savings Rate",val:avgRate.toFixed(1)+"%",col:avgRate>=target?"#16a34a":"#ef4444",sub:"Target: "+target+"%",icon:React.createElement(Icon,{n:"activity",size:18})}),
+      React.createElement(StatCard,{label:"Overall Rate",val:overallRate.toFixed(1)+"%",col:overallRate>=target?"#16a34a":"#ef4444",sub:INR(totalInc-totalExp)+" saved of "+INR(totalInc),icon:React.createElement(Icon,{n:"classIncome",size:16})}),
+      React.createElement(StatCard,{label:"Months on Target",val:aboveTarget+"/"+mData.length,col:aboveTarget>=mData.length*0.7?"#16a34a":"#f59e0b",sub:((aboveTarget/Math.max(1,mData.length))*100).toFixed(0)+"% success rate",icon:React.createElement(Icon,{n:"target",size:18})}),
+      React.createElement(StatCard,{label:"Total Saved",val:INR(totalInc-totalExp),col:"#16a34a",sub:"After expenses (excl. investments)",icon:React.createElement(Icon,{n:"coin",size:18})})
+    ),
+    view==="snapshot"&&React.createElement("div",null,
+      React.createElement(Card,{sx:{marginBottom:14,position:"relative",minHeight:200,paddingTop:30}},
+        React.createElement("div",{style:{position:"absolute",top:8,left:40,right:10,display:"flex",justifyContent:"space-between",fontSize:9,color:"var(--text6)"}}),
+        React.createElement(SvgLine,{data:trendData,h:160,color:"#16a34a"}),
+        React.createElement("div",{style:{position:"absolute",bottom:Math.round((target/maxRate)*155+10),left:40,right:0,borderTop:"1.5px dashed #b45309",pointerEvents:"none"}},
+          React.createElement("span",{style:{position:"absolute",right:4,top:-14,fontSize:9,color:"#b45309",fontWeight:600}},target+"% target")
+        )
+      ),
+      React.createElement(Card,null,
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text2)",marginBottom:12}},"Monthly Breakdown"),
+        mData.map(m=>{
+          const isAbove=m.savingsRate>=target;
+          return React.createElement("div",{key:m.month,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid var(--border2)"}},
+            React.createElement("span",{style:{width:50,fontSize:12,color:"var(--text4)",fontWeight:600,fontFamily:"'Sora',sans-serif"}},MONTH_NAMES[parseInt(m.month.slice(5))-1]),
+            React.createElement("div",{style:{flex:1,height:6,background:"var(--bg5)",borderRadius:3,overflow:"hidden",position:"relative"}},
+              React.createElement("div",{style:{height:"100%",width:Math.min(100,m.savingsRate)+"%",background:isAbove?"#16a34a":"#ef4444",borderRadius:3,transition:"width .3s"}})
+            ),
+            React.createElement("span",{style:{width:55,textAlign:"right",fontSize:12,fontWeight:700,color:isAbove?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif"}},m.savingsRate.toFixed(1)+"%"),
+            React.createElement("span",{style:{width:90,textAlign:"right",fontSize:11,color:"var(--text5)"}},INR(m.inc)),
+            React.createElement("span",{style:{width:90,textAlign:"right",fontSize:11,color:"var(--text5)"}},INR(m.exp))
+          );
+        })
+      )
+    ),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflowY:"hidden",overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"80px 1fr 1fr 1fr 1fr 80px 60px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},
+        React.createElement("span",null,"Month"),
+        React.createElement("span",{style:{textAlign:"right"}},"Income"),
+        React.createElement("span",{style:{textAlign:"right"}},"Expenses"),
+        React.createElement("span",{style:{textAlign:"right"}},"Investments"),
+        React.createElement("span",{style:{textAlign:"right"}},"Saved"),
+        React.createElement("span",{style:{textAlign:"right"}},"Rate"),
+        React.createElement("span",{style:{textAlign:"center"}},"vs Target")
+      ),
+      mData.length===0&&React.createElement(Empty,{text:"No data in selected period"}),
+      mData.map(m=>{
+        const isAbove=m.savingsRate>=target;
+        return React.createElement("div",{key:m.month,className:"tr",style:{display:"grid",gridTemplateColumns:"80px 1fr 1fr 1fr 1fr 80px 60px",padding:"9px 14px",borderBottom:"1px solid var(--border2)"}},
+          React.createElement("div",{style:{fontSize:12,color:"var(--text3)",fontWeight:600,fontFamily:"'Sora',sans-serif"}},MONTH_NAMES[parseInt(m.month.slice(5))-1]),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"#16a34a",fontWeight:600}},INR(m.inc)),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"#ef4444",fontWeight:600}},INR(m.exp)),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"#6d28d9",fontWeight:600}},INR(m.inv)),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,color:m.savings>=0?"#16a34a":"#ef4444",fontWeight:700}},INR(m.savings)),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:isAbove?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif"}},m.savingsRate.toFixed(1)+"%"),
+          React.createElement("div",{style:{textAlign:"center",fontSize:14}},isAbove?"✅":"⚠️")
+        );
+      }),
+      mData.length>0&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"80px 1fr 1fr 1fr 1fr 80px 60px",padding:"10px 14px",borderTop:"2px solid var(--border)",background:"var(--bg4)"}},
+        React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text3)"}},
+        ),
+        React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:"#16a34a"}},INR(totalInc)),
+        React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:"#ef4444"}},INR(totalExp)),
+        React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:"#6d28d9"}},INR(totalInv)),
+        React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:"#16a34a"}},INR(totalInc-totalExp)),
+        React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:overallRate>=target?"#16a34a":"#ef4444"}},overallRate.toFixed(1)+"%"),
+        React.createElement("div",null)
+      )
+    ),
+    view==="heatmap"&&React.createElement(HeatGrid,{rows:hmRows,months,rowLabel:"Metric",
+      hint:"Savings rate and cash flow metrics by month. Savings rate shown as percentage."})
+  );
+};
+
+/* ══ NEW REPORT: SPENDING ANOMALIES ════════════════════════════════════════ */
+const RptSpendingAnomalies=({data,from,to,onExportPDF})=>{
+  const[accFilter,setAccFilter]=useState("all");
+  const[view,setView]=useState("snapshot");
+  const allTx=collectTx(data,from,to,accFilter);
+  const expenseTx=allTx.filter(t=>{
+    const ct=catClassType(data.categories,t.cat||"Others");
+    return ct!=="Income"&&ct!=="Transfer"&&t.type==="debit";
+  });
+  const catMonthAvg={};
+  const catMonthSums={};
+  const catMonthCounts={};
+  expenseTx.forEach(t=>{
+    const cat=catMainName(t.cat||"Others");
+    const m=t.date.substr(0,7);
+    if(!catMonthSums[cat])catMonthSums[cat]={};
+    if(!catMonthCounts[cat])catMonthCounts[cat]={};
+    catMonthSums[cat][m]=(catMonthSums[cat][m]||0)+t.amount;
+    catMonthCounts[cat][m]=(catMonthCounts[cat][m]||0)+1;
+  });
+  Object.keys(catMonthSums).forEach(cat=>{
+    const months=Object.keys(catMonthSums[cat]);
+    const avg=months.length>0?months.reduce((s,m)=>s+catMonthSums[cat][m],0)/months.length:0;
+    catMonthAvg[cat]=avg;
+  });
+  const months=[...new Set(expenseTx.map(t=>t.date.substr(0,7)))].sort();
+  const anomalies=[];
+  expenseTx.forEach(t=>{
+    const cat=catMainName(t.cat||"Others");
+    const avg=catMonthAvg[cat]||0;
+    const m=t.date.substr(0,7);
+    const monthTotal=catMonthSums[cat]?.[m]||0;
+    const monthAvg=catMonthSums[cat]?(Object.values(catMonthSums[cat]).reduce((s,v)=>s+v,0)/Object.keys(catMonthSums[cat]).length):0;
+    const ratio=monthAvg>0?t.amount/monthAvg:0;
+    if(t.amount>0&&ratio>=2){
+      anomalies.push({...t,cat,ratio,monthAvg});
+    }
+  });
+  anomalies.sort((a,b)=>b.ratio-a.ratio);
+  const totalAnomalyAmount=anomalies.reduce((s,a)=>s+a.amount,0);
+  const affectedCats=new Set(anomalies.map(a=>a.cat));
+  const byCat={};
+  anomalies.forEach(a=>{
+    if(!byCat[a.cat])byCat[a.cat]={count:0,total:0,maxRatio:0,txns:[]};
+    byCat[a.cat].count++;
+    byCat[a.cat].total+=a.amount;
+    byCat[a.cat].maxRatio=Math.max(byCat[a.cat].maxRatio,a.ratio);
+    byCat[a.cat].txns.push(a);
+  });
+  const hmRows=Object.entries(byCat).map(([cat,v])=>{
+    const catObj=data.categories.find(c=>c.name===cat);
+    const monthlyData={};
+    v.txns.forEach(t=>{const m=t.date.substr(0,7);monthlyData[m]=(monthlyData[m]||0)+t.amount;});
+    return{label:cat,col:catObj?.color||"#ef4444",data:monthlyData,badge:v.count+" anomalies"};
+  });
+  return React.createElement("div",{className:"fu"},
+    React.createElement(RptHeader,{title:"Spending Anomalies",desc:"Transactions that are 2x+ higher than your category average — potential unusual spending",icon:React.createElement(Icon,{n:"detective",size:18})}),
+    React.createElement(RptCtrlBar,{onExportPDF},
+      React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Account:"),
+      React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
+      React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
+    ),
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement(StatCard,{label:"Anomalies Found",val:anomalies.length,col:"#ef4444",sub:"Transactions flagged",icon:React.createElement(Icon,{n:"detective",size:18})}),
+      React.createElement(StatCard,{label:"Total Anomaly Spend",val:INR(totalAnomalyAmount),col:"#f59e0b",sub:anomalies.length>0?"Avg "+INR(totalAnomalyAmount/anomalies.length)+" each":"",icon:React.createElement(Icon,{n:"warning",size:18})}),
+      React.createElement(StatCard,{label:"Affected Categories",val:affectedCats.size+"/"+Object.keys(catMonthAvg).length,col:"#8b5cf6",sub:"Categories with anomalies",icon:React.createElement(Icon,{n:"category",size:18})}),
+      React.createElement(StatCard,{label:"Detection Threshold",val:"2x Average",col:"var(--accent)",sub:"Based on your category spending average",icon:React.createElement(Icon,{n:"search",size:18})})
+    ),
+    view==="snapshot"&&React.createElement("div",null,
+      anomalies.length===0?React.createElement(Card,null,React.createElement(Empty,{art:"search",text:"No spending anomalies detected in this period. Your spending looks consistent across categories."})):
+      Object.entries(byCat).sort((a,b)=>b[1].total-a[1].total).map(([cat,v])=>{
+        const catObj=data.categories.find(c=>c.name===cat);
+        const col=catObj?.color||"#ef4444";
+        return React.createElement(Card,{key:cat,sx:{marginBottom:12,borderLeft:"3px solid "+col}},
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+              React.createElement("span",{style:{width:10,height:10,borderRadius:"50%",background:col,display:"inline-block",flexShrink:0}}),
+              React.createElement("span",{style:{fontSize:14,fontWeight:700,color:col}},cat),
+              React.createElement("span",{style:{fontSize:10,color:"var(--text6)",background:"var(--bg5)",borderRadius:8,padding:"2px 8px"}},v.count+" anomaly"+(v.count>1?"s":""))
+            ),
+            React.createElement("div",{style:{fontSize:14,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#ef4444"}},INR(v.total))
+          ),
+          v.txns.slice(0,5).map((t,i)=>React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:i<v.txns.length-1?"1px solid var(--border2)":"none"}},
+            React.createElement("span",{style:{fontSize:10,color:"var(--text5)",width:60}},t.date.slice(5)),
+            React.createElement("span",{style:{flex:1,fontSize:12,color:"var(--text3)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.desc||"—"),
+            React.createElement("span",{style:{fontSize:12,color:"#ef4444",fontWeight:700,fontFamily:"'Sora',sans-serif",whiteSpace:"nowrap"}},INR(t.amount)),
+            React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:8,background:"#ef444418",color:"#ef4444",whiteSpace:"nowrap"}},t.ratio.toFixed(1)+"x avg")
+          )),
+          v.txns.length>5&&React.createElement("div",{style:{fontSize:10,color:"var(--text6)",paddingTop:6,textAlign:"center"}},(v.txns.length-5)+" more anomalies")
+        );
+      })
+    ),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflowY:"hidden",overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"100px 120px 1fr 100px 80px 80px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},
+        React.createElement("span",null,"Date"),
+        React.createElement("span",null,"Category"),
+        React.createElement("span",null,"Description"),
+        React.createElement("span",{style:{textAlign:"right"}},"Amount"),
+        React.createElement("span",{style:{textAlign:"right"}},"Avg"),
+        React.createElement("span",{style:{textAlign:"right"}},"Ratio")
+      ),
+      anomalies.length===0&&React.createElement(Empty,{text:"No anomalies in this period"}),
+      anomalies.map((t,i)=>React.createElement("div",{key:i,className:"tr",style:{display:"grid",gridTemplateColumns:"100px 120px 1fr 100px 80px 80px",padding:"9px 14px",borderBottom:"1px solid var(--border2)"}},
+        React.createElement("div",{style:{fontSize:12,color:"var(--text4)",fontFamily:"'Sora',sans-serif"}},t.date),
+        React.createElement("div",{style:{fontSize:12,color:"var(--text3)",fontWeight:500}},t.cat),
+        React.createElement("div",{style:{fontSize:12,color:"var(--text4)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.desc||"—"),
+        React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"#ef4444",fontWeight:700,fontFamily:"'Sora',sans-serif"}},INR(t.amount)),
+        React.createElement("div",{style:{textAlign:"right",fontSize:11,color:"var(--text5)"}},INR(t.monthAvg)),
+        React.createElement("div",{style:{textAlign:"right",fontSize:11,fontWeight:700,color:"#ef4444"}},t.ratio.toFixed(1)+"x")
+      ))
+    ),
+    view==="heatmap"&&React.createElement(HeatGrid,{rows:hmRows,months:months.length>0?months:[],rowLabel:"Category",
+      hint:"Anomaly amounts by category and month. Red = higher anomaly spend."})
+  );
+};
+
+/* ══ NEW REPORT: YEAR-OVER-YEAR COMPARISON ═════════════════════════════════ */
+const RptYoYComparison=({data,from,to,onExportPDF})=>{
+  const[accFilter,setAccFilter]=useState("all");
+  const[view,setView]=useState("snapshot");
+  const allTx=collectTx(data,from,to,accFilter);
+  const currentFY=getCurrentIndianFY();
+  const fyYears=[currentFY-2,currentFY-1,currentFY];
+  const fyData=fyYears.map(fy=>{
+    const{from:fyFrom,to:fyTo}=getIndianFYDates(fy);
+    const label=getIndianFYLabel(fy);
+    const fyTx=allTx.filter(t=>t.date>=fyFrom&&t.date<=fyTo);
+    const monthly={};
+    fyTx.forEach(t=>{
+      const k=t.date.substr(0,7);
+      const ct=catClassType(data.categories,t.cat||"Others");
+      if(ct==="Transfer")return;
+      const d=txCatDelta(t,ct);
+      if(!monthly[k])monthly[k]={inc:0,exp:0,inv:0};
+      if(ct==="Income")monthly[k].inc+=d;
+      else if(ct==="Investment")monthly[k].inv+=d;
+      else monthly[k].exp+=d;
+    });
+    const months=Object.keys(monthly).sort();
+    const totInc=months.reduce((s,m)=>s+monthly[m].inc,0);
+    const totExp=months.reduce((s,m)=>s+monthly[m].exp,0);
+    const totInv=months.reduce((s,m)=>s+monthly[m].inv,0);
+    const savings=totInc-totExp;
+    const savingsRate=totInc>0?(savings/totInc)*100:0;
+    return{fy,label,monthly,months,totInc,totExp,totInv,savings,savingsRate};
+  });
+  const latest=fyData[2]||fyData[1]||fyData[0];
+  const prev=fyData[1]||fyData[0];
+  const incChange=prev&&prev.totInc>0?((latest.totInc-prev.totInc)/prev.totInc)*100:0;
+  const expChange=prev&&prev.totExp>0?((latest.totExp-prev.totExp)/prev.totExp)*100:0;
+  const rateChange=prev?(latest.savingsRate-prev.savingsRate):0;
+  const commonMonths=["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const monthCompare=commonMonths.map((mName,mi)=>{
+    const calMonth=mi>=9?(mi-9):(mi+3);
+    const fy=fyYears[1];
+    const prevM=fmtD(new Date(fy,calMonth,1)).slice(0,7);
+    const currM=fmtD(new Date(fy+1,calMonth,1)).slice(0,7);
+    const prevVal=prev?.monthly[prevM]?.exp||0;
+    const currVal=latest?.monthly[currM]?.exp||0;
+    const change=prevVal>0?((currVal-prevVal)/prevVal)*100:0;
+    return{month:mName,prevExp:prevVal,currExp:currVal,change};
+  });
+  const catCompare=(fy1,fy2)=>{
+    const cats={};
+    const fy1Data=fyData.find(f=>f.fy===fy1);
+    const fy2Data=fyData.find(f=>f.fy===fy2);
+    if(!fy1Data||!fy2Data)return[];
+    allTx.filter(t=>{
+      const ct=catClassType(data.categories,t.cat||"Others");
+      return ct!=="Transfer"&&ct!=="Income";
+    }).forEach(t=>{
+      const cat=catMainName(t.cat||"Others");
+      const ct=catClassType(data.categories,t.cat||"Others");
+      const d=txCatDelta(t,ct);
+      if(!cats[cat])cats[cat]={fy1:0,fy2:0};
+      const fy=t.date>=getIndianFYDates(fy1).from&&t.date<=getIndianFYDates(fy1).to?fy1:(t.date>=getIndianFYDates(fy2).from&&t.date<=getIndianFYDates(fy2).to?fy2:null);
+      if(fy===fy1)cats[cat].fy1+=d;
+      else if(fy===fy2)cats[cat].fy2+=d;
+    });
+    return Object.entries(cats).filter(([,v])=>v.fy1>0||v.fy2>0).map(([cat,v])=>({
+      cat,fy1:v.fy1,fy2:v.fy2,change:v.fy1>0?((v.fy2-v.fy1)/v.fy1)*100:0
+    })).sort((a,b)=>Math.abs(b.change)-Math.abs(a.change));
+  };
+  const catComp=catCompare(fyYears[1],fyYears[2]);
+  return React.createElement("div",{className:"fu"},
+    React.createElement(RptHeader,{title:"Year-over-Year Comparison",desc:"Compare financial years side by side — see how your spending and income have changed",icon:React.createElement(Icon,{n:"compare",size:18})}),
+    React.createElement(RptCtrlBar,{onExportPDF},
+      React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Account:"),
+      React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
+      React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
+    ),
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement(StatCard,{label:"Income Change",val:(incChange>0?"+":"")+incChange.toFixed(1)+"%",col:incChange>=0?"#16a34a":"#ef4444",sub:prev?.label+" → "+latest?.label,icon:React.createElement(Icon,{n:"classIncome",size:16})}),
+      React.createElement(StatCard,{label:"Expense Change",val:(expChange>0?"+":"")+expChange.toFixed(1)+"%",col:expChange<=0?"#16a34a":"#ef4444",sub:"Yearly expenses",icon:React.createElement(Icon,{n:"classExpense",size:18})}),
+      React.createElement(StatCard,{label:"Savings Rate Δ",val:(rateChange>0?"+":"")+rateChange.toFixed(1)+"pp",col:rateChange>=0?"#16a34a":"#ef4444",sub:prev?.savingsRate.toFixed(1)+"% → "+latest?.savingsRate.toFixed(1)+"%",icon:React.createElement(Icon,{n:"activity",size:18})}),
+      React.createElement(StatCard,{label:"Period Compared",val:latest?.label,sub:"vs "+prev?.label,col:"var(--accent)",icon:React.createElement(Icon,{n:"calendar",size:18})})
+    ),
+    view==="snapshot"&&React.createElement("div",null,
+      React.createElement(Card,{sx:{marginBottom:14}},
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text2)",marginBottom:12}},"Financial Year Overview"),
+        React.createElement(SvgGroupBar,{
+          data:fyData.map(fy=>({label:fy.label.slice(3),v1:fy.totInc,v2:fy.totExp,v3:fy.totInv})),
+          h:160,label1:"Income",label2:"Expenses",label3:"Invested"
+        })
+      ),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat("+fyData.length+",1fr)",gap:12,marginBottom:14}},
+        fyData.map(fy=>React.createElement(Card,{key:fy.fy,sx:{borderTop:"3px solid "+(fy.fy===latest?.fy?"var(--accent)":"var(--border)")}},
+          React.createElement("div",{style:{fontSize:11,fontWeight:700,color:fy.fy===latest?.fy?"var(--accent)":"var(--text5)",marginBottom:10,textAlign:"center"}},fy.label),
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
+            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},INR(fy.totInc)),
+            React.createElement("span",{style:{fontSize:11,color:"#16a34a",fontWeight:600}},"Income")
+          ),
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
+            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},INR(fy.totExp)),
+            React.createElement("span",{style:{fontSize:11,color:"#ef4444",fontWeight:600}},"Expenses")
+          ),
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
+            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},INR(fy.totInv)),
+            React.createElement("span",{style:{fontSize:11,color:"#6d28d9",fontWeight:600}},"Invested")
+          ),
+          React.createElement("div",{style:{borderTop:"1px solid var(--border)",paddingTop:6,marginTop:4,display:"flex",justifyContent:"space-between"}},
+            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},INR(fy.savings)),
+            React.createElement("span",{style:{fontSize:11,fontWeight:700,color:fy.savingsRate>=30?"#16a34a":"#f59e0b"}},fy.savingsRate.toFixed(1)+"% saved")
+          )
+        ))
+      ),
+      catComp.length>0&&React.createElement(Card,null,
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text2)",marginBottom:12}},"Category Changes ("+prev?.label+" → "+latest?.label+")"),
+        catComp.slice(0,12).map(r=>{
+          const catObj=data.categories.find(c=>c.name===r.cat);
+          const col=catObj?.color||"#8ba0c0";
+          return React.createElement(HBar,{key:r.cat,label:r.cat,value:r.fy2,max:Math.max(...catComp.map(c=>Math.max(c.fy1,c.fy2))),color:col,
+            sub:(r.change>0?"+":"")+r.change.toFixed(0)+"%",
+            badge:r.change>10?{text:"↑ Rising",bg:"#ef444418",col:"#ef4444"}:r.change<-10?{text:"↓ Falling",bg:"#16a34a18",col:"#16a34a"}:null
+          });
+        })
+      )
+    ),
+    view==="detailed"&&React.createElement("div",null,
+      React.createElement(Card,{sx:{marginBottom:14,padding:0,overflowY:"hidden",overflowX:"auto"}},
+        React.createElement("div",{style:{padding:"10px 14px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:12,fontWeight:700,color:"var(--text2)"}},
+          "Month-by-Month Expense Comparison ("+prev?.label+" vs "+latest?.label+")"
+        ),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"80px 1fr 1fr 80px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase"}},
+          React.createElement("span",null,"Month"),
+          React.createElement("span",{style:{textAlign:"right"}},prev?.label),
+          React.createElement("span",{style:{textAlign:"right"}},latest?.label),
+          React.createElement("span",{style:{textAlign:"right"}},"Change")
+        ),
+        monthCompare.map((m,i)=>{
+          const isUp=m.change>5;
+          return React.createElement("div",{key:i,className:"tr",style:{display:"grid",gridTemplateColumns:"80px 1fr 1fr 80px",padding:"9px 14px",borderBottom:"1px solid var(--border2)"}},
+            React.createElement("div",{style:{fontSize:12,color:"var(--text3)",fontWeight:600,fontFamily:"'Sora',sans-serif"}},m.month),
+            React.createElement("div",{style:{textAlign:"right",fontSize:12,color:prev?"var(--text3)":"var(--text7)",fontWeight:600}},INR(m.prevExp)),
+            React.createElement("div",{style:{textAlign:"right",fontSize:12,color:m.currExp>0?"#ef4444":"var(--text7)",fontWeight:700}},INR(m.currExp)),
+            React.createElement("div",{style:{textAlign:"right",fontSize:11,fontWeight:700,color:m.currExp>0?(isUp?"#ef4444":"#16a34a"):"var(--text7)"}},m.currExp>0?(m.change>0?"+":"")+m.change.toFixed(0)+"%":"—")
+          );
+        })
+      ),
+      React.createElement(Card,null,
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text2)",marginBottom:10}},"Category Comparison Table"),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 80px",padding:"6px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase"}},
+          React.createElement("span",null,"Category"),
+          React.createElement("span",{style:{textAlign:"right"}},prev?.label),
+          React.createElement("span",{style:{textAlign:"right"}},latest?.label),
+          React.createElement("span",{style:{textAlign:"right"}},"Change")
+        ),
+        catComp.map((r,i)=>{
+          const catObj=data.categories.find(c=>c.name===r.cat);
+          const col=catObj?.color||"#8ba0c0";
+          return React.createElement("div",{key:i,style:{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 80px",padding:"8px 14px",borderBottom:"1px solid var(--border2)"}},
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+              React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:col,display:"inline-block",flexShrink:0}}),
+              React.createElement("span",{style:{fontSize:12,color:"var(--text3)",fontWeight:500}},r.cat)
+            ),
+            React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"var(--text4)",fontWeight:600}},INR(r.fy1)),
+            React.createElement("div",{style:{textAlign:"right",fontSize:12,color:col,fontWeight:700}},INR(r.fy2)),
+            React.createElement("div",{style:{textAlign:"right",fontSize:11,fontWeight:700,color:r.change>5?"#ef4444":r.change<-5?"#16a34a":"var(--text5)"}},(r.change>0?"+":"")+r.change.toFixed(0)+"%")
+          );
+        })
+      )
+    ),
+    view==="heatmap"&&React.createElement(HeatGrid,{
+      rows:fyData.map(fy=>({label:fy.label,col:fy.fy===latest?.fy?"var(--accent)":"#8ba0c0",data:fy.months.reduce((o,m)=>{o[m]=fy.monthly[m]?.exp||0;return o;},{})})),
+      months:[...new Set(fyData.flatMap(f=>f.months))].sort(),
+      rowLabel:"Financial Year",
+      hint:"Monthly expense heatmap across financial years. Deeper colour = higher spend."
+    })
+  );
+};
+
+/* ══ NEW REPORT: CATEGORY TREND LINES ══════════════════════════════════════ */
+const RptCategoryTrends=({data,from,to,onExportPDF})=>{
+  const[accFilter,setAccFilter]=useState("all");
+  const[view,setView]=useState("snapshot");
+  const[showType,setShowType]=useState("expense");
+  const allTx=collectTx(data,from,to,accFilter);
+  const monthly={};
+  allTx.forEach(t=>{
+    const k=t.date.substr(0,7);
+    const ct=catClassType(data.categories,t.cat||"Others");
+    if(ct==="Transfer")return;
+    if(showType==="expense"&&(ct!=="Expense"&&ct!=="Others"))return;
+    if(showType==="income"&&ct!=="Income")return;
+    if(showType==="investment"&&ct!=="Investment")return;
+    const cat=catMainName(t.cat||"Others");
+    if(!monthly[k])monthly[k]={};
+    const d=txCatDelta(t,ct);
+    monthly[k][cat]=(monthly[k][cat]||0)+Math.abs(d);
+  });
+  const months=Object.keys(monthly).sort();
+  const allCats=new Set();
+  months.forEach(m=>Object.keys(monthly[m]).forEach(c=>allCats.add(c)));
+  const catList=[...allCats].sort();
+  const catTrends=catList.map(cat=>{
+    const vals=months.map(m=>monthly[m]?.[cat]||0);
+    const total=vals.reduce((s,v)=>s+v,0);
+    const avg=vals.length>0?total/vals.length:0;
+    /* Proportional split: use floor/ceil of half the months for comparison */
+    const n=vals.length;
+    let trendPct=0,direction="stable",recentAvg=0,prevAvg=0;
+    if(n>=2){
+      const split=Math.max(1,Math.floor(n/2));
+      const recentSlice=vals.slice(-split);
+      const prevSlice=vals.slice(0,n-split);
+      recentAvg=recentSlice.reduce((s,v)=>s+v,0)/recentSlice.length;
+      prevAvg=prevSlice.length>0?prevSlice.reduce((s,v)=>s+v,0)/prevSlice.length:0;
+      if(prevAvg>0&&recentAvg>0){
+        trendPct=((recentAvg-prevAvg)/prevAvg)*100;
+      }else if(prevAvg===0&&recentAvg>0){
+        trendPct=null;
+      }else if(prevAvg>0&&recentAvg===0){
+        trendPct=-100;
+      }
+      direction=trendPct===null?"new":trendPct>10?"up":trendPct<-10?"down":"stable";
+    }else{
+      direction="stable";
+    }
+    const catObj=data.categories.find(c=>c.name===cat);
+    const ct=catObj?.classType||"Expense";
+    return{cat,vals,total,avg,trendPct,direction,color:catObj?.color||"#8ba0c0",ct,recentAvg,prevAvg};
+  });
+  const filtered=showType==="expense"?catTrends.filter(t=>t.ct==="Expense"||t.ct==="Others"):
+    showType==="income"?catTrends.filter(t=>t.ct==="Income"):
+    catTrends.filter(t=>t.ct==="Investment");
+  const sorted=[...filtered].sort((a,b)=>{
+    if(a.direction==="new"&&b.direction!=="new")return-1;
+    if(b.direction==="new"&&a.direction!=="new")return 1;
+    return Math.abs(b.trendPct||0)-Math.abs(a.trendPct||0);
+  });
+  const rising=sorted.filter(t=>t.direction==="up");
+  const falling=sorted.filter(t=>t.direction==="down");
+  const stable=sorted.filter(t=>t.direction==="stable");
+  const newSpending=sorted.filter(t=>t.direction==="new");
+  const maxVal=Math.max(...catTrends.flatMap(t=>t.vals),1);
+  const hmRows=filtered.map(t=>({label:t.cat,col:t.color,data:months.reduce((o,m,i)=>{o[m]=t.vals[i];return o;},{})}));
+  const CatSparkline=({vals,color})=>{
+    const h=36,w=120,pad=2;
+    if(!vals||vals.length<2)return null;
+    const mx=Math.max(...vals,1),mn=Math.min(...vals,0);
+    const pts=vals.map((v,i)=>`${pad+i*((w-pad*2)/(vals.length-1))},${pad+(h-pad*2)*(1-(v-mn)/(mx-mn||1))}`).join(" ");
+    const fill=`${pad},${h-pad} ${pts} ${pad+(vals.length-1)*((w-pad*2)/(vals.length-1))},${h-pad}`;
+    return React.createElement("svg",{width:w,height:h,viewBox:`0 0 ${w} ${h}`,style:{display:"block"}},
+      React.createElement("polygon",{points:fill,fill:color,opacity:.1}),
+      React.createElement("polyline",{points:pts,fill:"none",stroke:color,strokeWidth:1.5,strokeLinejoin:"round"})
+    );
+  };
+  const fmtTrendPct=(pct)=>pct===null?"New":(pct>0?"+":"")+pct.toFixed(0)+"%";
+  const trendColor=(dir)=>dir==="up"?"#ef4444":dir==="down"?"#16a34a":dir==="new"?"#b45309":"var(--text5)";
+  return React.createElement("div",{className:"fu"},
+    React.createElement(RptHeader,{title:"Category Trend Lines",desc:"Track spending direction for each category — are you spending more or less over time?",icon:React.createElement(Icon,{n:"trenddown",size:18})}),
+    React.createElement(RptCtrlBar,{onExportPDF},
+      React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Account:"),
+      React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
+      React.createElement("div",{style:{marginLeft:"auto",display:"flex",gap:6}},
+        ["expense","income","investment"].map(t=>React.createElement("button",{key:t,onClick:()=>setShowType(t),style:{padding:"5px 12px",borderRadius:16,border:"1.5px solid "+(showType===t?"var(--accent)":"var(--border)"),background:showType===t?"linear-gradient(135deg,var(--accentbg),var(--accentbg2))":"transparent",color:showType===t?"var(--accent)":"var(--text4)",cursor:"pointer",fontSize:11,fontFamily:"'DM Sans',sans-serif",fontWeight:showType===t?700:400,transition:"all .15s"}},t.charAt(0).toUpperCase()+t.slice(1)))
+      ),
+      React.createElement("div",{style:{marginLeft:10}},React.createElement(ViewToggle,{value:view,onChange:setView}))
+    ),
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement(StatCard,{label:"Rising Categories",val:rising.length,col:"#ef4444",sub:rising.map(r=>r.cat).slice(0,2).join(", ")||"—",icon:React.createElement(Icon,{n:"trenddown",size:18})}),
+      React.createElement(StatCard,{label:"Falling Categories",val:falling.length,col:"#16a34a",sub:falling.map(r=>r.cat).slice(0,2).join(", ")||"—",icon:React.createElement(Icon,{n:"checkcircle",size:16})}),
+      React.createElement(StatCard,{label:"Stable Categories",val:stable.length,col:"#64748b",sub:"Spending →",icon:React.createElement(Icon,{n:"balance",size:18})}),
+      React.createElement(StatCard,{label:"Total Categories",val:filtered.length,col:"var(--accent)",sub:showType.charAt(0).toUpperCase()+showType.slice(1)+" categories",icon:React.createElement(Icon,{n:"category",size:18})})
+    ),
+    newSpending.length>0&&view==="snapshot"&&React.createElement(Card,{sx:{marginBottom:14,borderLeft:"3px solid #b45309"}},
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+        React.createElement("span",{style:{fontSize:14,fontWeight:700,color:"#b45309"}},"🆕 New Spending"),
+        React.createElement("span",{style:{fontSize:10,color:"var(--text6)",background:"#b4530918",borderRadius:8,padding:"2px 8px"}},newSpending.length+" categor"+(newSpending.length===1?"y":"ies"))
+      ),
+      newSpending.map(r=>React.createElement("div",{key:r.cat,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid var(--border2)"}},
+        React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:r.color,flexShrink:0,display:"inline-block"}}),
+        React.createElement("span",{style:{flex:1,fontSize:12,color:"var(--text3)",fontWeight:500}},r.cat),
+        React.createElement(CatSparkline,{vals:r.vals,color:r.color}),
+        React.createElement("span",{style:{fontSize:11,fontWeight:700,color:"#b45309",fontFamily:"'Sora',sans-serif",whiteSpace:"nowrap"}},"New"),
+        React.createElement("span",{style:{fontSize:11,color:"var(--text5)",whiteSpace:"nowrap"}},INR(r.avg)+"/mo")
+      ))
+    ),
+    view==="snapshot"&&React.createElement("div",null,
+      rising.length>0&&React.createElement(Card,{sx:{marginBottom:14,borderLeft:"3px solid #ef4444"}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+          React.createElement("span",{style:{fontSize:14,fontWeight:700,color:"#ef4444"}},"📈 Spending Rising"),
+          React.createElement("span",{style:{fontSize:10,color:"var(--text6)",background:"#ef444418",borderRadius:8,padding:"2px 8px"}},rising.length+" categor"+(rising.length===1?"y":"ies"))
+        ),
+        rising.map(r=>React.createElement("div",{key:r.cat,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid var(--border2)"}},
+          React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:r.color,flexShrink:0,display:"inline-block"}}),
+          React.createElement("span",{style:{flex:1,fontSize:12,color:"var(--text3)",fontWeight:500}},r.cat),
+          React.createElement(CatSparkline,{vals:r.vals,color:r.color}),
+          React.createElement("span",{style:{fontSize:11,fontWeight:700,color:"#ef4444",fontFamily:"'Sora',sans-serif",whiteSpace:"nowrap"}},fmtTrendPct(r.trendPct)),
+          React.createElement("span",{style:{fontSize:11,color:"var(--text5)",whiteSpace:"nowrap"}},INR(r.avg)+"/mo")
+        ))
+      ),
+      falling.length>0&&React.createElement(Card,{sx:{marginBottom:14,borderLeft:"3px solid #16a34a"}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+          React.createElement("span",{style:{fontSize:14,fontWeight:700,color:"#16a34a"}},"📉 Spending Falling"),
+          React.createElement("span",{style:{fontSize:10,color:"var(--text6)",background:"#16a34a18",borderRadius:8,padding:"2px 8px"}},falling.length+" categor"+(falling.length===1?"y":"ies"))
+        ),
+        falling.map(r=>React.createElement("div",{key:r.cat,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid var(--border2)"}},
+          React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:r.color,flexShrink:0,display:"inline-block"}}),
+          React.createElement("span",{style:{flex:1,fontSize:12,color:"var(--text3)",fontWeight:500}},r.cat),
+          React.createElement(CatSparkline,{vals:r.vals,color:r.color}),
+          React.createElement("span",{style:{fontSize:11,fontWeight:700,color:"#16a34a",fontFamily:"'Sora',sans-serif",whiteSpace:"nowrap"}},fmtTrendPct(r.trendPct)),
+          React.createElement("span",{style:{fontSize:11,color:"var(--text5)",whiteSpace:"nowrap"}},INR(r.avg)+"/mo")
+        ))
+      ),
+      stable.length>0&&React.createElement(Card,{sx:{borderLeft:"3px solid #64748b"}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+          React.createElement("span",{style:{fontSize:14,fontWeight:700,color:"#64748b"}},"➡️ Stable"),
+          React.createElement("span",{style:{fontSize:10,color:"var(--text6)",background:"#64748b18",borderRadius:8,padding:"2px 8px"}},stable.length+" categor"+(stable.length===1?"y":"ies"))
+        ),
+        stable.map(r=>React.createElement("div",{key:r.cat,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid var(--border2)"}},
+          React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:r.color,flexShrink:0,display:"inline-block"}}),
+          React.createElement("span",{style:{flex:1,fontSize:12,color:"var(--text3)",fontWeight:500}},r.cat),
+          React.createElement(CatSparkline,{vals:r.vals,color:r.color}),
+          React.createElement("span",{style:{fontSize:11,fontWeight:700,color:"var(--text5)",fontFamily:"'Sora',sans-serif",whiteSpace:"nowrap"}},fmtTrendPct(r.trendPct)),
+          React.createElement("span",{style:{fontSize:11,color:"var(--text5)",whiteSpace:"nowrap"}},INR(r.avg)+"/mo")
+        ))
+      )
+    ),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflowY:"hidden",overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1.2fr 80px 80px 80px 80px 80px 80px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},
+        React.createElement("span",null,"Category"),
+        React.createElement("span",{style:{textAlign:"right"}},"Avg/mo"),
+        React.createElement("span",{style:{textAlign:"right"}},"Total"),
+        React.createElement("span",{style:{textAlign:"right"}},"Min"),
+        React.createElement("span",{style:{textAlign:"right"}},"Max"),
+        React.createElement("span",{style:{textAlign:"right"}},"Trend"),
+        React.createElement("span",{style:{textAlign:"center"}},"Direction")
+      ),
+      sorted.length===0&&React.createElement(Empty,{text:"No data for this filter"}),
+      sorted.map(r=>{
+        const min=Math.min(...r.vals.filter(v=>v>0));
+        const max=Math.max(...r.vals);
+        const dirIcon=r.direction==="up"?"📈":r.direction==="down"?"📉":r.direction==="new"?"🆕":"➡️";
+        return React.createElement("div",{key:r.cat,className:"tr",style:{display:"grid",gridTemplateColumns:"1.2fr 80px 80px 80px 80px 80px 80px",padding:"9px 14px",borderBottom:"1px solid var(--border2)"}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+            React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:r.color,display:"inline-block",flexShrink:0}}),
+            React.createElement("span",{style:{fontSize:12,color:"var(--text3)",fontWeight:500}},r.cat)
+          ),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"var(--text4)",fontWeight:600}},INR(r.avg)),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,color:r.color,fontWeight:700}},INR(r.total)),
+          React.createElement("div",{style:{textAlign:"right",fontSize:11,color:"var(--text5)"}},isFinite(min)?INR(min):"—"),
+          React.createElement("div",{style:{textAlign:"right",fontSize:11,color:"var(--text5)"}},isFinite(max)?INR(max):""),
+          React.createElement("div",{style:{textAlign:"right",fontSize:11,fontWeight:700,color:trendColor(r.direction)}},fmtTrendPct(r.trendPct)),
+          React.createElement("div",{style:{textAlign:"center",fontSize:14}},dirIcon)
+        );
+      })
+    ),
+    view==="heatmap"&&React.createElement(HeatGrid,{rows:hmRows,months,rowLabel:"Category",
+      hint:"Monthly spend per category. Deeper colour = higher spend in that month."})
+  );
+};
+
 const REPORT_TREE=[
   {id:"cashflow",      label:"Cash Flow",                icon:React.createElement(Icon,{n:"classIncome",size:16})},
   {id:"classification",label:"Classification Breakdown", icon:React.createElement(Icon,{n:"tag",size:18})},
@@ -31119,6 +31883,11 @@ const REPORT_TREE=[
   {id:"usage",         label:"My Usage",                 icon:React.createElement(Icon,{n:"phone",size:18})},
   {id:"summary",       label:"Summary of Accounts",      icon:React.createElement(Icon,{n:"tabs",size:18})},
   {id:"gsttds",        label:"GST & TDS",                 icon:React.createElement(Icon,{n:"receipt",size:18})},
+  {id:"budgetactual",  label:"Budget vs Actuals",          icon:React.createElement(Icon,{n:"checklist",size:18})},
+  {id:"savingsrate",   label:"Savings Rate Trend",         icon:React.createElement(Icon,{n:"activity",size:18})},
+  {id:"anomalies",     label:"Spending Anomalies",         icon:React.createElement(Icon,{n:"detective",size:18})},
+  {id:"yoy",           label:"Year-over-Year",             icon:React.createElement(Icon,{n:"compare",size:18})},
+  {id:"cattrends",     label:"Category Trends",            icon:React.createElement(Icon,{n:"trenddown",size:18})},
 ];
 
 const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
@@ -31229,6 +31998,11 @@ const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
       case"investments":     return React.createElement(RptInvestments,props);
       case"reconciliation":  return React.createElement(RptReconciliation,props);
       case"gsttds":          return React.createElement(RptGstTds,props);
+      case"budgetactual":    return React.createElement(RptBudgetVsActual,props);
+      case"savingsrate":     return React.createElement(RptSavingsRate,props);
+      case"anomalies":       return React.createElement(RptSpendingAnomalies,props);
+      case"yoy":             return React.createElement(RptYoYComparison,props);
+      case"cattrends":       return React.createElement(RptCategoryTrends,props);
       default:               return React.createElement(RptCashFlow,props);
     }
   };
@@ -31332,15 +32106,6 @@ const InsightPrefsPanel=({state,dispatch})=>{
       hint&&React.createElement("div",{style:{fontSize:11,color:"var(--text6)",marginTop:3,lineHeight:1.5}},hint)
     );
 
-  if(!ready)return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",gap:14}},
-    React.createElement("div",{style:{display:"flex",alignItems:"center",gap:13,marginBottom:16}},
-      React.createElement(Skeleton,{w:42,h:42,r:12}),
-      React.createElement("div",{style:{flex:1}},React.createElement(Skeleton,{w:"40%",h:16,style:{marginBottom:8}}),React.createElement(Skeleton,{w:"25%",h:10}))
-    ),
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(3,1fr)",gap:12}},
-      React.createElement(SkeletonStat,null),React.createElement(SkeletonStat,null),React.createElement(SkeletonStat,null)),
-    React.createElement("div",{className:"mm-card",style:{padding:18,borderRadius:14}},React.createElement(Skeleton,{h:200}))
-  );
   return React.createElement("div",{className:"fu"},
     React.createElement("div",{style:{marginBottom:24,display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}},
       React.createElement("div",null,
@@ -34776,7 +35541,7 @@ const NetWorthInsightTab=({banks,cards,cash,mf,shares,fd,re,loans,categories,pre
 
 
 
-const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile,goals,mf,shares,fd,re,loans,prefs,onJumpToLedger,nwSnapshots,brokerCashBalance=0})=>{
+const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile,goals,mf,mfTxns,shares,fd,re,loans,prefs,onJumpToLedger,nwSnapshots,brokerCashBalance=0})=>{
   const P=prefs||{};
   const[stab,setStab]=useState("pulse");
   const[schedConfirm,setSchedConfirm]=useState(null);
@@ -34816,10 +35581,11 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     const todaySpend=allTxns.filter(t=>t.type==="debit"&&t.date===todayStr).reduce((s,t)=>s+t.amount,0);
     const thisMonthSpend=allTxns.filter(t=>t.type==="debit"&&t.date>=thisStart&&t.date<=thisEnd).reduce((s,t)=>s+t.amount,0);
     const lastMonthSpend=allTxns.filter(t=>t.type==="debit"&&t.date>=lastStart&&t.date<=lastEnd).reduce((s,t)=>s+t.amount,0);
+    const thisMonthIncome=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");return ct==="Income"&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+txCatDelta(t,"Income"),0);
+    const lastMonthIncome=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");return ct==="Income"&&t.date>=lastStart&&t.date<=lastEnd;}).reduce((s,t)=>s+txCatDelta(t,"Income"),0);
     const dailyAvg=dayOfMonth>0?thisMonthSpend/dayOfMonth:0;
     const projected=dailyAvg*daysInMonth;
     const last7=allTxns.filter(t=>{const diff=(now-new Date(t.date))/86400000;return t.type==="debit"&&diff<=7&&diff>=0;}).reduce((s,t)=>s+t.amount,0);
-    // 28-day heatmap
     const heatmap=[];
     for(let i=27;i>=0;i--){
       const d=new Date(now);d.setDate(d.getDate()-i);
@@ -34828,8 +35594,23 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       heatmap.push({date:ds,amt,dayOfWeek:d.getDay(),day:d.getDate(),month:d.getMonth()});
     }
     const maxDay=Math.max(...heatmap.map(h=>h.amt),1);
-    return {todaySpend,thisMonthSpend,lastMonthSpend,dailyAvg,projected,last7,heatmap,maxDay,dayOfMonth,daysInMonth};
-  },[allTxns,thisStart,thisEnd,lastStart,lastEnd]);
+    const expenseRatio=thisMonthIncome>0?(thisMonthSpend/thisMonthIncome*100):0;
+    const savingsThisMonth=thisMonthIncome-thisMonthSpend;
+    const savingsRate=thisMonthIncome>0?(savingsThisMonth/thisMonthIncome*100):0;
+    const pyfTarget=P.pyfDayTarget||10;
+    const pyfPassed=dayOfMonth>pyfTarget;
+    const pyfSaved=pyfPassed&&savingsThisMonth>0;
+    const foodBudget=P.foodBudget?Number(P.foodBudget):0;
+    const foodSpend=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");const main=catMainName(t.cat||"Others");return ct!=="Income"&&ct!=="Transfer"&&t.type==="debit"&&(main.toLowerCase().includes("food")||main.toLowerCase().includes("grocer"))&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+t.amount,0);
+    const liquidAssets=(banks||[]).reduce((s,b)=>s+(b.balance||0),0)+(cash?.balance||0);
+    const monthlyExpenses=allTxns.filter(t=>t.type==="debit"&&t.date>=thisStart&&t.date<=thisEnd).reduce((s,t)=>s+t.amount,0);
+    const emergencyTarget=P.emergencyTargetMonths||6;
+    const emergencyActualMonths=monthlyExpenses>0?liquidAssets/monthlyExpenses:0;
+    const discSpendTarget=P.discSpendTarget?Number(P.discSpendTarget):15;
+    const discCategories=["Shopping","Entertainment","Travel","Dining"];
+    const discSpend=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");const main=catMainName(t.cat||"Others");return ct!=="Income"&&ct!=="Transfer"&&t.type==="debit"&&(discCategories.some(c=>main.toLowerCase().includes(c.toLowerCase())))&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+t.amount,0);
+    return {todaySpend,thisMonthSpend,lastMonthSpend,dailyAvg,projected,last7,heatmap,maxDay,dayOfMonth,daysInMonth,thisMonthIncome,lastMonthIncome,expenseRatio,savingsThisMonth,savingsRate,pyfTarget,pyfPassed,pyfSaved,foodBudget,foodSpend,liquidAssets,emergencyTarget,emergencyActualMonths,discSpendTarget,discSpend};
+  },[allTxns,thisStart,thisEnd,lastStart,lastEnd,categories,P,banks,cash]);
 
 
 
@@ -34851,9 +35632,33 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     return Array.from(cats).map(cat=>{
       const curr=maps.curr[cat]||0,last=maps.last[cat]||0;
       const avg3=((maps.m3[cat]||0)+(maps.m2[cat]||0)+last)/3;
-      return {cat,curr,last,delta:curr-last,pct:last?((curr-last)/last*100):null,drift3m:avg3>0?((curr-avg3)/avg3*100):null};
+      return {cat,curr,last,m2:maps.m2[cat]||0,m3:maps.m3[cat]||0,delta:curr-last,pct:last?((curr-last)/last*100):null,drift3m:avg3>0?((curr-avg3)/avg3*100):null};
     }).sort((a,b)=>b.curr-a.curr);
   },[allTxns,thisStart,thisEnd,lastStart,lastEnd]);
+
+  /* ── LEAK DETECTOR ── */
+  const leakData=React.useMemo(()=>{
+    const threshold=Number(P.leakThreshold)||500;
+    const dayOfMonth=now.getDate();
+    const smallTx=allTxns.filter(t=>{
+      if(t.type!=="debit")return false;
+      const ct=catClassType(categories,t.cat||"");
+      if(ct==="Income"||ct==="Transfer")return false;
+      return t.amount>0&&t.amount<=threshold&&t.date>=thisStart&&t.date<=thisEnd;
+    });
+    const totalLeak=smallTx.reduce((s,t)=>s+t.amount,0);
+    const avgPerDay=dayOfMonth>0?totalLeak/dayOfMonth:0;
+    const projectedMonthly=avgPerDay*new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+    const byCat={};
+    smallTx.forEach(t=>{
+      const cat=catMainName(t.cat||"Others");
+      if(!byCat[cat])byCat[cat]={count:0,total:0};
+      byCat[cat].count++;
+      byCat[cat].total+=t.amount;
+    });
+    const topLeaks=Object.entries(byCat).map(([cat,v])=>({cat,...v})).sort((a,b)=>b.total-a.total).slice(0,5);
+    return{count:smallTx.length,total:totalLeak,projectedMonthly:Math.round(projectedMonthly),topLeaks,threshold};
+  },[allTxns,thisStart,thisEnd,categories]);
 
   /* ── TOP PAYEES ── */
   const payeeData=React.useMemo(()=>{
@@ -34874,8 +35679,22 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     const top=Object.values(thisMap).sort((a,b)=>b.total-a.total).slice(0,10);
     const totalThisMonth=Object.values(thisMap).reduce((s,p)=>s+p.total,0);
     const top3Pct=top.slice(0,3).reduce((s,p)=>s+p.total,0)/Math.max(totalThisMonth,1)*100;
-    return {top,totalThisMonth,top3Pct,firstTime:firstTime.slice(0,10)};
-  },[allTxns,thisStart,thisEnd]);
+    /* MoM comparison — last month payees */
+    const lastMap={};
+    allTxns.filter(t=>t.type==="debit"&&t.date>=lastStart&&t.date<=lastEnd).forEach(t=>{
+      const k=(t.payee||t.desc||"Unknown").trim().slice(0,40);
+      if(!k)return;
+      if(!lastMap[k])lastMap[k]={name:k,total:0,count:0};
+      lastMap[k].total+=t.amount;lastMap[k].count++;
+    });
+    const lastTop=new Set(Object.keys(lastMap));
+    const thisTop=new Set(Object.keys(thisMap));
+    const lostPayees=Array.from(lastTop).filter(k=>!thisTop.has(k)).map(k=>({name:k,...lastMap[k]})).sort((a,b)=>b.total-a.total).slice(0,10);
+    const returnedPayees=Array.from(thisTop).filter(k=>lastTop.has(k)).map(k=>({name:k,thisAmt:thisMap[k].total,lastAmt:lastMap[k].total,delta:thisMap[k].total-lastMap[k].total})).filter(p=>Math.abs(p.delta)>100).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,8);
+    const momComparison=Array.from(thisTop).filter(k=>lastTop.has(k)).map(k=>({name:k,thisAmt:thisMap[k].total,lastAmt:lastMap[k].total,pct:lastMap[k].total>0?((thisMap[k].total-lastMap[k].total)/lastMap[k].total*100):null})).filter(p=>p.pct!==null).sort((a,b)=>Math.abs(b.pct)-Math.abs(a.pct)).slice(0,8);
+    const recurring=top.filter(p=>lastTop.has(p.name)).map(p=>({...p,lastAmt:lastMap[p.name]?.total||0,delta:p.total-(lastMap[p.name]?.total||0),pct:lastMap[p.name]?.total>0?((p.total-lastMap[p.name].total)/lastMap[p.name].total*100):null}));
+    return {top,totalThisMonth,top3Pct,firstTime:firstTime.slice(0,10),lostPayees,returnedPayees,momComparison,recurring};
+  },[allTxns,thisStart,thisEnd,lastStart,lastEnd]);
 
   /* ── BUDGET WATERFALL ── */
   const waterfallData=React.useMemo(()=>{
@@ -35039,9 +35858,50 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       const isOTT=(t.cat||"").toLowerCase().includes("ott")||(t.cat||"").toLowerCase().includes("streaming");
       if(!matched&&!isOTT)return;
       const key=matched||(t.payee||t.desc||"sub").toLowerCase().slice(0,20);
-      if(!candidates[key]||t.date>candidates[key].lastDate)candidates[key]={key,name:t.payee||t.desc||matched||"Subscription",amount:t.amount,lastDate:t.date,cat:t.cat};
+      if(!candidates[key])candidates[key]={key,name:t.payee||t.desc||matched||"Subscription",txns:[]};
+      candidates[key].txns.push({date:t.date,amount:t.amount});
     });
-    return Object.values(candidates).sort((a,b)=>b.amount-a.amount);
+    return Object.values(candidates).map(c=>{
+      c.txns.sort((a,b)=>a.date.localeCompare(b.date));
+      c.amount=c.txns[c.txns.length-1].amount;
+      c.lastDate=c.txns[c.txns.length-1].date;
+      c.cat=c.txns[0].cat||"";
+      c.count=c.txns.length;
+      /* frequency detection from gaps */
+      if(c.txns.length>=2){
+        const gaps=[];
+        for(let i=1;i<c.txns.length;i++){
+          const d1=new Date(c.txns[i-1].date),d2=new Date(c.txns[i].date);
+          gaps.push(Math.round((d2-d1)/86400000));
+        }
+        const avgGap=gaps.reduce((s,g)=>s+g,0)/gaps.length;
+        c.avgGapDays=Math.round(avgGap);
+        c.frequency=avgGap<=1?"daily":avgGap<=3?"weekly":avgGap<=10?"bi-weekly":avgGap<=35?"monthly":avgGap<=70?"bi-monthly":avgGap<=100?"quarterly":"irregular";
+      } else {
+        c.avgGapDays=null;
+        c.frequency=c.txns.length===1?"one-time":"unknown";
+      }
+      /* monthly spend last 4 months */
+      const monthMap={};
+      for(let i=3;i>=0;i--){
+        const ms=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
+        const me=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
+        const mn=MONTH_NAMES[(now.getMonth()-i+12)%12];
+        const mTotal=c.txns.filter(tx=>tx.date>=ms&&tx.date<=me).reduce((s,tx)=>s+tx.amount,0);
+        monthMap[mn]=mTotal;
+      }
+      c.monthlyHistory=MONTH_NAMES.slice(0).map((_,i)=>{
+        const mn=MONTH_NAMES[(now.getMonth()-3+i+12)%12];
+        return {mName:mn.slice(0,3),total:monthMap[mn]||0};
+      });
+      /* trend */
+      const vals=c.monthlyHistory.map(m=>m.total);
+      const nonZero=vals.filter(v=>v>0);
+      c.trend=nonZero.length>=2?(nonZero[nonZero.length-1]-nonZero[0])/Math.max(nonZero[0],1)*100:0;
+      /* annual cost */
+      c.annualEstimate=c.frequency==="monthly"?c.amount*12:c.frequency==="bi-monthly"?c.amount*6:c.frequency==="quarterly"?c.amount*4:c.frequency==="weekly"?c.amount*52:c.count>=2?c.amount*(12/Math.max(c.avgGapDays/30,0.5)):c.amount*12;
+      return c;
+    }).sort((a,b)=>b.amount-a.amount);
   },[allTxns]);
   const totalSubBurn=subscriptionData.reduce((s,sub)=>s+sub.amount,0);
 
@@ -35060,12 +35920,90 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
   const Card2=({children,sx})=>React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px",...sx}},children);
 
   /* ══ 1. PULSE TAB ══ */
+  const _ord=n=>{const s=["th","st","nd","rd"],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0])};
+  const _miniSpark=(vals,color)=>{
+    if(!vals||vals.length<2)return null;
+    const h=24,w=80,pad=2;
+    const mx=Math.max(...vals,1),mn=Math.min(...vals,0);
+    const pts=vals.map((v,i)=>`${pad+i*((w-pad*2)/(vals.length-1))},${pad+(h-pad*2)*(1-(v-mn)/(mx-mn||1))}`).join(" ");
+    return React.createElement("svg",{width:w,height:h,viewBox:`0 0 ${w} ${h}`,style:{display:"inline-block",verticalAlign:"middle"}},
+      React.createElement("polyline",{points:pts,fill:"none",stroke:color||"var(--accent)",strokeWidth:1.5,strokeLinejoin:"round"}),
+      vals[vals.length-1]>vals[0]?React.createElement("circle",{cx:w-pad,cy:pad+(h-pad*2)*(1-(vals[vals.length-1]-mn)/(mx-mn||1)),r:2.5,fill:color||"var(--accent)"}):React.createElement("circle",{cx:w-pad,cy:pad+(h-pad*2)*(1-(vals[vals.length-1]-mn)/(mx-mn||1)),r:2.5,fill:color||"var(--accent)"})
+    );
+  };
   const PulseTab=React.createElement("div",{style:{paddingBottom:20}},
     React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
       React.createElement(KpiCard,{label:"Today's Spend",value:INR(pulseData.todaySpend),sub:"transactions recorded today",col:pulseData.todaySpend>pulseData.dailyAvg*1.4?"#ef4444":"var(--accent)",icon:React.createElement(Icon,{n:"calendar",size:22})}),
       React.createElement(KpiCard,{label:"Month So Far",value:INR(pulseData.thisMonthSpend),sub:pulseData.dayOfMonth+" of "+pulseData.daysInMonth+" days done",col:"var(--accent)",icon:React.createElement(Icon,{n:"chart",size:22})}),
       React.createElement(KpiCard,{label:"Projected Month-End",value:INR(Math.round(pulseData.projected)),sub:"at current daily pace",col:pulseData.projected>pulseData.lastMonthSpend*1.1?"#ef4444":"#16a34a",icon:React.createElement(Icon,{n:"invest",size:18})}),
       React.createElement(KpiCard,{label:"Last 7 Days",value:INR(pulseData.last7),sub:"rolling 7-day total",col:"#6d28d9",icon:React.createElement(Icon,{n:"calendar",size:18})})
+    ),
+    /* ── Income & Cashflow Row ── */
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement(KpiCard,{label:"This Month Income",value:INR(pulseData.thisMonthIncome),sub:pulseData.lastMonthIncome>0?(pulseData.thisMonthIncome>=pulseData.lastMonthIncome?"↑ ":"↓ ")+Math.abs(((pulseData.thisMonthIncome-pulseData.lastMonthIncome)/pulseData.lastMonthIncome*100)).toFixed(0)+"% vs last month":"",col:"#16a34a",icon:React.createElement(Icon,{n:"classIncome",size:16})}),
+      React.createElement(KpiCard,{label:"Net Cashflow",value:INR(pulseData.savingsThisMonth),sub:pulseData.savingsThisMonth>=0?"Income − Expenses":"Spending exceeds income",col:pulseData.savingsThisMonth>=0?"#16a34a":"#ef4444",icon:React.createElement(Icon,{n:"balance",size:18})}),
+      React.createElement(KpiCard,{label:"Savings Rate",value:pulseData.savingsRate.toFixed(1)+"%",sub:P.savingsRateTarget?"Target: "+P.savingsRateTarget+"%":"",col:pulseData.savingsRate>=(P.savingsRateTarget||30)?"#16a34a":"#f59e0b",icon:React.createElement(Icon,{n:"activity",size:18})}),
+      React.createElement(KpiCard,{label:"Expense Ratio",value:pulseData.expenseRatio.toFixed(0)+"%",sub:pulseData.expenseRatio>(P.expRatioDanger||80)?"⚠ Above danger zone":"Healthy",col:pulseData.expenseRatio>(P.expRatioDanger||80)?"#ef4444":pulseData.expenseRatio>60?"#b45309":"#16a34a",icon:React.createElement(Icon,{n:"percent",size:18})})
+    ),
+    /* ── Emergency Fund Gauge ── */
+    React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement(SHead,{t:"Emergency Fund Runway",s:P.emergencyTargetMonths?"Target: "+P.emergencyTargetMonths+" months of expenses":"Set target in Settings → Insight Preferences"}),
+      React.createElement("div",{style:{display:"flex",gap:16,alignItems:"center",flexWrap:"wrap"}},
+        React.createElement("svg",{width:120,height:120,viewBox:"0 0 120 120",style:{flexShrink:0}},
+          React.createElement("circle",{cx:60,cy:60,r:50,fill:"none",stroke:"var(--border2)",strokeWidth:10}),
+          React.createElement("circle",{cx:60,cy:60,r:50,fill:"none",
+            stroke:pulseData.emergencyActualMonths>=pulseData.emergencyTarget?"#16a34a":pulseData.emergencyActualMonths>=pulseData.emergencyTarget*0.5?"#f59e0b":"#ef4444",
+            strokeWidth:10,strokeDasharray:2*Math.PI*50,
+            strokeDashoffset:2*Math.PI*50*(1-Math.min(pulseData.emergencyActualMonths/pulseData.emergencyTarget,1)),
+            strokeLinecap:"round",transform:"rotate(-90 60 60)",style:{transition:"stroke-dashoffset 0.8s ease"}}
+          ),
+          React.createElement("text",{x:60,y:55,textAnchor:"middle",fontSize:18,fontWeight:800,fontFamily:"'Sora',sans-serif",fill:pulseData.emergencyActualMonths>=pulseData.emergencyTarget?"#16a34a":"var(--text2)"},pulseData.emergencyActualMonths.toFixed(1)),
+          React.createElement("text",{x:60,y:70,textAnchor:"middle",fontSize:9,fontWeight:600,fill:"var(--text5)"},"months covered")
+        ),
+        React.createElement("div",{style:{flex:1,minWidth:180}},
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
+            React.createElement("span",{style:{fontSize:12,color:"var(--text4)"}},INR(Math.round(pulseData.liquidAssets))+" liquid"),
+            React.createElement("span",{style:{fontSize:12,color:"var(--text5)"}},pulseData.emergencyTarget+" month target")
+          ),
+          React.createElement("div",{style:{height:8,background:"var(--bg5)",borderRadius:4,overflow:"hidden",marginBottom:8}},
+            React.createElement("div",{style:{height:"100%",width:Math.min(pulseData.emergencyActualMonths/pulseData.emergencyTarget*100,100)+"%",background:pulseData.emergencyActualMonths>=pulseData.emergencyTarget?"#16a34a":pulseData.emergencyActualMonths>=pulseData.emergencyTarget*0.5?"#f59e0b":"#ef4444",borderRadius:4}})
+          ),
+          React.createElement("div",{style:{fontSize:11,color:pulseData.emergencyActualMonths>=pulseData.emergencyTarget?"#16a34a":"#ef4444",fontWeight:600}},
+            pulseData.emergencyActualMonths>=pulseData.emergencyTarget?"✓ Emergency fund fully covered":"⚠ Need "+INR(Math.round((pulseData.emergencyTarget-pulseData.emergencyActualMonths)*pulseData.thisMonthIncome/12))+" more to reach target"
+          )
+        )
+      )
+    ),
+    /* ── PYF Tracker ── */
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement("div",{style:{flex:"1 1 200px",padding:"14px 16px",borderRadius:12,background:pulseData.pyfSaved?"rgba(22,163,74,.08)":"rgba(239,68,68,.06)",border:"1px solid "+(pulseData.pyfSaved?"rgba(22,163,74,.25)":"rgba(239,68,68,.2)"),display:"flex",alignItems:"center",gap:12}},
+        React.createElement("div",{style:{width:40,height:40,borderRadius:10,background:pulseData.pyfSaved?"rgba(22,163,74,.15)":"rgba(239,68,68,.12)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}},pulseData.pyfSaved?"✅":pulseData.pyfPassed?"⏰":"💰"),
+        React.createElement("div",{style:{flex:1}},
+          React.createElement("div",{style:{fontSize:13,fontWeight:700,color:pulseData.pyfSaved?"#16a34a":"#ef4444"}},"Pay Yourself First"),
+          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},
+            pulseData.pyfSaved?"Saved before the "+_ord(pulseData.pyfTarget)+" — great discipline!":
+            pulseData.pyfPassed?"Day "+pulseData.pyfTarget+" passed, no savings captured this month yet.":"Set day "+_ord(pulseData.pyfTarget)+" as your PYF target"
+          )
+        )
+      ),
+      React.createElement("div",{style:{flex:"1 1 200px",padding:"14px 16px",borderRadius:12,background:pulseData.foodBudget>0?"var(--card)":"var(--bg5)",border:"1px solid var(--border)",display:"flex",alignItems:"center",gap:12}},
+        React.createElement("div",{style:{width:40,height:40,borderRadius:10,background:pulseData.foodBudget>0?pulseData.foodSpend>pulseData.foodBudget?"rgba(239,68,68,.15)":"rgba(22,163,74,.15)":"var(--bg4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}},"🍽️"),
+        React.createElement("div",{style:{flex:1}},
+          React.createElement("div",{style:{fontSize:13,fontWeight:700,color:pulseData.foodBudget>0?(pulseData.foodSpend>pulseData.foodBudget?"#ef4444":"#16a34a"):"var(--text4)"}},"Food Budget"),
+          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},
+            pulseData.foodBudget>0?INR(pulseData.foodSpend)+" / "+INR(pulseData.foodBudget)+" ("+Math.min(100,(pulseData.foodSpend/pulseData.foodBudget*100)).toFixed(0)+"%)":"Set food budget in Settings → Insight Preferences"
+          )
+        )
+      ),
+      React.createElement("div",{style:{flex:"1 1 200px",padding:"14px 16px",borderRadius:12,background:"var(--card)",border:"1px solid var(--border)",display:"flex",alignItems:"center",gap:12}},
+        React.createElement("div",{style:{width:40,height:40,borderRadius:10,background:pulseData.discSpend>0?pulseData.discSpendTarget>0&&pulseData.discSpend/(pulseData.thisMonthIncome||1)*100>pulseData.discSpendTarget?"rgba(239,68,68,.15)":"rgba(109,40,217,.12)":"var(--bg4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}},"🎯"),
+        React.createElement("div",{style:{flex:1}},
+          React.createElement("div",{style:{fontSize:13,fontWeight:700,color:pulseData.discSpendTarget>0&&pulseData.thisMonthIncome>0&&pulseData.discSpend/(pulseData.thisMonthIncome)*100>pulseData.discSpendTarget?"#ef4444":"#6d28d9"}},"Discretionary Spend"),
+          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},
+            pulseData.discSpendTarget>0&&pulseData.thisMonthIncome>0?INR(pulseData.discSpend)+" ("+(pulseData.discSpend/pulseData.thisMonthIncome*100).toFixed(0)+"% of income, target ≤"+pulseData.discSpendTarget+"%)":INR(pulseData.discSpend)+" this month"
+          )
+        )
+      )
     ),
     pulseData.lastMonthSpend>0&&React.createElement(Card2,{sx:{marginBottom:16}},
       React.createElement(SHead,{t:"Month Pace vs Last Month"}),
@@ -35124,8 +36062,8 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
           );
         })(),
         React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,overflow:"hidden"}},
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 100px 100px 80px 88px",padding:"8px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg4)"}},
-            ...["Category",lastMonthName,thisMonthName,"Change","3M Drift"].map((h,i)=>
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 100px 100px 80px 88px 84px",padding:"8px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg4)"}},
+            ...["Category",lastMonthName,thisMonthName,"Change","3M Drift","Trend"].map((h,i)=>
               React.createElement("div",{key:i,style:{fontSize:10,fontWeight:700,color:i===2?"var(--accent)":"var(--text5)",textTransform:"uppercase",letterSpacing:.5,textAlign:i>0?"right":"left"}},h)
             )
           ),
@@ -35134,8 +36072,10 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
             const mx=Math.max(...spendData.map(r=>Math.max(r.last,r.curr)),1);
             const driftCol=row.drift3m===null?"var(--text6)":row.drift3m>25?"#ef4444":row.drift3m>10?"#b45309":"#16a34a";
             const driftIco=row.drift3m===null?"—":row.drift3m>25?"●":row.drift3m>10?"●":"●";
+            const trendVals=[row.m3,row.m2,row.last,row.curr];
+            const trendDir=row.curr>row.last?"#ef4444":row.curr<row.last?"#16a34a":"var(--text5)";
             return React.createElement("div",{key:row.cat,style:{padding:"10px 16px",borderBottom:i<spendData.length-1?"1px solid var(--border2)":"none",background:i%2?"var(--bg5)":"transparent"}},
-              React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 100px 100px 80px 88px",alignItems:"center",marginBottom:5}},
+              React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 100px 100px 80px 88px 84px",alignItems:"center",marginBottom:5}},
                 React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
                   React.createElement("span",{style:{width:10,height:10,borderRadius:"50%",background:col,flexShrink:0,display:"inline-block"}}),
                   React.createElement("span",{style:{fontSize:13,color:"var(--text3)",fontWeight:500}},row.cat)
@@ -35143,7 +36083,8 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
                 React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"var(--text5)",fontFamily:"'Sora',sans-serif"}},row.last>0?INR(row.last):"—"),
                 React.createElement("div",{style:{textAlign:"right",fontSize:13,color:"var(--text3)",fontWeight:600,fontFamily:"'Sora',sans-serif"}},row.curr>0?INR(row.curr):"—"),
                 React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:row.delta>0?"#ef4444":row.delta<0?"#16a34a":"var(--text5)"}},row.delta===0?"—":(row.delta>0?"+":"")+INR(row.delta)),
-                React.createElement("div",{style:{textAlign:"right",fontSize:11,color:driftCol}},row.drift3m!==null?driftIco+" "+(row.drift3m>0?"+":"")+row.drift3m.toFixed(0)+"%":"—")
+                React.createElement("div",{style:{textAlign:"right",fontSize:11,color:driftCol}},row.drift3m!==null?driftIco+" "+(row.drift3m>0?"+":"")+row.drift3m.toFixed(0)+"%":"—"),
+                React.createElement("div",{style:{textAlign:"right"}},_miniSpark(trendVals,trendDir))
               ),
               React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:2,paddingLeft:18}},
                 React.createElement("div",{style:{background:"var(--bg5)",borderRadius:2,height:3,overflow:"hidden"}},React.createElement("div",{style:{width:(row.last/mx*100)+"%",height:"100%",background:"var(--text6)",borderRadius:2}})),
@@ -35151,11 +36092,38 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
               )
             );
           }),
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 100px 100px 80px 88px",padding:"10px 16px",borderTop:"2px solid var(--border)",background:"var(--bg4)"}},
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 100px 100px 80px 88px 84px",padding:"10px 16px",borderTop:"2px solid var(--border)",background:"var(--bg4)"}},
             React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)"}},"Total"),
             React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"var(--text3)"}},INR(spendData.reduce((s,r)=>s+r.last,0))),
             React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"var(--accent)"}},INR(spendData.reduce((s,r)=>s+r.curr,0))),
-            React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:(spendData.reduce((s,r)=>s+r.delta,0))>0?"#ef4444":"#16a34a"}},(()=>{const d=spendData.reduce((s,r)=>s+r.delta,0);return(d>0?"+":"")+INR(d);})()), React.createElement("div",null)
+            React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:(spendData.reduce((s,r)=>s+r.delta,0))>0?"#ef4444":"#16a34a"}},(()=>{const d=spendData.reduce((s,r)=>s+r.delta,0);return(d>0?"+":"")+INR(d);})()), React.createElement("div",null), React.createElement("div",null)
+          )
+        ),
+        leakData.count>0&&React.createElement(Card2,{sx:{marginTop:16}},
+          React.createElement(SHead,{t:"Expense Leak Detector",s:"Small transactions (≤"+INR(leakData.threshold)+") that add up — micro-spends, impulse buys, cash withdrawals"}),
+          React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:12}},
+            React.createElement(KpiCard,{label:"Micro-Transactions",value:leakData.count,sub:"≤"+INR(leakData.threshold)+" each",col:"#f59e0b",icon:React.createElement(Icon,{n:"warning",size:18})}),
+            React.createElement(KpiCard,{label:"Total Leak",value:INR(leakData.total),sub:"projected "+INR(leakData.projectedMonthly)+"/mo at this pace",col:"#ef4444",icon:React.createElement(Icon,{n:"trenddown",size:18})}),
+            leakData.topLeaks.length>0&&React.createElement(KpiCard,{label:"Top Leak Category",value:leakData.topLeaks[0].cat,sub:INR(leakData.topLeaks[0].total)+" · "+leakData.topLeaks[0].count+" txns",col:"#b45309",icon:React.createElement(Icon,{n:"tag",size:18})})
+          ),
+          React.createElement("div",{style:{overflowX:"auto"}},
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 80px 80px",padding:"6px 12px",background:"var(--bg4)",borderRadius:"8px 8px 0 0",borderBottom:"1px solid var(--border2)"}},
+              React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase"}},"Category"),
+              React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",textAlign:"right"}},"Count"),
+              React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",textAlign:"right"}},"Total")
+            ),
+            leakData.topLeaks.map((l,i)=>{
+              const catObj=categories.find(c=>c.name===l.cat);
+              const catCol=catObj?.color||"#f59e0b";
+              return React.createElement("div",{key:l.cat,style:{display:"grid",gridTemplateColumns:"1fr 80px 80px",padding:"8px 12px",borderBottom:i<leakData.topLeaks.length-1?"1px solid var(--border2)":"none"}},
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+                  React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:catCol,display:"inline-block",flexShrink:0}}),
+                  React.createElement("span",{style:{fontSize:12,color:"var(--text3)",fontWeight:500}},l.cat)
+                ),
+                React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"var(--text5)"}},l.count+"×"),
+                React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"#ef4444",fontWeight:700,fontFamily:"'Sora',sans-serif"}},INR(l.total))
+              );
+            })
           )
         )
       )
@@ -35194,6 +36162,50 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
             );
           })()
         ),
+        /* ── MoM Comparison ── */
+        payeeData.momComparison.length>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+          React.createElement(SHead,{t:"Month-over-Month Changes",s:"Payees with biggest spend shifts vs last month"}),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 90px 90px 80px",padding:"6px 12px",background:"var(--bg4)",borderRadius:"8px 8px 0 0",borderBottom:"1px solid var(--border2)"}},
+            React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase"}},"Payee"),
+            React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",textAlign:"right"}},"Last Mo."),
+            React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",textAlign:"right"}},"This Mo."),
+            React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",textAlign:"right"}},"Change")
+          ),
+          payeeData.momComparison.map((p,i)=>{
+            const isUp=p.pct>0;
+            return React.createElement("div",{key:p.name,style:{display:"grid",gridTemplateColumns:"1fr 90px 90px 80px",padding:"8px 12px",borderBottom:i<payeeData.momComparison.length-1?"1px solid var(--border2)":"none"}},
+              React.createElement("div",{style:{fontSize:12,color:"var(--text3)",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.name),
+              React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"var(--text5)",fontFamily:"'Sora',sans-serif"}},INR(Math.round(p.lastAmt))),
+              React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"var(--text3)",fontWeight:600,fontFamily:"'Sora',sans-serif"}},INR(Math.round(p.thisAmt))),
+              React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:isUp?"#ef4444":"#16a34a"}},(isUp?"+":"")+p.pct.toFixed(0)+"%")
+            );
+          })
+        ),
+        /* ── Returned Payees (big increases) ── */
+        payeeData.returnedPayees.filter(p=>p.delta>0).length>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+          React.createElement(SHead,{t:"Rising Payees",s:"Payees where you're spending more than last month — watch for creep"}),
+          React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
+            payeeData.returnedPayees.filter(p=>p.delta>0).slice(0,6).map((p,i)=>
+              React.createElement("div",{key:p.name,style:{padding:"8px 14px",borderRadius:10,background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.18)",fontSize:12,minWidth:120}},
+                React.createElement("div",{style:{fontWeight:600,color:"var(--text3)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:140}},p.name),
+                React.createElement("div",{style:{color:"#ef4444",fontWeight:700,marginTop:3,fontFamily:"'Sora',sans-serif"}},INR(Math.round(p.delta))+" ↑")
+              )
+            )
+          )
+        ),
+        /* ── Lost Payees ── */
+        payeeData.lostPayees.length>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+          React.createElement(SHead,{t:"Lost Payees",s:"Merchants you paid last month but not this month — subscriptions cancelled or habits changed?"}),
+          React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
+            payeeData.lostPayees.map((p,i)=>
+              React.createElement("div",{key:p.name,style:{padding:"6px 12px",borderRadius:20,background:"rgba(22,163,74,.06)",border:"1px solid rgba(22,163,74,.18)",fontSize:12}},
+                React.createElement("span",{style:{color:"var(--text3)",fontWeight:500}},p.name),
+                React.createElement("span",{style:{color:"#16a34a",marginLeft:6,fontWeight:700}},INR(Math.round(p.total))+" saved")
+              )
+            )
+          )
+        ),
+        /* ── First-Time Payees ── */
         payeeData.firstTime.length>0&&React.createElement(Card2,null,
           React.createElement(SHead,{t:"First-Time Payees This Month",s:"New merchants you haven't paid before — check for impulse or subscription creep"}),
           React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
@@ -35957,6 +36969,67 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
           )
         )
       )
+    ),
+
+    /* ── Income Waterfall Chart ── */
+    waterfallData.income>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement(SHead,{t:"Income → Savings Waterfall",s:"How your income breaks down into Fixed, Variable, Discretionary, and Savings"}),
+      (()=>{
+        const w=waterfallData;
+        const cols=[
+          {label:"Income",val:w.income,col:"#16a34a",type:"start"},
+          {label:"Fixed",val:-w.fixed,col:"#ef4444",type:"expense"},
+          {label:"Variable",val:-w.variable,col:"#f97316",type:"expense"},
+          {label:"Discretionary",val:-w.disc,col:"#b45309",type:"expense"},
+          w.other>0?{label:"Other",val:-w.other,col:"#78716c",type:"expense"}:null,
+          {label:"Savings",val:w.savings,col:w.savings>=0?"#16a34a":"#ef4444",type:"end"}
+        ].filter(Boolean);
+        const maxVal=w.income||1;
+        const barH=140;
+        const usableW=isMobile?260:420;
+        const barW=Math.max(Math.floor(usableW/cols.length)-6,24);
+        let running=0;
+        const bars=cols.map((c,i)=>{
+          if(c.type==="start"){running=c.val;return{...c,y:0,h:Math.abs(c.val)/maxVal*barH};}
+          if(c.type==="end"){return{...c,y:running>0?(w.income-running)/maxVal*barH:(w.income)/maxVal*barH,h:Math.abs(c.val)/maxVal*barH};}
+          const startH=running/maxVal*barH;
+          running+=c.val;
+          const endH=running/maxVal*barH;
+          return{...c,y:Math.min(startH,endH),h:Math.abs(c.val)/maxVal*barH};
+        });
+        return React.createElement("div",{style:{display:"flex",justifyContent:"center",overflowX:"auto"}},
+          React.createElement("svg",{width:bars.length*(barW+6)+20,height:barH+40,viewBox:"0 0 "+(bars.length*(barW+6)+20)+" "+(barH+40),style:{maxWidth:"100%"}},
+            bars.map((b,i)=>{
+              const x=10+i*(barW+6);
+              const y=b.y+5;
+              const pct=Math.abs(b.val)/maxVal*100;
+              return React.createElement("g",{key:i},
+                React.createElement("rect",{x:x,y:y,width:barW,height:Math.max(b.h,2),rx:3,fill:b.col,opacity:.85}),
+                React.createElement("text",{x:x+barW/2,y:Math.max(y-4,12),textAnchor:"middle",fontSize:10,fontWeight:700,fill:b.col,fontFamily:"'Sora',sans-serif"},INR(Math.abs(b.val))),
+                React.createElement("text",{x:x+barW/2,y:barH+22,textAnchor:"middle",fontSize:9,fill:"var(--text5)",fontFamily:"'DM Sans',sans-serif"},b.label),
+                React.createElement("text",{x:x+barW/2,y:barH+34,textAnchor:"middle",fontSize:8,fill:"var(--text6)",fontFamily:"'DM Sans',sans-serif"},pct.toFixed(0)+"%")
+              );
+            }),
+            React.createElement("line",{x1:0,y1:barH+5,x2:bars.length*(barW+6)+20,y2:barH+5,stroke:"var(--border2)",strokeWidth:1,strokeDasharray:"4,3"})
+          )
+        );
+      })(),
+      React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginTop:8,justifyContent:"center"}},
+        [
+          {l:"Fixed (Housing, Insurance)",v:waterfallData.fixed,c:"#ef4444"},
+          {l:"Variable (Food, Transport)",v:waterfallData.variable,c:"#f97316"},
+          {l:"Discretionary (Shopping, Travel)",v:waterfallData.disc,c:"#b45309"},
+          {l:"Savings",v:waterfallData.savings,c:waterfallData.savings>=0?"#16a34a":"#ef4444"}
+        ].map(x=>React.createElement("div",{key:x.l,style:{fontSize:11,color:"var(--text5)",display:"flex",alignItems:"center",gap:4}},
+          React.createElement("span",{style:{width:8,height:8,borderRadius:2,background:x.c,display:"inline-block"}}),
+          x.l+": ",React.createElement("strong",{style:{color:x.c}},INR(x.v)),waterfallData.income>0&&" ("+(Math.abs(x.v)/waterfallData.income*100).toFixed(0)+"%)"
+        ))
+      ),
+      React.createElement("div",{style:{marginTop:12,padding:"10px 14px",borderRadius:10,background:waterfallData.savings>=0?"rgba(22,163,74,.06)":"rgba(239,68,68,.06)",border:"1px solid "+(waterfallData.savings>=0?"rgba(22,163,74,.2)":"rgba(239,68,68,.2)"),fontSize:12,color:"var(--text3)",lineHeight:1.6}},
+        waterfallData.savings>=0
+          ?"✓ You're saving "+INR(waterfallData.savings)+" ("+waterfallData.savingsRate.toFixed(0)+"% of income) after all expenses. "+(waterfallData.savingsRate>=30?"Excellent FIRE pace!":waterfallData.savingsRate>=20?"Good — aim for 30%+ for FIRE":"Room to improve — target 20%+ savings rate.")+""
+          :"⚠ Expenses exceed income by "+INR(Math.abs(waterfallData.savings))+". "+(waterfallData.disc>0?"Discretionary spending ("+INR(waterfallData.disc)+") is the biggest lever to pull.":"Review fixed costs for renegotiation opportunities.")+""
+      )
     )
   );
 
@@ -36055,33 +37128,45 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       ?React.createElement(Empty,{icon:React.createElement(Icon,{n:"phone",size:18}),text:"No subscription patterns detected. Transactions with streaming/OTT keywords will appear here."})
       :React.createElement(React.Fragment,null,
         React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
-          React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 16px",flex:"1 1 160px"}},
-            React.createElement("div",{style:{fontSize:11,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Monthly Subscription Burn"),
-            React.createElement("div",{style:{fontSize:24,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#ef4444"}},INR(totalSubBurn))
-          ),
-          React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 16px",flex:"1 1 100px"}},
-            React.createElement("div",{style:{fontSize:11,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Services Detected"),
-            React.createElement("div",{style:{fontSize:24,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--accent)"}},subscriptionData.length)
-          ),
-          React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 16px",flex:"1 1 120px"}},
-            React.createElement("div",{style:{fontSize:11,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Annual Estimate"),
-            React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#b45309"}},INR(totalSubBurn*12))
-          )
+          React.createElement(KpiCard,{label:"Monthly Burn",value:INR(totalSubBurn),sub:subscriptionData.length+" active services",col:"#ef4444",icon:React.createElement(Icon,{n:"phone",size:18})}),
+          React.createElement(KpiCard,{label:"Annual Estimate",value:INR(subscriptionData.reduce((s,sub)=>s+Math.round(sub.annualEstimate),0)),sub:"projected yearly cost",col:"#b45309",icon:React.createElement(Icon,{n:"chart",size:18})}),
+          React.createElement(KpiCard,{label:"Highest Cost",value:subscriptionData.length>0?subscriptionData[0].name:"—",sub:subscriptionData.length>0?INR(subscriptionData[0].amount)+"/mo":"",col:"var(--accent)",icon:React.createElement(Icon,{n:"star",size:18})})
         ),
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(auto-fill,minmax(260px,1fr))",gap:12}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(auto-fill,minmax(300px,1fr))",gap:12}},
           subscriptionData.map(sub=>{
             const daysAgo=Math.floor((new Date()-new Date(sub.lastDate))/86400000);
             const active=daysAgo<=45;
-            return React.createElement("div",{key:sub.key,style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px",display:"flex",alignItems:"center",gap:12}},
-              React.createElement("div",{style:{width:44,height:44,borderRadius:12,background:"var(--accentbg2)",border:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}},React.createElement(Icon,{n:"phone",size:18})),
-              React.createElement("div",{style:{flex:1,minWidth:0}},
-                React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},sub.name),
-                React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},sub.cat?sub.cat:"Subscription"," · ",daysAgo===0?"Today":daysAgo===1?"Yesterday":daysAgo+" days ago"),
-                React.createElement("span",{style:{fontSize:10,padding:"1px 7px",borderRadius:8,background:active?"rgba(22,163,74,.12)":"rgba(239,68,68,.1)",color:active?"#16a34a":"#ef4444",fontWeight:600,border:"1px solid "+(active?"rgba(22,163,74,.3)":"rgba(239,68,68,.25)")}},active?"● Active":"○ Inactive")
+            const freqCol=sub.frequency==="monthly"?"#16a34a":sub.frequency==="weekly"?"#ef4444":sub.frequency==="bi-weekly"?"#b45309":"var(--text5)";
+            const trendDir=sub.trend>10?"#ef4444":sub.trend<-10?"#16a34a":"var(--text5)";
+            return React.createElement("div",{key:sub.key,style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px"}},
+              React.createElement("div",{style:{display:"flex",alignItems:"center",gap:12,marginBottom:10}},
+                React.createElement("div",{style:{width:40,height:40,borderRadius:10,background:"var(--accentbg2)",border:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},React.createElement(Icon,{n:"phone",size:16})),
+                React.createElement("div",{style:{flex:1,minWidth:0}},
+                  React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},sub.name),
+                  React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:1,display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}},
+                    React.createElement("span",{style:{padding:"1px 6px",borderRadius:6,background:active?"rgba(22,163,74,.1)":"rgba(239,68,68,.1)",color:active?"#16a34a":"#ef4444",fontWeight:600,fontSize:10}},active?"● Active":"○ Inactive"),
+                    React.createElement("span",{style:{color:freqCol,fontWeight:600,fontSize:10,textTransform:"capitalize"}},sub.frequency),
+                    React.createElement("span",{style:{color:"var(--text6)"}},sub.cat||"Subscription")
+                  )
+                ),
+                React.createElement("div",{style:{textAlign:"right",flexShrink:0}},
+                  React.createElement("div",{style:{fontSize:16,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#ef4444"}},INR(sub.amount)),
+                  React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"/mo")
+                )
               ),
-              React.createElement("div",{style:{textAlign:"right",flexShrink:0}},
-                React.createElement("div",{style:{fontSize:16,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#ef4444"}},INR(sub.amount)),
-                React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"last charge")
+              /* 4-month trend sparkline */
+              React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:6}},
+                React.createElement("div",{style:{flex:1,display:"flex",gap:2,alignItems:"flex-end",height:22}},sub.monthlyHistory.map((m,mi)=>{
+                  const mx=Math.max(...sub.monthlyHistory.map(x=>x.total),1);
+                  const h=m.total>0?Math.max(2,Math.round(m.total/mx*20)):1;
+                  return React.createElement("div",{key:mi,style:{flex:1,height:h,borderRadius:2,background:mi===sub.monthlyHistory.length-1?"var(--accent)":"var(--text6)",opacity:mi===sub.monthlyHistory.length-1?1:.6}});
+                })),
+                sub.trend!==0&&React.createElement("div",{style:{fontSize:10,color:trendDir,fontWeight:700,flexShrink:0}},(sub.trend>0?"+":"")+sub.trend.toFixed(0)+"%")
+              ),
+              /* Footer: annual estimate + avg gap */
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",borderTop:"1px solid var(--border2)",paddingTop:6}},
+                React.createElement("span",null,"~"+INR(Math.round(sub.annualEstimate))+"/yr"),
+                React.createElement("span",null,sub.avgGapDays?sub.avgGapDays+" day avg gap":sub.count+" charge"+(sub.count>1?"s":""))
               )
             );
           })
@@ -36327,6 +37412,255 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
   );
 
 
+  /* ══ FINANCIAL HEALTH SCORE DATA ══ */
+  const healthScoreData=React.useMemo(()=>{
+    const scores=[];
+    /* Savings Rate (0-25) */
+    const sr=pulseData.savingsRate;
+    scores.push({name:"Savings Rate",score:Math.min(25,sr>=40?25:sr>=30?22:sr>=20?18:sr>=10?12:5),max:25,detail:sr.toFixed(0)+"%",col:sr>=30?"#16a34a":sr>=20?"#b45309":"#ef4444",
+      tip:sr>=30?"Excellent — FIRE pace":sr>=20?"Good — aim for 30%+":"Below target — aim for 20%+"});
+    /* Emergency Fund (0-20) */
+    const ef=pulseData.emergencyActualMonths;
+    const efTarget=pulseData.emergencyTarget;
+    const efPct=Math.min(ef/efTarget,2);
+    scores.push({name:"Emergency Fund",score:Math.min(20,Math.round(efPct*20)),max:20,detail:ef.toFixed(1)+" months",col:ef>=efTarget?"#16a34a":ef>=efTarget*0.6?"#b45309":"#ef4444",
+      tip:ef>=efTarget?"Fully funded":ef>=efTarget*0.6?"Building up — "+(efTarget-ef).toFixed(1)+" months to go":"Critical — build to "+efTarget+" months"});
+    /* Budget Adherence (0-20) */
+    const bu=_biScore||50;
+    scores.push({name:"Budget Discipline",score:Math.min(20,Math.round(bu/100*20)),max:20,detail:"Score "+bu,col:bu>=70?"#16a34a":bu>=50?"#b45309":"#ef4444",
+      tip:bu>=70?"Strong budget adherence":bu>=50?"Moderate — some categories overspending":"Needs improvement"});
+    /* Expense Ratio (0-15) */
+    const er=pulseData.expenseRatio;
+    scores.push({name:"Expense Ratio",score:Math.min(15,er<=60?15:er<=75?12:er<=90?8:3),max:15,detail:er.toFixed(0)+"%",col:er<=70?"#16a34a":er<=90?"#b45309":"#ef4444",
+      tip:er<=70?"Expenses well below income":er<=90?"Manageable but tight":"Expenses nearly matching income"});
+    /* Debt Health (0-10) */
+    const totalDebt=(pulseData.liquidAssets||0)>0?0:0;
+    const cardD=(cards||[]).reduce((s,c)=>s+(c.outstanding||0),0);
+    const loanD=(loans||[]).reduce((s,l)=>s+(l.outstanding||0),0);
+    const debtScore=cardD===0&&loanD===0?10:cardD===0?7:loanD<cardD*12?5:2;
+    scores.push({name:"Debt Health",score:debtScore,max:10,detail:cardD+loanD>0?INR(cardD+loanD)+" outstanding":"No high-interest debt",col:debtScore>=7?"#16a34a":debtScore>=4?"#b45309":"#ef4444",
+      tip:debtScore>=7?"Healthy — no high-interest debt":debtScore>=4?"Manageable debt load":"High debt burden"});
+    /* Investment Momentum (0-10) */
+    const invMonths=[];
+    for(let i=5;i>=0;i--){
+      const ms=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
+      const me=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
+      invMonths.push(allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");return ct==="Investment"&&t.date>=ms&&t.date<=me;}).reduce((s,t)=>s+t.amount,0));
+    }
+    const avgInv=invMonths.reduce((s,v)=>s+v,0)/6;
+    const invConsistent=invMonths.filter(v=>v>0).length;
+    const invScore=Math.min(10,Math.round(invConsistent/6*10));
+    scores.push({name:"Investment Consistency",score:invScore,max:10,detail:invConsistent+"/6 months",col:invScore>=7?"#16a34a":invScore>=4?"#b45309":"#ef4444",
+      tip:invScore>=7?"Consistent investing — great habit":invScore>=4?"Some gaps in investing":"Irregular — aim to invest monthly"});
+    const total=scores.reduce((s,c)=>s+c.score,0);
+    const maxTotal=scores.reduce((s,c)=>s+c.max,0);
+    const grade=total>=85?"A+":total>=70?"A":total>=55?"B":total>=40?"C":"D";
+    return{scores,total,maxTotal,grade};
+  },[pulseData,cards,loans,allTxns,categories]);
+
+  /* ══ SPENDING PATTERNS DATA ══ */
+  const spendingPatternsData=React.useMemo(()=>{
+    const dayNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    const byDay=Array(7).fill(0).map(()=>({total:0,count:0}));
+    const byHour=Array(24).fill(0).map(()=>({total:0,count:0}));
+    const byMonth=Array(12).fill(0).map(()=>({total:0,count:0}));
+    let weekdayTotal=0,weekendTotal=0,weekdayCount=0,weekendCount=0;
+    const tx=allTxns.filter(t=>t.type==="debit");
+    tx.forEach(t=>{
+      const d=new Date(t.date);
+      const dow=d.getDay();
+      const month=d.getMonth();
+      byDay[dow].total+=t.amount;byDay[dow].count++;
+      byMonth[month].total+=t.amount;byMonth[month].count++;
+      if(dow>=1&&dow<=5){weekdayTotal+=t.amount;weekdayCount++;}
+      else{weekendTotal+=t.amount;weekendCount++;}
+    });
+    const avgWeekday=weekdayCount>0?weekdayTotal/weekdayCount:0;
+    const avgWeekend=weekendCount>0?weekendTotal/weekendCount:0;
+    const avgWeekdaySpend=weekdayCount>0?weekdayTotal/Math.max(weekdayCount/tx.length*7,1):0;
+    const avgWeekendSpend=weekendCount>0?weekendTotal/Math.max(weekendCount/tx.length*2,1):0;
+    const maxDay=Math.max(...byDay.map(d=>d.total),1);
+    const maxMonth=Math.max(...byMonth.map(m=>m.total),1);
+    const avgPerTx=tx.length>0?tx.reduce((s,t)=>s+t.amount,0)/tx.length:0;
+    const medianIdx=Math.floor(tx.length/2);
+    const sortedAmts=[...tx].sort((a,b)=>a.amount-b.amount);
+    const medianTx=tx.length>0?sortedAmts[medianIdx]?.amount||0:0;
+    const top10pctIdx=Math.floor(tx.length*0.9);
+    const top10pctTotal=sortedAmts.slice(top10pctIdx).reduce((s,t)=>s+t.amount,0);
+    const grandTotal=tx.reduce((s,t)=>s+t.amount,0);
+    const top10Concentration=grandTotal>0?top10pctTotal/grandTotal*100:0;
+    return{byDay,byMonth,dayNames,avgWeekdaySpend,avgWeekendSpend,avgWeekday,avgWeekend,weekdayTotal,weekendTotal,maxDay,maxMonth,avgPerTx,medianTx,top10Concentration,txCount:tx.length,grandTotal};
+  },[allTxns,thisStart,thisEnd]);
+
+  /* ══ GOALS DATA ══ */
+  const goalData=React.useMemo(()=>{
+    const g=Array.isArray(goals)?goals:[];
+    const liquidAssets=(banks||[]).reduce((s,b)=>s+(b.balance||0),0)+(cash?.balance||0);
+    return{goals:g,liquidAssets,hasGoals:g.length>0};
+  },[goals,banks,cash]);
+
+
+  /* ══ HEALTH SCORE TAB ══ */
+  const HealthScoreTab=React.createElement("div",{style:{paddingBottom:20}},
+    React.createElement("div",{style:{display:"flex",gap:16,flexWrap:"wrap",marginBottom:16,alignItems:"stretch"}},
+      React.createElement(Card2,{sx:{flex:"0 0 auto",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 30px",minWidth:160}},
+        React.createElement("svg",{width:120,height:120,viewBox:"0 0 120 120"},
+          React.createElement("circle",{cx:60,cy:60,r:50,fill:"none",stroke:"var(--border2)",strokeWidth:10}),
+          React.createElement("circle",{cx:60,cy:60,r:50,fill:"none",stroke:healthScoreData.total>=70?"#16a34a":healthScoreData.total>=50?"#b45309":"#ef4444",strokeWidth:10,
+            strokeDasharray:""+(2*Math.PI*50),
+            strokeDashoffset:""+(2*Math.PI*50*(1-healthScoreData.total/healthScoreData.maxTotal)),
+            strokeLinecap:"round",transform:"rotate(-90 60 60)",style:{transition:"stroke-dashoffset 1s ease"}}),
+          React.createElement("text",{x:60,y:56,textAnchor:"middle",fontSize:32,fontWeight:800,fontFamily:"'Sora',sans-serif",fill:healthScoreData.total>=70?"#16a34a":healthScoreData.total>=50?"#b45309":"#ef4444"},healthScoreData.total),
+          React.createElement("text",{x:60,y:74,textAnchor:"middle",fontSize:14,fontWeight:600,fill:"var(--text5)",fontFamily:"'DM Sans',sans-serif"},"of "+healthScoreData.maxTotal),
+          React.createElement("text",{x:60,y:92,textAnchor:"middle",fontSize:16,fontWeight:800,fill:"var(--accent)",fontFamily:"'Sora',sans-serif"},"Grade "+healthScoreData.grade)
+        ),
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,marginTop:8}},"Overall Health")
+      ),
+      React.createElement(Card2,{sx:{flex:"1 1 250px"}},
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:12,fontFamily:"'Sora',sans-serif"}},"Score Breakdown"),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
+          healthScoreData.scores.map(sc=>{
+            const pct=sc.score/sc.max*100;
+            return React.createElement("div",{key:sc.name},
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:3}},
+                React.createElement("span",{style:{fontSize:12,color:"var(--text3)",fontWeight:500}},sc.name),
+                React.createElement("span",{style:{fontSize:12,fontWeight:700,color:sc.col,fontFamily:"'Sora',sans-serif"}},sc.score+"/"+sc.max+" — "+sc.detail)
+              ),
+              React.createElement("div",{style:{height:6,background:"var(--bg5)",borderRadius:3,overflow:"hidden"}},
+                React.createElement("div",{style:{height:"100%",width:pct+"%",background:sc.col,borderRadius:3,transition:"width 0.6s"}})
+              ),
+              React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},sc.tip)
+            );
+          })
+        )
+      )
+    ),
+    React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement(SHead,{t:"Recommendations",s:"Priority actions to improve your financial health"}),
+      React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+        healthScoreData.scores.filter(s=>s.score<s.max*0.7).sort((a,b)=>(a.score/a.max)-(b.score/b.max)).map((sc,i)=>
+          React.createElement("div",{key:sc.name,style:{display:"flex",gap:10,alignItems:"flex-start",padding:"10px 14px",borderRadius:10,background:sc.col+"08",border:"1px solid "+sc.col+"25"}},
+            React.createElement("span",{style:{fontSize:14,flexShrink:0,color:sc.col,fontWeight:700}},(i+1)+"."),
+            React.createElement("div",{style:{fontSize:12,color:"var(--text3)",lineHeight:1.6}},
+              React.createElement("strong",{style:{color:sc.col}},sc.name)," — ",sc.tip
+            )
+          )
+        ),
+        healthScoreData.scores.filter(s=>s.score>=s.max*0.7).length===healthScoreData.scores.length&&
+          React.createElement("div",{style:{padding:"14px",borderRadius:10,background:"rgba(22,163,74,.06)",border:"1px solid rgba(22,163,74,.2)",fontSize:12,color:"#16a34a",textAlign:"center",fontWeight:600}},"✓ All areas look healthy — keep up the great work!")
+      )
+    )
+  );
+
+
+  /* ══ SPENDING PATTERNS TAB ══ */
+  const SpendingPatternsTab=React.createElement("div",{style:{paddingBottom:20}},
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement(KpiCard,{label:"Avg/Transaction",value:INR(Math.round(spendingPatternsData.avgPerTx)),sub:spendingPatternsData.txCount+" transactions",col:"var(--accent)",icon:React.createElement(Icon,{n:"chart",size:18})}),
+      React.createElement(KpiCard,{label:"Median Txn",value:INR(Math.round(spendingPatternsData.medianTx)),sub:"50th percentile amount",col:"#0e7490",icon:React.createElement(Icon,{n:"target",size:18})}),
+      React.createElement(KpiCard,{label:"Top 10% Concentration",value:spendingPatternsData.top10Concentration.toFixed(0)+"%",sub:"of spend in top 10% txns",col:spendingPatternsData.top10Concentration>50?"#ef4444":"#16a34a",icon:React.createElement(Icon,{n:"pie",size:18})})
+    ),
+    React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement(SHead,{t:"Spending by Day of Week",s:"Which days you spend the most — weekday vs weekend patterns"}),
+      React.createElement("div",{style:{display:"flex",gap:4,alignItems:"flex-end",height:100,marginBottom:8}},
+        spendingPatternsData.byDay.map((d,i)=>{
+          const h=d.total>0?Math.max(3,Math.round(d.total/spendingPatternsData.maxDay*90)):2;
+          const isWeekend=i===0||i===6;
+          return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+            React.createElement("div",{style:{fontSize:9,color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},d.total>0?INR(d.total):""),
+            React.createElement("div",{style:{width:"100%",height:h,borderRadius:"3px 3px 0 0",background:isWeekend?"#b45309":"var(--accent)",opacity:isWeekend?0.7:1}})
+          );
+        })
+      ),
+      React.createElement("div",{style:{display:"flex",gap:4}},
+        spendingPatternsData.dayNames.map((d,i)=>React.createElement("div",{key:i,style:{flex:1,textAlign:"center",fontSize:10,color:i===0||i===6?"#b45309":"var(--text5)",fontWeight:i===0||i===6?700:400}},d))
+      ),
+      React.createElement("div",{style:{marginTop:12,padding:"10px 14px",borderRadius:10,background:"var(--bg4)",fontSize:12,color:"var(--text3)",display:"flex",gap:16,flexWrap:"wrap"}},
+        React.createElement("span",null,"Weekday avg: ",React.createElement("strong",null,INR(Math.round(spendingPatternsData.avgWeekdaySpend)))),
+        React.createElement("span",null,"Weekend avg: ",React.createElement("strong",null,INR(Math.round(spendingPatternsData.avgWeekendSpend)))),
+        spendingPatternsData.avgWeekendSpend>spendingPatternsData.avgWeekdaySpend*1.3&&React.createElement("span",{style:{color:"#ef4444",fontWeight:600}},"⚠ Weekend spending 30%+ above weekday"),
+        spendingPatternsData.avgWeekendSpend<spendingPatternsData.avgWeekdaySpend*0.7&&React.createElement("span",{style:{color:"#16a34a"}},"✓ Controlled weekend spending")
+      )
+    ),
+    React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement(SHead,{t:"Monthly Seasonality",s:"Spend patterns across months — spot festival spikes, salary cycles"}),
+      React.createElement("div",{style:{display:"flex",gap:4,alignItems:"flex-end",height:100,marginBottom:8}},
+        spendingPatternsData.byMonth.map((m,i)=>{
+          const h=m.total>0?Math.max(3,Math.round(m.total/spendingPatternsData.maxMonth*90)):2;
+          const isCurrent=i===now.getMonth();
+          return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+            React.createElement("div",{style:{fontSize:9,color:isCurrent?"var(--accent)":"var(--text6)",fontFamily:"'Sora',sans-serif"}},m.total>0?INR(m.total):""),
+            React.createElement("div",{style:{width:"100%",height:h,borderRadius:"3px 3px 0 0",background:isCurrent?"var(--accent)":"var(--text6)",opacity:isCurrent?1:.6}})
+          );
+        })
+      ),
+      React.createElement("div",{style:{display:"flex",gap:4}},
+        ["J","F","M","A","M","J","J","A","S","O","N","D"].map((m,i)=>React.createElement("div",{key:i,style:{flex:1,textAlign:"center",fontSize:10,color:i===now.getMonth()?"var(--accent)":"var(--text6)",fontWeight:i===now.getMonth()?700:400}},m))
+      ),
+      (()=>{
+        const months=spendingPatternsData.byMonth.map((m,i)=>({...m,idx:i})).filter(m=>m.total>0);
+        if(months.length<2)return null;
+        const sorted=[...months].sort((a,b)=>b.total-a.total);
+        const peak=sorted[0],low=sorted[sorted.length-1];
+        const ratio=low.total>0?peak.total/low.total:0;
+        return ratio>2?React.createElement("div",{style:{marginTop:10,fontSize:12,color:"#b45309",lineHeight:1.6}},
+          "⚠ High seasonality detected — ",React.createElement("strong",null,["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][peak.idx]),
+          " ("+INR(peak.total)+") is ",ratio.toFixed(1)+"× ",["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][low.idx],
+          " ("+INR(low.total)+"). Consider building sinking funds for peak months."
+        ):null;
+      })()
+    )
+  );
+
+
+  /* ══ GOAL TRACKER TAB ══ */
+  const GoalTrackerTab=React.createElement("div",{style:{paddingBottom:20}},
+    !goalData.hasGoals
+      ?React.createElement(Card2,{sx:{textAlign:"center",padding:"28px 20px"}},
+          React.createElement("div",{style:{fontSize:32,marginBottom:10}},"\uD83C\uDFAF"),
+          React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text3)",marginBottom:6}},"No goals set yet"),
+          React.createElement("div",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.7,maxWidth:400,margin:"0 auto"}},"Add financial goals in Settings to track progress towards targets like Emergency Fund, Vacation, New Car, or Custom goals. Your liquid assets: ",React.createElement("strong",{style:{color:"var(--accent)"}},INR(goalData.liquidAssets)))
+        )
+      :React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+            React.createElement(KpiCard,{label:"Active Goals",value:goalData.goals.length,sub:"tracking targets",col:"var(--accent)",icon:React.createElement(Icon,{n:"target",size:18})}),
+            React.createElement(KpiCard,{label:"Liquid Assets",value:INR(goalData.liquidAssets),sub:"available to allocate",col:"#16a34a",icon:React.createElement(Icon,{n:"money",size:15})})
+          ),
+          goalData.goals.map((g,i)=>{
+            const target=Number(g.target)||0;
+            const current=Number(g.current)||0;
+            const pct=target>0?Math.min(current/target*100,100):0;
+            const remaining=Math.max(target-current,0);
+            const col=pct>=100?"#16a34a":pct>=60?"#b45309":"#ef4444";
+            const deadline=g.deadline?new Date(g.deadline):null;
+            const daysLeft=deadline?Math.ceil((deadline-now)/86400000):null;
+            const monthlyNeeded=daysLeft&&daysLeft>0&&remaining>0?remaining/(daysLeft/30):0;
+            return React.createElement(Card2,{key:i,sx:{marginBottom:12}},
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+                  React.createElement("span",{style:{fontSize:18}},g.icon||"\uD83C\uDFAF"),
+                  React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},g.name||"Goal "+(i+1))
+                ),
+                pct>=100&&React.createElement("span",{style:{fontSize:11,padding:"3px 10px",borderRadius:8,background:"rgba(22,163,74,.12)",color:"#16a34a",fontWeight:700}},"\u2713 Achieved!")
+              ),
+              React.createElement("div",{style:{position:"relative",height:10,background:"var(--bg5)",borderRadius:5,overflow:"hidden",marginBottom:6}},
+                React.createElement("div",{style:{height:"100%",width:pct+"%",background:col,borderRadius:5,transition:"width 0.6s"}})
+              ),
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:6}},
+                React.createElement("span",{style:{color:"var(--text5)"}},INR(current)+" of "+INR(target)),
+                React.createElement("span",{style:{fontWeight:700,color:col}},pct.toFixed(0)+"%")
+              ),
+              React.createElement("div",{style:{display:"flex",gap:16,fontSize:11,color:"var(--text5)",flexWrap:"wrap"}},
+                deadline&&React.createElement("span",null,"Deadline: ",React.createElement("strong",{style:{color:daysLeft<=30?"#ef4444":"var(--text3)"}},g.deadline),daysLeft!==null&&(daysLeft>0?" ("+daysLeft+" days left)":" (overdue!)")),
+                monthlyNeeded>0&&React.createElement("span",null,"Need: ",React.createElement("strong",{style:{color:"var(--accent)"}},INR(Math.round(monthlyNeeded))+"/mo"))
+              )
+            );
+          })
+        )
+  );
+
+
+
   const STABS=[
     {id:"pulse",         label:"Pulse"},
     {id:"spend",         label:"Spend"},
@@ -36336,6 +37670,9 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     {id:"fire",          label:"FIRE"},
     {id:"networth",      label:"Net Worth"},
     {id:"capgains",      label:"Cap Gains"},
+    {id:"health",        label:"Health"},
+    {id:"patterns",      label:"Patterns"},
+    {id:"goals",         label:"Goals"},
     {id:"calculators",   label:"Calculators"},
   ];
 
@@ -36357,8 +37694,42 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     stab==="subscriptions" &&SubsTab,
     stab==="fire"          &&FireTab,
     stab==="networth"      &&React.createElement(NetWorthInsightTab,{banks,cards,cash,mf,shares,fd,re:re||[],loans,categories,prefs:P,isMobile,dispatch,nwSnapshots:nwSnapshots||{},brokerCashBalance}),
-    stab==="capgains"      &&React.createElement(CapGainsTab,{shares,mf,isMobile}),
-    stab==="calculators"   &&React.createElement(InsightCalculators,{isMobile})
+    stab==="capgains"      &&React.createElement(CapGainsTab,{shares,mf,mfTxns:mfTxns||[],isMobile}),
+    stab==="health"        &&HealthScoreTab,
+    stab==="patterns"      &&SpendingPatternsTab,
+    stab==="goals"         &&GoalTrackerTab,
+    stab==="calculators"   &&React.createElement(InsightCalculators,{isMobile}),
+    /* ── Cross-Tab Intelligence Alerts (Pulse only) ── */
+    stab==="pulse"&&(()=>{
+      const alerts=[];
+      if(_biScore<50&&_biPastWithPlan.length>0){
+        const overCats=_biCatStats.filter(c=>c.avgUtil>1.1);
+        if(overCats.length>0)alerts.push({icon:"\u26A0\uFE0F",text:"Budget Alert: "+overCats.length+" categor"+(overCats.length>1?"ies are":"y is")+" consistently over 110% \u2014 "+overCats.slice(0,2).map(c=>c.cat).join(", "),type:"warn"});
+      }
+      if(subscriptionData.length>0){
+        const rising=subscriptionData.filter(s=>s.trend>15);
+        if(rising.length>0)alerts.push({icon:"\uD83D\uDCF1",text:"Subscriptions Rising: "+rising.map(s=>s.name+" (+"+s.trend.toFixed(0)+"%)").join(", ")+" \u2014 review or cancel unused services",type:"warn"});
+      }
+      if(pulseData.savingsRate>=40)alerts.push({icon:"\uD83C\uDFC6",text:"Savings Milestone: "+pulseData.savingsRate.toFixed(0)+"% savings rate \u2014 you're on aggressive FIRE pace!",type:"good"});
+      else if(pulseData.savingsRate<10&&pulseData.thisMonthIncome>0)alerts.push({icon:"\u26A0\uFE0F",text:"Low Savings: Only "+pulseData.savingsRate.toFixed(0)+"% savings rate this month \u2014 target 20%+ to stay on track",type:"warn"});
+      if(leakData.count>5)alerts.push({icon:"\uD83D\uDCA9",text:"Expense Leaks: "+leakData.count+" micro-transactions totaling "+INR(leakData.total)+" \u2014 projected "+INR(leakData.projectedMonthly)+"/mo in small spends",type:"warn"});
+      if(pulseData.emergencyActualMonths>0&&pulseData.emergencyActualMonths<pulseData.emergencyTarget*0.5)alerts.push({icon:"\uD83D\uDEA8",text:"Emergency Fund Low: Only "+pulseData.emergencyActualMonths.toFixed(1)+" months covered \u2014 target "+pulseData.emergencyTarget+" months",type:"warn"});
+      if(payeeData.top3Pct>70)alerts.push({icon:"\uD83D\uDCCA",text:"Payee Concentration: Top 3 payees account for "+payeeData.top3Pct.toFixed(0)+"% of spend \u2014 diversify spending",type:"info"});
+      if(alerts.length===0)return null;
+      return React.createElement(Card2,{sx:{marginBottom:16}},
+        React.createElement(SHead,{t:"Intelligence Alerts",s:"Cross-tab insights from budget, subscriptions, spending patterns & more"}),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+          alerts.slice(0,5).map((a,i)=>React.createElement("div",{key:i,style:{
+            display:"flex",gap:10,alignItems:"flex-start",padding:"9px 12px",borderRadius:9,
+            background:a.type==="good"?"rgba(22,163,74,.06)":a.type==="warn"?"rgba(239,68,68,.06)":"rgba(14,116,144,.06)",
+            border:"1px solid "+(a.type==="good"?"rgba(22,163,74,.2)":a.type==="warn"?"rgba(239,68,68,.2)":"rgba(14,116,144,.2)")
+          }},
+            React.createElement("span",{style:{fontSize:14,flexShrink:0}},a.icon),
+            React.createElement("span",{style:{fontSize:12,color:"var(--text3)",lineHeight:1.5}},a.text)
+          ))
+        )
+      );
+    })()
   );
 });
 
@@ -36900,119 +38271,123 @@ const XirrCalc=()=>{
    STCG u/s 111A  — held ≤12 months  → 20% flat
    LTCG u/s 112A  — held >12 months  → 12.5% flat; ₹1,25,000 exemption p.a.
    ══════════════════════════════════════════════════════════════════════════ */
-const CapGainsTab=({shares=[],mf=[],isMobile})=>{
+const CapGainsTab=({shares=[],mf=[],mfTxns=[],isMobile})=>{
   const today=new Date();
-  const[buyDates,setBuyDates]=useState(()=>{
-    try{return JSON.parse(localStorage.getItem("mm_capgains_dates")||"{}");}catch{return {};}
-  });
-  const saveDates=d=>{setBuyDates(d);try{localStorage.setItem("mm_capgains_dates",JSON.stringify(d));}catch{}};
 
-  /* Build holdings list */
-  const holdings=React.useMemo(()=>{
-    const rows=[];
-    shares.forEach(sh=>{
-      const rawDate=buyDates["sh_"+sh.id]||sh.buyDate||null;
-      const buyDate=rawDate?new Date(rawDate):null;
-      const ageMonths=buyDate?Math.floor((today-buyDate)/(1000*60*60*24*30.44)):null;
-      /* Budget 2024: LTCG requires MORE THAN 12 months (>12, not >=12) */
-      const isLTCG=ageMonths!=null&&ageMonths>12;
-      const invested=sh.qty*(sh.avgPrice||sh.buyPrice||0);
-      const current=sh.qty*sh.currentPrice;
-      const gain=current-invested;
-      rows.push({id:"sh_"+sh.id,name:sh.name||sh.ticker,ticker:sh.ticker,assetType:"Equity",buyDate:rawDate||"",ageMonths,isLTCG,invested,current,gain,rawGainType:gain>=0?"gain":"loss"});
+  /* Auto-build buy date map from mfTxns (first buy per fund) + shares.buyDate */
+  const autoBuyDates=React.useMemo(()=>{
+    const map={};
+    /* Shares: use sh.buyDate directly */
+    shares.forEach(sh=>{if(sh.buyDate)map["sh_"+sh.id]=sh.buyDate;});
+    /* MF: find earliest buy transaction per fundName */
+    const fundFirstBuy={};
+    (mfTxns||[]).filter(t=>t.orderType==="buy"&&t.date).forEach(t=>{
+      const fn=t.fundName||"";
+      if(!fundFirstBuy[fn]||t.date<fundFirstBuy[fn])fundFirstBuy[fn]=t.date;
     });
     mf.forEach(m=>{
-      const rawDate=buyDates["mf_"+m.id]||m.buyDate||null;
-      const buyDate=rawDate?new Date(rawDate):null;
-      const ageMonths=buyDate?Math.floor((today-buyDate)/(1000*60*60*24*30.44)):null;
-      /* Budget 2024: LTCG requires MORE THAN 12 months (>12, not >=12) */
-      const isLTCG=ageMonths!=null&&ageMonths>12;
-      const current=m.currentValue||m.invested;
-      const gain=current-m.invested;
-      rows.push({id:"mf_"+m.id,name:m.scheme||m.name||"MF Folio",ticker:"",assetType:"Equity MF",buyDate:rawDate||"",ageMonths,isLTCG,invested:m.invested,current,gain,rawGainType:gain>=0?"gain":"loss"});
+      const txnDate=fundFirstBuy[m.name];
+      if(txnDate)map["mf_"+m.id]=txnDate;
+      else if(m.startDate)map["mf_"+m.id]=m.startDate;
     });
-    return rows.filter(r=>r.gain!==0);
-  },[shares,mf,buyDates,today]);
+    return map;
+  },[shares,mf,mfTxns]);
 
-  /* Tax calculation — Budget 2024 rates */
-  const STCG_RATE=0.20;    /* 20% u/s 111A */
-  const LTCG_RATE=0.125;   /* 12.5% u/s 112A */
-  const LTCG_EXEMPT=125000; /* ₹1,25,000 annual exemption */
-  const stcgGains=holdings.filter(h=>!h.isLTCG&&h.ageMonths!=null&&h.gain>0).reduce((s,h)=>s+h.gain,0);
-  const ltcgGains=holdings.filter(h=>h.isLTCG&&h.gain>0).reduce((s,h)=>s+h.gain,0);
-  const stcgTax=stcgGains*STCG_RATE;
-  const ltcgTaxable=Math.max(0,ltcgGains-LTCG_EXEMPT);
-  const ltcgTax=ltcgTaxable*LTCG_RATE;
-  const totalTax=stcgTax+ltcgTax;
-  const missingDates=holdings.filter(h=>!h.buyDate).length;
+  /* Use the shared computeCapitalGains for proper cross-offset + debt MF */
+  const cg=React.useMemo(()=>computeCapitalGains(shares,mf),[shares,mf]);
+
+  /* Build enriched holdings from computeCapitalGains details */
+  const holdings=React.useMemo(()=>{
+    return cg.details.map(d=>{
+      const prefix=d.type==="Share"?"sh_":"mf_";
+      const autoDate=autoBuyDates[prefix+d.id]||"";
+      const isDebt=d.type==="Debt MF";
+      return{...d,autoDate,assetType:isDebt?"Debt MF":d.type==="Share"?"Equity":"Equity MF",
+        ltcgThreshold:isDebt?36:12,
+        buyDateSource:autoDate?(mfTxns.length>0?"auto-txn":"auto"):"missing"};
+    }).sort((a,b)=>a.daysHeld-b.daysHeld);
+  },[cg.details,autoBuyDates,mfTxns]);
+
+  const missingDates=holdings.filter(h=>!h.autoDate).length;
 
   const fmt=v=>{const a=Math.abs(v);if(a>=10000000)return(v<0?"-":"")+"₹"+(a/10000000).toFixed(2)+"Cr";if(a>=100000)return(v<0?"-":"")+"₹"+(a/100000).toFixed(1)+"L";if(a>=1000)return(v<0?"-":"")+"₹"+(a/1000).toFixed(1)+"K";return(v<0?"-":"")+"₹"+Math.round(a);};
 
   return React.createElement("div",{style:{paddingBottom:20}},
     React.createElement("div",{style:{marginBottom:16}},
       React.createElement("h3",{style:{fontFamily:"'Sora',sans-serif",fontSize:16,fontWeight:700,color:"var(--text)",marginBottom:3}},"Capital Gains Tax Estimator"),
-      React.createElement("p",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.6}},"Budget 2024 rates — STCG (20% u/s 111A, held ≤12 months) and LTCG (12.5% u/s 112A, held >12 months, ₹1.25L annual exemption). Add buy dates below for accurate classification. Not tax advice — consult your CA.")
+      React.createElement("p",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.6}},"Buy dates auto-fetched from MF transaction history and share records. Budget 2024 rates \u2014 STCG (20% u/s 111A) and LTCG (12.5% u/s 112A, ₹1.25L annual exemption). Cross-loss offset applied. Not tax advice.")
     ),
     /* KPI strip */
     React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16}},
       ...[
-        {label:"STCG Gains",val:stcgGains,sub:"Held ≤12 months · Tax @ 20%",col:"#b45309",tax:stcgTax},
-        {label:"LTCG Gains",val:ltcgGains,sub:"Held >12 months · ₹1.25L exempt",col:"#6d28d9",tax:ltcgTax},
-        {label:"Estimated Tax",val:totalTax,sub:"STCG+LTCG · excl. surcharge & cess",col:totalTax>0?"#ef4444":"#16a34a",tax:null},
-      ].map(k=>React.createElement("div",{key:k.label,style:{flex:"1 1 150px",background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 14px"}},
+        {label:"STCG Gains",val:cg.stcgGain,sub:"Held ≤12mo \u00B7 Tax @ 20%",col:"#b45309"},
+        {label:"STCG Losses",val:cg.stcgLoss,sub:"Offset against gains",col:cg.stcgLoss>0?"#ef4444":"var(--text6)"},
+        {label:"LTCG Gains",val:cg.ltcgGain,sub:"Held >12mo \u00B7 ₹1.25L exempt",col:"#6d28d9"},
+        {label:"LTCG Losses",val:cg.ltcgLoss,sub:"Offset against gains",col:cg.ltcgLoss>0?"#ef4444":"var(--text6)"},
+        {label:"Estimated Tax",val:cg.totalTax,sub:"After cross-offset \u00B7 excl. cess",col:cg.totalTax>0?"#ef4444":"#16a34a"},
+      ].map(k=>React.createElement("div",{key:k.label,style:{flex:"1 1 120px",background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 14px"}},
         React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:4}},k.label),
         React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:k.col}},fmt(k.val)),
-        k.tax!=null&&React.createElement("div",{style:{fontSize:11,color:"#ef4444",marginTop:2}},k.tax>0?"Tax: "+fmt(k.tax):"No tax"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},k.sub)
+        k.val>0&&k.label!=="Estimated Tax"&&React.createElement("div",{style:{fontSize:11,color:"#ef4444",marginTop:2}},"Tax: "+fmt(k.val*(k.label.includes("STCG")?0.20:0.125)))
       ))
     ),
     /* LTCG exemption usage bar */
-    ltcgGains>0&&React.createElement("div",{style:{marginBottom:14,padding:"10px 14px",borderRadius:10,background:"var(--card)",border:"1px solid var(--border)"}},
+    cg.ltcgGain>0&&React.createElement("div",{style:{marginBottom:14,padding:"10px 14px",borderRadius:10,background:"var(--card)",border:"1px solid var(--border)"}},
       React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:6}},
         React.createElement("span",{style:{color:"var(--text4)",fontWeight:600}},"₹1.25L LTCG Annual Exemption Used"),
-        React.createElement("span",{style:{color:ltcgGains>=LTCG_EXEMPT?"#ef4444":"#16a34a",fontWeight:700}},fmt(Math.min(ltcgGains,LTCG_EXEMPT))+" / "+fmt(LTCG_EXEMPT)+" ("+(Math.min(100,Math.round(ltcgGains/LTCG_EXEMPT*100)))+"%)")
+        React.createElement("span",{style:{color:cg.ltcgGain>=cg.ltcgExempt?"#ef4444":"#16a34a",fontWeight:700}},fmt(Math.min(cg.ltcgGain,125000))+" / ₹1.25L ("+Math.min(100,Math.round(cg.ltcgGain/125000*100))+"%)")
       ),
       React.createElement("div",{style:{background:"var(--bg5)",borderRadius:4,height:7,overflow:"hidden"}},
-        React.createElement("div",{style:{width:Math.min(100,ltcgGains/LTCG_EXEMPT*100)+"%",height:"100%",background:ltcgGains>=LTCG_EXEMPT?"#ef4444":"#16a34a",borderRadius:4,transition:"width .5s"}})
+        React.createElement("div",{style:{width:Math.min(100,cg.ltcgGain/125000*100)+"%",height:"100%",background:cg.ltcgGain>=125000?"#ef4444":"#16a34a",borderRadius:4,transition:"width .5s"}})
       ),
-      ltcgGains>=LTCG_EXEMPT&&React.createElement("div",{style:{fontSize:10,color:"#ef4444",marginTop:4,fontWeight:600}},"⚠ Exemption fully used — remaining LTCG is taxable at 12.5%.")
+      cg.ltcgGain>=125000&&React.createElement("div",{style:{fontSize:10,color:"#ef4444",marginTop:4,fontWeight:600}},"⚠ Exemption fully used \u2014 remaining LTCG taxable at 12.5%.")
+    ),
+    /* Cross-offset info */
+    (cg.stcgLoss>0||cg.ltcgLoss>0)&&React.createElement("div",{style:{marginBottom:14,padding:"9px 12px",borderRadius:9,background:"rgba(14,116,144,.06)",border:"1px solid rgba(14,116,144,.2)",fontSize:12,color:"var(--text3)",lineHeight:1.6}},
+      React.createElement("strong",null,"Cross-Offset Applied: "),
+      cg.stcgLoss>0&&"STCG losses of "+fmt(cg.stcgLoss)+" offset against LTCG gains. ",
+      cg.ltcgLoss>0&&"LTCG losses of "+fmt(cg.ltcgLoss)+" offset against STCG gains. ",
+      "Net taxable after cross-offset: STCG "+fmt(Math.max(0,cg.stcgGain-cg.stcgLoss-cg.ltcgLoss))+" + LTCG "+fmt(Math.max(0,cg.ltcgGain-cg.ltcgExempt-cg.stcgLoss))+""
     ),
     missingDates>0&&React.createElement("div",{style:{padding:"9px 12px",borderRadius:9,background:"rgba(180,83,9,.08)",border:"1px solid rgba(180,83,9,.25)",fontSize:12,color:"#b45309",marginBottom:14}},
-      "⚠ "+missingDates+" holding"+(missingDates===1?"":"s")+" missing a buy date — add dates below for accurate STCG/LTCG classification."
+      "⚠ "+missingDates+" holding"+(missingDates===1?"":"s")+" missing a buy date \u2014 add a buy date or import MF transactions for auto-detection."
     ),
     /* Holdings table */
     React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,overflowX:"auto",overflowY:"hidden",WebkitOverflowScrolling:"touch"}},
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"minmax(120px,1fr) minmax(75px,90px) minmax(65px,80px) minmax(65px,80px) minmax(65px,80px) minmax(75px,90px)",padding:"7px 12px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Holding"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Buy Date"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Held"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Gain/Loss"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Type"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Tax Est.†")),
-      holdings.length===0&&React.createElement("div",{style:{padding:"30px",textAlign:"center",color:"var(--text5)",fontSize:13}},"No holdings with gains/losses found. Add shares or mutual funds in the Investments section."),
-      holdings.map((h,i)=>React.createElement("div",{key:h.id,style:{display:"grid",gridTemplateColumns:"minmax(120px,1fr) minmax(75px,90px) minmax(65px,80px) minmax(65px,80px) minmax(65px,80px) minmax(75px,90px)",padding:"9px 12px",borderBottom:i<holdings.length-1?"1px solid var(--border2)":"none",alignItems:"center",background:i%2?"var(--bg5)":"transparent"}},
-        React.createElement("div",null,
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"minmax(100px,1fr) 65px 60px 65px 55px":"minmax(140px,1fr) minmax(85px,100px) 70px 80px 80px minmax(70px,90px) minmax(75px,90px)",padding:"7px 12px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},
+        React.createElement("span",{style:{whiteSpace:"nowrap"}},"Holding"),
+        React.createElement("span",{style:{whiteSpace:"nowrap"}},"Buy Date"),
+        React.createElement("span",{style:{whiteSpace:"nowrap"}},"Held"),
+        React.createElement("span",{style:{whiteSpace:"nowrap"}},"Cost"),
+        React.createElement("span",{style:{whiteSpace:"nowrap"}},"Current"),
+        React.createElement("span",{style:{whiteSpace:"nowrap"}},"Gain/Loss"),
+        React.createElement("span",{style:{whiteSpace:"nowrap"}},"Type")
+      ),
+      holdings.length===0&&React.createElement("div",{style:{padding:"30px",textAlign:"center",color:"var(--text5)",fontSize:13}},"No holdings with gains or losses found. Add shares or mutual funds in the Investments section."),
+      holdings.map((h,i)=>React.createElement("div",{key:h.id+i,style:{display:"grid",gridTemplateColumns:isMobile?"minmax(100px,1fr) 65px 60px 65px 55px":"minmax(140px,1fr) minmax(85px,100px) 70px 80px 80px minmax(70px,90px) minmax(75px,90px)",padding:"9px 12px",borderBottom:i<holdings.length-1?"1px solid var(--border2)":"none",alignItems:"center",background:i%2?"var(--bg5)":"transparent"}},
+        React.createElement("div",{style:{minWidth:0}},
           React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},h.name),
-          React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},h.assetType)
+          React.createElement("div",{style:{fontSize:10,color:h.assetType==="Debt MF"?"#b45309":h.assetType==="Equity MF"?"#6d28d9":"var(--text5)"}},h.assetType)
         ),
-        React.createElement("input",{type:"date",className:"inp",value:h.buyDate,
-          onChange:e=>{const d={...buyDates,[h.id]:e.target.value};saveDates(d);},
-          style:{fontSize:10,padding:"3px 6px",width:"100%",background:"var(--bg4)"}}),
-        React.createElement("div",{style:{fontSize:11,color:"var(--text4)",textAlign:"right"}},h.ageMonths!=null?h.ageMonths+"mo":"—"),
+        React.createElement("div",{style:{fontSize:10,color:h.autoDate?"var(--text3)":"var(--text6)",fontStyle:h.autoDate?"normal":"italic"}},
+          h.autoDate||"No date"
+        ),
+        React.createElement("div",{style:{fontSize:10,color:"var(--text4)",textAlign:"right"}},
+          h.daysHeld!=null?h.daysHeld+"d":"—"
+        ),
+        React.createElement("div",{style:{fontSize:10,color:"var(--text4)",textAlign:"right",fontFamily:"'Sora',sans-serif"}},fmt(h.cost)),
+        React.createElement("div",{style:{fontSize:10,color:"var(--text3)",textAlign:"right",fontFamily:"'Sora',sans-serif",fontWeight:600}},fmt(h.curVal)),
         React.createElement("div",{style:{fontSize:11,fontWeight:700,fontFamily:"'Sora',sans-serif",color:h.gain>=0?"#16a34a":"#ef4444",textAlign:"right"}},fmt(h.gain)),
         React.createElement("div",null,
-          h.ageMonths==null
-            ?React.createElement("span",{style:{fontSize:10,color:"var(--text6)"}},"?")
-            :React.createElement("span",{style:{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:10,
-                background:h.isLTCG?"rgba(109,40,217,.12)":"rgba(180,83,9,.12)",
-                color:h.isLTCG?"#6d28d9":"#b45309"}},h.isLTCG?"LTCG":"STCG")
-        ),
-        /* Per-holding tax: STCG = gain×20%, LTCG = gain×12.5% (no per-row exemption —
-           the ₹1.25L is an annual combined exemption shown in the KPI strip above) */
-        React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"#ef4444",fontFamily:"'Sora',sans-serif",textAlign:"right"}},
-          h.ageMonths==null?"—":
-          h.gain<=0?"₹0":
-          h.isLTCG?fmt(h.gain*LTCG_RATE):
-          fmt(h.gain*STCG_RATE)
+          React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:10,
+            background:h.isLT?"rgba(109,40,217,.12)":h.daysHeld!=null?"rgba(180,83,9,.12)":"rgba(100,100,100,.1)",
+            color:h.isLT?"#6d28d9":h.daysHeld!=null?"#b45309":"var(--text6)"}},h.daysHeld==null?"?":h.isLT?"LTCG":"STCG"),
+          (h.ltcgThreshold===36)&&React.createElement("div",{style:{fontSize:8,color:"var(--text6)",marginTop:2}},"36mo debt")
         )
       ))
     ),
     React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:10,lineHeight:1.7}},
-      "† Per-holding tax at applicable rate (STCG 20%, LTCG 12.5%). The ₹1,25,000 annual LTCG exemption is shared across all holdings combined — see KPI strip above for net liability. Surcharge (15%/25% above ₹1Cr/₹2Cr) and 4% health & education cess not included. This is an estimate only — consult a CA for actual tax computation."
+      "Buy dates auto-detected from MF transaction history (earliest buy) and share records. Debt MF LTCG uses 36-month threshold. Cross-offset: losses in one class offset gains in the other. Surcharge and 4% cess not included."
     )
   );
 };
@@ -40477,7 +41852,7 @@ function App(){
           React.createElement(GoalsSection,{goals:state.goals||_EA,dispatch,isMobile,scheduled:state.scheduled||_EA,banks:state.banks,cards:state.cards,cash:state.cash,mf:state.mf||_EA,shares:state.shares||_EA,fd:state.fd||_EA,re:state.re||_EA,brokerCashBalance:state.brokerCashBalance||0}))),
       React.createElement("div",{style:{display:tab==="insights"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Insights"},
-          React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs,onJumpToLedger,nwSnapshots:state.nwSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0}))),
+          React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,mfTxns:state.mfTxns||[],shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs,onJumpToLedger,nwSnapshots:state.nwSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0}))),
       React.createElement("div",{style:{display:tab==="notes"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Notes"},
           React.createElement(NotesSection,{notes:state.notes||_EA,dispatch}))),
