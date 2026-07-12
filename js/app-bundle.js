@@ -31928,9 +31928,9 @@ const RptCategoryDrillDown=({data,from,to})=>{
     !selected?React.createElement("p",{style:{color:"var(--text5)",fontSize:13}},"Select a category to drill down.")
     :React.createElement(React.Fragment,null,
       React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
-        React.createElement(KpiCard,{label:"Total Transactions",value:totalTx.toLocaleString(),sub:totalTx+" txns in period",col:"var(--accent)",icon:React.createElement(Icon,{n:"list",size:18})}),
-        React.createElement(KpiCard,{label:"Total Amount",value:INR(Math.round(totalAmt)),sub:isDebit?"Total spend":"Total income",col:isDebit?"#ef4444":"#16a34a",icon:React.createElement(Icon,{n:isDebit?"expense":"income",size:18})}),
-        React.createElement(KpiCard,{label:"Avg/Transaction",value:INR(Math.round(avgTx)),sub:"Mean transaction amount",col:"#0e7490",icon:React.createElement(Icon,{n:"target",size:18})})
+        React.createElement(StatCard,{label:"Total Transactions",val:totalTx.toLocaleString(),sub:totalTx+" txns in period",col:"var(--accent)",icon:React.createElement(Icon,{n:"list",size:18})}),
+        React.createElement(StatCard,{label:"Total Amount",val:INR(Math.round(totalAmt)),sub:isDebit?"Total spend":"Total income",col:isDebit?"#ef4444":"#16a34a",icon:React.createElement(Icon,{n:isDebit?"expense":"income",size:18})}),
+        React.createElement(StatCard,{label:"Avg/Transaction",val:INR(Math.round(avgTx)),sub:"Mean transaction amount",col:"#0e7490",icon:React.createElement(Icon,{n:"target",size:18})})
       ),
       React.createElement(Card2,{sx:{marginBottom:16}},
         React.createElement(SHead,{t:"Monthly Trend — "+selected,s:months.length+" months of data in selected range"}),
