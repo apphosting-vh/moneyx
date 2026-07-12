@@ -35602,7 +35602,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     const pyfSaved=pyfPassed&&savingsThisMonth>0;
     const foodBudget=P.foodBudget?Number(P.foodBudget):0;
     const foodSpend=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");const main=catMainName(t.cat||"Others");return ct!=="Income"&&ct!=="Transfer"&&t.type==="debit"&&(main.toLowerCase().includes("food")||main.toLowerCase().includes("grocer"))&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+t.amount,0);
-    const liquidAssets=(banks||[]).reduce((s,b)=>s+(b.balance||0),0)+(cash?.balance||0);
+    const liquidAssets=(banks||[]).reduce((s,b)=>s+(b.balance||0),0)+(cash?.balance||0)+(fd||[]).reduce((s,f)=>s+calcFDValueToday(f),0);
     const monthlyExpenses=allTxns.filter(t=>t.type==="debit"&&t.date>=thisStart&&t.date<=thisEnd).reduce((s,t)=>s+t.amount,0);
     const emergencyTarget=P.emergencyTargetMonths||6;
     const emergencyActualMonths=monthlyExpenses>0?liquidAssets/monthlyExpenses:0;
@@ -35610,7 +35610,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     const discCategories=["Shopping","Entertainment","Travel","Dining"];
     const discSpend=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");const main=catMainName(t.cat||"Others");return ct!=="Income"&&ct!=="Transfer"&&t.type==="debit"&&(discCategories.some(c=>main.toLowerCase().includes(c.toLowerCase())))&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+t.amount,0);
     return {todaySpend,thisMonthSpend,lastMonthSpend,dailyAvg,projected,last7,heatmap,maxDay,dayOfMonth,daysInMonth,thisMonthIncome,lastMonthIncome,expenseRatio,savingsThisMonth,savingsRate,pyfTarget,pyfPassed,pyfSaved,foodBudget,foodSpend,liquidAssets,emergencyTarget,emergencyActualMonths,discSpendTarget,discSpend};
-  },[allTxns,thisStart,thisEnd,lastStart,lastEnd,categories,P,banks,cash]);
+  },[allTxns,thisStart,thisEnd,lastStart,lastEnd,categories,P,banks,cash,fd]);
 
 
 
@@ -37495,9 +37495,9 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
   /* ══ GOALS DATA ══ */
   const goalData=React.useMemo(()=>{
     const g=Array.isArray(goals)?goals:[];
-    const liquidAssets=(banks||[]).reduce((s,b)=>s+(b.balance||0),0)+(cash?.balance||0);
+    const liquidAssets=(banks||[]).reduce((s,b)=>s+(b.balance||0),0)+(cash?.balance||0)+(fd||[]).reduce((s,f)=>s+calcFDValueToday(f),0);
     return{goals:g,liquidAssets,hasGoals:g.length>0};
-  },[goals,banks,cash]);
+  },[goals,banks,cash,fd]);
 
 
   /* ══ HEALTH SCORE TAB ══ */
@@ -38271,60 +38271,228 @@ const XirrCalc=()=>{
    STCG u/s 111A  — held ≤12 months  → 20% flat
    LTCG u/s 112A  — held >12 months  → 12.5% flat; ₹1,25,000 exemption p.a.
    ══════════════════════════════════════════════════════════════════════════ */
+const CapGainsFundCard=React.memo(({f,fmt,fmtD})=>{
+  const[isExp,setIsExp]=React.useState(false);
+  return React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,marginBottom:12,overflow:"hidden"}},
+    React.createElement("div",{onClick:()=>setIsExp(!isExp),style:{padding:"12px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,borderBottom:isExp?"1px solid var(--border2)":"none"}},
+      React.createElement("span",{style:{fontSize:10,transform:isExp?"rotate(90deg)":"rotate(0)",transition:"transform .15s",color:"var(--text5)"}},"\u25B6"),
+      React.createElement("div",{style:{flex:1,minWidth:0}},
+        React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},f.name),
+        React.createElement("div",{style:{fontSize:10,color:f.isDebt?"#b45309":"#6d28d9",fontWeight:600}},f.fundType+" \u00B7 "+f.lotCount+" lot"+(f.lotCount!==1?"s":"")+" \u00B7 "+f.totalUnits.toFixed(2)+" units \u00B7 "+(f.isDebt?"36":"12")+"mo threshold")
+      ),
+      React.createElement("div",{style:{textAlign:"right"}},
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:f.fundGain>=0?"#16a34a":"#ef4444"}},fmt(f.fundGain)),
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},fmt(f.fundCurVal)+" current")
+      )
+    ),
+    isExp&&React.createElement("div",{style:{padding:0}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"85px 60px 60px 60px 50px 80px 60px",padding:"6px 16px",background:"var(--bg4)",fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.3}},
+        React.createElement("span",null,"Buy Date"),
+        React.createElement("span",{style:{textAlign:"right"}},"Units"),
+        React.createElement("span",{style:{textAlign:"right"}},"Buy NAV"),
+        React.createElement("span",{style:{textAlign:"right"}},"Curr NAV"),
+        React.createElement("span",{style:{textAlign:"right"}},"Days"),
+        React.createElement("span",{style:{textAlign:"right"}},"Gain/Loss"),
+        React.createElement("span",{style:{textAlign:"center"}},"Type")
+      ),
+      f.lots.sort((a,b)=>a.date.localeCompare(b.date)).map((l,i)=>React.createElement("div",{key:i,style:{display:"grid",gridTemplateColumns:"85px 60px 60px 60px 50px 80px 60px",padding:"7px 16px",borderBottom:i<f.lots.length-1?"1px solid var(--border2)":"none",background:i%2?"var(--bg5)":"transparent",fontSize:11}},
+        React.createElement("span",{style:{color:"var(--text3)",fontSize:10}},fmtD(l.date)),
+        React.createElement("span",{style:{textAlign:"right",color:"var(--text4)",fontSize:10}},l.units.toFixed(2)),
+        React.createElement("span",{style:{textAlign:"right",color:"var(--text4)",fontSize:10}},"\u20B9"+l.buyNav.toFixed(2)),
+        React.createElement("span",{style:{textAlign:"right",color:"var(--text3)",fontSize:10}},"\u20B9"+l.currentNav.toFixed(2)),
+        React.createElement("span",{style:{textAlign:"right",color:"var(--text5)",fontSize:10}},l.daysHeld+"d"),
+        React.createElement("span",{style:{textAlign:"right",fontWeight:700,fontFamily:"'Sora',sans-serif",fontSize:11,color:l.gain>=0?"#16a34a":"#ef4444"}},fmt(l.gain)),
+        React.createElement("span",{style:{textAlign:"center"}},
+          React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:8,
+            background:l.isLT?"rgba(109,40,217,.12)":"rgba(180,83,9,.12)",
+            color:l.isLT?"#6d28d9":"#b45309"}},l.isLT?"LTCG":"STCG")
+        )
+      )),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"85px 60px 60px 60px 50px 80px 60px",padding:"8px 16px",borderTop:"2px solid var(--border)",background:"var(--bg4)",fontSize:11,fontWeight:700}},
+        React.createElement("span",{style:{color:"var(--text3)"}},"Subtotal"),
+        React.createElement("span",{style:{textAlign:"right",color:"var(--text4)"}},f.totalUnits.toFixed(2)),
+        React.createElement("span",null),React.createElement("span",null),React.createElement("span",null),
+        React.createElement("span",{style:{textAlign:"right",color:f.fundGain>=0?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif"}},fmt(f.fundGain)),
+        React.createElement("span",null)
+      ),
+      (f.stcgGain>0||f.stcgLoss>0||f.ltcgGain>0||f.ltcgLoss>0)&&React.createElement("div",{style:{display:"flex",gap:12,padding:"8px 16px",fontSize:10,color:"var(--text5)",flexWrap:"wrap"}},
+        f.stcgGain>0&&React.createElement("span",null,"STCG: "+fmt(f.stcgGain)),
+        f.stcgLoss>0&&React.createElement("span",{style:{color:"#ef4444"}},"STCL: "+fmt(-f.stcgLoss)),
+        f.ltcgGain>0&&React.createElement("span",null,"LTCG: "+fmt(f.ltcgGain)),
+        f.ltcgLoss>0&&React.createElement("span",{style:{color:"#ef4444"}},"LTCL: "+fmt(-f.ltcgLoss))
+      )
+    )
+  );
+});
+
 const CapGainsTab=({shares=[],mf=[],mfTxns=[],isMobile})=>{
   const today=new Date();
+  const todayStr=TODAY();
 
-  /* Auto-build buy date map from mfTxns (first buy per fund) + shares.buyDate */
-  const autoBuyDates=React.useMemo(()=>{
-    const map={};
-    /* Shares: use sh.buyDate directly */
-    shares.forEach(sh=>{if(sh.buyDate)map["sh_"+sh.id]=sh.buyDate;});
-    /* MF: find earliest buy transaction per fundName */
-    const fundFirstBuy={};
-    (mfTxns||[]).filter(t=>t.orderType==="buy"&&t.date).forEach(t=>{
-      const fn=t.fundName||"";
-      if(!fundFirstBuy[fn]||t.date<fundFirstBuy[fn])fundFirstBuy[fn]=t.date;
+  /* ── FIFO lot-level capital gains engine ──────────────────────────────
+     For each MF fund:
+       1. Collect buy transactions → lots (each has date, units, nav)
+       2. Collect sell transactions → FIFO-consume earliest lots
+       3. Remaining held lots → classify each as STCG/LTCG by purchase date
+     Shares: single lot per holding (unchanged from before).
+     ─────────────────────────────────────────────────────────────────── */
+  const lotData=React.useMemo(()=>{
+    let stcgGain=0,stcgLoss=0,ltcgGain=0,ltcgLoss=0;
+    const details=[];
+    const fundLots={};
+
+    /* ── Shares: one lot per holding ── */
+    shares.forEach(sh=>{
+      if(!sh.buyDate||!sh.currentPrice||!sh.buyPrice||!sh.qty)return;
+      const normBuyDate=parseDate(sh.buyDate);
+      const buyD=new Date(normBuyDate+"T12:00:00");
+      const todD=new Date(todayStr+"T12:00:00");
+      const daysHeld=Math.floor((todD-buyD)/86400000);
+      const isLT=daysHeld>365;
+      const cost=sh.qty*sh.buyPrice;
+      const curVal=sh.qty*sh.currentPrice;
+      const gain=curVal-cost;
+      if(gain>=0){if(isLT)ltcgGain+=gain;else stcgGain+=gain;}
+      else{if(isLT)ltcgLoss+=Math.abs(gain);else stcgLoss+=Math.abs(gain);}
+      details.push({id:sh.id,name:sh.company,ticker:sh.ticker,daysHeld,isLT,cost,curVal,gain,type:"Share",
+        buyDate:normBuyDate,units:sh.qty,buyNav:sh.buyPrice,currentNav:sh.currentPrice});
     });
+
+    /* ── MF: FIFO lot matching ── */
+    /* Group transactions by fundName */
+    const txnByFund={};
+    (mfTxns||[]).forEach(t=>{
+      const fn=t.fundName;if(!fn)return;
+      if(!txnByFund[fn])txnByFund[fn]={buys:[],sells:[]};
+      if(t.orderType==="buy")txnByFund[fn].buys.push(t);
+      else if(t.orderType==="sell")txnByFund[fn].sells.push(t);
+    });
+
     mf.forEach(m=>{
-      const txnDate=fundFirstBuy[m.name];
-      if(txnDate)map["mf_"+m.id]=txnDate;
-      else if(m.startDate)map["mf_"+m.id]=m.startDate;
+      const name=m.name;
+      const isDebt=(m.fundType||"equity")==="debt";
+      const ltcgThresholdDays=isDebt?365*3:365;
+      const currentNav=m.nav||0;
+      const currentUnits=m.units||0;
+      if(currentUnits<=0||currentNav<=0)return;
+
+      const fundTxns=txnByFund[name];
+      const lots=[];
+
+      if(fundTxns&&fundTxns.buys.length>0){
+        /* Sort buys ascending by date — normalise all dates to ISO first */
+        const _iso=t=>parseDate(t.date);
+        const buys=fundTxns.buys.filter(t=>t.date&&t.units>0).sort((a,b)=>_iso(a).localeCompare(_iso(b)));
+        const sells=fundTxns.sells.filter(t=>t.date&&t.units>0).sort((a,b)=>_iso(a).localeCompare(_iso(b)));
+
+        /* Clone buy lots (each has remaining units) — store ISO date */
+        const heldLots=buys.map(t=>({
+          date:_iso(t),units:parseFloat((+t.units).toFixed(4)),
+          nav:+t.nav||0,amount:+t.amount||0
+        }));
+
+        /* FIFO: consume lots with sells */
+        let sellIdx=0;
+        for(const lot of heldLots){
+          while(sellIdx<sells.length&&lot.units>0){
+            const sellUnits=parseFloat((+sells[sellIdx].units).toFixed(4));
+            if(sellUnits<=lot.units){
+              lot.units=parseFloat((lot.units-sellUnits).toFixed(4));
+              sellIdx++;
+            }else{
+              sells[sellIdx].units=parseFloat((sellUnits-lot.units).toFixed(4));
+              lot.units=0;
+            }
+          }
+        }
+
+        /* Remaining held lots → compute gains */
+        heldLots.filter(l=>l.units>0.0001).forEach(lot=>{
+          const todD=new Date(todayStr+"T12:00:00");
+          const buyD=new Date(lot.date+"T12:00:00");
+          const daysHeld=Math.floor((todD-buyD)/86400000);
+          const isLT=daysHeld>ltcgThresholdDays;
+          const cost=lot.units*lot.nav;
+          const curVal=lot.units*currentNav;
+          const gain=curVal-cost;
+          if(gain>=0){if(isLT)ltcgGain+=gain;else stcgGain+=gain;}
+          else{if(isLT)ltcgLoss+=Math.abs(gain);else stcgLoss+=Math.abs(gain);}
+          lots.push({date:lot.date,units:lot.units,buyNav:lot.nav,currentNav,daysHeld,isLT,cost,curVal,gain});
+        });
+      }else{
+        /* No transactions — use metadata date as single lot */
+        const startDate=parseDate(m.startDate||m.buyDate||"");
+        if(startDate&&currentUnits>0){
+          const buyD=new Date(startDate+"T12:00:00");
+          const todD=new Date(todayStr+"T12:00:00");
+          const daysHeld=Math.floor((todD-buyD)/86400000);
+          const isLT=daysHeld>ltcgThresholdDays;
+          const avgNav=m.avgNav||0;
+          const cost=currentUnits*avgNav;
+          const curVal=currentUnits*currentNav;
+          const gain=curVal-cost;
+          if(gain>=0){if(isLT)ltcgGain+=gain;else stcgGain+=gain;}
+          else{if(isLT)ltcgLoss+=Math.abs(gain);else stcgLoss+=Math.abs(gain);}
+          lots.push({date:startDate,units:currentUnits,buyNav:avgNav,currentNav,daysHeld,isLT,cost,curVal,gain});
+        }
+      }
+
+      /* Fund subtotal */
+      const fundCost=lots.reduce((s,l)=>s+l.cost,0);
+      const fundCurVal=lots.reduce((s,l)=>s+l.curVal,0);
+      const fundGain=fundCurVal-fundCost;
+      const stcgLots=lots.filter(l=>!l.isLT);
+      const ltcgLots=lots.filter(l=>l.isLT);
+      fundLots[name]={name,fundType:isDebt?"Debt MF":"Equity MF",isDebt,ltcgThresholdDays,
+        lots,fundCost,fundCurVal,fundGain,
+        stcgCost:stcgLots.reduce((s,l)=>s+l.cost,0),
+        stcgGain:stcgLots.reduce((s,l)=>s+Math.max(0,l.gain),0),
+        stcgLoss:stcgLots.reduce((s,l)=>s+Math.abs(Math.min(0,l.gain)),0),
+        ltcgCost:ltcgLots.reduce((s,l)=>s+l.cost,0),
+        ltcgGain:ltcgLots.reduce((s,l)=>s+Math.max(0,l.gain),0),
+        ltcgLoss:ltcgLots.reduce((s,l)=>s+Math.abs(Math.min(0,l.gain)),0),
+        lotCount:lots.length,
+        totalUnits:lots.reduce((s,l)=>s+l.units,0)};
+      details.push({id:m.id,name:name,ticker:m.schemeCode,daysHeld:lots.length>0?Math.round(lots.reduce((s,l)=>s+l.daysHeld*l.units,0)/lots.reduce((s,l)=>s+l.units,1)):null,
+        isLT:fundGain>=0?ltcgLots.length>stcgLots.length:stcgLots.length>=ltcgLots.length,
+        cost:fundCost,curVal:fundCurVal,gain:fundGain,type:isDebt?"Debt MF":"MF",
+        buyDate:lots.length>0?lots[0].date:"",lots});
     });
-    return map;
-  },[shares,mf,mfTxns]);
 
-  /* Use the shared computeCapitalGains for proper cross-offset + debt MF */
-  const cg=React.useMemo(()=>computeCapitalGains(shares,mf),[shares,mf]);
+    const ltcgExempt=Math.min(125000,Math.max(0,ltcgGain));
+    const ltcgTaxable=Math.max(0,ltcgGain-ltcgExempt);
+    const netStcg=Math.max(0,stcgGain-stcgLoss);
+    const netLtcg=Math.max(0,ltcgTaxable-ltcgLoss);
+    const stcgRemLoss=Math.max(0,stcgLoss-stcgGain);
+    const ltcgRemLoss=Math.max(0,ltcgLoss-ltcgTaxable);
+    const crossStcg=Math.max(0,netStcg-ltcgRemLoss);
+    const crossLtcg=Math.max(0,netLtcg-stcgRemLoss);
+    const stcgTax=crossStcg*0.20;
+    const ltcgTax=crossLtcg*0.125;
+    return{stcgGain,stcgLoss,ltcgGain,ltcgLoss,ltcgExempt,ltcgTaxable,
+      stcgTax,ltcgTax,totalTax:stcgTax+ltcgTax,details,
+      fundLots:Object.values(fundLots).sort((a,b)=>Math.abs(b.fundGain)-Math.abs(a.fundGain))};
+  },[shares,mf,mfTxns,todayStr]);
 
-  /* Build enriched holdings from computeCapitalGains details */
-  const holdings=React.useMemo(()=>{
-    return cg.details.map(d=>{
-      const prefix=d.type==="Share"?"sh_":"mf_";
-      const autoDate=autoBuyDates[prefix+d.id]||"";
-      const isDebt=d.type==="Debt MF";
-      return{...d,autoDate,assetType:isDebt?"Debt MF":d.type==="Share"?"Equity":"Equity MF",
-        ltcgThreshold:isDebt?36:12,
-        buyDateSource:autoDate?(mfTxns.length>0?"auto-txn":"auto"):"missing"};
-    }).sort((a,b)=>a.daysHeld-b.daysHeld);
-  },[cg.details,autoBuyDates,mfTxns]);
+  const missingDates=lotData.details.filter(d=>d.type!=="Share"&&!d.buyDate).length;
+  const totalLots=lotData.fundLots.reduce((s,f)=>s+f.lotCount,0);
 
-  const missingDates=holdings.filter(h=>!h.autoDate).length;
-
-  const fmt=v=>{const a=Math.abs(v);if(a>=10000000)return(v<0?"-":"")+"₹"+(a/10000000).toFixed(2)+"Cr";if(a>=100000)return(v<0?"-":"")+"₹"+(a/100000).toFixed(1)+"L";if(a>=1000)return(v<0?"-":"")+"₹"+(a/1000).toFixed(1)+"K";return(v<0?"-":"")+"₹"+Math.round(a);};
+  const fmt=v=>{const a=Math.abs(v);if(a>=10000000)return(v<0?"-":"")+"\u20B9"+(a/10000000).toFixed(2)+"Cr";if(a>=100000)return(v<0?"-":"")+"\u20B9"+(a/100000).toFixed(1)+"L";if(a>=1000)return(v<0?"-":"")+"\u20B9"+(a/1000).toFixed(1)+"K";return(v<0?"-":"")+"\u20B9"+Math.round(a);};
+  const fmtD=v=>{if(!v)return"\u2014";const iso=parseDate(v);const p=iso.split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0].slice(2):v;};
 
   return React.createElement("div",{style:{paddingBottom:20}},
     React.createElement("div",{style:{marginBottom:16}},
       React.createElement("h3",{style:{fontFamily:"'Sora',sans-serif",fontSize:16,fontWeight:700,color:"var(--text)",marginBottom:3}},"Capital Gains Tax Estimator"),
-      React.createElement("p",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.6}},"Buy dates auto-fetched from MF transaction history and share records. Budget 2024 rates \u2014 STCG (20% u/s 111A) and LTCG (12.5% u/s 112A, ₹1.25L annual exemption). Cross-loss offset applied. Not tax advice.")
+      React.createElement("p",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.6}},"Lot-level FIFO calculation \u2014 each purchase lot is tracked individually. Budget 2024 rates: STCG \u226412mo (20%), LTCG >12mo (12.5%, \u20B91.25L exemption). Debt MF: 36mo threshold. Cross-offset applied. Not tax advice.")
     ),
     /* KPI strip */
     React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16}},
       ...[
-        {label:"STCG Gains",val:cg.stcgGain,sub:"Held ≤12mo \u00B7 Tax @ 20%",col:"#b45309"},
-        {label:"STCG Losses",val:cg.stcgLoss,sub:"Offset against gains",col:cg.stcgLoss>0?"#ef4444":"var(--text6)"},
-        {label:"LTCG Gains",val:cg.ltcgGain,sub:"Held >12mo \u00B7 ₹1.25L exempt",col:"#6d28d9"},
-        {label:"LTCG Losses",val:cg.ltcgLoss,sub:"Offset against gains",col:cg.ltcgLoss>0?"#ef4444":"var(--text6)"},
-        {label:"Estimated Tax",val:cg.totalTax,sub:"After cross-offset \u00B7 excl. cess",col:cg.totalTax>0?"#ef4444":"#16a34a"},
+        {label:"STCG Gains",val:lotData.stcgGain,sub:"Held \u226412mo \u00B7 Tax @ 20%",col:"#b45309"},
+        {label:"STCG Losses",val:lotData.stcgLoss,sub:"Offset against gains",col:lotData.stcgLoss>0?"#ef4444":"var(--text6)"},
+        {label:"LTCG Gains",val:lotData.ltcgGain,sub:"Held >12mo \u00B7 \u20B91.25L exempt",col:"#6d28d9"},
+        {label:"LTCG Losses",val:lotData.ltcgLoss,sub:"Offset against gains",col:lotData.ltcgLoss>0?"#ef4444":"var(--text6)"},
+        {label:"Estimated Tax",val:lotData.totalTax,sub:"After cross-offset \u00B7 excl. cess",col:lotData.totalTax>0?"#ef4444":"#16a34a"},
       ].map(k=>React.createElement("div",{key:k.label,style:{flex:"1 1 120px",background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 14px"}},
         React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:4}},k.label),
         React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:k.col}},fmt(k.val)),
@@ -38332,62 +38500,64 @@ const CapGainsTab=({shares=[],mf=[],mfTxns=[],isMobile})=>{
       ))
     ),
     /* LTCG exemption usage bar */
-    cg.ltcgGain>0&&React.createElement("div",{style:{marginBottom:14,padding:"10px 14px",borderRadius:10,background:"var(--card)",border:"1px solid var(--border)"}},
+    lotData.ltcgGain>0&&React.createElement("div",{style:{marginBottom:14,padding:"10px 14px",borderRadius:10,background:"var(--card)",border:"1px solid var(--border)"}},
       React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:6}},
-        React.createElement("span",{style:{color:"var(--text4)",fontWeight:600}},"₹1.25L LTCG Annual Exemption Used"),
-        React.createElement("span",{style:{color:cg.ltcgGain>=cg.ltcgExempt?"#ef4444":"#16a34a",fontWeight:700}},fmt(Math.min(cg.ltcgGain,125000))+" / ₹1.25L ("+Math.min(100,Math.round(cg.ltcgGain/125000*100))+"%)")
+        React.createElement("span",{style:{color:"var(--text4)",fontWeight:600}},"\u20B91.25L LTCG Annual Exemption Used"),
+        React.createElement("span",{style:{color:lotData.ltcgGain>=lotData.ltcgExempt?"#ef4444":"#16a34a",fontWeight:700}},fmt(Math.min(lotData.ltcgGain,125000))+" / \u20B91.25L ("+Math.min(100,Math.round(lotData.ltcgGain/125000*100))+"%)")
       ),
       React.createElement("div",{style:{background:"var(--bg5)",borderRadius:4,height:7,overflow:"hidden"}},
-        React.createElement("div",{style:{width:Math.min(100,cg.ltcgGain/125000*100)+"%",height:"100%",background:cg.ltcgGain>=125000?"#ef4444":"#16a34a",borderRadius:4,transition:"width .5s"}})
+        React.createElement("div",{style:{width:Math.min(100,lotData.ltcgGain/125000*100)+"%",height:"100%",background:lotData.ltcgGain>=125000?"#ef4444":"#16a34a",borderRadius:4,transition:"width .5s"}})
       ),
-      cg.ltcgGain>=125000&&React.createElement("div",{style:{fontSize:10,color:"#ef4444",marginTop:4,fontWeight:600}},"⚠ Exemption fully used \u2014 remaining LTCG taxable at 12.5%.")
+      lotData.ltcgGain>=125000&&React.createElement("div",{style:{fontSize:10,color:"#ef4444",marginTop:4,fontWeight:600}},"\u26A0 Exemption fully used \u2014 remaining LTCG taxable at 12.5%.")
     ),
     /* Cross-offset info */
-    (cg.stcgLoss>0||cg.ltcgLoss>0)&&React.createElement("div",{style:{marginBottom:14,padding:"9px 12px",borderRadius:9,background:"rgba(14,116,144,.06)",border:"1px solid rgba(14,116,144,.2)",fontSize:12,color:"var(--text3)",lineHeight:1.6}},
+    (lotData.stcgLoss>0||lotData.ltcgLoss>0)&&React.createElement("div",{style:{marginBottom:14,padding:"9px 12px",borderRadius:9,background:"rgba(14,116,144,.06)",border:"1px solid rgba(14,116,144,.2)",fontSize:12,color:"var(--text3)",lineHeight:1.6}},
       React.createElement("strong",null,"Cross-Offset Applied: "),
-      cg.stcgLoss>0&&"STCG losses of "+fmt(cg.stcgLoss)+" offset against LTCG gains. ",
-      cg.ltcgLoss>0&&"LTCG losses of "+fmt(cg.ltcgLoss)+" offset against STCG gains. ",
-      "Net taxable after cross-offset: STCG "+fmt(Math.max(0,cg.stcgGain-cg.stcgLoss-cg.ltcgLoss))+" + LTCG "+fmt(Math.max(0,cg.ltcgGain-cg.ltcgExempt-cg.stcgLoss))+""
+      lotData.stcgLoss>0&&"STCG losses of "+fmt(lotData.stcgLoss)+" offset against LTCG gains. ",
+      lotData.ltcgLoss>0&&"LTCG losses of "+fmt(lotData.ltcgLoss)+" offset against STCG gains."
     ),
-    missingDates>0&&React.createElement("div",{style:{padding:"9px 12px",borderRadius:9,background:"rgba(180,83,9,.08)",border:"1px solid rgba(180,83,9,.25)",fontSize:12,color:"#b45309",marginBottom:14}},
-      "⚠ "+missingDates+" holding"+(missingDates===1?"":"s")+" missing a buy date \u2014 add a buy date or import MF transactions for auto-detection."
+    /* Summary line */
+    React.createElement("div",{style:{marginBottom:14,padding:"8px 14px",borderRadius:9,background:"var(--card)",border:"1px solid var(--border)",fontSize:11,color:"var(--text4)",display:"flex",gap:16,flexWrap:"wrap"}},
+      React.createElement("span",null,React.createElement("strong",null,totalLots)," total lots across "),
+      React.createElement("span",null,React.createElement("strong",null,lotData.fundLots.length)," funds + "),
+      React.createElement("span",null,React.createElement("strong",null,lotData.details.filter(d=>d.type==="Share").length)," shares"),
+      missingDates>0&&React.createElement("span",{style:{color:"#b45309"}},"\u00B7 "+missingDates+" fund"+(missingDates===1?"":"s")+" missing buy dates")
     ),
-    /* Holdings table */
-    React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,overflowX:"auto",overflowY:"hidden",WebkitOverflowScrolling:"touch"}},
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"minmax(100px,1fr) 65px 60px 65px 55px":"minmax(140px,1fr) minmax(85px,100px) 70px 80px 80px minmax(70px,90px) minmax(75px,90px)",padding:"7px 12px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},
-        React.createElement("span",{style:{whiteSpace:"nowrap"}},"Holding"),
-        React.createElement("span",{style:{whiteSpace:"nowrap"}},"Buy Date"),
-        React.createElement("span",{style:{whiteSpace:"nowrap"}},"Held"),
-        React.createElement("span",{style:{whiteSpace:"nowrap"}},"Cost"),
-        React.createElement("span",{style:{whiteSpace:"nowrap"}},"Current"),
-        React.createElement("span",{style:{whiteSpace:"nowrap"}},"Gain/Loss"),
-        React.createElement("span",{style:{whiteSpace:"nowrap"}},"Type")
-      ),
-      holdings.length===0&&React.createElement("div",{style:{padding:"30px",textAlign:"center",color:"var(--text5)",fontSize:13}},"No holdings with gains or losses found. Add shares or mutual funds in the Investments section."),
-      holdings.map((h,i)=>React.createElement("div",{key:h.id+i,style:{display:"grid",gridTemplateColumns:isMobile?"minmax(100px,1fr) 65px 60px 65px 55px":"minmax(140px,1fr) minmax(85px,100px) 70px 80px 80px minmax(70px,90px) minmax(75px,90px)",padding:"9px 12px",borderBottom:i<holdings.length-1?"1px solid var(--border2)":"none",alignItems:"center",background:i%2?"var(--bg5)":"transparent"}},
-        React.createElement("div",{style:{minWidth:0}},
-          React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},h.name),
-          React.createElement("div",{style:{fontSize:10,color:h.assetType==="Debt MF"?"#b45309":h.assetType==="Equity MF"?"#6d28d9":"var(--text5)"}},h.assetType)
+    /* Fund cards */
+    React.createElement("div",{style:{marginBottom:16}},
+      lotData.fundLots.map(f=>React.createElement(CapGainsFundCard,{key:f.name,f,fmt,fmtD}))
+    ),
+    /* Shares table (if any) */
+    lotData.details.filter(d=>d.type==="Share").length>0&&React.createElement("div",null,
+      React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text3)",marginBottom:8}},"Equity Shares"),
+      React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,overflowX:"auto",overflowY:"hidden",WebkitOverflowScrolling:"touch"}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"minmax(100px,1fr) 65px 60px 65px 55px":"minmax(140px,1fr) minmax(85px,100px) 70px 80px 80px minmax(70px,90px)",padding:"7px 12px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},
+          React.createElement("span",{style:{whiteSpace:"nowrap"}},"Holding"),
+          React.createElement("span",{style:{whiteSpace:"nowrap"}},"Buy Date"),
+          React.createElement("span",{style:{whiteSpace:"nowrap"}},"Held"),
+          React.createElement("span",{style:{whiteSpace:"nowrap"}},"Cost"),
+          React.createElement("span",{style:{whiteSpace:"nowrap"}},"Current"),
+          React.createElement("span",{style:{whiteSpace:"nowrap"}},"Gain/Loss"),
+          React.createElement("span",{style:{whiteSpace:"nowrap"}},"Type")
         ),
-        React.createElement("div",{style:{fontSize:10,color:h.autoDate?"var(--text3)":"var(--text6)",fontStyle:h.autoDate?"normal":"italic"}},
-          h.autoDate||"No date"
-        ),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text4)",textAlign:"right"}},
-          h.daysHeld!=null?h.daysHeld+"d":"—"
-        ),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text4)",textAlign:"right",fontFamily:"'Sora',sans-serif"}},fmt(h.cost)),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text3)",textAlign:"right",fontFamily:"'Sora',sans-serif",fontWeight:600}},fmt(h.curVal)),
-        React.createElement("div",{style:{fontSize:11,fontWeight:700,fontFamily:"'Sora',sans-serif",color:h.gain>=0?"#16a34a":"#ef4444",textAlign:"right"}},fmt(h.gain)),
-        React.createElement("div",null,
+        lotData.details.filter(d=>d.type==="Share").map((h,i)=>React.createElement("div",{key:h.id,style:{display:"grid",gridTemplateColumns:isMobile?"minmax(100px,1fr) 65px 60px 65px 55px":"minmax(140px,1fr) minmax(85px,100px) 70px 80px 80px minmax(70px,90px)",padding:"9px 12px",borderBottom:i<lotData.details.filter(d=>d.type==="Share").length-1?"1px solid var(--border2)":"none",alignItems:"center",background:i%2?"var(--bg5)":"transparent"}},
+          React.createElement("div",{style:{minWidth:0}},
+            React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},h.name),
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},h.ticker||"Equity")
+          ),
+          React.createElement("div",{style:{fontSize:10,color:"var(--text3)"}},fmtD(h.buyDate)),
+          React.createElement("div",{style:{fontSize:10,color:"var(--text4)",textAlign:"right"}},h.daysHeld!=null?h.daysHeld+"d":"—"),
+          React.createElement("div",{style:{fontSize:10,color:"var(--text4)",textAlign:"right",fontFamily:"'Sora',sans-serif"}},fmt(h.cost)),
+          React.createElement("div",{style:{fontSize:10,color:"var(--text3)",textAlign:"right",fontFamily:"'Sora',sans-serif",fontWeight:600}},fmt(h.curVal)),
+          React.createElement("div",{style:{fontSize:11,fontWeight:700,fontFamily:"'Sora',sans-serif",color:h.gain>=0?"#16a34a":"#ef4444",textAlign:"right"}},fmt(h.gain)),
           React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:10,
-            background:h.isLT?"rgba(109,40,217,.12)":h.daysHeld!=null?"rgba(180,83,9,.12)":"rgba(100,100,100,.1)",
-            color:h.isLT?"#6d28d9":h.daysHeld!=null?"#b45309":"var(--text6)"}},h.daysHeld==null?"?":h.isLT?"LTCG":"STCG"),
-          (h.ltcgThreshold===36)&&React.createElement("div",{style:{fontSize:8,color:"var(--text6)",marginTop:2}},"36mo debt")
-        )
-      ))
+            background:h.isLT?"rgba(109,40,217,.12)":"rgba(180,83,9,.12)",
+            color:h.isLT?"#6d28d9":"#b45309"}},h.isLT?"LTCG":"STCG")
+        ))
+      )
     ),
     React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:10,lineHeight:1.7}},
-      "Buy dates auto-detected from MF transaction history (earliest buy) and share records. Debt MF LTCG uses 36-month threshold. Cross-offset: losses in one class offset gains in the other. Surcharge and 4% cess not included."
+      "FIFO lot tracking: each purchase is a separate lot. Sells consume earliest lots first. Remaining held lots are classified individually as STCG or LTCG. Debt MF uses 36-month threshold. Surcharge and 4% cess not included."
     )
   );
 };
