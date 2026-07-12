@@ -888,7 +888,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="6.7.2";
+const APP_VERSION="6.7.3";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -31889,6 +31889,119 @@ const RptCategoryTrends=({data,from,to,onExportPDF})=>{
   );
 };
 
+/* ══ CATEGORY DEEP-DIVE DRILL-DOWN ═══════════════════════════════════════ */
+const RptCategoryDrillDown=({data,from,to})=>{
+  const[selCat,setSelCat]=useState("");
+  const allTx=collectTx(data,from,to,"all",true);
+  const catNames=[...new Set(allTx.map(t=>catMainName(t.cat||"Others")))].sort();
+  const selected=selCat||catNames[0]||"";
+  const catTx=allTx.filter(t=>catMainName(t.cat||"Others")===selected);
+  const catClass=catClassType(data.categories,selected);
+  const isDebit=catClass!=="Income"&&catClass!=="Transfer";
+  const monthly={};const subCats={};const payees={};
+  catTx.forEach(t=>{
+    const k=t.date.substr(0,7);
+    if(!monthly[k])monthly[k]={inc:0,exp:0};
+    const ct=catClassType(data.categories,t.cat||"Others");
+    if(ct==="Income")monthly[k].inc+=t.amount;else monthly[k].exp+=t.amount;
+    if(t.cat&&t.cat.includes("::")){const s=t.cat.split("::")[1];subCats[s]=(subCats[s]||0)+t.amount;}
+    if(t.payee)payees[t.payee]=(payees[t.payee]||0)+t.amount;
+  });
+  const months=Object.keys(monthly).sort();
+  const maxAmt=Math.max(...months.map(m=>isDebit?monthly[m].exp:monthly[m].inc),1);
+  const totalTx=catTx.length;
+  const totalAmt=catTx.reduce((s,t)=>s+t.amount,0);
+  const avgTx=totalTx>0?(totalAmt/totalTx):0;
+  const topPayees=Object.entries(payees).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const subList=Object.entries(subCats).sort((a,b)=>b[1]-a[1]);
+  const anomalies=catTx.filter(t=>{
+    const subAvg=catTx.filter(x=>x.cat===t.cat).reduce((s,x)=>s+x.amount,0)/Math.max(catTx.filter(x=>x.cat===t.cat).length,1);
+    return t.amount>subAvg*2&&t.amount>500;
+  }).slice(0,5);
+  return React.createElement("div",{style:{paddingBottom:20}},
+    React.createElement("div",{style:{marginBottom:14,display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}},
+      React.createElement("span",{style:{fontSize:12,color:"var(--text5)",fontWeight:600}},"Select Category:"),
+      React.createElement("select",{value:selected,onChange:e=>setSelCat(e.target.value),style:{padding:"6px 10px",borderRadius:8,border:"1px solid var(--border)",background:"var(--card)",color:"var(--text)",fontSize:12,minWidth:200,cursor:"pointer"}},
+        catNames.map(c=>React.createElement("option",{key:c,value:c},c))
+      )
+    ),
+    !selected?React.createElement("p",{style:{color:"var(--text5)",fontSize:13}},"Select a category to drill down.")
+    :React.createElement(React.Fragment,null,
+      React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+        React.createElement(KpiCard,{label:"Total Transactions",value:totalTx.toLocaleString(),sub:totalTx+" txns in period",col:"var(--accent)",icon:React.createElement(Icon,{n:"list",size:18})}),
+        React.createElement(KpiCard,{label:"Total Amount",value:INR(Math.round(totalAmt)),sub:isDebit?"Total spend":"Total income",col:isDebit?"#ef4444":"#16a34a",icon:React.createElement(Icon,{n:isDebit?"expense":"income",size:18})}),
+        React.createElement(KpiCard,{label:"Avg/Transaction",value:INR(Math.round(avgTx)),sub:"Mean transaction amount",col:"#0e7490",icon:React.createElement(Icon,{n:"target",size:18})})
+      ),
+      React.createElement(Card2,{sx:{marginBottom:16}},
+        React.createElement(SHead,{t:"Monthly Trend — "+selected,s:months.length+" months of data in selected range"}),
+        React.createElement("div",{style:{display:"flex",gap:4,alignItems:"flex-end",height:110,marginBottom:6}},
+          months.map((m,i)=>{
+            const amt=isDebit?monthly[m].exp:monthly[m].inc;
+            const h=amt>0?Math.max(3,Math.round(amt/maxAmt*100)):2;
+            return React.createElement("div",{key:m,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+              React.createElement("div",{style:{fontSize:8,color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},amt>0?INR(amt):""),
+              React.createElement("div",{style:{width:"100%",height:h,borderRadius:"2px 2px 0 0",background:isDebit?"#ef4444":"#16a34a",opacity:.6+i*.06}})
+            );
+          })
+        ),
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:9,color:"var(--text6)"}},
+          React.createElement("span",null,months[0]),React.createElement("span",null,months[months.length-1])
+        )
+      ),
+      subList.length>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+        React.createElement(SHead,{t:"Sub-Category Breakdown",s:"How spending splits across sub-categories"}),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+          subList.map(([sub,amt])=>{
+            const pct=totalAmt>0?(amt/totalAmt*100):0;
+            return React.createElement("div",{key:sub},
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:2}},
+                React.createElement("span",{style:{color:"var(--text3)"}},sub),
+                React.createElement("span",{style:{fontWeight:600}},INR(Math.round(amt))+" ("+pct.toFixed(0)+"%)")
+              ),
+              React.createElement("div",{style:{height:6,background:"var(--bg5)",borderRadius:3,overflow:"hidden"}},
+                React.createElement("div",{style:{height:"100%",width:pct+"%",background:"var(--accent)",borderRadius:3}})
+              )
+            );
+          })
+        )
+      ),
+      topPayees.length>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+        React.createElement(SHead,{t:"Top Payees",s:"Merchants/payees where this category money goes"}),
+        React.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:12}},
+          React.createElement("thead",null,React.createElement("tr",null,
+            ["#","Payee","Amount","%"].map(h=>React.createElement("th",{key:h,style:{textAlign:h==="#"?"left":"right",padding:"6px 8px",color:"var(--text5)",fontWeight:600,borderBottom:"1px solid var(--border)"}},h))
+          )),
+          React.createElement("tbody",null,
+            topPayees.map(([name,amt],i)=>{
+              const pct=totalAmt>0?(amt/totalAmt*100):0;
+              return React.createElement("tr",{key:i,style:{background:i%2===0?"transparent":"var(--bg4)"}},
+                React.createElement("td",{style:{padding:"6px 8px",color:"var(--text5)"}},i+1),
+                React.createElement("td",{style:{padding:"6px 8px",fontWeight:600,color:"var(--text3)"}},name),
+                React.createElement("td",{style:{textAlign:"right",padding:"6px 8px",fontWeight:600}},INR(Math.round(amt))),
+                React.createElement("td",{style:{textAlign:"right",padding:"6px 8px",color:"var(--text5)"}},pct.toFixed(1)+"%")
+              );
+            })
+          )
+        )
+      ),
+      anomalies.length>0&&React.createElement(Card2,null,
+        React.createElement(SHead,{t:"Potential Anomalies",s:"Transactions significantly above average in this category"}),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+          anomalies.map((t,i)=>
+            React.createElement("div",{key:i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<anomalies.length-1?"1px solid var(--border)":"none"}},
+              React.createElement("div",null,
+                React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text3)"}},t.payee||t.desc||"(no desc)"),
+                React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},t.date+(t.cat&&t.cat.includes("::")?" · "+t.cat.split("::")[1]:""))
+              ),
+              React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"#ef4444"}},INR(Math.round(t.amount)))
+            )
+          )
+        )
+      )
+    )
+  );
+};
+
 const REPORT_TREE=[
   {id:"cashflow",      label:"Cash Flow",                icon:React.createElement(Icon,{n:"classIncome",size:16})},
   {id:"classification",label:"Classification Breakdown", icon:React.createElement(Icon,{n:"tag",size:18})},
@@ -31913,6 +32026,7 @@ const REPORT_TREE=[
   {id:"anomalies",     label:"Spending Anomalies",         icon:React.createElement(Icon,{n:"detective",size:18})},
   {id:"yoy",           label:"Year-over-Year",             icon:React.createElement(Icon,{n:"compare",size:18})},
   {id:"cattrends",     label:"Category Trends",            icon:React.createElement(Icon,{n:"trenddown",size:18})},
+  {id:"catdrilldown",  label:"Category Deep-Dive",         icon:React.createElement(Icon,{n:"search",size:18})},
 ];
 
 const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
@@ -32028,6 +32142,7 @@ const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
       case"anomalies":       return React.createElement(RptSpendingAnomalies,props);
       case"yoy":             return React.createElement(RptYoYComparison,props);
       case"cattrends":       return React.createElement(RptCategoryTrends,props);
+      case"catdrilldown":    return React.createElement(RptCategoryDrillDown,props);
       default:               return React.createElement(RptCashFlow,props);
     }
   };
@@ -35721,13 +35836,15 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     return {top,totalThisMonth,top3Pct,firstTime:firstTime.slice(0,10),lostPayees,returnedPayees,momComparison,recurring};
   },[allTxns,thisStart,thisEnd,lastStart,lastEnd]);
 
+  /* ── EXPENSE CLASSIFICATION GROUPS ── */
+  const FIXED=["Homeneeds","Insurance Premiums","Utilities and Bills","Subscriptions"];
+  const VARIABLE=["Groceries Food & Essentials","Automobile"];
+  const DISC=["Personal Items","Leisure","Travel","Vacation","Beauty and Personal Care","Events and Functions","Donations","Jewellery and Precious Metals","Office & Business Expenses"];
+
   /* ── BUDGET WATERFALL ── */
   const waterfallData=React.useMemo(()=>{
     const income=allTxns.filter(t=>t.type==="credit"&&t.date>=thisStart&&t.date<=thisEnd).reduce((s,t)=>s+t.amount,0);
     const debits=allTxns.filter(t=>t.type==="debit"&&t.date>=thisStart&&t.date<=thisEnd);
-    const FIXED=["Homeneeds","Insurance Premiums","Utilities and Bills","Subscriptions"];
-    const VARIABLE=["Groceries Food & Essentials","Automobile"];
-    const DISC=["Personal Items","Leisure","Travel","Vacation","Beauty and Personal Care","Events and Functions","Donations","Jewellery and Precious Metals","Office & Business Expenses"];
     const fixed=debits.filter(t=>FIXED.some(c=>(catMainName(t.cat||"")).toLowerCase()===c.toLowerCase())).reduce((s,t)=>s+t.amount,0);
     const variable=debits.filter(t=>VARIABLE.some(c=>(catMainName(t.cat||"")).toLowerCase()===c.toLowerCase())).reduce((s,t)=>s+t.amount,0);
     const disc=debits.filter(t=>DISC.some(c=>(catMainName(t.cat||"")).toLowerCase()===c.toLowerCase())).reduce((s,t)=>s+t.amount,0);
@@ -37256,6 +37373,430 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       )
   );
 
+  /* ══ COMMITMENTS FLOOR DATA ══ */
+  const COMMIT_CATS=["Utilities and Bills","Insurance Premiums","Subscriptions"];
+  const commitmentsData=React.useMemo(()=>{
+    const months=[];
+    for(let i=5;i>=0;i--){
+      const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
+      const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
+      const byCat={};let total=0;
+      allTxns.filter(t=>t.type==="debit"&&t.date>=mS&&t.date<=mE).forEach(t=>{
+        const main=catMainName(t.cat||"");
+        if(COMMIT_CATS.includes(main)){byCat[main]=(byCat[main]||0)+t.amount;total+=t.amount;}
+        if(t.cat==="Utilities and Bills::Housing & Rent"){byCat["Rent"]=(byCat["Rent"]||0)+t.amount;total+=t.amount;}
+      });
+      months.push({mS,mE,name:MONTH_NAMES[(now.getMonth()-i+12)%12],byCat,total});
+    }
+    const income=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Income"&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+t.amount,0);
+    const cur=months[5],prev=months[4];
+    const floorPct=income>0?(cur.total/income*100):0;
+    const growth=prev.total>0?((cur.total-prev.total)/prev.total*100):0;
+    const avg6=months.reduce((s,m)=>s+m.total,0)/6;
+    const breakdown=Object.entries(cur.byCat).sort((a,b)=>b[1]-a[1]);
+    return {months,cur,prev,income,floorPct,growth,avg6,breakdown};
+  },[allTxns,categories,thisStart,thisEnd,now]);
+
+  const CommitmentsTab=React.createElement("div",{style:{paddingBottom:20}},
+    commitmentsData.income===0
+      ?React.createElement(Empty,{icon:React.createElement(Icon,{n:"lock",size:18}),text:"No income data this month. Add income transactions to see your commitments floor."})
+      :React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+            React.createElement(KpiCard,{label:"This Month Floor",value:INR(Math.round(commitmentsData.cur.total)),sub:commitmentsData.floorPct.toFixed(1)+"% of income",col:"var(--accent)",icon:React.createElement(Icon,{n:"lock",size:18})}),
+            React.createElement(KpiCard,{label:"6-Month Average",value:INR(Math.round(commitmentsData.avg6)),sub:"avg monthly commitments",col:"#0e7490",icon:React.createElement(Icon,{n:"chart",size:18})}),
+            React.createElement(KpiCard,{label:"Month-on-Month",value:(commitmentsData.growth>=0?"+":"")+commitmentsData.growth.toFixed(1)+"%",sub:commitmentsData.growth>0?"Rising commitments":"Falling commitments",col:commitmentsData.growth>5?"#ef4444":commitmentsData.growth>0?"#f97316":"#16a34a",icon:React.createElement(Icon,{n:commitmentsData.growth>0?"trendup":"trenddown",size:18})})
+          ),
+          React.createElement(Card2,{sx:{marginBottom:16}},
+            React.createElement(SHead,{t:"Commitment Breakdown (This Month)",s:"Fixed expenses you can't avoid — rent, insurance, utilities, subscriptions"}),
+            React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
+              commitmentsData.breakdown.map(([cat,amt])=>{
+                const pct=commitmentsData.cur.total>0?(amt/commitmentsData.cur.total*100):0;
+                const col=cat==="Rent"?"#ef4444":cat==="Insurance Premiums"?"#8b5cf6":cat==="Utilities and Bills"?"#0e7490":"#f59e0b";
+                return React.createElement("div",{key:cat},
+                  React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:3}},
+                    React.createElement("span",{style:{fontWeight:600,color:"var(--text3)"}},cat),
+                    React.createElement("span",{style:{fontWeight:700,color:col}},INR(Math.round(amt))+" ("+pct.toFixed(0)+"%)")
+                  ),
+                  React.createElement("div",{style:{height:8,background:"var(--bg5)",borderRadius:4,overflow:"hidden"}},
+                    React.createElement("div",{style:{height:"100%",width:pct+"%",background:col,borderRadius:4,transition:"width .6s"}})
+                  )
+                );
+              })
+            )
+          ),
+          React.createElement(Card2,{sx:{marginBottom:16}},
+            React.createElement(SHead,{t:"Monthly Floor Trend (6 Months)",s:"Is your mandatory spend growing?"}),
+            React.createElement("div",{style:{display:"flex",gap:6,alignItems:"flex-end",height:120}},
+              commitmentsData.months.map((m,i)=>{
+                const maxAmt=Math.max(...commitmentsData.months.map(x=>x.total),1);
+                const h=Math.max(4,Math.round(m.total/maxAmt*110));
+                const isCur=i===5;
+                return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+                  React.createElement("div",{style:{fontSize:9,color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},INR(Math.round(m.total))),
+                  React.createElement("div",{style:{width:"100%",height:h,borderRadius:"3px 3px 0 0",background:isCur?"var(--accent)":"var(--accent)",opacity:isCur?1:.5}})
+                );
+              })
+            ),
+            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",marginTop:6}},
+              React.createElement("span",null,commitmentsData.months[0].name),
+              React.createElement("span",null,commitmentsData.months[5].name)
+            )
+          ),
+          React.createElement(Card2,null,
+            React.createElement(SHead,{t:"Insight",s:"What this means"}),
+            React.createElement("p",{style:{fontSize:13,color:"var(--text4)",lineHeight:1.6}},
+              "Your monthly commitments floor is ",React.createElement("strong",{style:{color:"var(--accent)"}},INR(Math.round(commitmentsData.cur.total)))," which is ",React.createElement("strong",null,commitmentsData.floorPct.toFixed(1)+"%")," of this month's income.",
+              commitmentsData.growth>5?" ⚠️ Commitments grew "+commitmentsData.growth.toFixed(1)+"% last month — review if any can be reduced.":
+              commitmentsData.growth<-5?" ✅ Commitments dropped "+Math.abs(commitmentsData.growth).toFixed(1)+"% — nice reduction.":
+              " This is within normal range."
+            )
+          )
+        )
+  );
+
+  /* ══ HEALTHCARE INTELLIGENCE DATA ══ */
+  const healthIntelData=React.useMemo(()=>{
+    const PREVENTIVE=["Vaccination","Lab Test & Diagnostics","Eyecare","Fitness Equipments and Accessories","Nutraceuticals And Suppliments"];
+    const REACTIVE=["Prescriptions and Drugs","Surgeries and Procedures","Treatments","Doctor Consultation Fees","Prescriptions and Medicines","Dental"];
+    const CHILDREN=["Children Doctor Consultation Fees","Children Prescriptions and Medicines"];
+    const monthly=[];let totalAll=0;let preventiveTotal=0;let reactiveTotal=0;let childrenTotal=0;
+    const subTotals={};
+    const byPayee={};
+    const episodes=[];
+    for(let i=5;i>=0;i--){
+      const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
+      const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
+      let mTotal=0;const mSubs={};
+      allTxns.filter(t=>t.type==="debit"&&catMainName(t.cat||"")==="Healthcare"&&t.date>=mS&&t.date<=mE).forEach(t=>{
+        mTotal+=t.amount;totalAll+=t.amount;
+        const sub=t.cat&&t.cat.includes("::")?t.cat.split("::")[1]:"Uncategorised";
+        mSubs[sub]=(mSubs[sub]||0)+t.amount;
+        subTotals[sub]=(subTotals[sub]||0)+t.amount;
+        if(PREVENTIVE.includes(sub))preventiveTotal+=t.amount;
+        if(REACTIVE.includes(sub)||CHILDREN.includes(sub))reactiveTotal+=t.amount;
+        if(CHILDREN.includes(sub))childrenTotal+=t.amount;
+        if(t.payee){byPayee[t.payee]=(byPayee[t.payee]||0)+t.amount;}
+        if(sub==="Surgeries and Procedures"||sub==="Treatments")episodes.push({date:t.date,sub,amount:t.amount,payee:t.payee||"",desc:t.desc||""});
+      });
+      monthly.push({name:MONTH_NAMES[(now.getMonth()-i+12)%12],total:mTotal,subs:mSubs});
+    }
+    const topPayees=Object.entries(byPayee).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const maxMonth=Math.max(...monthly.map(m=>m.total),1);
+    return {monthly,totalAll,preventiveTotal,reactiveTotal,childrenTotal,subTotals,topPayees,episodes,maxMonth};
+  },[allTxns,now]);
+
+  const HealthIntelTab=React.createElement("div",{style:{paddingBottom:20}},
+    healthIntelData.totalAll===0
+      ?React.createElement(Empty,{icon:React.createElement(Icon,{n:"health",size:18}),text:"No healthcare transactions found. Tag expenses with the Healthcare category to see insights."})
+      :React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+            React.createElement(KpiCard,{label:"Total Healthcare (6mo)",value:INR(Math.round(healthIntelData.totalAll)),sub:"Last 6 months",col:"#ef4444",icon:React.createElement(Icon,{n:"health",size:18})}),
+            React.createElement(KpiCard,{label:"Preventive Care",value:INR(Math.round(healthIntelData.preventiveTotal)),sub:(healthIntelData.totalAll>0?(healthIntelData.preventiveTotal/healthIntelData.totalAll*100).toFixed(0):0)+"% of total",col:"#16a34a",icon:React.createElement(Icon,{n:"shield",size:18})}),
+            React.createElement(KpiCard,{label:"Reactive Care",value:INR(Math.round(healthIntelData.reactiveTotal)),sub:(healthIntelData.totalAll>0?(healthIntelData.reactiveTotal/healthIntelData.totalAll*100).toFixed(0):0)+"% of total",col:"#f97316",icon:React.createElement(Icon,{n:"warning",size:18})})
+          ),
+          React.createElement(Card2,{sx:{marginBottom:16}},
+            React.createElement(SHead,{t:"Preventive vs Reactive Split",s:"Investing in preventive care reduces costly reactive expenses over time"}),
+            React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12}},
+              React.createElement("div",{style:{flex:healthIntelData.preventiveTotal,maxHeight:24,minWidth:40,background:"#16a34a",borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff"}},
+                healthIntelData.totalAll>0?((healthIntelData.preventiveTotal/healthIntelData.totalAll*100).toFixed(0)+"%"):""),
+              React.createElement("div",{style:{flex:healthIntelData.reactiveTotal,maxHeight:24,minWidth:40,background:"#f97316",borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff"}},
+                healthIntelData.totalAll>0?((healthIntelData.reactiveTotal/healthIntelData.totalAll*100).toFixed(0)+"%"):"")
+            ),
+            React.createElement("div",{style:{display:"flex",gap:16,fontSize:11,color:"var(--text5)"}},
+              React.createElement("span",null,"🟢 Preventive: Vaccinations, Lab Tests, Eyecare, Fitness, Supplements"),
+              React.createElement("span",null,"🟠 Reactive: Prescriptions, Surgeries, Treatments, Consultations")
+            )
+          ),
+          React.createElement(Card2,{sx:{marginBottom:16}},
+            React.createElement(SHead,{t:"Monthly Trend",s:"Healthcare spending over the last 6 months"}),
+            React.createElement("div",{style:{display:"flex",gap:6,alignItems:"flex-end",height:100}},
+              healthIntelData.monthly.map((m,i)=>{
+                const h=m.total>0?Math.max(4,Math.round(m.total/healthIntelData.maxMonth*90)):2;
+                return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+                  React.createElement("div",{style:{fontSize:9,color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},m.total>0?INR(m.total):""),
+                  React.createElement("div",{style:{width:"100%",height:h,borderRadius:"3px 3px 0 0",background:i===5?"#ef4444":"#ef4444",opacity:i===5?1:.5}})
+                );
+              })
+            ),
+            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",marginTop:6}},
+              React.createElement("span",null,healthIntelData.monthly[0].name),React.createElement("span",null,healthIntelData.monthly[5].name)
+            )
+          ),
+          healthIntelData.childrenTotal>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+            React.createElement(SHead,{t:"Children's Healthcare",s:"Doctor consultations and medicines for children"}),
+            React.createElement(KpiCard,{label:"Children's Healthcare (6mo)",value:INR(Math.round(healthIntelData.childrenTotal)),sub:(healthIntelData.totalAll>0?(healthIntelData.childrenTotal/healthIntelData.totalAll*100).toFixed(0):0)+"% of total healthcare",col:"#8b5cf6",icon:React.createElement(Icon,{n:"user",size:18})})
+          ),
+          Object.keys(healthIntelData.subTotals).length>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+            React.createElement(SHead,{t:"Sub-Category Breakdown",s:"Where healthcare money goes"}),
+            React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+              Object.entries(healthIntelData.subTotals).sort((a,b)=>b[1]-a[1]).map(([sub,amt])=>{
+                const pct=healthIntelData.totalAll>0?(amt/healthIntelData.totalAll*100):0;
+                return React.createElement("div",{key:sub},
+                  React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:2}},
+                    React.createElement("span",{style:{color:"var(--text3)"}},sub),React.createElement("span",{style:{fontWeight:600}},INR(Math.round(amt))+" ("+pct.toFixed(0)+"%)")
+                  ),
+                  React.createElement("div",{style:{height:6,background:"var(--bg5)",borderRadius:3,overflow:"hidden"}},
+                    React.createElement("div",{style:{height:"100%",width:pct+"%",background:"var(--accent)",borderRadius:3}})
+                  )
+                );
+              })
+            )
+          ),
+          healthIntelData.topPayees.length>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+            React.createElement(SHead,{t:"Top Healthcare Providers",s:"Where you spend the most on healthcare"}),
+            React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+              healthIntelData.topPayees.map(([name,amt],i)=>
+                React.createElement("div",{key:i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<healthIntelData.topPayees.length-1?"1px solid var(--border)":"none"}},
+                  React.createElement("span",{style:{fontSize:13,color:"var(--text3)"}},name),
+                  React.createElement("span",{style:{fontSize:13,fontWeight:700}},INR(Math.round(amt)))
+                )
+              )
+            )
+          )
+        )
+  );
+
+  /* ══ INSURANCE PORTFOLIO DATA ══ */
+  const insuranceData=React.useMemo(()=>{
+    const monthly=[];let totalAll=0;const subTotals={};const byPayee={};
+    for(let i=5;i>=0;i--){
+      const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
+      const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
+      let mTotal=0;
+      allTxns.filter(t=>t.type==="debit"&&catMainName(t.cat||"")==="Insurance Premiums"&&t.date>=mS&&t.date<=mE).forEach(t=>{
+        mTotal+=t.amount;totalAll+=t.amount;
+        const sub=t.cat&&t.cat.includes("::")?t.cat.split("::")[1]:"Other";
+        subTotals[sub]=(subTotals[sub]||0)+t.amount;
+        if(t.payee)byPayee[t.payee]=(byPayee[t.payee]||0)+t.amount;
+      });
+      monthly.push({name:MONTH_NAMES[(now.getMonth()-i+12)%12],total:mTotal});
+    }
+    const annualized=monthly.reduce((s,m)=>s+m.total,0);
+    const topPayees=Object.entries(byPayee).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const breakdown=Object.entries(subTotals).sort((a,b)=>b[1]-a[1]);
+    const maxMonth=Math.max(...monthly.map(m=>m.total),1);
+    const income=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Income"&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+t.amount,0);
+    const premiumPct=income>0?(annualized/income*100):0;
+    return {monthly,totalAll,annualized,subTotals,breakdown,topPayees,maxMonth,income,premiumPct};
+  },[allTxns,categories,thisStart,thisEnd,now]);
+
+  const InsuranceTab=React.createElement("div",{style:{paddingBottom:20}},
+    insuranceData.totalAll===0
+      ?React.createElement(Empty,{icon:React.createElement(Icon,{n:"shield",size:18}),text:"No insurance premium transactions found. Tag premiums with the Insurance Premiums category."})
+      :React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+            React.createElement(KpiCard,{label:"Total Premiums (6mo)",value:INR(Math.round(insuranceData.totalAll)),sub:insuranceData.breakdown.length+" policies tracked",col:"#8b5cf6",icon:React.createElement(Icon,{n:"shield",size:18})}),
+            React.createElement(KpiCard,{label:"Avg Monthly Premium",value:INR(Math.round(insuranceData.totalAll/6)),sub:"Monthly commitment",col:"#0e7490",icon:React.createElement(Icon,{n:"chart",size:18})}),
+            React.createElement(KpiCard,{label:"Premium-to-Income",value:insuranceData.premiumPct.toFixed(1)+"%",sub:insuranceData.premiumPct>15?"High — review coverage":"Within healthy range",col:insuranceData.premiumPct>15?"#ef4444":"#16a34a",icon:React.createElement(Icon,{n:"percent",size:18})})
+          ),
+          React.createElement(Card2,{sx:{marginBottom:16}},
+            React.createElement(SHead,{t:"Policy Breakdown",s:"Premium distribution across insurance types"}),
+            React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
+              insuranceData.breakdown.map(([sub,amt])=>{
+                const pct=insuranceData.totalAll>0?(amt/insuranceData.totalAll*100):0;
+                const colors=["#ef4444","#8b5cf6","#0e7490","#f59e0b","#16a34a","#ec4899"];
+                const col=colors[insuranceData.breakdown.indexOf([sub,amt])%colors.length];
+                return React.createElement("div",{key:sub},
+                  React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:3}},
+                    React.createElement("span",{style:{fontWeight:600,color:"var(--text3)"}},sub),
+                    React.createElement("span",{style:{fontWeight:700,color:col}},INR(Math.round(amt))+" ("+pct.toFixed(0)+"%)")
+                  ),
+                  React.createElement("div",{style:{height:8,background:"var(--bg5)",borderRadius:4,overflow:"hidden"}},
+                    React.createElement("div",{style:{height:"100%",width:pct+"%",background:col,borderRadius:4}})
+                  )
+                );
+              })
+            )
+          ),
+          React.createElement(Card2,{sx:{marginBottom:16}},
+            React.createElement(SHead,{t:"Monthly Premium Trend",s:"Insurance premium payments over the last 6 months"}),
+            React.createElement("div",{style:{display:"flex",gap:6,alignItems:"flex-end",height:100}},
+              insuranceData.monthly.map((m,i)=>{
+                const h=m.total>0?Math.max(4,Math.round(m.total/insuranceData.maxMonth*90)):2;
+                return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+                  React.createElement("div",{style:{fontSize:9,color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},m.total>0?INR(m.total):""),
+                  React.createElement("div",{style:{width:"100%",height:h,borderRadius:"3px 3px 0 0",background:"#8b5cf6",opacity:i===5?1:.5}})
+                );
+              })
+            ),
+            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",marginTop:6}},
+              React.createElement("span",null,insuranceData.monthly[0].name),React.createElement("span",null,insuranceData.monthly[5].name)
+            )
+          ),
+          insuranceData.topPayees.length>0&&React.createElement(Card2,null,
+            React.createElement(SHead,{t:"Insurance Providers",s:"Where premiums are paid"}),
+            React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+              insuranceData.topPayees.map(([name,amt],i)=>
+                React.createElement("div",{key:i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<insuranceData.topPayees.length-1?"1px solid var(--border)":"none"}},
+                  React.createElement("span",{style:{fontSize:13,color:"var(--text3)"}},name),
+                  React.createElement("span",{style:{fontSize:13,fontWeight:700}},INR(Math.round(amt)))
+                )
+              )
+            )
+          )
+        )
+  );
+
+  /* ══ NET CASHFLOW WATERFALL TREND DATA ══ */
+  const waterfallTrendData=React.useMemo(()=>{
+    const months=[];
+    for(let i=5;i>=0;i--){
+      const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
+      const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
+      const debits=allTxns.filter(t=>t.type==="debit"&&t.date>=mS&&t.date<=mE);
+      const income=allTxns.filter(t=>t.type==="credit"&&t.date>=mS&&t.date<=mE).reduce((s,t)=>s+t.amount,0);
+      const fixed=debits.filter(t=>FIXED.some(c=>(catMainName(t.cat||"")).toLowerCase()===c.toLowerCase())).reduce((s,t)=>s+t.amount,0);
+      const variable=debits.filter(t=>VARIABLE.some(c=>(catMainName(t.cat||"")).toLowerCase()===c.toLowerCase())).reduce((s,t)=>s+t.amount,0);
+      const disc=debits.filter(t=>DISC.some(c=>(catMainName(t.cat||"")).toLowerCase()===c.toLowerCase())).reduce((s,t)=>s+t.amount,0);
+      const investCat=debits.filter(t=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Investment";}).reduce((s,t)=>s+t.amount,0);
+      const total=debits.reduce((s,t)=>s+t.amount,0);
+      const other=Math.max(total-fixed-variable-disc-investCat,0);
+      const savings=Math.max(income-total,0);
+      months.push({name:MONTH_NAMES[(now.getMonth()-i+12)%12],income,fixed,variable,disc,invest:investCat,other,savings});
+    }
+    const maxIncome=Math.max(...months.map(m=>m.income),1);
+    return {months,maxIncome};
+  },[allTxns,categories,now]);
+
+  const WaterfallTrendTab=React.createElement("div",{style:{paddingBottom:20}},
+    React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement(SHead,{t:"Cashflow Composition Trend (6 Months)",s:"How your income splits into commitments, lifestyle, investments and savings"}),
+      React.createElement("div",{style:{display:"flex",gap:4,alignItems:"flex-end",height:160,marginBottom:8}},
+        waterfallTrendData.months.map((m,i)=>{
+          const scale=waterfallTrendData.maxIncome>0?(140/waterfallTrendData.maxIncome):1;
+          const parts=[
+            {label:"Fixed",amt:m.fixed,col:"#ef4444"},
+            {label:"Variable",amt:m.variable,col:"#f97316"},
+            {label:"Discretionary",amt:m.disc,col:"#b45309"},
+            {label:"Other",amt:m.other,col:"#64748b"},
+            {label:"Invest",amt:m.invest,col:"#16a34a"},
+          ];
+          let cumH=0;
+          return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+            React.createElement("div",{style:{fontSize:9,color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},INR(m.income)),
+            React.createElement("div",{style:{width:"100%",display:"flex",flexDirection:"column",borderRadius:"3px 3px 0 0",overflow:"hidden",background:"var(--bg5)"}},
+              parts.map((p,pi)=>{
+                const h=Math.max(1,Math.round(p.amt*scale));
+                return React.createElement("div",{key:pi,style:{height:h,background:p.col,opacity:i===5?1:.6}});
+              }),
+              m.savings>0&&React.createElement("div",{style:{height:Math.max(1,Math.round(m.savings*scale)),background:"#059669",opacity:i===5?1:.6}})
+            )
+          );
+        })
+      ),
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",marginBottom:10}},
+        React.createElement("span",null,waterfallTrendData.months[0].name),React.createElement("span",null,waterfallTrendData.months[5].name)
+      ),
+      React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",fontSize:11}},
+        [{l:"Fixed",c:"#ef4444"},{l:"Variable",c:"#f97316"},{l:"Discretionary",c:"#b45309"},{l:"Other",c:"#64748b"},{l:"Invest",c:"#16a34a"},{l:"Savings",c:"#059669"}].map(x=>
+          React.createElement("span",{key:x.l,style:{display:"flex",alignItems:"center",gap:4}},
+            React.createElement("span",{style:{width:10,height:10,borderRadius:2,background:x.c,display:"inline-block"}}),x.l
+          )
+        )
+      )
+    ),
+    React.createElement(Card2,null,
+      React.createElement(SHead,{t:"Monthly Breakdown",s:"Exact amounts per category per month"}),
+      React.createElement("div",{style:{overflowX:"auto"}},
+        React.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:12}},
+          React.createElement("thead",null,
+            React.createElement("tr",null,
+              ["Month","Income","Fixed","Variable","Disc.","Other","Invest","Savings"].map(h=>
+                React.createElement("th",{key:h,style:{textAlign:h==="Month"?"left":"right",padding:"6px 8px",color:"var(--text5)",fontWeight:600,borderBottom:"1px solid var(--border)"}},h)
+              )
+            )
+          ),
+          React.createElement("tbody",null,
+            waterfallTrendData.months.map((m,i)=>
+              React.createElement("tr",{key:i,style:{background:i===5?"var(--accentbg)":"transparent"}},
+                React.createElement("td",{style:{padding:"6px 8px",fontWeight:600,color:"var(--text3)"}},m.name),
+                React.createElement("td",{style:{textAlign:"right",padding:"6px 8px"}},INR(m.income)),
+                React.createElement("td",{style:{textAlign:"right",padding:"6px 8px",color:"#ef4444"}},INR(m.fixed)),
+                React.createElement("td",{style:{textAlign:"right",padding:"6px 8px",color:"#f97316"}},INR(m.variable)),
+                React.createElement("td",{style:{textAlign:"right",padding:"6px 8px",color:"#b45309"}},INR(m.disc)),
+                React.createElement("td",{style:{textAlign:"right",padding:"6px 8px",color:"#64748b"}},INR(m.other)),
+                React.createElement("td",{style:{textAlign:"right",padding:"6px 8px",color:"#16a34a"}},INR(m.invest)),
+                React.createElement("td",{style:{textAlign:"right",padding:"6px 8px",fontWeight:700,color:m.savings>0?"#16a34a":"#ef4444"}},INR(m.savings))
+              )
+            )
+          )
+        )
+      )
+    )
+  );
+
+  /* ══ COMMITMENT GROWTH TRACKER DATA ══ */
+  const commitGrowthData=React.useMemo(()=>{
+    const months=[];
+    for(let i=11;i>=0;i--){
+      const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
+      const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
+      const byCat={};let total=0;
+      allTxns.filter(t=>t.type==="debit"&&t.date>=mS&&t.date<=mE).forEach(t=>{
+        const main=catMainName(t.cat||"");
+        if(COMMIT_CATS.includes(main)){byCat[main]=(byCat[main]||0)+t.amount;total+=t.amount;}
+        if(t.cat==="Utilities and Bills::Housing & Rent"){byCat["Rent"]=(byCat["Rent"]||0)+t.amount;total+=t.amount;}
+      });
+      const inc=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Income"&&t.date>=mS&&t.date<=mE;}).reduce((s,t)=>s+t.amount,0);
+      months.push({name:MONTH_NAMES[(now.getMonth()-i+12)%12],total,byCat,income:inc,ratio:inc>0?(total/inc*100):0});
+    }
+    const first=months[0],last=months[11];
+    const totalGrowth=first.total>0?((last.total-first.total)/first.total*100):0;
+    const avgRatio=months.filter(m=>m.ratio>0).reduce((s,m)=>s+m.ratio,0)/(months.filter(m=>m.ratio>0).length||1);
+    const maxTotal=Math.max(...months.map(m=>m.total),1);
+    return {months,totalGrowth,avgRatio,maxTotal};
+  },[allTxns,categories,now]);
+
+  const CommitGrowthTab=React.createElement("div",{style:{paddingBottom:20}},
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement(KpiCard,{label:"12-Month Growth",value:(commitGrowthData.totalGrowth>=0?"+":"")+commitGrowthData.totalGrowth.toFixed(1)+"%",sub:"Commitment floor change",col:commitGrowthData.totalGrowth>10?"#ef4444":commitGrowthData.totalGrowth>0?"#f97316":"#16a34a",icon:React.createElement(Icon,{n:"chart",size:18})}),
+      React.createElement(KpiCard,{label:"Avg Commitment Ratio",value:commitGrowthData.avgRatio.toFixed(1)+"%",sub:"Of income going to commitments",col:commitGrowthData.avgRatio>50?"#ef4444":commitGrowthData.avgRatio>30?"#f97316":"#16a34a",icon:React.createElement(Icon,{n:"percent",size:18})}),
+      React.createElement(KpiCard,{label:"Current Floor",value:INR(Math.round(commitGrowthData.months[11].total)),sub:MONTH_NAMES[(now.getMonth()+12)%12]+" commitments",col:"var(--accent)",icon:React.createElement(Icon,{n:"lock",size:18})})
+    ),
+    React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement(SHead,{t:"Commitment Floor Trend (12 Months)",s:"Track how your mandatory expenses evolve over time"}),
+      React.createElement("div",{style:{display:"flex",gap:4,alignItems:"flex-end",height:120}},
+        commitGrowthData.months.map((m,i)=>{
+          const h=m.total>0?Math.max(3,Math.round(m.total/commitGrowthData.maxTotal*110)):2;
+          return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+            React.createElement("div",{style:{fontSize:8,color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},m.total>0?INR(m.total):""),
+            React.createElement("div",{style:{width:"100%",height:h,borderRadius:"2px 2px 0 0",background:"var(--accent)",opacity:i===11?1:.45}})
+          );
+        })
+      ),
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",marginTop:6}},
+        React.createElement("span",null,commitGrowthData.months[0].name),React.createElement("span",null,commitGrowthData.months[11].name)
+      )
+    ),
+    React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement(SHead,{t:"Commitment-to-Income Ratio",s:"What percentage of your income is pre-committed each month"}),
+      React.createElement("div",{style:{display:"flex",gap:4,alignItems:"flex-end",height:100}},
+        commitGrowthData.months.map((m,i)=>{
+          const h=m.ratio>0?Math.max(3,Math.round(m.ratio)):2;
+          return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+            React.createElement("div",{style:{fontSize:8,color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},m.ratio>0?m.ratio.toFixed(0)+"%":""),
+            React.createElement("div",{style:{width:"100%",height:h,borderRadius:"2px 2px 0 0",background:m.ratio>50?"#ef4444":m.ratio>30?"#f97316":"#16a34a",opacity:i===11?1:.45}})
+          );
+        })
+      ),
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",marginTop:6}},
+        React.createElement("span",null,commitGrowthData.months[0].name),React.createElement("span",null,commitGrowthData.months[11].name)
+      )
+    ),
+    React.createElement(Card2,null,
+      React.createElement(SHead,{t:"Growth Insight",s:"What this trend means for your finances"}),
+      React.createElement("p",{style:{fontSize:13,color:"var(--text4)",lineHeight:1.6}},
+        "Over the last 12 months, your commitment floor ",React.createElement("strong",{style:{color:commitGrowthData.totalGrowth>0?"#ef4444":"#16a34a"}},
+          commitGrowthData.totalGrowth>0?"grew "+commitGrowthData.totalGrowth.toFixed(1)+"%":"decreased "+Math.abs(commitGrowthData.totalGrowth).toFixed(1)+"%"
+        ),
+        ". On average, ",React.createElement("strong",null,commitGrowthData.avgRatio.toFixed(1)+"%")," of your monthly income goes to fixed commitments.",
+        commitGrowthData.avgRatio>50?" ⚠️ Over half your income is pre-committed — consider reducing where possible.":
+        commitGrowthData.avgRatio>30?" This is within a healthy range but monitor for growth.":
+        " Your commitment ratio is healthy — you have good flexibility."
+      )
+    )
+  );
+
   /* ══ FIRE DATA ══ */
   const fireData=React.useMemo(()=>{
     // Monthly expense average (last 6 months debits excluding investment/transfer)
@@ -37750,7 +38291,12 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     {id:"fire",          label:"FIRE"},
     {id:"networth",      label:"Net Worth"},
     {id:"capgains",      label:"Cap Gains"},
+    {id:"commitments",   label:"Commitments"},
     {id:"health",        label:"Health"},
+    {id:"healthintel",   label:"Healthcare"},
+    {id:"insurance",     label:"Insurance"},
+    {id:"cashflowtrend", label:"Cashflow"},
+    {id:"commgrowth",    label:"Commit Growth"},
     {id:"patterns",      label:"Patterns"},
     {id:"goals",         label:"Goals"},
     {id:"calculators",   label:"Calculators"},
@@ -37775,7 +38321,12 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     stab==="fire"          &&FireTab,
     stab==="networth"      &&React.createElement(NetWorthInsightTab,{banks,cards,cash,mf,shares,fd,re:re||[],loans,categories,prefs:P,isMobile,dispatch,nwSnapshots:nwSnapshots||{},brokerCashBalance}),
     stab==="capgains"      &&React.createElement(CapGainsTab,{shares,mf,mfTxns:mfTxns||[],isMobile}),
+    stab==="commitments"   &&CommitmentsTab,
     stab==="health"        &&HealthScoreTab,
+    stab==="healthintel"   &&HealthIntelTab,
+    stab==="insurance"     &&InsuranceTab,
+    stab==="cashflowtrend" &&WaterfallTrendTab,
+    stab==="commgrowth"    &&CommitGrowthTab,
     stab==="patterns"      &&SpendingPatternsTab,
     stab==="goals"         &&GoalTrackerTab,
     stab==="calculators"   &&React.createElement(InsightCalculators,{isMobile}),
