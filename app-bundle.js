@@ -1,3 +1,4 @@
+﻿const NIFTY50_HISTORY={"2017-01-31":8879.6,"2017-02-28":9173.75,"2017-03-31":9304.05,"2017-04-30":9621.25,"2017-05-31":9520.9,"2017-06-30":10077.1,"2017-07-31":9917.9,"2017-08-31":9788.6,"2017-09-30":10335.3,"2017-10-31":10226.55,"2017-11-30":10530.7,"2017-12-31":11027.7,"2018-01-31":10492.85,"2018-02-28":10113.7,"2018-03-31":10739.35,"2018-04-30":10736.15,"2018-05-31":10714.3,"2018-06-30":11356.5,"2018-07-31":11680.5,"2018-08-31":10930.45,"2018-09-30":10386.6,"2018-10-31":10876.75,"2018-11-30":10862.55,"2018-12-31":10830.95,"2019-01-31":10792.5,"2019-02-28":11623.9,"2019-03-31":11748.15,"2019-04-30":11922.8,"2019-05-31":11788.85,"2019-06-30":11118,"2019-07-31":11023.25,"2019-08-31":11474.45,"2019-09-30":11877.45,"2019-10-31":12056.05,"2019-11-30":12168.45,"2019-12-31":11962.1,"2020-01-31":11201.75,"2020-02-29":8597.75,"2020-03-31":9859.9,"2020-04-30":9580.3,"2020-05-31":10302.1,"2020-06-30":11073.45,"2020-07-31":11387.5,"2020-08-31":11247.55,"2020-09-30":11642.4,"2020-10-31":12968.95,"2020-11-30":13981.75,"2020-12-31":13634.6,"2021-01-31":14529.15,"2021-02-28":14690.7,"2021-03-31":14631.1,"2021-04-30":15582.8,"2021-05-31":15721.5,"2021-06-30":15763.05,"2021-07-31":17132.2,"2021-08-31":17618.15,"2021-09-30":17671.65,"2021-10-31":16983.2,"2021-11-30":17354.05,"2021-12-31":17339.85,"2022-01-31":16793.9,"2022-02-28":17464.75,"2022-03-31":17102.55,"2022-04-30":16584.55,"2022-05-31":15780.25,"2022-06-30":17158.25,"2022-07-31":17759.3,"2022-08-31":17094.35,"2022-09-30":18012.2,"2022-10-31":18758.35,"2022-11-30":18105.3,"2022-12-31":17662.15,"2023-01-31":17303.95,"2023-02-28":17359.75,"2023-03-31":18065,"2023-04-30":18534.4,"2023-05-31":19189.05,"2023-06-30":19753.8,"2023-07-31":19253.8,"2023-08-31":19638.3,"2023-09-30":19079.6,"2023-10-31":20133.15,"2023-11-30":21731.4,"2023-12-31":21725.7,"2024-01-31":21982.8,"2024-02-29":22326.9,"2024-03-31":22604.85,"2024-04-30":22530.7,"2024-05-31":24010.6,"2024-06-30":24951.15,"2024-07-31":25235.9,"2024-08-31":25810.85,"2024-09-30":24205.35,"2024-10-31":24131.1,"2024-11-30":23644.8,"2024-12-31":23508.4,"2025-01-31":22124.7,"2025-02-28":23519.35,"2025-03-31":24334.2,"2025-04-30":24750.7,"2025-05-31":25517.05,"2025-06-30":24768.35,"2025-07-31":24426.85,"2025-08-31":24611.1,"2025-09-30":25722.1,"2025-10-31":26202.95,"2025-11-30":26129.6,"2025-12-31":25320.65,"2026-01-31":25178.65,"2026-02-28":22331.4,"2026-03-31":23997.55,"2026-04-30":23547.75,"2026-05-31":23865.75,"2026-06-30":24270.85,"2026-07-07":24398.7};
 ﻿/* ── Utilities, hooks, formatting, price/NAV fetchers ── */
 const{useState,useReducer,useRef,useEffect,useCallback,useMemo,useDeferredValue}=React;
 /* ══════════════════════════════════════════════════════════════════════════
@@ -286,7 +287,10 @@ const fetchTickerPrice=async(rawTicker)=>{
 /* Indexes to show — matched by indexSymbol from NSE API response */
 const MARKET_INDEX_MAP=[
   {nseKey:"NIFTY 50",          name:"Nifty 50",          group:"Broad"},
+  {nseKey:"NIFTY 100",         name:"Nifty 100",         group:"Broad"},
   {nseKey:"NIFTY MIDCAP 50",   name:"Nifty Midcap 50",   group:"Broad"},
+  {nseKey:"NIFTY MIDCAP 100",  name:"Nifty Midcap 100",  group:"Broad"},
+  {nseKey:"NIFTY MIDCAP 150",  name:"Nifty Midcap 150",  group:"Broad"},
   {nseKey:"NIFTY SMLCAP 100",  name:"Nifty Smallcap 100",group:"Broad"},
   {nseKey:"NIFTY BANK",        name:"Bank Nifty",         group:"Sector"},
   {nseKey:"NIFTY IT",          name:"Nifty IT",           group:"Sector"},
@@ -316,9 +320,11 @@ const fetchMarketIndices=async()=>{
     /* ── 1. NSE India API for all Indian indexes (single request) ── */
     const nseUrl="https://www.nseindia.com/api/allIndices";
     const nseProxies=[
+      "https://corsproxy.io/?"+encodeURIComponent(nseUrl),
       "https://api.cors.lol/?url="+encodeURIComponent(nseUrl),
       "https://cors.eu.org/"+nseUrl,
       "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(nseUrl),
+      "https://api.allorigins.win/raw?url="+encodeURIComponent(nseUrl),
     ];
     let nseData=null;
     for(const proxyUrl of nseProxies){
@@ -708,6 +714,7 @@ const INIT=()=>({
   soldShareSnapshots:{},
   eodPrices:{},
   eodNavs:{},
+  eodIndices:{},
   historyCache:{},
   hiddenTabs:[],
   taxData:null,
@@ -766,6 +773,7 @@ const EMPTY_STATE=()=>({
   soldShareSnapshots:{},
   eodPrices:{},
   eodNavs:{},
+  eodIndices:{},
   historyCache:{},
   hiddenTabs:[],
   taxData:null,
@@ -798,13 +806,29 @@ const _EA=Object.freeze([]);   /* stable empty-array fallback  */
 const _EO=Object.freeze({});   /* stable empty-object fallback */
 
 const THEMES=[
-  {id:"sky",    name:"Sky Blue", desc:"Airy light sky-blue",    dark:false, preview:["#f0f9ff","#0ea5e9","#bae6fd","#0284c7"]},
-  {id:"slate",  name:"Slate",    desc:"Cool blue-grey minimal", dark:false, preview:["#f4f6f8","#4a6888","#bcc8d8","#385470"]},
-  {id:"nordic", name:"Nordic",   desc:"Crisp cool steel blue",  dark:false, preview:["#f4f7f9","#3a6888","#b8ccdc","#2c5272"]},
-  {id:"moss",   name:"Moss",     desc:"Deep earthy olive moss", dark:false, preview:["#f5f8f3","#526e3c","#bcd0b0","#3e5830"]},
-  {id:"mint",   name:"Mint",     desc:"Fresh cool emerald mint",dark:false, preview:["#f2fbf8","#1a8a68","#a8d8c8","#147054"]},
+  {id:"sky",         name:"Sky Blue",    desc:"Airy light sky-blue",       dark:false, preview:["#f0f9ff","#0ea5e9","#bae6fd","#0284c7"]},
+  {id:"slate",       name:"Slate",       desc:"Cool blue-grey minimal",    dark:false, preview:["#f4f6f8","#4a6888","#bcc8d8","#385470"]},
+  {id:"nordic",      name:"Nordic",      desc:"Crisp cool steel blue",     dark:false, preview:["#f4f7f9","#3a6888","#b8ccdc","#2c5272"]},
+  {id:"moss",        name:"Moss",        desc:"Deep earthy olive moss",    dark:false, preview:["#f5f8f3","#526e3c","#bcd0b0","#3e5830"]},
+  {id:"mint",        name:"Mint",        desc:"Fresh cool emerald mint",   dark:false, preview:["#f2fbf8","#1a8a68","#a8d8c8","#147054"]},
+  {id:"rose",        name:"Rose",        desc:"Soft warm pink rose",       dark:false, preview:["#fef2f2","#e11d48","#f5d0d0","#be123c"]},
+  {id:"lavender",    name:"Lavender",    desc:"Light purple lavender",     dark:false, preview:["#f8f6ff","#7c3aed","#ddd8f5","#6d28d9"]},
+  {id:"sunset",      name:"Sunset",      desc:"Warm orange sunset",        dark:false, preview:["#fff8f0","#ea580c","#f8e0c8","#c2410c"]},
+  {id:"ocean",       name:"Ocean",       desc:"Deep teal ocean",           dark:false, preview:["#f0fafc","#0891b2","#c8ecf0","#0e7490"]},
+  {id:"coral",       name:"Coral",       desc:"Vibrant warm coral pink",   dark:false, preview:["#fff0ee","#e11d48","#fcc8c0","#be123c"]},
+  {id:"electric",    name:"Electric",    desc:"Bright electric blue",      dark:false, preview:["#eef4ff","#2563eb","#b8d0f8","#1d4ed8"]},
+  {id:"lime",        name:"Lime",        desc:"Vivid lime green",          dark:false, preview:["#f1fae8","#65a30d","#c8e4ac","#4d7c08"]},
+  {id:"tangerine",   name:"Tangerine",   desc:"Warm bold tangerine",       dark:false, preview:["#fff7ed","#ea580c","#fac8a8","#c2410c"]},
+  {id:"fuchsia",     name:"Fuchsia",     desc:"Bold vibrant fuchsia",      dark:false, preview:["#fdf2ff","#d946ef","#f0ccf0","#c026d3"]},
+  {id:"sky-dark",    name:"Sky Dark",    desc:"Deep space blue",           dark:true,  preview:["#070b12","#38bdf8","#1e3a5a","#0ea5e9"]},
+  {id:"slate-dark",  name:"Slate Dark",  desc:"Charcoal steel",            dark:true,  preview:["#080b10","#6a8aaa","#28344a","#4a6888"]},
+  {id:"nordic-dark", name:"Nordic Dark", desc:"Midnight arctic",           dark:true,  preview:["#070c12","#5a8aaa","#22364e","#3a6888"]},
+  {id:"moss-dark",   name:"Moss Dark",   desc:"Deep forest",               dark:true,  preview:["#080c06","#6e9a52","#2a3e26","#526e3c"]},
+  {id:"mint-dark",   name:"Mint Dark",   desc:"Dark emerald",              dark:true,  preview:["#060e0c","#2ab888","#1e4236","#1a8a68"]},
 ];
-const applyTheme=id=>{document.documentElement.setAttribute("data-theme",id);};
+const loadTheme=()=>{try{const t=localStorage.getItem(LS_THEME);if(t&&THEMES.find(th=>th.id===t))return t;}catch{}const mq=window.matchMedia("(prefers-color-scheme: dark)");return mq&&mq.matches?"sky-dark":"electric";};
+const saveTheme=id=>{try{localStorage.setItem(LS_THEME,id);}catch{}};
+const applyTheme=id=>{document.documentElement.setAttribute("data-theme",id);if(id.endsWith("-dark")){document.documentElement.style.setProperty("color-scheme","dark");}else{document.documentElement.style.removeProperty("color-scheme");}setTimeout(syncPAL,0);};
 
 /* ── FONT SYSTEM ─────────────────────────────────────────────────────────
    5 most popular fonts for financial apps in 2026.
@@ -857,13 +881,14 @@ const applyFont=id=>{
   document.documentElement.style.setProperty("--font-body",font.stack);
 };
 
-const PAL=["#b45309","#0e7490","#16a34a","#6d28d9","#c2410c","#be185d","#1d4ed8","#059669"];
+let PAL=["#b45309","#0e7490","#16a34a","#6d28d9","#c2410c","#be185d","#1d4ed8","#059669"];
+const syncPAL=()=>{const g=getComputedStyle(document.documentElement);const c=[1,2,3,4,5,6].map(i=>g.getPropertyValue(`--chart-${i}`).trim()).filter(Boolean);if(c.length)PAL=c;};
 const CAT_C={Income:"#16a34a",Housing:"#0e7490",Insurance:"#6d28d9",Food:"#c2410c",Transport:"#1d4ed8",Utilities:"#be185d",Shopping:"#b45309",Entertainment:"#059669",Investment:"#16a34a",Travel:"#0e7490",Payment:"#0891b2",Transfer:"#1d4ed8",Others:"#475569"};
 const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak Mahindra Bank","Punjab National Bank","Bank of Baroda","Yes Bank","IndusInd Bank","Federal Bank","Other"];
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="5.3.0";
+const APP_VERSION="6.7.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -885,7 +910,12 @@ const SVGIpoly=(points,opts={})=>React.createElement("svg",{
 },React.createElement("polyline",{points}));
 
 // Icon component — modern Lucide-inspired 24×24 stroke icons
+const _ICON_NAV_MAP={bank:"banks",card:"cards",cash:"cash",loan:"loans",invest:"inv_dash",chart:"inv_mf",pie:"inv_mf",stocks:"inv_shares",calendar:"calendar",target:"goals",home:"inv_re",building:"banks",report:"reports",receipt:"tax_est",lightbulb:"insights",hash:"calculator",inv_pf:"inv_pf"};
 const Icon=({n,size=16,col,style={}})=>{
+  /* Unify in-content iconography with the sidebar NavIcon language */
+  if(_ICON_NAV_MAP[n]&&typeof NavIcon!=="undefined"){
+    return React.createElement("span",{style:{display:"inline-flex",verticalAlign:"middle",color:col||undefined,...style}},React.createElement(NavIcon,{id:_ICON_NAV_MAP[n],size}));
+  }
   const S={width:size,height:size,viewBox:"0 0 24 24",fill:"none",stroke:col||"currentColor",strokeWidth:1.8,strokeLinecap:"round",strokeLinejoin:"round",style:{display:"inline-block",verticalAlign:"middle",...style}};
   const E=(t,p)=>React.createElement(t,p);
   const svg=(...k)=>React.createElement("svg",S,...k);
@@ -983,6 +1013,7 @@ const Icon=({n,size=16,col,style={}})=>{
     case"layers":return svg(p("M12 2 2 7l10 5 10-5-10-5z"),pl("2 17 12 22 22 17"),pl("2 12 12 17 22 12"));
     case"party":return svg(p("M5.8 11.3L2 22l10.7-3.79"),p("M4 3h.01M22 8h.01M15 2h.01M22 20h.01M22 2l-2.24.75a2.9 2.9 0 00-1.96 3.12v0c.1.86-.57 1.63-1.44 1.63h-.38c-.86 0-1.32.956-.75 1.63l.21.27c.47.59.43 1.43-.1 1.97l0 0c-.51.51-1.33.53-1.86.05L12 10"),p("M14.5 5.5l-5 5"));
     case"checklist":return svg(p("M9 11l3 3L22 4"),p("M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"));
+    case"star":return svg(E("polygon",{points:"12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2",fill:col||"currentColor",stroke:"none"}));
     // ── Classification type icons ─────────────────────────────────────────
     case"classIncome":return svg(               // billfold wallet — where money lands
       r(2,8,20,14,4),                             // wallet outer body
@@ -1631,6 +1662,15 @@ const reducer=(s,a)=>{
         return m;
       });
       return{...s,eodNavs:pruned,mf:_syncedMf};
+    }
+    /* ── Market index EOD snapshots (Nifty etc.) ── */
+    case"SET_EOD_INDICES":{
+      const _isoIdxDate=mfNavDateToISO(a.date)||a.date;
+      const updatedIdx={...normalizeEodNavKeys(s.eodIndices||{}),[_isoIdxDate]:a.indices};
+      const idxKeys=Object.keys(updatedIdx).sort();
+      const prunedIdx={};
+      idxKeys.slice(-90).forEach(k=>{prunedIdx[k]=updatedIdx[k];});
+      return{...s,eodIndices:prunedIdx};
     }
     case"SET_BROKER_CASH":return{...s,brokerCashBalance:a.amount};
     case"ADD_SHARE":return{...s,shares:[...s.shares,a.p]};
@@ -2414,37 +2454,52 @@ const SvgBar=({data,h=155})=>{
 
 /* ── SHARED UI ───────────────────────────────────────────────────────────── */
 const Btn=({children,onClick,v="primary",sz="md",disabled,sx={}})=>{
-  const S={sm:{padding:"6px 13px",fontSize:12},md:{padding:"9px 17px",fontSize:14}};
-  const V={primary:{background:"var(--accentbg)",border:"1px solid var(--accent)88",color:"var(--accent)"},secondary:{background:"var(--bg3)",border:"1px solid var(--border)",color:"var(--text3)"},success:{background:"rgba(22,163,74,.13)",border:"1px solid rgba(22,163,74,.35)",color:"#16a34a"},danger:{background:"rgba(239,68,68,.12)",border:"1px solid rgba(239,68,68,.3)",color:"#ef4444"}};
-  return React.createElement("button",{onClick,disabled,style:{display:"inline-flex",alignItems:"center",gap:6,borderRadius:8,cursor:disabled?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:500,transition:"all .2s",opacity:disabled?.5:1,...S[sz],...V[v],...sx}},children);
+  const S={sm:{padding:"7px 14px",fontSize:12},md:{padding:"10px 18px",fontSize:14}};
+  const V={primary:{background:"var(--accentbg)",border:"1px solid var(--accent)66",color:"var(--accent)"},secondary:{background:"var(--bg3)",border:"1px solid var(--border)",color:"var(--text3)"},success:{background:"rgba(22,163,74,.13)",border:"1px solid rgba(22,163,74,.35)",color:"#16a34a"},danger:{background:"rgba(239,68,68,.12)",border:"1px solid rgba(239,68,68,.3)",color:"#ef4444"}};
+  return React.createElement("button",{onClick,disabled,className:"mm-btn",style:{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:7,borderRadius:10,cursor:disabled?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:600,letterSpacing:.1,transition:"transform .15s ease,box-shadow .2s ease,background .2s ease,border-color .2s ease",opacity:disabled?.5:1,...S[sz],...V[v],...sx}},children);
 };
-const Badge=({ch,col="var(--accent)"})=>React.createElement("span",{style:{background:`${col}1a`,color:col,border:`1px solid ${col}35`,borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:600,whiteSpace:"nowrap"}},ch);
-const Card=({children,sx={},cn=""})=>React.createElement("div",{className:cn,style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,padding:20,...sx}},children);
-const StatCard=({label,val,sub,col="var(--accent)",icon})=>React.createElement(Card,{sx:{flex:"1 1 150px",minWidth:150}},
-  React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}},
-    React.createElement("span",{style:{fontSize:11,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.6}},label),
-    React.createElement("span",{style:{display:"flex",alignItems:"center",opacity:.6,color:"var(--text4)"}},icon)
+const Badge=({ch,col="var(--accent)"})=>React.createElement("span",{style:{background:`${col}14`,color:col,border:`1px solid ${col}30`,borderRadius:999,padding:"3px 11px",fontSize:11,fontWeight:600,letterSpacing:.2,whiteSpace:"nowrap"}},ch);
+const Card=({children,sx={},cn=""})=>React.createElement("div",{className:("mm-card "+cn).trim(),style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:16,padding:20,boxShadow:"var(--shadow-sm)",transition:"box-shadow .25s ease,border-color .2s ease,transform .2s ease",...sx}},children);
+const StatCard=({label,val,sub,col="var(--accent)",icon})=>React.createElement(Card,{cn:"mm-statcard",sx:{flex:"1 1 150px",minWidth:150,position:"relative",overflow:"hidden"}},
+  React.createElement("div",{style:{position:"absolute",top:0,left:0,bottom:0,width:3,background:col,opacity:.85}}),
+  React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,gap:8}},
+    React.createElement("span",{style:{fontSize:10.5,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,fontWeight:600}},label),
+    icon&&React.createElement("span",{style:{display:"flex",alignItems:"center",justifyContent:"center",width:30,height:30,borderRadius:9,background:`${col}14`,color:col,flexShrink:0}},icon)
   ),
-  React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:700,color:col,lineHeight:1.2}},val),
-  sub&&React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:5}},sub)
+  React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:700,color:col,lineHeight:1.15,letterSpacing:-.3}},val),
+  sub&&React.createElement("div",{style:{fontSize:11.5,color:"var(--text5)",marginTop:6}},sub)
 );
-const Modal=({title,onClose,children,w=480})=>React.createElement("div",{className:"modal-bd",onClick:onClose,style:{position:"fixed",top:0,right:0,bottom:0,left:0,background:"rgba(0,0,0,.78)",zIndex:1000,overflowY:"auto",overflowX:"hidden",WebkitOverflowScrolling:"touch"}},
-  React.createElement("div",{style:{display:"flex",justifyContent:"center",alignItems:"flex-start",minHeight:"100vh",padding:"24px 12px 32px 12px",boxSizing:"border-box"}},
-    React.createElement("div",{className:"fu",onClick:e=>e.stopPropagation(),style:{background:"var(--modal-bg)",border:"1px solid var(--border)",borderRadius:14,padding:"20px 18px",width:"100%",maxWidth:w,boxSizing:"border-box",flexShrink:0}},
+const Modal=({title,onClose,children,w=480})=>React.createElement("div",{className:"modal-bd",onClick:onClose,style:{position:"fixed",top:0,right:0,bottom:0,left:0,zIndex:1000,overflowY:"auto",overflowX:"hidden",WebkitOverflowScrolling:"touch"}},
+  React.createElement("div",{style:{display:"flex",justifyContent:"center",alignItems:"center",minHeight:"100dvh",padding:"24px 12px",boxSizing:"border-box"}},
+    React.createElement("div",{className:"fu",onClick:e=>e.stopPropagation(),style:{background:"var(--modal-bg)",border:"1px solid var(--border)",borderRadius:18,padding:"22px 20px",width:"100%",maxWidth:w,boxSizing:"border-box",flexShrink:0,boxShadow:"var(--shadow-lg)"}},
       React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,gap:8}},
         React.createElement("h3",{style:{color:"var(--accent)",fontFamily:"'Sora',sans-serif",fontSize:16,fontWeight:700,lineHeight:1.3,minWidth:0,flex:1}},title),
         React.createElement("button",{onClick:onClose,style:{background:"none",border:"none",color:"var(--text5)",cursor:"pointer",fontSize:26,lineHeight:1,padding:"8px 12px",minWidth:44,minHeight:44,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,borderRadius:8,transition:"background .15s"},onMouseEnter:e=>{e.currentTarget.style.background="var(--accentbg2)";},onMouseLeave:e=>{e.currentTarget.style.background="transparent";}},"×")
       ),children
-    )
-  )
+      )
+    ),
+
+  );
+const Field=({label,children,sx={}})=>React.createElement("div",{style:{marginBottom:14,...sx}},
+  React.createElement("label",{style:{display:"block",color:"var(--text5)",fontSize:10.5,fontWeight:600,textTransform:"uppercase",letterSpacing:.7,marginBottom:6}},label),children
 );
-const Field=({label,children,sx={}})=>React.createElement("div",{style:{marginBottom:13,...sx}},
-  React.createElement("label",{style:{display:"block",color:"var(--text5)",fontSize:11,textTransform:"uppercase",letterSpacing:.5,marginBottom:5}},label),children
+const HR=()=>React.createElement("div",{style:{borderTop:"1px solid var(--border2)",margin:"16px 0"}});
+const _EMPTY_ART={
+  search:'<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/><line x1="8" y1="11" x2="14" y2="11"/></svg>',
+  empty:'<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>',
+  inbox:'<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.5h13l3.5 6.5v5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-5z"/></svg>',
+};
+const Empty=({icon,text,art="empty"})=>React.createElement("div",{className:"mm-empty",style:{textAlign:"center",padding:"48px 20px",color:"var(--text6)"}},
+  React.createElement("div",{className:"mm-empty-art",style:{display:"flex",alignItems:"center",justifyContent:"center",width:56,height:56,margin:"0 auto 14px",borderRadius:16,background:"var(--accentbg2)",color:"var(--text5)",opacity:.9},dangerouslySetInnerHTML:{__html:_EMPTY_ART[art]||_EMPTY_ART.empty}}),
+  React.createElement("div",{style:{fontSize:13.5,lineHeight:1.5}},text)
 );
-const HR=()=>React.createElement("div",{style:{borderTop:"1px solid var(--border)",margin:"14px 0"}});
-const Empty=({icon,text})=>React.createElement("div",{style:{textAlign:"center",padding:"36px 20px",color:"var(--text6)"}},
-  React.createElement("div",{style:{marginBottom:10,display:"flex",justifyContent:"center",opacity:.45}},icon),
-  React.createElement("div",{style:{fontSize:13}},text)
+
+/* ── Skeleton loader primitives ── */
+const Skeleton=({w,h,r,style={}})=>React.createElement("div",{className:"mm-skel",style:{width:w||"100%",height:h||12,borderRadius:r||8,...style}});
+const SkeletonStat=()=>React.createElement("div",{className:"mm-card mm-statcard",style:{padding:18}},
+  React.createElement(Skeleton,{w:54,h:12}),
+  React.createElement(Skeleton,{w:"70%",h:24,style:{marginTop:12,marginBottom:10}}),
+  React.createElement(Skeleton,{w:90,h:8})
 );
 
 /* ── STATUS CONFIG ────────────────────────────────────────────────────── */
@@ -3603,6 +3658,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
   const cancelLP=()=>{if(lpRef.current)clearTimeout(lpRef.current);};
   const toggleOne=(id)=>{setSelectedIds(prev=>{const n=new Set(prev);n.has(id)?n.delete(id):n.add(id);return n;});};
   const massUpdate=(status)=>{if(onMassUpdateStatus&&selectedIds.size>0){onMassUpdateStatus(new Set(selectedIds),status);clearSelection();}};
+  const toggleStar=()=>{if(selectedIds.size===0||!onEdit)return;selectedIds.forEach(id=>{const tx=transactions.find(t=>t.id===id);if(tx)onEdit({...tx,_starred:!tx._starred},tx);});clearSelection();};
   const COL_STATUS={Reconciled:"R",Unreconciled:"U",Void:"V",Duplicate:"D","Follow Up":"F"};
   const labelSt={display:"block",color:"var(--text5)",fontSize:11,textTransform:"uppercase",letterSpacing:.5,marginBottom:5};
   const flatCatsLedger=flatCats(categories||[]);
@@ -3698,6 +3754,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
             ),
             /* Row 2: date + badges */
             React.createElement("div",{style:{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}},
+              tx._starred&&React.createElement("span",{style:{fontSize:12,color:"#d97706",display:"inline-flex",alignItems:"center",gap:2}},React.createElement(Icon,{n:"star",size:12,col:"#d97706"})),
               React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},dmyFmt(tx.date)),
               tx.cat&&React.createElement("span",{style:{fontSize:10,color:catCol,background:catCol+"18",borderRadius:10,padding:"1px 7px",fontWeight:500}},catDisplayName(tx.cat)),
               tx.status&&tx.status!=="Unreconciled"&&React.createElement("span",{style:{fontSize:10,color:STATUS_C[tx.status],background:STATUS_C[tx.status]+"22",borderRadius:10,padding:"1px 7px"}},(STATUS_ICON[tx.status]||"")+" "+tx.status),
@@ -3714,6 +3771,16 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
               }),
               /* Edit / Delete action buttons — mobile */
               React.createElement("div",{style:{display:"flex",gap:8,marginTop:8}},
+                React.createElement("button",{
+                  onClick:e=>{e.stopPropagation();if(onEdit)onEdit({...tx,_starred:!tx._starred},tx);},
+                  style:{
+                    flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,
+                    padding:"8px 12px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,
+                    background:tx._starred?"rgba(217,119,6,.15)":"rgba(217,119,6,.08)",
+                    border:"1px solid "+(tx._starred?"#d97706":"rgba(217,119,6,.3)"),
+                    color:"#d97706",fontFamily:"'DM Sans',sans-serif"
+                  }
+                },React.createElement(Icon,{n:"star",size:14,col:"#d97706"}),tx._starred?"Unstar":"Star"),
                 React.createElement("button",{
                   onClick:e=>{e.stopPropagation();setEditTx(tx);},
                   style:{
@@ -3997,8 +4064,8 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
           title:"Select / deselect all visible"
         })
       ),
-      /* Reconcile */
-      React.createElement("div",{style:{padding:"9px 4px"}}),
+      /* Reconcile + Star */
+      React.createElement("div",{style:{padding:"9px 4px",display:"flex",alignItems:"center",justifyContent:"center",gap:2,fontSize:9,color:"var(--text6)"}},"✓ ★"),
       /* SN — click to reset to default date-desc */
       React.createElement("div",{
         style:{padding:"9px 4px",cursor:"pointer",color:sortKey==="date"?"var(--accent)":"var(--text5)"},
@@ -4116,9 +4183,10 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
               style:{width:13,height:13,accentColor:"var(--accent)",cursor:"pointer"}
             })
           ),
-          /* Reconcile tick */
-          React.createElement("div",{style:{padding:"4px 4px",display:"flex",alignItems:"center",justifyContent:"center"}},
-            isReconciled&&React.createElement("span",{style:{color:"#16a34a",fontSize:13,fontWeight:700}},"✓")
+          /* Reconcile tick + Star */
+          React.createElement("div",{style:{padding:"4px 4px",display:"flex",alignItems:"center",justifyContent:"center",gap:2}},
+            isReconciled&&React.createElement("span",{style:{color:"#16a34a",fontSize:13,fontWeight:700}},"✓"),
+            tx._starred&&React.createElement("span",{style:{color:"#d97706",fontSize:13,fontWeight:700,textShadow:"0 0 4px rgba(217,119,6,.3)"}},React.createElement(Icon,{n:"star",size:13,col:"#d97706"}))
           ),
           /* SN */
           React.createElement("div",{style:{padding:"4px 4px",fontSize:12,color:"var(--text5)",fontFamily:"'Sora',sans-serif"}},globalIdx),
@@ -4240,6 +4308,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
       selectedCount>0
         ?React.createElement(React.Fragment,null,
             React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--accent)",marginRight:4}},selectedCount+" selected"),
+            React.createElement("button",{onClick:toggleStar,style:tbBtn("#d97706","rgba(217,119,6,.12)")},"★ Assign Star"),
             React.createElement("button",{onClick:()=>setBulkCatOpen(true),style:tbBtn("#6d28d9","rgba(109,40,217,.12)")},"Categorize"),
             React.createElement("button",{onClick:()=>massUpdate("Reconciled"),style:tbBtn("#16a34a","rgba(22,163,74,.15)")},"✓ Mark Reconciled"),
             React.createElement("button",{onClick:()=>massUpdate("Unreconciled"),style:tbBtn("#b45309","rgba(180,83,9,.12)")},"○ Mark Unreconciled"),
@@ -5815,7 +5884,25 @@ var gdriveRequestTokenWithRefresh = () => new Promise((resolve) => {
  * silent = true  → background / auto-sync: only cached token, refresh token exchange, or
  *                  GIS browser-session silent refresh.  NEVER shows a popup.
  * silent = false → user-initiated (Push, Pull, Sync Now): full chain including popup. */
+var _gdriveAuthInProgress = false;
 var _gdriveEnsureTokenV2 = async (silent = false) => {
+  /* ── Concurrency guard: prevent multiple simultaneous callers from each
+         opening their own popup (the root cause of the Android popup loop). ── */
+  if (_gdriveAuthInProgress) {
+    console.log("[GDrive] Auth already in progress — waiting for existing request.");
+    /* Poll every 200 ms until the in-flight request finishes (max 10 s) */
+    for (let i = 0; i < 50; i++) {
+      await new Promise(r => setTimeout(r, 200));
+      if (!_gdriveAuthInProgress) break;
+    }
+    /* After waiting, return whatever token is now cached (if any) */
+    const tok = _gdriveGetToken();
+    if (tok && !_gdriveTokenExpired()) return tok;
+    return "";
+  }
+  _gdriveAuthInProgress = true;
+
+  try {
   /* ── Step 1: cached access token still valid ── */
   let tok = _gdriveGetToken();
   if (tok && !_gdriveTokenExpired()) return tok;
@@ -5837,14 +5924,20 @@ var _gdriveEnsureTokenV2 = async (silent = false) => {
   }
 
   /* ── Step 4: interactive popup — Code flow (gives back a refresh token) ── */
+  _gdriveLastPopupTime = Date.now();
   if (_gdriveGetClientSecret()) {
     tok = await gdriveRequestTokenWithRefresh();
     if (tok) return tok;
   }
 
   /* ── Step 5: fallback — Token flow (no refresh token; same as pre-v3) ── */
+  _gdriveLastPopupTime = Date.now();
   tok = await gdriveRequestToken();
   return tok;
+
+  } finally {
+    _gdriveAuthInProgress = false;
+  }
 };
 
 
@@ -7650,7 +7743,10 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
       )
     ),
     !isMobile&&React.createElement("div",{style:{width:200,minWidth:200,display:"flex",flexDirection:"column",gap:2,paddingRight:16,borderRight:"1px solid #0d1e32",marginRight:24}},
-      React.createElement("div",{style:{fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.8,marginBottom:12,paddingLeft:4}},"Settings"),
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12,paddingLeft:4}},
+        React.createElement("div",{style:{width:3,height:14,borderRadius:2,background:"#93c5fd",flexShrink:0}}),
+        React.createElement("div",{style:{fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.8}},"Settings")
+      ),
       STABS.map(t=>React.createElement(SectionTab,{key:t.id,id:t.id,active:stab===t.id,label:t.label,icon:t.icon,onClick:setStab}))
     ),
 
@@ -9113,16 +9209,18 @@ var NotesSection=React.memo(({notes=[],dispatch})=>{
     }),
     /* ── Header */
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}},
-      React.createElement("div",null,
-        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:700,color:"var(--text)"}},"Notes"),
-        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},
+      React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+        React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#6ee7b7",flexShrink:0}}),
+        React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:23,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"Notes"),
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},
           notes.length+" note"+(notes.length!==1?"s":""),
           notes.filter(n=>n.reminder&&!n.reminderDismissed).length>0&&
             React.createElement("span",{style:{marginLeft:8,fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:10,background:"rgba(180,83,9,.18)",color:"#b45309",border:"1px solid rgba(180,83,9,.35)"}},
               ""+notes.filter(n=>n.reminder&&!n.reminderDismissed).length+" reminder"+(notes.filter(n=>n.reminder&&!n.reminderDismissed).length!==1?"s":"")
             )
         )
-      ),
+      )),
       React.createElement(Btn,{onClick:openAdd},"+ New Note")
     ),
 
@@ -9745,10 +9843,12 @@ var ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,paye
 
     /* ── Header row */
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16,gap:12,flexWrap:"wrap"}},
-      React.createElement("div",null,
-        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:700,color:"var(--text)"}},"Scheduled Transactions"),
-        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},"Schedule recurring or future-dated transactions across all accounts.")
-      ),
+      React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+        React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#a78bfa",flexShrink:0}}),
+        React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:23,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"Scheduled Transactions"),
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},"Schedule recurring or future-dated transactions across all accounts.")
+      )),
       React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}},
         React.createElement(Btn,{onClick:()=>setAddScOpen(true),sx:{gap:6,whiteSpace:"nowrap"}},"+ Add Scheduled"),
         /* Completed toggle checkbox */
@@ -10324,13 +10424,9 @@ var _saveEodCaches=(state)=>{
   }catch{}
 };
 
-var loadTheme=()=>{
-  try{return localStorage.getItem(LS_THEME)||"ocean";}catch{return "ocean";}
-};
 
-var saveTheme=(id)=>{
-  try{localStorage.setItem(LS_THEME,id);}catch{}
-};
+
+
 
 /* ── PIN SECURITY ─────────────────────────────────────────────────────────── */
 /* Hash a PIN string with SHA-256; returns lowercase hex string */
@@ -10442,6 +10538,21 @@ var _isAndroidDevice = () => {
   return /Android/i.test(navigator.userAgent);
 };
 
+/* Is the app running as an installed PWA / TWA (standalone display mode)? */
+var _isStandalonePWA = () => {
+  try { return window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; }
+  catch { return false; }
+};
+
+/* ── Popup cooldown: prevents the GIS silent-auth popup from re-appearing
+   in rapid succession on Android where prompt:"none" still opens a popup
+   when third-party cookies are blocked in standalone PWA / TWA mode.
+   The cooldown is 10 seconds — long enough to break the visibility-change
+   re-trigger loop but short enough that a genuine user-initiated auth
+   request is not delayed noticeably. ── */
+var _gdriveLastPopupTime = 0;
+var GDRIVE_POPUP_COOLDOWN_MS = 10000;
+
 /* ── Token helpers ── */
 var _gdriveGetToken = () => {
   try { return localStorage.getItem(GDRIVE_LS_TOKEN) || ""; } catch { return ""; }
@@ -10494,11 +10605,37 @@ var _gdriveTokenExpired = () => {
 /* Silent token refresh — uses the browser's existing Google session cookie.
    Resolves with a token string on success, or "" if the Google session itself
    has expired (in which case the interactive popup fallback will be used).
-   No UI is shown at any point. */
+   No UI is shown at any point.
+
+   *** ANDROID PWA FIX ***
+   On Android in standalone / TWA mode, third-party cookies are blocked by
+   default.  The GIS library cannot verify the Google session without them,
+   so even with prompt:"none" it opens a popup — defeating the "silent"
+   purpose and causing an infinite popup loop (visibility-change re-triggers
+   the same silent call).  We detect this case and bail out immediately so
+   the caller can fall through to the interactive popup path instead.        */
 var gdriveRequestTokenSilent = () => new Promise((resolve) => {
   try {
     const cid = (function(){try{return localStorage.getItem("mm_gdrive_cid")||"";}catch{return "";}})();
     if (!cid || typeof google === "undefined" || !google.accounts?.oauth2) { resolve(""); return; }
+
+    /* On Android standalone PWA / TWA, prompt:"none" still opens a popup
+       because third-party cookies are blocked.  Skip silently so the caller
+       falls through to the interactive path (one popup, not an infinite loop). */
+    if (_isAndroidDevice() && _isStandalonePWA()) {
+      console.log("[GDrive] Skipping GIS silent auth on Android standalone — cookies blocked, prompt:none opens a popup.");
+      resolve("");
+      return;
+    }
+
+    /* Popup cooldown: if a popup was shown very recently, skip to avoid
+       the rapid-popup cascade (e.g. visibility-change re-trigger).       */
+    if (Date.now() - _gdriveLastPopupTime < GDRIVE_POPUP_COOLDOWN_MS) {
+      console.log("[GDrive] Skipping GIS silent auth — popup cooldown active.");
+      resolve("");
+      return;
+    }
+
     const client = google.accounts.oauth2.initTokenClient({
       client_id: cid,
       scope: "https://www.googleapis.com/auth/drive.file",
@@ -11728,192 +11865,186 @@ var usePersistentReducer=(reducer,init)=>{
 };
 
 /* ── APP SHELL ────────────────────────────────────────────────────────────── */
+
+/* ════════════ SHARED POLISH HELPERS ════════════ */
+/* Deterministic gradient pair from a string (account name, etc.) */
+const _AV_GRADS=[
+  ["#6366f1","#8b5cf6"],["#0ea5e9","#22d3ee"],["#10b981","#34d399"],
+  ["#f59e0b","#fbbf24"],["#ef4444","#f97316"],["#ec4899","#f472b6"],
+  ["#14b8a6","#2dd4bf"],["#8b5cf6","#a78bfa"],["#3b82f6","#60a5fa"],
+  ["#f43f5e","#fb7185"],["#84cc16","#a3e635"],["#06b6d4","#67e8f9"],
+];
+function colorFromName(name){
+  try{
+    const s=String(name||"x");let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;
+    return _AV_GRADS[h%_AV_GRADS.length];
+  }catch{return _AV_GRADS[0];}
+}
+/* Animated count-up number */
+function useCountUp(value,dur=600){
+  const[disp,setDisp]=React.useState(value);
+  const fromRef=React.useRef(value),rafRef=React.useRef(0);
+  React.useEffect(()=>{
+    const reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if(reduce){setDisp(value);return;}
+    const from=fromRef.current,to=Number(value)||0,start=performance.now();
+    cancelAnimationFrame(rafRef.current);
+    const tick=now=>{
+      const p=Math.min(1,(now-start)/(dur||600));
+      const e=1-Math.pow(1-p,3);
+      setDisp(from+(to-from)*e);
+      if(p<1)rafRef.current=requestAnimationFrame(tick);
+      else fromRef.current=to;
+    };
+    rafRef.current=requestAnimationFrame(tick);
+    return()=>cancelAnimationFrame(rafRef.current);
+  },[value,dur]);
+  return disp;
+}
+const CountUp=({value,fmt=v=>String(Math.round(v)),dur,className,style={}})=>{
+  const d=useCountUp(value,dur);
+  return React.createElement("span",{className:className,style:style},fmt(d));
+};
+/* Themed account avatar (monogram) */
+const Avatar=({name,size=40,radius=11,fontSize})=>{
+  const[g0,g1]=colorFromName(name);
+  const id="av"+Math.abs((name||"x").split("").reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7)).toString(36);
+  const initials=String(name||"?").trim().split(/\s+/).slice(0,2).map(w=>w[0]||"").join("").toUpperCase()||"?";
+  const fs=fontSize||Math.round(size*0.4);
+  return React.createElement("span",{className:"mm-avatar",style:{width:size,height:size,borderRadius:radius,fontSize:fs,background:"linear-gradient(135deg,"+g0+","+g1+")"},"aria-hidden":"true"},initials);
+};
+/* Toast host */
+const ToastHost=({toasts,onUndo,onClose})=>React.createElement("div",{className:"mm-toast-host","aria-live":"polite",role:"status"},
+  toasts.map(t=>React.createElement("div",{key:t.id,className:"mm-toast",role:"alert"},
+    React.createElement("div",{className:"mm-toast-msg"},t.msg),
+    t.undo&&React.createElement("button",{className:"mm-toast-undo",onClick:()=>onUndo(t.id)},"Undo"),
+    React.createElement("button",{className:"mm-toast-close",onClick:()=>onClose(t.id),"aria-label":"Dismiss"},"×")
+  ))
+);
+/* Sticky subheader */
+/* Reusable keyboard-navigable list (arrow keys + Enter) */
+const useKbdList=(count,onEnter)=>{
+  const[idx,setIdx]=React.useState(-1);
+  const onKeyDown=e=>{
+    if(count<=0)return;
+    if(e.key==="ArrowDown"){e.preventDefault();setIdx(i=>Math.min(count-1,(i<0?-1:i)+1));}
+    else if(e.key==="ArrowUp"){e.preventDefault();setIdx(i=>Math.max(0,(i<0?count:0)-1));}
+    else if(e.key==="Home"){e.preventDefault();setIdx(0);}
+    else if(e.key==="End"){e.preventDefault();setIdx(count-1);}
+    else if(e.key==="Enter"){if(idx>=0&&idx<count)onEnter(idx);}
+  };
+  return[idx,setIdx,onKeyDown];
+};
+/* "What's New" modal — shown once per version bump */
+/* Sticky subheader */
+const StickyHd=({children,style={}})=>React.createElement("div",{className:"mm-sticky-hd",style},children);
+
+const WHATS_NEW=[
+  {icon:"star",t:"Star transactions",d:"Mark important transactions with a golden star in Bank, Card, and Cash ledgers."},
+  {icon:"sparkles",t:"Hero card animations",d:"Dashboard hero cards now fade in with a subtle staggered entrance animation."},
+  {icon:"sparkles",t:"Redesigned navigation icons",d:"All 22 nav items got cohesive line-style icons."},
+  {icon:"zap",t:"Command palette (⌘K)",d:"Search, jump to any screen, add transactions, switch theme."},
+  {icon:"loader",t:"Loading skeletons",d:"Dashboards now show elegant shimmer placeholders."},
+  {icon:"smartphone",t:"Mobile bottom bar",d:"Primary destinations are one tap away on phones."},
+  {icon:"a11y",t:"Accessibility pass",d:"Focus rings, aria-labels, and reduced-motion support."},
+];
+const WhatsNewModal=({onClose})=>{
+  const body=React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:12}},
+    WHATS_NEW.map(f=>React.createElement("div",{key:f.t,style:{display:"flex",gap:12,alignItems:"flex-start",padding:"10px 12px",borderRadius:12,background:"var(--bg5)"}},
+      React.createElement("div",{style:{flexShrink:0,width:34,height:34,borderRadius:10,background:"var(--accentbg2)",color:"var(--accent)",display:"flex",alignItems:"center",justifyContent:"center"}},React.createElement(Icon,{n:f.icon,size:18})),
+      React.createElement("div",null,
+        React.createElement("div",{style:{fontSize:13.5,fontWeight:600,color:"var(--text)"}},f.t),
+        React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginTop:2,lineHeight:1.5}},f.d)
+      )
+    ))
+  );
+  return React.createElement(Modal,{title:"✨ What's new in v"+APP_VERSION,onClose,w:440},
+    body,
+    React.createElement("div",{style:{marginTop:18,display:"flex",justifyContent:"flex-end"}},
+      React.createElement(Btn,{onClick:onClose},"Awesome")
+    )
+  );
+};
+
 /* ── NAV ICONS -- pixel-perfect 16×16 stroke SVGs, inherit color via currentColor ── */
 var NavIcon=({id,size=16})=>{
   const s={width:size,height:size,viewBox:"0 0 16 16",fill:"none",stroke:"currentColor",strokeWidth:1.5,strokeLinecap:"round",strokeLinejoin:"round",display:"block",flexShrink:0};
+  const g=(...k)=>React.createElement("svg",s,...k);
+  const P=d=>React.createElement("path",{d});
+  const L=(x1,y1,x2,y2)=>React.createElement("line",{x1,y1,x2,y2});
+  const C=(cx,cy,r,f)=>React.createElement("circle",{cx,cy,r,...(f?{fill:"currentColor",stroke:"none"}:{})});
+  const R=(x,y,w,h,rx)=>React.createElement("rect",{x,y,width:w,height:h,rx:rx==null?1.4:rx});
+  const PL=(pts,extra)=>React.createElement("polyline",{points:pts,...(extra||{})});
+  const T=t=>React.createElement("text",{x:8,y:10.8,textAnchor:"middle",fontSize:6.5,fontWeight:700,fill:"currentColor",stroke:"none",fontFamily:"sans-serif"},t);
   switch(id){
-    /* ── Dashboard: 2×2 rounded tiles ── */
+    /* ── Dashboard: one large panel + two stacked tiles ── */
     case"dashboard":
-      return React.createElement("svg",s,
-        React.createElement("rect",{x:1.5,y:1.5,width:5.5,height:5.5,rx:1.2}),
-        React.createElement("rect",{x:9,y:1.5,width:5.5,height:5.5,rx:1.2}),
-        React.createElement("rect",{x:1.5,y:9,width:5.5,height:5.5,rx:1.2}),
-        React.createElement("rect",{x:9,y:9,width:5.5,height:5.5,rx:1.2})
-      );
-    /* ── Banks: roof triangle + 3 columns + base bar ── */
+      return g(R(2,2,5.5,12,1.5),R(9,2,5,5,1.5),R(9,8.5,5,5.5,1.5));
+    /* ── Banks: roof + three columns + base ── */
     case"banks":
-      return React.createElement("svg",s,
-        React.createElement("path",{d:"M1.5 6.5L8 2l6.5 4.5H1.5z"}),
-        React.createElement("line",{x1:3.5,y1:6.5,x2:3.5,y2:11.5}),
-        React.createElement("line",{x1:8,y1:6.5,x2:8,y2:11.5}),
-        React.createElement("line",{x1:12.5,y1:6.5,x2:12.5,y2:11.5}),
-        React.createElement("line",{x1:1.5,y1:11.5,x2:14.5,y2:11.5}),
-        React.createElement("line",{x1:1.5,y1:13.5,x2:14.5,y2:13.5})
-      );
-    /* ── Cards: card body + stripe + chip ── */
+      return g(P("M2 6.3 8 2.3 14 6.3"),L(4,7,4,12.2),L(8,7,8,12.2),L(12,7,12,12.2),L(2.2,12.6,13.8,12.6));
+    /* ── Cards: rounded card + magstripe + chip ── */
     case"cards":
-      return React.createElement("svg",s,
-        React.createElement("rect",{x:1.5,y:3.5,width:13,height:9,rx:1.5}),
-        React.createElement("line",{x1:1.5,y1:7,x2:14.5,y2:7}),
-        React.createElement("rect",{x:3,y:9,width:3,height:2,rx:.6})
-      );
-    /* ── Cash: banknote rectangle + centre circle + corner dots ── */
+      return g(R(1.5,3.5,13,9,1.9),L(1.5,6.9,14.5,6.9),R(3.4,9.2,3,2,0.6));
+    /* ── Cash: modern wallet + button pocket ── */
     case"cash":
-      return React.createElement("svg",s,
-        React.createElement("rect",{x:1.5,y:4.5,width:13,height:7,rx:1.3}),
-        React.createElement("circle",{cx:8,cy:8,r:1.9}),
-        React.createElement("circle",{cx:4,cy:8,r:.6,fill:"currentColor",stroke:"none"}),
-        React.createElement("circle",{cx:12,cy:8,r:.6,fill:"currentColor",stroke:"none"})
-      );
-    /* ── Loans: document + diagonal % ── */
+      return g(R(1.5,3.8,13,8.6,2),P("M14.5 7.6H11.4a1.5 1.5 0 000 3h3.1"),C(11.9,9.1,0.7,true));
+    /* ── Loans: percent in a circle (interest) ── */
     case"loans":
-      return React.createElement("svg",s,
-        React.createElement("path",{d:"M9.5 1.5H4a1.2 1.2 0 00-1.2 1.2v10.6a1.2 1.2 0 001.2 1.2h8a1.2 1.2 0 001.2-1.2V5.2z"}),
-        React.createElement("polyline",{points:"9.5,1.5 9.5,5.2 13.2,5.2"}),
-        React.createElement("line",{x1:5.5,y1:11,x2:10.5,y2:7}),
-        React.createElement("circle",{cx:6,cy:7.5,r:.9}),
-        React.createElement("circle",{cx:10,cy:10.5,r:.9})
-      );
-    /* ── Scheduled: calendar + clock face ── */
+      return g(C(8,8,6),L(5.6,10.4,10.4,5.6),C(6.2,6.2,0.95),C(9.8,9.8,0.95));
+    /* ── Scheduled: calendar + clock ── */
     case"scheduled":
-      return React.createElement("svg",s,
-        React.createElement("rect",{x:2,y:3,width:12,height:11,rx:1.4}),
-        React.createElement("line",{x1:5.5,y1:1.5,x2:5.5,y2:4.5}),
-        React.createElement("line",{x1:10.5,y1:1.5,x2:10.5,y2:4.5}),
-        React.createElement("line",{x1:2,y1:7,x2:14,y2:7}),
-        React.createElement("circle",{cx:8,cy:10.5,r:2.4}),
-        React.createElement("polyline",{points:"8,9.2 8,10.5 9.2,11.4"})
-      );
-    /* ── All Transactions: 3 clean horizontal rows ── */
+      return g(R(1.8,3,12.4,11,1.6),L(5,1.6,5,4.2),L(11,1.6,11,4.2),L(1.8,6.8,14.2,6.8),C(8,10.6,2.5),PL("8,9.3 8,10.6 9.5,11.3"));
+    /* ── All Transactions: up/down flow arrows ── */
     case"unified_ledger":
-      return React.createElement("svg",s,
-        React.createElement("line",{x1:1.5,y1:4,x2:14.5,y2:4}),
-        React.createElement("line",{x1:1.5,y1:8,x2:14.5,y2:8}),
-        React.createElement("line",{x1:1.5,y1:12,x2:10.5,y2:12}),
-        React.createElement("circle",{cx:1.5,cy:4,r:.9,fill:"currentColor",stroke:"none"}),
-        React.createElement("circle",{cx:1.5,cy:8,r:.9,fill:"currentColor",stroke:"none"}),
-        React.createElement("circle",{cx:1.5,cy:12,r:.9,fill:"currentColor",stroke:"none"})
-      );
-    /* ── Invest overview: rising trend + arrow ── */
+      return g(P("M5 13.2V4.2"),PL("2.6,6.6 5,4.2 7.4,6.6"),P("M11 2.8v9"),PL("8.6,9.4 11,11.8 13.4,9.4"));
+    /* ── Investments overview: rising trend + arrow ── */
     case"inv_dash":
-      return React.createElement("svg",s,
-        React.createElement("polyline",{points:"1.5,12 5,7.5 8.5,9.5 13.5,4"}),
-        React.createElement("polyline",{points:"10.5,4 13.5,4 13.5,7"})
-      );
-    /* ── Mutual Funds: 4 ascending bars ── */
+      return g(PL("1.8,11.5 5.6,7.6 8.6,9.6 14,4.2"),PL("10.6,4.2 14,4.2 14,7.6"));
+    /* ── Mutual Funds: donut allocation ── */
     case"inv_mf":
-      return React.createElement("svg",s,
-        React.createElement("rect",{x:1.5,y:10.5,width:2.5,height:3.5,rx:.6}),
-        React.createElement("rect",{x:5.5,y:7.5,width:2.5,height:6.5,rx:.6}),
-        React.createElement("rect",{x:9.5,y:4.5,width:2.5,height:9.5,rx:.6}),
-        React.createElement("line",{x1:1.5,y1:14,x2:14.5,y2:14})
-      );
+      return g(C(8,8,5.4),C(8,8,2.1),L(8,2.6,8,5.9),L(12.9,9.4,10.2,8.5));
     /* ── Shares: candlestick chart ── */
     case"inv_shares":
-      return React.createElement("svg",s,
-        React.createElement("line",{x1:4,y1:2.5,x2:4,y2:13.5}),
-        React.createElement("rect",{x:2.5,y:5,width:3,height:5.5,rx:.5}),
-        React.createElement("line",{x1:9,y1:1.5,x2:9,y2:12}),
-        React.createElement("rect",{x:7.5,y:4.5,width:3,height:4,rx:.5}),
-        React.createElement("line",{x1:13.5,y1:4,x2:13.5,y2:14}),
-        React.createElement("rect",{x:12,y:6.5,width:3,height:5,rx:.5})
-      );
-    /* ── Fixed Deposit: clock (time-locked) ── */
+      return g(L(4,2.6,4,13.4),R(2.7,5,2.6,5,0.5),L(9,2,9,12),R(7.7,4.4,2.6,4,0.5),L(13,4,13,14),R(11.7,6.4,2.6,5,0.5));
+    /* ── Fixed Deposit: padlock (locked-in) ── */
     case"inv_fd":
-      return React.createElement("svg",s,
-        React.createElement("circle",{cx:8,cy:8.5,r:5.5}),
-        React.createElement("polyline",{points:"8,5.5 8,8.5 10.5,10"}),
-        React.createElement("line",{x1:6,y1:2,x2:10,y2:2})
-      );
-    /* ── Real Estate: clean house silhouette ── */
+      return g(P("M5.5 7V5.2a2.5 2.5 0 015 0V7"),R(3.6,7,8.8,6.4,1.6),C(8,9.7,0.95),L(8,10.5,8,11.5));
+    /* ── Real Estate: house with door ── */
     case"inv_re":
-      return React.createElement("svg",s,
-        React.createElement("path",{d:"M1.5 8.5L8 2.5l6.5 6V14H10v-4H6v4H1.5z"}),
-        React.createElement("line",{x1:1.5,y1:14,x2:14.5,y2:14})
-      );
-    /* ── Provident Fund: shield with ₹ — secure, government-backed savings ── */
+      return g(P("M2.2 8 8 2.6 13.8 8"),P("M3.6 7.1V13.4H12.4V7.1"),R(6.7,9.6,2.6,3.8,0.4),L(2.2,13.6,13.8,13.6));
+    /* ── Provident Fund: shield + rupee ── */
     case"inv_pf":
-      return React.createElement("svg",s,
-        React.createElement("path",{d:"M8 1.5L2 4v5c0 3.2 2.6 5.8 6 6.5 3.4-.7 6-3.3 6-6.5V4L8 1.5z"}),
-        React.createElement("text",{x:8,y:11,textAnchor:"middle",fontSize:6.5,fontWeight:700,fill:"currentColor",stroke:"none",fontFamily:"sans-serif"},"₹")
-      );
-    /* ── Calendar: grid with highlighted day ── */
+      return g(P("M8 1.8 2.6 4v4.6c0 3 2.3 5.2 5.4 6 3.1-.8 5.4-3 5.4-6V4L8 1.8Z"),T("\u20B9"));
+    /* ── Calendar: grid + highlighted day ── */
     case"calendar":
-      return React.createElement("svg",s,
-        React.createElement("rect",{x:1.5,y:3,width:13,height:11.5,rx:1.4}),
-        React.createElement("line",{x1:5.5,y1:1.5,x2:5.5,y2:4.5}),
-        React.createElement("line",{x1:10.5,y1:1.5,x2:10.5,y2:4.5}),
-        React.createElement("line",{x1:1.5,y1:7,x2:14.5,y2:7}),
-        React.createElement("circle",{cx:8,cy:10.5,r:1.2,fill:"currentColor",stroke:"none"})
-      );
-    /* ── Goals: concentric target rings + dot ── */
+      return g(R(1.8,3,12.4,11.5,1.6),L(5,1.6,5,4.3),L(11,1.6,11,4.3),L(1.8,7,14.2,7),C(8,10.7,1.3,true));
+    /* ── Goals: concentric target ── */
     case"goals":
-      return React.createElement("svg",s,
-        React.createElement("circle",{cx:8,cy:8,r:6}),
-        React.createElement("circle",{cx:8,cy:8,r:3.5}),
-        React.createElement("circle",{cx:8,cy:8,r:1,fill:"currentColor",stroke:"none"})
-      );
-    /* ── Insights: ascending bars + dashed trend ── */
+      return g(C(8,8,6),C(8,8,3.3),C(8,8,1,true));
+    /* ── Insights: lightbulb (ideas) ── */
     case"insights":
-      return React.createElement("svg",s,
-        React.createElement("rect",{x:1.5,y:10,width:3,height:4,rx:.6}),
-        React.createElement("rect",{x:6.5,y:6.5,width:3,height:7.5,rx:.6}),
-        React.createElement("rect",{x:11.5,y:3,width:3,height:11,rx:.6}),
-        React.createElement("polyline",{points:"3,9.5 8,6 13,2.5",strokeDasharray:"2,1.5"})
-      );
-    /* ── Notes: document + 2 text lines ── */
+      return g(P("M5.2 10a4 4 0 116 0c-.5.5-.9 1-1 1.8H6.2c-.1-.8-.5-1.3-1-1.8Z"),L(6.5,13,9.5,13),L(7,14.2,9,14.2));
+    /* ── Notes: document + folded corner + lines ── */
     case"notes":
-      return React.createElement("svg",s,
-        React.createElement("path",{d:"M10.5 1.5H3.8a1.2 1.2 0 00-1.2 1.2v10.6a1.2 1.2 0 001.2 1.2h8.4a1.2 1.2 0 001.2-1.2V5.2z"}),
-        React.createElement("polyline",{points:"10.5,1.5 10.5,5.2 13.4,5.2"}),
-        React.createElement("line",{x1:5,y1:8,x2:11,y2:8}),
-        React.createElement("line",{x1:5,y1:10.5,x2:8.5,y2:10.5})
-      );
-    /* ── Calculator: body + display + 6 keys ── */
+      return g(P("M10.3 2H4.2a1.3 1.3 0 00-1.3 1.3v9.4a1.3 1.3 0 001.3 1.3h7.6a1.3 1.3 0 001.3-1.3V4.7Z"),PL("10.3,2 10.3,4.7 13,4.7"),L(5,8,11,8),L(5,10.5,8.5,10.5));
+    /* ── Calculator: body + display + keys ── */
     case"calculator":
-      return React.createElement("svg",s,
-        React.createElement("rect",{x:2.5,y:1.5,width:11,height:13,rx:1.6}),
-        React.createElement("rect",{x:4.5,y:3.2,width:7,height:2.8,rx:.7,fill:"currentColor",opacity:.2,stroke:"none"}),
-        React.createElement("circle",{cx:5.5,cy:8.5,r:.85,fill:"currentColor",stroke:"none"}),
-        React.createElement("circle",{cx:8,cy:8.5,r:.85,fill:"currentColor",stroke:"none"}),
-        React.createElement("circle",{cx:10.5,cy:8.5,r:.85,fill:"currentColor",stroke:"none"}),
-        React.createElement("circle",{cx:5.5,cy:11.5,r:.85,fill:"currentColor",stroke:"none"}),
-        React.createElement("circle",{cx:8,cy:11.5,r:.85,fill:"currentColor",stroke:"none"}),
-        React.createElement("circle",{cx:10.5,cy:11.5,r:.85,fill:"currentColor",stroke:"none"})
-      );
-    /* ── Reports: document + embedded bar chart ── */
+      return g(R(2.7,1.6,10.6,12.8,1.8),R(4.4,3.2,7.2,2.6,0.6),C(5.6,8.6,0.85,true),C(8,8.6,0.85,true),C(10.4,8.6,0.85,true),C(5.6,11.4,0.85,true),C(8,11.4,0.85,true),C(10.4,11.4,0.85,true));
+    /* ── Reports: document + bar chart ── */
     case"reports":
-      return React.createElement("svg",s,
-        React.createElement("path",{d:"M9.5 1.5H4a1.2 1.2 0 00-1.2 1.2v10.6a1.2 1.2 0 001.2 1.2h8a1.2 1.2 0 001.2-1.2V5.2z"}),
-        React.createElement("polyline",{points:"9.5,1.5 9.5,5.2 13.2,5.2"}),
-        React.createElement("rect",{x:5,y:9.5,width:1.5,height:3,rx:.4}),
-        React.createElement("rect",{x:7.5,y:8,width:1.5,height:4.5,rx:.4}),
-        React.createElement("rect",{x:10,y:6.5,width:1.5,height:6,rx:.4})
-      );
-    /* ── Settings: gear — circle + 8 spokes ── */
+      return g(P("M9.5 2H4.2a1.3 1.3 0 00-1.3 1.3v9.4a1.3 1.3 0 001.3 1.3h7.6a1.3 1.3 0 001.3-1.3V5.2Z"),PL("9.5,2 9.5,5.2 12.8,5.2"),R(5,9.5,1.4,3,0.4),R(7.6,8,1.4,4.5,0.4),R(10.2,6.8,1.4,5.7,0.4));
+    /* ── Settings: gear ── */
     case"settings":
-      return React.createElement("svg",s,
-        React.createElement("circle",{cx:8,cy:8,r:2.4}),
-        React.createElement("path",{d:"M8 1.5v1.3M8 13.2v1.3M1.5 8h1.3M13.2 8h1.3M3.4 3.4l.95.95M11.65 11.65l.95.95M3.4 12.6l.95-.95M11.65 4.35l.95-.95"})
-      );
-    /* ── Info: circled lowercase i ── */
+      return g(C(8,8,2.3),P("M8 1.4v1.4M8 13.2v1.4M1.4 8h1.4M13.2 8h1.4M3.3 3.3l1 1M11.7 11.7l1 1M3.3 12.7l1-1M11.7 4.3l1-1"));
+    /* ── Info: circled i ── */
     case"info":
-      return React.createElement("svg",s,
-        React.createElement("circle",{cx:8,cy:8,r:6.2}),
-        React.createElement("line",{x1:8,y1:7,x2:8,y2:11.5}),
-        React.createElement("circle",{cx:8,cy:4.8,r:.85,fill:"currentColor",stroke:"none"})
-      );
-    /* ── Tax Estimator: receipt + % lines ── */
+      return g(C(8,8,6.2),L(8,7.2,8,11.4),C(8,4.9,0.85,true));
+    /* ── Tax Estimator: receipt + percent ── */
     case"tax_est":
-      return React.createElement("svg",s,
-        React.createElement("path",{d:"M11 1.5H5a1.2 1.2 0 00-1.2 1.2v10.6a1.2 1.2 0 001.2 1.2h6a1.2 1.2 0 001.2-1.2V2.7a1.2 1.2 0 00-1.2-1.2z"}),
-        React.createElement("line",{x1:5.5,y1:5,x2:10.5,y2:5}),
-        React.createElement("line",{x1:5.5,y1:10.5,x2:10.5,y2:7}),
-        React.createElement("circle",{cx:6.2,cy:7.2,r:.85}),
-        React.createElement("circle",{cx:9.8,cy:10.2,r:.85})
-      );
+      return g(P("M4 2h8v11.6l-1.3-.9-1.3.9-1.3-.9-1.3.9-1.3-.9-1.3.9Z"),L(5.8,4.8,10.2,4.8),L(6.2,9.6,9.8,6.4),C(6.7,7,0.7),C(9.3,9.4,0.7));
     default:
-      return React.createElement("svg",s,React.createElement("circle",{cx:8,cy:8,r:5}));
+      return g(C(8,8,5));
   }
 };
 
@@ -13234,10 +13365,12 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}},
       React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,minWidth:0}},
         isMobile&&mobileView==="detail"&&React.createElement("button",{onClick:()=>setMobileView("list"),style:{background:"transparent",border:"1px solid var(--border)",borderRadius:8,color:"var(--accent)",cursor:"pointer",fontSize:13,padding:"5px 10px",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap",flexShrink:0}},"← Back"),
-        React.createElement("div",null,
-          React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,color:"var(--text)"}},isMobile&&mobileView==="detail"?(selD?.name||"Transactions"):"Bank Accounts"),
-          !(isMobile&&mobileView==="detail")&&React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},"Total: ",React.createElement("span",{style:{color:"#0e7490",fontWeight:600}},INR(banks.reduce((s,b)=>s+b.balance,0))))
-        )
+        React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+          React.createElement("div",{style:{width:4,minHeight:isMobile?30:40,borderRadius:3,background:"#38bdf8",flexShrink:0}}),
+          React.createElement("div",null,
+          React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},isMobile&&mobileView==="detail"?(selD?.name||"Transactions"):"Bank Accounts"),
+          !(isMobile&&mobileView==="detail")&&React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},"Total: ",React.createElement("span",{style:{color:"#0e7490",fontWeight:600}},INR(banks.reduce((s,b)=>s+b.balance,0))))
+        ))
       ),
       !(isMobile&&mobileView==="detail")&&React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center"}},
         banks.length>1&&React.createElement("button",{
@@ -13280,9 +13413,12 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
                     style:{width:22,height:22,borderRadius:5,border:"1px solid var(--border)",background:bIdx===banks.length-1?"transparent":"var(--accentbg2)",color:bIdx===banks.length-1?"var(--text6)":"var(--accent)",cursor:bIdx===banks.length-1?"not-allowed":"pointer",fontSize:12,lineHeight:1,fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",padding:0}
                   },"▼")
                 ),
-                React.createElement("div",{style:{minWidth:0,flex:1}},
-                  React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",lineHeight:1.3}},b.name),
-                  React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",marginTop:2}},b.bank)
+                React.createElement("div",{style:{minWidth:0,flex:1,display:"flex",alignItems:"center",gap:10}},
+                  React.createElement(Avatar,{name:b.name,size:38,radius:11}),
+                  React.createElement("div",{style:{minWidth:0,flex:1}},
+                    React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",lineHeight:1.3}},b.name),
+                    React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",marginTop:2}},b.bank)
+                  )
                 )
               ),
               !reorderMode&&React.createElement(Badge,{ch:b.type,col:"#0e7490"}),
@@ -13455,10 +13591,12 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:8}},
       React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,minWidth:0}},
         isMobile&&mobileView==="detail"&&React.createElement("button",{onClick:()=>setMobileView("list"),style:{background:"transparent",border:"1px solid var(--border)",borderRadius:8,color:"var(--accent)",cursor:"pointer",fontSize:13,padding:"5px 10px",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap",flexShrink:0}},"← Back"),
-        React.createElement("div",null,
-          React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,color:"var(--text)"}},isMobile&&mobileView==="detail"?(selD?.name||"Transactions"):"Credit Cards"),
-          !(isMobile&&mobileView==="detail")&&React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},"Outstanding: ",React.createElement("span",{style:{color:"#c2410c",fontWeight:600}},INR(cards.reduce((s,c)=>s+c.outstanding,0))))
-        )
+        React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+          React.createElement("div",{style:{width:4,minHeight:isMobile?30:40,borderRadius:3,background:"#f472b6",flexShrink:0}}),
+          React.createElement("div",null,
+          React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},isMobile&&mobileView==="detail"?(selD?.name||"Transactions"):"Credit Cards"),
+          !(isMobile&&mobileView==="detail")&&React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},"Outstanding: ",React.createElement("span",{style:{color:"#c2410c",fontWeight:600}},INR(cards.reduce((s,c)=>s+c.outstanding,0))))
+        ))
       ),
       !(isMobile&&mobileView==="detail")&&React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center"}},
         cards.length>1&&React.createElement("button",{
@@ -13499,9 +13637,12 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
                     style:{width:22,height:22,borderRadius:5,border:"1px solid var(--border)",background:cIdx===cards.length-1?"transparent":"var(--accentbg2)",color:cIdx===cards.length-1?"var(--text6)":"var(--accent)",cursor:cIdx===cards.length-1?"not-allowed":"pointer",fontSize:12,lineHeight:1,fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",padding:0}
                   },"▼")
                 ),
-                React.createElement("div",{style:{minWidth:0,flex:1}},
-                  React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text)"}},c.name),
-                  React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},c.bank)
+                React.createElement("div",{style:{minWidth:0,flex:1,display:"flex",alignItems:"center",gap:10}},
+                  React.createElement(Avatar,{name:c.name,size:38,radius:11}),
+                  React.createElement("div",{style:{minWidth:0,flex:1}},
+                    React.createElement("div",{style:{fontSize:14,fontWeight:600,color:"var(--text)"}},c.name),
+                    React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},c.bank)
+                  )
                 )
               ),
               !reorderMode&&React.createElement("span",{style:{fontSize:22}},React.createElement(Icon,{n:"card",size:18})),
@@ -13546,11 +13687,15 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
               ):null;
               const daysUntilDue=dueDate?Math.ceil((dueDate-now)/(86400000)):null;
               const fmtD=d=>`${d.getDate()}/${d.getMonth()+1}`;
-              const _dFmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;const cycleSpend=(c.transactions||[]).filter(t=>t.type==="debit"&&t.date>=_dFmt(cycleStart)&&t.date<=_dFmt(cycleEnd)).reduce((s,t)=>s+t.amount,0);
+              const _dFmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;const cycleSpend=(c.transactions||[]).filter(t=>t.type==="debit"&&t.date>=_dFmt(cycleStart)&&t.date<=_dFmt(cycleEnd)).reduce((s,t)=>s+t.amount,0);const cycleOutstanding=Math.max(0,(c.transactions||[]).filter(t=>t.status==="Reconciled"&&t.date<=_dFmt(cycleEnd)).reduce((s,t)=>s+(t.type==="debit"?t.amount:-t.amount),0));
               return React.createElement("div",{style:{marginTop:8,padding:"7px 9px",borderRadius:8,background:"var(--bg5)",border:"1px solid var(--border2)",fontSize:10}},
                 React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:3}},
                   React.createElement("span",{style:{color:"var(--text5)"}},"Cycle: "+fmtD(cycleStart)+" – "+fmtD(cycleEnd)),
                   React.createElement("span",{style:{color:"var(--accent)",fontWeight:600}},"Spent: "+INR(cycleSpend))
+                ),
+                React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:3,fontSize:9}},
+                  React.createElement("span",{style:{color:"var(--text4)"}},"Outstanding on cycle end"),
+                  React.createElement("span",{style:{color:"#c2410c",fontWeight:700}},""+INR(cycleOutstanding))
                 ),
                 dueDate&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5}},
                   React.createElement("span",{style:{color:daysUntilDue!==null&&daysUntilDue<=5?"#ef4444":daysUntilDue!==null&&daysUntilDue<=10?"#c2410c":"#16a34a",fontWeight:600}},
@@ -13690,9 +13835,12 @@ const CashSection=React.memo(({cash,dispatch,categories,payees,allBanks,allCards
   const catMap=cash.transactions.filter(t=>t.type==="debit").reduce((a,t)=>{const k=catMainName(t.cat||"Others");a[k]=(a[k]||0)+t.amount;return a;},{});
   const pieData=Object.entries(catMap).map(([name,value])=>({name,value}));
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",height:"100%"}},
-    React.createElement("div",{style:{marginBottom:16}},
-      React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:700,color:"var(--text)"}},"Cash Account"),
-      React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},"Physical cash and cash-based transactions")
+    React.createElement("div",{style:{marginBottom:16,display:"flex",alignItems:"center",gap:13}},
+      React.createElement(Avatar,{name:"Cash",size:42,radius:12,fontSize:17}),
+      React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:23,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"Cash Account"),
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},"Physical cash and cash-based transactions")
+      )
     ),
     React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"1fr 1fr 1fr",gap:12,marginBottom:16}},
       React.createElement(Card,{sx:{background:"var(--card)"}},
@@ -14068,11 +14216,11 @@ const FinancialCalendar=({data,isMobile})=>{
     if(now.getDate()<=bd)cs.setMonth(cs.getMonth()-1);
     const ns=new Date(cs);ns.setMonth(ns.getMonth()+1);
     const due=dd>bd?new Date(ns.getFullYear(),ns.getMonth(),dd):new Date(ns.getFullYear(),ns.getMonth()+1,dd);
-    const _fmtLocal=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;const ds=_fmtLocal(due);
+    const _fmtLocal=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;const ds=_fmtLocal(due);const _nsStr=_fmtLocal(ns);const cycleDue=Math.max(0,(card.transactions||[]).filter(t=>t.status==="Reconciled"&&t.date<_nsStr).reduce((s,t)=>s+(t.type==="debit"?t.amount:-t.amount),0));
     if(ds>=todayStr&&ds<=horizonStr)
       events.push({date:ds,icon:React.createElement(Icon,{n:"card",size:18}),label:card.name+" payment due",
-        sub:"Outstanding: "+INRc(card.outstanding||0),
-        amount:card.outstanding||0,aCol:"#ef4444",aSign:"−",col:"#c2410c"});
+        sub:"Outstanding: "+INRc(cycleDue||0),
+        amount:cycleDue||0,aCol:"#ef4444",aSign:"−",col:"#c2410c"});
   });
   (data.fd||[]).filter(f=>f.maturityDate&&f.maturityDate>=todayStr&&f.maturityDate<=horizonStr).forEach(f=>{
     const m=f.maturityAmount&&f.maturityAmount>f.amount?f.maturityAmount:f.amount;
@@ -14126,7 +14274,7 @@ const FinancialCalendar=({data,isMobile})=>{
   );
 };
 
-const Dashboard=React.memo(({data,isMobile})=>{
+const Dashboard=React.memo(({data,isMobile,onJumpToTx})=>{
   const[ready,setReady]=useState(false);
   const[txTab,setTxTab]=useState("all"); /* account id or "all" */
   const[showPayeeAnalytics,setShowPayeeAnalytics]=useState(false);
@@ -14360,6 +14508,9 @@ const Dashboard=React.memo(({data,isMobile})=>{
 
   /* ━━ 11. CASH FLOW SVG BAR CHART ━━━━━━━━━━━━━━━━━━━━━━━━━ */
   const CashFlowChart=(()=>{
+    const[active,setActive]=React.useState(-1);
+    const wrapRef=React.useRef(null);
+    const[tip,setTip]=React.useState({x:0,y:0});
     if(!monthlyFlow.length)return null;
     const W=460,H=140,pL=6,pR=6,pT=10,pB=32;
     const cW=W-pL-pR,cH=H-pT-pB,n=monthlyFlow.length;
@@ -14367,27 +14518,41 @@ const Dashboard=React.memo(({data,isMobile})=>{
     const grpW=cW/n,bW=Math.min(grpW*0.32,14);
     const bh=v=>Math.max(v>0?(v/maxV)*cH:0,v>0?2:0);
     const xC=i=>pL+i*grpW+grpW/2;
-    return React.createElement("svg",{width:"100%",viewBox:`0 0 ${W} ${H}`,style:{display:"block",overflow:"visible"}},
-      React.createElement("defs",null,
-        React.createElement("linearGradient",{id:"gInc",x1:"0",y1:"0",x2:"0",y2:"1"},
-          React.createElement("stop",{offset:"0%",stopColor:"#16a34a",stopOpacity:.9}),
-          React.createElement("stop",{offset:"100%",stopColor:"#16a34a",stopOpacity:.55})),
-        React.createElement("linearGradient",{id:"gExp",x1:"0",y1:"0",x2:"0",y2:"1"},
-          React.createElement("stop",{offset:"0%",stopColor:"#ef4444",stopOpacity:.85}),
-          React.createElement("stop",{offset:"100%",stopColor:"#ef4444",stopOpacity:.5}))
+    const gId="gInc_"+n+"_"+monthlyFlow[0].label.replace(/\W/g,"");
+    const gExp="gExp_"+n+"_"+monthlyFlow[0].label.replace(/\W/g,"");
+    return React.createElement("div",{ref:wrapRef,style:{position:"relative"}},
+      React.createElement("svg",{width:"100%",viewBox:`0 0 ${W} ${H}`,style:{display:"block",overflow:"visible"}},
+        React.createElement("defs",null,
+          React.createElement("linearGradient",{id:gId,x1:"0",y1:"0",x2:"0",y2:"1"},
+            React.createElement("stop",{offset:"0%",stopColor:"#16a34a",stopOpacity:.9}),
+            React.createElement("stop",{offset:"100%",stopColor:"#16a34a",stopOpacity:.55})),
+          React.createElement("linearGradient",{id:gExp,x1:"0",y1:"0",x2:"0",y2:"1"},
+            React.createElement("stop",{offset:"0%",stopColor:"#ef4444",stopOpacity:.85}),
+            React.createElement("stop",{offset:"100%",stopColor:"#ef4444",stopOpacity:.5}))
+        ),
+        [.25,.5,.75,1].map((f,i)=>React.createElement("line",{key:i,
+          x1:pL,y1:pT+cH*(1-f),x2:W-pR,y2:pT+cH*(1-f),
+          stroke:"var(--border2)",strokeWidth:.6,strokeDasharray:"3,3"})),
+        monthlyFlow.map((d,i)=>{
+          const cx=xC(i),by=pT+cH;
+          const ih=bh(d.inc),eh=bh(d.exp);
+          const onEnter=()=>{
+            setActive(i);
+            const svgWrap=wrapRef.current;const pr=svgWrap?svgWrap.getBoundingClientRect():null;
+            if(pr){const sx=(cx/W)*pr.width;setTip({x:sx,y:(by-eh)/H*pr.height});}
+          };
+          return React.createElement("g",{key:i,onMouseEnter:onEnter,onMouseLeave:()=>setActive(-1)},
+            d.inc>0&&React.createElement("rect",{x:cx-bW-1.5,y:by-ih,width:bW,height:ih,rx:3,fill:`url(#${gId})`,className:"mm-chart-bar"+(active===i?" active":"")}),
+            d.exp>0&&React.createElement("rect",{x:cx+1.5,y:by-eh,width:bW,height:eh,rx:3,fill:`url(#${gExp})`,className:"mm-chart-bar"+(active===i?" active":"")}),
+            React.createElement("text",{x:cx,y:H-10,textAnchor:"middle",fill:"var(--text5)",fontSize:8,fontFamily:"'DM Sans',sans-serif"},d.label)
+          );
+        })
       ),
-      [.25,.5,.75,1].map((f,i)=>React.createElement("line",{key:i,
-        x1:pL,y1:pT+cH*(1-f),x2:W-pR,y2:pT+cH*(1-f),
-        stroke:"var(--border2)",strokeWidth:.6,strokeDasharray:"3,3"})),
-      monthlyFlow.map((d,i)=>{
-        const cx=xC(i),by=pT+cH;
-        const ih=bh(d.inc),eh=bh(d.exp);
-        return React.createElement("g",{key:i},
-          d.inc>0&&React.createElement("rect",{x:cx-bW-1.5,y:by-ih,width:bW,height:ih,rx:3,fill:"url(#gInc)"}),
-          d.exp>0&&React.createElement("rect",{x:cx+1.5,y:by-eh,width:bW,height:eh,rx:3,fill:"url(#gExp)"}),
-          React.createElement("text",{x:cx,y:H-10,textAnchor:"middle",fill:"var(--text5)",fontSize:8,fontFamily:"'DM Sans',sans-serif"},d.label)
-        );
-      })
+      active>=0&&React.createElement("div",{className:"mm-chart-tip",style:{left:tip.x,top:tip.y}},
+        React.createElement("div",{style:{fontWeight:700,marginBottom:2}},monthlyFlow[active].label),
+        React.createElement("div",{style:{color:"#16a34a"}},"Income: "+INR(monthlyFlow[active].inc)),
+        React.createElement("div",{style:{color:"#ef4444"}},"Expense: "+INR(monthlyFlow[active].exp))
+      )
     );
   })();
 
@@ -14397,7 +14562,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
   const dateStr=new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"});
 
   /* Section label */
-  const SL=(t,sub)=>React.createElement("div",{style:{marginBottom:14}},
+  const SL=(t,sub)=>React.createElement("div",{className:"mm-sticky-hd",style:{marginBottom:14}},
     React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",textTransform:"uppercase",letterSpacing:.9,display:"flex",alignItems:"center",gap:6}},
       React.createElement("div",{style:{width:3,height:13,borderRadius:2,background:"var(--accent)",flexShrink:0}}),t),
     sub&&React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2,paddingLeft:9}},sub)
@@ -14413,6 +14578,15 @@ const Dashboard=React.memo(({data,isMobile})=>{
   };
 
   /* ━━ RENDER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  if(!ready)return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",gap:14,padding:isMobile?4:0}},
+    React.createElement(SkeletonStat,null),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)",gap:14}},
+      React.createElement(SkeletonStat,null),React.createElement(SkeletonStat,null),
+      React.createElement(SkeletonStat,null),React.createElement(SkeletonStat,null)),
+    React.createElement("div",{className:"mm-card",style:{padding:18,borderRadius:14}},
+      React.createElement(Skeleton,{w:"40%",h:16,style:{marginBottom:14}}),
+      React.createElement(Skeleton,{h:140}))
+  );
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",gap:14}},
     /* Share Summary Modal */
     shareOpen&&React.createElement(ShareSummaryModal,{data,allBankTx,thisMonth,onClose:()=>setShareOpen(false)}),
@@ -14482,10 +14656,9 @@ const Dashboard=React.memo(({data,isMobile})=>{
         backgroundImage:"radial-gradient(circle,var(--border) 1.2px,transparent 1.2px)",
         backgroundSize:"22px 22px",
       }}),
-
       /* ── Absolute action buttons ── */
       React.createElement("button",{
-        onClick:()=>setShowWidgetMgr(true),title:"Customize dashboard sections",
+        onClick:()=>setShowWidgetMgr(true),title:"Customize dashboard sections","aria-label":"Customize dashboard sections",
         style:{position:"absolute",top:13,right:13,zIndex:2,padding:"5px 11px",borderRadius:8,
           border:"1px solid var(--border2)",background:"var(--bg4)",color:"var(--text5)",cursor:"pointer",
           fontSize:11,fontFamily:"'DM Sans',sans-serif",fontWeight:600,display:"flex",alignItems:"center",gap:4,
@@ -14494,7 +14667,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
         onMouseLeave:e=>{e.currentTarget.style.color="var(--text5)";e.currentTarget.style.borderColor="var(--border2)";},
       },React.createElement(Icon,{n:"settings",size:13}),!isMobile&&React.createElement("span",null,"Customize")),
       React.createElement("button",{
-        onClick:()=>setShareOpen(true),title:"Share this month's summary",
+        onClick:()=>setShareOpen(true),title:"Share this month's summary","aria-label":"Share this month's summary",
         style:{position:"absolute",top:13,right:isMobile?56:136,zIndex:2,padding:"5px 11px",borderRadius:8,
           border:"1px solid var(--border2)",background:"var(--bg4)",color:"var(--text5)",cursor:"pointer",
           fontSize:11,fontFamily:"'DM Sans',sans-serif",fontWeight:600,display:"flex",alignItems:"center",gap:4,
@@ -14509,8 +14682,9 @@ const Dashboard=React.memo(({data,isMobile})=>{
         /* Greeting */
         React.createElement("div",{style:{
           paddingRight:isMobile?100:176,marginBottom:isMobile?14:18,
-          display:"flex",alignItems:"baseline",gap:8,flexWrap:"wrap",
+          display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",
         }},
+          React.createElement("span",{style:{width:4,height:16,borderRadius:3,background:"#fbbf24",flexShrink:0,display:"inline-block"}}),
           React.createElement("span",{style:{fontSize:isMobile?12:14,fontWeight:600,color:"var(--text3)",letterSpacing:.1}},greeting),
           React.createElement("span",{style:{fontSize:isMobile?11:12,color:"var(--text5)",letterSpacing:.2}},"· "+dateStr)
         ),
@@ -14705,10 +14879,13 @@ const Dashboard=React.memo(({data,isMobile})=>{
             display:"flex",flexDirection:"column",gap:6,padding:"12px 14px"
           }},
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
-              React.createElement("div",{style:{minWidth:0,flex:1}},
-                React.createElement("div",{style:{fontSize:8,color:"#0e7490",fontWeight:700,textTransform:"uppercase",letterSpacing:.6}},b.type),
-                React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}},b.name),
-                React.createElement("div",{style:{fontSize:8,color:"var(--text5)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},b.bank)
+              React.createElement("div",{style:{minWidth:0,flex:1,display:"flex",alignItems:"center",gap:8}},
+                React.createElement(Avatar,{name:b.name,size:30,radius:9,fontSize:12}),
+                React.createElement("div",{style:{minWidth:0,flex:1}},
+                  React.createElement("div",{style:{fontSize:8,color:"#0e7490",fontWeight:700,textTransform:"uppercase",letterSpacing:.6}},b.type),
+                  React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}},b.name),
+                  React.createElement("div",{style:{fontSize:8,color:"var(--text5)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},b.bank)
+                )
               ),
               Sparkline(b.transactions,"#0e7490")
             ),
@@ -14732,10 +14909,13 @@ const Dashboard=React.memo(({data,isMobile})=>{
             display:"flex",flexDirection:"column",gap:6,padding:"12px 14px"
           }},
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
-              React.createElement("div",{style:{minWidth:0,flex:1}},
-                React.createElement("div",{style:{fontSize:8,color:"#c2410c",fontWeight:700,textTransform:"uppercase",letterSpacing:.6}},"Credit Card"),
-                React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}},c.name),
-                React.createElement("div",{style:{fontSize:8,color:"var(--text5)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},c.bank)
+              React.createElement("div",{style:{minWidth:0,flex:1,display:"flex",alignItems:"center",gap:8}},
+                React.createElement(Avatar,{name:c.name,size:30,radius:9,fontSize:12}),
+                React.createElement("div",{style:{minWidth:0,flex:1}},
+                  React.createElement("div",{style:{fontSize:8,color:"#c2410c",fontWeight:700,textTransform:"uppercase",letterSpacing:.6}},"Credit Card"),
+                  React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",marginTop:1}},c.name),
+                  React.createElement("div",{style:{fontSize:8,color:"var(--text5)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},c.bank)
+                )
               ),
               Sparkline(c.transactions,"#c2410c")
             ),
@@ -14757,9 +14937,12 @@ const Dashboard=React.memo(({data,isMobile})=>{
             display:"flex",flexDirection:"column",gap:6,padding:"12px 14px"
           }},
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
-              React.createElement("div",null,
-                React.createElement("div",{style:{fontSize:8,color:"var(--accent)",fontWeight:700,textTransform:"uppercase",letterSpacing:.6}},"Cash"),
-                React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text2)",marginTop:1}},"Physical Cash")
+              React.createElement("div",{style:{minWidth:0,flex:1,display:"flex",alignItems:"center",gap:8}},
+                React.createElement(Avatar,{name:"Cash",size:30,radius:9,fontSize:12}),
+                React.createElement("div",null,
+                  React.createElement("div",{style:{fontSize:8,color:"var(--accent)",fontWeight:700,textTransform:"uppercase",letterSpacing:.6}},"Cash"),
+                  React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text2)",marginTop:1}},"Physical Cash")
+                )
               ),
               Sparkline(data.cash.transactions,"var(--accent)")
             ),
@@ -15052,10 +15235,10 @@ const Dashboard=React.memo(({data,isMobile})=>{
     /* ══ C: THIS MONTH KPI STRIP ════════════════════════════════ */
     W("kpi")&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)",gap:10}},
       ...[
-        {label:"Income",val:INR(curMD.inc),col:"#16a34a",icon:React.createElement(Icon,{n:"classIncome",size:16}),sub:incDelta!==null?((incDelta>=0?"↑ ":"↓ ")+INR(Math.abs(incDelta))+" vs last mo"):data.banks.length+" bank accounts",delay:0},
-        {label:"Expenses",val:INR(curMD.exp),col:"#ef4444",icon:React.createElement(Icon,{n:"classExpense",size:16}),sub:expDelta!==null?((expDelta>=0?"↑ ":"↓ ")+INR(Math.abs(expDelta))+" vs last mo"):data.cards.length+" cards + cash",delay:60},
-        {label:"Net Saved",val:INR(curMD.inc-curMD.exp),col:curMD.inc-curMD.exp>=0?"#16a34a":"#ef4444",icon:"=",sub:"income − expenses",delay:120},
-        {label:"Savings Rate",val:savingsRate.toFixed(1)+"%",col:savingsRate>=30?"#16a34a":savingsRate>=15?"#b45309":"#ef4444",icon:React.createElement(Icon,{n:"target",size:18}),sub:savingsRate>=30?"Excellent":savingsRate>=15?"On track":"Below target",delay:180},
+        {label:"Income",val:React.createElement(CountUp,{value:curMD.inc,dur:650,fmt:v=>INR(v)}),col:"#16a34a",icon:React.createElement(Icon,{n:"classIncome",size:16}),sub:incDelta!==null?((incDelta>=0?"↑ ":"↓ ")+INR(Math.abs(incDelta))+" vs last mo"):data.banks.length+" bank accounts",delay:0},
+        {label:"Expenses",val:React.createElement(CountUp,{value:curMD.exp,dur:650,fmt:v=>INR(v)}),col:"#ef4444",icon:React.createElement(Icon,{n:"classExpense",size:16}),sub:expDelta!==null?((expDelta>=0?"↑ ":"↓ ")+INR(Math.abs(expDelta))+" vs last mo"):data.cards.length+" cards + cash",delay:60},
+        {label:"Net Saved",val:React.createElement(CountUp,{value:curMD.inc-curMD.exp,dur:650,fmt:v=>INR(v)}),col:curMD.inc-curMD.exp>=0?"#16a34a":"#ef4444",icon:"=",sub:"income − expenses",delay:120},
+        {label:"Savings Rate",val:React.createElement(CountUp,{value:savingsRate,dur:650,fmt:v=>v.toFixed(1)+"%"}),col:savingsRate>=30?"#16a34a":savingsRate>=15?"#b45309":"#ef4444",icon:React.createElement(Icon,{n:"target",size:18}),sub:savingsRate>=30?"Excellent":savingsRate>=15?"On track":"Below target",delay:180},
       ].map(({label,val,col,icon,sub,delay})=>
         React.createElement("div",{key:label,style:{
           background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,
@@ -15166,36 +15349,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
         recentFiltered.length===0
           ?React.createElement("div",{style:{textAlign:"center",padding:"28px 0",color:"var(--text6)",fontSize:12,display:"flex",flexDirection:"column",gap:8,alignItems:"center"}},
               React.createElement("span",{style:{fontSize:24}},React.createElement(Icon,{n:"report",size:18})),"No transactions")
-          :recentFiltered.map((tx,i)=>{
-            const isCredit=tx.type==="credit";
-            const col=catColor(data.categories,catMainName(tx.cat||""));
-            return React.createElement("div",{key:tx.id+i,className:"db-txrow"},
-              /* Type icon */
-              React.createElement("div",{style:{
-                width:32,height:32,borderRadius:10,flexShrink:0,
-                background:isCredit?"rgba(22,163,74,.1)":"rgba(239,68,68,.07)",
-                border:"1px solid "+(isCredit?"rgba(22,163,74,.2)":"rgba(239,68,68,.18)"),
-                display:"flex",alignItems:"center",justifyContent:"center",
-                fontSize:13,color:isCredit?"#16a34a":"#ef4444",fontWeight:800
-              }},isCredit?"↑":"↓"),
-              /* Description + meta */
-              React.createElement("div",{style:{flex:1,minWidth:0}},
-                React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
-                  tx.desc||tx.payee||"—"),
-                React.createElement("div",{style:{display:"flex",gap:5,alignItems:"center",marginTop:2,flexWrap:"nowrap",overflow:"hidden"}},
-                  React.createElement("span",{style:{fontSize:9,color:tx._col,fontWeight:700,flexShrink:0,
-                    background:tx._col+"15",borderRadius:6,padding:"1px 6px"}},tx._src),
-                  tx.payee&&React.createElement("span",{style:{fontSize:9,color:"var(--text5)",flexShrink:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},tx.payee),
-                  tx.cat&&React.createElement("span",{style:{fontSize:9,color:col,background:col+"18",borderRadius:6,padding:"1px 6px",flexShrink:0}},catDisplayName(tx.cat))
-                )
-              ),
-              /* Date + amount */
-              React.createElement("div",{style:{textAlign:"right",flexShrink:0,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}},
-                React.createElement("div",{style:{fontSize:13,fontWeight:700,color:isCredit?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif"}},(isCredit?"+":"−")+INR(tx.amount)),
-                React.createElement("div",{style:{fontSize:9,color:"var(--text6)"}},dmyFmt(tx.date))
-              )
-            );
-          })
+          :React.createElement(RecentTxnList,{txns:recentFiltered,onJumpToTx:(t)=>{onJumpToTx&&onJumpToTx(t._bid==="__cash__"?"cash":t._accType,t._bid,t.id);}})
       ),
 
       /* E2: Top payees + this-month savings ring */
@@ -15333,7 +15487,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
             ?new Date(nextStatement.getFullYear(),nextStatement.getMonth(),dd)
             :new Date(nextStatement.getFullYear(),nextStatement.getMonth()+1,dd);
           const dl=Math.ceil((dueDate-now)/86400000);
-          const _fmtD=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;return{...c,dueDate:_fmtD(dueDate),daysLeft:dl};
+          const _fmtD=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;const _nsStr2=_fmtD(nextStatement);const cycleDue2=Math.max(0,(c.transactions||[]).filter(t=>t.status==="Reconciled"&&t.date<_nsStr2).reduce((s,t)=>s+(t.type==="debit"?t.amount:-t.amount),0));return{...c,dueDate:_fmtD(dueDate),daysLeft:dl,cycleDue:cycleDue2};
         })
         .filter(c=>c.daysLeft>=0)
         .sort((a,b)=>a.daysLeft-b.daysLeft);
@@ -15362,7 +15516,7 @@ const Dashboard=React.memo(({data,isMobile})=>{
                 )
               ),
               React.createElement("div",{style:{textAlign:"right",flexShrink:0}},
-                React.createElement("div",{style:{fontSize:14,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#c2410c"}},INR(c.outstanding)),
+                React.createElement("div",{style:{fontSize:14,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#c2410c"}},INR(c.cycleDue||c.outstanding)),
                 React.createElement("div",{style:{fontSize:9,color:"var(--text5)"}},c.daysLeft<=1?"Pay now":"outstanding")
               )
             );
@@ -15476,8 +15630,8 @@ const Dashboard=React.memo(({data,isMobile})=>{
                 React.createElement("stop",{offset:"100%",stopColor:col,stopOpacity:.02})
               )
             ),
-            React.createElement("polygon",{points:fillPts,fill:"url(#"+gradId+")"}),
-            React.createElement("polyline",{points:ptStr,fill:"none",stroke:col,strokeWidth:2.5,strokeLinejoin:"round",strokeLinecap:"round"}),
+            React.createElement("polygon",{points:fillPts,fill:"url(#"+gradId+")",className:"mm-chart-area"}),
+            React.createElement("polyline",{points:ptStr,fill:"none",stroke:col,strokeWidth:2.5,strokeLinejoin:"round",strokeLinecap:"round",className:"mm-chart-line"}),
             React.createElement("circle",{cx:cx(pts.length-1),cy:cy(pts[pts.length-1].nw),r:4,fill:col}),
             [0,Math.floor(pts.length/2),pts.length-1].filter((v,i,a)=>a.indexOf(v)===i).map(i=>
               React.createElement("text",{key:i,x:cx(i),y:H-1,textAnchor:i===0?"start":i===pts.length-1?"end":"middle",fill:"var(--text6)",fontSize:9},pts[i].lbl)
@@ -16398,10 +16552,14 @@ const SplitTxModal=({tx,categories,onSave,onClose})=>{
    Fuzzy-searches all transactions, accounts, notes and payees. Click any
    result to jump directly to it.
    ══════════════════════════════════════════════════════════════════════════ */
-const GlobalSearchModal=({state,onClose,onJumpToTx,setTab})=>{
+const GlobalSearchModal=({state,onClose,onJumpToTx,setTab,setTheme,setQuickAddOpen,onWhatsNew})=>{
   const[q,setQ]=useState("");
   const[debouncedQ,setDebouncedQ]=useState("");
   const inputRef=React.useRef(null);
+  const listRef=React.useRef(null);
+  const[,force]=React.useReducer(x=>x+1,0);
+  const activeRef=React.useRef(0);
+  const setActive=i=>{activeRef.current=i;force();};
 
   /* Auto-focus on open */
   React.useEffect(()=>{
@@ -16409,20 +16567,25 @@ const GlobalSearchModal=({state,onClose,onJumpToTx,setTab})=>{
     return()=>clearTimeout(t);
   },[]);
 
-  /* Escape to close */
+  /* Escape / arrow navigation */
   React.useEffect(()=>{
-    const handler=e=>{if(e.key==="Escape")onClose();};
+    const handler=e=>{
+      if(e.key==="Escape"){onClose();return;}
+      if(e.key==="ArrowDown"){e.preventDefault();setActive(Math.min(items.length-1,activeRef.current+1));}
+      else if(e.key==="ArrowUp"){e.preventDefault();setActive(Math.max(0,activeRef.current-1));}
+      else if(e.key==="Enter"){e.preventDefault();const it=items[activeRef.current];if(it)execute(it);}
+    };
     document.addEventListener("keydown",handler);
     return()=>document.removeEventListener("keydown",handler);
-  },[onClose]);
+  });
 
-  /* Fix 3 — 150ms debounce: input updates instantly, scan fires once per typing burst */
+  /* 200ms debounce for the scan */
   React.useEffect(()=>{
     const t=setTimeout(()=>setDebouncedQ(q),200);
     return()=>clearTimeout(t);
   },[q]);
 
-  /* Fix 1 — Pre-flatten transactions once, only when account data changes */
+  /* Pre-flatten transactions once */
   const allTxFlat=React.useMemo(()=>{
     const out=[];
     state.banks.forEach(b=>(b.transactions||[]).forEach(t=>out.push({...t,_accId:b.id,_accName:b.name,_accType:"bank"})));
@@ -16431,8 +16594,8 @@ const GlobalSearchModal=({state,onClose,onJumpToTx,setTab})=>{
     return out;
   },[state.banks,state.cards,state.cash]);
 
-  /* Fix 2 — Narrow memo deps: only the six slices this search actually reads */
   const qLow=debouncedQ.toLowerCase().trim();
+  const qLowLive=q.toLowerCase().trim();
   const results=React.useMemo(()=>{
     if(!qLow||qLow.length<2)return{txns:[],accounts:[],notes:[],payees:[]};
     const match=s=>(s||"").toLowerCase().includes(qLow);
@@ -16450,12 +16613,51 @@ const GlobalSearchModal=({state,onClose,onJumpToTx,setTab})=>{
   },[qLow,allTxFlat,state.notes,state.payees,state.banks,state.cards]);
 
   const total=results.txns.length+results.accounts.length+results.notes.length+results.payees.length;
-  /* Use the live (non-debounced) q for the input display, debounced only for the scan */
-  const qLowLive=q.toLowerCase().trim();
-  const rowStyle={display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 18px",borderBottom:"1px solid var(--border2)",cursor:"pointer",transition:"background .1s"};
-  const hoverOn=e=>e.currentTarget.style.background="var(--accentbg2)";
-  const hoverOff=e=>e.currentTarget.style.background="transparent";
-  const SecHd=({label,count})=>React.createElement("div",{style:{padding:"6px 18px 3px",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,background:"var(--bg5)",borderBottom:"1px solid var(--border2)"}},label+(count?" ("+count+(count===20?"+":"")+")":""));
+
+  /* Command list (navigation + actions + themes) */
+  const commands=React.useMemo(()=>{
+    const nav=(window.__mm_visibleNAV||[]).map(n=>({kind:"cmd",icon:n.id,label:"Go to "+n.label,action:()=>setTab(n.id)}));
+    const acts=[
+      {kind:"cmd",icon:"plus",label:"Quick Add Transaction",action:()=>{setQuickAddOpen&&setQuickAddOpen(true);}},
+      {kind:"cmd",icon:"sparkles",label:"What's new in this version",action:()=>{onWhatsNew&&onWhatsNew();}},
+    ];
+    const themes=(window.THEMES||[]).map(t=>({kind:"cmd",icon:"palette",label:"Theme: "+t.name,action:()=>{setTheme&&setTheme(t.id);}}));
+    return[...nav,...acts,...themes];
+  },[setTab,setQuickAddOpen,setTheme,onWhatsNew]);
+
+  /* Flat list for keyboard nav (commands first, then results) */
+  const items=React.useMemo(()=>{
+    if(!qLowLive||qLowLive.length<2)return commands;
+    const out=[];
+    results.txns.forEach(t=>out.push({kind:"txn",data:t}));
+    results.accounts.forEach(a=>out.push({kind:"acc",data:a}));
+    results.notes.forEach(n=>out.push({kind:"note",data:n}));
+    results.payees.forEach(p=>out.push({kind:"payee",data:p}));
+    return out;
+  },[qLowLive,commands,results]);
+
+  /* Keep active index in range when list changes */
+  React.useEffect(()=>{if(activeRef.current>items.length-1)activeRef.current=Math.max(0,items.length-1);force();},[items]);
+  /* Scroll active into view */
+  React.useEffect(()=>{
+    const el=listRef.current&&listRef.current.querySelector('[data-idx="'+activeRef.current+'"]');
+    if(el)el.scrollIntoView({block:"nearest"});
+  },[activeRef.current,items]);
+
+  const execute=it=>{
+    if(!it)return;
+    if(it.kind==="cmd"){it.action();onClose();return;}
+    if(it.kind==="txn"){onJumpToTx&&onJumpToTx(it.data._accType,it.data._accId,it.data.id);onClose();return;}
+    if(it.kind==="acc"){setTab(it.data._type==="bank"?"banks":"cards");onClose();return;}
+    if(it.kind==="note"){setTab("notes");onClose();return;}
+    if(it.kind==="payee"){setTab("unified_ledger");onClose();return;}
+  };
+
+  const rowStyle=active=>{const base={display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 18px",borderBottom:"1px solid var(--border2)",cursor:"pointer",transition:"background .1s",background:active?"var(--accentbg2)":null};return base;};
+  const hoverOn=e=>{if(e.currentTarget.getAttribute("data-idx")!=activeRef.current)e.currentTarget.style.background="var(--accentbg2)";};
+  const hoverOff=e=>{if(e.currentTarget.getAttribute("data-idx")!=activeRef.current)e.currentTarget.style.background="transparent";};
+  const SecHd=({label,count})=>React.createElement("div",{style:{padding:"6px 18px 3px",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,background:"var(--bg5)",borderBottom:"1px solid var(--border2)"}},label+(count?" ("+count+(count>=20?"+":"")+")":""));
+
   return React.createElement("div",{
     style:{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,.72)",zIndex:1200,display:"flex",flexDirection:"column",alignItems:"center",paddingTop:60,paddingLeft:8,paddingRight:8,boxSizing:"border-box"},
     onClick:onClose
@@ -16469,20 +16671,28 @@ const GlobalSearchModal=({state,onClose,onJumpToTx,setTab})=>{
         React.createElement("span",{style:{fontSize:17,flexShrink:0,opacity:.6}},React.createElement(Icon,{n:"search",size:16})),
         React.createElement("input",{
           ref:inputRef,value:q,onChange:e=>setQ(e.target.value),
-          placeholder:"Search transactions, accounts, notes, payees…",
+          placeholder:"Search, jump to a screen, switch theme, add txn…",
           style:{flex:1,background:"transparent",border:"none",outline:"none",fontSize:15,color:"var(--text)",fontFamily:"'DM Sans',sans-serif"},
+          "aria-label":"Command palette search"
         }),
         q&&React.createElement("button",{onClick:()=>{setQ("");setDebouncedQ("");},style:{background:"none",border:"none",color:"var(--text5)",cursor:"pointer",fontSize:20,lineHeight:1,padding:"8px 10px",minWidth:44,minHeight:44,display:"inline-flex",alignItems:"center",justifyContent:"center",borderRadius:8}},"×"),
-        React.createElement("kbd",{style:{fontSize:10,background:"var(--bg5)",border:"1px solid var(--border)",borderRadius:5,padding:"2px 7px",color:"var(--text5)",flexShrink:0,whiteSpace:"nowrap"}},"Esc to close")
+        React.createElement("kbd",{style:{fontSize:10,background:"var(--bg5)",border:"1px solid var(--border)",borderRadius:5,padding:"2px 7px",color:"var(--text5)",flexShrink:0,whiteSpace:"nowrap"}},"Esc")
       ),
       /* Results */
-      React.createElement("div",{style:{overflowY:"auto",flex:1}},
+      React.createElement("div",{ref:listRef,style:{overflowY:"auto",flex:1}},
         (!qLowLive||qLowLive.length<2)
-          ?React.createElement("div",{style:{padding:"36px 20px",textAlign:"center",color:"var(--text5)",fontSize:13}},
-              React.createElement("div",{style:{fontSize:30,marginBottom:10,opacity:.5}},"⌕"),
-              "Type at least 2 characters to search"
+          ?React.createElement("div",null,
+              commands.length>0&&React.createElement(SecHd,{label:"Commands"}),
+              commands.map((c,i)=>React.createElement("div",{key:"cmd"+i,"data-idx":i,style:rowStyle(activeRef.current===i),
+                onClick:()=>execute(c),onMouseEnter:()=>setActive(i),onMouseLeave:hoverOff},
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:12,minWidth:0,flex:1,overflow:"hidden"}},
+                  React.createElement("span",{style:{fontSize:18,flexShrink:0,color:"var(--text5)"}},React.createElement(Icon,{n:c.icon,size:18})),
+                  React.createElement("div",{style:{fontSize:13,fontWeight:500,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},c.label)
+                ),
+                React.createElement("kbd",{style:{fontSize:10,background:"var(--bg5)",border:"1px solid var(--border)",borderRadius:5,padding:"2px 7px",color:"var(--text6)",flexShrink:0}},"↵")
+              ))
             )
-          :total===0&&debouncedQ===q /* only show "no results" once debounce has settled */
+          :total===0&&debouncedQ===q
           ?React.createElement("div",{style:{padding:"36px 20px",textAlign:"center",color:"var(--text5)",fontSize:13}},
               React.createElement("div",{style:{fontSize:30,marginBottom:10,opacity:.5}},React.createElement(Icon,{n:"search",size:16})),
               "No results for \""+q+"\""
@@ -16490,8 +16700,8 @@ const GlobalSearchModal=({state,onClose,onJumpToTx,setTab})=>{
           :React.createElement(React.Fragment,null,
               results.txns.length>0&&React.createElement("div",null,
                 React.createElement(SecHd,{label:"Transactions",count:results.txns.length}),
-                results.txns.map(t=>React.createElement("div",{key:t.id,style:rowStyle,
-                  onClick:()=>{onJumpToTx(t._accType,t._accId,t.id);onClose();},onMouseEnter:hoverOn,onMouseLeave:hoverOff},
+                results.txns.map((t,i)=>{const idx=commands.length+i;return React.createElement("div",{key:t.id,"data-idx":idx,style:rowStyle(activeRef.current===idx),
+                  onClick:()=>execute({kind:"txn",data:t}),onMouseEnter:()=>setActive(idx),onMouseLeave:hoverOff},
                   React.createElement("div",{style:{minWidth:0,flex:1}},
                     React.createElement("div",{style:{fontSize:13,fontWeight:500,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.desc||t.payee||"—"),
                     React.createElement("div",{style:{display:"flex",gap:8,marginTop:2,fontSize:11,color:"var(--text5)",flexWrap:"wrap"}},
@@ -16505,12 +16715,12 @@ const GlobalSearchModal=({state,onClose,onJumpToTx,setTab})=>{
                     React.createElement("div",{style:{fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:t.type==="credit"?"#16a34a":"#ef4444"}},(t.type==="credit"?"+":"-")+INR(t.amount)),
                     React.createElement("span",{style:{fontSize:9,padding:"1px 6px",borderRadius:8,background:t._accType==="bank"?"#0e74901a":t._accType==="card"?"#c2410c1a":"var(--accentbg2)",color:t._accType==="bank"?"#0e7490":t._accType==="card"?"#c2410c":"var(--accent)",marginTop:2,display:"inline-block"}},t._accType==="bank"?React.createElement(Icon,{n:"bank",size:18}):t._accType==="card"?React.createElement(Icon,{n:"card",size:18}):React.createElement(Icon,{n:"cash",size:18}))
                   )
-                ))
+                );})
               ),
               results.accounts.length>0&&React.createElement("div",null,
                 React.createElement(SecHd,{label:"Accounts"}),
-                results.accounts.map(a=>React.createElement("div",{key:a.id,style:rowStyle,
-                  onClick:()=>{setTab(a._type==="bank"?"banks":"cards");onClose();},onMouseEnter:hoverOn,onMouseLeave:hoverOff},
+                results.accounts.map((a,i)=>{const idx=commands.length+results.txns.length+i;return React.createElement("div",{key:a.id,"data-idx":idx,style:rowStyle(activeRef.current===idx),
+                  onClick:()=>execute({kind:"acc",data:a}),onMouseEnter:()=>setActive(idx),onMouseLeave:hoverOff},
                   React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
                     React.createElement("span",{style:{fontSize:20}},(a._type==="bank"?React.createElement(Icon,{n:"bank",size:18}):React.createElement(Icon,{n:"card",size:18}))),
                     React.createElement("div",null,
@@ -16519,32 +16729,32 @@ const GlobalSearchModal=({state,onClose,onJumpToTx,setTab})=>{
                     )
                   ),
                   React.createElement("div",{style:{fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:a._type==="bank"?"#0e7490":"#c2410c"}},INR(a._type==="bank"?a.balance:a.outstanding))
-                ))
+                );})
               ),
               results.notes.length>0&&React.createElement("div",null,
                 React.createElement(SecHd,{label:"Notes"}),
-                results.notes.map(n=>React.createElement("div",{key:n.id,style:{...rowStyle,gap:12},
-                  onClick:()=>{setTab("notes");onClose();},onMouseEnter:hoverOn,onMouseLeave:hoverOff},
+                results.notes.map((n,i)=>{const idx=commands.length+results.txns.length+results.accounts.length+i;return React.createElement("div",{key:n.id,"data-idx":idx,style:{...rowStyle(activeRef.current===idx),gap:12},
+                  onClick:()=>execute({kind:"note",data:n}),onMouseEnter:()=>setActive(idx),onMouseLeave:hoverOff},
                   React.createElement("span",{style:{fontSize:16,flexShrink:0}},React.createElement(Icon,{n:"edit",size:16})),
                   React.createElement("div",{style:{minWidth:0,flex:1}},
                     React.createElement("div",{style:{fontSize:13,fontWeight:500,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},n.title||"Note"),
                     n.body&&React.createElement("div",{style:{fontSize:11,color:"var(--text5)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},n.body)
                   )
-                ))
+                );})
               ),
               results.payees.length>0&&React.createElement("div",null,
                 React.createElement(SecHd,{label:"Payees"}),
-                results.payees.map(p=>React.createElement("div",{key:p.id,style:{...rowStyle,gap:12},
-                  onClick:()=>{setTab("unified_ledger");onClose();},onMouseEnter:hoverOn,onMouseLeave:hoverOff},
+                results.payees.map((p,i)=>{const idx=commands.length+results.txns.length+results.accounts.length+results.notes.length+i;return React.createElement("div",{key:p.id,"data-idx":idx,style:{...rowStyle(activeRef.current===idx),gap:12},
+                  onClick:()=>execute({kind:"payee",data:p}),onMouseEnter:()=>setActive(idx),onMouseLeave:hoverOff},
                   React.createElement("span",{style:{fontSize:16,flexShrink:0}},React.createElement(Icon,{n:"user",size:18})),
                   React.createElement("div",{style:{fontSize:13,fontWeight:500,color:"var(--text)"}},p.name)
-                ))
+                );})
               )
             )
       ),
       /* Footer hint */
       React.createElement("div",{style:{padding:"7px 18px",borderTop:"1px solid var(--border2)",display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",background:"var(--bg5)"}},
-        React.createElement("span",null,"↵ jump to result"),
+        React.createElement("span",null,"↑↓ navigate · ↵ select"),
         React.createElement("span",null,"Ctrl+K / ⌘K to reopen")
       )
     )
@@ -17351,8 +17561,44 @@ const CapitalGainsCard=({shares,mf,dispatch})=>{
   );
 };
 
+/* Keyboard-navigable recent-transactions list (↑↓ navigate, ↵ jump) */
+const RecentTxnList=React.memo(({txns,onJumpToTx})=>{
+  const[idx,setIdx,onKeyDown]=useKbdList(txns.length,i=>{
+    const t=txns[i];if(!t)return;
+    if(onJumpToTx)onJumpToTx(t._bid==="__cash__"?"cash":t._accType,t._bid,t.id);
+  });
+  if(!txns||!txns.length)return null;
+  const go=t=>{if(onJumpToTx)onJumpToTx(t._bid==="__cash__"?"cash":t._accType,t._bid,t.id);};
+  return React.createElement("div",{role:"listbox",tabIndex:0,"aria-label":"Recent transactions",onKeyDown,
+    style:{outline:"none"}},
+    txns.map((tx,i)=>{
+      const isCredit=tx.type==="credit";
+      const col=tx._col||"var(--text5)";
+      const active=idx===i;
+      return React.createElement("div",{key:tx.id+i,role:"option","aria-selected":active,"data-kidx":i,
+        onClick:()=>go(tx),onMouseEnter:()=>setIdx(i),tabIndex:-1,
+        style:{display:"flex",alignItems:"center",gap:10,padding:"9px 4px",borderRadius:8,
+          cursor:"pointer",background:active?"var(--accentbg2)":"transparent",transition:"background .12s",
+          borderBottom:"1px solid var(--border2)"}},
+        React.createElement("div",{style:{width:30,height:30,borderRadius:9,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,
+          background:isCredit?"rgba(22,163,74,.1)":"rgba(239,68,68,.07)",border:"1px solid "+(isCredit?"rgba(22,163,74,.2)":"rgba(239,68,68,.18)"),color:isCredit?"#16a34a":"#ef4444"}},isCredit?"↑":"↓"),
+        React.createElement("div",{style:{flex:1,minWidth:0}},
+          React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},tx.desc||tx.payee||"—"),
+          React.createElement("div",{style:{display:"flex",gap:5,alignItems:"center",marginTop:2,fontSize:9,flexWrap:"nowrap",overflow:"hidden"}},
+            React.createElement("span",{style:{fontWeight:700,color:tx._col,background:tx._col+"15",borderRadius:6,padding:"1px 6px"}},tx._src),
+            tx.cat&&React.createElement("span",{style:{color:col,background:col+"18",borderRadius:6,padding:"1px 6px"}},catDisplayName(tx.cat))
+          )
+        ),
+        React.createElement("div",{style:{textAlign:"right",flexShrink:0,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:2}},
+          React.createElement("div",{style:{fontSize:13,fontWeight:700,color:isCredit?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif"}},(isCredit?"+":"−")+INR(tx.amount)),
+          React.createElement("div",{style:{fontSize:9,color:"var(--text6)"}},dmyFmt(tx.date))
+        )
+      );
+    })
+  );
+});
+
 const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobile,eodPrices={},eodNavs={},brokerCashBalance=0})=>{
-  /* ── Refresh state ── */
   const[refreshing,setRefreshing]=useState(false);
   const[refreshStatus,setRefreshStatus]=useState(null); /* {ok,msg,ts,navOk,sharesOk} */
 
@@ -17593,10 +17839,12 @@ const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobil
   return React.createElement("div",{className:"fu"},
     /* ── Page title */
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:refreshStatus?10:20,flexWrap:"wrap",gap:10}},
-      React.createElement("div",null,
-        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:700,color:"var(--text)"}},"Investment Dashboard"),
+      React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+        React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#2dd4bf",flexShrink:0}}),
+        React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:23,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"Investment Dashboard"),
         React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4}},"Portfolio overview · "+new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}))
-      ),
+      )),
       React.createElement(Btn,{v:"success",sz:"sm",onClick:refreshAll,disabled:refreshing},
         refreshing
           ? React.createElement(React.Fragment,null,React.createElement("span",{className:"spinr"},"⟳")," Refreshing…")
@@ -18693,9 +18941,63 @@ const FDTimeline=({fd})=>{
    • Solid green/red line + fill    → holding value (green = gain, red = loss)
    • Hover crosshair shows date, CoA, holding value and gain/loss %
    ══════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   fetchNiftyLive — fetch the latest Nifty 50 value from Yahoo Finance (^NSEI)
+   via the same CORS-proxy pattern used elsewhere. Falls back silently to null
+   so the embedded history is used unchanged when offline / blocked.
+   ══════════════════════════════════════════════════════════════════════════ */
+let _niftyLiveCache=null;   /* {value, date} */
+let _niftyLivePromise=null;
+const fetchNiftyLive=async()=>{
+  if(_niftyLiveCache)return _niftyLiveCache;
+  if(_niftyLivePromise)return _niftyLivePromise;
+  const run=async()=>{
+    const period2=Math.floor(Date.now()/1000);
+    const period1=period2-60*60*24*7; /* last 7 days is enough for the latest close */
+    const yUrl="https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?period1="+period1+"&period2="+period2+"&interval=1d";
+    const proxies=[
+      "https://api.cors.lol/?url="+encodeURIComponent(yUrl),
+      "https://corsproxy.io/?"+encodeURIComponent(yUrl),
+      "https://cors.eu.org/"+yUrl,
+      "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(yUrl),
+    ];
+    for(const p of proxies){
+      try{
+        const r=await _fetchX(p,{},10000);if(!r.ok)continue;
+        const txt=await _readBody(r,8000);
+        let json;try{json=JSON.parse(_unwrap(txt));}catch{continue;}
+        const res=json&&json.chart&&json.chart.result&&json.chart.result[0];
+        if(!res)continue;
+        const ts=res.timestamp, q=res.indicators&&res.indicators.quote&&res.indicators.quote[0];
+        if(!ts||!q||!q.close)continue;
+        let idx=ts.length-1;
+        while(idx>0&&(q.close[idx]==null))idx--;
+        const close=q.close[idx];
+        const t=ts[idx];
+        if(close==null)continue;
+        const dt=new Date(t*1000);
+        const iso=dt.toISOString().slice(0,10);
+        _niftyLiveCache={value:Math.round(close*100)/100,date:iso};
+        return _niftyLiveCache;
+      }catch(e){}
+    }
+    return null;
+  };
+  _niftyLivePromise=run().finally(()=>{_niftyLivePromise=null;});
+  return _niftyLivePromise;
+};
+
 const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const svgRef=React.useRef(null);
   const[hoverIdx,setHoverIdx]=React.useState(null);
+  const[niftyLive,setNiftyLive]=React.useState(_niftyLiveCache);
+
+  React.useEffect(()=>{
+    let alive=true;
+    fetchNiftyLive().then(v=>{if(alive&&v)setNiftyLive(v);}).catch(()=>{});
+    return()=>{alive=false;};
+  },[]);
 
   /* ── Build timeline data points ── */
   const dataPoints=React.useMemo(()=>{
@@ -18792,6 +19094,49 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const costAreaPath=costPath+` L${xFn(dataPoints.length-1)},${baseY} L${xFn(0)},${baseY} Z`;
   const valAreaPath=valPath+` L${xFn(dataPoints.length-1)},${baseY} L${xFn(0)},${baseY} Z`;
 
+  /* ── Nifty 50 overlay (secondary right axis, index points) ──
+     Build an independent time-series mapped onto the chart's full date domain
+     so the line always spans the entire portfolio period (Jan 2017 to now),
+     independent of how sparse/irregular the portfolio transaction dates are. ── */
+  const _toTime=iso=>{const p=iso.split("-");return Date.UTC(+p[0],+p[1]-1,+p[2]);};
+  /* Merge live Nifty value into the embedded history so the line extends to the
+     most recent close (fetched at runtime). Replaces any same-date entry. */
+  const niftyHist={...NIFTY50_HISTORY};
+  if(niftyLive&&niftyLive.value){
+    const ld=niftyLive.date;
+    let _replaced=false;
+    for(const k of Object.keys(niftyHist)){if(k===ld){niftyHist[k]=niftyLive.value;_replaced=true;break;}}
+    if(!_replaced)niftyHist[ld]=niftyLive.value;
+  }
+  const domStart=_toTime(dataPoints[0].rawDate);
+  const domEnd=_toTime(dataPoints[dataPoints.length-1].rawDate);
+  const domSpan=(domEnd-domStart)||1;
+  const _xTime=iso=>padL+(chartW*(_toTime(iso)-domStart)/domSpan);
+  const histEntries=Object.keys(niftyHist)
+    .filter(d=>_toTime(d)>=domStart&&_toTime(d)<=domEnd)
+    .sort()
+    .map(d=>[ _xTime(d), niftyHist[d] ]);
+  const niftyHasData=histEntries.length>=2;
+  const niftyRawMn=niftyHasData?Math.min(...histEntries.map(e=>e[1])):0;
+  const niftyRawMx=niftyHasData?Math.max(...histEntries.map(e=>e[1])):1;
+  const niftyPadV=(niftyRawMx-niftyRawMn)*0.10||1;
+  const niftyMn=Math.max(0,niftyRawMn-niftyPadV);
+  const niftyMx=niftyRawMx+niftyPadV;
+  const niftyRange=niftyMx-niftyMn||1;
+  const yFnN=v=>padT+chartH*(1-(v-niftyMn)/niftyRange);
+  const niftyXY=histEntries.map(([x,v])=>[x,yFnN(v)]);
+  const niftyPath=niftyXY.length>=2?smoothPath(niftyXY):"";
+  const niftyColor="#2563eb";
+  const niftyTicks=Array.from({length:nTicks},(_,i)=>niftyRawMn+(niftyRawMx-niftyRawMn)/(nTicks-1)*i);
+  if(niftyTicks.length)niftyTicks[nTicks-1]=niftyRawMx;
+  /* Per-portfolio-point Nifty value for hover tooltip (nearest history date <= point date) */
+  const _histSorted=Object.keys(niftyHist).sort();
+  const niftyValsAt=dataPoints.map(dp=>{
+    let best=null;
+    for(const hd of _histSorted){if(_toTime(hd)<=_toTime(dp.rawDate))best=niftyHist[hd];else break;}
+    return best;
+  });
+
   const last=dataPoints[dataPoints.length-1];
   const isGain=last.value>=last.cost;
   const totalGainPct=last.cost>0?((last.value-last.cost)/last.cost*100):0;
@@ -18843,7 +19188,9 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const hx=hoverIdx!==null?xFn(hoverIdx):null;
   const hyV=hoverIdx!==null?yFn(dataPoints[hoverIdx].value):null;
   const hyC=hoverIdx!==null?yFn(dataPoints[hoverIdx].cost):null;
-  const tipW=230,tipH=110;
+  const hN=hoverIdx!==null&&niftyValsAt[hoverIdx]!=null?niftyValsAt[hoverIdx]:null;
+  const hyN=hoverIdx!==null&&hN!=null?yFnN(hN):null;
+  const tipW=230,tipH=128;
   const tipX=hx!==null?(hx+tipW+padR+4>W?hx-tipW-14:hx+14):0;
   const tipY=hyV!==null?Math.max(padT,Math.min(padT+chartH-tipH,hyV-tipH/2)):0;
 
@@ -18906,6 +19253,16 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         ),
         React.createElement("span",null,"Holding Value ("+(isGain?"in profit":"in loss")+")")
       ),
+      niftyHasData&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7}},
+        React.createElement("svg",{width:28,height:12,style:{overflow:"visible"}},
+          React.createElement("line",{x1:0,y1:6,x2:28,y2:6,stroke:"#2563eb",strokeWidth:2,strokeDasharray:"5,3",strokeLinecap:"round"})
+        ),
+        React.createElement("span",null,"Nifty 50 (index points)"),
+        React.createElement("span",{style:{marginLeft:6,fontSize:8,fontWeight:700,padding:"1px 6px",borderRadius:5,
+          background:niftyLive?"rgba(37,99,235,.12)":"rgba(120,120,120,.12)",
+          color:niftyLive?"#2563eb":"var(--text6)",border:"1px solid "+(niftyLive?"rgba(37,99,235,.3)":"var(--border2)")}},
+          niftyLive?"LIVE":"cached")
+      ),
       React.createElement("div",{style:{marginLeft:"auto",fontSize:10,color:"var(--text6)",fontStyle:"italic"}},
         dataPoints.length+" data points · "+mfTxns.length+" transactions"
       )
@@ -18964,6 +19321,13 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
           fill:"var(--text5)",fontSize:9.5,fontWeight:600},INRshort(v))
       )),
 
+      /* Nifty 50 right-axis labels (index points) */
+      niftyHasData&&niftyTicks.map((v,i)=>React.createElement("g",{key:"pev_yn"+i},
+        React.createElement("text",{x:W-padR+6,y:yFnN(v)+3.5,textAnchor:"start",
+          fill:"#2563eb",fontSize:9.5,fontWeight:600,opacity:.85},
+          Math.round(v).toLocaleString("en-IN"))
+      )),
+
       /* Area fills (clipped) */
       React.createElement("g",{clipPath:"url(#pev_clip)"},
         React.createElement("path",{d:costAreaPath,fill:"url(#pev_cost_g)"}),
@@ -18979,6 +19343,11 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
       React.createElement("path",{d:valPath,fill:"none",stroke:valColor,strokeWidth:2.5,
         strokeLinejoin:"round",strokeLinecap:"round",
         style:{filter:`drop-shadow(0 0 4px ${valColor}80)`},
+        clipPath:"url(#pev_clip)"}),
+
+      /* Nifty 50 overlay line — blue dashed, secondary axis */
+      niftyHasData&&React.createElement("path",{d:niftyPath,fill:"none",stroke:niftyColor,strokeWidth:1.8,
+        strokeDasharray:"7,4",strokeLinejoin:"round",strokeLinecap:"round",opacity:.85,
         clipPath:"url(#pev_clip)"}),
 
       /* Milestone markers (peak / trough) */
@@ -19024,11 +19393,14 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         /* Rings behind dots */
         React.createElement("circle",{cx:hx,cy:hyC,r:9,fill:"#f59e0b",opacity:.12}),
         React.createElement("circle",{cx:hx,cy:hyV,r:9,fill:valColor,opacity:.15}),
+        hyN!==null&&React.createElement("circle",{cx:hx,cy:hyN,r:9,fill:niftyColor,opacity:.13}),
         /* Cost dot */
         React.createElement("circle",{cx:hx,cy:hyC,r:5,fill:"#f59e0b",stroke:"var(--modal-bg)",strokeWidth:2.5}),
         /* Value dot */
         React.createElement("circle",{cx:hx,cy:hyV,r:5.5,
           fill:valColor,stroke:"var(--modal-bg)",strokeWidth:2.5}),
+        hyN!==null&&React.createElement("circle",{cx:hx,cy:hyN,r:4.5,
+          fill:niftyColor,stroke:"var(--modal-bg)",strokeWidth:2.5}),
         /* Tooltip */
         React.createElement("g",null,
           /* Drop shadow */
@@ -19063,6 +19435,14 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
           React.createElement("text",{x:tipX+14,y:tipY+81,fill:"var(--text5)",fontSize:9.5,fontWeight:600,letterSpacing:.3},"COST OF ACQUISITION"),
           React.createElement("text",{x:tipX+14,y:tipY+97,fill:"#d97706",fontSize:13,fontWeight:700},
             INRfmt(Math.round(hp.cost))),
+          /* Nifty row */
+          hN!==null&&React.createElement(React.Fragment,null,
+            React.createElement("line",{x1:tipX+10,y1:tipY+105,x2:tipX+tipW-10,y2:tipY+105,
+              stroke:"var(--border2)",strokeWidth:.8,opacity:.6}),
+            React.createElement("text",{x:tipX+14,y:tipY+119,fill:"#2563eb",fontSize:9.5,fontWeight:600,letterSpacing:.3},"NIFTY 50"),
+            React.createElement("text",{x:tipX+14,y:tipY+124,fill:"#2563eb",fontSize:13,fontWeight:700},
+              Math.round(hN).toLocaleString("en-IN"))
+          ),
           /* Net */
           (()=>{
             const nd=hp.value-hp.cost;
@@ -24201,7 +24581,9 @@ const SwingHoldOptimizer=({shares,soldShareSnapshots={}})=>{
   );
 };
 
-const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},historyCache={},soldShareSnapshots={},brokerCashBalance=0,banks=[],scheduled=[]})=>{
+const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},eodIndices={},historyCache={},soldShareSnapshots={},brokerCashBalance=0,banks=[],scheduled=[],isMobile})=>{
+  const[ready,setReady]=useState(false);
+  React.useEffect(()=>{const t=setTimeout(()=>setReady(true),120);return()=>clearTimeout(t);},[]);
   const[tab,setTab]=useState(defaultTab);const[open,setOpen]=useState(false);const[navLoad,setNavLoad]=useState(false);
   const[sharesSubTab,setSharesSubTab]=useState("holdings"); /* "holdings" | "profitability" | "timeholding" | "winloss" | "capitaleff" | "behavioural" | "timing" | "risk" | "pattern" | "drawdown" | "multitime" | "frequency" | "swing" */
   React.useEffect(()=>{setTab(defaultTab);},[defaultTab]);
@@ -24246,6 +24628,59 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
       if(navDateISO)dispatch({type:"SET_EOD_NAVS",date:navDateISO,navs:navsByCode});
     }
     setNavLoad(false);
+    /* ── Fetch market indices EOD snapshot (runs after spinner clears) ── */
+    setTimeout(async()=>{
+      try{
+        let idxData=await fetchMarketIndices();
+        const KEY_INDICES=["NIFTY 50","NIFTY 100","NIFTY MIDCAP 50","NIFTY MIDCAP 100","NIFTY MIDCAP 150","NIFTY SMLCAP 100","NIFTY BANK","NIFTY AUTO","NIFTY IT","NIFTY PHARMA"];
+        const _store=d=>{
+          const indexSnap={};
+          d.forEach(idx=>{
+            if(KEY_INDICES.includes(idx.symbol)&&idx.price>0){
+              indexSnap[idx.symbol]=idx.price;
+              if(idx.prevClose>0)indexSnap[idx.symbol+"_pc"]=idx.prevClose;
+            }
+          });
+          if(Object.keys(indexSnap).length>0){
+            dispatch({type:"SET_EOD_INDICES",date:getISTDateStr(),indices:indexSnap});
+            return true;
+          }
+          return false;
+        };
+        if(idxData&&idxData.length&&_store(idxData))return;
+        /* Fallback: Yahoo Finance v7 quote endpoint (all 10 indices in one call) */
+        const ySymToKey={"^NSEI":"NIFTY 50","^CNX100":"NIFTY 100","^NSEMDCP50":"NIFTY MIDCAP 50","^NSEMDCP100":"NIFTY MIDCAP 100","^CRSLDX":"NIFTY MIDCAP 150","^CNXSMALL":"NIFTY SMLCAP 100","^NSEBANK":"NIFTY BANK","^CNXAUTO":"NIFTY AUTO","^CNXIT":"NIFTY IT","^CNXPHARMA":"NIFTY PHARMA"};
+        const yTickers=Object.keys(ySymToKey).join(",");
+        const yProxies=[
+          u=>"https://corsproxy.io/?"+encodeURIComponent(u),
+          u=>"https://api.cors.lol/?url="+encodeURIComponent(u),
+        ];
+        const yHosts=["query1.finance.yahoo.com","query2.finance.yahoo.com"];
+        const yResults=[];
+        for(const host of yHosts){
+          for(const mkP of yProxies){
+            try{
+              const url="https://"+host+"/v7/finance/quote?symbols="+encodeURIComponent(yTickers)+"&fields=regularMarketPrice,previousClose";
+              const r=await _fetchX(mkP(url),{},10000);if(!r.ok)continue;
+              const txt=await _readBody(r,8000);
+              let json;try{json=JSON.parse(txt);}catch{continue;}
+              const p=json?.contents?JSON.parse(json.contents):json;
+              const items=p?.quoteResponse?.result||[];
+              if(!items.length)continue;
+              items.forEach(q=>{
+                const key=ySymToKey[q.symbol];
+                const price=parseFloat(q?.regularMarketPrice)||parseFloat(q?.previousClose);
+                const prevClose=parseFloat(q?.previousClose);
+                if(key&&price>0)yResults.push({symbol:key,price,prevClose:prevClose>0?prevClose:null});
+              });
+              if(yResults.length>0)break;
+            }catch{}
+          }
+          if(yResults.length>0)break;
+        }
+        if(yResults.length>0)_store(yResults);
+      }catch(e){}
+    },50);
   };
 
   /* ── Live price fetch — delegates to shared fetchTickerPrice helper ── */
@@ -24316,20 +24751,33 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
   const pfInterest=pfBalance-pfTotalContrib;
   /* Dynamic section config based on active tab */
   const CFG={
-    mf:{title:"Mutual Funds",sub:"Portfolio: ",subVal:INR(mfTotal),subCol:"#6d28d9",addLabel:"+ Add Fund"},
-    shares:{title:"Shares",sub:"Market Value: ",subVal:INR(shVal),subCol:"#16a34a",addLabel:"+ Add Share"},
-    fd:{title:"Fixed Deposits",sub:"Value Today: ",subVal:INR(fdTodayTotal),subCol:"#b45309",addLabel:"+ Add FD"},
-    re:{title:"Real Estate",sub:"Portfolio Value: ",subVal:INR(re.reduce((s,r)=>s+(r.currentValue||r.acquisitionCost),0)),subCol:"#c2410c",addLabel:"+ Add Property"},
-    pf:{title:"Provident Funds",sub:"Total Balance: ",subVal:INR(pfBalance),subCol:"#0f766e",addLabel:"+ Add PF Account"},
+    mf:{title:"Mutual Funds",sub:"Portfolio: ",subVal:INR(mfTotal),subCol:"#6d28d9",addLabel:"+ Add Fund",bar:"#a3e635"},
+    shares:{title:"Shares",sub:"Market Value: ",subVal:INR(shVal),subCol:"#16a34a",addLabel:"+ Add Share",bar:"#facc15"},
+    fd:{title:"Fixed Deposits",sub:"Value Today: ",subVal:INR(fdTodayTotal),subCol:"#b45309",addLabel:"+ Add FD",bar:"#7dd3fc"},
+    re:{title:"Real Estate",sub:"Portfolio Value: ",subVal:INR(re.reduce((s,r)=>s+(r.currentValue||r.acquisitionCost),0)),subCol:"#c2410c",addLabel:"+ Add Property",bar:"#e879f9"},
+    pf:{title:"Provident Funds",sub:"Total Balance: ",subVal:INR(pfBalance),subCol:"#0f766e",addLabel:"+ Add PF Account",bar:"#34d399"},
   };
   const cfg=CFG[tab]||CFG.mf;
+  if(!ready)return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",gap:14}},
+    React.createElement("div",{style:{display:"flex",alignItems:"center",gap:13,marginBottom:16}},
+      React.createElement(Skeleton,{w:42,h:42,r:12}),
+      React.createElement("div",{style:{flex:1}},React.createElement(Skeleton,{w:"40%",h:16,style:{marginBottom:8}}),React.createElement(Skeleton,{w:"25%",h:10}))
+    ),
+    React.createElement("div",{style:{display:"flex",gap:8,marginBottom:14}},
+      React.createElement(Skeleton,{w:80,h:30,r:10}),React.createElement(Skeleton,{w:80,h:30,r:10}),React.createElement(Skeleton,{w:80,h:30,r:10})),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr 1fr":"repeat(4,1fr)",gap:12}},
+      React.createElement(SkeletonStat,null),React.createElement(SkeletonStat,null),React.createElement(SkeletonStat,null),React.createElement(SkeletonStat,null)),
+    React.createElement("div",{className:"mm-card",style:{padding:18,borderRadius:14}},React.createElement(Skeleton,{h:160}))
+  );
   return React.createElement("div",{className:"fu"},
     /* ── Page header */
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
-      React.createElement("div",null,
-        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:700,color:"var(--text)"}},cfg.title),
-        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},cfg.sub,React.createElement("span",{style:{color:cfg.subCol,fontWeight:600}},cfg.subVal))
-      ),
+      React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+        React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:cfg.bar,flexShrink:0}}),
+        React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:23,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},cfg.title),
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},cfg.sub,React.createElement("span",{style:{color:cfg.subCol,fontWeight:600}},cfg.subVal))
+      )),
       React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",justifyContent:"flex-end"}},
         tab==="mf"&&React.createElement(Btn,{v:"secondary",sz:"sm",onClick:()=>setImportMFOpen(true),sx:{fontSize:12}},"⬆ Import Excel"),
         tab==="mf"&&React.createElement(Btn,{v:"secondary",sz:"sm",onClick:()=>setImportTxnsOpen(true),sx:{fontSize:12,borderColor:"rgba(109,40,217,.4)",color:"#6d28d9",background:"rgba(109,40,217,.08)"}},"⬆ Import Txns"),
@@ -24370,6 +24818,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         borderRadius:14,padding:"18px 22px",
         display:"flex",alignItems:"center",gap:18,flexWrap:"wrap",
         position:"relative",overflow:"hidden",
+        animation:"heroAppear .42s ease both",
       }},
         /* Left accent bar */
         React.createElement("div",{style:{position:"absolute",left:0,top:0,bottom:0,width:4,background:"linear-gradient(180deg,#0e7490,#06b6d4)",borderRadius:"16px 0 0 16px"}}),
@@ -24515,7 +24964,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         const fmtDateLabel=(iso)=>{if(!iso)return"--";const p=iso.split("-");const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return p.length===3?p[2]+" "+MON[parseInt(p[1],10)-1]+" "+p[0]:iso;};
         return React.createElement("div",{style:{marginBottom:16}},
           /* ── Hero card ── */
-          React.createElement(Card,{sx:{marginBottom:12,background:"linear-gradient(135deg,var(--card2),var(--card))",position:"relative",overflow:"hidden"}},
+          React.createElement(Card,{sx:{marginBottom:12,background:"linear-gradient(135deg,var(--card2),var(--card))",position:"relative",overflow:"hidden",animation:"heroAppear .42s ease both"}},
             /* decorative glow blob */
             React.createElement("div",{style:{position:"absolute",right:-30,top:-30,width:160,height:160,borderRadius:"50%",background:"rgba(109,40,217,.07)",pointerEvents:"none"}}),
             /* ── Label ── */
@@ -24590,37 +25039,130 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
               )
             )
           ),
-          /* ── NAV Progress: Avg Buy NAV → Current NAV per fund ── */
-          mf.filter(m=>m.units>0).some(m=>m.avgNav>0&&m.nav>0)&&React.createElement(Card,{sx:{marginBottom:4}},
-            React.createElement("div",{style:{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:"var(--text5)",marginBottom:12,paddingBottom:6,borderBottom:"1px solid var(--border2)"}},"NAV Progress — Avg Buy NAV vs Current NAV"),
-            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:10}},
-              mf.filter(m=>m.units>0&&m.avgNav>0&&m.nav>0).map(m=>{
-                const pct=(m.nav-m.avgNav)/m.avgNav*100;
-                const barW=Math.min(100,Math.abs(pct));
-                const col=pct>=0?"#16a34a":"#ef4444";
-                const bgCol=pct>=0?"rgba(22,163,74,.07)":"rgba(239,68,68,.07)";
-                const borderCol=pct>=0?"rgba(22,163,74,.18)":"rgba(239,68,68,.18)";
-                const raw=m.name.replace(/\s*-\s*(direct|regular)\s*(growth|idcw|dividend).*/i,"").replace(/\s*fund$/i,"").trim();
-                const dn=raw.length>22?raw.slice(0,20)+"…":raw;
-                return React.createElement("div",{key:m.id,style:{padding:"10px 12px",background:bgCol,borderRadius:9,border:"1px solid "+borderCol}},
-                  React.createElement("div",{style:{fontSize:11,fontWeight:600,color:"var(--text3)",marginBottom:6,lineHeight:1.3}},dn),
-                  React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,marginBottom:5}},
-                    React.createElement("span",{style:{color:"var(--text5)"}},"Avg ₹"+Number(m.avgNav).toFixed(2)),
-                    React.createElement("span",{style:{color:"#0e7490",fontWeight:600}},"Now ₹"+Number(m.nav).toFixed(2))
-                  ),
-                  React.createElement("div",{style:{height:5,background:"var(--bg4)",borderRadius:3,overflow:"hidden",marginBottom:5}},
-                    React.createElement("div",{style:{height:"100%",width:barW+"%",background:col,borderRadius:3,minWidth:pct!==0?3:0}})
-                  ),
-                  React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
-                    React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},(m.units||0).toFixed(3)+" units"),
-                    React.createElement("span",{style:{fontSize:12,fontWeight:700,color:col}},(pct>=0?"+":"")+pct.toFixed(2)+"%")
-                  )
-                );
-              })
-            )
-          )
         );
       })(),
+          tab==="mf"&&(()=>{
+            const _normIdx=normalizeEodNavKeys(eodIndices||{});
+            const _idxDates=Object.keys(_normIdx).sort();
+            const _normTbl=normalizeEodNavKeys(eodNavs||{});
+            const _tblDates=Object.keys(_normTbl).sort();
+            const _navD1=_tblDates.slice(-1)[0];
+            const _navD2=_tblDates.slice(-2,-1)[0];
+            const _fundCount=mf.filter(m=>m.units>0).length;
+            const _hasNavPair=_navD1&&_navD2&&!!_fundCount;
+            const _idxKeys=["NIFTY 50","NIFTY 100","NIFTY MIDCAP 50","NIFTY MIDCAP 100","NIFTY MIDCAP 150","NIFTY SMLCAP 100","NIFTY BANK","NIFTY AUTO","NIFTY IT","NIFTY PHARMA"];
+            const _idxLabels=["Nifty 50","Nifty 100","Midcap 50","Midcap 100","Midcap 150","Smallcap 100","Bank","Auto","IT","Pharma"];
+            /* Index value as of the market close on/before a given date — indices are
+               published at close, just like NAVs, so we anchor to the latest index
+               snapshot on or before each NAV date. This guarantees the Nifty column
+               reflects the SAME past market close as the fund's NAV (never today's
+               live value), so NAV % and Nifty % are always comparable for one day. */
+            const _idxValOnOrBefore=(iso,k)=>{
+              if(!iso)return null;
+              let best=null;
+              for(const d of _idxDates){if(d<=iso){const v=(_normIdx[d]||{})[k];if(v&&v>0)best=v;}else break;}
+              return best;
+            };
+            const _idxChgs=_idxKeys.map((k,i)=>{
+              let chgPct=null;
+              if(_navD1&&_navD2){
+                const c1=_idxValOnOrBefore(_navD1,k);
+                const c2=_idxValOnOrBefore(_navD2,k);
+                if(c1&&c2&&c2>0)chgPct=((c1-c2)/c2*100);
+              }
+              return{label:_idxLabels[i],chgPct:chgPct!==null?Math.round(chgPct*100)/100:null};
+            });
+            /* Build fund rows only when we have 2+ NAV dates */
+            const _fundChgs=_hasNavPair?(function(){
+              const _ah=mf.filter(m=>m.units>0);
+              return _ah.map(m=>{
+                const l=(_normTbl[_navD1]||{})[m.schemeCode];
+                const p=(_normTbl[_navD2]||{})[m.schemeCode];
+                if(!l||!p||p<=0)return null;
+                return{name:m.name,chgPct:((l-p)/p*100)};
+              }).filter(Boolean).sort((a,b)=>b.chgPct-a.chgPct);
+            })():[];
+            /* Net portfolio value change over the SAME navD2 → navD1 period.
+               Sum units × NAV for every active fund at each date. */
+            const _netPort=()=>{
+              const _ah=mf.filter(m=>m.units>0);
+              let v1=0,v2=0;
+              _ah.forEach(m=>{
+                const l=(_normTbl[_navD1]||{})[m.schemeCode];
+                const p=(_normTbl[_navD2]||{})[m.schemeCode];
+                if(l&&l>0)v1+=m.units*l;
+                if(p&&p>0)v2+=m.units*p;
+              });
+              return{v1,v2};
+            };
+            const _net=_hasNavPair?_netPort():{v1:0,v2:0};
+            const _netChgAbs=_net.v1-_net.v2;
+            const _netChgPct=_net.v2>0?(_netChgAbs/_net.v2*100):null;
+            const _fmtD=(iso)=>{if(!iso)return"--";const p=iso.split("-");const M=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return p.length===3?p[2]+" "+M[parseInt(p[1],10)-1]+" "+p[0]:iso;};
+            const _col=(v)=>v!==null&&v!==undefined?(v>=0?"#16a34a":"#ef4444"):"var(--text5)";
+            const _pct=(v)=>v!==null&&v!==undefined?(v>=0?"▲ +":"▼ ")+Math.abs(v).toFixed(2)+"%":"—";
+            const _sn=(n)=>{const r=n.replace(/\s*-\s*(direct|regular)\s*(growth|idcw|dividend).*/i,"").replace(/\s*fund$/i,"").trim();return r.length>25?r.slice(0,23)+"…":r;};
+            const _showNavDate=_navD1||"--";
+            /* Both NAV and Nifty are anchored to the same NAV date pair (past close),
+               so the subtitle shows that single shared period. */
+            const _idxHasData=_idxChgs.some(c=>c.chgPct!==null);
+            /* ── Determine subtitle ── */
+            let _subtitle="NAV & Nifty: "+(_navD2?(_fmtD(_navD2)+" → "):"")+_fmtD(_navD1);
+            if(!_idxHasData&&!_hasNavPair)_subtitle="Refresh NAV to see comparison";
+            else if(_hasNavPair&&!_idxHasData)_subtitle=_subtitle+" · Nifty history not yet captured for these dates";
+            else if(!_hasNavPair&&_fundCount>0)_subtitle=_subtitle+" · Fund rows appear after 2nd NAV refresh";
+            return React.createElement(Card,{sx:{marginBottom:14,overflow:"hidden"}},
+              React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7,padding:"14px 16px 8px",borderBottom:"1px solid var(--border2)"}},
+                React.createElement("div",{style:{width:3,height:14,borderRadius:2,background:"#6d28d9",flexShrink:0}}),
+                React.createElement("span",{style:{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:"var(--text5)"}},"NAV Change vs Nifty Benchmarks"),
+                React.createElement("span",{style:{fontSize:9,color:"var(--text6)",fontWeight:400,marginLeft:"auto",whiteSpace:"nowrap"}},_subtitle)
+              ),
+              React.createElement("div",{style:{overflowX:"auto",WebkitOverflowScrolling:"touch"}},
+                React.createElement("div",{style:{minWidth:850}},
+                  React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,background:"var(--bg5)",borderBottom:"2px solid var(--border)",fontSize:9,fontWeight:700,color:"var(--accent)",textTransform:"uppercase",letterSpacing:.5}},
+                    React.createElement("div",{style:{padding:"7px 10px"}},"Fund"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"NAV"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"N50"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"N100"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"MC50"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"MC100"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"MC150"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"SC100"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"BANK"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"AUTO"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"IT"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right"}},"PHAR")
+                  ),
+                  React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,background:"rgba(109,40,217,.04)",borderBottom:"1px solid var(--border2)",fontSize:10,fontWeight:600}},
+                    React.createElement("div",{style:{padding:"7px 10px",color:"var(--text5)",fontStyle:"italic"}},"Benchmark"),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:"var(--text6)"}},"—"),
+                    _idxChgs.map(idx=>React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct),fontWeight:700}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
+                  ),
+                  _fundChgs.length>0?_fundChgs.map(f=>React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,borderBottom:"1px solid var(--border2)",fontSize:10,":last-child":{borderBottom:"none"}}},
+                    React.createElement("div",{style:{padding:"7px 10px",color:"var(--text2)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},_sn(f.name)),
+                    React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(f.chgPct),fontWeight:600}},(f.chgPct>=0?"▲ +":"▼ ")+Math.abs(f.chgPct).toFixed(2)+"%"),
+                    _idxChgs.map(idx=>React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
+                  )):_hasNavPair||!_fundCount?null:React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr",gap:0,padding:"16px 10px",fontSize:10,color:"var(--text6)",textAlign:"center",fontStyle:"italic"}},
+                    "Refresh NAV again tomorrow to see per-fund day-over-day changes.")
+                  ),
+                  /* ── Summary: Net Portfolio Change (value % + rupees) ── */
+                  _hasNavPair&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,borderTop:"2px solid var(--border)",background:"rgba(109,40,217,.07)",fontSize:10,fontWeight:700}},
+                    React.createElement("div",{style:{padding:"8px 10px",color:"#6d28d9"}},"Net Portfolio"),
+                    React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:_col(_netChgPct),display:"flex",flexDirection:"column",alignItems:"flex-end",lineHeight:1.25}},
+                      React.createElement("span",null,_netChgPct!==null?_pct(_netChgPct):"—"),
+                      React.createElement("span",{style:{fontSize:9,fontWeight:600,opacity:.85}},_netChgAbs!==0?INR(_netChgAbs):"")
+                    ),
+                    _idxChgs.map(()=>React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:"var(--text6)"}},"—"))
+                  ),
+                  /* ── Summary: Net Indices Change (same period) ── */
+                  React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,background:"rgba(37,99,235,.06)",borderBottom:"1px solid var(--border2)",fontSize:10,fontWeight:700}},
+                    React.createElement("div",{style:{padding:"8px 10px",color:"#2563eb"}},"Net Indices"),
+                    React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:"var(--text6)"}},"—"),
+                    _idxChgs.map(idx=>React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
+                  )
+              )
+            );
+          })(),
       /* ── Portfolio Evolution Chart — always visible when txns are imported ── */
       (mfTxns||[]).length>=2&&React.createElement(Card,{sx:{marginBottom:14}},
         React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:8}},
@@ -24634,6 +25176,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         ),
         React.createElement(MFPortfolioEvolutionChart,{mfTxns:mfTxns,mf:mf.filter(m=>m.units>0)})
       ),
+
       /* Filter out zero-unit (fully sold) holdings */
       (()=>{
         const activeMf=mf.filter(m=>m.units>0);
@@ -24797,6 +25340,16 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
       );
       })() /* close IIFE for zero-unit filter */
     ),
+    /* ── NAV change vs Nifty benchmark comparison table ──
+         Uses latest eodIndices entry which stores close + prevClose per index,
+         so a single date entry gives the full day's change. This avoids date
+         alignment issues between NAV dates and index data.
+
+         Handles three states:
+           • No data yet   → prompt to refresh NAV
+           • 1 NAV snap    → shows benchmarks + "second snapshot needed" prompt
+           • 2+ NAV snaps  → full table with fund rows                          */
+
     /* ── Market Indices Ticker ── */
     tab==="shares"&&React.createElement(MarketTicker),
     /* ── Shares sub-tab bar ── */
@@ -26260,13 +26813,15 @@ const LoanSection=React.memo(({loans,dispatch,allBanks=[],allCards=[],cash,isMob
   return React.createElement("div",{className:"fu"},
     /* Header */
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
-      React.createElement("div",null,
-        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:700,color:"var(--text)"}},"Loan Accounts"),
-        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},
+      React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+        React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#fb923c",flexShrink:0}}),
+        React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:23,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"Loan Accounts"),
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},
           "Outstanding: ",React.createElement("span",{style:{color:"#ef4444",fontWeight:600}},INR(tot)),
           " · Monthly EMI: ",React.createElement("span",{style:{color:"#c2410c",fontWeight:600}},INR(totalEmi))
         )
-      ),
+      )),
       React.createElement(Btn,{onClick:()=>setOpen(true)},"+ Add Loan")
     ),
 
@@ -30546,6 +31101,769 @@ const RptGstTds=({data,from,to,onExportPDF})=>{
   );
 };
 
+/* ══ NEW REPORT: BUDGET VS ACTUALS ═════════════════════════════════════════ */
+const RptBudgetVsActual=({data,from,to,onExportPDF})=>{
+  const[accFilter,setAccFilter]=useState("all");
+  const[view,setView]=useState("snapshot");
+  const[budgetMode,setBudgetMode]=useState("auto");
+  const allTx=collectTx(data,from,to,accFilter);
+  const mPlans=data.insightPrefs?.budgetPlans||{};
+  const yPlans=data.insightPrefs?.yearlyBudgetPlans||{};
+  const hasMonthly=Object.values(mPlans).some(v=>v>0);
+  const hasYearly=Object.values(yPlans).some(v=>v>0);
+  const hasBudgets=hasMonthly||hasYearly;
+
+  /* Compute number of months in the date range for budget scaling */
+  const numMonths=React.useMemo(()=>{
+    const fD=new Date(from+"T00:00:00");
+    const tD=new Date(to+"T00:00:00");
+    return Math.max(1,(tD.getFullYear()-fD.getFullYear())*12+(tD.getMonth()-fD.getMonth())+1);
+  },[from,to]);
+
+  /* Group actuals by month and category */
+  const monthly={};
+  allTx.forEach(t=>{
+    const k=t.date.substr(0,7);
+    const ct=catClassType(data.categories,t.cat||"Others");
+    if(ct==="Transfer"||ct==="Income"||ct==="Investment"||ct==="Others")return;
+    if(t.type!=="debit")return;
+    const cat=catMainName(t.cat||"Others");
+    if(cat==="Taxes")return;
+    if(!monthly[k])monthly[k]={};
+    monthly[k][cat]=(monthly[k][cat]||0)+t.amount;
+  });
+  const months=Object.keys(monthly).sort();
+  const allCats=new Set();
+  months.forEach(m=>Object.keys(monthly[m]).forEach(c=>allCats.add(c)));
+
+  /* Resolve effective budget per category:
+     "auto"  → yearly if set, else monthly (scaled to range)
+     "monthly" → monthly × numMonths
+     "yearly"  → yearly × numMonths/12 (fractional year) */
+  const resolvePlanned=(cat)=>{
+    if(budgetMode==="monthly")return(mPlans[cat]||0)*numMonths;
+    if(budgetMode==="yearly")return(yPlans[cat]||0)*numMonths/12;
+    /* auto: prefer yearly if set, else monthly */
+    if((yPlans[cat]||0)>0)return yPlans[cat]*numMonths/12;
+    return(mPlans[cat]||0)*numMonths;
+  };
+
+  const catList=[...allCats].sort();
+  const catRows=catList.map(cat=>{
+    const planned=resolvePlanned(cat);
+    const monthlyBudget=mPlans[cat]||0;
+    const yearlyBudget=yPlans[cat]||0;
+    let totalActual=0;
+    months.forEach(m=>{totalActual+=(monthly[m][cat]||0);});
+    const avgPerMonth=months.length>0?totalActual/months.length:0;
+    const variance=planned>0?((totalActual-planned)/planned)*100:0;
+    return{cat,planned,monthlyBudget,yearlyBudget,totalActual,avgPerMonth,variance,
+      monthlyData:months.map(m=>monthly[m]?.[cat]||0),
+      budgetSource:(yPlans[cat]||0)>0?"yearly":(mPlans[cat]||0)>0?"monthly":"none"};
+  }).filter(r=>r.planned>0||r.totalActual>0).sort((a,b)=>b.totalActual-a.totalActual);
+
+  const totalPlanned=catRows.reduce((s,r)=>s+r.planned,0);
+  const totalActual=catRows.reduce((s,r)=>s+r.totalActual,0);
+  const overallVariance=totalPlanned>0?((totalActual-totalPlanned)/totalPlanned)*100:0;
+  const overBudget=catRows.filter(r=>r.planned>0&&r.totalActual>r.planned).length;
+  const underBudget=catRows.filter(r=>r.planned>0&&r.totalActual<=r.planned).length;
+  const hmRows=catRows.filter(r=>r.planned>0).map(r=>({label:r.cat,col:r.totalActual>r.planned?"#ef4444":"#16a34a",data:months.reduce((o,m,i)=>{o[m]=r.monthlyData[i];return o;},{})}));
+
+  /* Label for the budget scaling */
+  const rangeLabel=numMonths===1?"1 month":numMonths+" months";
+  const budgetModeLabel=budgetMode==="auto"?(hasYearly?"Yearly":"Monthly"):(budgetMode==="monthly"?"Monthly":"Yearly");
+
+  if(!hasBudgets)return React.createElement("div",{className:"fu"},
+    React.createElement(RptHeader,{title:"Budget vs Actuals",desc:"Compare planned budgets with actual spending per category",icon:React.createElement(Icon,{n:"checklist",size:18})}),
+    React.createElement(Card,null,
+      React.createElement(Empty,{art:"empty",text:"No budgets set yet. Go to Settings → Insight Preferences → Budget Planning to set monthly or yearly budgets for your expense categories."})
+    )
+  );
+
+  return React.createElement("div",{className:"fu"},
+    React.createElement(RptHeader,{title:"Budget vs Actuals",desc:"Compare planned budgets with actual spending. Budgets auto-scale to the selected timeframe \u2014 monthly budgets multiply by months, yearly budgets prorate.",icon:React.createElement(Icon,{n:"checklist",size:18})}),
+    React.createElement(RptCtrlBar,{onExportPDF},
+      React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Account:"),
+      React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
+      React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4,marginLeft:12}},"Budget:"),
+      React.createElement("div",{style:{display:"inline-flex",borderRadius:6,border:"1px solid var(--border)",overflow:"hidden",marginLeft:4}},
+        ["auto","monthly","yearly"].map(mode=>React.createElement("button",{key:mode,onClick:()=>setBudgetMode(mode),
+          style:{padding:"3px 10px",fontSize:10,fontWeight:600,border:"none",cursor:"pointer",
+            background:budgetMode===mode?"var(--accent)":"transparent",
+            color:budgetMode===mode?"#fff":"var(--text5)"}},mode==="auto"?"Auto":mode==="monthly"?"Monthly":"Yearly"))
+      ),
+      React.createElement("span",{style:{marginLeft:8,fontSize:10,color:"var(--text6)",lineHeight:"22px"}},"\u00B7 "+rangeLabel+"\u00B7 Budget: "+INR(totalPlanned)),
+      React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
+    ),
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement(StatCard,{label:"Total Budget ("+rangeLabel+")",val:INR(totalPlanned),col:"#6d28d9",sub:budgetModeLabel+" budgets \u00D7 "+rangeLabel,icon:React.createElement(Icon,{n:"checklist",size:18})}),
+      React.createElement(StatCard,{label:"Total Spent",val:INR(totalActual),col:overallVariance>0?"#ef4444":"#16a34a",icon:React.createElement(Icon,{n:"classExpense",size:18})}),
+      React.createElement(StatCard,{label:"Variance",val:(overallVariance>0?"+":"")+overallVariance.toFixed(1)+"%",col:overallVariance>0?"#ef4444":"#16a34a",sub:overallVariance>0?"Over budget":"Under budget",icon:React.createElement(Icon,{n:overallVariance>0?"trenddown":"checkcircle",size:18})}),
+      React.createElement(StatCard,{label:"Categories",val:overBudget+"/"+catRows.filter(r=>r.planned>0).length+" over",col:overBudget>0?"#ef4444":"#16a34a",sub:underBudget+" under budget",icon:React.createElement(Icon,{n:"category",size:18})})
+    ),
+    view==="snapshot"&&React.createElement("div",null,
+      React.createElement(Card,{sx:{marginBottom:14}},
+        React.createElement(SvgGroupBar,{data:catRows.filter(r=>r.planned>0).slice(0,10).map(r=>({label:r.cat.length>8?r.cat.slice(0,8)+"…":r.cat,v1:r.planned,v2:r.totalActual})),h:160,color1:"#6d28d9",color2:"#ef4444",label1:"Budget ("+rangeLabel+")",label2:"Actual"})
+      ),
+      catRows.filter(r=>r.planned>0).map(r=>{
+        const pct=Math.min(100,r.planned>0?(r.totalActual/r.planned)*100:0);
+        const isOver=r.totalActual>r.planned;
+        const catObj=data.categories.find(c=>c.name===r.cat);
+        const col=catObj?.color||(isOver?"#ef4444":"#16a34a");
+        return React.createElement(Card,{key:r.cat,sx:{marginBottom:10}},
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+              React.createElement("span",{style:{width:10,height:10,borderRadius:"50%",background:col,display:"inline-block",flexShrink:0}}),
+              React.createElement("span",{style:{fontSize:13,fontWeight:600,color:"var(--text2)"}},r.cat),
+              React.createElement("span",{style:{fontSize:9,fontWeight:600,padding:"1px 6px",borderRadius:6,
+                background:r.budgetSource==="yearly"?"rgba(109,40,217,.1)":"rgba(180,83,9,.1)",
+                color:r.budgetSource==="yearly"?"#6d28d9":"#b45309"}},
+                r.budgetSource==="yearly"?"Yearly":"Monthly")
+            ),
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+              React.createElement("span",{style:{fontSize:12,color:"var(--text5)"}},INR(r.totalActual)+" / "+INR(r.planned)),
+              React.createElement("span",{style:{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:8,background:isOver?"#ef444418":"#16a34a18",color:isOver?"#ef4444":"#16a34a"}},isOver?"+"+((r.totalActual-r.planned)/r.planned*100).toFixed(0)+"%":(((r.planned-r.totalActual)/r.planned)*100).toFixed(0)+"% left")
+            )
+          ),
+          React.createElement("div",{style:{height:8,background:"var(--bg5)",borderRadius:4,overflow:"hidden",marginBottom:4}},
+            React.createElement("div",{style:{height:"100%",width:Math.min(100,pct)+"%",background:isOver?"#ef4444":"#16a34a",borderRadius:4,transition:"width .4s ease"}})
+          ),
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)"}},
+            React.createElement("span",null,"Avg/month: "+INR(r.avgPerMonth)),
+            React.createElement("span",null,
+              r.budgetSource==="yearly"
+                ?"Monthly budget: "+INR(r.yearlyBudget/12)+"\u00B7 "+pct.toFixed(0)+"% of "+rangeLabel+" budget"
+                :"Monthly budget: "+INR(r.monthlyBudget)+"\u00B7 "+pct.toFixed(0)+"% of "+rangeLabel+" budget")
+          )
+        );
+      })
+    ),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflowY:"hidden",overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1.5fr repeat("+Math.min(months.length,6)+",minmax(70px,1fr)) 100px 100px 80px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},
+        React.createElement("span",null,"Category"),
+        ...months.slice(-6).map(m=>React.createElement("span",{key:m,style:{textAlign:"right"}},MONTH_NAMES[parseInt(m.slice(5))-1])),
+        React.createElement("span",{style:{textAlign:"right"}},"Budget ("+rangeLabel+")"),
+        React.createElement("span",{style:{textAlign:"right"}},"Actual"),
+        React.createElement("span",{style:{textAlign:"right"}},"Var %")
+      ),
+      catRows.length===0&&React.createElement(Empty,{text:"No budget data for this period"}),
+      catRows.map(r=>{
+        const isOver=r.planned>0&&r.totalActual>r.planned;
+        return React.createElement("div",{key:r.cat,className:"tr",style:{display:"grid",gridTemplateColumns:"1.5fr repeat("+Math.min(months.length,6)+",minmax(70px,1fr)) 100px 100px 80px",padding:"9px 14px",borderBottom:"1px solid var(--border2)"}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,fontSize:12,color:"var(--text2)",fontWeight:500}},
+            React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:isOver?"#ef4444":"var(--accent)",flexShrink:0,display:"inline-block"}}),
+            React.createElement("span",null,r.cat),
+            React.createElement("span",{style:{fontSize:8,fontWeight:600,padding:"0px 4px",borderRadius:4,marginLeft:2,
+              background:r.budgetSource==="yearly"?"rgba(109,40,217,.1)":"rgba(180,83,9,.1)",
+              color:r.budgetSource==="yearly"?"#6d28d9":"#b45309"}},
+              r.budgetSource==="yearly"?"Y":"M")
+          ),
+          ...months.slice(-6).map((m,i)=>React.createElement("div",{key:m,style:{textAlign:"right",fontSize:11,color:r.monthlyData[months.indexOf(m)]>0?"var(--text3)":"var(--text7)",fontWeight:r.monthlyData[months.indexOf(m)]>0?600:400}},r.monthlyData[months.indexOf(m)]>0?INR(r.monthlyData[months.indexOf(m)]):"—")),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"#6d28d9",fontWeight:600}},r.planned>0?INR(r.planned):"—"),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,color:isOver?"#ef4444":"#16a34a",fontWeight:700}},INR(r.totalActual)),
+          React.createElement("div",{style:{textAlign:"right",fontSize:11,fontWeight:700,color:isOver?"#ef4444":"#16a34a"}},r.planned>0?(r.variance>0?"+":"")+r.variance.toFixed(0)+"%":"—")
+        );
+      }),
+      catRows.length>0&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1.5fr repeat("+Math.min(months.length,6)+",minmax(70px,1fr)) 100px 100px 80px",padding:"10px 14px",borderTop:"2px solid var(--border)",background:"var(--bg4)"}},
+        React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text3)"}},INR(totalActual)+" / "+INR(totalPlanned)),
+        ...months.slice(-6).map(m=>React.createElement("div",{key:m,style:{textAlign:"right",fontSize:11,fontWeight:700,color:"var(--accent)"}})),
+        React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:"#6d28d9"}},INR(totalPlanned)),
+        React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:overallVariance>0?"#ef4444":"#16a34a"}},INR(totalActual)),
+        React.createElement("div",{style:{textAlign:"right",fontSize:11,fontWeight:700,color:overallVariance>0?"#ef4444":"#16a34a"}},(overallVariance>0?"+":"")+overallVariance.toFixed(0)+"%")
+      )
+    ),
+    view==="heatmap"&&React.createElement(HeatGrid,{rows:hmRows,months,rowLabel:"Category",
+      hint:"Actual spending per category per month. Colour intensity = relative spend within each row."})
+  );
+};
+
+/* ══ NEW REPORT: SAVINGS RATE TREND ════════════════════════════════════════ */
+const RptSavingsRate=({data,from,to,onExportPDF})=>{
+  const[accFilter,setAccFilter]=useState("all");
+  const[view,setView]=useState("snapshot");
+  const allTx=collectTx(data,from,to,accFilter);
+  const target=data.insightPrefs?.savingsRateTarget||30;
+  const monthly={};
+  allTx.forEach(t=>{
+    const k=t.date.substr(0,7);
+    const ct=catClassType(data.categories,t.cat||"Others");
+    if(ct==="Transfer")return;
+    const d=txCatDelta(t,ct);
+    if(!monthly[k])monthly[k]={inc:0,exp:0,inv:0};
+    if(ct==="Income")monthly[k].inc+=d;
+    else if(ct==="Investment")monthly[k].inv+=d;
+    else if(ct==="Expense"||ct==="Others")monthly[k].exp+=d;
+  });
+  const months=Object.keys(monthly).sort();
+  const mData=months.map(m=>{
+    const v=monthly[m];
+    const savings=v.inc-v.exp;
+    const savingsRate=v.inc>0?Math.max(0,Math.min(100,(savings/v.inc)*100)):0;
+    return{month:m,savings,savingsRate,inc:v.inc,exp:v.exp,inv:v.inv};
+  });
+  const avgRate=mData.length>0?mData.reduce((s,m)=>s+m.savingsRate,0)/mData.length:0;
+  const totalInc=mData.reduce((s,m)=>s+m.inc,0);
+  const totalExp=mData.reduce((s,m)=>s+m.exp,0);
+  const totalInv=mData.reduce((s,m)=>s+m.inv,0);
+  const overallRate=totalInc>0?Math.max(0,((totalInc-totalExp)/totalInc)*100):0;
+  const aboveTarget=mData.filter(m=>m.savingsRate>=target).length;
+  const maxRate=Math.max(...mData.map(m=>m.savingsRate),target+10);
+  const trendData=mData.map(m=>({label:MONTH_NAMES[parseInt(m.month.slice(5))-1],value:m.savingsRate}));
+  const hmRows=[
+    {label:"Savings Rate %",col:"#16a34a",data:months.reduce((o,m,i)=>{o[m]=mData[i].savingsRate;return o;},{})},
+    {label:"Income",col:"#16a34a",data:months.reduce((o,m,i)=>{o[m]=mData[i].inc;return o;},{})},
+    {label:"Expenses",col:"#ef4444",data:months.reduce((o,m,i)=>{o[m]=mData[i].exp;return o;},{})},
+    {label:"Investments",col:"#6d28d9",data:months.reduce((o,m,i)=>{o[m]=mData[i].inv;return o;},{})},
+  ];
+  return React.createElement("div",{className:"fu"},
+    React.createElement(RptHeader,{title:"Savings Rate Trend",desc:"Track your monthly savings rate (Income − Expenses) / Income over time",icon:React.createElement(Icon,{n:"activity",size:18})}),
+    React.createElement(RptCtrlBar,{onExportPDF},
+      React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Account:"),
+      React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
+      React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
+    ),
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement(StatCard,{label:"Avg Savings Rate",val:avgRate.toFixed(1)+"%",col:avgRate>=target?"#16a34a":"#ef4444",sub:"Target: "+target+"%",icon:React.createElement(Icon,{n:"activity",size:18})}),
+      React.createElement(StatCard,{label:"Overall Rate",val:overallRate.toFixed(1)+"%",col:overallRate>=target?"#16a34a":"#ef4444",sub:INR(totalInc-totalExp)+" saved of "+INR(totalInc),icon:React.createElement(Icon,{n:"classIncome",size:16})}),
+      React.createElement(StatCard,{label:"Months on Target",val:aboveTarget+"/"+mData.length,col:aboveTarget>=mData.length*0.7?"#16a34a":"#f59e0b",sub:((aboveTarget/Math.max(1,mData.length))*100).toFixed(0)+"% success rate",icon:React.createElement(Icon,{n:"target",size:18})}),
+      React.createElement(StatCard,{label:"Total Saved",val:INR(totalInc-totalExp),col:"#16a34a",sub:"After expenses (excl. investments)",icon:React.createElement(Icon,{n:"coin",size:18})})
+    ),
+    view==="snapshot"&&React.createElement("div",null,
+      React.createElement(Card,{sx:{marginBottom:14,position:"relative",minHeight:200,paddingTop:30}},
+        React.createElement("div",{style:{position:"absolute",top:8,left:40,right:10,display:"flex",justifyContent:"space-between",fontSize:9,color:"var(--text6)"}}),
+        React.createElement(SvgLine,{data:trendData,h:160,color:"#16a34a"}),
+        React.createElement("div",{style:{position:"absolute",bottom:Math.round((target/maxRate)*155+10),left:40,right:0,borderTop:"1.5px dashed #b45309",pointerEvents:"none"}},
+          React.createElement("span",{style:{position:"absolute",right:4,top:-14,fontSize:9,color:"#b45309",fontWeight:600}},target+"% target")
+        )
+      ),
+      React.createElement(Card,null,
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text2)",marginBottom:12}},"Monthly Breakdown"),
+        mData.map(m=>{
+          const isAbove=m.savingsRate>=target;
+          return React.createElement("div",{key:m.month,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid var(--border2)"}},
+            React.createElement("span",{style:{width:50,fontSize:12,color:"var(--text4)",fontWeight:600,fontFamily:"'Sora',sans-serif"}},MONTH_NAMES[parseInt(m.month.slice(5))-1]),
+            React.createElement("div",{style:{flex:1,height:6,background:"var(--bg5)",borderRadius:3,overflow:"hidden",position:"relative"}},
+              React.createElement("div",{style:{height:"100%",width:Math.min(100,m.savingsRate)+"%",background:isAbove?"#16a34a":"#ef4444",borderRadius:3,transition:"width .3s"}})
+            ),
+            React.createElement("span",{style:{width:55,textAlign:"right",fontSize:12,fontWeight:700,color:isAbove?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif"}},m.savingsRate.toFixed(1)+"%"),
+            React.createElement("span",{style:{width:90,textAlign:"right",fontSize:11,color:"var(--text5)"}},INR(m.inc)),
+            React.createElement("span",{style:{width:90,textAlign:"right",fontSize:11,color:"var(--text5)"}},INR(m.exp))
+          );
+        })
+      )
+    ),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflowY:"hidden",overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"80px 1fr 1fr 1fr 1fr 80px 60px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},
+        React.createElement("span",null,"Month"),
+        React.createElement("span",{style:{textAlign:"right"}},"Income"),
+        React.createElement("span",{style:{textAlign:"right"}},"Expenses"),
+        React.createElement("span",{style:{textAlign:"right"}},"Investments"),
+        React.createElement("span",{style:{textAlign:"right"}},"Saved"),
+        React.createElement("span",{style:{textAlign:"right"}},"Rate"),
+        React.createElement("span",{style:{textAlign:"center"}},"vs Target")
+      ),
+      mData.length===0&&React.createElement(Empty,{text:"No data in selected period"}),
+      mData.map(m=>{
+        const isAbove=m.savingsRate>=target;
+        return React.createElement("div",{key:m.month,className:"tr",style:{display:"grid",gridTemplateColumns:"80px 1fr 1fr 1fr 1fr 80px 60px",padding:"9px 14px",borderBottom:"1px solid var(--border2)"}},
+          React.createElement("div",{style:{fontSize:12,color:"var(--text3)",fontWeight:600,fontFamily:"'Sora',sans-serif"}},MONTH_NAMES[parseInt(m.month.slice(5))-1]),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"#16a34a",fontWeight:600}},INR(m.inc)),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"#ef4444",fontWeight:600}},INR(m.exp)),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"#6d28d9",fontWeight:600}},INR(m.inv)),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,color:m.savings>=0?"#16a34a":"#ef4444",fontWeight:700}},INR(m.savings)),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:isAbove?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif"}},m.savingsRate.toFixed(1)+"%"),
+          React.createElement("div",{style:{textAlign:"center",fontSize:14}},isAbove?"✅":"⚠️")
+        );
+      }),
+      mData.length>0&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"80px 1fr 1fr 1fr 1fr 80px 60px",padding:"10px 14px",borderTop:"2px solid var(--border)",background:"var(--bg4)"}},
+        React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text3)"}},
+        ),
+        React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:"#16a34a"}},INR(totalInc)),
+        React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:"#ef4444"}},INR(totalExp)),
+        React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:"#6d28d9"}},INR(totalInv)),
+        React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:"#16a34a"}},INR(totalInc-totalExp)),
+        React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:overallRate>=target?"#16a34a":"#ef4444"}},overallRate.toFixed(1)+"%"),
+        React.createElement("div",null)
+      )
+    ),
+    view==="heatmap"&&React.createElement(HeatGrid,{rows:hmRows,months,rowLabel:"Metric",
+      hint:"Savings rate and cash flow metrics by month. Savings rate shown as percentage."})
+  );
+};
+
+/* ══ NEW REPORT: SPENDING ANOMALIES ════════════════════════════════════════ */
+const RptSpendingAnomalies=({data,from,to,onExportPDF})=>{
+  const[accFilter,setAccFilter]=useState("all");
+  const[view,setView]=useState("snapshot");
+  const allTx=collectTx(data,from,to,accFilter);
+  const expenseTx=allTx.filter(t=>{
+    const ct=catClassType(data.categories,t.cat||"Others");
+    return ct!=="Income"&&ct!=="Transfer"&&t.type==="debit";
+  });
+  const catMonthAvg={};
+  const catMonthSums={};
+  const catMonthCounts={};
+  expenseTx.forEach(t=>{
+    const cat=catMainName(t.cat||"Others");
+    const m=t.date.substr(0,7);
+    if(!catMonthSums[cat])catMonthSums[cat]={};
+    if(!catMonthCounts[cat])catMonthCounts[cat]={};
+    catMonthSums[cat][m]=(catMonthSums[cat][m]||0)+t.amount;
+    catMonthCounts[cat][m]=(catMonthCounts[cat][m]||0)+1;
+  });
+  Object.keys(catMonthSums).forEach(cat=>{
+    const months=Object.keys(catMonthSums[cat]);
+    const avg=months.length>0?months.reduce((s,m)=>s+catMonthSums[cat][m],0)/months.length:0;
+    catMonthAvg[cat]=avg;
+  });
+  const months=[...new Set(expenseTx.map(t=>t.date.substr(0,7)))].sort();
+  const anomalies=[];
+  expenseTx.forEach(t=>{
+    const cat=catMainName(t.cat||"Others");
+    const avg=catMonthAvg[cat]||0;
+    const m=t.date.substr(0,7);
+    const monthTotal=catMonthSums[cat]?.[m]||0;
+    const monthAvg=catMonthSums[cat]?(Object.values(catMonthSums[cat]).reduce((s,v)=>s+v,0)/Object.keys(catMonthSums[cat]).length):0;
+    const ratio=monthAvg>0?t.amount/monthAvg:0;
+    if(t.amount>0&&ratio>=2){
+      anomalies.push({...t,cat,ratio,monthAvg});
+    }
+  });
+  anomalies.sort((a,b)=>b.ratio-a.ratio);
+  const totalAnomalyAmount=anomalies.reduce((s,a)=>s+a.amount,0);
+  const affectedCats=new Set(anomalies.map(a=>a.cat));
+  const byCat={};
+  anomalies.forEach(a=>{
+    if(!byCat[a.cat])byCat[a.cat]={count:0,total:0,maxRatio:0,txns:[]};
+    byCat[a.cat].count++;
+    byCat[a.cat].total+=a.amount;
+    byCat[a.cat].maxRatio=Math.max(byCat[a.cat].maxRatio,a.ratio);
+    byCat[a.cat].txns.push(a);
+  });
+  const hmRows=Object.entries(byCat).map(([cat,v])=>{
+    const catObj=data.categories.find(c=>c.name===cat);
+    const monthlyData={};
+    v.txns.forEach(t=>{const m=t.date.substr(0,7);monthlyData[m]=(monthlyData[m]||0)+t.amount;});
+    return{label:cat,col:catObj?.color||"#ef4444",data:monthlyData,badge:v.count+" anomalies"};
+  });
+  return React.createElement("div",{className:"fu"},
+    React.createElement(RptHeader,{title:"Spending Anomalies",desc:"Transactions that are 2x+ higher than your category average — potential unusual spending",icon:React.createElement(Icon,{n:"detective",size:18})}),
+    React.createElement(RptCtrlBar,{onExportPDF},
+      React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Account:"),
+      React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
+      React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
+    ),
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement(StatCard,{label:"Anomalies Found",val:anomalies.length,col:"#ef4444",sub:"Transactions flagged",icon:React.createElement(Icon,{n:"detective",size:18})}),
+      React.createElement(StatCard,{label:"Total Anomaly Spend",val:INR(totalAnomalyAmount),col:"#f59e0b",sub:anomalies.length>0?"Avg "+INR(totalAnomalyAmount/anomalies.length)+" each":"",icon:React.createElement(Icon,{n:"warning",size:18})}),
+      React.createElement(StatCard,{label:"Affected Categories",val:affectedCats.size+"/"+Object.keys(catMonthAvg).length,col:"#8b5cf6",sub:"Categories with anomalies",icon:React.createElement(Icon,{n:"category",size:18})}),
+      React.createElement(StatCard,{label:"Detection Threshold",val:"2x Average",col:"var(--accent)",sub:"Based on your category spending average",icon:React.createElement(Icon,{n:"search",size:18})})
+    ),
+    view==="snapshot"&&React.createElement("div",null,
+      anomalies.length===0?React.createElement(Card,null,React.createElement(Empty,{art:"search",text:"No spending anomalies detected in this period. Your spending looks consistent across categories."})):
+      Object.entries(byCat).sort((a,b)=>b[1].total-a[1].total).map(([cat,v])=>{
+        const catObj=data.categories.find(c=>c.name===cat);
+        const col=catObj?.color||"#ef4444";
+        return React.createElement(Card,{key:cat,sx:{marginBottom:12,borderLeft:"3px solid "+col}},
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+              React.createElement("span",{style:{width:10,height:10,borderRadius:"50%",background:col,display:"inline-block",flexShrink:0}}),
+              React.createElement("span",{style:{fontSize:14,fontWeight:700,color:col}},cat),
+              React.createElement("span",{style:{fontSize:10,color:"var(--text6)",background:"var(--bg5)",borderRadius:8,padding:"2px 8px"}},v.count+" anomaly"+(v.count>1?"s":""))
+            ),
+            React.createElement("div",{style:{fontSize:14,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#ef4444"}},INR(v.total))
+          ),
+          v.txns.slice(0,5).map((t,i)=>React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:i<v.txns.length-1?"1px solid var(--border2)":"none"}},
+            React.createElement("span",{style:{fontSize:10,color:"var(--text5)",width:60}},t.date.slice(5)),
+            React.createElement("span",{style:{flex:1,fontSize:12,color:"var(--text3)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.desc||"—"),
+            React.createElement("span",{style:{fontSize:12,color:"#ef4444",fontWeight:700,fontFamily:"'Sora',sans-serif",whiteSpace:"nowrap"}},INR(t.amount)),
+            React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:8,background:"#ef444418",color:"#ef4444",whiteSpace:"nowrap"}},t.ratio.toFixed(1)+"x avg")
+          )),
+          v.txns.length>5&&React.createElement("div",{style:{fontSize:10,color:"var(--text6)",paddingTop:6,textAlign:"center"}},(v.txns.length-5)+" more anomalies")
+        );
+      })
+    ),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflowY:"hidden",overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"100px 120px 1fr 100px 80px 80px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},
+        React.createElement("span",null,"Date"),
+        React.createElement("span",null,"Category"),
+        React.createElement("span",null,"Description"),
+        React.createElement("span",{style:{textAlign:"right"}},"Amount"),
+        React.createElement("span",{style:{textAlign:"right"}},"Avg"),
+        React.createElement("span",{style:{textAlign:"right"}},"Ratio")
+      ),
+      anomalies.length===0&&React.createElement(Empty,{text:"No anomalies in this period"}),
+      anomalies.map((t,i)=>React.createElement("div",{key:i,className:"tr",style:{display:"grid",gridTemplateColumns:"100px 120px 1fr 100px 80px 80px",padding:"9px 14px",borderBottom:"1px solid var(--border2)"}},
+        React.createElement("div",{style:{fontSize:12,color:"var(--text4)",fontFamily:"'Sora',sans-serif"}},t.date),
+        React.createElement("div",{style:{fontSize:12,color:"var(--text3)",fontWeight:500}},t.cat),
+        React.createElement("div",{style:{fontSize:12,color:"var(--text4)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.desc||"—"),
+        React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"#ef4444",fontWeight:700,fontFamily:"'Sora',sans-serif"}},INR(t.amount)),
+        React.createElement("div",{style:{textAlign:"right",fontSize:11,color:"var(--text5)"}},INR(t.monthAvg)),
+        React.createElement("div",{style:{textAlign:"right",fontSize:11,fontWeight:700,color:"#ef4444"}},t.ratio.toFixed(1)+"x")
+      ))
+    ),
+    view==="heatmap"&&React.createElement(HeatGrid,{rows:hmRows,months:months.length>0?months:[],rowLabel:"Category",
+      hint:"Anomaly amounts by category and month. Red = higher anomaly spend."})
+  );
+};
+
+/* ══ NEW REPORT: YEAR-OVER-YEAR COMPARISON ═════════════════════════════════ */
+const RptYoYComparison=({data,from,to,onExportPDF})=>{
+  const[accFilter,setAccFilter]=useState("all");
+  const[view,setView]=useState("snapshot");
+  const allTx=collectTx(data,from,to,accFilter);
+  const currentFY=getCurrentIndianFY();
+  const fyYears=[currentFY-2,currentFY-1,currentFY];
+  const fyData=fyYears.map(fy=>{
+    const{from:fyFrom,to:fyTo}=getIndianFYDates(fy);
+    const label=getIndianFYLabel(fy);
+    const fyTx=allTx.filter(t=>t.date>=fyFrom&&t.date<=fyTo);
+    const monthly={};
+    fyTx.forEach(t=>{
+      const k=t.date.substr(0,7);
+      const ct=catClassType(data.categories,t.cat||"Others");
+      if(ct==="Transfer")return;
+      const d=txCatDelta(t,ct);
+      if(!monthly[k])monthly[k]={inc:0,exp:0,inv:0};
+      if(ct==="Income")monthly[k].inc+=d;
+      else if(ct==="Investment")monthly[k].inv+=d;
+      else monthly[k].exp+=d;
+    });
+    const months=Object.keys(monthly).sort();
+    const totInc=months.reduce((s,m)=>s+monthly[m].inc,0);
+    const totExp=months.reduce((s,m)=>s+monthly[m].exp,0);
+    const totInv=months.reduce((s,m)=>s+monthly[m].inv,0);
+    const savings=totInc-totExp;
+    const savingsRate=totInc>0?(savings/totInc)*100:0;
+    return{fy,label,monthly,months,totInc,totExp,totInv,savings,savingsRate};
+  });
+  const latest=fyData[2]||fyData[1]||fyData[0];
+  const prev=fyData[1]||fyData[0];
+  const incChange=prev&&prev.totInc>0?((latest.totInc-prev.totInc)/prev.totInc)*100:0;
+  const expChange=prev&&prev.totExp>0?((latest.totExp-prev.totExp)/prev.totExp)*100:0;
+  const rateChange=prev?(latest.savingsRate-prev.savingsRate):0;
+  const commonMonths=["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+  const monthCompare=commonMonths.map((mName,mi)=>{
+    const calMonth=mi>=9?(mi-9):(mi+3);
+    const fy=fyYears[1];
+    const prevM=fmtD(new Date(fy,calMonth,1)).slice(0,7);
+    const currM=fmtD(new Date(fy+1,calMonth,1)).slice(0,7);
+    const prevVal=prev?.monthly[prevM]?.exp||0;
+    const currVal=latest?.monthly[currM]?.exp||0;
+    const change=prevVal>0?((currVal-prevVal)/prevVal)*100:0;
+    return{month:mName,prevExp:prevVal,currExp:currVal,change};
+  });
+  const catCompare=(fy1,fy2)=>{
+    const cats={};
+    const fy1Data=fyData.find(f=>f.fy===fy1);
+    const fy2Data=fyData.find(f=>f.fy===fy2);
+    if(!fy1Data||!fy2Data)return[];
+    allTx.filter(t=>{
+      const ct=catClassType(data.categories,t.cat||"Others");
+      return ct!=="Transfer"&&ct!=="Income";
+    }).forEach(t=>{
+      const cat=catMainName(t.cat||"Others");
+      const ct=catClassType(data.categories,t.cat||"Others");
+      const d=txCatDelta(t,ct);
+      if(!cats[cat])cats[cat]={fy1:0,fy2:0};
+      const fy=t.date>=getIndianFYDates(fy1).from&&t.date<=getIndianFYDates(fy1).to?fy1:(t.date>=getIndianFYDates(fy2).from&&t.date<=getIndianFYDates(fy2).to?fy2:null);
+      if(fy===fy1)cats[cat].fy1+=d;
+      else if(fy===fy2)cats[cat].fy2+=d;
+    });
+    return Object.entries(cats).filter(([,v])=>v.fy1>0||v.fy2>0).map(([cat,v])=>({
+      cat,fy1:v.fy1,fy2:v.fy2,change:v.fy1>0?((v.fy2-v.fy1)/v.fy1)*100:0
+    })).sort((a,b)=>Math.abs(b.change)-Math.abs(a.change));
+  };
+  const catComp=catCompare(fyYears[1],fyYears[2]);
+  return React.createElement("div",{className:"fu"},
+    React.createElement(RptHeader,{title:"Year-over-Year Comparison",desc:"Compare financial years side by side — see how your spending and income have changed",icon:React.createElement(Icon,{n:"compare",size:18})}),
+    React.createElement(RptCtrlBar,{onExportPDF},
+      React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Account:"),
+      React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
+      React.createElement("div",{style:{marginLeft:"auto"}},React.createElement(ViewToggle,{value:view,onChange:setView}))
+    ),
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement(StatCard,{label:"Income Change",val:(incChange>0?"+":"")+incChange.toFixed(1)+"%",col:incChange>=0?"#16a34a":"#ef4444",sub:prev?.label+" → "+latest?.label,icon:React.createElement(Icon,{n:"classIncome",size:16})}),
+      React.createElement(StatCard,{label:"Expense Change",val:(expChange>0?"+":"")+expChange.toFixed(1)+"%",col:expChange<=0?"#16a34a":"#ef4444",sub:"Yearly expenses",icon:React.createElement(Icon,{n:"classExpense",size:18})}),
+      React.createElement(StatCard,{label:"Savings Rate Δ",val:(rateChange>0?"+":"")+rateChange.toFixed(1)+"pp",col:rateChange>=0?"#16a34a":"#ef4444",sub:prev?.savingsRate.toFixed(1)+"% → "+latest?.savingsRate.toFixed(1)+"%",icon:React.createElement(Icon,{n:"activity",size:18})}),
+      React.createElement(StatCard,{label:"Period Compared",val:latest?.label,sub:"vs "+prev?.label,col:"var(--accent)",icon:React.createElement(Icon,{n:"calendar",size:18})})
+    ),
+    view==="snapshot"&&React.createElement("div",null,
+      React.createElement(Card,{sx:{marginBottom:14}},
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text2)",marginBottom:12}},"Financial Year Overview"),
+        React.createElement(SvgGroupBar,{
+          data:fyData.map(fy=>({label:fy.label.slice(3),v1:fy.totInc,v2:fy.totExp,v3:fy.totInv})),
+          h:160,label1:"Income",label2:"Expenses",label3:"Invested"
+        })
+      ),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat("+fyData.length+",1fr)",gap:12,marginBottom:14}},
+        fyData.map(fy=>React.createElement(Card,{key:fy.fy,sx:{borderTop:"3px solid "+(fy.fy===latest?.fy?"var(--accent)":"var(--border)")}},
+          React.createElement("div",{style:{fontSize:11,fontWeight:700,color:fy.fy===latest?.fy?"var(--accent)":"var(--text5)",marginBottom:10,textAlign:"center"}},fy.label),
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
+            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},INR(fy.totInc)),
+            React.createElement("span",{style:{fontSize:11,color:"#16a34a",fontWeight:600}},"Income")
+          ),
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
+            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},INR(fy.totExp)),
+            React.createElement("span",{style:{fontSize:11,color:"#ef4444",fontWeight:600}},"Expenses")
+          ),
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
+            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},INR(fy.totInv)),
+            React.createElement("span",{style:{fontSize:11,color:"#6d28d9",fontWeight:600}},"Invested")
+          ),
+          React.createElement("div",{style:{borderTop:"1px solid var(--border)",paddingTop:6,marginTop:4,display:"flex",justifyContent:"space-between"}},
+            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},INR(fy.savings)),
+            React.createElement("span",{style:{fontSize:11,fontWeight:700,color:fy.savingsRate>=30?"#16a34a":"#f59e0b"}},fy.savingsRate.toFixed(1)+"% saved")
+          )
+        ))
+      ),
+      catComp.length>0&&React.createElement(Card,null,
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text2)",marginBottom:12}},"Category Changes ("+prev?.label+" → "+latest?.label+")"),
+        catComp.slice(0,12).map(r=>{
+          const catObj=data.categories.find(c=>c.name===r.cat);
+          const col=catObj?.color||"#8ba0c0";
+          return React.createElement(HBar,{key:r.cat,label:r.cat,value:r.fy2,max:Math.max(...catComp.map(c=>Math.max(c.fy1,c.fy2))),color:col,
+            sub:(r.change>0?"+":"")+r.change.toFixed(0)+"%",
+            badge:r.change>10?{text:"↑ Rising",bg:"#ef444418",col:"#ef4444"}:r.change<-10?{text:"↓ Falling",bg:"#16a34a18",col:"#16a34a"}:null
+          });
+        })
+      )
+    ),
+    view==="detailed"&&React.createElement("div",null,
+      React.createElement(Card,{sx:{marginBottom:14,padding:0,overflowY:"hidden",overflowX:"auto"}},
+        React.createElement("div",{style:{padding:"10px 14px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:12,fontWeight:700,color:"var(--text2)"}},
+          "Month-by-Month Expense Comparison ("+prev?.label+" vs "+latest?.label+")"
+        ),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"80px 1fr 1fr 80px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase"}},
+          React.createElement("span",null,"Month"),
+          React.createElement("span",{style:{textAlign:"right"}},prev?.label),
+          React.createElement("span",{style:{textAlign:"right"}},latest?.label),
+          React.createElement("span",{style:{textAlign:"right"}},"Change")
+        ),
+        monthCompare.map((m,i)=>{
+          const isUp=m.change>5;
+          return React.createElement("div",{key:i,className:"tr",style:{display:"grid",gridTemplateColumns:"80px 1fr 1fr 80px",padding:"9px 14px",borderBottom:"1px solid var(--border2)"}},
+            React.createElement("div",{style:{fontSize:12,color:"var(--text3)",fontWeight:600,fontFamily:"'Sora',sans-serif"}},m.month),
+            React.createElement("div",{style:{textAlign:"right",fontSize:12,color:prev?"var(--text3)":"var(--text7)",fontWeight:600}},INR(m.prevExp)),
+            React.createElement("div",{style:{textAlign:"right",fontSize:12,color:m.currExp>0?"#ef4444":"var(--text7)",fontWeight:700}},INR(m.currExp)),
+            React.createElement("div",{style:{textAlign:"right",fontSize:11,fontWeight:700,color:m.currExp>0?(isUp?"#ef4444":"#16a34a"):"var(--text7)"}},m.currExp>0?(m.change>0?"+":"")+m.change.toFixed(0)+"%":"—")
+          );
+        })
+      ),
+      React.createElement(Card,null,
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text2)",marginBottom:10}},"Category Comparison Table"),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 80px",padding:"6px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase"}},
+          React.createElement("span",null,"Category"),
+          React.createElement("span",{style:{textAlign:"right"}},prev?.label),
+          React.createElement("span",{style:{textAlign:"right"}},latest?.label),
+          React.createElement("span",{style:{textAlign:"right"}},"Change")
+        ),
+        catComp.map((r,i)=>{
+          const catObj=data.categories.find(c=>c.name===r.cat);
+          const col=catObj?.color||"#8ba0c0";
+          return React.createElement("div",{key:i,style:{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 80px",padding:"8px 14px",borderBottom:"1px solid var(--border2)"}},
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+              React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:col,display:"inline-block",flexShrink:0}}),
+              React.createElement("span",{style:{fontSize:12,color:"var(--text3)",fontWeight:500}},r.cat)
+            ),
+            React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"var(--text4)",fontWeight:600}},INR(r.fy1)),
+            React.createElement("div",{style:{textAlign:"right",fontSize:12,color:col,fontWeight:700}},INR(r.fy2)),
+            React.createElement("div",{style:{textAlign:"right",fontSize:11,fontWeight:700,color:r.change>5?"#ef4444":r.change<-5?"#16a34a":"var(--text5)"}},(r.change>0?"+":"")+r.change.toFixed(0)+"%")
+          );
+        })
+      )
+    ),
+    view==="heatmap"&&React.createElement(HeatGrid,{
+      rows:fyData.map(fy=>({label:fy.label,col:fy.fy===latest?.fy?"var(--accent)":"#8ba0c0",data:fy.months.reduce((o,m)=>{o[m]=fy.monthly[m]?.exp||0;return o;},{})})),
+      months:[...new Set(fyData.flatMap(f=>f.months))].sort(),
+      rowLabel:"Financial Year",
+      hint:"Monthly expense heatmap across financial years. Deeper colour = higher spend."
+    })
+  );
+};
+
+/* ══ NEW REPORT: CATEGORY TREND LINES ══════════════════════════════════════ */
+const RptCategoryTrends=({data,from,to,onExportPDF})=>{
+  const[accFilter,setAccFilter]=useState("all");
+  const[view,setView]=useState("snapshot");
+  const[showType,setShowType]=useState("expense");
+  const allTx=collectTx(data,from,to,accFilter);
+  const monthly={};
+  allTx.forEach(t=>{
+    const k=t.date.substr(0,7);
+    const ct=catClassType(data.categories,t.cat||"Others");
+    if(ct==="Transfer")return;
+    if(showType==="expense"&&(ct!=="Expense"&&ct!=="Others"))return;
+    if(showType==="income"&&ct!=="Income")return;
+    if(showType==="investment"&&ct!=="Investment")return;
+    const cat=catMainName(t.cat||"Others");
+    if(!monthly[k])monthly[k]={};
+    const d=txCatDelta(t,ct);
+    monthly[k][cat]=(monthly[k][cat]||0)+Math.abs(d);
+  });
+  const months=Object.keys(monthly).sort();
+  const allCats=new Set();
+  months.forEach(m=>Object.keys(monthly[m]).forEach(c=>allCats.add(c)));
+  const catList=[...allCats].sort();
+  const catTrends=catList.map(cat=>{
+    const vals=months.map(m=>monthly[m]?.[cat]||0);
+    const total=vals.reduce((s,v)=>s+v,0);
+    const avg=vals.length>0?total/vals.length:0;
+    /* Proportional split: use floor/ceil of half the months for comparison */
+    const n=vals.length;
+    let trendPct=0,direction="stable",recentAvg=0,prevAvg=0;
+    if(n>=2){
+      const split=Math.max(1,Math.floor(n/2));
+      const recentSlice=vals.slice(-split);
+      const prevSlice=vals.slice(0,n-split);
+      recentAvg=recentSlice.reduce((s,v)=>s+v,0)/recentSlice.length;
+      prevAvg=prevSlice.length>0?prevSlice.reduce((s,v)=>s+v,0)/prevSlice.length:0;
+      if(prevAvg>0&&recentAvg>0){
+        trendPct=((recentAvg-prevAvg)/prevAvg)*100;
+      }else if(prevAvg===0&&recentAvg>0){
+        trendPct=null;
+      }else if(prevAvg>0&&recentAvg===0){
+        trendPct=-100;
+      }
+      direction=trendPct===null?"new":trendPct>10?"up":trendPct<-10?"down":"stable";
+    }else{
+      direction="stable";
+    }
+    const catObj=data.categories.find(c=>c.name===cat);
+    const ct=catObj?.classType||"Expense";
+    return{cat,vals,total,avg,trendPct,direction,color:catObj?.color||"#8ba0c0",ct,recentAvg,prevAvg};
+  });
+  const filtered=showType==="expense"?catTrends.filter(t=>t.ct==="Expense"||t.ct==="Others"):
+    showType==="income"?catTrends.filter(t=>t.ct==="Income"):
+    catTrends.filter(t=>t.ct==="Investment");
+  const sorted=[...filtered].sort((a,b)=>{
+    if(a.direction==="new"&&b.direction!=="new")return-1;
+    if(b.direction==="new"&&a.direction!=="new")return 1;
+    return Math.abs(b.trendPct||0)-Math.abs(a.trendPct||0);
+  });
+  const rising=sorted.filter(t=>t.direction==="up");
+  const falling=sorted.filter(t=>t.direction==="down");
+  const stable=sorted.filter(t=>t.direction==="stable");
+  const newSpending=sorted.filter(t=>t.direction==="new");
+  const maxVal=Math.max(...catTrends.flatMap(t=>t.vals),1);
+  const hmRows=filtered.map(t=>({label:t.cat,col:t.color,data:months.reduce((o,m,i)=>{o[m]=t.vals[i];return o;},{})}));
+  const CatSparkline=({vals,color})=>{
+    const h=36,w=120,pad=2;
+    if(!vals||vals.length<2)return null;
+    const mx=Math.max(...vals,1),mn=Math.min(...vals,0);
+    const pts=vals.map((v,i)=>`${pad+i*((w-pad*2)/(vals.length-1))},${pad+(h-pad*2)*(1-(v-mn)/(mx-mn||1))}`).join(" ");
+    const fill=`${pad},${h-pad} ${pts} ${pad+(vals.length-1)*((w-pad*2)/(vals.length-1))},${h-pad}`;
+    return React.createElement("svg",{width:w,height:h,viewBox:`0 0 ${w} ${h}`,style:{display:"block"}},
+      React.createElement("polygon",{points:fill,fill:color,opacity:.1}),
+      React.createElement("polyline",{points:pts,fill:"none",stroke:color,strokeWidth:1.5,strokeLinejoin:"round"})
+    );
+  };
+  const fmtTrendPct=(pct)=>pct===null?"New":(pct>0?"+":"")+pct.toFixed(0)+"%";
+  const trendColor=(dir)=>dir==="up"?"#ef4444":dir==="down"?"#16a34a":dir==="new"?"#b45309":"var(--text5)";
+  return React.createElement("div",{className:"fu"},
+    React.createElement(RptHeader,{title:"Category Trend Lines",desc:"Track spending direction for each category — are you spending more or less over time?",icon:React.createElement(Icon,{n:"trenddown",size:18})}),
+    React.createElement(RptCtrlBar,{onExportPDF},
+      React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Account:"),
+      React.createElement(AccFilter,{data,value:accFilter,onChange:setAccFilter}),
+      React.createElement("div",{style:{marginLeft:"auto",display:"flex",gap:6}},
+        ["expense","income","investment"].map(t=>React.createElement("button",{key:t,onClick:()=>setShowType(t),style:{padding:"5px 12px",borderRadius:16,border:"1.5px solid "+(showType===t?"var(--accent)":"var(--border)"),background:showType===t?"linear-gradient(135deg,var(--accentbg),var(--accentbg2))":"transparent",color:showType===t?"var(--accent)":"var(--text4)",cursor:"pointer",fontSize:11,fontFamily:"'DM Sans',sans-serif",fontWeight:showType===t?700:400,transition:"all .15s"}},t.charAt(0).toUpperCase()+t.slice(1)))
+      ),
+      React.createElement("div",{style:{marginLeft:10}},React.createElement(ViewToggle,{value:view,onChange:setView}))
+    ),
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement(StatCard,{label:"Rising Categories",val:rising.length,col:"#ef4444",sub:rising.map(r=>r.cat).slice(0,2).join(", ")||"—",icon:React.createElement(Icon,{n:"trenddown",size:18})}),
+      React.createElement(StatCard,{label:"Falling Categories",val:falling.length,col:"#16a34a",sub:falling.map(r=>r.cat).slice(0,2).join(", ")||"—",icon:React.createElement(Icon,{n:"checkcircle",size:16})}),
+      React.createElement(StatCard,{label:"Stable Categories",val:stable.length,col:"#64748b",sub:"Spending →",icon:React.createElement(Icon,{n:"balance",size:18})}),
+      React.createElement(StatCard,{label:"Total Categories",val:filtered.length,col:"var(--accent)",sub:showType.charAt(0).toUpperCase()+showType.slice(1)+" categories",icon:React.createElement(Icon,{n:"category",size:18})})
+    ),
+    newSpending.length>0&&view==="snapshot"&&React.createElement(Card,{sx:{marginBottom:14,borderLeft:"3px solid #b45309"}},
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+        React.createElement("span",{style:{fontSize:14,fontWeight:700,color:"#b45309"}},"🆕 New Spending"),
+        React.createElement("span",{style:{fontSize:10,color:"var(--text6)",background:"#b4530918",borderRadius:8,padding:"2px 8px"}},newSpending.length+" categor"+(newSpending.length===1?"y":"ies"))
+      ),
+      newSpending.map(r=>React.createElement("div",{key:r.cat,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid var(--border2)"}},
+        React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:r.color,flexShrink:0,display:"inline-block"}}),
+        React.createElement("span",{style:{flex:1,fontSize:12,color:"var(--text3)",fontWeight:500}},r.cat),
+        React.createElement(CatSparkline,{vals:r.vals,color:r.color}),
+        React.createElement("span",{style:{fontSize:11,fontWeight:700,color:"#b45309",fontFamily:"'Sora',sans-serif",whiteSpace:"nowrap"}},"New"),
+        React.createElement("span",{style:{fontSize:11,color:"var(--text5)",whiteSpace:"nowrap"}},INR(r.avg)+"/mo")
+      ))
+    ),
+    view==="snapshot"&&React.createElement("div",null,
+      rising.length>0&&React.createElement(Card,{sx:{marginBottom:14,borderLeft:"3px solid #ef4444"}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+          React.createElement("span",{style:{fontSize:14,fontWeight:700,color:"#ef4444"}},"📈 Spending Rising"),
+          React.createElement("span",{style:{fontSize:10,color:"var(--text6)",background:"#ef444418",borderRadius:8,padding:"2px 8px"}},rising.length+" categor"+(rising.length===1?"y":"ies"))
+        ),
+        rising.map(r=>React.createElement("div",{key:r.cat,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid var(--border2)"}},
+          React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:r.color,flexShrink:0,display:"inline-block"}}),
+          React.createElement("span",{style:{flex:1,fontSize:12,color:"var(--text3)",fontWeight:500}},r.cat),
+          React.createElement(CatSparkline,{vals:r.vals,color:r.color}),
+          React.createElement("span",{style:{fontSize:11,fontWeight:700,color:"#ef4444",fontFamily:"'Sora',sans-serif",whiteSpace:"nowrap"}},fmtTrendPct(r.trendPct)),
+          React.createElement("span",{style:{fontSize:11,color:"var(--text5)",whiteSpace:"nowrap"}},INR(r.avg)+"/mo")
+        ))
+      ),
+      falling.length>0&&React.createElement(Card,{sx:{marginBottom:14,borderLeft:"3px solid #16a34a"}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+          React.createElement("span",{style:{fontSize:14,fontWeight:700,color:"#16a34a"}},"📉 Spending Falling"),
+          React.createElement("span",{style:{fontSize:10,color:"var(--text6)",background:"#16a34a18",borderRadius:8,padding:"2px 8px"}},falling.length+" categor"+(falling.length===1?"y":"ies"))
+        ),
+        falling.map(r=>React.createElement("div",{key:r.cat,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid var(--border2)"}},
+          React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:r.color,flexShrink:0,display:"inline-block"}}),
+          React.createElement("span",{style:{flex:1,fontSize:12,color:"var(--text3)",fontWeight:500}},r.cat),
+          React.createElement(CatSparkline,{vals:r.vals,color:r.color}),
+          React.createElement("span",{style:{fontSize:11,fontWeight:700,color:"#16a34a",fontFamily:"'Sora',sans-serif",whiteSpace:"nowrap"}},fmtTrendPct(r.trendPct)),
+          React.createElement("span",{style:{fontSize:11,color:"var(--text5)",whiteSpace:"nowrap"}},INR(r.avg)+"/mo")
+        ))
+      ),
+      stable.length>0&&React.createElement(Card,{sx:{borderLeft:"3px solid #64748b"}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+          React.createElement("span",{style:{fontSize:14,fontWeight:700,color:"#64748b"}},"➡️ Stable"),
+          React.createElement("span",{style:{fontSize:10,color:"var(--text6)",background:"#64748b18",borderRadius:8,padding:"2px 8px"}},stable.length+" categor"+(stable.length===1?"y":"ies"))
+        ),
+        stable.map(r=>React.createElement("div",{key:r.cat,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid var(--border2)"}},
+          React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:r.color,flexShrink:0,display:"inline-block"}}),
+          React.createElement("span",{style:{flex:1,fontSize:12,color:"var(--text3)",fontWeight:500}},r.cat),
+          React.createElement(CatSparkline,{vals:r.vals,color:r.color}),
+          React.createElement("span",{style:{fontSize:11,fontWeight:700,color:"var(--text5)",fontFamily:"'Sora',sans-serif",whiteSpace:"nowrap"}},fmtTrendPct(r.trendPct)),
+          React.createElement("span",{style:{fontSize:11,color:"var(--text5)",whiteSpace:"nowrap"}},INR(r.avg)+"/mo")
+        ))
+      )
+    ),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflowY:"hidden",overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1.2fr 80px 80px 80px 80px 80px 80px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},
+        React.createElement("span",null,"Category"),
+        React.createElement("span",{style:{textAlign:"right"}},"Avg/mo"),
+        React.createElement("span",{style:{textAlign:"right"}},"Total"),
+        React.createElement("span",{style:{textAlign:"right"}},"Min"),
+        React.createElement("span",{style:{textAlign:"right"}},"Max"),
+        React.createElement("span",{style:{textAlign:"right"}},"Trend"),
+        React.createElement("span",{style:{textAlign:"center"}},"Direction")
+      ),
+      sorted.length===0&&React.createElement(Empty,{text:"No data for this filter"}),
+      sorted.map(r=>{
+        const min=Math.min(...r.vals.filter(v=>v>0));
+        const max=Math.max(...r.vals);
+        const dirIcon=r.direction==="up"?"📈":r.direction==="down"?"📉":r.direction==="new"?"🆕":"➡️";
+        return React.createElement("div",{key:r.cat,className:"tr",style:{display:"grid",gridTemplateColumns:"1.2fr 80px 80px 80px 80px 80px 80px",padding:"9px 14px",borderBottom:"1px solid var(--border2)"}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+            React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:r.color,display:"inline-block",flexShrink:0}}),
+            React.createElement("span",{style:{fontSize:12,color:"var(--text3)",fontWeight:500}},r.cat)
+          ),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"var(--text4)",fontWeight:600}},INR(r.avg)),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,color:r.color,fontWeight:700}},INR(r.total)),
+          React.createElement("div",{style:{textAlign:"right",fontSize:11,color:"var(--text5)"}},isFinite(min)?INR(min):"—"),
+          React.createElement("div",{style:{textAlign:"right",fontSize:11,color:"var(--text5)"}},isFinite(max)?INR(max):""),
+          React.createElement("div",{style:{textAlign:"right",fontSize:11,fontWeight:700,color:trendColor(r.direction)}},fmtTrendPct(r.trendPct)),
+          React.createElement("div",{style:{textAlign:"center",fontSize:14}},dirIcon)
+        );
+      })
+    ),
+    view==="heatmap"&&React.createElement(HeatGrid,{rows:hmRows,months,rowLabel:"Category",
+      hint:"Monthly spend per category. Deeper colour = higher spend in that month."})
+  );
+};
+
 const REPORT_TREE=[
   {id:"cashflow",      label:"Cash Flow",                icon:React.createElement(Icon,{n:"classIncome",size:16})},
   {id:"classification",label:"Classification Breakdown", icon:React.createElement(Icon,{n:"tag",size:18})},
@@ -30565,9 +31883,16 @@ const REPORT_TREE=[
   {id:"usage",         label:"My Usage",                 icon:React.createElement(Icon,{n:"phone",size:18})},
   {id:"summary",       label:"Summary of Accounts",      icon:React.createElement(Icon,{n:"tabs",size:18})},
   {id:"gsttds",        label:"GST & TDS",                 icon:React.createElement(Icon,{n:"receipt",size:18})},
+  {id:"budgetactual",  label:"Budget vs Actuals",          icon:React.createElement(Icon,{n:"checklist",size:18})},
+  {id:"savingsrate",   label:"Savings Rate Trend",         icon:React.createElement(Icon,{n:"activity",size:18})},
+  {id:"anomalies",     label:"Spending Anomalies",         icon:React.createElement(Icon,{n:"detective",size:18})},
+  {id:"yoy",           label:"Year-over-Year",             icon:React.createElement(Icon,{n:"compare",size:18})},
+  {id:"cattrends",     label:"Category Trends",            icon:React.createElement(Icon,{n:"trenddown",size:18})},
 ];
 
 const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
+  const[ready,setReady]=useState(false);
+  React.useEffect(()=>{const t=setTimeout(()=>setReady(true),140);return()=>clearTimeout(t);},[]);
   const[showRptNav,setShowRptNav]=useState(false);
   const[activeRpt,setActiveRpt]=useState("cashflow");
   const[expanded,setExpanded]=useState({categories:true});
@@ -30673,6 +31998,11 @@ const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
       case"investments":     return React.createElement(RptInvestments,props);
       case"reconciliation":  return React.createElement(RptReconciliation,props);
       case"gsttds":          return React.createElement(RptGstTds,props);
+      case"budgetactual":    return React.createElement(RptBudgetVsActual,props);
+      case"savingsrate":     return React.createElement(RptSavingsRate,props);
+      case"anomalies":       return React.createElement(RptSpendingAnomalies,props);
+      case"yoy":             return React.createElement(RptYoYComparison,props);
+      case"cattrends":       return React.createElement(RptCategoryTrends,props);
       default:               return React.createElement(RptCashFlow,props);
     }
   };
@@ -30700,7 +32030,10 @@ const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
     ),
     !isMobile&&React.createElement("div",{style:{width:218,minWidth:218,display:"flex",flexDirection:"column",paddingRight:14,borderRight:"1px solid var(--border2)",marginRight:22,overflowY:"auto"}},
       React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,paddingLeft:4,paddingTop:2}},
-        React.createElement("div",{style:{fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.8,fontWeight:600}},"Reports"),
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+          React.createElement("div",{style:{width:3,height:14,borderRadius:2,background:"#fde68a",flexShrink:0}}),
+          React.createElement("div",{style:{fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.8,fontWeight:600}},"Reports")
+        ),
         React.createElement("button",{
           onClick:()=>setExportOpen(true),
           title:"Export summary report to Excel or PDF",
@@ -31919,11 +33252,12 @@ function checkAndFireNotifications(state){
     const ns=new Date(bd);ns.setMonth(ns.getMonth()+1);
     const due=new Date(card.dueDay>card.billingDay?ns.getFullYear():(ns.getMonth()===11?ns.getFullYear()+1:ns.getFullYear()),
       card.dueDay>card.billingDay?ns.getMonth():((ns.getMonth()+1)%12),card.dueDay);
+    const _nsFmt=fmtD(ns);const _notifDue=Math.max(0,(card.transactions||[]).filter(t=>t.status==="Reconciled"&&t.date<_nsFmt).reduce((s,t)=>s+(t.type==="debit"?t.amount:-t.amount),0));
     const dl=Math.round((due-today)/86400000);
     if(dl>=0&&dl<=prefs.cardDays){
       const tag="card_"+card.id+"_"+fmtD(due);
       fire(tag,"Card Bill Due"+(dl===0?" Today":dl===1?" Tomorrow":" in "+dl+" days"),
-        card.name+" — Outstanding: "+INR(card.outstanding));
+        card.name+" — Outstanding: "+INR(_notifDue));
     }
   });
 
@@ -32414,10 +33748,12 @@ const CalendarSection=React.memo(({banks,cards,cash,categories,isMobile})=>{
   return React.createElement("div",{className:"fu"},
     /* Header */
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10,marginBottom:14}},
-      React.createElement("div",null,
-        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,color:"var(--text)"}},"Calendar"),
+      React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+        React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#f87171",flexShrink:0}}),
+        React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"Calendar"),
         React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:2}},"Daily transaction view — click any day to see details")
-      ),
+      )),
       React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
         React.createElement("select",{value:accFilter,onChange:e=>setAccFilter(e.target.value),className:"inp",style:{fontSize:12,padding:"5px 10px",width:"auto"}},
           accOpts.map(o=>React.createElement("option",{key:o.id,value:o.id},o.label))
@@ -32839,6 +34175,7 @@ const UnifiedLedgerSection=React.memo(({banks,cards,cash,categories,payees,isMob
     display:"flex",alignItems:"center",justifyContent:"space-between",
     gap:isMobile?10:20,flexWrap:"wrap",
     position:"relative",overflow:"hidden",flexShrink:0,
+    animation:"heroAppear .42s ease both",
   }},
     /* Decorative background pulse */
     React.createElement("div",{style:{
@@ -32980,9 +34317,11 @@ const UnifiedLedgerSection=React.memo(({banks,cards,cash,categories,payees,isMob
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",height:"100%"}},
     /* Page header */
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:initialFilter?8:16,flexWrap:"wrap",gap:12}},
-      React.createElement("div",null,
-        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:22,fontWeight:700,color:"var(--text)"}},"All Transactions"),
-        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},
+      React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+        React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#818cf8",flexShrink:0}}),
+        React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:23,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"All Transactions"),
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},
           allTxns.length+" transactions · ",
           React.createElement("span",{style:{color:"#0e7490",fontWeight:600}},banks.length+" bank"+(banks.length!==1?"s":"")),
           " + ",
@@ -32990,7 +34329,7 @@ const UnifiedLedgerSection=React.memo(({banks,cards,cash,categories,payees,isMob
           " + ",
           React.createElement("span",{style:{color:"#16a34a",fontWeight:600}},"cash")
         )
-      ),
+      )),
       SummaryBar
     ),
     initialFilter&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"8px 14px",background:"var(--accentbg)",border:"1px solid var(--accent)",borderRadius:9,fontSize:12,color:"var(--accent)",fontWeight:500,marginBottom:12}},
@@ -33402,10 +34741,12 @@ const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],ca
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",height:"100%",overflowY:"auto"}},
     /* Header row */
     React.createElement("div",{style:{marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}},
-      React.createElement("div",null,
-        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,color:"var(--text)"}},"Financial Goals"),
-        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},"Allocate your investment portfolio to life goals")
-      ),
+      React.createElement("div",{style:{display:"flex",alignItems:"stretch",gap:13}},
+        React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#fb7185",flexShrink:0}}),
+        React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"Financial Goals"),
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},"Allocate your investment portfolio to life goals")
+      )),
       React.createElement(Btn,{onClick:()=>{setEditGoal(null);setGf(EMPTY_GOAL);setAddOpen(true);}},"+ New Goal")
     ),
 
@@ -33954,7 +35295,7 @@ const NetWorthInsightTab=({banks,cards,cash,mf,shares,fd,re,loans,categories,pre
     ),
 
     /* ── Hero card: NW total + full breakdown ── */
-    React.createElement("div",{style:{background:"var(--networth-bg)",border:"1px solid var(--border)",borderRadius:16,padding:"18px 20px",marginBottom:16}},
+    React.createElement("div",{style:{background:"var(--networth-bg)",border:"1px solid var(--border)",borderRadius:16,padding:"18px 20px",marginBottom:16,animation:"heroAppear .42s ease both"}},
 
       /* Top row: NW number + Assets/Liabilities totals */
       React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:16,alignItems:"flex-start",marginBottom:18}},
@@ -34200,7 +35541,7 @@ const NetWorthInsightTab=({banks,cards,cash,mf,shares,fd,re,loans,categories,pre
 
 
 
-const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile,goals,mf,shares,fd,re,loans,prefs,onJumpToLedger,nwSnapshots,brokerCashBalance=0})=>{
+const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile,goals,mf,mfTxns,shares,fd,re,loans,prefs,onJumpToLedger,nwSnapshots,brokerCashBalance=0})=>{
   const P=prefs||{};
   const[stab,setStab]=useState("pulse");
   const[schedConfirm,setSchedConfirm]=useState(null);
@@ -34240,10 +35581,11 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     const todaySpend=allTxns.filter(t=>t.type==="debit"&&t.date===todayStr).reduce((s,t)=>s+t.amount,0);
     const thisMonthSpend=allTxns.filter(t=>t.type==="debit"&&t.date>=thisStart&&t.date<=thisEnd).reduce((s,t)=>s+t.amount,0);
     const lastMonthSpend=allTxns.filter(t=>t.type==="debit"&&t.date>=lastStart&&t.date<=lastEnd).reduce((s,t)=>s+t.amount,0);
+    const thisMonthIncome=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");return ct==="Income"&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+txCatDelta(t,"Income"),0);
+    const lastMonthIncome=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");return ct==="Income"&&t.date>=lastStart&&t.date<=lastEnd;}).reduce((s,t)=>s+txCatDelta(t,"Income"),0);
     const dailyAvg=dayOfMonth>0?thisMonthSpend/dayOfMonth:0;
     const projected=dailyAvg*daysInMonth;
     const last7=allTxns.filter(t=>{const diff=(now-new Date(t.date))/86400000;return t.type==="debit"&&diff<=7&&diff>=0;}).reduce((s,t)=>s+t.amount,0);
-    // 28-day heatmap
     const heatmap=[];
     for(let i=27;i>=0;i--){
       const d=new Date(now);d.setDate(d.getDate()-i);
@@ -34252,8 +35594,23 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       heatmap.push({date:ds,amt,dayOfWeek:d.getDay(),day:d.getDate(),month:d.getMonth()});
     }
     const maxDay=Math.max(...heatmap.map(h=>h.amt),1);
-    return {todaySpend,thisMonthSpend,lastMonthSpend,dailyAvg,projected,last7,heatmap,maxDay,dayOfMonth,daysInMonth};
-  },[allTxns,thisStart,thisEnd,lastStart,lastEnd]);
+    const expenseRatio=thisMonthIncome>0?(thisMonthSpend/thisMonthIncome*100):0;
+    const savingsThisMonth=thisMonthIncome-thisMonthSpend;
+    const savingsRate=thisMonthIncome>0?(savingsThisMonth/thisMonthIncome*100):0;
+    const pyfTarget=P.pyfDayTarget||10;
+    const pyfPassed=dayOfMonth>pyfTarget;
+    const pyfSaved=pyfPassed&&savingsThisMonth>0;
+    const foodBudget=P.foodBudget?Number(P.foodBudget):0;
+    const foodSpend=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");const main=catMainName(t.cat||"Others");return ct!=="Income"&&ct!=="Transfer"&&t.type==="debit"&&(main.toLowerCase().includes("food")||main.toLowerCase().includes("grocer"))&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+t.amount,0);
+    const liquidAssets=(banks||[]).reduce((s,b)=>s+(b.balance||0),0)+(cash?.balance||0);
+    const monthlyExpenses=allTxns.filter(t=>t.type==="debit"&&t.date>=thisStart&&t.date<=thisEnd).reduce((s,t)=>s+t.amount,0);
+    const emergencyTarget=P.emergencyTargetMonths||6;
+    const emergencyActualMonths=monthlyExpenses>0?liquidAssets/monthlyExpenses:0;
+    const discSpendTarget=P.discSpendTarget?Number(P.discSpendTarget):15;
+    const discCategories=["Shopping","Entertainment","Travel","Dining"];
+    const discSpend=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");const main=catMainName(t.cat||"Others");return ct!=="Income"&&ct!=="Transfer"&&t.type==="debit"&&(discCategories.some(c=>main.toLowerCase().includes(c.toLowerCase())))&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+t.amount,0);
+    return {todaySpend,thisMonthSpend,lastMonthSpend,dailyAvg,projected,last7,heatmap,maxDay,dayOfMonth,daysInMonth,thisMonthIncome,lastMonthIncome,expenseRatio,savingsThisMonth,savingsRate,pyfTarget,pyfPassed,pyfSaved,foodBudget,foodSpend,liquidAssets,emergencyTarget,emergencyActualMonths,discSpendTarget,discSpend};
+  },[allTxns,thisStart,thisEnd,lastStart,lastEnd,categories,P,banks,cash]);
 
 
 
@@ -34275,9 +35632,33 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     return Array.from(cats).map(cat=>{
       const curr=maps.curr[cat]||0,last=maps.last[cat]||0;
       const avg3=((maps.m3[cat]||0)+(maps.m2[cat]||0)+last)/3;
-      return {cat,curr,last,delta:curr-last,pct:last?((curr-last)/last*100):null,drift3m:avg3>0?((curr-avg3)/avg3*100):null};
+      return {cat,curr,last,m2:maps.m2[cat]||0,m3:maps.m3[cat]||0,delta:curr-last,pct:last?((curr-last)/last*100):null,drift3m:avg3>0?((curr-avg3)/avg3*100):null};
     }).sort((a,b)=>b.curr-a.curr);
   },[allTxns,thisStart,thisEnd,lastStart,lastEnd]);
+
+  /* ── LEAK DETECTOR ── */
+  const leakData=React.useMemo(()=>{
+    const threshold=Number(P.leakThreshold)||500;
+    const dayOfMonth=now.getDate();
+    const smallTx=allTxns.filter(t=>{
+      if(t.type!=="debit")return false;
+      const ct=catClassType(categories,t.cat||"");
+      if(ct==="Income"||ct==="Transfer")return false;
+      return t.amount>0&&t.amount<=threshold&&t.date>=thisStart&&t.date<=thisEnd;
+    });
+    const totalLeak=smallTx.reduce((s,t)=>s+t.amount,0);
+    const avgPerDay=dayOfMonth>0?totalLeak/dayOfMonth:0;
+    const projectedMonthly=avgPerDay*new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+    const byCat={};
+    smallTx.forEach(t=>{
+      const cat=catMainName(t.cat||"Others");
+      if(!byCat[cat])byCat[cat]={count:0,total:0};
+      byCat[cat].count++;
+      byCat[cat].total+=t.amount;
+    });
+    const topLeaks=Object.entries(byCat).map(([cat,v])=>({cat,...v})).sort((a,b)=>b.total-a.total).slice(0,5);
+    return{count:smallTx.length,total:totalLeak,projectedMonthly:Math.round(projectedMonthly),topLeaks,threshold};
+  },[allTxns,thisStart,thisEnd,categories]);
 
   /* ── TOP PAYEES ── */
   const payeeData=React.useMemo(()=>{
@@ -34298,8 +35679,22 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     const top=Object.values(thisMap).sort((a,b)=>b.total-a.total).slice(0,10);
     const totalThisMonth=Object.values(thisMap).reduce((s,p)=>s+p.total,0);
     const top3Pct=top.slice(0,3).reduce((s,p)=>s+p.total,0)/Math.max(totalThisMonth,1)*100;
-    return {top,totalThisMonth,top3Pct,firstTime:firstTime.slice(0,10)};
-  },[allTxns,thisStart,thisEnd]);
+    /* MoM comparison — last month payees */
+    const lastMap={};
+    allTxns.filter(t=>t.type==="debit"&&t.date>=lastStart&&t.date<=lastEnd).forEach(t=>{
+      const k=(t.payee||t.desc||"Unknown").trim().slice(0,40);
+      if(!k)return;
+      if(!lastMap[k])lastMap[k]={name:k,total:0,count:0};
+      lastMap[k].total+=t.amount;lastMap[k].count++;
+    });
+    const lastTop=new Set(Object.keys(lastMap));
+    const thisTop=new Set(Object.keys(thisMap));
+    const lostPayees=Array.from(lastTop).filter(k=>!thisTop.has(k)).map(k=>({name:k,...lastMap[k]})).sort((a,b)=>b.total-a.total).slice(0,10);
+    const returnedPayees=Array.from(thisTop).filter(k=>lastTop.has(k)).map(k=>({name:k,thisAmt:thisMap[k].total,lastAmt:lastMap[k].total,delta:thisMap[k].total-lastMap[k].total})).filter(p=>Math.abs(p.delta)>100).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,8);
+    const momComparison=Array.from(thisTop).filter(k=>lastTop.has(k)).map(k=>({name:k,thisAmt:thisMap[k].total,lastAmt:lastMap[k].total,pct:lastMap[k].total>0?((thisMap[k].total-lastMap[k].total)/lastMap[k].total*100):null})).filter(p=>p.pct!==null).sort((a,b)=>Math.abs(b.pct)-Math.abs(a.pct)).slice(0,8);
+    const recurring=top.filter(p=>lastTop.has(p.name)).map(p=>({...p,lastAmt:lastMap[p.name]?.total||0,delta:p.total-(lastMap[p.name]?.total||0),pct:lastMap[p.name]?.total>0?((p.total-lastMap[p.name].total)/lastMap[p.name].total*100):null}));
+    return {top,totalThisMonth,top3Pct,firstTime:firstTime.slice(0,10),lostPayees,returnedPayees,momComparison,recurring};
+  },[allTxns,thisStart,thisEnd,lastStart,lastEnd]);
 
   /* ── BUDGET WATERFALL ── */
   const waterfallData=React.useMemo(()=>{
@@ -34463,9 +35858,50 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       const isOTT=(t.cat||"").toLowerCase().includes("ott")||(t.cat||"").toLowerCase().includes("streaming");
       if(!matched&&!isOTT)return;
       const key=matched||(t.payee||t.desc||"sub").toLowerCase().slice(0,20);
-      if(!candidates[key]||t.date>candidates[key].lastDate)candidates[key]={key,name:t.payee||t.desc||matched||"Subscription",amount:t.amount,lastDate:t.date,cat:t.cat};
+      if(!candidates[key])candidates[key]={key,name:t.payee||t.desc||matched||"Subscription",txns:[]};
+      candidates[key].txns.push({date:t.date,amount:t.amount});
     });
-    return Object.values(candidates).sort((a,b)=>b.amount-a.amount);
+    return Object.values(candidates).map(c=>{
+      c.txns.sort((a,b)=>a.date.localeCompare(b.date));
+      c.amount=c.txns[c.txns.length-1].amount;
+      c.lastDate=c.txns[c.txns.length-1].date;
+      c.cat=c.txns[0].cat||"";
+      c.count=c.txns.length;
+      /* frequency detection from gaps */
+      if(c.txns.length>=2){
+        const gaps=[];
+        for(let i=1;i<c.txns.length;i++){
+          const d1=new Date(c.txns[i-1].date),d2=new Date(c.txns[i].date);
+          gaps.push(Math.round((d2-d1)/86400000));
+        }
+        const avgGap=gaps.reduce((s,g)=>s+g,0)/gaps.length;
+        c.avgGapDays=Math.round(avgGap);
+        c.frequency=avgGap<=1?"daily":avgGap<=3?"weekly":avgGap<=10?"bi-weekly":avgGap<=35?"monthly":avgGap<=70?"bi-monthly":avgGap<=100?"quarterly":"irregular";
+      } else {
+        c.avgGapDays=null;
+        c.frequency=c.txns.length===1?"one-time":"unknown";
+      }
+      /* monthly spend last 4 months */
+      const monthMap={};
+      for(let i=3;i>=0;i--){
+        const ms=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
+        const me=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
+        const mn=MONTH_NAMES[(now.getMonth()-i+12)%12];
+        const mTotal=c.txns.filter(tx=>tx.date>=ms&&tx.date<=me).reduce((s,tx)=>s+tx.amount,0);
+        monthMap[mn]=mTotal;
+      }
+      c.monthlyHistory=MONTH_NAMES.slice(0).map((_,i)=>{
+        const mn=MONTH_NAMES[(now.getMonth()-3+i+12)%12];
+        return {mName:mn.slice(0,3),total:monthMap[mn]||0};
+      });
+      /* trend */
+      const vals=c.monthlyHistory.map(m=>m.total);
+      const nonZero=vals.filter(v=>v>0);
+      c.trend=nonZero.length>=2?(nonZero[nonZero.length-1]-nonZero[0])/Math.max(nonZero[0],1)*100:0;
+      /* annual cost */
+      c.annualEstimate=c.frequency==="monthly"?c.amount*12:c.frequency==="bi-monthly"?c.amount*6:c.frequency==="quarterly"?c.amount*4:c.frequency==="weekly"?c.amount*52:c.count>=2?c.amount*(12/Math.max(c.avgGapDays/30,0.5)):c.amount*12;
+      return c;
+    }).sort((a,b)=>b.amount-a.amount);
   },[allTxns]);
   const totalSubBurn=subscriptionData.reduce((s,sub)=>s+sub.amount,0);
 
@@ -34484,12 +35920,90 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
   const Card2=({children,sx})=>React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px",...sx}},children);
 
   /* ══ 1. PULSE TAB ══ */
+  const _ord=n=>{const s=["th","st","nd","rd"],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0])};
+  const _miniSpark=(vals,color)=>{
+    if(!vals||vals.length<2)return null;
+    const h=24,w=80,pad=2;
+    const mx=Math.max(...vals,1),mn=Math.min(...vals,0);
+    const pts=vals.map((v,i)=>`${pad+i*((w-pad*2)/(vals.length-1))},${pad+(h-pad*2)*(1-(v-mn)/(mx-mn||1))}`).join(" ");
+    return React.createElement("svg",{width:w,height:h,viewBox:`0 0 ${w} ${h}`,style:{display:"inline-block",verticalAlign:"middle"}},
+      React.createElement("polyline",{points:pts,fill:"none",stroke:color||"var(--accent)",strokeWidth:1.5,strokeLinejoin:"round"}),
+      vals[vals.length-1]>vals[0]?React.createElement("circle",{cx:w-pad,cy:pad+(h-pad*2)*(1-(vals[vals.length-1]-mn)/(mx-mn||1)),r:2.5,fill:color||"var(--accent)"}):React.createElement("circle",{cx:w-pad,cy:pad+(h-pad*2)*(1-(vals[vals.length-1]-mn)/(mx-mn||1)),r:2.5,fill:color||"var(--accent)"})
+    );
+  };
   const PulseTab=React.createElement("div",{style:{paddingBottom:20}},
     React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
       React.createElement(KpiCard,{label:"Today's Spend",value:INR(pulseData.todaySpend),sub:"transactions recorded today",col:pulseData.todaySpend>pulseData.dailyAvg*1.4?"#ef4444":"var(--accent)",icon:React.createElement(Icon,{n:"calendar",size:22})}),
       React.createElement(KpiCard,{label:"Month So Far",value:INR(pulseData.thisMonthSpend),sub:pulseData.dayOfMonth+" of "+pulseData.daysInMonth+" days done",col:"var(--accent)",icon:React.createElement(Icon,{n:"chart",size:22})}),
       React.createElement(KpiCard,{label:"Projected Month-End",value:INR(Math.round(pulseData.projected)),sub:"at current daily pace",col:pulseData.projected>pulseData.lastMonthSpend*1.1?"#ef4444":"#16a34a",icon:React.createElement(Icon,{n:"invest",size:18})}),
       React.createElement(KpiCard,{label:"Last 7 Days",value:INR(pulseData.last7),sub:"rolling 7-day total",col:"#6d28d9",icon:React.createElement(Icon,{n:"calendar",size:18})})
+    ),
+    /* ── Income & Cashflow Row ── */
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement(KpiCard,{label:"This Month Income",value:INR(pulseData.thisMonthIncome),sub:pulseData.lastMonthIncome>0?(pulseData.thisMonthIncome>=pulseData.lastMonthIncome?"↑ ":"↓ ")+Math.abs(((pulseData.thisMonthIncome-pulseData.lastMonthIncome)/pulseData.lastMonthIncome*100)).toFixed(0)+"% vs last month":"",col:"#16a34a",icon:React.createElement(Icon,{n:"classIncome",size:16})}),
+      React.createElement(KpiCard,{label:"Net Cashflow",value:INR(pulseData.savingsThisMonth),sub:pulseData.savingsThisMonth>=0?"Income − Expenses":"Spending exceeds income",col:pulseData.savingsThisMonth>=0?"#16a34a":"#ef4444",icon:React.createElement(Icon,{n:"balance",size:18})}),
+      React.createElement(KpiCard,{label:"Savings Rate",value:pulseData.savingsRate.toFixed(1)+"%",sub:P.savingsRateTarget?"Target: "+P.savingsRateTarget+"%":"",col:pulseData.savingsRate>=(P.savingsRateTarget||30)?"#16a34a":"#f59e0b",icon:React.createElement(Icon,{n:"activity",size:18})}),
+      React.createElement(KpiCard,{label:"Expense Ratio",value:pulseData.expenseRatio.toFixed(0)+"%",sub:pulseData.expenseRatio>(P.expRatioDanger||80)?"⚠ Above danger zone":"Healthy",col:pulseData.expenseRatio>(P.expRatioDanger||80)?"#ef4444":pulseData.expenseRatio>60?"#b45309":"#16a34a",icon:React.createElement(Icon,{n:"percent",size:18})})
+    ),
+    /* ── Emergency Fund Gauge ── */
+    React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement(SHead,{t:"Emergency Fund Runway",s:P.emergencyTargetMonths?"Target: "+P.emergencyTargetMonths+" months of expenses":"Set target in Settings → Insight Preferences"}),
+      React.createElement("div",{style:{display:"flex",gap:16,alignItems:"center",flexWrap:"wrap"}},
+        React.createElement("svg",{width:120,height:120,viewBox:"0 0 120 120",style:{flexShrink:0}},
+          React.createElement("circle",{cx:60,cy:60,r:50,fill:"none",stroke:"var(--border2)",strokeWidth:10}),
+          React.createElement("circle",{cx:60,cy:60,r:50,fill:"none",
+            stroke:pulseData.emergencyActualMonths>=pulseData.emergencyTarget?"#16a34a":pulseData.emergencyActualMonths>=pulseData.emergencyTarget*0.5?"#f59e0b":"#ef4444",
+            strokeWidth:10,strokeDasharray:2*Math.PI*50,
+            strokeDashoffset:2*Math.PI*50*(1-Math.min(pulseData.emergencyActualMonths/pulseData.emergencyTarget,1)),
+            strokeLinecap:"round",transform:"rotate(-90 60 60)",style:{transition:"stroke-dashoffset 0.8s ease"}}
+          ),
+          React.createElement("text",{x:60,y:55,textAnchor:"middle",fontSize:18,fontWeight:800,fontFamily:"'Sora',sans-serif",fill:pulseData.emergencyActualMonths>=pulseData.emergencyTarget?"#16a34a":"var(--text2)"},pulseData.emergencyActualMonths.toFixed(1)),
+          React.createElement("text",{x:60,y:70,textAnchor:"middle",fontSize:9,fontWeight:600,fill:"var(--text5)"},"months covered")
+        ),
+        React.createElement("div",{style:{flex:1,minWidth:180}},
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
+            React.createElement("span",{style:{fontSize:12,color:"var(--text4)"}},INR(Math.round(pulseData.liquidAssets))+" liquid"),
+            React.createElement("span",{style:{fontSize:12,color:"var(--text5)"}},pulseData.emergencyTarget+" month target")
+          ),
+          React.createElement("div",{style:{height:8,background:"var(--bg5)",borderRadius:4,overflow:"hidden",marginBottom:8}},
+            React.createElement("div",{style:{height:"100%",width:Math.min(pulseData.emergencyActualMonths/pulseData.emergencyTarget*100,100)+"%",background:pulseData.emergencyActualMonths>=pulseData.emergencyTarget?"#16a34a":pulseData.emergencyActualMonths>=pulseData.emergencyTarget*0.5?"#f59e0b":"#ef4444",borderRadius:4}})
+          ),
+          React.createElement("div",{style:{fontSize:11,color:pulseData.emergencyActualMonths>=pulseData.emergencyTarget?"#16a34a":"#ef4444",fontWeight:600}},
+            pulseData.emergencyActualMonths>=pulseData.emergencyTarget?"✓ Emergency fund fully covered":"⚠ Need "+INR(Math.round((pulseData.emergencyTarget-pulseData.emergencyActualMonths)*pulseData.thisMonthIncome/12))+" more to reach target"
+          )
+        )
+      )
+    ),
+    /* ── PYF Tracker ── */
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement("div",{style:{flex:"1 1 200px",padding:"14px 16px",borderRadius:12,background:pulseData.pyfSaved?"rgba(22,163,74,.08)":"rgba(239,68,68,.06)",border:"1px solid "+(pulseData.pyfSaved?"rgba(22,163,74,.25)":"rgba(239,68,68,.2)"),display:"flex",alignItems:"center",gap:12}},
+        React.createElement("div",{style:{width:40,height:40,borderRadius:10,background:pulseData.pyfSaved?"rgba(22,163,74,.15)":"rgba(239,68,68,.12)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}},pulseData.pyfSaved?"✅":pulseData.pyfPassed?"⏰":"💰"),
+        React.createElement("div",{style:{flex:1}},
+          React.createElement("div",{style:{fontSize:13,fontWeight:700,color:pulseData.pyfSaved?"#16a34a":"#ef4444"}},"Pay Yourself First"),
+          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},
+            pulseData.pyfSaved?"Saved before the "+_ord(pulseData.pyfTarget)+" — great discipline!":
+            pulseData.pyfPassed?"Day "+pulseData.pyfTarget+" passed, no savings captured this month yet.":"Set day "+_ord(pulseData.pyfTarget)+" as your PYF target"
+          )
+        )
+      ),
+      React.createElement("div",{style:{flex:"1 1 200px",padding:"14px 16px",borderRadius:12,background:pulseData.foodBudget>0?"var(--card)":"var(--bg5)",border:"1px solid var(--border)",display:"flex",alignItems:"center",gap:12}},
+        React.createElement("div",{style:{width:40,height:40,borderRadius:10,background:pulseData.foodBudget>0?pulseData.foodSpend>pulseData.foodBudget?"rgba(239,68,68,.15)":"rgba(22,163,74,.15)":"var(--bg4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}},"🍽️"),
+        React.createElement("div",{style:{flex:1}},
+          React.createElement("div",{style:{fontSize:13,fontWeight:700,color:pulseData.foodBudget>0?(pulseData.foodSpend>pulseData.foodBudget?"#ef4444":"#16a34a"):"var(--text4)"}},"Food Budget"),
+          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},
+            pulseData.foodBudget>0?INR(pulseData.foodSpend)+" / "+INR(pulseData.foodBudget)+" ("+Math.min(100,(pulseData.foodSpend/pulseData.foodBudget*100)).toFixed(0)+"%)":"Set food budget in Settings → Insight Preferences"
+          )
+        )
+      ),
+      React.createElement("div",{style:{flex:"1 1 200px",padding:"14px 16px",borderRadius:12,background:"var(--card)",border:"1px solid var(--border)",display:"flex",alignItems:"center",gap:12}},
+        React.createElement("div",{style:{width:40,height:40,borderRadius:10,background:pulseData.discSpend>0?pulseData.discSpendTarget>0&&pulseData.discSpend/(pulseData.thisMonthIncome||1)*100>pulseData.discSpendTarget?"rgba(239,68,68,.15)":"rgba(109,40,217,.12)":"var(--bg4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}},"🎯"),
+        React.createElement("div",{style:{flex:1}},
+          React.createElement("div",{style:{fontSize:13,fontWeight:700,color:pulseData.discSpendTarget>0&&pulseData.thisMonthIncome>0&&pulseData.discSpend/(pulseData.thisMonthIncome)*100>pulseData.discSpendTarget?"#ef4444":"#6d28d9"}},"Discretionary Spend"),
+          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},
+            pulseData.discSpendTarget>0&&pulseData.thisMonthIncome>0?INR(pulseData.discSpend)+" ("+(pulseData.discSpend/pulseData.thisMonthIncome*100).toFixed(0)+"% of income, target ≤"+pulseData.discSpendTarget+"%)":INR(pulseData.discSpend)+" this month"
+          )
+        )
+      )
     ),
     pulseData.lastMonthSpend>0&&React.createElement(Card2,{sx:{marginBottom:16}},
       React.createElement(SHead,{t:"Month Pace vs Last Month"}),
@@ -34548,8 +36062,8 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
           );
         })(),
         React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,overflow:"hidden"}},
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 100px 100px 80px 88px",padding:"8px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg4)"}},
-            ...["Category",lastMonthName,thisMonthName,"Change","3M Drift"].map((h,i)=>
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 100px 100px 80px 88px 84px",padding:"8px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg4)"}},
+            ...["Category",lastMonthName,thisMonthName,"Change","3M Drift","Trend"].map((h,i)=>
               React.createElement("div",{key:i,style:{fontSize:10,fontWeight:700,color:i===2?"var(--accent)":"var(--text5)",textTransform:"uppercase",letterSpacing:.5,textAlign:i>0?"right":"left"}},h)
             )
           ),
@@ -34558,8 +36072,10 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
             const mx=Math.max(...spendData.map(r=>Math.max(r.last,r.curr)),1);
             const driftCol=row.drift3m===null?"var(--text6)":row.drift3m>25?"#ef4444":row.drift3m>10?"#b45309":"#16a34a";
             const driftIco=row.drift3m===null?"—":row.drift3m>25?"●":row.drift3m>10?"●":"●";
+            const trendVals=[row.m3,row.m2,row.last,row.curr];
+            const trendDir=row.curr>row.last?"#ef4444":row.curr<row.last?"#16a34a":"var(--text5)";
             return React.createElement("div",{key:row.cat,style:{padding:"10px 16px",borderBottom:i<spendData.length-1?"1px solid var(--border2)":"none",background:i%2?"var(--bg5)":"transparent"}},
-              React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 100px 100px 80px 88px",alignItems:"center",marginBottom:5}},
+              React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 100px 100px 80px 88px 84px",alignItems:"center",marginBottom:5}},
                 React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
                   React.createElement("span",{style:{width:10,height:10,borderRadius:"50%",background:col,flexShrink:0,display:"inline-block"}}),
                   React.createElement("span",{style:{fontSize:13,color:"var(--text3)",fontWeight:500}},row.cat)
@@ -34567,7 +36083,8 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
                 React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"var(--text5)",fontFamily:"'Sora',sans-serif"}},row.last>0?INR(row.last):"—"),
                 React.createElement("div",{style:{textAlign:"right",fontSize:13,color:"var(--text3)",fontWeight:600,fontFamily:"'Sora',sans-serif"}},row.curr>0?INR(row.curr):"—"),
                 React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:row.delta>0?"#ef4444":row.delta<0?"#16a34a":"var(--text5)"}},row.delta===0?"—":(row.delta>0?"+":"")+INR(row.delta)),
-                React.createElement("div",{style:{textAlign:"right",fontSize:11,color:driftCol}},row.drift3m!==null?driftIco+" "+(row.drift3m>0?"+":"")+row.drift3m.toFixed(0)+"%":"—")
+                React.createElement("div",{style:{textAlign:"right",fontSize:11,color:driftCol}},row.drift3m!==null?driftIco+" "+(row.drift3m>0?"+":"")+row.drift3m.toFixed(0)+"%":"—"),
+                React.createElement("div",{style:{textAlign:"right"}},_miniSpark(trendVals,trendDir))
               ),
               React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:2,paddingLeft:18}},
                 React.createElement("div",{style:{background:"var(--bg5)",borderRadius:2,height:3,overflow:"hidden"}},React.createElement("div",{style:{width:(row.last/mx*100)+"%",height:"100%",background:"var(--text6)",borderRadius:2}})),
@@ -34575,11 +36092,38 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
               )
             );
           }),
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 100px 100px 80px 88px",padding:"10px 16px",borderTop:"2px solid var(--border)",background:"var(--bg4)"}},
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 100px 100px 80px 88px 84px",padding:"10px 16px",borderTop:"2px solid var(--border)",background:"var(--bg4)"}},
             React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)"}},"Total"),
             React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"var(--text3)"}},INR(spendData.reduce((s,r)=>s+r.last,0))),
             React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"var(--accent)"}},INR(spendData.reduce((s,r)=>s+r.curr,0))),
-            React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:(spendData.reduce((s,r)=>s+r.delta,0))>0?"#ef4444":"#16a34a"}},(()=>{const d=spendData.reduce((s,r)=>s+r.delta,0);return(d>0?"+":"")+INR(d);})()), React.createElement("div",null)
+            React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:(spendData.reduce((s,r)=>s+r.delta,0))>0?"#ef4444":"#16a34a"}},(()=>{const d=spendData.reduce((s,r)=>s+r.delta,0);return(d>0?"+":"")+INR(d);})()), React.createElement("div",null), React.createElement("div",null)
+          )
+        ),
+        leakData.count>0&&React.createElement(Card2,{sx:{marginTop:16}},
+          React.createElement(SHead,{t:"Expense Leak Detector",s:"Small transactions (≤"+INR(leakData.threshold)+") that add up — micro-spends, impulse buys, cash withdrawals"}),
+          React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:12}},
+            React.createElement(KpiCard,{label:"Micro-Transactions",value:leakData.count,sub:"≤"+INR(leakData.threshold)+" each",col:"#f59e0b",icon:React.createElement(Icon,{n:"warning",size:18})}),
+            React.createElement(KpiCard,{label:"Total Leak",value:INR(leakData.total),sub:"projected "+INR(leakData.projectedMonthly)+"/mo at this pace",col:"#ef4444",icon:React.createElement(Icon,{n:"trenddown",size:18})}),
+            leakData.topLeaks.length>0&&React.createElement(KpiCard,{label:"Top Leak Category",value:leakData.topLeaks[0].cat,sub:INR(leakData.topLeaks[0].total)+" · "+leakData.topLeaks[0].count+" txns",col:"#b45309",icon:React.createElement(Icon,{n:"tag",size:18})})
+          ),
+          React.createElement("div",{style:{overflowX:"auto"}},
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 80px 80px",padding:"6px 12px",background:"var(--bg4)",borderRadius:"8px 8px 0 0",borderBottom:"1px solid var(--border2)"}},
+              React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase"}},"Category"),
+              React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",textAlign:"right"}},"Count"),
+              React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",textAlign:"right"}},"Total")
+            ),
+            leakData.topLeaks.map((l,i)=>{
+              const catObj=categories.find(c=>c.name===l.cat);
+              const catCol=catObj?.color||"#f59e0b";
+              return React.createElement("div",{key:l.cat,style:{display:"grid",gridTemplateColumns:"1fr 80px 80px",padding:"8px 12px",borderBottom:i<leakData.topLeaks.length-1?"1px solid var(--border2)":"none"}},
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+                  React.createElement("span",{style:{width:8,height:8,borderRadius:"50%",background:catCol,display:"inline-block",flexShrink:0}}),
+                  React.createElement("span",{style:{fontSize:12,color:"var(--text3)",fontWeight:500}},l.cat)
+                ),
+                React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"var(--text5)"}},l.count+"×"),
+                React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"#ef4444",fontWeight:700,fontFamily:"'Sora',sans-serif"}},INR(l.total))
+              );
+            })
           )
         )
       )
@@ -34618,6 +36162,50 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
             );
           })()
         ),
+        /* ── MoM Comparison ── */
+        payeeData.momComparison.length>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+          React.createElement(SHead,{t:"Month-over-Month Changes",s:"Payees with biggest spend shifts vs last month"}),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 90px 90px 80px",padding:"6px 12px",background:"var(--bg4)",borderRadius:"8px 8px 0 0",borderBottom:"1px solid var(--border2)"}},
+            React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase"}},"Payee"),
+            React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",textAlign:"right"}},"Last Mo."),
+            React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",textAlign:"right"}},"This Mo."),
+            React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",textAlign:"right"}},"Change")
+          ),
+          payeeData.momComparison.map((p,i)=>{
+            const isUp=p.pct>0;
+            return React.createElement("div",{key:p.name,style:{display:"grid",gridTemplateColumns:"1fr 90px 90px 80px",padding:"8px 12px",borderBottom:i<payeeData.momComparison.length-1?"1px solid var(--border2)":"none"}},
+              React.createElement("div",{style:{fontSize:12,color:"var(--text3)",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.name),
+              React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"var(--text5)",fontFamily:"'Sora',sans-serif"}},INR(Math.round(p.lastAmt))),
+              React.createElement("div",{style:{textAlign:"right",fontSize:12,color:"var(--text3)",fontWeight:600,fontFamily:"'Sora',sans-serif"}},INR(Math.round(p.thisAmt))),
+              React.createElement("div",{style:{textAlign:"right",fontSize:12,fontWeight:700,color:isUp?"#ef4444":"#16a34a"}},(isUp?"+":"")+p.pct.toFixed(0)+"%")
+            );
+          })
+        ),
+        /* ── Returned Payees (big increases) ── */
+        payeeData.returnedPayees.filter(p=>p.delta>0).length>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+          React.createElement(SHead,{t:"Rising Payees",s:"Payees where you're spending more than last month — watch for creep"}),
+          React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
+            payeeData.returnedPayees.filter(p=>p.delta>0).slice(0,6).map((p,i)=>
+              React.createElement("div",{key:p.name,style:{padding:"8px 14px",borderRadius:10,background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.18)",fontSize:12,minWidth:120}},
+                React.createElement("div",{style:{fontWeight:600,color:"var(--text3)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:140}},p.name),
+                React.createElement("div",{style:{color:"#ef4444",fontWeight:700,marginTop:3,fontFamily:"'Sora',sans-serif"}},INR(Math.round(p.delta))+" ↑")
+              )
+            )
+          )
+        ),
+        /* ── Lost Payees ── */
+        payeeData.lostPayees.length>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+          React.createElement(SHead,{t:"Lost Payees",s:"Merchants you paid last month but not this month — subscriptions cancelled or habits changed?"}),
+          React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
+            payeeData.lostPayees.map((p,i)=>
+              React.createElement("div",{key:p.name,style:{padding:"6px 12px",borderRadius:20,background:"rgba(22,163,74,.06)",border:"1px solid rgba(22,163,74,.18)",fontSize:12}},
+                React.createElement("span",{style:{color:"var(--text3)",fontWeight:500}},p.name),
+                React.createElement("span",{style:{color:"#16a34a",marginLeft:6,fontWeight:700}},INR(Math.round(p.total))+" saved")
+              )
+            )
+          )
+        ),
+        /* ── First-Time Payees ── */
         payeeData.firstTime.length>0&&React.createElement(Card2,null,
           React.createElement(SHead,{t:"First-Time Payees This Month",s:"New merchants you haven't paid before — check for impulse or subscription creep"}),
           React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
@@ -35381,6 +36969,67 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
           )
         )
       )
+    ),
+
+    /* ── Income Waterfall Chart ── */
+    waterfallData.income>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement(SHead,{t:"Income → Savings Waterfall",s:"How your income breaks down into Fixed, Variable, Discretionary, and Savings"}),
+      (()=>{
+        const w=waterfallData;
+        const cols=[
+          {label:"Income",val:w.income,col:"#16a34a",type:"start"},
+          {label:"Fixed",val:-w.fixed,col:"#ef4444",type:"expense"},
+          {label:"Variable",val:-w.variable,col:"#f97316",type:"expense"},
+          {label:"Discretionary",val:-w.disc,col:"#b45309",type:"expense"},
+          w.other>0?{label:"Other",val:-w.other,col:"#78716c",type:"expense"}:null,
+          {label:"Savings",val:w.savings,col:w.savings>=0?"#16a34a":"#ef4444",type:"end"}
+        ].filter(Boolean);
+        const maxVal=w.income||1;
+        const barH=140;
+        const usableW=isMobile?260:420;
+        const barW=Math.max(Math.floor(usableW/cols.length)-6,24);
+        let running=0;
+        const bars=cols.map((c,i)=>{
+          if(c.type==="start"){running=c.val;return{...c,y:0,h:Math.abs(c.val)/maxVal*barH};}
+          if(c.type==="end"){return{...c,y:running>0?(w.income-running)/maxVal*barH:(w.income)/maxVal*barH,h:Math.abs(c.val)/maxVal*barH};}
+          const startH=running/maxVal*barH;
+          running+=c.val;
+          const endH=running/maxVal*barH;
+          return{...c,y:Math.min(startH,endH),h:Math.abs(c.val)/maxVal*barH};
+        });
+        return React.createElement("div",{style:{display:"flex",justifyContent:"center",overflowX:"auto"}},
+          React.createElement("svg",{width:bars.length*(barW+6)+20,height:barH+40,viewBox:"0 0 "+(bars.length*(barW+6)+20)+" "+(barH+40),style:{maxWidth:"100%"}},
+            bars.map((b,i)=>{
+              const x=10+i*(barW+6);
+              const y=b.y+5;
+              const pct=Math.abs(b.val)/maxVal*100;
+              return React.createElement("g",{key:i},
+                React.createElement("rect",{x:x,y:y,width:barW,height:Math.max(b.h,2),rx:3,fill:b.col,opacity:.85}),
+                React.createElement("text",{x:x+barW/2,y:Math.max(y-4,12),textAnchor:"middle",fontSize:10,fontWeight:700,fill:b.col,fontFamily:"'Sora',sans-serif"},INR(Math.abs(b.val))),
+                React.createElement("text",{x:x+barW/2,y:barH+22,textAnchor:"middle",fontSize:9,fill:"var(--text5)",fontFamily:"'DM Sans',sans-serif"},b.label),
+                React.createElement("text",{x:x+barW/2,y:barH+34,textAnchor:"middle",fontSize:8,fill:"var(--text6)",fontFamily:"'DM Sans',sans-serif"},pct.toFixed(0)+"%")
+              );
+            }),
+            React.createElement("line",{x1:0,y1:barH+5,x2:bars.length*(barW+6)+20,y2:barH+5,stroke:"var(--border2)",strokeWidth:1,strokeDasharray:"4,3"})
+          )
+        );
+      })(),
+      React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginTop:8,justifyContent:"center"}},
+        [
+          {l:"Fixed (Housing, Insurance)",v:waterfallData.fixed,c:"#ef4444"},
+          {l:"Variable (Food, Transport)",v:waterfallData.variable,c:"#f97316"},
+          {l:"Discretionary (Shopping, Travel)",v:waterfallData.disc,c:"#b45309"},
+          {l:"Savings",v:waterfallData.savings,c:waterfallData.savings>=0?"#16a34a":"#ef4444"}
+        ].map(x=>React.createElement("div",{key:x.l,style:{fontSize:11,color:"var(--text5)",display:"flex",alignItems:"center",gap:4}},
+          React.createElement("span",{style:{width:8,height:8,borderRadius:2,background:x.c,display:"inline-block"}}),
+          x.l+": ",React.createElement("strong",{style:{color:x.c}},INR(x.v)),waterfallData.income>0&&" ("+(Math.abs(x.v)/waterfallData.income*100).toFixed(0)+"%)"
+        ))
+      ),
+      React.createElement("div",{style:{marginTop:12,padding:"10px 14px",borderRadius:10,background:waterfallData.savings>=0?"rgba(22,163,74,.06)":"rgba(239,68,68,.06)",border:"1px solid "+(waterfallData.savings>=0?"rgba(22,163,74,.2)":"rgba(239,68,68,.2)"),fontSize:12,color:"var(--text3)",lineHeight:1.6}},
+        waterfallData.savings>=0
+          ?"✓ You're saving "+INR(waterfallData.savings)+" ("+waterfallData.savingsRate.toFixed(0)+"% of income) after all expenses. "+(waterfallData.savingsRate>=30?"Excellent FIRE pace!":waterfallData.savingsRate>=20?"Good — aim for 30%+ for FIRE":"Room to improve — target 20%+ savings rate.")+""
+          :"⚠ Expenses exceed income by "+INR(Math.abs(waterfallData.savings))+". "+(waterfallData.disc>0?"Discretionary spending ("+INR(waterfallData.disc)+") is the biggest lever to pull.":"Review fixed costs for renegotiation opportunities.")+""
+      )
     )
   );
 
@@ -35479,33 +37128,45 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       ?React.createElement(Empty,{icon:React.createElement(Icon,{n:"phone",size:18}),text:"No subscription patterns detected. Transactions with streaming/OTT keywords will appear here."})
       :React.createElement(React.Fragment,null,
         React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
-          React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 16px",flex:"1 1 160px"}},
-            React.createElement("div",{style:{fontSize:11,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Monthly Subscription Burn"),
-            React.createElement("div",{style:{fontSize:24,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#ef4444"}},INR(totalSubBurn))
-          ),
-          React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 16px",flex:"1 1 100px"}},
-            React.createElement("div",{style:{fontSize:11,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Services Detected"),
-            React.createElement("div",{style:{fontSize:24,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--accent)"}},subscriptionData.length)
-          ),
-          React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 16px",flex:"1 1 120px"}},
-            React.createElement("div",{style:{fontSize:11,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Annual Estimate"),
-            React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#b45309"}},INR(totalSubBurn*12))
-          )
+          React.createElement(KpiCard,{label:"Monthly Burn",value:INR(totalSubBurn),sub:subscriptionData.length+" active services",col:"#ef4444",icon:React.createElement(Icon,{n:"phone",size:18})}),
+          React.createElement(KpiCard,{label:"Annual Estimate",value:INR(subscriptionData.reduce((s,sub)=>s+Math.round(sub.annualEstimate),0)),sub:"projected yearly cost",col:"#b45309",icon:React.createElement(Icon,{n:"chart",size:18})}),
+          React.createElement(KpiCard,{label:"Highest Cost",value:subscriptionData.length>0?subscriptionData[0].name:"—",sub:subscriptionData.length>0?INR(subscriptionData[0].amount)+"/mo":"",col:"var(--accent)",icon:React.createElement(Icon,{n:"star",size:18})})
         ),
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(auto-fill,minmax(260px,1fr))",gap:12}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(auto-fill,minmax(300px,1fr))",gap:12}},
           subscriptionData.map(sub=>{
             const daysAgo=Math.floor((new Date()-new Date(sub.lastDate))/86400000);
             const active=daysAgo<=45;
-            return React.createElement("div",{key:sub.key,style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px",display:"flex",alignItems:"center",gap:12}},
-              React.createElement("div",{style:{width:44,height:44,borderRadius:12,background:"var(--accentbg2)",border:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}},React.createElement(Icon,{n:"phone",size:18})),
-              React.createElement("div",{style:{flex:1,minWidth:0}},
-                React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},sub.name),
-                React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},sub.cat?sub.cat:"Subscription"," · ",daysAgo===0?"Today":daysAgo===1?"Yesterday":daysAgo+" days ago"),
-                React.createElement("span",{style:{fontSize:10,padding:"1px 7px",borderRadius:8,background:active?"rgba(22,163,74,.12)":"rgba(239,68,68,.1)",color:active?"#16a34a":"#ef4444",fontWeight:600,border:"1px solid "+(active?"rgba(22,163,74,.3)":"rgba(239,68,68,.25)")}},active?"● Active":"○ Inactive")
+            const freqCol=sub.frequency==="monthly"?"#16a34a":sub.frequency==="weekly"?"#ef4444":sub.frequency==="bi-weekly"?"#b45309":"var(--text5)";
+            const trendDir=sub.trend>10?"#ef4444":sub.trend<-10?"#16a34a":"var(--text5)";
+            return React.createElement("div",{key:sub.key,style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px"}},
+              React.createElement("div",{style:{display:"flex",alignItems:"center",gap:12,marginBottom:10}},
+                React.createElement("div",{style:{width:40,height:40,borderRadius:10,background:"var(--accentbg2)",border:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},React.createElement(Icon,{n:"phone",size:16})),
+                React.createElement("div",{style:{flex:1,minWidth:0}},
+                  React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},sub.name),
+                  React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:1,display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}},
+                    React.createElement("span",{style:{padding:"1px 6px",borderRadius:6,background:active?"rgba(22,163,74,.1)":"rgba(239,68,68,.1)",color:active?"#16a34a":"#ef4444",fontWeight:600,fontSize:10}},active?"● Active":"○ Inactive"),
+                    React.createElement("span",{style:{color:freqCol,fontWeight:600,fontSize:10,textTransform:"capitalize"}},sub.frequency),
+                    React.createElement("span",{style:{color:"var(--text6)"}},sub.cat||"Subscription")
+                  )
+                ),
+                React.createElement("div",{style:{textAlign:"right",flexShrink:0}},
+                  React.createElement("div",{style:{fontSize:16,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#ef4444"}},INR(sub.amount)),
+                  React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"/mo")
+                )
               ),
-              React.createElement("div",{style:{textAlign:"right",flexShrink:0}},
-                React.createElement("div",{style:{fontSize:16,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#ef4444"}},INR(sub.amount)),
-                React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},"last charge")
+              /* 4-month trend sparkline */
+              React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:6}},
+                React.createElement("div",{style:{flex:1,display:"flex",gap:2,alignItems:"flex-end",height:22}},sub.monthlyHistory.map((m,mi)=>{
+                  const mx=Math.max(...sub.monthlyHistory.map(x=>x.total),1);
+                  const h=m.total>0?Math.max(2,Math.round(m.total/mx*20)):1;
+                  return React.createElement("div",{key:mi,style:{flex:1,height:h,borderRadius:2,background:mi===sub.monthlyHistory.length-1?"var(--accent)":"var(--text6)",opacity:mi===sub.monthlyHistory.length-1?1:.6}});
+                })),
+                sub.trend!==0&&React.createElement("div",{style:{fontSize:10,color:trendDir,fontWeight:700,flexShrink:0}},(sub.trend>0?"+":"")+sub.trend.toFixed(0)+"%")
+              ),
+              /* Footer: annual estimate + avg gap */
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",borderTop:"1px solid var(--border2)",paddingTop:6}},
+                React.createElement("span",null,"~"+INR(Math.round(sub.annualEstimate))+"/yr"),
+                React.createElement("span",null,sub.avgGapDays?sub.avgGapDays+" day avg gap":sub.count+" charge"+(sub.count>1?"s":""))
               )
             );
           })
@@ -35618,7 +37279,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       ?React.createElement(Empty,{icon:React.createElement(Icon,{n:"beach",size:18}),text:"Add at least 3 months of expense transactions to calculate your FIRE number and retirement timeline."})
       :React.createElement(React.Fragment,null,
         /* ── FIRE Number hero ── */
-        React.createElement("div",{style:{background:"linear-gradient(135deg,var(--accent),#1d4ed8)",borderRadius:16,padding:"20px 24px",marginBottom:16,color:"#fff",position:"relative",overflow:"hidden"}},
+        React.createElement("div",{style:{background:"linear-gradient(135deg,var(--accent),#1d4ed8)",borderRadius:16,padding:"20px 24px",marginBottom:16,color:"#fff",position:"relative",overflow:"hidden",animation:"heroAppear .42s ease both"}},
           React.createElement("div",{style:{position:"absolute",right:-20,top:-20,fontSize:100,opacity:.07}},React.createElement(Icon,{n:"beach",size:18})),
           React.createElement("div",{style:{fontSize:12,fontWeight:600,textTransform:"uppercase",letterSpacing:1,opacity:.8,marginBottom:6}},"Your FIRE Number (4% rule · 25× annual expenses)"),
           React.createElement("div",{style:{fontSize:isMobile?28:38,fontFamily:"'Sora',sans-serif",fontWeight:800,marginBottom:6}},INR(Math.round(fireData.fireNumber))),
@@ -35751,6 +37412,255 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
   );
 
 
+  /* ══ FINANCIAL HEALTH SCORE DATA ══ */
+  const healthScoreData=React.useMemo(()=>{
+    const scores=[];
+    /* Savings Rate (0-25) */
+    const sr=pulseData.savingsRate;
+    scores.push({name:"Savings Rate",score:Math.min(25,sr>=40?25:sr>=30?22:sr>=20?18:sr>=10?12:5),max:25,detail:sr.toFixed(0)+"%",col:sr>=30?"#16a34a":sr>=20?"#b45309":"#ef4444",
+      tip:sr>=30?"Excellent — FIRE pace":sr>=20?"Good — aim for 30%+":"Below target — aim for 20%+"});
+    /* Emergency Fund (0-20) */
+    const ef=pulseData.emergencyActualMonths;
+    const efTarget=pulseData.emergencyTarget;
+    const efPct=Math.min(ef/efTarget,2);
+    scores.push({name:"Emergency Fund",score:Math.min(20,Math.round(efPct*20)),max:20,detail:ef.toFixed(1)+" months",col:ef>=efTarget?"#16a34a":ef>=efTarget*0.6?"#b45309":"#ef4444",
+      tip:ef>=efTarget?"Fully funded":ef>=efTarget*0.6?"Building up — "+(efTarget-ef).toFixed(1)+" months to go":"Critical — build to "+efTarget+" months"});
+    /* Budget Adherence (0-20) */
+    const bu=_biScore||50;
+    scores.push({name:"Budget Discipline",score:Math.min(20,Math.round(bu/100*20)),max:20,detail:"Score "+bu,col:bu>=70?"#16a34a":bu>=50?"#b45309":"#ef4444",
+      tip:bu>=70?"Strong budget adherence":bu>=50?"Moderate — some categories overspending":"Needs improvement"});
+    /* Expense Ratio (0-15) */
+    const er=pulseData.expenseRatio;
+    scores.push({name:"Expense Ratio",score:Math.min(15,er<=60?15:er<=75?12:er<=90?8:3),max:15,detail:er.toFixed(0)+"%",col:er<=70?"#16a34a":er<=90?"#b45309":"#ef4444",
+      tip:er<=70?"Expenses well below income":er<=90?"Manageable but tight":"Expenses nearly matching income"});
+    /* Debt Health (0-10) */
+    const totalDebt=(pulseData.liquidAssets||0)>0?0:0;
+    const cardD=(cards||[]).reduce((s,c)=>s+(c.outstanding||0),0);
+    const loanD=(loans||[]).reduce((s,l)=>s+(l.outstanding||0),0);
+    const debtScore=cardD===0&&loanD===0?10:cardD===0?7:loanD<cardD*12?5:2;
+    scores.push({name:"Debt Health",score:debtScore,max:10,detail:cardD+loanD>0?INR(cardD+loanD)+" outstanding":"No high-interest debt",col:debtScore>=7?"#16a34a":debtScore>=4?"#b45309":"#ef4444",
+      tip:debtScore>=7?"Healthy — no high-interest debt":debtScore>=4?"Manageable debt load":"High debt burden"});
+    /* Investment Momentum (0-10) */
+    const invMonths=[];
+    for(let i=5;i>=0;i--){
+      const ms=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
+      const me=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
+      invMonths.push(allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");return ct==="Investment"&&t.date>=ms&&t.date<=me;}).reduce((s,t)=>s+t.amount,0));
+    }
+    const avgInv=invMonths.reduce((s,v)=>s+v,0)/6;
+    const invConsistent=invMonths.filter(v=>v>0).length;
+    const invScore=Math.min(10,Math.round(invConsistent/6*10));
+    scores.push({name:"Investment Consistency",score:invScore,max:10,detail:invConsistent+"/6 months",col:invScore>=7?"#16a34a":invScore>=4?"#b45309":"#ef4444",
+      tip:invScore>=7?"Consistent investing — great habit":invScore>=4?"Some gaps in investing":"Irregular — aim to invest monthly"});
+    const total=scores.reduce((s,c)=>s+c.score,0);
+    const maxTotal=scores.reduce((s,c)=>s+c.max,0);
+    const grade=total>=85?"A+":total>=70?"A":total>=55?"B":total>=40?"C":"D";
+    return{scores,total,maxTotal,grade};
+  },[pulseData,cards,loans,allTxns,categories]);
+
+  /* ══ SPENDING PATTERNS DATA ══ */
+  const spendingPatternsData=React.useMemo(()=>{
+    const dayNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    const byDay=Array(7).fill(0).map(()=>({total:0,count:0}));
+    const byHour=Array(24).fill(0).map(()=>({total:0,count:0}));
+    const byMonth=Array(12).fill(0).map(()=>({total:0,count:0}));
+    let weekdayTotal=0,weekendTotal=0,weekdayCount=0,weekendCount=0;
+    const tx=allTxns.filter(t=>t.type==="debit");
+    tx.forEach(t=>{
+      const d=new Date(t.date);
+      const dow=d.getDay();
+      const month=d.getMonth();
+      byDay[dow].total+=t.amount;byDay[dow].count++;
+      byMonth[month].total+=t.amount;byMonth[month].count++;
+      if(dow>=1&&dow<=5){weekdayTotal+=t.amount;weekdayCount++;}
+      else{weekendTotal+=t.amount;weekendCount++;}
+    });
+    const avgWeekday=weekdayCount>0?weekdayTotal/weekdayCount:0;
+    const avgWeekend=weekendCount>0?weekendTotal/weekendCount:0;
+    const avgWeekdaySpend=weekdayCount>0?weekdayTotal/Math.max(weekdayCount/tx.length*7,1):0;
+    const avgWeekendSpend=weekendCount>0?weekendTotal/Math.max(weekendCount/tx.length*2,1):0;
+    const maxDay=Math.max(...byDay.map(d=>d.total),1);
+    const maxMonth=Math.max(...byMonth.map(m=>m.total),1);
+    const avgPerTx=tx.length>0?tx.reduce((s,t)=>s+t.amount,0)/tx.length:0;
+    const medianIdx=Math.floor(tx.length/2);
+    const sortedAmts=[...tx].sort((a,b)=>a.amount-b.amount);
+    const medianTx=tx.length>0?sortedAmts[medianIdx]?.amount||0:0;
+    const top10pctIdx=Math.floor(tx.length*0.9);
+    const top10pctTotal=sortedAmts.slice(top10pctIdx).reduce((s,t)=>s+t.amount,0);
+    const grandTotal=tx.reduce((s,t)=>s+t.amount,0);
+    const top10Concentration=grandTotal>0?top10pctTotal/grandTotal*100:0;
+    return{byDay,byMonth,dayNames,avgWeekdaySpend,avgWeekendSpend,avgWeekday,avgWeekend,weekdayTotal,weekendTotal,maxDay,maxMonth,avgPerTx,medianTx,top10Concentration,txCount:tx.length,grandTotal};
+  },[allTxns,thisStart,thisEnd]);
+
+  /* ══ GOALS DATA ══ */
+  const goalData=React.useMemo(()=>{
+    const g=Array.isArray(goals)?goals:[];
+    const liquidAssets=(banks||[]).reduce((s,b)=>s+(b.balance||0),0)+(cash?.balance||0);
+    return{goals:g,liquidAssets,hasGoals:g.length>0};
+  },[goals,banks,cash]);
+
+
+  /* ══ HEALTH SCORE TAB ══ */
+  const HealthScoreTab=React.createElement("div",{style:{paddingBottom:20}},
+    React.createElement("div",{style:{display:"flex",gap:16,flexWrap:"wrap",marginBottom:16,alignItems:"stretch"}},
+      React.createElement(Card2,{sx:{flex:"0 0 auto",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"24px 30px",minWidth:160}},
+        React.createElement("svg",{width:120,height:120,viewBox:"0 0 120 120"},
+          React.createElement("circle",{cx:60,cy:60,r:50,fill:"none",stroke:"var(--border2)",strokeWidth:10}),
+          React.createElement("circle",{cx:60,cy:60,r:50,fill:"none",stroke:healthScoreData.total>=70?"#16a34a":healthScoreData.total>=50?"#b45309":"#ef4444",strokeWidth:10,
+            strokeDasharray:""+(2*Math.PI*50),
+            strokeDashoffset:""+(2*Math.PI*50*(1-healthScoreData.total/healthScoreData.maxTotal)),
+            strokeLinecap:"round",transform:"rotate(-90 60 60)",style:{transition:"stroke-dashoffset 1s ease"}}),
+          React.createElement("text",{x:60,y:56,textAnchor:"middle",fontSize:32,fontWeight:800,fontFamily:"'Sora',sans-serif",fill:healthScoreData.total>=70?"#16a34a":healthScoreData.total>=50?"#b45309":"#ef4444"},healthScoreData.total),
+          React.createElement("text",{x:60,y:74,textAnchor:"middle",fontSize:14,fontWeight:600,fill:"var(--text5)",fontFamily:"'DM Sans',sans-serif"},"of "+healthScoreData.maxTotal),
+          React.createElement("text",{x:60,y:92,textAnchor:"middle",fontSize:16,fontWeight:800,fill:"var(--accent)",fontFamily:"'Sora',sans-serif"},"Grade "+healthScoreData.grade)
+        ),
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.8,marginTop:8}},"Overall Health")
+      ),
+      React.createElement(Card2,{sx:{flex:"1 1 250px"}},
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:12,fontFamily:"'Sora',sans-serif"}},"Score Breakdown"),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
+          healthScoreData.scores.map(sc=>{
+            const pct=sc.score/sc.max*100;
+            return React.createElement("div",{key:sc.name},
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:3}},
+                React.createElement("span",{style:{fontSize:12,color:"var(--text3)",fontWeight:500}},sc.name),
+                React.createElement("span",{style:{fontSize:12,fontWeight:700,color:sc.col,fontFamily:"'Sora',sans-serif"}},sc.score+"/"+sc.max+" — "+sc.detail)
+              ),
+              React.createElement("div",{style:{height:6,background:"var(--bg5)",borderRadius:3,overflow:"hidden"}},
+                React.createElement("div",{style:{height:"100%",width:pct+"%",background:sc.col,borderRadius:3,transition:"width 0.6s"}})
+              ),
+              React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},sc.tip)
+            );
+          })
+        )
+      )
+    ),
+    React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement(SHead,{t:"Recommendations",s:"Priority actions to improve your financial health"}),
+      React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+        healthScoreData.scores.filter(s=>s.score<s.max*0.7).sort((a,b)=>(a.score/a.max)-(b.score/b.max)).map((sc,i)=>
+          React.createElement("div",{key:sc.name,style:{display:"flex",gap:10,alignItems:"flex-start",padding:"10px 14px",borderRadius:10,background:sc.col+"08",border:"1px solid "+sc.col+"25"}},
+            React.createElement("span",{style:{fontSize:14,flexShrink:0,color:sc.col,fontWeight:700}},(i+1)+"."),
+            React.createElement("div",{style:{fontSize:12,color:"var(--text3)",lineHeight:1.6}},
+              React.createElement("strong",{style:{color:sc.col}},sc.name)," — ",sc.tip
+            )
+          )
+        ),
+        healthScoreData.scores.filter(s=>s.score>=s.max*0.7).length===healthScoreData.scores.length&&
+          React.createElement("div",{style:{padding:"14px",borderRadius:10,background:"rgba(22,163,74,.06)",border:"1px solid rgba(22,163,74,.2)",fontSize:12,color:"#16a34a",textAlign:"center",fontWeight:600}},"✓ All areas look healthy — keep up the great work!")
+      )
+    )
+  );
+
+
+  /* ══ SPENDING PATTERNS TAB ══ */
+  const SpendingPatternsTab=React.createElement("div",{style:{paddingBottom:20}},
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement(KpiCard,{label:"Avg/Transaction",value:INR(Math.round(spendingPatternsData.avgPerTx)),sub:spendingPatternsData.txCount+" transactions",col:"var(--accent)",icon:React.createElement(Icon,{n:"chart",size:18})}),
+      React.createElement(KpiCard,{label:"Median Txn",value:INR(Math.round(spendingPatternsData.medianTx)),sub:"50th percentile amount",col:"#0e7490",icon:React.createElement(Icon,{n:"target",size:18})}),
+      React.createElement(KpiCard,{label:"Top 10% Concentration",value:spendingPatternsData.top10Concentration.toFixed(0)+"%",sub:"of spend in top 10% txns",col:spendingPatternsData.top10Concentration>50?"#ef4444":"#16a34a",icon:React.createElement(Icon,{n:"pie",size:18})})
+    ),
+    React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement(SHead,{t:"Spending by Day of Week",s:"Which days you spend the most — weekday vs weekend patterns"}),
+      React.createElement("div",{style:{display:"flex",gap:4,alignItems:"flex-end",height:100,marginBottom:8}},
+        spendingPatternsData.byDay.map((d,i)=>{
+          const h=d.total>0?Math.max(3,Math.round(d.total/spendingPatternsData.maxDay*90)):2;
+          const isWeekend=i===0||i===6;
+          return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+            React.createElement("div",{style:{fontSize:9,color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},d.total>0?INR(d.total):""),
+            React.createElement("div",{style:{width:"100%",height:h,borderRadius:"3px 3px 0 0",background:isWeekend?"#b45309":"var(--accent)",opacity:isWeekend?0.7:1}})
+          );
+        })
+      ),
+      React.createElement("div",{style:{display:"flex",gap:4}},
+        spendingPatternsData.dayNames.map((d,i)=>React.createElement("div",{key:i,style:{flex:1,textAlign:"center",fontSize:10,color:i===0||i===6?"#b45309":"var(--text5)",fontWeight:i===0||i===6?700:400}},d))
+      ),
+      React.createElement("div",{style:{marginTop:12,padding:"10px 14px",borderRadius:10,background:"var(--bg4)",fontSize:12,color:"var(--text3)",display:"flex",gap:16,flexWrap:"wrap"}},
+        React.createElement("span",null,"Weekday avg: ",React.createElement("strong",null,INR(Math.round(spendingPatternsData.avgWeekdaySpend)))),
+        React.createElement("span",null,"Weekend avg: ",React.createElement("strong",null,INR(Math.round(spendingPatternsData.avgWeekendSpend)))),
+        spendingPatternsData.avgWeekendSpend>spendingPatternsData.avgWeekdaySpend*1.3&&React.createElement("span",{style:{color:"#ef4444",fontWeight:600}},"⚠ Weekend spending 30%+ above weekday"),
+        spendingPatternsData.avgWeekendSpend<spendingPatternsData.avgWeekdaySpend*0.7&&React.createElement("span",{style:{color:"#16a34a"}},"✓ Controlled weekend spending")
+      )
+    ),
+    React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement(SHead,{t:"Monthly Seasonality",s:"Spend patterns across months — spot festival spikes, salary cycles"}),
+      React.createElement("div",{style:{display:"flex",gap:4,alignItems:"flex-end",height:100,marginBottom:8}},
+        spendingPatternsData.byMonth.map((m,i)=>{
+          const h=m.total>0?Math.max(3,Math.round(m.total/spendingPatternsData.maxMonth*90)):2;
+          const isCurrent=i===now.getMonth();
+          return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+            React.createElement("div",{style:{fontSize:9,color:isCurrent?"var(--accent)":"var(--text6)",fontFamily:"'Sora',sans-serif"}},m.total>0?INR(m.total):""),
+            React.createElement("div",{style:{width:"100%",height:h,borderRadius:"3px 3px 0 0",background:isCurrent?"var(--accent)":"var(--text6)",opacity:isCurrent?1:.6}})
+          );
+        })
+      ),
+      React.createElement("div",{style:{display:"flex",gap:4}},
+        ["J","F","M","A","M","J","J","A","S","O","N","D"].map((m,i)=>React.createElement("div",{key:i,style:{flex:1,textAlign:"center",fontSize:10,color:i===now.getMonth()?"var(--accent)":"var(--text6)",fontWeight:i===now.getMonth()?700:400}},m))
+      ),
+      (()=>{
+        const months=spendingPatternsData.byMonth.map((m,i)=>({...m,idx:i})).filter(m=>m.total>0);
+        if(months.length<2)return null;
+        const sorted=[...months].sort((a,b)=>b.total-a.total);
+        const peak=sorted[0],low=sorted[sorted.length-1];
+        const ratio=low.total>0?peak.total/low.total:0;
+        return ratio>2?React.createElement("div",{style:{marginTop:10,fontSize:12,color:"#b45309",lineHeight:1.6}},
+          "⚠ High seasonality detected — ",React.createElement("strong",null,["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][peak.idx]),
+          " ("+INR(peak.total)+") is ",ratio.toFixed(1)+"× ",["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][low.idx],
+          " ("+INR(low.total)+"). Consider building sinking funds for peak months."
+        ):null;
+      })()
+    )
+  );
+
+
+  /* ══ GOAL TRACKER TAB ══ */
+  const GoalTrackerTab=React.createElement("div",{style:{paddingBottom:20}},
+    !goalData.hasGoals
+      ?React.createElement(Card2,{sx:{textAlign:"center",padding:"28px 20px"}},
+          React.createElement("div",{style:{fontSize:32,marginBottom:10}},"\uD83C\uDFAF"),
+          React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text3)",marginBottom:6}},"No goals set yet"),
+          React.createElement("div",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.7,maxWidth:400,margin:"0 auto"}},"Add financial goals in Settings to track progress towards targets like Emergency Fund, Vacation, New Car, or Custom goals. Your liquid assets: ",React.createElement("strong",{style:{color:"var(--accent)"}},INR(goalData.liquidAssets)))
+        )
+      :React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+            React.createElement(KpiCard,{label:"Active Goals",value:goalData.goals.length,sub:"tracking targets",col:"var(--accent)",icon:React.createElement(Icon,{n:"target",size:18})}),
+            React.createElement(KpiCard,{label:"Liquid Assets",value:INR(goalData.liquidAssets),sub:"available to allocate",col:"#16a34a",icon:React.createElement(Icon,{n:"money",size:15})})
+          ),
+          goalData.goals.map((g,i)=>{
+            const target=Number(g.target)||0;
+            const current=Number(g.current)||0;
+            const pct=target>0?Math.min(current/target*100,100):0;
+            const remaining=Math.max(target-current,0);
+            const col=pct>=100?"#16a34a":pct>=60?"#b45309":"#ef4444";
+            const deadline=g.deadline?new Date(g.deadline):null;
+            const daysLeft=deadline?Math.ceil((deadline-now)/86400000):null;
+            const monthlyNeeded=daysLeft&&daysLeft>0&&remaining>0?remaining/(daysLeft/30):0;
+            return React.createElement(Card2,{key:i,sx:{marginBottom:12}},
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+                  React.createElement("span",{style:{fontSize:18}},g.icon||"\uD83C\uDFAF"),
+                  React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},g.name||"Goal "+(i+1))
+                ),
+                pct>=100&&React.createElement("span",{style:{fontSize:11,padding:"3px 10px",borderRadius:8,background:"rgba(22,163,74,.12)",color:"#16a34a",fontWeight:700}},"\u2713 Achieved!")
+              ),
+              React.createElement("div",{style:{position:"relative",height:10,background:"var(--bg5)",borderRadius:5,overflow:"hidden",marginBottom:6}},
+                React.createElement("div",{style:{height:"100%",width:pct+"%",background:col,borderRadius:5,transition:"width 0.6s"}})
+              ),
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:6}},
+                React.createElement("span",{style:{color:"var(--text5)"}},INR(current)+" of "+INR(target)),
+                React.createElement("span",{style:{fontWeight:700,color:col}},pct.toFixed(0)+"%")
+              ),
+              React.createElement("div",{style:{display:"flex",gap:16,fontSize:11,color:"var(--text5)",flexWrap:"wrap"}},
+                deadline&&React.createElement("span",null,"Deadline: ",React.createElement("strong",{style:{color:daysLeft<=30?"#ef4444":"var(--text3)"}},g.deadline),daysLeft!==null&&(daysLeft>0?" ("+daysLeft+" days left)":" (overdue!)")),
+                monthlyNeeded>0&&React.createElement("span",null,"Need: ",React.createElement("strong",{style:{color:"var(--accent)"}},INR(Math.round(monthlyNeeded))+"/mo"))
+              )
+            );
+          })
+        )
+  );
+
+
+
   const STABS=[
     {id:"pulse",         label:"Pulse"},
     {id:"spend",         label:"Spend"},
@@ -35760,13 +37670,19 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     {id:"fire",          label:"FIRE"},
     {id:"networth",      label:"Net Worth"},
     {id:"capgains",      label:"Cap Gains"},
+    {id:"health",        label:"Health"},
+    {id:"patterns",      label:"Patterns"},
+    {id:"goals",         label:"Goals"},
     {id:"calculators",   label:"Calculators"},
   ];
 
   return React.createElement("div",{className:"fu",style:{display:"flex",flexDirection:"column",height:"100%",overflowY:"auto"}},
-    React.createElement("div",{style:{marginBottom:14}},
-      React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,color:"var(--text)"}},"Insights"),
-      React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:3}},"Family finance intelligence — spend, FIRE planning, emergency readiness, savings trends & calculators")
+    React.createElement("div",{style:{marginBottom:14,display:"flex",alignItems:"stretch",gap:13}},
+      React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#c084fc",flexShrink:0}}),
+      React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?17:22,fontWeight:700,letterSpacing:-.4,color:"var(--text)"}},"Insights"),
+        React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4,lineHeight:1.5}},"Family finance intelligence — spend, FIRE planning, emergency readiness, savings trends & calculators")
+      )
     ),
     React.createElement("div",{style:{display:"flex",gap:4,marginBottom:18,background:"var(--bg4)",borderRadius:10,padding:4,overflowX:"auto",flexShrink:0,flexWrap:"nowrap"}},
       STABS.map(t=>React.createElement("button",{key:t.id,onClick:()=>setStab(t.id),style:tabBtn(t.id)},t.label))
@@ -35778,8 +37694,42 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     stab==="subscriptions" &&SubsTab,
     stab==="fire"          &&FireTab,
     stab==="networth"      &&React.createElement(NetWorthInsightTab,{banks,cards,cash,mf,shares,fd,re:re||[],loans,categories,prefs:P,isMobile,dispatch,nwSnapshots:nwSnapshots||{},brokerCashBalance}),
-    stab==="capgains"      &&React.createElement(CapGainsTab,{shares,mf,isMobile}),
-    stab==="calculators"   &&React.createElement(InsightCalculators,{isMobile})
+    stab==="capgains"      &&React.createElement(CapGainsTab,{shares,mf,mfTxns:mfTxns||[],isMobile}),
+    stab==="health"        &&HealthScoreTab,
+    stab==="patterns"      &&SpendingPatternsTab,
+    stab==="goals"         &&GoalTrackerTab,
+    stab==="calculators"   &&React.createElement(InsightCalculators,{isMobile}),
+    /* ── Cross-Tab Intelligence Alerts (Pulse only) ── */
+    stab==="pulse"&&(()=>{
+      const alerts=[];
+      if(_biScore<50&&_biPastWithPlan.length>0){
+        const overCats=_biCatStats.filter(c=>c.avgUtil>1.1);
+        if(overCats.length>0)alerts.push({icon:"\u26A0\uFE0F",text:"Budget Alert: "+overCats.length+" categor"+(overCats.length>1?"ies are":"y is")+" consistently over 110% \u2014 "+overCats.slice(0,2).map(c=>c.cat).join(", "),type:"warn"});
+      }
+      if(subscriptionData.length>0){
+        const rising=subscriptionData.filter(s=>s.trend>15);
+        if(rising.length>0)alerts.push({icon:"\uD83D\uDCF1",text:"Subscriptions Rising: "+rising.map(s=>s.name+" (+"+s.trend.toFixed(0)+"%)").join(", ")+" \u2014 review or cancel unused services",type:"warn"});
+      }
+      if(pulseData.savingsRate>=40)alerts.push({icon:"\uD83C\uDFC6",text:"Savings Milestone: "+pulseData.savingsRate.toFixed(0)+"% savings rate \u2014 you're on aggressive FIRE pace!",type:"good"});
+      else if(pulseData.savingsRate<10&&pulseData.thisMonthIncome>0)alerts.push({icon:"\u26A0\uFE0F",text:"Low Savings: Only "+pulseData.savingsRate.toFixed(0)+"% savings rate this month \u2014 target 20%+ to stay on track",type:"warn"});
+      if(leakData.count>5)alerts.push({icon:"\uD83D\uDCA9",text:"Expense Leaks: "+leakData.count+" micro-transactions totaling "+INR(leakData.total)+" \u2014 projected "+INR(leakData.projectedMonthly)+"/mo in small spends",type:"warn"});
+      if(pulseData.emergencyActualMonths>0&&pulseData.emergencyActualMonths<pulseData.emergencyTarget*0.5)alerts.push({icon:"\uD83D\uDEA8",text:"Emergency Fund Low: Only "+pulseData.emergencyActualMonths.toFixed(1)+" months covered \u2014 target "+pulseData.emergencyTarget+" months",type:"warn"});
+      if(payeeData.top3Pct>70)alerts.push({icon:"\uD83D\uDCCA",text:"Payee Concentration: Top 3 payees account for "+payeeData.top3Pct.toFixed(0)+"% of spend \u2014 diversify spending",type:"info"});
+      if(alerts.length===0)return null;
+      return React.createElement(Card2,{sx:{marginBottom:16}},
+        React.createElement(SHead,{t:"Intelligence Alerts",s:"Cross-tab insights from budget, subscriptions, spending patterns & more"}),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+          alerts.slice(0,5).map((a,i)=>React.createElement("div",{key:i,style:{
+            display:"flex",gap:10,alignItems:"flex-start",padding:"9px 12px",borderRadius:9,
+            background:a.type==="good"?"rgba(22,163,74,.06)":a.type==="warn"?"rgba(239,68,68,.06)":"rgba(14,116,144,.06)",
+            border:"1px solid "+(a.type==="good"?"rgba(22,163,74,.2)":a.type==="warn"?"rgba(239,68,68,.2)":"rgba(14,116,144,.2)")
+          }},
+            React.createElement("span",{style:{fontSize:14,flexShrink:0}},a.icon),
+            React.createElement("span",{style:{fontSize:12,color:"var(--text3)",lineHeight:1.5}},a.text)
+          ))
+        )
+      );
+    })()
   );
 });
 
@@ -36321,119 +38271,293 @@ const XirrCalc=()=>{
    STCG u/s 111A  — held ≤12 months  → 20% flat
    LTCG u/s 112A  — held >12 months  → 12.5% flat; ₹1,25,000 exemption p.a.
    ══════════════════════════════════════════════════════════════════════════ */
-const CapGainsTab=({shares=[],mf=[],isMobile})=>{
+const CapGainsFundCard=React.memo(({f,fmt,fmtD})=>{
+  const[isExp,setIsExp]=React.useState(false);
+  return React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,marginBottom:12,overflow:"hidden"}},
+    React.createElement("div",{onClick:()=>setIsExp(!isExp),style:{padding:"12px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:10,borderBottom:isExp?"1px solid var(--border2)":"none"}},
+      React.createElement("span",{style:{fontSize:10,transform:isExp?"rotate(90deg)":"rotate(0)",transition:"transform .15s",color:"var(--text5)"}},"\u25B6"),
+      React.createElement("div",{style:{flex:1,minWidth:0}},
+        React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},f.name),
+        React.createElement("div",{style:{fontSize:10,color:f.isDebt?"#b45309":"#6d28d9",fontWeight:600}},f.fundType+" \u00B7 "+f.lotCount+" lot"+(f.lotCount!==1?"s":"")+" \u00B7 "+f.totalUnits.toFixed(2)+" units \u00B7 "+(f.isDebt?"36":"12")+"mo threshold")
+      ),
+      React.createElement("div",{style:{textAlign:"right"}},
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:f.fundGain>=0?"#16a34a":"#ef4444"}},fmt(f.fundGain)),
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},fmt(f.fundCurVal)+" current")
+      )
+    ),
+    isExp&&React.createElement("div",{style:{padding:0}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"85px 60px 60px 60px 50px 80px 60px",padding:"6px 16px",background:"var(--bg4)",fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.3}},
+        React.createElement("span",null,"Buy Date"),
+        React.createElement("span",{style:{textAlign:"right"}},"Units"),
+        React.createElement("span",{style:{textAlign:"right"}},"Buy NAV"),
+        React.createElement("span",{style:{textAlign:"right"}},"Curr NAV"),
+        React.createElement("span",{style:{textAlign:"right"}},"Days"),
+        React.createElement("span",{style:{textAlign:"right"}},"Gain/Loss"),
+        React.createElement("span",{style:{textAlign:"center"}},"Type")
+      ),
+      f.lots.sort((a,b)=>a.date.localeCompare(b.date)).map((l,i)=>React.createElement("div",{key:i,style:{display:"grid",gridTemplateColumns:"85px 60px 60px 60px 50px 80px 60px",padding:"7px 16px",borderBottom:i<f.lots.length-1?"1px solid var(--border2)":"none",background:i%2?"var(--bg5)":"transparent",fontSize:11}},
+        React.createElement("span",{style:{color:"var(--text3)",fontSize:10}},fmtD(l.date)),
+        React.createElement("span",{style:{textAlign:"right",color:"var(--text4)",fontSize:10}},l.units.toFixed(2)),
+        React.createElement("span",{style:{textAlign:"right",color:"var(--text4)",fontSize:10}},"\u20B9"+l.buyNav.toFixed(2)),
+        React.createElement("span",{style:{textAlign:"right",color:"var(--text3)",fontSize:10}},"\u20B9"+l.currentNav.toFixed(2)),
+        React.createElement("span",{style:{textAlign:"right",color:"var(--text5)",fontSize:10}},l.daysHeld+"d"),
+        React.createElement("span",{style:{textAlign:"right",fontWeight:700,fontFamily:"'Sora',sans-serif",fontSize:11,color:l.gain>=0?"#16a34a":"#ef4444"}},fmt(l.gain)),
+        React.createElement("span",{style:{textAlign:"center"}},
+          React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:8,
+            background:l.isLT?"rgba(109,40,217,.12)":"rgba(180,83,9,.12)",
+            color:l.isLT?"#6d28d9":"#b45309"}},l.isLT?"LTCG":"STCG")
+        )
+      )),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"85px 60px 60px 60px 50px 80px 60px",padding:"8px 16px",borderTop:"2px solid var(--border)",background:"var(--bg4)",fontSize:11,fontWeight:700}},
+        React.createElement("span",{style:{color:"var(--text3)"}},"Subtotal"),
+        React.createElement("span",{style:{textAlign:"right",color:"var(--text4)"}},f.totalUnits.toFixed(2)),
+        React.createElement("span",null),React.createElement("span",null),React.createElement("span",null),
+        React.createElement("span",{style:{textAlign:"right",color:f.fundGain>=0?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif"}},fmt(f.fundGain)),
+        React.createElement("span",null)
+      ),
+      (f.stcgGain>0||f.stcgLoss>0||f.ltcgGain>0||f.ltcgLoss>0)&&React.createElement("div",{style:{display:"flex",gap:12,padding:"8px 16px",fontSize:10,color:"var(--text5)",flexWrap:"wrap"}},
+        f.stcgGain>0&&React.createElement("span",null,"STCG: "+fmt(f.stcgGain)),
+        f.stcgLoss>0&&React.createElement("span",{style:{color:"#ef4444"}},"STCL: "+fmt(-f.stcgLoss)),
+        f.ltcgGain>0&&React.createElement("span",null,"LTCG: "+fmt(f.ltcgGain)),
+        f.ltcgLoss>0&&React.createElement("span",{style:{color:"#ef4444"}},"LTCL: "+fmt(-f.ltcgLoss))
+      )
+    )
+  );
+});
+
+const CapGainsTab=({shares=[],mf=[],mfTxns=[],isMobile})=>{
   const today=new Date();
-  const[buyDates,setBuyDates]=useState(()=>{
-    try{return JSON.parse(localStorage.getItem("mm_capgains_dates")||"{}");}catch{return {};}
-  });
-  const saveDates=d=>{setBuyDates(d);try{localStorage.setItem("mm_capgains_dates",JSON.stringify(d));}catch{}};
+  const todayStr=TODAY();
 
-  /* Build holdings list */
-  const holdings=React.useMemo(()=>{
-    const rows=[];
+  /* ── FIFO lot-level capital gains engine ──────────────────────────────
+     For each MF fund:
+       1. Collect buy transactions → lots (each has date, units, nav)
+       2. Collect sell transactions → FIFO-consume earliest lots
+       3. Remaining held lots → classify each as STCG/LTCG by purchase date
+     Shares: single lot per holding (unchanged from before).
+     ─────────────────────────────────────────────────────────────────── */
+  const lotData=React.useMemo(()=>{
+    let stcgGain=0,stcgLoss=0,ltcgGain=0,ltcgLoss=0;
+    const details=[];
+    const fundLots={};
+
+    /* ── Shares: one lot per holding ── */
     shares.forEach(sh=>{
-      const rawDate=buyDates["sh_"+sh.id]||sh.buyDate||null;
-      const buyDate=rawDate?new Date(rawDate):null;
-      const ageMonths=buyDate?Math.floor((today-buyDate)/(1000*60*60*24*30.44)):null;
-      /* Budget 2024: LTCG requires MORE THAN 12 months (>12, not >=12) */
-      const isLTCG=ageMonths!=null&&ageMonths>12;
-      const invested=sh.qty*(sh.avgPrice||sh.buyPrice||0);
-      const current=sh.qty*sh.currentPrice;
-      const gain=current-invested;
-      rows.push({id:"sh_"+sh.id,name:sh.name||sh.ticker,ticker:sh.ticker,assetType:"Equity",buyDate:rawDate||"",ageMonths,isLTCG,invested,current,gain,rawGainType:gain>=0?"gain":"loss"});
+      if(!sh.buyDate||!sh.currentPrice||!sh.buyPrice||!sh.qty)return;
+      const normBuyDate=parseDate(sh.buyDate);
+      const buyD=new Date(normBuyDate+"T12:00:00");
+      const todD=new Date(todayStr+"T12:00:00");
+      const daysHeld=Math.floor((todD-buyD)/86400000);
+      const isLT=daysHeld>365;
+      const cost=sh.qty*sh.buyPrice;
+      const curVal=sh.qty*sh.currentPrice;
+      const gain=curVal-cost;
+      if(gain>=0){if(isLT)ltcgGain+=gain;else stcgGain+=gain;}
+      else{if(isLT)ltcgLoss+=Math.abs(gain);else stcgLoss+=Math.abs(gain);}
+      details.push({id:sh.id,name:sh.company,ticker:sh.ticker,daysHeld,isLT,cost,curVal,gain,type:"Share",
+        buyDate:normBuyDate,units:sh.qty,buyNav:sh.buyPrice,currentNav:sh.currentPrice});
     });
+
+    /* ── MF: FIFO lot matching ── */
+    /* Group transactions by fundName */
+    const txnByFund={};
+    (mfTxns||[]).forEach(t=>{
+      const fn=t.fundName;if(!fn)return;
+      if(!txnByFund[fn])txnByFund[fn]={buys:[],sells:[]};
+      if(t.orderType==="buy")txnByFund[fn].buys.push(t);
+      else if(t.orderType==="sell")txnByFund[fn].sells.push(t);
+    });
+
     mf.forEach(m=>{
-      const rawDate=buyDates["mf_"+m.id]||m.buyDate||null;
-      const buyDate=rawDate?new Date(rawDate):null;
-      const ageMonths=buyDate?Math.floor((today-buyDate)/(1000*60*60*24*30.44)):null;
-      /* Budget 2024: LTCG requires MORE THAN 12 months (>12, not >=12) */
-      const isLTCG=ageMonths!=null&&ageMonths>12;
-      const current=m.currentValue||m.invested;
-      const gain=current-m.invested;
-      rows.push({id:"mf_"+m.id,name:m.scheme||m.name||"MF Folio",ticker:"",assetType:"Equity MF",buyDate:rawDate||"",ageMonths,isLTCG,invested:m.invested,current,gain,rawGainType:gain>=0?"gain":"loss"});
+      const name=m.name;
+      const isDebt=(m.fundType||"equity")==="debt";
+      const ltcgThresholdDays=isDebt?365*3:365;
+      const currentNav=m.nav||0;
+      const currentUnits=m.units||0;
+      if(currentUnits<=0||currentNav<=0)return;
+
+      const fundTxns=txnByFund[name];
+      const lots=[];
+
+      if(fundTxns&&fundTxns.buys.length>0){
+        /* Sort buys ascending by date — normalise all dates to ISO first */
+        const _iso=t=>parseDate(t.date);
+        const buys=fundTxns.buys.filter(t=>t.date&&t.units>0).sort((a,b)=>_iso(a).localeCompare(_iso(b)));
+        const sells=fundTxns.sells.filter(t=>t.date&&t.units>0).sort((a,b)=>_iso(a).localeCompare(_iso(b)));
+
+        /* Clone buy lots (each has remaining units) — store ISO date */
+        const heldLots=buys.map(t=>({
+          date:_iso(t),units:parseFloat((+t.units).toFixed(4)),
+          nav:+t.nav||0,amount:+t.amount||0
+        }));
+
+        /* FIFO: consume lots with sells */
+        let sellIdx=0;
+        for(const lot of heldLots){
+          while(sellIdx<sells.length&&lot.units>0){
+            const sellUnits=parseFloat((+sells[sellIdx].units).toFixed(4));
+            if(sellUnits<=lot.units){
+              lot.units=parseFloat((lot.units-sellUnits).toFixed(4));
+              sellIdx++;
+            }else{
+              sells[sellIdx].units=parseFloat((sellUnits-lot.units).toFixed(4));
+              lot.units=0;
+            }
+          }
+        }
+
+        /* Remaining held lots → compute gains */
+        heldLots.filter(l=>l.units>0.0001).forEach(lot=>{
+          const todD=new Date(todayStr+"T12:00:00");
+          const buyD=new Date(lot.date+"T12:00:00");
+          const daysHeld=Math.floor((todD-buyD)/86400000);
+          const isLT=daysHeld>ltcgThresholdDays;
+          const cost=lot.units*lot.nav;
+          const curVal=lot.units*currentNav;
+          const gain=curVal-cost;
+          if(gain>=0){if(isLT)ltcgGain+=gain;else stcgGain+=gain;}
+          else{if(isLT)ltcgLoss+=Math.abs(gain);else stcgLoss+=Math.abs(gain);}
+          lots.push({date:lot.date,units:lot.units,buyNav:lot.nav,currentNav,daysHeld,isLT,cost,curVal,gain});
+        });
+      }else{
+        /* No transactions — use metadata date as single lot */
+        const startDate=parseDate(m.startDate||m.buyDate||"");
+        if(startDate&&currentUnits>0){
+          const buyD=new Date(startDate+"T12:00:00");
+          const todD=new Date(todayStr+"T12:00:00");
+          const daysHeld=Math.floor((todD-buyD)/86400000);
+          const isLT=daysHeld>ltcgThresholdDays;
+          const avgNav=m.avgNav||0;
+          const cost=currentUnits*avgNav;
+          const curVal=currentUnits*currentNav;
+          const gain=curVal-cost;
+          if(gain>=0){if(isLT)ltcgGain+=gain;else stcgGain+=gain;}
+          else{if(isLT)ltcgLoss+=Math.abs(gain);else stcgLoss+=Math.abs(gain);}
+          lots.push({date:startDate,units:currentUnits,buyNav:avgNav,currentNav,daysHeld,isLT,cost,curVal,gain});
+        }
+      }
+
+      /* Fund subtotal */
+      const fundCost=lots.reduce((s,l)=>s+l.cost,0);
+      const fundCurVal=lots.reduce((s,l)=>s+l.curVal,0);
+      const fundGain=fundCurVal-fundCost;
+      const stcgLots=lots.filter(l=>!l.isLT);
+      const ltcgLots=lots.filter(l=>l.isLT);
+      fundLots[name]={name,fundType:isDebt?"Debt MF":"Equity MF",isDebt,ltcgThresholdDays,
+        lots,fundCost,fundCurVal,fundGain,
+        stcgCost:stcgLots.reduce((s,l)=>s+l.cost,0),
+        stcgGain:stcgLots.reduce((s,l)=>s+Math.max(0,l.gain),0),
+        stcgLoss:stcgLots.reduce((s,l)=>s+Math.abs(Math.min(0,l.gain)),0),
+        ltcgCost:ltcgLots.reduce((s,l)=>s+l.cost,0),
+        ltcgGain:ltcgLots.reduce((s,l)=>s+Math.max(0,l.gain),0),
+        ltcgLoss:ltcgLots.reduce((s,l)=>s+Math.abs(Math.min(0,l.gain)),0),
+        lotCount:lots.length,
+        totalUnits:lots.reduce((s,l)=>s+l.units,0)};
+      details.push({id:m.id,name:name,ticker:m.schemeCode,daysHeld:lots.length>0?Math.round(lots.reduce((s,l)=>s+l.daysHeld*l.units,0)/lots.reduce((s,l)=>s+l.units,1)):null,
+        isLT:fundGain>=0?ltcgLots.length>stcgLots.length:stcgLots.length>=ltcgLots.length,
+        cost:fundCost,curVal:fundCurVal,gain:fundGain,type:isDebt?"Debt MF":"MF",
+        buyDate:lots.length>0?lots[0].date:"",lots});
     });
-    return rows.filter(r=>r.gain!==0);
-  },[shares,mf,buyDates,today]);
 
-  /* Tax calculation — Budget 2024 rates */
-  const STCG_RATE=0.20;    /* 20% u/s 111A */
-  const LTCG_RATE=0.125;   /* 12.5% u/s 112A */
-  const LTCG_EXEMPT=125000; /* ₹1,25,000 annual exemption */
-  const stcgGains=holdings.filter(h=>!h.isLTCG&&h.ageMonths!=null&&h.gain>0).reduce((s,h)=>s+h.gain,0);
-  const ltcgGains=holdings.filter(h=>h.isLTCG&&h.gain>0).reduce((s,h)=>s+h.gain,0);
-  const stcgTax=stcgGains*STCG_RATE;
-  const ltcgTaxable=Math.max(0,ltcgGains-LTCG_EXEMPT);
-  const ltcgTax=ltcgTaxable*LTCG_RATE;
-  const totalTax=stcgTax+ltcgTax;
-  const missingDates=holdings.filter(h=>!h.buyDate).length;
+    const ltcgExempt=Math.min(125000,Math.max(0,ltcgGain));
+    const ltcgTaxable=Math.max(0,ltcgGain-ltcgExempt);
+    const netStcg=Math.max(0,stcgGain-stcgLoss);
+    const netLtcg=Math.max(0,ltcgTaxable-ltcgLoss);
+    const stcgRemLoss=Math.max(0,stcgLoss-stcgGain);
+    const ltcgRemLoss=Math.max(0,ltcgLoss-ltcgTaxable);
+    const crossStcg=Math.max(0,netStcg-ltcgRemLoss);
+    const crossLtcg=Math.max(0,netLtcg-stcgRemLoss);
+    const stcgTax=crossStcg*0.20;
+    const ltcgTax=crossLtcg*0.125;
+    return{stcgGain,stcgLoss,ltcgGain,ltcgLoss,ltcgExempt,ltcgTaxable,
+      stcgTax,ltcgTax,totalTax:stcgTax+ltcgTax,details,
+      fundLots:Object.values(fundLots).sort((a,b)=>Math.abs(b.fundGain)-Math.abs(a.fundGain))};
+  },[shares,mf,mfTxns,todayStr]);
 
-  const fmt=v=>{const a=Math.abs(v);if(a>=10000000)return(v<0?"-":"")+"₹"+(a/10000000).toFixed(2)+"Cr";if(a>=100000)return(v<0?"-":"")+"₹"+(a/100000).toFixed(1)+"L";if(a>=1000)return(v<0?"-":"")+"₹"+(a/1000).toFixed(1)+"K";return(v<0?"-":"")+"₹"+Math.round(a);};
+  const missingDates=lotData.details.filter(d=>d.type!=="Share"&&!d.buyDate).length;
+  const totalLots=lotData.fundLots.reduce((s,f)=>s+f.lotCount,0);
+
+  const fmt=v=>{const a=Math.abs(v);if(a>=10000000)return(v<0?"-":"")+"\u20B9"+(a/10000000).toFixed(2)+"Cr";if(a>=100000)return(v<0?"-":"")+"\u20B9"+(a/100000).toFixed(1)+"L";if(a>=1000)return(v<0?"-":"")+"\u20B9"+(a/1000).toFixed(1)+"K";return(v<0?"-":"")+"\u20B9"+Math.round(a);};
+  const fmtD=v=>{if(!v)return"\u2014";const iso=parseDate(v);const p=iso.split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0].slice(2):v;};
 
   return React.createElement("div",{style:{paddingBottom:20}},
     React.createElement("div",{style:{marginBottom:16}},
       React.createElement("h3",{style:{fontFamily:"'Sora',sans-serif",fontSize:16,fontWeight:700,color:"var(--text)",marginBottom:3}},"Capital Gains Tax Estimator"),
-      React.createElement("p",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.6}},"Budget 2024 rates — STCG (20% u/s 111A, held ≤12 months) and LTCG (12.5% u/s 112A, held >12 months, ₹1.25L annual exemption). Add buy dates below for accurate classification. Not tax advice — consult your CA.")
+      React.createElement("p",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.6}},"Lot-level FIFO calculation \u2014 each purchase lot is tracked individually. Budget 2024 rates: STCG \u226412mo (20%), LTCG >12mo (12.5%, \u20B91.25L exemption). Debt MF: 36mo threshold. Cross-offset applied. Not tax advice.")
     ),
     /* KPI strip */
     React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16}},
       ...[
-        {label:"STCG Gains",val:stcgGains,sub:"Held ≤12 months · Tax @ 20%",col:"#b45309",tax:stcgTax},
-        {label:"LTCG Gains",val:ltcgGains,sub:"Held >12 months · ₹1.25L exempt",col:"#6d28d9",tax:ltcgTax},
-        {label:"Estimated Tax",val:totalTax,sub:"STCG+LTCG · excl. surcharge & cess",col:totalTax>0?"#ef4444":"#16a34a",tax:null},
-      ].map(k=>React.createElement("div",{key:k.label,style:{flex:"1 1 150px",background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 14px"}},
+        {label:"STCG Gains",val:lotData.stcgGain,sub:"Held \u226412mo \u00B7 Tax @ 20%",col:"#b45309"},
+        {label:"STCG Losses",val:lotData.stcgLoss,sub:"Offset against gains",col:lotData.stcgLoss>0?"#ef4444":"var(--text6)"},
+        {label:"LTCG Gains",val:lotData.ltcgGain,sub:"Held >12mo \u00B7 \u20B91.25L exempt",col:"#6d28d9"},
+        {label:"LTCG Losses",val:lotData.ltcgLoss,sub:"Offset against gains",col:lotData.ltcgLoss>0?"#ef4444":"var(--text6)"},
+        {label:"Estimated Tax",val:lotData.totalTax,sub:"After cross-offset \u00B7 excl. cess",col:lotData.totalTax>0?"#ef4444":"#16a34a"},
+      ].map(k=>React.createElement("div",{key:k.label,style:{flex:"1 1 120px",background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,padding:"12px 14px"}},
         React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4,marginBottom:4}},k.label),
         React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:k.col}},fmt(k.val)),
-        k.tax!=null&&React.createElement("div",{style:{fontSize:11,color:"#ef4444",marginTop:2}},k.tax>0?"Tax: "+fmt(k.tax):"No tax"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},k.sub)
+        k.val>0&&k.label!=="Estimated Tax"&&React.createElement("div",{style:{fontSize:11,color:"#ef4444",marginTop:2}},"Tax: "+fmt(k.val*(k.label.includes("STCG")?0.20:0.125)))
       ))
     ),
     /* LTCG exemption usage bar */
-    ltcgGains>0&&React.createElement("div",{style:{marginBottom:14,padding:"10px 14px",borderRadius:10,background:"var(--card)",border:"1px solid var(--border)"}},
+    lotData.ltcgGain>0&&React.createElement("div",{style:{marginBottom:14,padding:"10px 14px",borderRadius:10,background:"var(--card)",border:"1px solid var(--border)"}},
       React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:6}},
-        React.createElement("span",{style:{color:"var(--text4)",fontWeight:600}},"₹1.25L LTCG Annual Exemption Used"),
-        React.createElement("span",{style:{color:ltcgGains>=LTCG_EXEMPT?"#ef4444":"#16a34a",fontWeight:700}},fmt(Math.min(ltcgGains,LTCG_EXEMPT))+" / "+fmt(LTCG_EXEMPT)+" ("+(Math.min(100,Math.round(ltcgGains/LTCG_EXEMPT*100)))+"%)")
+        React.createElement("span",{style:{color:"var(--text4)",fontWeight:600}},"\u20B91.25L LTCG Annual Exemption Used"),
+        React.createElement("span",{style:{color:lotData.ltcgGain>=lotData.ltcgExempt?"#ef4444":"#16a34a",fontWeight:700}},fmt(Math.min(lotData.ltcgGain,125000))+" / \u20B91.25L ("+Math.min(100,Math.round(lotData.ltcgGain/125000*100))+"%)")
       ),
       React.createElement("div",{style:{background:"var(--bg5)",borderRadius:4,height:7,overflow:"hidden"}},
-        React.createElement("div",{style:{width:Math.min(100,ltcgGains/LTCG_EXEMPT*100)+"%",height:"100%",background:ltcgGains>=LTCG_EXEMPT?"#ef4444":"#16a34a",borderRadius:4,transition:"width .5s"}})
+        React.createElement("div",{style:{width:Math.min(100,lotData.ltcgGain/125000*100)+"%",height:"100%",background:lotData.ltcgGain>=125000?"#ef4444":"#16a34a",borderRadius:4,transition:"width .5s"}})
       ),
-      ltcgGains>=LTCG_EXEMPT&&React.createElement("div",{style:{fontSize:10,color:"#ef4444",marginTop:4,fontWeight:600}},"⚠ Exemption fully used — remaining LTCG is taxable at 12.5%.")
+      lotData.ltcgGain>=125000&&React.createElement("div",{style:{fontSize:10,color:"#ef4444",marginTop:4,fontWeight:600}},"\u26A0 Exemption fully used \u2014 remaining LTCG taxable at 12.5%.")
     ),
-    missingDates>0&&React.createElement("div",{style:{padding:"9px 12px",borderRadius:9,background:"rgba(180,83,9,.08)",border:"1px solid rgba(180,83,9,.25)",fontSize:12,color:"#b45309",marginBottom:14}},
-      "⚠ "+missingDates+" holding"+(missingDates===1?"":"s")+" missing a buy date — add dates below for accurate STCG/LTCG classification."
+    /* Cross-offset info */
+    (lotData.stcgLoss>0||lotData.ltcgLoss>0)&&React.createElement("div",{style:{marginBottom:14,padding:"9px 12px",borderRadius:9,background:"rgba(14,116,144,.06)",border:"1px solid rgba(14,116,144,.2)",fontSize:12,color:"var(--text3)",lineHeight:1.6}},
+      React.createElement("strong",null,"Cross-Offset Applied: "),
+      lotData.stcgLoss>0&&"STCG losses of "+fmt(lotData.stcgLoss)+" offset against LTCG gains. ",
+      lotData.ltcgLoss>0&&"LTCG losses of "+fmt(lotData.ltcgLoss)+" offset against STCG gains."
     ),
-    /* Holdings table */
-    React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,overflowX:"auto",overflowY:"hidden",WebkitOverflowScrolling:"touch"}},
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"minmax(120px,1fr) minmax(75px,90px) minmax(65px,80px) minmax(65px,80px) minmax(65px,80px) minmax(75px,90px)",padding:"7px 12px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Holding"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Buy Date"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Held"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Gain/Loss"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Type"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Tax Est.†")),
-      holdings.length===0&&React.createElement("div",{style:{padding:"30px",textAlign:"center",color:"var(--text5)",fontSize:13}},"No holdings with gains/losses found. Add shares or mutual funds in the Investments section."),
-      holdings.map((h,i)=>React.createElement("div",{key:h.id,style:{display:"grid",gridTemplateColumns:"minmax(120px,1fr) minmax(75px,90px) minmax(65px,80px) minmax(65px,80px) minmax(65px,80px) minmax(75px,90px)",padding:"9px 12px",borderBottom:i<holdings.length-1?"1px solid var(--border2)":"none",alignItems:"center",background:i%2?"var(--bg5)":"transparent"}},
-        React.createElement("div",null,
-          React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},h.name),
-          React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},h.assetType)
+    /* Summary line */
+    React.createElement("div",{style:{marginBottom:14,padding:"8px 14px",borderRadius:9,background:"var(--card)",border:"1px solid var(--border)",fontSize:11,color:"var(--text4)",display:"flex",gap:16,flexWrap:"wrap"}},
+      React.createElement("span",null,React.createElement("strong",null,totalLots)," total lots across "),
+      React.createElement("span",null,React.createElement("strong",null,lotData.fundLots.length)," funds + "),
+      React.createElement("span",null,React.createElement("strong",null,lotData.details.filter(d=>d.type==="Share").length)," shares"),
+      missingDates>0&&React.createElement("span",{style:{color:"#b45309"}},"\u00B7 "+missingDates+" fund"+(missingDates===1?"":"s")+" missing buy dates")
+    ),
+    /* Fund cards */
+    React.createElement("div",{style:{marginBottom:16}},
+      lotData.fundLots.map(f=>React.createElement(CapGainsFundCard,{key:f.name,f,fmt,fmtD}))
+    ),
+    /* Shares table (if any) */
+    lotData.details.filter(d=>d.type==="Share").length>0&&React.createElement("div",null,
+      React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text3)",marginBottom:8}},"Equity Shares"),
+      React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:12,overflowX:"auto",overflowY:"hidden",WebkitOverflowScrolling:"touch"}},
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"minmax(100px,1fr) 65px 60px 65px 55px":"minmax(140px,1fr) minmax(85px,100px) 70px 80px 80px minmax(70px,90px)",padding:"7px 12px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},
+          React.createElement("span",{style:{whiteSpace:"nowrap"}},"Holding"),
+          React.createElement("span",{style:{whiteSpace:"nowrap"}},"Buy Date"),
+          React.createElement("span",{style:{whiteSpace:"nowrap"}},"Held"),
+          React.createElement("span",{style:{whiteSpace:"nowrap"}},"Cost"),
+          React.createElement("span",{style:{whiteSpace:"nowrap"}},"Current"),
+          React.createElement("span",{style:{whiteSpace:"nowrap"}},"Gain/Loss"),
+          React.createElement("span",{style:{whiteSpace:"nowrap"}},"Type")
         ),
-        React.createElement("input",{type:"date",className:"inp",value:h.buyDate,
-          onChange:e=>{const d={...buyDates,[h.id]:e.target.value};saveDates(d);},
-          style:{fontSize:10,padding:"3px 6px",width:"100%",background:"var(--bg4)"}}),
-        React.createElement("div",{style:{fontSize:11,color:"var(--text4)",textAlign:"right"}},h.ageMonths!=null?h.ageMonths+"mo":"—"),
-        React.createElement("div",{style:{fontSize:11,fontWeight:700,fontFamily:"'Sora',sans-serif",color:h.gain>=0?"#16a34a":"#ef4444",textAlign:"right"}},fmt(h.gain)),
-        React.createElement("div",null,
-          h.ageMonths==null
-            ?React.createElement("span",{style:{fontSize:10,color:"var(--text6)"}},"?")
-            :React.createElement("span",{style:{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:10,
-                background:h.isLTCG?"rgba(109,40,217,.12)":"rgba(180,83,9,.12)",
-                color:h.isLTCG?"#6d28d9":"#b45309"}},h.isLTCG?"LTCG":"STCG")
-        ),
-        /* Per-holding tax: STCG = gain×20%, LTCG = gain×12.5% (no per-row exemption —
-           the ₹1.25L is an annual combined exemption shown in the KPI strip above) */
-        React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"#ef4444",fontFamily:"'Sora',sans-serif",textAlign:"right"}},
-          h.ageMonths==null?"—":
-          h.gain<=0?"₹0":
-          h.isLTCG?fmt(h.gain*LTCG_RATE):
-          fmt(h.gain*STCG_RATE)
-        )
-      ))
+        lotData.details.filter(d=>d.type==="Share").map((h,i)=>React.createElement("div",{key:h.id,style:{display:"grid",gridTemplateColumns:isMobile?"minmax(100px,1fr) 65px 60px 65px 55px":"minmax(140px,1fr) minmax(85px,100px) 70px 80px 80px minmax(70px,90px)",padding:"9px 12px",borderBottom:i<lotData.details.filter(d=>d.type==="Share").length-1?"1px solid var(--border2)":"none",alignItems:"center",background:i%2?"var(--bg5)":"transparent"}},
+          React.createElement("div",{style:{minWidth:0}},
+            React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},h.name),
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},h.ticker||"Equity")
+          ),
+          React.createElement("div",{style:{fontSize:10,color:"var(--text3)"}},fmtD(h.buyDate)),
+          React.createElement("div",{style:{fontSize:10,color:"var(--text4)",textAlign:"right"}},h.daysHeld!=null?h.daysHeld+"d":"—"),
+          React.createElement("div",{style:{fontSize:10,color:"var(--text4)",textAlign:"right",fontFamily:"'Sora',sans-serif"}},fmt(h.cost)),
+          React.createElement("div",{style:{fontSize:10,color:"var(--text3)",textAlign:"right",fontFamily:"'Sora',sans-serif",fontWeight:600}},fmt(h.curVal)),
+          React.createElement("div",{style:{fontSize:11,fontWeight:700,fontFamily:"'Sora',sans-serif",color:h.gain>=0?"#16a34a":"#ef4444",textAlign:"right"}},fmt(h.gain)),
+          React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:10,
+            background:h.isLT?"rgba(109,40,217,.12)":"rgba(180,83,9,.12)",
+            color:h.isLT?"#6d28d9":"#b45309"}},h.isLT?"LTCG":"STCG")
+        ))
+      )
     ),
     React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:10,lineHeight:1.7}},
-      "† Per-holding tax at applicable rate (STCG 20%, LTCG 12.5%). The ₹1,25,000 annual LTCG exemption is shared across all holdings combined — see KPI strip above for net liability. Surcharge (15%/25% above ₹1Cr/₹2Cr) and 4% health & education cess not included. This is an estimate only — consult a CA for actual tax computation."
+      "FIFO lot tracking: each purchase is a separate lot. Sells consume earliest lots first. Remaining held lots are classified individually as STCG or LTCG. Debt MF uses 36-month threshold. Surcharge and 4% cess not included."
     )
   );
 };
@@ -36695,7 +38819,7 @@ const InsightCalculators=({isMobile})=>{
       React.createElement("div",{style:{flex:"1 1 280px",minWidth:0}},
         eduResult?React.createElement("div",null,
           /* hero */
-          React.createElement("div",{style:{background:"linear-gradient(135deg,#6d28d9,#0e7490)",borderRadius:14,padding:"18px 20px",marginBottom:12,color:"#fff",position:"relative",overflow:"hidden"}},
+          React.createElement("div",{style:{background:"linear-gradient(135deg,#6d28d9,#0e7490)",borderRadius:14,padding:"18px 20px",marginBottom:12,color:"#fff",position:"relative",overflow:"hidden",animation:"heroAppear .42s ease both"}},
             React.createElement("div",{style:{position:"absolute",right:-10,top:-10,fontSize:80,opacity:.07}},React.createElement(Icon,{n:"education",size:18})),
             React.createElement("div",{style:{fontSize:11,opacity:.8,textTransform:"uppercase",letterSpacing:1,marginBottom:6}},"Required Monthly SIP · Goal in "+eduResult.years+" years"),
             React.createElement("div",{style:{fontSize:isMobile?26:34,fontFamily:"'Sora',sans-serif",fontWeight:900,marginBottom:4}},INR(Math.round(eduResult.reqSip))),
@@ -36863,7 +38987,7 @@ const InsightCalculators=({isMobile})=>{
       React.createElement("div",{style:{flex:"1 1 280px",minWidth:0}},
         retResult?React.createElement("div",null,
           /* hero corpus */
-          React.createElement("div",{style:{background:"linear-gradient(135deg,#c2410c,#b45309)",borderRadius:14,padding:"18px 20px",marginBottom:12,color:"#fff",position:"relative",overflow:"hidden"}},
+          React.createElement("div",{style:{background:"linear-gradient(135deg,#c2410c,#b45309)",borderRadius:14,padding:"18px 20px",marginBottom:12,color:"#fff",position:"relative",overflow:"hidden",animation:"heroAppear .42s ease both"}},
             React.createElement("div",{style:{position:"absolute",right:-10,top:-10,fontSize:80,opacity:.07}},React.createElement(Icon,{n:"beach",size:18})),
             React.createElement("div",{style:{fontSize:11,opacity:.8,textTransform:"uppercase",letterSpacing:1,marginBottom:6}},"Corpus Required at Age "+ret.retirementAge),
             React.createElement("div",{style:{fontSize:isMobile?26:34,fontFamily:"'Sora',sans-serif",fontWeight:900,marginBottom:4}},INR(retResult.corpusNeeded)),
@@ -36923,9 +39047,12 @@ const InsightCalculators=({isMobile})=>{
 
   return React.createElement("div",{style:{paddingBottom:20}},
     /* header */
-    React.createElement("div",{style:{marginBottom:16}},
-      React.createElement("h3",{style:{fontFamily:"'Sora',sans-serif",fontSize:16,fontWeight:700,color:"var(--text)",marginBottom:3}},"Financial Calculators"),
-      React.createElement("p",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.6}},"Interactive calculators for retirement planning, child education, and systematic withdrawal. All calculations happen locally — no data leaves your device.")
+    React.createElement("div",{style:{marginBottom:16,display:"flex",alignItems:"stretch",gap:13}},
+      React.createElement("div",{style:{width:4,minHeight:38,borderRadius:3,background:"#67e8f9",flexShrink:0}}),
+      React.createElement("div",null,
+        React.createElement("h3",{style:{fontFamily:"'Sora',sans-serif",fontSize:16,fontWeight:700,letterSpacing:-.3,color:"var(--text)",marginBottom:3}},"Financial Calculators"),
+        React.createElement("p",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.6}},"Interactive calculators for retirement planning, child education, and systematic withdrawal. All calculations happen locally — no data leaves your device.")
+      )
     ),
     /* sub-tabs */
     React.createElement("div",{style:{display:"flex",gap:4,marginBottom:18,background:"var(--bg4)",borderRadius:10,padding:4,flexWrap:"nowrap",overflowX:"auto",flexShrink:0}},
@@ -36975,9 +39102,12 @@ const InfoSection=React.memo(({isMobile})=>{
   return React.createElement("div",{style:{maxWidth:720,paddingBottom:32}},
 
     /* ── Page header ── */
-    React.createElement("div",{style:{marginBottom:22}},
-      React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?18:22,fontWeight:800,color:"var(--text)",marginBottom:4}},"App Information"),
-      React.createElement("p",{style:{fontSize:13,color:"var(--text5)",lineHeight:1.6,margin:0}},"Developer details, copyright, and terms of authorised use for finsight.")
+    React.createElement("div",{style:{marginBottom:22,display:"flex",alignItems:"stretch",gap:13}},
+      React.createElement("div",{style:{width:4,minHeight:40,borderRadius:3,background:"#bef264",flexShrink:0}}),
+      React.createElement("div",null,
+        React.createElement("h2",{style:{fontFamily:"'Sora',sans-serif",fontSize:isMobile?18:22,fontWeight:800,letterSpacing:-.4,color:"var(--text)",marginBottom:4}},"App Information"),
+        React.createElement("p",{style:{fontSize:13,color:"var(--text5)",lineHeight:1.6,margin:0}},"Developer details, copyright, and terms of authorised use for finsight.")
+      )
     ),
 
     /* ── Developer Card ── */
@@ -38816,6 +40946,26 @@ function App(){
   },[dispatch]);
   /* Wire the ref so the wrapped dispatch can call pushUndo */
   _undoPushRef.current=pushUndo;
+  /* ── Toast system ── */
+  const[toasts,setToasts]=useState([]);
+  const toastIdRef=React.useRef(1);
+  const pushToast=React.useCallback((msg,opts={})=>{
+    const id=toastIdRef.current++;
+    setToasts(ts=>[...ts,{id,msg,undo:!!opts.undo}]);
+    const ttl=opts.ttl||(opts.undo?6000:3200);
+    setTimeout(()=>setToasts(ts=>ts.filter(x=>x.id!==id)),ttl);
+    return id;
+  },[]);
+  const dismissToast=React.useCallback(id=>setToasts(ts=>ts.filter(x=>x.id!==id)),[]);
+  /* pushUndo already surfaces via the undo toast block below (ToastHost) */
+  /* ── "What's New" — show once per version ── */
+  const[whatsNew,setWhatsNew]=useState(false);
+  React.useEffect(()=>{
+    try{
+      const seen=localStorage.getItem("mm_seen_version");
+      if(seen!==APP_VERSION){setWhatsNew(true);localStorage.setItem("mm_seen_version",APP_VERSION);}
+    }catch{}
+  },[]);
   /* ── Global search ── */
   const[searchOpen,setSearchOpen]=useState(false);
   /* ── Quick-add FAB ── */
@@ -38891,24 +41041,23 @@ function App(){
     return()=>document.removeEventListener("visibilitychange",onFocus);
   },[]);
 
-  /* ── AUTO EOD SNAPSHOT — runs silently after NSE close (15:30 IST) ──────────
-     Uses refs so the interval always reads the latest state without restarting.
-     Fires once on mount then every 5 min. No user interaction required.
-     ─────────────────────────────────────────────────────────────────────────── */
+  /* ── AUTO EOD FETCH — silently fetches NAVs, share prices & market indices
+     on every launch + every 5 min. Uses refs to avoid double-fetch if data
+     already exists for today's date or NAV date. No user action required.    */
   const _sharesRef=React.useRef(state.shares);
   const _eodRef=React.useRef(state.eodPrices);
   const _mfRef=React.useRef(state.mf);
   const _eodNavsRef=React.useRef(state.eodNavs);
+  const _eodIdxRef=React.useRef(state.eodIndices);
   React.useEffect(()=>{_sharesRef.current=state.shares;},[state.shares]);
   React.useEffect(()=>{_eodRef.current=state.eodPrices;},[state.eodPrices]);
   React.useEffect(()=>{_mfRef.current=state.mf;},[state.mf]);
   React.useEffect(()=>{_eodNavsRef.current=state.eodNavs;},[state.eodNavs]);
+  React.useEffect(()=>{_eodIdxRef.current=state.eodIndices;},[state.eodIndices]);
   React.useEffect(()=>{
     const doEODSnap=async()=>{
       try{
         if(!navigator.onLine)return;
-        /* Only after NSE close (15:30 IST) on trading weekdays */
-        if(!isAfterNSEClose()||!isTradingWeekday())return;
         const today=getISTDateStr();
 
         /* ── Share price EOD snapshot ── */
@@ -38956,6 +41105,55 @@ function App(){
             }
           }
         }
+        /* ── Market index EOD snapshot ── */
+        try{
+          if(_eodIdxRef.current&&_eodIdxRef.current[today])return;
+          const KEY_INDICES=["NIFTY 50","NIFTY 100","NIFTY MIDCAP 50","NIFTY MIDCAP 100","NIFTY MIDCAP 150","NIFTY SMLCAP 100","NIFTY BANK","NIFTY AUTO","NIFTY IT","NIFTY PHARMA"];
+          const _storeIdx=d=>{
+            const idxSnap={};
+            d.forEach(idx=>{
+              if(KEY_INDICES.includes(idx.symbol)&&idx.price>0){
+                idxSnap[idx.symbol]=idx.price;
+                if(idx.prevClose>0)idxSnap[idx.symbol+"_pc"]=idx.prevClose;
+              }
+            });
+            if(Object.keys(idxSnap).length>0){dispatch({type:"SET_EOD_INDICES",date:today,indices:idxSnap});return true;}
+            return false;
+          };
+          let idxRes=await fetchMarketIndices();
+          if(idxRes&&idxRes.length&&_storeIdx(idxRes))return;
+          /* Fallback: Yahoo Finance v7 quote endpoint (all indices in one call) */
+          const ySymToKey={"^NSEI":"NIFTY 50","^CNX100":"NIFTY 100","^NSEMDCP50":"NIFTY MIDCAP 50","^NSEMDCP100":"NIFTY MIDCAP 100","^CRSLDX":"NIFTY MIDCAP 150","^CNXSMALL":"NIFTY SMLCAP 100","^NSEBANK":"NIFTY BANK","^CNXAUTO":"NIFTY AUTO","^CNXIT":"NIFTY IT","^CNXPHARMA":"NIFTY PHARMA"};
+          const yTickers=Object.keys(ySymToKey).join(",");
+          const yProxies=[
+            u=>"https://corsproxy.io/?"+encodeURIComponent(u),
+            u=>"https://api.cors.lol/?url="+encodeURIComponent(u),
+          ];
+          const yHosts=["query1.finance.yahoo.com","query2.finance.yahoo.com"];
+          const yResults=[];
+          for(const host of yHosts){
+            for(const mkP of yProxies){
+              try{
+                const url="https://"+host+"/v7/finance/quote?symbols="+encodeURIComponent(yTickers)+"&fields=regularMarketPrice,previousClose";
+                const r=await _fetchX(mkP(url),{},10000);if(!r.ok)continue;
+                const txt=await _readBody(r,8000);
+                let json;try{json=JSON.parse(txt);}catch{continue;}
+                const p=json?.contents?JSON.parse(json.contents):json;
+                const items=p?.quoteResponse?.result||[];
+                if(!items.length)continue;
+                items.forEach(q=>{
+                  const key=ySymToKey[q.symbol];
+                  const price=parseFloat(q?.regularMarketPrice)||parseFloat(q?.previousClose);
+                  const prevClose=parseFloat(q?.previousClose);
+                  if(key&&price>0)yResults.push({symbol:key,price,prevClose:prevClose>0?prevClose:null});
+                });
+                if(yResults.length>0)break;
+              }catch{}
+            }
+            if(yResults.length>0)break;
+          }
+          if(yResults.length>0)_storeIdx(yResults);
+        }catch(e){}
       }catch(e){console.warn("[MM] EOD snapshot error:",e);}
     };
     doEODSnap();
@@ -39600,7 +41798,7 @@ function App(){
           React.createElement("button",{
             className:"nb nb-icon-only"+(isActive?" nb-icon-active":""),
             onClick:()=>setTab(n.id),
-            title:n.label,
+            title:n.label,"aria-label":n.label,"aria-current":isActive?"page":undefined,
             style:{
               border:"none",cursor:"pointer",
               "--nic":NAV_COLORS[n.id]||"var(--accent)",
@@ -39661,7 +41859,7 @@ function App(){
       /* Collapse chevron button */
       React.createElement("button",{
         onClick:toggleNav,
-        title:"Collapse sidebar",
+        title:"Collapse sidebar","aria-label":"Collapse sidebar",
         style:{
           background:"transparent",border:"1px solid var(--border2)",
           borderRadius:8,color:"var(--text6)",cursor:"pointer",
@@ -39698,7 +41896,7 @@ function App(){
           React.createElement("span",{style:{fontSize:9,fontWeight:700,letterSpacing:1.2,color:"var(--text6)",textTransform:"uppercase",whiteSpace:"nowrap"}},n.label),
           React.createElement("div",{style:{flex:1,height:1,background:"var(--border2)"}})
         );
-        return React.createElement("button",{key:n.id,className:"nb"+(tab===n.id?" nb-full-active":""),onClick:()=>setTab(n.id),style:{
+        return React.createElement("button",{key:n.id,className:"nb"+(tab===n.id?" nb-full-active":""),onClick:()=>setTab(n.id),"aria-label":n.label,"aria-current":tab===n.id?"page":undefined,style:{
           display:"flex",alignItems:"center",gap:10,width:"100%",
           padding:"10px 12px",borderRadius:10,border:"none",cursor:"pointer",marginBottom:2,
           fontFamily:"'DM Sans',sans-serif",fontSize:13,
@@ -39736,6 +41934,34 @@ function App(){
     )
   );
 
+  /* ── Mobile bottom tab bar — primary destinations ── */
+  const MobileBottomNav=({tab,setTab})=>{
+    const items=[
+      {id:"dashboard",label:"Home"},
+      {id:"banks",label:"Banks"},
+      {id:"cards",label:"Cards"},
+      {id:"inv_dash",label:"Invest"},
+      {id:"more",label:"More"},
+    ];
+    return React.createElement("nav",{className:"mm-botnav","aria-label":"Primary"},
+      items.map(it=>{
+        const active=it.id==="more"?(["cash","loans","scheduled","unified_ledger","calendar","goals","insights","tax_est","notes","calculator","reports","settings","info"].includes(tab)):(tab===it.id);
+        const col=NAV_COLORS[it.id]||"var(--accent)";
+        return React.createElement("button",{
+          key:it.id,className:"mm-botnav-item"+(active?" active":""),
+          style:it.id==="more"?{}:{"--nic":col,"--nic-glow":NAV_COLORS[it.id]?hexAlpha(NAV_COLORS[it.id],.32):"var(--accentbg5)"},
+          onClick:()=>{ if(it.id==="more"){ setTab("settings"); } else { setTab(it.id); } },
+          "aria-current":active?"page":undefined,
+        },
+          it.id==="more"
+            ?React.createElement(NavIcon,{id:"settings",size:21})
+            :React.createElement(NavIcon,{id:it.id,size:21}),
+          React.createElement("span",null,it.label)
+        );
+      })
+    );
+  };
+
   /* ── PIN guard: all hooks above, conditional render below ── */
   if(locked)return React.createElement(PinLockScreen,{onUnlock});
 
@@ -39743,7 +41969,7 @@ function App(){
     React.createElement("div",{style:{display:"flex",height:"100vh",background:"var(--bg)"}},
     isMobile?React.createElement(SidebarCollapsed):(navCollapsed?React.createElement(SidebarCollapsed):React.createElement(SidebarFull)),
     React.createElement("div",{
-      className:isMobile?"mobile-content-panel":"",
+      className:isMobile?"mobile-content-panel mm-has-botnav":"",
       style:{
         flex:1,overflowY:"auto",
         padding:isMobile?"14px 10px 32px":"24px 24px 40px",
@@ -39779,15 +42005,15 @@ function App(){
       /* InvestSection: five sub-tabs reuse the same component with different
          defaultTab — keep the && pattern so each sub-tab mounts independently */
       tab==="inv_mf"&&React.createElement(ErrorBoundary,{name:"Mutual Funds"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0,banks:state.banks,scheduled:state.scheduled||[]})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0,banks:state.banks,scheduled:state.scheduled||[]})),
       tab==="inv_shares"&&React.createElement(ErrorBoundary,{name:"Shares"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"shares",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"shares",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       tab==="inv_fd"&&React.createElement(ErrorBoundary,{name:"Fixed Deposits"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"fd",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"fd",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       tab==="inv_re"&&React.createElement(ErrorBoundary,{name:"Real Estate"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"re",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"re",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       tab==="inv_pf"&&React.createElement(ErrorBoundary,{name:"Provident Fund"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"pf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"pf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       React.createElement("div",{style:{display:tab==="loans"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Loans"},
           React.createElement(LoanSection,{loans:state.loans,dispatch,allBanks:state.banks,allCards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees,isMobile}))),
@@ -39796,7 +42022,7 @@ function App(){
           React.createElement(GoalsSection,{goals:state.goals||_EA,dispatch,isMobile,scheduled:state.scheduled||_EA,banks:state.banks,cards:state.cards,cash:state.cash,mf:state.mf||_EA,shares:state.shares||_EA,fd:state.fd||_EA,re:state.re||_EA,brokerCashBalance:state.brokerCashBalance||0}))),
       React.createElement("div",{style:{display:tab==="insights"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Insights"},
-          React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs,onJumpToLedger,nwSnapshots:state.nwSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0}))),
+          React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,mfTxns:state.mfTxns||[],shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs,onJumpToLedger,nwSnapshots:state.nwSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0}))),
       React.createElement("div",{style:{display:tab==="notes"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Notes"},
           React.createElement(NotesSection,{notes:state.notes||_EA,dispatch}))),
@@ -39838,32 +42064,21 @@ function App(){
       && React.createElement(GlobalNotificationSync,{state,dispatch}),
     /* Reminder Toast Manager */
     tab==="dashboard"&&React.createElement(ReminderToastManager,{state,dispatch}),
-    /* ── Undo Toast ── */
-    undoSnap&&React.createElement("div",{style:{
-      position:"fixed",bottom:isMobile?88:28,left:"50%",transform:"translateX(-50%)",
-      zIndex:1100,animation:"undoSlideUp .25s ease forwards",
-      background:"#1a2a3a",border:"1px solid rgba(2,132,199,.4)",
-      borderRadius:14,padding:"11px 18px",display:"flex",alignItems:"center",gap:14,
-      boxShadow:"0 8px 32px rgba(0,0,0,.45)",minWidth:240,maxWidth:400,
-      fontFamily:"'DM Sans',sans-serif"
-    }},
-      React.createElement("span",{style:{fontSize:13,color:"rgba(255,255,255,.85)",flex:1}},"Last action deleted • undo within 6 s"),
-      React.createElement("button",{onClick:doUndo,style:{
-        padding:"6px 16px",borderRadius:8,border:"1px solid rgba(2,132,199,.6)",
-        background:"rgba(2,132,199,.2)",color:"#38bdf8",cursor:"pointer",
-        fontSize:12,fontWeight:700,fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap"
-      }},"↩ Undo"),
-      React.createElement("button",{onClick:()=>setUndoSnap(null),style:{
-        background:"none",border:"none",color:"rgba(255,255,255,.35)",cursor:"pointer",
-        fontSize:18,lineHeight:1,padding:"8px 10px",minWidth:44,minHeight:44,display:"inline-flex",alignItems:"center",justifyContent:"center"
-      }},"×")
-    ),
-    /* ── Global Search Modal ── */
+    /* ── Toasts (incl. undo) ── */
+    React.createElement(ToastHost,{
+      toasts:undoSnap?[{id:"_undo",msg:"Last action removed — undo within 6 s",undo:true},...toasts]:toasts,
+      onUndo:id=>{ if(id==="_undo"){doUndo();} else {dismissToast(id);} },
+      onClose:id=>{ if(id==="_undo"){setUndoSnap(null);} else {dismissToast(id);} }
+    }),
+    /* ── "What's New" modal (once per version) ── */
+    whatsNew&&React.createElement(WhatsNewModal,{onClose:()=>setWhatsNew(false)}),
+    /* ── Global Search Modal (⌘K command palette) ── */
     searchOpen&&React.createElement(GlobalSearchModal,{
       state,
       onClose:()=>setSearchOpen(false),
       onJumpToTx:(accType,accId,txId)=>{onJumpToTx(accType,accId,txId);},
-      setTab
+      setTab,setTheme,setQuickAddOpen,
+      onWhatsNew:()=>{setWhatsNew(true);}
     }),
     /* ── Quick-Add FAB ── */
     !["settings","info"].includes(tab)&&React.createElement(React.Fragment,null,
@@ -39873,7 +42088,7 @@ function App(){
         title:"Quick Add Transaction (global)",
         style:{
           position:"fixed",
-          bottom:isMobile?80:32,right:isMobile?16:32,
+          bottom:isMobile?86:32,right:isMobile?16:32,
           width:52,height:52,borderRadius:"50%",
           background:"var(--accent)",color:"#fff",
           border:"none",cursor:"pointer",
@@ -39925,6 +42140,8 @@ function App(){
     /* ── ChatBot ── */
     !["settings","info"].includes(tab)&&React.createElement(ChatBotFAB,{onClick:()=>setChatBotOpen(true),isOpen:chatBotOpen}),
     React.createElement(ChatBot,{state:state,dispatch:dispatch,isOpen:chatBotOpen,onClose:()=>setChatBotOpen(false)}),
+    /* ── Mobile bottom tab bar ── */
+    isMobile&&React.createElement(MobileBottomNav,{tab,setTab}),
   );
 }
 /* ═══ CHATBOT CODE — injected ═══ */
