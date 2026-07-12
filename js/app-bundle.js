@@ -37320,7 +37320,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
       const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
       const inc=allTxns.filter(t=>t.date>=mS&&t.date<=mE).reduce((s,t)=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Income"?s+txCatDelta(t,ct):s;},0);
-      const exp=allTxns.filter(t=>t.date>=mS&&t.date<=mE&&!INVEST_CATS.includes(catMainName(t.cat||""))).reduce((s,t)=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Expense"||ct==="Others"?s+txCatDelta(t,ct):s;},0);
+      const exp=allTxns.filter(t=>t.date>=mS&&t.date<=mE&&!INVEST_TYPES.includes(catMainName(t.cat||""))).reduce((s,t)=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Expense"||ct==="Others"?s+txCatDelta(t,ct):s;},0);
       const rate=inc>0?Math.max((inc-exp)/inc*100,0):0;
       savingsRate12.push({mName:MONTH_NAMES[(now.getMonth()-i+12)%12],rate,inc,exp,savings:inc-exp});
     }
@@ -37333,8 +37333,8 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     const realEstatePct=reVal/totalInvest*100;
 
     // Lifestyle inflation
-    const recent3Exp=allTxns.filter(t=>{const m=new Date(t.date).getMonth(),y=new Date(t.date).getFullYear();const cur=now.getMonth(),cy=now.getFullYear();const diff=(cy-y)*12+(cur-m);return t.type==="debit"&&diff>=0&&diff<3&&!INVEST_CATS.includes(catMainName(t.cat||""));}).reduce((s,t)=>s+t.amount,0)/3;
-    const prev3Exp=allTxns.filter(t=>{const m=new Date(t.date).getMonth(),y=new Date(t.date).getFullYear();const cur=now.getMonth(),cy=now.getFullYear();const diff=(cy-y)*12+(cur-m);return t.type==="debit"&&diff>=3&&diff<6&&!INVEST_CATS.includes(catMainName(t.cat||""));}).reduce((s,t)=>s+t.amount,0)/3;
+    const recent3Exp=allTxns.filter(t=>{const m=new Date(t.date).getMonth(),y=new Date(t.date).getFullYear();const cur=now.getMonth(),cy=now.getFullYear();const diff=(cy-y)*12+(cur-m);return t.type==="debit"&&diff>=0&&diff<3&&!INVEST_TYPES.includes(catMainName(t.cat||""));}).reduce((s,t)=>s+t.amount,0)/3;
+    const prev3Exp=allTxns.filter(t=>{const m=new Date(t.date).getMonth(),y=new Date(t.date).getFullYear();const cur=now.getMonth(),cy=now.getFullYear();const diff=(cy-y)*12+(cur-m);return t.type==="debit"&&diff>=3&&diff<6&&!INVEST_TYPES.includes(catMainName(t.cat||""));}).reduce((s,t)=>s+t.amount,0)/3;
     const lifestyleInflation=prev3Exp>0?(recent3Exp-prev3Exp)/prev3Exp*100:0;
     const expInflationAmt=Math.max(recent3Exp-prev3Exp,0);
     const delayMonths=avgMonthlySavings>0?Math.round(expInflationAmt/avgMonthlySavings*12*25/12):0;
