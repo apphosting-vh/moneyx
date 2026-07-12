@@ -888,7 +888,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="6.7.0";
+const APP_VERSION="6.7.2";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1319,59 +1319,59 @@ const saveUpiMap=m=>{try{localStorage.setItem(UPI_LS,JSON.stringify(m));}catch{}
 /* Built-in VPA keyword → {name, cat} table (keyword matched case-insensitively in desc/payee) */
 const UPI_BUILTIN=[
   /* Food delivery */
-  {k:"zomato",       name:"Zomato",           cat:"Food & Dining"},
-  {k:"swiggy",       name:"Swiggy",           cat:"Food & Dining"},
-  {k:"dunzo",        name:"Dunzo",            cat:"Shopping"},
-  {k:"blinkit",      name:"Blinkit",          cat:"Groceries"},
-  {k:"zepto",        name:"Zepto",            cat:"Groceries"},
-  {k:"bigbasket",    name:"BigBasket",        cat:"Groceries"},
-  {k:"grofers",      name:"Blinkit",          cat:"Groceries"},
-  {k:"jiomart",      name:"JioMart",          cat:"Groceries"},
+  {k:"zomato",       name:"Zomato",           cat:"Groceries Food & Essentials"},
+  {k:"swiggy",       name:"Swiggy",           cat:"Groceries Food & Essentials"},
+  {k:"dunzo",        name:"Dunzo",            cat:"Groceries Food & Essentials"},
+  {k:"blinkit",      name:"Blinkit",          cat:"Groceries Food & Essentials"},
+  {k:"zepto",        name:"Zepto",            cat:"Groceries Food & Essentials"},
+  {k:"bigbasket",    name:"BigBasket",        cat:"Groceries Food & Essentials"},
+  {k:"grofers",      name:"Blinkit",          cat:"Groceries Food & Essentials"},
+  {k:"jiomart",      name:"JioMart",          cat:"Groceries Food & Essentials"},
   /* E-commerce */
-  {k:"amazon",       name:"Amazon",           cat:"Shopping"},
-  {k:"flipkart",     name:"Flipkart",         cat:"Shopping"},
-  {k:"meesho",       name:"Meesho",           cat:"Shopping"},
-  {k:"myntra",       name:"Myntra",           cat:"Shopping"},
-  {k:"ajio",         name:"Ajio",             cat:"Shopping"},
-  {k:"nykaa",        name:"Nykaa",            cat:"Shopping"},
-  {k:"snapdeal",     name:"Snapdeal",         cat:"Shopping"},
-  {k:"tatacliq",     name:"Tata CLiQ",        cat:"Shopping"},
+  {k:"amazon",       name:"Amazon",           cat:"Personal Items"},
+  {k:"flipkart",     name:"Flipkart",         cat:"Personal Items"},
+  {k:"meesho",       name:"Meesho",           cat:"Personal Items"},
+  {k:"myntra",       name:"Myntra",           cat:"Personal Items"},
+  {k:"ajio",         name:"Ajio",             cat:"Personal Items"},
+  {k:"nykaa",        name:"Nykaa",            cat:"Beauty and Personal Care"},
+  {k:"snapdeal",     name:"Snapdeal",         cat:"Personal Items"},
+  {k:"tatacliq",     name:"Tata CLiQ",        cat:"Personal Items"},
   /* Utilities & bills */
-  {k:"bescom",       name:"BESCOM",           cat:"Utilities"},
-  {k:"msedcl",       name:"MSEDCL",           cat:"Utilities"},
-  {k:"tatapower",    name:"Tata Power",       cat:"Utilities"},
-  {k:"airtel",       name:"Airtel",           cat:"Utilities"},
-  {k:"jio",          name:"Jio",              cat:"Utilities"},
-  {k:"vodafone",     name:"Vodafone",         cat:"Utilities"},
-  {k:"bsnl",         name:"BSNL",             cat:"Utilities"},
-  {k:"mahanagar",    name:"MGL Gas",          cat:"Utilities"},
-  {k:"indraprastha", name:"IGL Gas",          cat:"Utilities"},
+  {k:"bescom",       name:"BESCOM",           cat:"Utilities and Bills"},
+  {k:"msedcl",       name:"MSEDCL",           cat:"Utilities and Bills"},
+  {k:"tatapower",    name:"Tata Power",       cat:"Utilities and Bills"},
+  {k:"airtel",       name:"Airtel",           cat:"Utilities and Bills"},
+  {k:"jio",          name:"Jio",              cat:"Utilities and Bills"},
+  {k:"vodafone",     name:"Vodafone",         cat:"Utilities and Bills"},
+  {k:"bsnl",         name:"BSNL",             cat:"Utilities and Bills"},
+  {k:"mahanagar",    name:"MGL Gas",          cat:"Utilities and Bills"},
+  {k:"indraprastha", name:"IGL Gas",          cat:"Utilities and Bills"},
   /* Travel */
   {k:"irctc",        name:"IRCTC",            cat:"Travel"},
   {k:"redbus",       name:"redBus",           cat:"Travel"},
   {k:"makemytrip",   name:"MakeMyTrip",       cat:"Travel"},
   {k:"goibibo",      name:"Goibibo",          cat:"Travel"},
   {k:"cleartrip",    name:"Cleartrip",        cat:"Travel"},
-  {k:"ola",          name:"Ola",              cat:"Transport"},
-  {k:"uber",         name:"Uber",             cat:"Transport"},
-  {k:"rapido",       name:"Rapido",           cat:"Transport"},
-  {k:"blusmrt",      name:"BluSmart",         cat:"Transport"},
+  {k:"ola",          name:"Ola",              cat:"Automobile"},
+  {k:"uber",         name:"Uber",             cat:"Automobile"},
+  {k:"rapido",       name:"Rapido",           cat:"Automobile"},
+  {k:"blusmrt",      name:"BluSmart",         cat:"Automobile"},
   /* Health */
-  {k:"practo",       name:"Practo",           cat:"Health"},
-  {k:"pharmeasy",    name:"PharmEasy",        cat:"Health"},
-  {k:"netmeds",      name:"Netmeds",          cat:"Health"},
-  {k:"1mg",          name:"1mg",              cat:"Health"},
-  {k:"apollopharmacy",name:"Apollo Pharmacy", cat:"Health"},
-  {k:"medlife",      name:"Medlife",          cat:"Health"},
-  /* Entertainment */
-  {k:"netflix",      name:"Netflix",          cat:"Entertainment"},
-  {k:"hotstar",      name:"Disney+Hotstar",   cat:"Entertainment"},
-  {k:"spotify",      name:"Spotify",          cat:"Entertainment"},
-  {k:"youtube",      name:"YouTube Premium",  cat:"Entertainment"},
-  {k:"amazon.prime", name:"Amazon Prime",     cat:"Entertainment"},
-  {k:"sonyliv",      name:"SonyLIV",          cat:"Entertainment"},
-  {k:"zee5",         name:"ZEE5",             cat:"Entertainment"},
-  {k:"bookmyshow",   name:"BookMyShow",       cat:"Entertainment"},
+  {k:"practo",       name:"Practo",           cat:"Healthcare"},
+  {k:"pharmeasy",    name:"PharmEasy",        cat:"Healthcare"},
+  {k:"netmeds",      name:"Netmeds",          cat:"Healthcare"},
+  {k:"1mg",          name:"1mg",              cat:"Healthcare"},
+  {k:"apollopharmacy",name:"Apollo Pharmacy", cat:"Healthcare"},
+  {k:"medlife",      name:"Medlife",          cat:"Healthcare"},
+  /* Subscriptions */
+  {k:"netflix",      name:"Netflix",          cat:"Subscriptions"},
+  {k:"hotstar",      name:"Disney+Hotstar",   cat:"Subscriptions"},
+  {k:"spotify",      name:"Spotify",          cat:"Subscriptions"},
+  {k:"youtube",      name:"YouTube Premium",  cat:"Subscriptions"},
+  {k:"amazon.prime", name:"Amazon Prime",     cat:"Subscriptions"},
+  {k:"sonyliv",      name:"SonyLIV",          cat:"Subscriptions"},
+  {k:"zee5",         name:"ZEE5",             cat:"Subscriptions"},
+  {k:"bookmyshow",   name:"BookMyShow",       cat:"Leisure"},
   /* Finance & investments */
   {k:"zerodha",      name:"Zerodha",          cat:"Investments"},
   {k:"groww",        name:"Groww",            cat:"Investments"},
@@ -1386,17 +1386,17 @@ const UPI_BUILTIN=[
   {k:"gpay",         name:"Google Pay",       cat:"Others"},
   {k:"bhim",         name:"BHIM UPI",         cat:"Others"},
   /* Education */
-  {k:"byju",         name:"BYJU'S",           cat:"Education"},
-  {k:"unacademy",    name:"Unacademy",        cat:"Education"},
-  {k:"coursera",     name:"Coursera",         cat:"Education"},
-  {k:"udemy",        name:"Udemy",            cat:"Education"},
-  {k:"vedantu",      name:"Vedantu",          cat:"Education"},
+  {k:"byju",         name:"BYJU'S",           cat:"Childcare"},
+  {k:"unacademy",    name:"Unacademy",        cat:"Childcare"},
+  {k:"coursera",     name:"Coursera",         cat:"Childcare"},
+  {k:"udemy",        name:"Udemy",            cat:"Childcare"},
+  {k:"vedantu",      name:"Vedantu",          cat:"Childcare"},
   /* Insurance */
-  {k:"lic",          name:"LIC",              cat:"Insurance"},
-  {k:"policybazaar", name:"PolicyBazaar",     cat:"Insurance"},
-  {k:"hdfcergo",     name:"HDFC ERGO",        cat:"Insurance"},
-  {k:"icicilomic",   name:"ICICI Lombard",    cat:"Insurance"},
-  {k:"starhealth",   name:"Star Health",      cat:"Insurance"},
+  {k:"lic",          name:"LIC",              cat:"Insurance Premiums"},
+  {k:"policybazaar", name:"PolicyBazaar",     cat:"Insurance Premiums"},
+  {k:"hdfcergo",     name:"HDFC ERGO",        cat:"Insurance Premiums"},
+  {k:"icicilomic",   name:"ICICI Lombard",    cat:"Insurance Premiums"},
+  {k:"starhealth",   name:"Star Health",      cat:"Insurance Premiums"},
 ];
 
 /* UPI VPA regex: UPI-<name>-<VPA>-<ref> or <name>@<bank> */
@@ -3083,13 +3083,13 @@ const ImportTxModal=({onImport,onClose,categories,accType="bank",existingTxns=[]
   const downloadTemplate=()=>{
     const rows=[
       ["Date","Description","Payee","Debit","Credit","Reference","Category","Notes"],
-      ["01-01-2025","Groceries at DMart","DMart","1500","","","Food",""],
-      ["02-01-2025","Salary Credit","Employer","","75000","SAL202501","Income::Salary","Monthly salary"],
-      ["05-01-2025","Electricity Bill","BESCOM","2200","","EB2501","Housing::Utilities",""],
-      ["10-01-2025","Netflix Subscription","Netflix","649","","","Entertainment::OTT / Streaming",""],
-      ["15-01-2025","Petrol","Indian Oil","3000","","","Transport::Fuel",""],
+      ["01-01-2025","Groceries at DMart","DMart","1500","","","Groceries Food & Essentials::Groceries and Essentials",""],
+      ["02-01-2025","Salary Credit","Employer","","75000","SAL202501","Income::Freelancing Income","Monthly salary"],
+      ["05-01-2025","Electricity Bill","BESCOM","2200","","EB2501","Utilities and Bills::Electricity",""],
+      ["10-01-2025","Netflix Subscription","Netflix","649","","","Subscriptions::OTT Subscriptions",""],
+      ["15-01-2025","Petrol","Indian Oil","3000","","","Automobile::Petrol Fuels",""],
       ["20-01-2025","ATM Withdrawal","ATM","5000","","","",""],
-      ["25-01-2025","Rent Payment","Landlord","25000","","JAN25RENT","Housing::Rent","Monthly rent"],
+      ["25-01-2025","Rent Payment","Landlord","25000","","JAN25RENT","Utilities and Bills::Housing & Rent","Monthly rent"],
     ];
     const csv=rows.map(r=>r.map(c=>{
       const s=String(c);
@@ -27162,22 +27162,46 @@ const CategoriesPanel=({state,dispatch,askDelete})=>{
   const COLORS=["#16a34a","#0e7490","#b45309","#c2410c","#dc2626","#6d28d9","#be185d","#1d4ed8","#059669","#475569","#92400e","#374151"];
   const payees=state.payees||[];
 
+  /* ── Export all categories to Excel */
+  const exportCategories=()=>{
+    window.__loadExportLibs().then(()=>{
+      const XL=window.XLSX;
+      const rows=[["Category Name","Classification","Color (hex)","Default Payee","Sub-category","Sub Default Payee"]];
+      (state.categories||[]).forEach(c=>{
+        if(c.subs&&c.subs.length>0){
+          c.subs.forEach((s,i)=>{
+            rows.push([i===0?c.name:"",i===0?(c.classType||""):"",i===0?(c.color||""):"",i===0?(c.defaultPayee||""):"",s.name||"",s.defaultPayee||""]);
+          });
+        }else{
+          rows.push([c.name,c.classType||"",c.color||"",c.defaultPayee||"","",""]);
+        }
+      });
+      const ws=XL.utils.aoa_to_sheet(rows);
+      ws["!cols"]=[{wch:24},{wch:16},{wch:14},{wch:20},{wch:24},{wch:20}];
+      const wb=XL.utils.book_new();
+      XL.utils.book_append_sheet(wb,ws,"Categories");
+      XL.writeFile(wb,"categories-export.xlsx");
+    }).catch(()=>alert("Failed to load Excel library. Check your internet connection."));
+  };
+
   /* ── Download sample template */
   const downloadTemplate=()=>{
-    const XL=window.XLSX;
-    const rows=[
-      ["Category Name","Classification","Color (hex)","Sub-categories (comma separated)"],
-      ["Healthcare","Expense","#ef4444","Doctor,Medicine,Hospital"],
-      ["Dining Out","Expense","#c2410c","Lunch,Dinner,Cafe"],
-      ["Freelance Income","Income","#16a34a","Consulting,Projects"],
-      ["Crypto","Investment","#6d28d9","Bitcoin,Altcoins"],
-      ["Gifts","Others","#8ba0c0","Birthday,Wedding"],
-    ];
-    const ws=XL.utils.aoa_to_sheet(rows);
-    ws["!cols"]=[{wch:22},{wch:18},{wch:14},{wch:38}];
-    const wb=XL.utils.book_new();
-    XL.utils.book_append_sheet(wb,ws,"Categories");
-    XL.writeFile(wb,"category-import-template.xlsx");
+    window.__loadExportLibs().then(()=>{
+      const XL=window.XLSX;
+      const rows=[
+        ["Category Name","Classification","Color (hex)","Sub-categories (comma separated)"],
+        ["Healthcare","Expense","#ef4444","Doctor,Medicine,Hospital"],
+        ["Dining Out","Expense","#c2410c","Lunch,Dinner,Cafe"],
+        ["Freelance Income","Income","#16a34a","Consulting,Projects"],
+        ["Crypto","Investment","#6d28d9","Bitcoin,Altcoins"],
+        ["Gifts","Others","#8ba0c0","Birthday,Wedding"],
+      ];
+      const ws=XL.utils.aoa_to_sheet(rows);
+      ws["!cols"]=[{wch:22},{wch:18},{wch:14},{wch:38}];
+      const wb=XL.utils.book_new();
+      XL.utils.book_append_sheet(wb,ws,"Categories");
+      XL.writeFile(wb,"category-import-template.xlsx");
+    }).catch(()=>alert("Failed to load Excel library. Check your internet connection."));
   };
 
   /* ── Parse uploaded file */
@@ -27228,6 +27252,7 @@ const CategoriesPanel=({state,dispatch,askDelete})=>{
       ),
       React.createElement("div",{style:{display:"flex",gap:8,flexShrink:0}},
         React.createElement(Btn,{v:"secondary",sz:"sm",onClick:downloadTemplate,sx:{fontSize:12}},"⬇ Template"),
+        React.createElement(Btn,{v:"secondary",sz:"sm",onClick:exportCategories,sx:{fontSize:12}},"⬆ Export"),
         React.createElement(Btn,{v:"secondary",sz:"sm",onClick:()=>{setImportResult(null);setImportOpen(true);},sx:{fontSize:12}},"⬆ Import Excel")
       )
     ),
@@ -32165,7 +32190,7 @@ const InsightPrefsPanel=({state,dispatch})=>{
       React.createElement(SecHdr,{icon:React.createElement(Icon,{n:"chart",size:18}),title:"Savings & Spending Targets",sub:"These appear as reference lines and budget markers across the Savings Trend, Food, and Leaks tabs."}),
       React.createElement("div",{className:"grid-2col"},
         React.createElement(Slider,{label:"Savings Rate Target",value:P.savingsRateTarget||30,min:5,max:70,step:5,suffix:"%",onChange:v=>{set("savingsRateTarget",v);flash();},marks:["5%","20%","30%","50%","70%"],hint:"Drawn as a reference line on the 12-month savings rate chart"}),
-        React.createElement(Slider,{label:"Discretionary Spend Target",value:P.discSpendTarget||15,min:5,max:40,step:5,suffix:"%",onChange:v=>{set("discSpendTarget",v);flash();},marks:["5%","15%","25%","40%"],hint:"% of income cap for Shopping + Entertainment + Dining + Travel"}),
+        React.createElement(Slider,{label:"Discretionary Spend Target",value:P.discSpendTarget||15,min:5,max:40,step:5,suffix:"%",onChange:v=>{set("discSpendTarget",v);flash();},marks:["5%","15%","25%","40%"],hint:"% of income cap for Shopping, Leisure, Travel, Vacations & Lifestyle spend"}),
         React.createElement(NumInp,{label:"Monthly Food Budget",value:P.foodBudget,onChange:v=>{numSet("foodBudget",v);flash();},prefix:"₹",placeholder:"e.g. 12000",hint:"Shows as budget vs actual banner in Food Intelligence tab"}),
         React.createElement(NumInp,{label:"Micro-Spend Leak Threshold",value:P.leakThreshold||500,onChange:v=>{numSet("leakThreshold",v);flash();},prefix:"₹",placeholder:"e.g. 500",hint:"Transactions below this amount appear in the Leak Detector tab"})
       )
@@ -35601,14 +35626,14 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     const pyfPassed=dayOfMonth>pyfTarget;
     const pyfSaved=pyfPassed&&savingsThisMonth>0;
     const foodBudget=P.foodBudget?Number(P.foodBudget):0;
-    const foodSpend=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");const main=catMainName(t.cat||"Others");return ct!=="Income"&&ct!=="Transfer"&&t.type==="debit"&&(main.toLowerCase().includes("food")||main.toLowerCase().includes("grocer"))&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+t.amount,0);
+    const foodSpend=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");const main=catMainName(t.cat||"Others");return ct!=="Income"&&ct!=="Transfer"&&t.type==="debit"&&(main.toLowerCase()==="groceries food & essentials")&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+t.amount,0);
     const liquidAssets=(banks||[]).reduce((s,b)=>s+(b.balance||0),0)+(cash?.balance||0)+(fd||[]).reduce((s,f)=>s+calcFDValueToday(f),0);
     const monthlyExpenses=allTxns.filter(t=>t.type==="debit"&&t.date>=thisStart&&t.date<=thisEnd).reduce((s,t)=>s+t.amount,0);
     const emergencyTarget=P.emergencyTargetMonths||6;
     const emergencyActualMonths=monthlyExpenses>0?liquidAssets/monthlyExpenses:0;
     const discSpendTarget=P.discSpendTarget?Number(P.discSpendTarget):15;
-    const discCategories=["Shopping","Entertainment","Travel","Dining"];
-    const discSpend=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");const main=catMainName(t.cat||"Others");return ct!=="Income"&&ct!=="Transfer"&&t.type==="debit"&&(discCategories.some(c=>main.toLowerCase().includes(c.toLowerCase())))&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+t.amount,0);
+    const discCatNames=["Personal Items","Leisure","Travel","Vacation","Beauty and Personal Care","Events and Functions","Donations","Jewellery and Precious Metals","Office & Business Expenses"];
+    const discSpend=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");const main=catMainName(t.cat||"Others");return ct!=="Income"&&ct!=="Transfer"&&t.type==="debit"&&(discCatNames.some(c=>main.toLowerCase()===c.toLowerCase()))&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+t.amount,0);
     return {todaySpend,thisMonthSpend,lastMonthSpend,dailyAvg,projected,last7,heatmap,maxDay,dayOfMonth,daysInMonth,thisMonthIncome,lastMonthIncome,expenseRatio,savingsThisMonth,savingsRate,pyfTarget,pyfPassed,pyfSaved,foodBudget,foodSpend,liquidAssets,emergencyTarget,emergencyActualMonths,discSpendTarget,discSpend};
   },[allTxns,thisStart,thisEnd,lastStart,lastEnd,categories,P,banks,cash,fd]);
 
@@ -35700,12 +35725,12 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
   const waterfallData=React.useMemo(()=>{
     const income=allTxns.filter(t=>t.type==="credit"&&t.date>=thisStart&&t.date<=thisEnd).reduce((s,t)=>s+t.amount,0);
     const debits=allTxns.filter(t=>t.type==="debit"&&t.date>=thisStart&&t.date<=thisEnd);
-    const FIXED=["Housing","Insurance"];
-    const VARIABLE=["Food","Groceries","Transport","Utilities"];
-    const DISC=["Shopping","Entertainment","Travel","Dining"];
-    const fixed=debits.filter(t=>FIXED.some(c=>(catMainName(t.cat||"")).toLowerCase().includes(c.toLowerCase()))).reduce((s,t)=>s+t.amount,0);
-    const variable=debits.filter(t=>VARIABLE.some(c=>(catMainName(t.cat||"")).toLowerCase().includes(c.toLowerCase()))).reduce((s,t)=>s+t.amount,0);
-    const disc=debits.filter(t=>DISC.some(c=>(catMainName(t.cat||"")).toLowerCase().includes(c.toLowerCase()))).reduce((s,t)=>s+t.amount,0);
+    const FIXED=["Homeneeds","Insurance Premiums","Utilities and Bills","Subscriptions"];
+    const VARIABLE=["Groceries Food & Essentials","Automobile"];
+    const DISC=["Personal Items","Leisure","Travel","Vacation","Beauty and Personal Care","Events and Functions","Donations","Jewellery and Precious Metals","Office & Business Expenses"];
+    const fixed=debits.filter(t=>FIXED.some(c=>(catMainName(t.cat||"")).toLowerCase()===c.toLowerCase())).reduce((s,t)=>s+t.amount,0);
+    const variable=debits.filter(t=>VARIABLE.some(c=>(catMainName(t.cat||"")).toLowerCase()===c.toLowerCase())).reduce((s,t)=>s+t.amount,0);
+    const disc=debits.filter(t=>DISC.some(c=>(catMainName(t.cat||"")).toLowerCase()===c.toLowerCase())).reduce((s,t)=>s+t.amount,0);
     const total=debits.reduce((s,t)=>s+t.amount,0);
     const other=Math.max(total-fixed-variable-disc,0);
     const savings=income-total;
@@ -35904,6 +35929,26 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     }).sort((a,b)=>b.amount-a.amount);
   },[allTxns]);
   const totalSubBurn=subscriptionData.reduce((s,sub)=>s+sub.amount,0);
+
+  /* ── MONTHLY SUBSCRIPTION TRANSACTIONS (last 12 months) ── */
+  const monthlySubData=React.useMemo(()=>{
+    const months=[];
+    for(let i=11;i>=0;i--){
+      const ms=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
+      const me=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
+      const mIdx=(now.getMonth()-i+12)%12;
+      const yr=new Date(now.getFullYear(),now.getMonth()-i,1).getFullYear();
+      const label=MONTH_NAMES[mIdx]+" '"+String(yr).slice(2);
+      const txns=allTxns.filter(t=>{
+        if(t.type!=="debit")return false;
+        const main=catMainName(t.cat||"");
+        return t.date>=ms&&t.date<=me&&(main.toLowerCase()==="subscriptions");
+      }).map(t=>({date:t.date,amount:t.amount,desc:t.desc||t.payee||"",cat:t.cat||""}));
+      const total=txns.reduce((s,t)=>s+t.amount,0);
+      months.push({ms,me,label,yr,mIdx,txns,total});
+    }
+    return months;
+  },[allTxns]);
 
   /* ── UI HELPERS ── */
   const tabBtn=id=>({padding:"7px 14px",borderRadius:8,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:stab===id?700:400,border:"none",borderBottom:stab===id?"3px solid var(--accent)":"3px solid transparent",background:stab===id?"linear-gradient(180deg,var(--accentbg),var(--accentbg2))":"transparent",color:stab===id?"var(--accent)":"var(--text5)",boxShadow:stab===id?"0 3px 16px var(--accentbg5)":"none",transition:"all .15s",whiteSpace:"nowrap"});
@@ -37016,9 +37061,9 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       })(),
       React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginTop:8,justifyContent:"center"}},
         [
-          {l:"Fixed (Housing, Insurance)",v:waterfallData.fixed,c:"#ef4444"},
-          {l:"Variable (Food, Transport)",v:waterfallData.variable,c:"#f97316"},
-          {l:"Discretionary (Shopping, Travel)",v:waterfallData.disc,c:"#b45309"},
+          {l:"Fixed (Homeneeds, Insurance, Utilities, Subs)",v:waterfallData.fixed,c:"#ef4444"},
+          {l:"Variable (Groceries, Auto)",v:waterfallData.variable,c:"#f97316"},
+          {l:"Discretionary (Personal, Leisure, Travel)",v:waterfallData.disc,c:"#b45309"},
           {l:"Savings",v:waterfallData.savings,c:waterfallData.savings>=0?"#16a34a":"#ef4444"}
         ].map(x=>React.createElement("div",{key:x.l,style:{fontSize:11,color:"var(--text5)",display:"flex",alignItems:"center",gap:4}},
           React.createElement("span",{style:{width:8,height:8,borderRadius:2,background:x.c,display:"inline-block"}}),
@@ -37122,9 +37167,9 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
           )
   );
 
-  /* ══ 9. SUBSCRIPTIONS TAB (original) ══ */
+  /* ══ 9. SUBSCRIPTIONS TAB (original + monthly view) ══ */
   const SubsTab=React.createElement("div",{style:{paddingBottom:20}},
-    subscriptionData.length===0
+    subscriptionData.length===0&&monthlySubData.every(m=>m.txns.length===0)
       ?React.createElement(Empty,{icon:React.createElement(Icon,{n:"phone",size:18}),text:"No subscription patterns detected. Transactions with streaming/OTT keywords will appear here."})
       :React.createElement(React.Fragment,null,
         React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
@@ -37132,7 +37177,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
           React.createElement(KpiCard,{label:"Annual Estimate",value:INR(subscriptionData.reduce((s,sub)=>s+Math.round(sub.annualEstimate),0)),sub:"projected yearly cost",col:"#b45309",icon:React.createElement(Icon,{n:"chart",size:18})}),
           React.createElement(KpiCard,{label:"Highest Cost",value:subscriptionData.length>0?subscriptionData[0].name:"—",sub:subscriptionData.length>0?INR(subscriptionData[0].amount)+"/mo":"",col:"var(--accent)",icon:React.createElement(Icon,{n:"star",size:18})})
         ),
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(auto-fill,minmax(300px,1fr))",gap:12}},
+        subscriptionData.length>0&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1":"repeat(auto-fill,minmax(300px,1fr))",gap:12,marginBottom:20}},
           subscriptionData.map(sub=>{
             const daysAgo=Math.floor((new Date()-new Date(sub.lastDate))/86400000);
             const active=daysAgo<=45;
@@ -37170,6 +37215,43 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
               )
             );
           })
+        ),
+        /* ── Month-wise Subscription Transactions ── */
+        monthlySubData.some(m=>m.txns.length>0)&&React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{marginBottom:12}},
+            React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text2)",fontFamily:"'Sora',sans-serif",marginBottom:3}},"Monthly Subscription Spends"),
+            React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},"Last 12 months of subscription transactions")
+          ),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(auto-fill,minmax(260px,1fr))",gap:12}},
+            monthlySubData.map((m,mIdx)=>{
+              const hasTxns=m.txns.length>0;
+              const isCurrent=m.mIdx===now.getMonth()&&m.yr===now.getFullYear();
+              const hasData=m.txns.length>0;
+              /* compute a subtle bar width based on max month total */
+              const maxMonthTotal=Math.max(...monthlySubData.map(x=>x.total),1);
+              const barW=hasData?Math.max(4,Math.round(m.total/maxMonthTotal*100)):0;
+              return React.createElement("div",{key:mIdx,style:{background:"var(--card)",border:isCurrent?"2px solid var(--accent)":"1px solid var(--border)",borderRadius:12,padding:"14px 16px",opacity:hasData?1:.55}},
+                React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:hasData?10:0}},
+                  React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+                    React.createElement("div",{style:{fontSize:13,fontWeight:700,color:isCurrent?"var(--accent)":"var(--text2)"}},m.label),
+                    isCurrent&&React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:6,background:"var(--accentbg)",color:"var(--accent)"}},"NOW")
+                  ),
+                  React.createElement("div",{style:{fontSize:14,fontWeight:800,fontFamily:"'Sora',sans-serif",color:hasData?"var(--text)":"var(--text6)"}},hasData?INR(m.total):"\u2014")
+                ),
+                hasData&&React.createElement("div",{style:{height:4,borderRadius:2,background:"var(--bg5)",marginBottom:10,overflow:"hidden"}},
+                  React.createElement("div",{style:{height:"100%",width:barW+"%",background:"var(--accent)",borderRadius:2,transition:"width .3s"}})
+                ),
+                hasData&&m.txns.map((t,ti)=>React.createElement("div",{key:ti,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:ti<m.txns.length-1?"1px solid var(--border2)":"none"}},
+                  React.createElement("div",{style:{flex:1,minWidth:0}},
+                    React.createElement("div",{style:{fontSize:11,color:"var(--text3)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.desc||"Subscription"),
+                    React.createElement("div",{style:{fontSize:9,color:"var(--text6)"}},t.date.slice(8,10)+" "+MONTH_NAMES[parseInt(t.date.slice(5,7),10)-1])
+                  ),
+                  React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"#ef4444",fontFamily:"'Sora',sans-serif",flexShrink:0,marginLeft:8}},"-"+INR(t.amount))
+                )),
+                !hasData&&React.createElement("div",{style:{fontSize:11,color:"var(--text6)",textAlign:"center",padding:"8px 0"}},"No subscription transactions")
+              );
+            })
+          )
         )
       )
   );
@@ -37177,12 +37259,12 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
   /* ══ FIRE DATA ══ */
   const fireData=React.useMemo(()=>{
     // Monthly expense average (last 6 months debits excluding investment/transfer)
-    const INVEST_CATS=["Investment","Transfer"];
+    const INVEST_TYPES=["Investment","Transfer"];
     const months6=[];
     for(let i=5;i>=0;i--){
       const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
       const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
-      const exp=allTxns.filter(t=>t.date>=mS&&t.date<=mE&&!INVEST_CATS.includes(catMainName(t.cat||""))).reduce((s,t)=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Expense"||ct==="Others"?s+txCatDelta(t,ct):s;},0);
+      const exp=allTxns.filter(t=>t.date>=mS&&t.date<=mE&&!INVEST_TYPES.includes(catClassType(categories,t.cat||"Others"))).reduce((s,t)=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Expense"||ct==="Others"?s+txCatDelta(t,ct):s;},0);
       const inc=allTxns.filter(t=>t.date>=mS&&t.date<=mE).reduce((s,t)=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Income"?s+txCatDelta(t,ct):s;},0);
       months6.push({exp,inc,savings:inc-exp,mName:MONTH_NAMES[(now.getMonth()-i+12)%12]});
     }
@@ -37426,18 +37508,17 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     scores.push({name:"Emergency Fund",score:Math.min(20,Math.round(efPct*20)),max:20,detail:ef.toFixed(1)+" months",col:ef>=efTarget?"#16a34a":ef>=efTarget*0.6?"#b45309":"#ef4444",
       tip:ef>=efTarget?"Fully funded":ef>=efTarget*0.6?"Building up — "+(efTarget-ef).toFixed(1)+" months to go":"Critical — build to "+efTarget+" months"});
     /* Budget Adherence (0-20) */
-    const bu=_biScore||50;
+    const bu=_biScore!=null?_biScore:50;
     scores.push({name:"Budget Discipline",score:Math.min(20,Math.round(bu/100*20)),max:20,detail:"Score "+bu,col:bu>=70?"#16a34a":bu>=50?"#b45309":"#ef4444",
       tip:bu>=70?"Strong budget adherence":bu>=50?"Moderate — some categories overspending":"Needs improvement"});
     /* Expense Ratio (0-15) */
     const er=pulseData.expenseRatio;
-    scores.push({name:"Expense Ratio",score:Math.min(15,er<=60?15:er<=75?12:er<=90?8:3),max:15,detail:er.toFixed(0)+"%",col:er<=70?"#16a34a":er<=90?"#b45309":"#ef4444",
-      tip:er<=70?"Expenses well below income":er<=90?"Manageable but tight":"Expenses nearly matching income"});
+    scores.push({name:"Expense Ratio",score:Math.min(15,er<=60?15:er<=75?12:er<=90?8:3),max:15,detail:er.toFixed(0)+"%",col:er<=60?"#16a34a":er<=75?"#b45309":"#ef4444",
+      tip:er<=60?"Expenses well below income":er<=75?"Manageable but tight":"Expenses nearly matching income"});
     /* Debt Health (0-10) */
-    const totalDebt=(pulseData.liquidAssets||0)>0?0:0;
     const cardD=(cards||[]).reduce((s,c)=>s+(c.outstanding||0),0);
     const loanD=(loans||[]).reduce((s,l)=>s+(l.outstanding||0),0);
-    const debtScore=cardD===0&&loanD===0?10:cardD===0?7:loanD<cardD*12?5:2;
+    const debtScore=cardD===0&&loanD===0?10:cardD===0?8:loanD===0?7:loanD<cardD*12?5:2;
     scores.push({name:"Debt Health",score:debtScore,max:10,detail:cardD+loanD>0?INR(cardD+loanD)+" outstanding":"No high-interest debt",col:debtScore>=7?"#16a34a":debtScore>=4?"#b45309":"#ef4444",
       tip:debtScore>=7?"Healthy — no high-interest debt":debtScore>=4?"Manageable debt load":"High debt burden"});
     /* Investment Momentum (0-10) */
@@ -37447,7 +37528,6 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       const me=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
       invMonths.push(allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");return ct==="Investment"&&t.date>=ms&&t.date<=me;}).reduce((s,t)=>s+t.amount,0));
     }
-    const avgInv=invMonths.reduce((s,v)=>s+v,0)/6;
     const invConsistent=invMonths.filter(v=>v>0).length;
     const invScore=Math.min(10,Math.round(invConsistent/6*10));
     scores.push({name:"Investment Consistency",score:invScore,max:10,detail:invConsistent+"/6 months",col:invScore>=7?"#16a34a":invScore>=4?"#b45309":"#ef4444",
@@ -42226,42 +42306,42 @@ const _cbMatchAccountMulti=(text,accounts,customAliases)=>{
 
 /* ── 2. CATEGORY KEYWORD DICTIONARY ───────────────────────────────────── */
 const _cbCatRules=[
-  {k:['petrol','diesel','fuel','gas station','petrol pump','hpcl','bpcl','iocl','refuel'],c:'Transport',s:'Fuel'},
-  {k:['uber','ola','rapido','auto','rickshaw','taxi','cab'],c:'Transport',s:'Cab / Auto'},
-  {k:['metro','bus','train','irctc','local train','bus pass','railway'],c:'Transport',s:'Public Transit'},
-  {k:['bigbasket','grofers','blinkit','zepto','dmart','reliance fresh','grocery','groceries','vegetable','fruit','ration','kirana','milk'],c:'Food',s:'Groceries'},
-  {k:['restaurant','cafe','dine out','dinner','lunch','breakfast','pizza','burger','biryani','mcdonald','kfc','domino','subway','starbucks','bar','pub'],c:'Food',s:'Restaurants'},
-  {k:['swiggy','zomato','food delivery','food order'],c:'Food',s:'Delivery'},
-  {k:['myntra','ajio','meesho','clothing','clothes','shirt','jeans','dress','shoes','fashion','apparel'],c:'Shopping',s:'Clothing'},
-  {k:['amazon','flipkart','croma','reliance digital','vijay sales','electronics','mobile','laptop','headphone','charger','gadget','phone','tablet','tv'],c:'Shopping',s:'Electronics'},
-  {k:['ikea','pepperfry','urban ladder','home decor','furniture','curtain','bedsheet','kitchen','utensil'],c:'Shopping',s:'Home & Decor'},
-  {k:['netflix','amazon prime','hotstar','disney','jiocinema','sonyliv','zee5','youtube premium','spotify','apple music','gaana','jiosaavn','streaming','ott'],c:'Entertainment',s:'OTT / Streaming'},
-  {k:['steam','playstation','xbox','gaming','pubg','free fire','valorant','game'],c:'Entertainment',s:'Gaming'},
-  {k:['bookmyshow','insider','event','concert','movie','cinema','pvr','inox','theatre','show','standup','comedy'],c:'Entertainment',s:'Events'},
-  {k:['electricity','bescom','mseb','tangedco','bses','torrent power','power bill','light bill','electric bill'],c:'Utilities',s:'Electricity'},
-  {k:['water bill','water tax','municipal water','bwssb'],c:'Utilities',s:'Water'},
-  {k:['broadband','wifi','internet','act fibernet','jio fiber','airtel xstream','bsnl fiber','tikona','hathway'],c:'Utilities',s:'Internet'},
-  {k:['mobile bill','phone recharge','airtel','jio','vi recharge','bsnl recharge','mobile recharge','prepaid','postpaid'],c:'Utilities',s:'Mobile'},
-  {k:['rent','house rent','flat rent','room rent'],c:'Housing',s:'Rent'},
-  {k:['maintenance','society maintenance','repair','plumber','electrician','carpenter','painting','renovation','ac service'],c:'Housing',s:'Maintenance'},
-  {k:['lic','life insurance','term insurance','hdfc life','sbi life','icici prudential','max life'],c:'Insurance',s:'Life'},
-  {k:['health insurance','medical insurance','star health','care health','niva bupa','hdfc ergo'],c:'Insurance',s:'Health'},
-  {k:['car insurance','bike insurance','vehicle insurance','motor insurance'],c:'Insurance',s:'Vehicle'},
-  {k:['sip','mutual fund','mf','groww','zerodha','kuvera','paytm money','et money','axis mf','sbi mf','hdfc mf','mirae','ppfas','parag parikh'],c:'Investment',s:'Mutual Fund SIP'},
-  {k:['stock','share','equity','upstox','angel one','icici direct','hdfc securities','intraday','ipo'],c:'Investment',s:'Stocks'},
-  {k:['ppf','nps','public provident fund','national pension','epf','provident fund'],c:'Investment',s:'PPF / NPS'},
-  {k:['flight','airline','air india','indigo','spicejet','vistara','go first','akasa','makemytrip flight','cleartrip','ease my trip'],c:'Travel',s:'Flights'},
-  {k:['hotel','resort','hostel','oyo','treebo','fabhotel','goibibo','booking.com','airbnb','stay','accommodation'],c:'Travel',s:'Hotels'},
-  {k:['local travel','sightseeing','tour','guide','car rental','zoomcar','revv','rental car'],c:'Travel',s:'Local Travel'},
-  {k:['card bill','credit card bill','card payment','cc payment','card due','minimum due','outstanding payment'],c:'Payment',s:'Card Bill'},
-  {k:['emi','loan','loan emi','home loan','car loan','personal loan','education loan','gold loan','emi payment'],c:'Payment',s:'Loan EMI'},
-  {k:['atm','cash withdrawal','atm withdrawal','withdraw cash'],c:'Transfer',s:'ATM Withdrawal'},
-  {k:['transfer','neft','rtgs','imps','upi transfer','fund transfer','bank transfer','sent to','transferred to'],c:'Transfer',s:'Inter-Bank'},
-  {k:['salary','wages','pay','stipend','monthly pay','payroll'],c:'Income',s:'Salary'},
-  {k:['freelance','freelancing','consulting','contract','gig','project payment','client payment'],c:'Income',s:'Freelance'},
-  {k:['interest','fd interest','rd interest','savings interest','deposit interest','bank interest'],c:'Income',s:'Interest'},
-  {k:['dividend','dividends','stock dividend','mf dividend','equity dividend'],c:'Income',s:'Dividends'},
-  {k:['commission','bonus','incentive','gratuity','performance bonus'],c:'Income',s:'Bonus & Commission'},
+  {k:['petrol','diesel','fuel','gas station','petrol pump','hpcl','bpcl','iocl','refuel'],c:'Automobile',s:'Petrol Fuels'},
+  {k:['uber','ola','rapido','auto','rickshaw','taxi','cab'],c:'Automobile',s:'Maintenance'},
+  {k:['metro','bus','train','irctc','local train','bus pass','railway'],c:'Travel',s:'Bus Tickets'},
+  {k:['bigbasket','grofers','blinkit','zepto','dmart','reliance fresh','grocery','groceries','vegetable','fruit','ration','kirana','milk'],c:'Groceries Food & Essentials',s:'Groceries and Essentials'},
+  {k:['restaurant','cafe','dine out','dinner','lunch','breakfast','pizza','burger','biryani','mcdonald','kfc','domino','subway','starbucks','bar','pub'],c:'Groceries Food & Essentials',s:'Dining Out'},
+  {k:['swiggy','zomato','food delivery','food order'],c:'Groceries Food & Essentials',s:'Dining Out'},
+  {k:['myntra','ajio','meesho','clothing','clothes','shirt','jeans','dress','shoes','fashion','apparel'],c:'Personal Items',s:'Shopping'},
+  {k:['amazon','flipkart','croma','reliance digital','vijay sales','electronics','mobile','laptop','headphone','charger','gadget','phone','tablet','tv'],c:'Personal Items',s:'Electronics Items'},
+  {k:['ikea','pepperfry','urban ladder','home decor','furniture','curtain','bedsheet','kitchen','utensil'],c:'Homeneeds',s:'Furnishing'},
+  {k:['netflix','amazon prime','hotstar','disney','jiocinema','sonyliv','zee5','youtube premium','spotify','apple music','gaana','jiosaavn','streaming','ott'],c:'Subscriptions',s:'OTT Subscriptions'},
+  {k:['steam','playstation','xbox','gaming','pubg','free fire','valorant','game'],c:'Leisure',s:'Misc.'},
+  {k:['bookmyshow','insider','event','concert','movie','cinema','pvr','inox','theatre','show','standup','comedy'],c:'Leisure',s:'Movies'},
+  {k:['electricity','bescom','mseb','tangedco','bses','torrent power','power bill','light bill','electric bill'],c:'Utilities and Bills',s:'Electricity'},
+  {k:['water bill','water tax','municipal water','bwssb'],c:'Utilities and Bills',s:'Water'},
+  {k:['broadband','wifi','internet','act fibernet','jio fiber','airtel xstream','bsnl fiber','tikona','hathway'],c:'Utilities and Bills',s:'Internet'},
+  {k:['mobile bill','phone recharge','airtel','jio','vi recharge','bsnl recharge','mobile recharge','prepaid','postpaid'],c:'Utilities and Bills',s:'Mobile Recharge'},
+  {k:['rent','house rent','flat rent','room rent'],c:'Utilities and Bills',s:'Housing & Rent'},
+  {k:['maintenance','society maintenance','repair','plumber','electrician','carpenter','painting','renovation','ac service'],c:'Homeneeds',s:'Home Improvements'},
+  {k:['lic','life insurance','term insurance','hdfc life','sbi life','icici prudential','max life'],c:'Insurance Premiums',s:'Life  Insurance Premium'},
+  {k:['health insurance','medical insurance','star health','care health','niva bupa','hdfc ergo'],c:'Insurance Premiums',s:'Health  Insurance Premium'},
+  {k:['car insurance','bike insurance','vehicle insurance','motor insurance'],c:'Insurance Premiums',s:'Auto (Car)  Insurance Premium'},
+  {k:['sip','mutual fund','mf','groww','zerodha','kuvera','paytm money','et money','axis mf','sbi mf','hdfc mf','mirae','ppfas','parag parikh'],c:'Investments',s:'Investment - Mutual Funds'},
+  {k:['stock','share','equity','upstox','angel one','icici direct','hdfc securities','intraday','ipo'],c:'Investments',s:'Investment - Shares'},
+  {k:['ppf','nps','public provident fund','national pension','epf','provident fund'],c:'Investments',s:'Investment - Fixed Deposits'},
+  {k:['flight','airline','air india','indigo','spicejet','vistara','go first','akasa','makemytrip flight','cleartrip','ease my trip'],c:'Travel',s:'Flight Tickets'},
+  {k:['hotel','resort','hostel','oyo','treebo','fabhotel','goibibo','booking.com','airbnb','stay','accommodation'],c:'Vacation',s:'Lodging'},
+  {k:['local travel','sightseeing','tour','guide','car rental','zoomcar','revv','rental car'],c:'Travel',s:'Train Tickets'},
+  {k:['card bill','credit card bill','card payment','cc payment','card due','minimum due','outstanding payment'],c:'Credit Card Bill Payment',s:''},
+  {k:['emi','loan','loan emi','home loan','car loan','personal loan','education loan','gold loan','emi payment'],c:'Homeneeds',s:'Home Improvements'},
+  {k:['atm','cash withdrawal','atm withdrawal','withdraw cash'],c:'Bank Balance Reconciliation',s:'ATM Withdrawl'},
+  {k:['transfer','neft','rtgs','imps','upi transfer','fund transfer','bank transfer','sent to','transferred to'],c:'Fund Transfer b/w Bank Accounts',s:'Inter Bank Transfer'},
+  {k:['salary','wages','pay','stipend','monthly pay','payroll'],c:'Income',s:'Freelancing Income'},
+  {k:['freelance','freelancing','consulting','contract','gig','project payment','client payment'],c:'Income',s:'Freelancing Income'},
+  {k:['interest','fd interest','rd interest','savings interest','deposit interest','bank interest'],c:'Income',s:'Interest Income'},
+  {k:['dividend','dividends','stock dividend','mf dividend','equity dividend'],c:'Income',s:'Dividend'},
+  {k:['commission','bonus','incentive','gratuity','performance bonus'],c:'Income',s:'Other Income'},
 ];
 /* ── Levenshtein distance between two strings (dynamic programming). ──────
    Used for fuzzy keyword matching: tolerates typos in user input.          */
@@ -42386,7 +42466,7 @@ const _cbDetectType=(text,cat)=>{
     if(new RegExp('\\b'+kw+'\\b','i').test(lo))return'credit';
   if(cat){
     if(cat.cat==='Income')return'credit';
-    if(['Housing','Food','Transport','Shopping','Entertainment','Utilities','Insurance','Investment','Travel','Payment'].includes(cat.cat))return'debit';
+    if(['Automobile','Beauty and Personal Care','Childcare','Farming','Groceries Food & Essentials','Healthcare','Homeneeds','Insurance Premiums','Investments','Leisure','Donations','Jewellery and Precious Metals','Office & Business Expenses','Personal Items','Subscriptions','Taxes','Travel','Utilities and Bills','Vacation','Credit Card Bill Payment','Unclassified Expenses','Events and Functions'].includes(cat.cat))return'debit';
   }
   for(const kw of['spent','spend','paid','purchase','bought','debit','bill','charge','subscription','emi','withdrawal','withdraw','donated','tip','fine'])
     if(new RegExp('\\b'+kw+'\\b','i').test(lo))return'debit';
@@ -42442,11 +42522,11 @@ const _cbParseTransaction=(text,state)=>{
   else if(allAcc.length===1){srcId=allAcc[0].id;srcType=allAcc[0].accType;accConf=1;}
   else{srcId=allAcc[0]?.id;srcType=allAcc[0]?.accType;ambiguities.push({type:'account',options:allAcc.map(a=>({id:a.id,name:a.name,type:a.accType}))});}
   // Check for card bill payment — also validate Payment::Card Bill exists in state.categories
-  const _cardBillCatOk=_appCats.some(c=>c.name==='Payment'&&(c.subs||[]).some(s=>s.name==='Card Bill'));
+  const _cardBillCatOk=_appCats.some(c=>c.name==='Credit Card Bill Payment');
   if(_cardBillCatOk&&srcType==='card'&&type==='debit'&&/\b(card\s*bill|card\s*payment|cc\s*payment|bill\s*payment|due|outstanding)\b/i.test(trimmed)){
-    const _cbPayee=_cbExtractPayee(trimmed)||getDefaultPayee(_appCats,'Payment::Card Bill')||'';
-    const tx={amount,date,type:'credit',cat:'Payment',subcat:'Card Bill',payee:_cbPayee,desc:_cbGenDesc(trimmed,catResult,_cbPayee,accMatch?.match?.account,(_training.accountAliases||[]).filter(a=>a.accountId===accMatch?.match?.account?.id).map(a=>a.alias)),status:'Reconciled',srcId,srcType};
-    return{success:true,confidence:0.9,transaction:tx,ambiguities,catMatch:{cat:'Payment',subcat:'Card Bill'},accountMatch:accMatch?{name:accMatch.match.account.name,confidence:accMatch.match.confidence}:null,raw:{text:trimmed}};
+    const _cbPayee=_cbExtractPayee(trimmed)||getDefaultPayee(_appCats,'Credit Card Bill Payment')||'';
+    const tx={amount,date,type:'credit',cat:'Credit Card Bill Payment',subcat:'',payee:_cbPayee,desc:_cbGenDesc(trimmed,catResult,_cbPayee,accMatch?.match?.account,(_training.accountAliases||[]).filter(a=>a.accountId===accMatch?.match?.account?.id).map(a=>a.alias)),status:'Reconciled',srcId,srcType};
+    return{success:true,confidence:0.9,transaction:tx,ambiguities,catMatch:{cat:'Credit Card Bill Payment',subcat:''},accountMatch:accMatch?{name:accMatch.match.account.name,confidence:accMatch.match.confidence}:null,raw:{text:trimmed}};
   }
   // Build canonical category key (e.g. "Food::Groceries") for getDefaultPayee lookup.
   // If the user typed an explicit payee ("at Reliance Fresh"), use it.
