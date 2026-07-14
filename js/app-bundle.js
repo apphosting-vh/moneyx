@@ -42,8 +42,12 @@ window.__loadExportLibs=(function(){
     _p=Promise.all([
       loadOne('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'),
       loadOne('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'),
+      loadOne('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'),
     ]).then(function(){
-      return loadOne('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js');
+      return Promise.all([
+        loadOne('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js'),
+        loadOne('https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js'),
+      ]);
     }).catch(function(err){ _p=null; throw err; });
     return _p;
   };
@@ -732,6 +736,10 @@ const INIT=()=>({
     pyfDayTarget:10,
     budgetPlans:{},
     yearlyBudgetPlans:{},
+    emailjsServiceId:"",
+    emailjsTemplateId:"",
+    emailjsPublicKey:"",
+    emailRecipient:"",
   },
   catRules:[],
   reminders:[],
@@ -888,7 +896,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="6.7.3";
+const APP_VERSION="6.10.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -7702,6 +7710,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
     {id:"categories",label:"Categories",icon:React.createElement(Icon,{n:"tag",size:16})},
     {id:"payees",label:"Payees",icon:React.createElement(Icon,{n:"user",size:16})},
     {id:"insightprefs",label:"Insights Config",icon:React.createElement(Icon,{n:"target",size:16})},
+    {id:"emailconfig",label:"Email Config",icon:React.createElement(Icon,{n:"mail",size:16})},
     {id:"tabmgmt",     label:"Tab Management",icon:React.createElement(Icon,{n:"tabs",size:16})},
     {id:"backup",label:"Data & Backup",icon:React.createElement(Icon,{n:"save",size:16})},
     {id:"chatbotTraining",label:"Chatbot Training",icon:React.createElement(Icon,{n:"robot",size:16})},
@@ -8184,8 +8193,11 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
         editPayee&&React.createElement(PayeeEditModal,{p:editPayee,onClose:()=>setEditPayee(null)})
       ),
 
-      /* ══ DATA & BACKUP ══ */
+      /* ══ INSIGHTS CONFIG ══ */
       stab==="insightprefs"&&React.createElement(InsightPrefsPanel,{state,dispatch}),
+
+      /* ══ EMAIL CONFIG ══ */
+      stab==="emailconfig"&&React.createElement(EmailConfigPanel,{state,dispatch}),
 
       /* ══ TAB MANAGEMENT ══ */
       stab==="tabmgmt"&&(()=>{
@@ -30137,6 +30149,41 @@ const ExportReportModal=({data,onClose})=>{
     }));
   };
 
+  /* ── compute account balances as of a given date (reverses post-date txns) ── */
+  const getBalancesAsOf=(toDate)=>{
+    const after=t=>t.date>toDate;
+    const bankBal=data.banks.reduce((s,b)=>{
+      let bal=b.balance;
+      (b.transactions||[]).filter(after).forEach(t=>{
+        bal+=(t.type==="credit")?-t.amount:t.amount;
+      });
+      return s+bal;
+    },0);
+    let cashBal=data.cash.balance;
+    (data.cash.transactions||[]).filter(after).forEach(t=>{
+      cashBal+=(t.type==="credit")?-t.amount:t.amount;
+    });
+    const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
+    const mfVal=data.mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
+    const fdVal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
+    const reVal=data.re.reduce((s,r)=>s+(r.currentValue||r.acquisitionCost),0);
+    const cDebt=data.cards.reduce((s,c)=>{
+      let out=c.outstanding;
+      (c.transactions||[]).filter(after).forEach(t=>{
+        out+=(t.type==="debit")?-t.amount:t.amount;
+      });
+      return s+out;
+    },0);
+    const lDebt=data.loans.reduce((s,l)=>{
+      let out=l.outstanding;
+      (l.transactions||[]).filter(after).forEach(t=>{
+        out+=(t.type==="debit")?-t.amount:t.amount;
+      });
+      return s+out;
+    },0);
+    return{bankBal,cashBal,shVal,mfVal,fdVal,reVal,cDebt,lDebt,totalAssets:bankBal+cashBal+shVal+mfVal+fdVal+reVal};
+  };
+
   /* ══════════════════════════════════════════════════
      EXCEL EXPORT — multi-sheet workbook via SheetJS
   ══════════════════════════════════════════════════ */
@@ -30154,15 +30201,8 @@ const ExportReportModal=({data,onClose})=>{
       const hStyle={font:{bold:true}};
 
       /* ── Sheet 1: Cover & Net Worth Snapshot ── */
-      const bankBal=data.banks.reduce((s,b)=>s+b.balance,0);
-      const cashBal=data.cash.balance;
-      const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
-      const mfVal=data.mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
-      const fdVal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
-      const reVal=data.re.reduce((s,r)=>s+(r.currentValue||r.acquisitionCost),0);
-      const cDebt=data.cards.reduce((s,c)=>s+c.outstanding,0);
-      const lDebt=data.loans.reduce((s,l)=>s+l.outstanding,0);
-      const totalAssets=bankBal+cashBal+shVal+mfVal+fdVal+reVal;
+      const bal=getBalancesAsOf(to);
+      const{bankBal,cashBal,shVal,mfVal,fdVal,reVal,cDebt,lDebt,totalAssets}=bal;
       const netWorth=totalAssets-cDebt-lDebt;
       const totIncome=all.filter(t=>catClassType(data.categories,t.cat||"Others")==="Income").reduce((s,t)=>s+t.amount,0);
       const totExpense=all.filter(t=>["Expense","Others"].includes(catClassType(data.categories,t.cat||"Others"))).reduce((s,t)=>s+t.amount,0);
@@ -30214,13 +30254,25 @@ const ExportReportModal=({data,onClose})=>{
           cfRows.reduce((s,r)=>s+r.net,0),""],
       ]);
 
-      /* ── Sheet 3: Category Breakdown ── */
-      addSheet("Category Breakdown",[
-        ["Category","Sub-Category","Class","Debit (₹)","Credit (₹)","Transactions"],
-        ...catRows.map(r=>[r.category,r.subCategory,r.classType,fmt(r.debit),fmt(r.credit),r.count]),
+      /* ── Sheet 3: Income by Category ── */
+      const incomeCatRows=catRows.filter(r=>r.classType==="Income").sort((a,b)=>b.credit-a.credit);
+      const expenseCatRows=catRows.filter(r=>r.classType!=="Income").sort((a,b)=>b.debit-a.debit);
+      addSheet("Income by Category",[
+        ["Category","Sub-Category","Credit (₹)","Debit (₹)","Transactions"],
+        ...incomeCatRows.map(r=>[r.category,r.subCategory,fmt(r.credit),fmt(r.debit),r.count]),
+        ["","","","",""],
+        ["TOTALS","",fmt(incomeCatRows.reduce((s,r)=>s+r.credit,0)),"",incomeCatRows.reduce((s,r)=>s+r.count,0)],
       ]);
 
-      /* ── Sheet 4: Mutual Funds ── */
+      /* ── Sheet 4: Spending by Category ── */
+      addSheet("Spending by Category",[
+        ["Category","Sub-Category","Class","Debit (₹)","Credit (₹)","Transactions"],
+        ...expenseCatRows.map(r=>[r.category,r.subCategory,r.classType,fmt(r.debit),fmt(r.credit),r.count]),
+        ["","","","","",""],
+        ["TOTALS","","",fmt(expenseCatRows.reduce((s,r)=>s+r.debit,0)),"",expenseCatRows.reduce((s,r)=>s+r.count,0)],
+      ]);
+
+      /* ── Sheet 5: Mutual Funds ── */
       addSheet("Mutual Funds",[
         ["Fund Name","Scheme Code","Units","Avg NAV (₹)","Amount Invested (₹)","Current NAV (₹)","Current Value (₹)","P&L (₹)","Return (%)","Last Updated"],
         ...data.mf.map(m=>{
@@ -30236,7 +30288,7 @@ const ExportReportModal=({data,onClose})=>{
           data.mf.reduce((s,m)=>{const coa=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;return s+(m.currentValue||m.invested)-coa;},0),"",""],
       ]);
 
-      /* ── Sheet 5: Shares ── */
+      /* ── Sheet 6: Shares ── */
       addSheet("Shares",[
         ["Company","Ticker","Qty","Buy Price (₹)","Current Price (₹)","Cost Basis (₹)","Market Value (₹)","P&L (₹)","Return (%)","Last Updated"],
         ...data.shares.map(sh=>{
@@ -30251,7 +30303,7 @@ const ExportReportModal=({data,onClose})=>{
           data.shares.reduce((s,sh)=>s+sh.qty*(sh.currentPrice-sh.buyPrice),0),"",""],
       ]);
 
-      /* ── Sheet 6: Fixed Deposits ── */
+      /* ── Sheet 7: Fixed Deposits ── */
       addSheet("Fixed Deposits",[
         ["Bank / Institution","Principal (₹)","Rate (% p.a.)","Start Date","Maturity Date","Value Today (₹)","Maturity Amount (₹)","Interest Earned (₹)","Days to Maturity"],
         ...data.fd.map(f=>{
@@ -30265,7 +30317,7 @@ const ExportReportModal=({data,onClose})=>{
           data.fd.reduce((s,f)=>{const m=f.maturityAmount&&f.maturityAmount>f.amount?f.maturityAmount:calcFDMaturity(f.amount,f.rate,f.startDate,f.maturityDate);return s+m-f.amount;},0),""],
       ]);
 
-      /* ── Sheet 7: Real Estate ── */
+      /* ── Sheet 8: Real Estate ── */
       addSheet("Real Estate",[
         ["Property","Acquisition Date","Cost of Acquisition (₹)","Current Value (₹)","Unrealised Gain/Loss (₹)","Return (%)","Notes"],
         ...data.re.map(r=>{
@@ -30275,7 +30327,7 @@ const ExportReportModal=({data,onClose})=>{
         }),
       ]);
 
-      /* ── Sheet 8: Loans ── */
+      /* ── Sheet 9: Loans ── */
       addSheet("Loans",[
         ["Loan Name","Bank / Lender","Type","Principal (₹)","Outstanding (₹)","EMI/Month (₹)","Rate (% p.a.)","% Repaid","Start Date","End Date"],
         ...data.loans.map(l=>[
@@ -30290,7 +30342,7 @@ const ExportReportModal=({data,onClose})=>{
           data.loans.reduce((s,l)=>s+l.emi,0),"","","",""],
       ]);
 
-      /* ── Sheet 9: Account Balances ── */
+      /* ── Sheet 10: Account Balances ── */
       addSheet("Account Balances",[
         ["Account","Type","Bank / Institution","Current Balance / Outstanding (₹)"],
         ...data.banks.map(b=>[b.name,"Bank",b.bank,b.balance]),
@@ -30310,24 +30362,17 @@ const ExportReportModal=({data,onClose})=>{
   };
 
   /* ══════════════════════════════════════════════════
-     PDF EXPORT — styled print HTML in new window
+     PDF EXPORT — capture styled HTML → jsPDF download
   ══════════════════════════════════════════════════ */
-  const exportPDF=()=>{
+  const exportPDF=async()=>{
     setExporting(true);setStatus(null);
     try{
       const{from,to,label}=getRange();
       const{banks,cards,cash,all}=getTx(from,to);
       const catRows=getCatSummary(all);
       const cfRows=getMonthlyCF(all,from,to);
-      const bankBal=data.banks.reduce((s,b)=>s+b.balance,0);
-      const cashBal=data.cash.balance;
-      const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
-      const mfVal=data.mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
-      const fdVal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
-      const reVal=data.re.reduce((s,r)=>s+(r.currentValue||r.acquisitionCost),0);
-      const cDebt=data.cards.reduce((s,c)=>s+c.outstanding,0);
-      const lDebt=data.loans.reduce((s,l)=>s+l.outstanding,0);
-      const totalAssets=bankBal+cashBal+shVal+mfVal+fdVal+reVal;
+      const bal=getBalancesAsOf(to);
+      const{bankBal,cashBal,shVal,mfVal,fdVal,reVal,cDebt,lDebt,totalAssets}=bal;
       const netWorth=totalAssets-cDebt-lDebt;
       const totIncome=all.filter(t=>catClassType(data.categories,t.cat||"Others")==="Income").reduce((s,t)=>s+t.amount,0);
       const totExpense=all.filter(t=>["Expense","Others"].includes(catClassType(data.categories,t.cat||"Others"))).reduce((s,t)=>s+t.amount,0);
@@ -30335,33 +30380,109 @@ const ExportReportModal=({data,onClose})=>{
       const netFlow=totIncome-totExpense-totInvest;
       const savRate=totIncome>0?((netFlow/totIncome)*100).toFixed(1):"0.0";
 
-      const f2=(n)=>_numFmt0.format(n||0); // reuse cached plain-number formatter
-      const col=(n)=>n>=0?"#16a34a":"#dc2626";
-
-      /* ── HTML escape — prevents XSS via user-supplied text in PDF HTML ── */
+      const f2=(n)=>_numFmt0.format(n||0);
       const esc=(s)=>String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-
-      /* ── HTML builder helpers ── */
       const th=(txt,align="left",w="")=>`<th style="background:#1e3a5f;color:#fff;padding:7px 10px;font-size:11px;text-align:${align};white-space:nowrap;${w?"width:"+w+";":""}">${esc(txt)}</th>`;
       const td=(txt,align="left",bold=false,color="")=>`<td style="padding:6px 10px;font-size:11px;text-align:${align};${bold?"font-weight:700;":""}${color?"color:"+color+";":""}">${esc(txt)}</td>`;
-      const section=(title,icon,body)=>`
-        <div style="margin-bottom:28px;page-break-inside:avoid;">
-          <h3 style="font-size:14px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:6px;margin-bottom:12px;">${icon} ${esc(title)}</h3>
-          ${body}
-        </div>`;
-      const table=(header,rows)=>`
-        <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:4px;">
-          <thead><tr>${header}</tr></thead>
-          <tbody>${rows.map((r,i)=>`<tr style="background:${i%2===0?"#f8fafc":"#fff"};border-bottom:1px solid #e2e8f0;">${r}</tr>`).join("")}</tbody>
-        </table>`;
       const kv=(label,val,color="")=>`<tr><td style="padding:5px 8px;font-size:12px;color:#374151;">${label}</td><td style="padding:5px 8px;font-size:12px;font-weight:700;text-align:right;${color?"color:"+color+";":" "}">₹${f2(val)}</td></tr>`;
+      const table=(header,rows)=>`<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:4px;"><thead><tr>${header}</tr></thead><tbody>${rows.map((r,i)=>"<tr style=\"background:"+(i%2===0?"#f8fafc":"#fff")+";border-bottom:1px solid #e2e8f0;\">"+r+"</tr>").join("")}</tbody></table>`;
 
-      /* ── Build HTML ── */
-      const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
-<title>finsight Report — ${esc(label)}</title>
-<style>
+      await window.__loadExportLibs();
+      const h2c=window.html2canvas||window.Html2Canvas;
+
+      var cfSection="";
+      if(cfRows.length>0){
+        cfSection="<p class=\"section-title\">Cash Flow by Month</p>"+table(th("Month")+th("Income (₹)","right")+th("Expenses (₹)","right")+th("Investments (₹)","right")+th("Net Savings (₹)","right")+th("Rate","right"),cfRows.map(function(r){return[td(r.label),td("₹"+f2(r.income),"right",false,"#16a34a"),td("₹"+f2(r.expense),"right",false,"#dc2626"),td("₹"+f2(r.investment),"right",false,"#7c3aed"),td("₹"+f2(r.net),"right",true,r.net>=0?"#16a34a":"#dc2626"),td(r.income>0?((r.net/r.income)*100).toFixed(1)+"%":"--","right")].join("")}));
+      }
+      var catSection="";
+      var incCatSection="";
+      if(catRows.length>0){
+        var expCatRows=catRows.filter(function(r){return r.classType!=="Income";}).sort(function(a,b){return b.debit-a.debit;});
+        var incCatRows=catRows.filter(function(r){return r.classType==="Income";}).sort(function(a,b){return b.credit-a.credit;});
+        if(expCatRows.length>0){
+          catSection="<p class=\"section-title\">Spending by Category</p>"+table(th("Category")+th("Sub-Category")+th("Class")+th("Debit (₹)","right")+th("Credit (₹)","right")+th("Txns","right"),expCatRows.slice(0,30).map(function(r){return[td(r.category,"left",true),td(r.subCategory||"—"),td(r.classType),td(r.debit>0?"₹"+f2(r.debit):"—","right",false,r.debit>0?"#dc2626":"#9ca3af"),td(r.credit>0?"₹"+f2(r.credit):"—","right",false,r.credit>0?"#16a34a":"#9ca3af"),td(String(r.count),"right")].join("")}));
+        }
+        if(incCatRows.length>0){
+          incCatSection="<p class=\"section-title\">Income by Category</p>"+table(th("Category")+th("Sub-Category")+th("Credit (₹)","right")+th("Txns","right"),incCatRows.map(function(r){return[td(r.category,"left",true),td(r.subCategory||"—"),td("₹"+f2(r.credit),"right",false,"#16a34a"),td(String(r.count),"right")].join("")}));
+        }
+      }
+
+      /* ── Mutual Fund Holdings ── */
+      var mfSection="";
+      var mfActive=(data.mf||[]).filter(function(m){return m.units&&m.units>0;});
+      if(mfActive.length>0){
+        var mfInvTot=mfActive.reduce(function(s,m){return s+m.invested;},0);
+        var mfCurTot=mfActive.reduce(function(s,m){return s+(m.currentValue||m.invested);},0);
+        var mfPLTot=mfActive.reduce(function(s,m){var coa=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;return s+(m.currentValue||m.invested)-coa;},0);
+        mfSection="<p class=\"section-title\">Mutual Fund Portfolio</p>"+
+          "<div style=\"display:flex;gap:12px;margin-bottom:12px;\">"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Invested</div><div class=\"card-val\" style=\"color:#7c3aed;\">₹"+f2(mfInvTot)+"</div></div>"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Current Value</div><div class=\"card-val\" style=\"color:#16a34a;\">₹"+f2(mfCurTot)+"</div></div>"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">P&L</div><div class=\"card-val\" style=\"color:"+(mfPLTot>=0?"#16a34a":"#dc2626")+";\">₹"+f2(mfPLTot)+"</div></div>"+
+          "</div>"+
+          table(th("Fund Name")+th("Units","right")+th("Invested (₹)","right")+th("Current Value (₹)","right")+th("P&L (₹)","right")+th("Return %","right"),
+            mfActive.map(function(m){var coa=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;var cur=m.currentValue||m.invested;var pl=cur-coa;var ret=coa>0?((pl/coa)*100).toFixed(1)+"%":"--";
+              return[td(m.name,"left",true),td(f2(m.units),"right"),td("₹"+f2(m.invested),"right"),td("₹"+f2(cur),"right"),td("₹"+f2(pl),"right",false,pl>=0?"#16a34a":"#dc2626"),td(ret,"right",false,pl>=0?"#16a34a":"#dc2626")].join("");}));
+      }
+
+      /* ── Shares & Equities Holdings ── */
+      var sharesSection="";
+      if(data.shares&&data.shares.length>0){
+        var shCostTot=data.shares.reduce(function(s,sh){return s+sh.qty*sh.buyPrice;},0);
+        var shValTot=data.shares.reduce(function(s,sh){return s+sh.qty*sh.currentPrice;},0)+(data.brokerCashBalance||0);
+        var shPLTot=data.shares.reduce(function(s,sh){return s+sh.qty*(sh.currentPrice-sh.buyPrice);},0);
+        sharesSection="<p class=\"section-title\">Shares & Equities Portfolio</p>"+
+          "<div style=\"display:flex;gap:12px;margin-bottom:12px;\">"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Invested</div><div class=\"card-val\" style=\"color:#16a34a;\">₹"+f2(shCostTot)+"</div></div>"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Market Value</div><div class=\"card-val\" style=\"color:#16a34a;\">₹"+f2(shValTot)+"</div></div>"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">P&L</div><div class=\"card-val\" style=\"color:"+(shPLTot>=0?"#16a34a":"#dc2626")+";\">₹"+f2(shPLTot)+"</div></div>"+
+          "</div>"+
+          table(th("Company")+th("Ticker")+th("Qty","right")+th("Buy ₹","right")+th("CMP ₹","right")+th("Value (₹)","right")+th("P&L (₹)","right")+th("Return %","right"),
+            data.shares.map(function(sh){var cost=sh.qty*sh.buyPrice;var val=sh.qty*sh.currentPrice;var pl=val-cost;var ret=cost>0?((pl/cost)*100).toFixed(1)+"%":"--";
+              return[td(sh.company,"left",true),td(sh.ticker),td(String(sh.qty),"right"),td("₹"+f2(sh.buyPrice),"right"),td("₹"+f2(sh.currentPrice),"right"),td("₹"+f2(val),"right"),td("₹"+f2(pl),"right",false,pl>=0?"#16a34a":"#dc2626"),td(ret,"right",false,pl>=0?"#16a34a":"#dc2626")].join("");}));
+      }
+
+      /* ── Fixed Deposits Holdings ── */
+      var fdSection="";
+      if(data.fd&&data.fd.length>0){
+        var fdPrinTot=data.fd.reduce(function(s,f){return s+f.amount;},0);
+        var fdValTot=data.fd.reduce(function(s,f){return s+calcFDValueToday(f);},0);
+        var fdMatTot=data.fd.reduce(function(s,f){var m=f.maturityAmount&&f.maturityAmount>f.amount?f.maturityAmount:calcFDMaturity(f.amount,f.rate,f.startDate,f.maturityDate);return s+m;},0);
+        fdSection="<p class=\"section-title\">Fixed Deposits</p>"+
+          "<div style=\"display:flex;gap:12px;margin-bottom:12px;\">"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Principal</div><div class=\"card-val\" style=\"color:#d97706;\">₹"+f2(fdPrinTot)+"</div></div>"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Current Value</div><div class=\"card-val\" style=\"color:#d97706;\">₹"+f2(fdValTot)+"</div></div>"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Maturity Value</div><div class=\"card-val\" style=\"color:#16a34a;\">₹"+f2(fdMatTot)+"</div></div>"+
+          "</div>"+
+          table(th("Bank / Institution")+th("Principal (₹)","right")+th("Rate %")+th("Maturity Date")+th("Value Today (₹)","right")+th("Maturity Amt (₹)","right")+th("Days Left","right"),
+            data.fd.map(function(f){var mat=f.maturityAmount&&f.maturityAmount>f.amount?f.maturityAmount:calcFDMaturity(f.amount,f.rate,f.startDate,f.maturityDate);
+              return[td(f.bank,"left",true),td("₹"+f2(f.amount),"right"),td(String(f.rate)+"%"),td(f.maturityDate),td("₹"+f2(calcFDValueToday(f)),"right"),td("₹"+f2(mat),"right"),td(String(daysLeft(f.maturityDate)),"right")].join("");}));
+      }
+
+      /* ── Real Estate Holdings ── */
+      var reSection="";
+      if(data.re&&data.re.length>0){
+        var reCostTot=data.re.reduce(function(s,r){return s+r.acquisitionCost;},0);
+        var reValTot=data.re.reduce(function(s,r){return s+(r.currentValue||r.acquisitionCost);},0);
+        var reGainTot=reValTot-reCostTot;
+        reSection="<p class=\"section-title\">Real Estate Holdings</p>"+
+          "<div style=\"display:flex;gap:12px;margin-bottom:12px;\">"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Acquisition Cost</div><div class=\"card-val\" style=\"color:#ea580c;\">₹"+f2(reCostTot)+"</div></div>"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Current Value</div><div class=\"card-val\" style=\"color:#ea580c;\">₹"+f2(reValTot)+"</div></div>"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Unrealised Gain</div><div class=\"card-val\" style=\"color:"+(reGainTot>=0?"#16a34a":"#dc2626")+";\">₹"+f2(reGainTot)+"</div></div>"+
+          "</div>"+
+          table(th("Property")+th("Acquired")+th("Cost (₹)","right")+th("Current Value (₹)","right")+th("Gain/Loss (₹)","right")+th("Return %","right"),
+            data.re.map(function(r){var gain=(r.currentValue||r.acquisitionCost)-r.acquisitionCost;var ret=r.acquisitionCost>0?((gain/r.acquisitionCost)*100).toFixed(1)+"%":"--";
+              return[td(r.title,"left",true),td(r.acquisitionDate||"—"),td("₹"+f2(r.acquisitionCost),"right"),td("₹"+f2(r.currentValue||r.acquisitionCost),"right"),td("₹"+f2(gain),"right",false,gain>=0?"#16a34a":"#dc2626"),td(ret,"right",false,gain>=0?"#16a34a":"#dc2626")].join("");}));
+      }
+
+      var A4W=210,A4H=297,MG=10;
+      var cWmm=A4W-MG*2;
+      var capPx=960;
+
+      const html=`<style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Segoe UI',Arial,sans-serif;color:#1a1a2e;background:#fff;padding:28px;font-size:12px;}
+  .rpt-wrap{font-family:'Segoe UI',Arial,sans-serif;color:#1a1a2e;background:#fff;padding:16px 24px;font-size:12px;width:${capPx}px;}
   h1{font-size:22px;color:#1e3a5f;margin-bottom:4px;}
   h2{font-size:16px;color:#374151;margin-bottom:16px;}
   .badge{display:inline-block;background:#e0f2fe;color:#0369a1;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;margin-right:6px;}
@@ -30373,232 +30494,175 @@ const ExportReportModal=({data,onClose})=>{
   table{width:100%;border-collapse:collapse;}
   th{background:#1e3a5f;color:#fff;padding:7px 10px;font-size:11px;text-align:left;white-space:nowrap;}
   td{padding:6px 10px;font-size:11px;border-bottom:1px solid #e2e8f0;}
-  tr:nth-child(even) td{background:#f8fafc;}
-  .green{color:#16a34a;} .red{color:#dc2626;}
+  tr:nth-child(even) td{background:#f8faffc;}
   .section-title{font-size:14px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:6px;margin:20px 0 12px;}
-  @media print{
-    body{padding:14px;font-size:11px;}
-    .no-break{page-break-inside:avoid;}
-  }
-</style></head><body>
-
-<!-- COVER -->
-<div style="border-bottom:3px solid #1e3a5f;margin-bottom:20px;padding-bottom:14px;">
-  <div style="display:flex;justify-content:space-between;align-items:flex-end;">
-    <div>
-      <h1>finsight</h1>
-      <h2>${periodType==="monthly"?"Monthly":"Yearly"} Summary Report &mdash; ${esc(label)}</h2>
-      <span class="badge">${from} to ${to}</span>
-      <span class="badge">Generated ${new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})}</span>
-    </div>
-    <div style="text-align:right;color:#6b7280;font-size:11px;">
-      <div style="font-size:20px;font-weight:800;color:${netWorth>=0?"#16a34a":"#dc2626"}">₹${f2(netWorth)}</div>
-      <div>Net Worth</div>
-    </div>
-  </div>
+</style>
+<div class="rpt-wrap">
+<div style="border-bottom:3px solid #1e3a5f;margin-bottom:20px;padding-bottom:14px;display:flex;justify-content:space-between;align-items:flex-end;">
+  <div><h1>finsight</h1><h2>${periodType==="monthly"?"Monthly":"Yearly"} Summary Report — ${esc(label)}</h2>
+    <span class="badge">${from} to ${to}</span>
+    <span class="badge">Generated ${new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})}</span></div>
+  <div style="text-align:right;color:#6b7280;font-size:11px;"><div style="font-size:20px;font-weight:800;color:${netWorth>=0?"#16a34a":"#dc2626"}">₹${f2(netWorth)}</div><div>Net Worth</div></div>
 </div>
-
-<!-- PERIOD SNAPSHOT KPIs -->
-<div class="grid-4">
-  <div class="card"><div class="card-label">Total Income</div><div class="card-val" style="color:#16a34a;">₹${f2(totIncome)}</div></div>
+<div class="grid-4"><div class="card"><div class="card-label">Total Income</div><div class="card-val" style="color:#16a34a;">₹${f2(totIncome)}</div></div>
   <div class="card"><div class="card-label">Total Expenses</div><div class="card-val" style="color:#dc2626;">₹${f2(totExpense)}</div></div>
   <div class="card"><div class="card-label">Net Savings</div><div class="card-val" style="color:${netFlow>=0?"#16a34a":"#dc2626"};">₹${f2(netFlow)}</div></div>
-  <div class="card"><div class="card-label">Savings Rate</div><div class="card-val" style="color:#0369a1;">${savRate}%</div></div>
-</div>
-<div class="grid-4" style="margin-bottom:24px;">
-  <div class="card"><div class="card-label">Investments Made</div><div class="card-val" style="color:#7c3aed;">₹${f2(totInvest)}</div></div>
+  <div class="card"><div class="card-label">Savings Rate</div><div class="card-val" style="color:#0369a1;">${savRate}%</div></div></div>
+<div class="grid-4" style="margin-bottom:24px;"><div class="card"><div class="card-label">Investments Made</div><div class="card-val" style="color:#7c3aed;">₹${f2(totInvest)}</div></div>
   <div class="card"><div class="card-label">Total Transactions</div><div class="card-val">${all.length}</div></div>
   <div class="card"><div class="card-label">Total Assets</div><div class="card-val" style="color:#0369a1;">₹${f2(totalAssets)}</div></div>
-  <div class="card"><div class="card-label">Total Liabilities</div><div class="card-val" style="color:#dc2626;">₹${f2(cDebt+lDebt)}</div></div>
-</div>
-
-<!-- NET WORTH BREAKDOWN -->
-<div class="no-break">
-<p class="section-title">Net Worth Breakdown</p>
-<div class="grid-2">
-  <table>
-    <thead><tr><th>Asset</th><th style="text-align:right;">Value (₹)</th></tr></thead>
-    <tbody>
-      ${kv("Bank Accounts",bankBal,"#1e3a5f")}
-      ${kv("Cash Wallet",cashBal,"#1e3a5f")}
-      ${kv("Mutual Funds",mfVal,"#7c3aed")}
-      ${kv("Shares / Equities",shVal,"#16a34a")}
-      ${kv("Fixed Deposits",fdVal,"#d97706")}
-      ${kv("Real Estate",reVal,"#ea580c")}
-      <tr style="background:#e0f2fe;"><td style="padding:5px 8px;font-weight:700;font-size:12px;">Total Assets</td><td style="padding:5px 8px;font-weight:700;font-size:13px;text-align:right;color:#1e3a5f;">₹${f2(totalAssets)}</td></tr>
-    </tbody>
-  </table>
-  <table>
-    <thead><tr><th>Liability</th><th style="text-align:right;">Amount (₹)</th></tr></thead>
-    <tbody>
-      ${kv("Credit Card Outstanding",cDebt,"#dc2626")}
-      ${kv("Loan Balances",lDebt,"#dc2626")}
-      <tr style="background:#fee2e2;"><td style="padding:5px 8px;font-weight:700;font-size:12px;">Total Liabilities</td><td style="padding:5px 8px;font-weight:700;font-size:13px;text-align:right;color:#dc2626;">₹${f2(cDebt+lDebt)}</td></tr>
-      <tr><td colspan="2" style="padding:8px;"></td></tr>
-      <tr style="background:${netWorth>=0?"#dcfce7":"#fee2e2"};"><td style="padding:7px 8px;font-weight:800;font-size:13px;">NET WORTH</td><td style="padding:7px 8px;font-weight:800;font-size:16px;text-align:right;color:${netWorth>=0?"#16a34a":"#dc2626"};">₹${f2(netWorth)}</td></tr>
-    </tbody>
-  </table>
-</div></div>
-
-<!-- CASH FLOW BY MONTH -->
-${cfRows.length>0?`
-<p class="section-title">Cash Flow by Month</p>
-<div class="no-break">
-${table(
-  th("Month")+th("Income (₹)","right")+th("Expenses (₹)","right")+th("Investments (₹)","right")+th("Net Savings (₹)","right")+th("Rate","right"),
-  cfRows.map(r=>[
-    td(r.label),
-    td("₹"+f2(r.income),"right",false,"#16a34a"),
-    td("₹"+f2(r.expense),"right",false,"#dc2626"),
-    td("₹"+f2(r.investment),"right",false,"#7c3aed"),
-    td("₹"+f2(r.net),"right",true,r.net>=0?"#16a34a":"#dc2626"),
-    td(r.income>0?((r.net/r.income)*100).toFixed(1)+"%" :"--","right"),
-  ].join(""))
-)}
-</div>`:""}
-
-<!-- CATEGORY BREAKDOWN -->
-${catRows.length>0?`
-<p class="section-title">Spending by Category</p>
-<div class="no-break">
-${table(
-  th("Category")+th("Sub-Category")+th("Class")+th("Debit (₹)","right")+th("Credit (₹)","right")+th("Txns","right"),
-  catRows.slice(0,30).map(r=>[
-    td(r.category,"left",true),
-    td(r.subCategory||"—"),
-    td(r.classType),
-    td(r.debit>0?"₹"+f2(r.debit):"—","right",false,r.debit>0?"#dc2626":"#9ca3af"),
-    td(r.credit>0?"₹"+f2(r.credit):"—","right",false,r.credit>0?"#16a34a":"#9ca3af"),
-    td(String(r.count),"right"),
-  ].join(""))
-)}
-</div>`:""}
-
-<!-- ACCOUNT BALANCES SUMMARY -->
-<p class="section-title">Account Balances</p>
-<div class="no-break">
-${table(
-  th("Account")+th("Type")+th("Bank / Institution")+th("Balance / Outstanding","right","160px"),
-  [
-    ...data.banks.map(b=>[td(b.name,"left",true),td("Bank"),td(b.bank),td("₹"+f2(b.balance),"right",false,"#16a34a")].join("")),
-    [td("Cash Wallet","left",true),td("Cash"),td("—"),td("₹"+f2(data.cash.balance),"right",false,"#16a34a")].join(""),
-    ...data.cards.map(c=>[td(c.name,"left",true),td("Credit Card"),td(c.bank),td("₹"+f2(c.outstanding),"right",false,"#dc2626")].join("")),
-  ]
-)}
-</div>
-
-<!-- INVESTMENTS -->
-${data.mf.length>0?`
-<p class="section-title">Mutual Funds</p>
-<div class="no-break">
-${table(
-  th("Fund Name")+th("Units","right","60px")+th("Avg NAV","right","75px")+th("Invested","right","90px")+th("Current Value","right","90px")+th("P&L","right","90px")+th("Return","right","65px"),
-  data.mf.map(m=>{
-    const coa=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;
-    const cur=m.currentValue||m.invested;
-    const pnl=cur-coa;
-    const ret=coa>0?((pnl/coa)*100).toFixed(1):"0.0";
-    return[
-      td(m.name,"left",true),td(m.units.toFixed(3),"right"),td("₹"+f2(m.avgNav||0),"right"),
-      td("₹"+f2(m.invested),"right"),td("₹"+f2(cur),"right",true,"#7c3aed"),
-      td((pnl>=0?"+":"")+"₹"+f2(Math.abs(pnl)),"right",true,pnl>=0?"#16a34a":"#dc2626"),
-      td((+ret>=0?"+":"")+ret+"%","right",false,+ret>=0?"#16a34a":"#dc2626"),
-    ].join("");
-  })
-)}
-</div>`:""}
-
-${data.shares.length>0?`
-<p class="section-title">Shares / Equities</p>
-<div class="no-break">
-${table(
-  th("Company")+th("Ticker","left","80px")+th("Qty","right","50px")+th("Buy Price","right","80px")+th("Current Price","right","90px")+th("P&L","right","90px")+th("Return","right","65px"),
-  data.shares.map(sh=>{
-    const cost=sh.qty*sh.buyPrice,val=sh.qty*sh.currentPrice,pnl=val-cost;
-    const ret=cost>0?((pnl/cost)*100).toFixed(1):"0.0";
-    return[
-      td(sh.company,"left",true),td(sh.ticker),td(String(sh.qty),"right"),
-      td("₹"+f2(sh.buyPrice),"right"),td("₹"+f2(sh.currentPrice),"right",false,pnl>=0?"#16a34a":"#dc2626"),
-      td((pnl>=0?"+":"")+"₹"+f2(Math.abs(pnl)),"right",true,pnl>=0?"#16a34a":"#dc2626"),
-      td((+ret>=0?"+":"")+ret+"%","right",false,+ret>=0?"#16a34a":"#dc2626"),
-    ].join("");
-  })
-)}
-</div>`:""}
-
-${data.fd.length>0?`
-<p class="section-title">Fixed Deposits</p>
-<div class="no-break">
-${table(
-  th("Bank")+th("Principal","right","90px")+th("Rate","right","60px")+th("Start Date","left","85px")+th("Maturity Date","left","85px")+th("At Maturity","right","90px")+th("Interest","right","80px")+th("Days Left","right","70px"),
-  data.fd.map(f=>{
-    const mat=f.maturityAmount&&f.maturityAmount>f.amount?f.maturityAmount:calcFDMaturity(f.amount,f.rate,f.startDate,f.maturityDate);
-    const days=daysLeft(f.maturityDate);
-    return[
-      td(f.bank,"left",true),td("₹"+f2(f.amount),"right"),td(f.rate+"%","right"),
-      td(f.startDate),td(f.maturityDate),
-      td("₹"+f2(mat),"right",true,"#16a34a"),
-      td("+₹"+f2(mat-f.amount),"right",false,"#16a34a"),
-      td(days===0?"Matured!":String(days),"right",false,days<=30?"#dc2626":"#374151"),
-    ].join("");
-  })
-)}
-</div>`:""}
-
-${data.re.length>0?`
-<p class="section-title">Real Estate</p>
-<div class="no-break">
-${table(
-  th("Property")+th("Acquired","left","85px")+th("Cost","right","100px")+th("Current Value","right","100px")+th("Unrealised Gain","right","110px")+th("Return","right","65px"),
-  data.re.map(r=>{
-    const gain=(r.currentValue||r.acquisitionCost)-r.acquisitionCost;
-    const ret=r.acquisitionCost>0?((gain/r.acquisitionCost)*100).toFixed(1):"0.0";
-    return[
-      td(r.title,"left",true),td(r.acquisitionDate||"—"),
-      td("₹"+f2(r.acquisitionCost),"right"),
-      td("₹"+f2(r.currentValue||r.acquisitionCost),"right",true,"#ea580c"),
-      td((gain>=0?"+":"")+"₹"+f2(Math.abs(gain)),"right",true,gain>=0?"#16a34a":"#dc2626"),
-      td((+ret>=0?"+":"")+ret+"%","right",false,+ret>=0?"#16a34a":"#dc2626"),
-    ].join("");
-  })
-)}
-</div>`:""}
-
-${data.loans.length>0?`
-<p class="section-title">Loans & EMIs</p>
-<div class="no-break">
-${table(
-  th("Loan")+th("Bank")+th("Type","left","70px")+th("Principal","right","90px")+th("Outstanding","right","90px")+th("EMI/Month","right","85px")+th("Rate","right","55px")+th("% Paid","right","60px")+th("End Date","left","82px"),
-  data.loans.map(l=>{
-    const pp=l.principal>0?(((l.principal-l.outstanding)/l.principal)*100).toFixed(1):"0";
-    return[
-      td(l.name,"left",true),td(l.bank),td(l.type),
-      td("₹"+f2(l.principal),"right"),
-      td("₹"+f2(l.outstanding),"right",true,"#dc2626"),
-      td("₹"+f2(l.emi),"right",false,"#ea580c"),
-      td(l.rate+"%","right"),td(pp+"%","right"),td(l.endDate),
-    ].join("");
-  })
-)}
-</div>`:""}
-
-<!-- FOOTER -->
+  <div class="card"><div class="card-label">Total Liabilities</div><div class="card-val" style="color:#dc2626;">₹${f2(cDebt+lDebt)}</div></div></div>
+<p class="section-title">Net Worth Breakdown</p><div class="grid-2"><table><thead><tr><th>Asset</th><th style="text-align:right;">Value (₹)</th></tr></thead><tbody>
+  ${kv("Bank Accounts",bankBal,"#1e3a5f")}${kv("Cash Wallet",cashBal,"#1e3a5f")}${kv("Mutual Funds",mfVal,"#7c3aed")}${kv("Shares / Equities",shVal,"#16a34a")}${kv("Fixed Deposits",fdVal,"#d97706")}${kv("Real Estate",reVal,"#ea580c")}
+  <tr style="background:#e0f2fe;"><td style="padding:5px 8px;font-weight:700;font-size:12px;">Total Assets</td><td style="padding:5px 8px;font-weight:700;font-size:13px;text-align:right;color:#1e3a5f;">₹${f2(totalAssets)}</td></tr></tbody></table>
+  <table><thead><tr><th>Liability</th><th style="text-align:right;">Amount (₹)</th></tr></thead><tbody>
+  ${kv("Credit Card Outstanding",cDebt,"#dc2626")}${kv("Loan Balances",lDebt,"#dc2626")}
+  <tr style="background:#fee2e2;"><td style="padding:5px 8px;font-weight:700;font-size:12px;">Total Liabilities</td><td style="padding:5px 8px;font-weight:700;font-size:13px;text-align:right;color:#dc2626;">₹${f2(cDebt+lDebt)}</td></tr>
+  <tr style="background:${netWorth>=0?"#dcfce7":"#fee2e2"};"><td style="padding:7px 8px;font-weight:800;font-size:13px;">NET WORTH</td><td style="padding:7px 8px;font-weight:800;font-size:16px;text-align:right;color:${netWorth>=0?"#16a34a":"#dc2626"};">₹${f2(netWorth)}</td></tr></tbody></table></div>
+${cfSection}${catSection}${incCatSection}${mfSection}${sharesSection}${fdSection}${reSection}
 <div style="margin-top:32px;padding-top:12px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:10px;color:#9ca3af;">
   <span>finsight v${APP_VERSION} · Exported ${new Date().toLocaleString("en-IN")}</span>
-  <span>${esc(label)} · Personal Finance Report</span>
-</div>
-</body></html>`;
+  <span>${esc(label)} · Personal Finance Report</span></div>
+</div>`;
 
-      const win=window.open("","_blank","width=1100,height=800");
-      if(!win){setStatus({ok:false,msg:"Popup blocked — please allow popups for this page."});setExporting(false);return;}
-      win.document.write(html);
-      win.document.close();
-      win.focus();
-      /* slight delay to let styles render before print dialog */
-      setTimeout(()=>{win.print();},600);
-      setStatus({ok:true,msg:"PDF opened in new window. Use browser Print → Save as PDF."});
+      const container=document.createElement("div");
+      container.style.cssText="position:fixed;left:-9999px;top:0;background:#fff;z-index:-1;overflow:visible;";
+      container.innerHTML=html;
+      document.body.appendChild(container);
+      await new Promise(r=>setTimeout(r,350));
+      const captured=await h2c(container,{scale:3,useCORS:true,backgroundColor:"#ffffff",logging:false,windowWidth:capPx});
+      document.body.removeChild(container);
+      var natW=captured.width;
+      var natH=captured.height;
+      var tgtW=Math.round(cWmm*3.7795*3);
+      var tgtH=Math.round(natH*tgtW/natW);
+      var sc2=document.createElement("canvas");
+      sc2.width=tgtW;sc2.height=tgtH;
+      var s2x=sc2.getContext("2d");
+      s2x.drawImage(captured,0,0,tgtW,tgtH);
+      var pxPerMmX=tgtW/cWmm;
+      var pageHPx=Math.round((A4H-MG*2)*pxPerMmX);
+      const{jsPDF}=window.jspdf;
+      const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+      var srcY=0;var pg=0;
+      var pageMmH=pageHPx/pxPerMmX;
+      while(srcY<tgtH){
+        if(pg>0)doc.addPage();
+        var sliceH=Math.min(pageHPx,tgtH-srcY);
+        var sc=document.createElement("canvas");
+        sc.width=tgtW;sc.height=pageHPx;
+        var sx=sc.getContext("2d");
+        sx.fillStyle="#ffffff";
+        sx.fillRect(0,0,tgtW,pageHPx);
+        sx.drawImage(sc2,0,srcY,tgtW,sliceH,0,0,tgtW,sliceH);
+        var sData=sc.toDataURL("image/jpeg",0.92);
+        doc.addImage(sData,"JPEG",MG,MG,cWmm,pageMmH);
+        srcY+=pageHPx;pg++;
+      }
+      const safeLabel=label.replace(/[^a-zA-Z0-9]/g,"_");
+      doc.save("finsight_Summary_"+safeLabel+".pdf");
+      setStatus({ok:true,msg:"PDF downloaded successfully!"});
     }catch(e){setStatus({ok:false,msg:"PDF export failed: "+e.message});}
     setExporting(false);
+  };
+
+  /* ══════════════════════════════════════════════════
+     EMAIL EXPORT — send summary report via EmailJS
+  ══════════════════════════════════════════════════ */
+  const emailCfg=data?.insightPrefs||{};
+  const hasEmailJS=!!(emailCfg.emailjsServiceId&&emailCfg.emailjsTemplateId&&emailCfg.emailjsPublicKey&&emailCfg.emailRecipient);
+  const [emailSending,setEmailSending]=useState(false);
+  const sendEmail=async()=>{
+    if(!hasEmailJS){setStatus({ok:false,msg:"Please configure EmailJS in Settings \u2192 Email Config."});return;}
+    setEmailSending(true);setStatus(null);
+    try{
+      await window.__loadExportLibs();
+      const{from,to,label}=getRange();
+      const{all}=getTx(from,to);
+      const bal=getBalancesAsOf(to);
+      const{bankBal,cashBal,shVal,mfVal,fdVal,reVal,cDebt,lDebt,totalAssets}=bal;
+      const netWorth=totalAssets-cDebt-lDebt;
+      const totIncome=all.filter(t=>catClassType(data.categories,t.cat||"Others")==="Income").reduce((s,t)=>s+t.amount,0);
+      const totExpense=all.filter(t=>["Expense","Others"].includes(catClassType(data.categories,t.cat||"Others"))).reduce((s,t)=>s+t.amount,0);
+      const totInvest=all.filter(t=>catClassType(data.categories,t.cat||"Others")==="Investment").reduce((s,t)=>s+t.amount,0);
+      const netFlow=totIncome-totExpense-totInvest;
+      const savRate=totIncome>0?((netFlow/totIncome)*100).toFixed(1):"0.0";
+      const f2=(n)=>_numFmt0.format(n||0);
+      const esc=(s)=>String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      const cfRows=getMonthlyCF(all,from,to);
+      const catRows=getCatSummary(all);
+
+      var _escH=function(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");};
+      var _eMailCf="";
+      if(cfRows.length>0){
+        var _eRows=cfRows.map(function(r,i){
+          return "<tr style=\"background:"+(i%2===0?"#f8fafc":"#fff")+"\"><td style=\"padding:5px 10px;border-bottom:1px solid #e2e8f0;\">"+_escH(r.label)+"</td><td style=\"padding:5px 10px;text-align:right;border-bottom:1px solid #e2e8f0;color:#16a34a;\">₹"+f2(r.income)+"</td><td style=\"padding:5px 10px;text-align:right;border-bottom:1px solid #e2e8f0;color:#dc2626;\">₹"+f2(r.expense)+"</td><td style=\"padding:5px 10px;text-align:right;border-bottom:1px solid #e2e8f0;color:#7c3aed;\">₹"+f2(r.investment)+"</td><td style=\"padding:5px 10px;text-align:right;border-bottom:1px solid #e2e8f0;font-weight:700;color:"+(r.net>=0?"#16a34a":"#dc2626")+";\">₹"+f2(r.net)+"</td></tr>";
+        }).join("");
+        _eMailCf="<p style=\"font-size:13px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:6px;margin:20px 0 10px;\">Cash Flow by Month</p><table style=\"width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px;\"><thead><tr><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:left;\">Month</th><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:right;\">Income</th><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:right;\">Expenses</th><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:right;\">Invested</th><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:right;\">Net</th></tr></thead><tbody>"+_eRows+"</tbody></table>";
+      }
+      var _eMailCat="";
+      var _eMailIncCat="";
+      if(catRows.length>0){
+        var _expCats=catRows.filter(function(r){return r.classType!=="Income";}).sort(function(a,b){return b.debit-a.debit;}).slice(0,15);
+        var _incCats=catRows.filter(function(r){return r.classType==="Income";}).sort(function(a,b){return b.credit-a.credit;});
+        if(_expCats.length>0){
+          var _cRows=_expCats.map(function(r,i){
+            return "<tr style=\"background:"+(i%2===0?"#f8fafc":"#fff")+"\"><td style=\"padding:5px 10px;border-bottom:1px solid #e2e8f0;font-weight:600;\">"+_escH(r.category)+"</td><td style=\"padding:5px 10px;text-align:right;border-bottom:1px solid #e2e8f0;color:#dc2626;\">₹"+f2(r.debit)+"</td><td style=\"padding:5px 10px;text-align:right;border-bottom:1px solid #e2e8f0;\">"+r.count+"</td></tr>";
+          }).join("");
+          _eMailCat="<p style=\"font-size:13px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:6px;margin:20px 0 10px;\">Top Spending Categories</p><table style=\"width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px;\"><thead><tr><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:left;\">Category</th><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:right;\">Spent</th><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:right;\">Txns</th></tr></thead><tbody>"+_cRows+"</tbody></table>";
+        }
+        if(_incCats.length>0){
+          var _iRows=_incCats.map(function(r,i){
+            return "<tr style=\"background:"+(i%2===0?"#f8fafc":"#fff")+"\"><td style=\"padding:5px 10px;border-bottom:1px solid #e2e8f0;font-weight:600;\">"+_escH(r.category)+"</td><td style=\"padding:5px 10px;text-align:right;border-bottom:1px solid #e2e8f0;color:#16a34a;\">₹"+f2(r.credit)+"</td><td style=\"padding:5px 10px;text-align:right;border-bottom:1px solid #e2e8f0;\">"+r.count+"</td></tr>";
+          }).join("");
+          _eMailIncCat="<p style=\"font-size:13px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:6px;margin:20px 0 10px;\">Income by Category</p><table style=\"width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px;\"><thead><tr><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:left;\">Category</th><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:right;\">Received</th><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:right;\">Txns</th></tr></thead><tbody>"+_iRows+"</tbody></table>";
+        }
+      }
+
+      const html=`
+<div style="font-family:'Segoe UI',Arial,sans-serif;color:#1a1a2e;max-width:680px;margin:0 auto;padding:20px;">
+<div style="border-bottom:3px solid #1e3a5f;margin-bottom:20px;padding-bottom:14px;">
+  <h1 style="font-size:22px;color:#1e3a5f;margin:0 0 4px;">finsight</h1>
+  <h2 style="font-size:15px;color:#374151;margin:0 0 10px;font-weight:500;">${periodType==="monthly"?"Monthly":"Yearly"} Summary \u2014 ${esc(label)}</h2>
+  <span style="display:inline-block;background:#e0f2fe;color:#0369a1;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;margin-right:6px;">${from} to ${to}</span>
+  <span style="display:inline-block;background:#f0fdf4;color:#16a34a;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;">Net Worth: \u20b9${f2(netWorth)}</span>
+</div>
+
+<table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+<tr>
+  <td style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;text-align:center;width:25%;">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;">Income</div>
+    <div style="font-size:18px;font-weight:800;color:#16a34a;">\u20b9${f2(totIncome)}</div></td>
+  <td style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;text-align:center;width:25%;">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;">Expenses</div>
+    <div style="font-size:18px;font-weight:800;color:#dc2626;">\u20b9${f2(totExpense)}</div></td>
+  <td style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:12px 16px;text-align:center;width:25%;">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;">Invested</div>
+    <div style="font-size:18px;font-weight:800;color:#7c3aed;">\u20b9${f2(totInvest)}</div></td>
+  <td style="background:${netFlow>=0?"#f0fdf4":"#fef2f2"};border:1px solid ${netFlow>=0?"#bbf7d0":"#fecaca"};border-radius:8px;padding:12px 16px;text-align:center;width:25%;">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;">Savings (${savRate}%)</div>
+    <div style="font-size:18px;font-weight:800;color:${netFlow>=0?"#16a34a":"#dc2626"};">\u20b9${f2(netFlow)}</div></td>
+</tr></table>
+
+${_eMailCf}${_eMailCat}${_eMailIncCat}
+
+<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:10px;color:#9ca3af;text-align:center;">
+  finsight v${APP_VERSION} \u00b7 Generated ${new Date().toLocaleString("en-IN")} \u00b7 ${esc(label)}</div>
+</div>`;
+
+      const emailjs=window.emailjs;
+      if(!emailjs){throw new Error("EmailJS library not loaded");}
+      emailjs.init({publicKey:emailCfg.emailjsPublicKey});
+      await emailjs.send(emailCfg.emailjsServiceId,emailCfg.emailjsTemplateId,{
+        to_email:emailCfg.emailRecipient,
+        subject:"finsight \u2014 "+(periodType==="monthly"?"Monthly":"Yearly")+" Report \u2014 "+label,
+        message:html,
+      });
+      setStatus({ok:true,msg:"Report emailed to "+emailCfg.emailRecipient+"!"});
+    }catch(e){
+      setStatus({ok:false,msg:"Email failed: "+(e.text||e.message||e)});
+    }
+    setEmailSending(false);
   };
 
   /* ── Year options: earliest transaction FY year → current FY year ── */
@@ -30673,7 +30737,25 @@ ${table(
         React.createElement("span",{style:{fontSize:20}},React.createElement(Icon,{n:"report",size:16})),
         React.createElement("div",{style:{textAlign:"left"}},
           React.createElement("div",null,"Export as PDF"),
-          React.createElement("div",{style:{fontSize:10,fontWeight:400,opacity:.8}},"Print-ready · Save as PDF")
+          React.createElement("div",{style:{fontSize:10,fontWeight:400,opacity:.8}},".pdf — Direct download")
+        )
+      )
+    ),
+    /* ── Email button ── */
+    React.createElement("div",{style:{display:"flex",gap:10,marginTop:12,flexWrap:"wrap"}},
+      React.createElement("button",{
+        onClick:sendEmail,disabled:emailSending||!hasEmailJS,
+        style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+          padding:"13px 16px",borderRadius:10,border:"1px solid rgba(99,102,241,.4)",
+          background:"rgba(99,102,241,.1)",color:"#6366f1",cursor:(emailSending||!hasEmailJS)?"not-allowed":"pointer",
+          fontFamily:"'DM Sans',sans-serif",fontSize:14,fontWeight:700,transition:"all .2s",
+          opacity:(emailSending||!hasEmailJS)?.5:1}
+      },
+        React.createElement("span",{style:{fontSize:20}},"\u2709\uFE0F"),
+        React.createElement("div",{style:{textAlign:"left"}},
+          React.createElement("div",null,emailSending?"Sending\u2026":"Send Report by Email"),
+          React.createElement("div",{style:{fontSize:10,fontWeight:400,opacity:.8}},
+            hasEmailJS?"To: "+emailCfg.emailRecipient:"Configure in Settings \u2192 Insights Config")
         )
       )
     ),
@@ -32092,30 +32174,82 @@ const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
     );
   };
 
+  const [pdfViewLoading, setPdfViewLoading]=useState(false);
   const handleExportView=()=>{
     const rptLabel=REPORT_TREE.flatMap(r=>r.children||[r]).find(r=>r.id===activeRpt)?.label||activeRpt;
     const noD=["forecast","summary","investments"];
     const dateLabel=noD.includes(activeRpt)?"":from+" → "+to;
-    /* Inject a temporary print-only header above the report */
-    const hdr=document.createElement("div");
-    hdr.id="mm-print-hdr";
-    hdr.style.cssText="font-family:\'Sora\',sans-serif;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #1d4ed8;page-break-after:avoid";
-    const genDate=new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
-    hdr.innerHTML="<div style=\"font-size:19px;font-weight:800;color:#0f172a;margin-bottom:3px\">finsight — "+rptLabel+"</div>"
-      +"<div style=\"font-size:11px;color:#64748b;font-family:\'DM Sans\',sans-serif\">"+(dateLabel?"Period: "+dateLabel+" &nbsp;·&nbsp; ":"")+"Generated: "+genDate+"</div>";
-    const area=document.getElementById("rpt-print-area");
-    if(area)area.insertBefore(hdr,area.firstChild);
-    window.__mmPrintOK=true;
-    document.documentElement.setAttribute("data-mm-printing","1");
-    const cleanup=()=>{
-      window.__mmPrintOK=false;
-      document.documentElement.removeAttribute("data-mm-printing");
-      const h=document.getElementById("mm-print-hdr");
-      if(h)h.remove();
-      window.removeEventListener("afterprint",cleanup);
-    };
-    window.addEventListener("afterprint",cleanup);
-    setTimeout(()=>window.print(),80);
+    setPdfViewLoading(true);
+    window.__loadExportLibs().then(()=>{
+      try{
+        const area=document.getElementById("rpt-print-area");
+        if(!area){setPdfViewLoading(false);return;}
+        var A4W=210,A4H=297,MG=10;
+        var cWmm=A4W-MG*2;
+        var capPx=960;
+        var wrap=document.createElement("div");
+        wrap.style.cssText="position:fixed;left:-9999px;top:0;width:"+capPx+"px;background:#fff;z-index:-1;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;color:#1a1a2e;font-size:12px;line-height:1.5;overflow:visible;";
+        var genDate=new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+        var hdr=document.createElement("div");
+        hdr.style.cssText="margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #1d4ed8;";
+        hdr.innerHTML="<div style=\"font-size:18px;font-weight:800;color:#0f172a;margin-bottom:2px;font-family:Sora,sans-serif\">finsight — "+rptLabel.replace(/</g,"&lt;")+"</div><div style=\"font-size:10px;color:#64748b;font-family:DM Sans,sans-serif\">"+(dateLabel?"Period: "+dateLabel.replace(/</g,"&lt;")+" · ":"")+"Generated: "+genDate+"</div>";
+        wrap.appendChild(hdr);
+        var clone=area.cloneNode(true);
+        clone.removeAttribute("id");
+        clone.style.overflow="visible";
+        clone.style.height="auto";
+        clone.style.flex="none";
+        clone.style.width="100%";
+        wrap.appendChild(clone);
+        document.body.appendChild(wrap);
+        setTimeout(()=>{
+          var h2c=window.html2canvas||window.Html2Canvas;
+          h2c(wrap,{scale:3,useCORS:true,backgroundColor:"#ffffff",logging:false,windowWidth:capPx}).then(function(canvas){
+            if(wrap.parentNode)wrap.parentNode.removeChild(wrap);
+            var natW=canvas.width;
+            var natH=canvas.height;
+            var tgtW=Math.round(cWmm*3.7795*3);
+            var tgtH=Math.round(natH*tgtW/natW);
+            var sc2=document.createElement("canvas");
+            sc2.width=tgtW;sc2.height=tgtH;
+            var s2x=sc2.getContext("2d");
+            s2x.drawImage(canvas,0,0,tgtW,tgtH);
+            var pxPerMmX=tgtW/cWmm;
+            var pageHPx=Math.round((A4H-MG*2)*pxPerMmX);
+            var{jsPDF}=window.jspdf;
+            var doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+            var srcY=0;var pg=0;
+            var pageMmH=pageHPx/pxPerMmX;
+            while(srcY<tgtH){
+              if(pg>0)doc.addPage();
+              var sliceH=Math.min(pageHPx,tgtH-srcY);
+              var sc=document.createElement("canvas");
+              sc.width=tgtW;sc.height=pageHPx;
+              var sx=sc.getContext("2d");
+              sx.fillStyle="#ffffff";
+              sx.fillRect(0,0,tgtW,pageHPx);
+              sx.drawImage(sc2,0,srcY,tgtW,sliceH,0,0,tgtW,sliceH);
+              var sData=sc.toDataURL("image/jpeg",0.92);
+              doc.addImage(sData,"JPEG",MG,MG,cWmm,pageMmH);
+              srcY+=pageHPx;pg++;
+            }
+            var safeName=rptLabel.replace(/[^a-zA-Z0-9]/g,"_");
+            doc.save("finsight_"+safeName+"_"+(from||"all")+".pdf");
+            setPdfViewLoading(false);
+          }).catch(function(){
+            if(wrap.parentNode)wrap.parentNode.removeChild(wrap);
+            setPdfViewLoading(false);
+            alert("PDF generation failed. Try again.");
+          });
+        },350);
+      }catch(e){
+        setPdfViewLoading(false);
+        alert("PDF export error: "+e.message);
+      }
+    }).catch(()=>{
+      setPdfViewLoading(false);
+      alert("Could not load PDF library — check your internet connection.");
+    });
   };
 
   const renderReport=()=>{
@@ -32420,7 +32554,82 @@ const InsightPrefsPanel=({state,dispatch})=>{
           React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text3)",marginBottom:3}},"Reset Insights Config"),
           React.createElement("div",{style:{fontSize:12,color:"var(--text5)"}},"Restore all Insights settings to recommended defaults.")
         ),
-        React.createElement(Btn,{v:"secondary",onClick:()=>{dispatch({type:"SET_INSIGHT_PREFS",p:{currentAge:"",retirementAge:45,fireMode:"auto",manualFireNumber:"",annualReturnPct:10,withdrawalRatePct:4,expenseMode:"auto",manualMonthlyExpense:"",manualMonthlyIncome:"",incomeMode:"auto",emergencyTargetMonths:6,emergencyExpenseOverride:"",savingsRateTarget:30,discSpendTarget:15,benchmarkReturnPct:12,equityTarget:70,debtTarget:15,reTarget:15,foodBudget:"",leakThreshold:500,pyfDayTarget:10,expRatioDanger:80,budgetPlans:{},yearlyBudgetPlans:{}}});flash();}},"↺ Reset to Defaults")
+        React.createElement(Btn,{v:"secondary",onClick:()=>{dispatch({type:"SET_INSIGHT_PREFS",p:{currentAge:"",retirementAge:45,fireMode:"auto",manualFireNumber:"",annualReturnPct:10,withdrawalRatePct:4,expenseMode:"auto",manualMonthlyExpense:"",manualMonthlyIncome:"",incomeMode:"auto",emergencyTargetMonths:6,emergencyExpenseOverride:"",savingsRateTarget:30,discSpendTarget:15,benchmarkReturnPct:12,equityTarget:70,debtTarget:15,reTarget:15,foodBudget:"",leakThreshold:500,pyfDayTarget:10,expRatioDanger:80,budgetPlans:{},yearlyBudgetPlans:{},emailjsServiceId:"",emailjsTemplateId:"",emailjsPublicKey:"",emailRecipient:""}});flash();}},"↺ Reset to Defaults")
+      )
+    )
+  );
+};
+
+/* ── EMAIL CONFIG PANEL — standalone Settings tab ──────────────────────────── */
+const EmailConfigPanel=({state,dispatch})=>{
+  const P=state.insightPrefs||{};
+  const set=(k,v)=>dispatch({type:"SET_INSIGHT_PREFS",p:{[k]:v}});
+  const [testStatus,setTestStatus]=useState(null);
+  const [testing,setTesting]=useState(false);
+  const hasEmailJS=!!(P.emailjsServiceId&&P.emailjsTemplateId&&P.emailjsPublicKey&&P.emailRecipient);
+
+  const sendTest=async()=>{
+    if(!hasEmailJS){setTestStatus({ok:false,msg:"Please fill in all 4 fields first."});return;}
+    setTesting(true);setTestStatus(null);
+    try{
+      await window.__loadExportLibs();
+      const emailjs=window.emailjs;
+      if(!emailjs)throw new Error("EmailJS library failed to load");
+      emailjs.init({publicKey:P.emailjsPublicKey});
+      await emailjs.send(P.emailjsServiceId,P.emailjsTemplateId,{
+        to_email:P.emailRecipient,
+        subject:"finsight \u2014 Test Email",
+        message:"<div style=\"font-family:Arial,sans-serif;padding:20px;\"><h2 style=\"color:#1e3a5f;\">finsight EmailJS Setup Successful</h2><p style=\"font-size:14px;color:#374151;\">This is a test email from finsight. If you received this, your EmailJS configuration is working correctly.</p><p style=\"font-size:12px;color:#6b7280;margin-top:16px;\">You can now send summary reports from the Export modal in the Reports section.</p></div>",
+      });
+      setTestStatus({ok:true,msg:"Test email sent to "+P.emailRecipient+"! Check your inbox."});
+    }catch(e){setTestStatus({ok:false,msg:"Failed: "+(e.text||e.message||e)});}
+    setTesting(false);
+  };
+
+  const labelStyle={display:"block",fontSize:11,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:5};
+
+  return React.createElement("div",null,
+    React.createElement(Card,{sx:{marginBottom:16}},
+      React.createElement("div",{style:{marginBottom:16}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:3}},
+          React.createElement("div",{style:{fontSize:20}},"\u2709\uFE0F"),
+          React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},"Email Report Configuration")
+        ),
+        React.createElement("div",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.6}},"Send summary reports directly to your inbox via EmailJS. Configure the service, template, and recipient below.")
+      ),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}},
+        React.createElement("div",null,
+          React.createElement("label",{style:labelStyle},"EmailJS Public Key"),
+          React.createElement("input",{className:"inp",type:"text",value:P.emailjsPublicKey||"",onChange:e=>set("emailjsPublicKey",e.target.value),placeholder:"your_public_key from EmailJS",style:{fontFamily:"monospace",fontSize:12,width:"100%"}})
+        ),
+        React.createElement("div",null,
+          React.createElement("label",{style:labelStyle},"EmailJS Service ID"),
+          React.createElement("input",{className:"inp",type:"text",value:P.emailjsServiceId||"",onChange:e=>set("emailjsServiceId",e.target.value),placeholder:"service_xxxxxxx",style:{fontFamily:"monospace",fontSize:12,width:"100%"}})
+        ),
+        React.createElement("div",null,
+          React.createElement("label",{style:labelStyle},"EmailJS Template ID"),
+          React.createElement("input",{className:"inp",type:"text",value:P.emailjsTemplateId||"",onChange:e=>set("emailjsTemplateId",e.target.value),placeholder:"template_xxxxxxx",style:{fontFamily:"monospace",fontSize:12,width:"100%"}})
+        ),
+        React.createElement("div",null,
+          React.createElement("label",{style:labelStyle},"Recipient Email"),
+          React.createElement("input",{className:"inp",type:"email",value:P.emailRecipient||"",onChange:e=>set("emailRecipient",e.target.value),placeholder:"you@gmail.com",style:{fontSize:12,width:"100%"}})
+        )
+      ),
+      React.createElement("button",{
+        onClick:sendTest,disabled:testing||!hasEmailJS,
+        style:{padding:"10px 22px",borderRadius:10,border:"1px solid rgba(99,102,241,.4)",background:hasEmailJS?"rgba(99,102,241,.1)":"rgba(100,116,139,.08)",color:hasEmailJS?"#6366f1":"var(--text5)",cursor:(testing||!hasEmailJS)?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:700,transition:"all .2s",opacity:(testing||!hasEmailJS)?.6:1}
+      },"\u2709 "+(testing?"Sending\u2026":"Send Test Email"))
+    ),
+    testStatus&&React.createElement("div",{style:{marginBottom:16,padding:"10px 14px",borderRadius:8,fontSize:12,fontWeight:500,background:testStatus.ok?"rgba(22,163,74,.08)":"rgba(239,68,68,.08)",border:"1px solid "+(testStatus.ok?"rgba(22,163,74,.3)":"rgba(239,68,68,.3)"),color:testStatus.ok?"#16a34a":"#ef4444"}},testStatus.ok?"✓ "+testStatus.msg:"⚠ "+testStatus.msg),
+    React.createElement(Card,null,
+      React.createElement("div",{style:{fontWeight:600,color:"var(--text3)",marginBottom:8,fontSize:13}},"Setup Guide"),
+      React.createElement("ol",{style:{margin:0,paddingLeft:18,fontSize:12,color:"var(--text5)",lineHeight:2}},
+        React.createElement("li",null,"Create a free account at ",React.createElement("a",{href:"https://www.emailjs.com",target:"_blank",style:{color:"var(--accent)",fontWeight:600}},"emailjs.com")," (200 emails/month free)"),
+        React.createElement("li",null,"Create an Email Service (Gmail, Outlook, etc.) and copy the Service ID"),
+        React.createElement("li",null,"Create an Email Template with these variables: ",React.createElement("code",{style:{background:"var(--bg5)",padding:"1px 5px",borderRadius:3,fontSize:11}},"{{subject}}"),", ",React.createElement("code",{style:{background:"var(--bg5)",padding:"1px 5px",borderRadius:3,fontSize:11}},"{{message}}"),", ",React.createElement("code",{style:{background:"var(--bg5)",padding:"1px 5px",borderRadius:3,fontSize:11}},"{{to_email}}")),
+        React.createElement("li",null,"Copy your Public Key from Account \u2192 API Keys"),
+        React.createElement("li",null,"Paste all 4 values above, then click ",React.createElement("code",{style:{background:"var(--bg5)",padding:"1px 5px",borderRadius:3,fontSize:11}},"\u2709 Send Test")," to verify"),
+        React.createElement("li",null,"Once verified, use ",React.createElement("code",{style:{background:"var(--bg5)",padding:"1px 5px",borderRadius:3,fontSize:11}},"\u2709 Send Report by Email")," in Reports \u2192 Export Summary modal")
       )
     )
   );
