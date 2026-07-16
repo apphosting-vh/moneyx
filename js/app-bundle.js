@@ -1316,139 +1316,6 @@ const computeCapitalGains=(shares,mf)=>{
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
-   UPI ENRICHMENT — maps raw UPI VPA / description noise to merchant names
-   and suggests categories. Applied on SMS parse, bulk import, and manual add.
-   Custom mappings persisted in localStorage key mm_upi_v1.
-   ══════════════════════════════════════════════════════════════════════════ */
-const UPI_LS="mm_upi_v1";
-const loadUpiMap=()=>{try{return JSON.parse(localStorage.getItem(UPI_LS)||"{}");}catch{return {};}};
-const saveUpiMap=m=>{try{localStorage.setItem(UPI_LS,JSON.stringify(m));}catch{}};
-
-/* Built-in VPA keyword → {name, cat} table (keyword matched case-insensitively in desc/payee) */
-const UPI_BUILTIN=[
-  /* Food delivery */
-  {k:"zomato",       name:"Zomato",           cat:"Groceries Food & Essentials"},
-  {k:"swiggy",       name:"Swiggy",           cat:"Groceries Food & Essentials"},
-  {k:"dunzo",        name:"Dunzo",            cat:"Groceries Food & Essentials"},
-  {k:"blinkit",      name:"Blinkit",          cat:"Groceries Food & Essentials"},
-  {k:"zepto",        name:"Zepto",            cat:"Groceries Food & Essentials"},
-  {k:"bigbasket",    name:"BigBasket",        cat:"Groceries Food & Essentials"},
-  {k:"grofers",      name:"Blinkit",          cat:"Groceries Food & Essentials"},
-  {k:"jiomart",      name:"JioMart",          cat:"Groceries Food & Essentials"},
-  /* E-commerce */
-  {k:"amazon",       name:"Amazon",           cat:"Personal Items"},
-  {k:"flipkart",     name:"Flipkart",         cat:"Personal Items"},
-  {k:"meesho",       name:"Meesho",           cat:"Personal Items"},
-  {k:"myntra",       name:"Myntra",           cat:"Personal Items"},
-  {k:"ajio",         name:"Ajio",             cat:"Personal Items"},
-  {k:"nykaa",        name:"Nykaa",            cat:"Beauty and Personal Care"},
-  {k:"snapdeal",     name:"Snapdeal",         cat:"Personal Items"},
-  {k:"tatacliq",     name:"Tata CLiQ",        cat:"Personal Items"},
-  /* Utilities & bills */
-  {k:"bescom",       name:"BESCOM",           cat:"Utilities and Bills"},
-  {k:"msedcl",       name:"MSEDCL",           cat:"Utilities and Bills"},
-  {k:"tatapower",    name:"Tata Power",       cat:"Utilities and Bills"},
-  {k:"airtel",       name:"Airtel",           cat:"Utilities and Bills"},
-  {k:"jio",          name:"Jio",              cat:"Utilities and Bills"},
-  {k:"vodafone",     name:"Vodafone",         cat:"Utilities and Bills"},
-  {k:"bsnl",         name:"BSNL",             cat:"Utilities and Bills"},
-  {k:"mahanagar",    name:"MGL Gas",          cat:"Utilities and Bills"},
-  {k:"indraprastha", name:"IGL Gas",          cat:"Utilities and Bills"},
-  /* Travel */
-  {k:"irctc",        name:"IRCTC",            cat:"Travel"},
-  {k:"redbus",       name:"redBus",           cat:"Travel"},
-  {k:"makemytrip",   name:"MakeMyTrip",       cat:"Travel"},
-  {k:"goibibo",      name:"Goibibo",          cat:"Travel"},
-  {k:"cleartrip",    name:"Cleartrip",        cat:"Travel"},
-  {k:"ola",          name:"Ola",              cat:"Automobile"},
-  {k:"uber",         name:"Uber",             cat:"Automobile"},
-  {k:"rapido",       name:"Rapido",           cat:"Automobile"},
-  {k:"blusmrt",      name:"BluSmart",         cat:"Automobile"},
-  /* Health */
-  {k:"practo",       name:"Practo",           cat:"Healthcare"},
-  {k:"pharmeasy",    name:"PharmEasy",        cat:"Healthcare"},
-  {k:"netmeds",      name:"Netmeds",          cat:"Healthcare"},
-  {k:"1mg",          name:"1mg",              cat:"Healthcare"},
-  {k:"apollopharmacy",name:"Apollo Pharmacy", cat:"Healthcare"},
-  {k:"medlife",      name:"Medlife",          cat:"Healthcare"},
-  /* Subscriptions */
-  {k:"netflix",      name:"Netflix",          cat:"Subscriptions"},
-  {k:"hotstar",      name:"Disney+Hotstar",   cat:"Subscriptions"},
-  {k:"spotify",      name:"Spotify",          cat:"Subscriptions"},
-  {k:"youtube",      name:"YouTube Premium",  cat:"Subscriptions"},
-  {k:"amazon.prime", name:"Amazon Prime",     cat:"Subscriptions"},
-  {k:"sonyliv",      name:"SonyLIV",          cat:"Subscriptions"},
-  {k:"zee5",         name:"ZEE5",             cat:"Subscriptions"},
-  {k:"bookmyshow",   name:"BookMyShow",       cat:"Leisure"},
-  /* Finance & investments */
-  {k:"zerodha",      name:"Zerodha",          cat:"Investments"},
-  {k:"groww",        name:"Groww",            cat:"Investments"},
-  {k:"kuvera",       name:"Kuvera",           cat:"Investments"},
-  {k:"coin",         name:"Zerodha Coin",     cat:"Investments"},
-  {k:"smallcase",    name:"Smallcase",        cat:"Investments"},
-  {k:"nps",          name:"NPS",              cat:"Investments"},
-  {k:"ppf",          name:"PPF",              cat:"Investments"},
-  /* Payment wallets */
-  {k:"paytm",        name:"Paytm",            cat:"Others"},
-  {k:"phonepe",      name:"PhonePe",          cat:"Others"},
-  {k:"gpay",         name:"Google Pay",       cat:"Others"},
-  {k:"bhim",         name:"BHIM UPI",         cat:"Others"},
-  /* Education */
-  {k:"byju",         name:"BYJU'S",           cat:"Childcare"},
-  {k:"unacademy",    name:"Unacademy",        cat:"Childcare"},
-  {k:"coursera",     name:"Coursera",         cat:"Childcare"},
-  {k:"udemy",        name:"Udemy",            cat:"Childcare"},
-  {k:"vedantu",      name:"Vedantu",          cat:"Childcare"},
-  /* Insurance */
-  {k:"lic",          name:"LIC",              cat:"Insurance Premiums"},
-  {k:"policybazaar", name:"PolicyBazaar",     cat:"Insurance Premiums"},
-  {k:"hdfcergo",     name:"HDFC ERGO",        cat:"Insurance Premiums"},
-  {k:"icicilomic",   name:"ICICI Lombard",    cat:"Insurance Premiums"},
-  {k:"starhealth",   name:"Star Health",      cat:"Insurance Premiums"},
-];
-
-/* UPI VPA regex: UPI-<name>-<VPA>-<ref> or <name>@<bank> */
-const UPI_DESC_RE=/UPI[-\s](?:CR|DR|COLL|PAY)?[-\s]?(?:\d+[-\s])?([A-Za-z0-9._-]+@[A-Za-z0-9]+)/i;
-const UPI_PAYTM_RE=/\b([A-Za-z0-9._]+@(?:paytm|upi|icici|ybl|okaxis|okicici|okhdfcbank|oksbi|ibl|axisbank|hdfcbank|sbi|indus|federal|kotak|rbl|idbi|bob|pnb|cnrb|barodampay|aubank|jsb|yesbank|freecharge))\b/i;
-
-function enrichUpiDesc(desc, payee){
-  const src=((desc||"")+" "+(payee||"")).toLowerCase();
-  /* Check built-in table first */
-  const custom=loadUpiMap();
-  /* Check custom mappings */
-  for(const [k,v] of Object.entries(custom)){
-    if(src.includes(k.toLowerCase()))return{name:v.name||k,cat:v.cat||""};
-  }
-  /* Check built-in */
-  for(const entry of UPI_BUILTIN){
-    if(src.includes(entry.k))return{name:entry.name,cat:entry.cat};
-  }
-  /* Try to extract VPA name part */
-  const m=src.match(UPI_PAYTM_RE)||src.match(UPI_DESC_RE);
-  if(m){
-    const vpa=m[1]||m[0];
-    const namePart=vpa.split("@")[0].replace(/[._-]/g," ").replace(/\b\w/g,c=>c.toUpperCase()).trim();
-    if(namePart&&namePart.length>2&&namePart.length<40)return{name:namePart,cat:""};
-  }
-  return null;
-}
-
-/* Apply UPI enrichment to a transaction — returns {desc?,payee?} overrides or null */
-function applyUpiEnrichment(tx){
-  const src=((tx.desc||"")+" "+(tx.payee||"")).toLowerCase();
-  if(!src.includes("upi")&&!src.includes("@"))return null;
-  const result=enrichUpiDesc(tx.desc,tx.payee);
-  if(!result)return null;
-  const out={};
-  /* Only set payee if empty or looks like a raw VPA */
-  if(!tx.payee||(tx.payee||"").includes("@"))out.payee=result.name;
-  /* Only set desc if it looks like raw UPI noise */
-  if(result.name&&(tx.desc||"").match(/^UPI[-\s]/i))out.desc=result.name;
-  if(result.cat&&!tx.cat)out.cat=result.cat;
-  return Object.keys(out).length?out:null;
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
    AUTO-CAT RULE APPLICATION — applies a list of catRules to a single tx.
    Returns {cat, payee} overrides or null (no match).
    ══════════════════════════════════════════════════════════════════════════ */
@@ -1541,7 +1408,7 @@ const reducer=(s,a)=>{
   const nextSn=txs=>txs.reduce((m,t)=>Math.max(m,t._sn||0),0)+1;
   switch(a.type){
     case"ADD_BANK":return{...s,banks:[...s.banks,a.p]};
-    case"ADD_BANK_TX":{const b=s.banks.find(b=>b.id===a.id);const sn=b?nextSn(b.transactions):1;const _acr=applyCatRule(s.catRules||[],a.tx);const _upi=applyUpiEnrichment({...a.tx,...(_acr||{})});const _tx={...a.tx,...(_acr||{}),_sn:sn,...(_upi||{}),id:(a.tx.id||uid())};return{...s,banks:s.banks.map(b=>b.id===a.id?{...b,balance:b.balance+(_tx.status==="Reconciled"?(_tx.type==="credit"?_tx.amount:-_tx.amount):0),transactions:[...b.transactions,_tx]}:b)};}
+    case"ADD_BANK_TX":{const b=s.banks.find(b=>b.id===a.id);const sn=b?nextSn(b.transactions):1;const _acr=applyCatRule(s.catRules||[],a.tx);const _tx={...a.tx,...(_acr||{}),_sn:sn,id:(a.tx.id||uid())};return{...s,banks:s.banks.map(b=>b.id===a.id?{...b,balance:b.balance+(_tx.status==="Reconciled"?(_tx.type==="credit"?_tx.amount:-_tx.amount):0),transactions:[...b.transactions,_tx]}:b)};}
     case"UPD_BANK_BAL":return{...s,banks:s.banks.map(b=>b.id===a.id?(a.tx.status==="Reconciled"?{...b,balance:b.balance+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount)}:b):b)};
     case"EDIT_BANK_TX":{const _bwas=a.old.status==="Reconciled";const _bis=a.tx.status==="Reconciled";const _bOld=_bwas?(a.old.type==="credit"?a.old.amount:-a.old.amount):0;const _bNew=_bis?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0;return{...s,banks:s.banks.map(b=>b.id===a.accId?{...b,balance:b.balance+(_bNew-_bOld),transactions:(b.transactions||[]).map(t=>t.id===a.tx.id?a.tx:t)}:b)};}
     case"DEL_BANK_TX":return{...s,banks:s.banks.map(b=>b.id===a.accId?{...b,balance:b.balance-(a.tx.status==="Reconciled"?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0),transactions:(b.transactions||[]).filter(t=>t.id!==a.tx.id)}:b)};
@@ -1615,7 +1482,7 @@ const reducer=(s,a)=>{
       return{...s,cash:{...s.cash,balance:_cashRec}};
     }
     case"ADD_CARD":return{...s,cards:[...s.cards,a.p]};
-    case"ADD_CARD_TX":{const c=s.cards.find(c=>c.id===a.id);const sn=c?nextSn(c.transactions):1;const _acr2=applyCatRule(s.catRules||[],a.tx);const _upi2=applyUpiEnrichment({...a.tx,...(_acr2||{})});const _tx2={...a.tx,...(_acr2||{}),_sn:sn,...(_upi2||{}),id:(a.tx.id||uid())};return{...s,cards:s.cards.map(c=>c.id===a.id?{...c,outstanding:Math.max(0,c.outstanding+(_tx2.status==="Reconciled"?(_tx2.type==="debit"?_tx2.amount:-_tx2.amount):0)),transactions:[...c.transactions,_tx2]}:c)};}
+    case"ADD_CARD_TX":{const c=s.cards.find(c=>c.id===a.id);const sn=c?nextSn(c.transactions):1;const _acr2=applyCatRule(s.catRules||[],a.tx);const _tx2={...a.tx,...(_acr2||{}),_sn:sn,id:(a.tx.id||uid())};return{...s,cards:s.cards.map(c=>c.id===a.id?{...c,outstanding:Math.max(0,c.outstanding+(_tx2.status==="Reconciled"?(_tx2.type==="debit"?_tx2.amount:-_tx2.amount):0)),transactions:[...c.transactions,_tx2]}:c)};}
     case"UPD_CARD_BAL":return{...s,cards:s.cards.map(c=>c.id===a.id?(a.tx.status==="Reconciled"?{...c,outstanding:Math.max(0,c.outstanding+(a.tx.type==="debit"?a.tx.amount:-a.tx.amount))}:c):c)};
     case"EDIT_CARD_TX":{const _cwas=a.old.status==="Reconciled";const _cis=a.tx.status==="Reconciled";const _cOld=_cwas?(a.old.type==="debit"?a.old.amount:-a.old.amount):0;const _cNew=_cis?(a.tx.type==="debit"?a.tx.amount:-a.tx.amount):0;return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,outstanding:Math.max(0,c.outstanding+(_cNew-_cOld)),transactions:(c.transactions||[]).map(t=>t.id===a.tx.id?a.tx:t)}:c)};}
     case"DEL_CARD_TX":return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,outstanding:Math.max(0,c.outstanding-(a.tx.status==="Reconciled"?(a.tx.type==="debit"?a.tx.amount:-a.tx.amount):0)),transactions:(c.transactions||[]).filter(t=>t.id!==a.tx.id)}:c)};
@@ -1628,7 +1495,7 @@ const reducer=(s,a)=>{
         sc.accId!==a.id&&sc.srcId!==a.id&&sc.tgtId!==a.id
       ),
     };
-    case"ADD_CASH_TX":{const sn=nextSn(s.cash.transactions);const _caRec=a.tx.status==="Reconciled";const _acr3=applyCatRule(s.catRules||[],a.tx);const _upi3=applyUpiEnrichment({...a.tx,...(_acr3||{})});const _tx3={...a.tx,...(_acr3||{}),_sn:sn,...(_upi3||{}),id:(a.tx.id||uid())};return{...s,cash:{balance:s.cash.balance+(_caRec?(_tx3.type==="credit"?_tx3.amount:-_tx3.amount):0),transactions:[...s.cash.transactions,_tx3]}};}
+    case"ADD_CASH_TX":{const sn=nextSn(s.cash.transactions);const _caRec=a.tx.status==="Reconciled";const _acr3=applyCatRule(s.catRules||[],a.tx);const _tx3={...a.tx,...(_acr3||{}),_sn:sn,id:(a.tx.id||uid())};return{...s,cash:{balance:s.cash.balance+(_caRec?(_tx3.type==="credit"?_tx3.amount:-_tx3.amount):0),transactions:[...s.cash.transactions,_tx3]}};}
     case"SET_CASH_BAL":return{...s,cash:{...s.cash,balance:a.val}};
     case"EDIT_CASH_TX":{const _ewas=a.old.status==="Reconciled";const _eis=a.tx.status==="Reconciled";const _eOld=_ewas?(a.old.type==="credit"?a.old.amount:-a.old.amount):0;const _eNew=_eis?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0;return{...s,cash:{...s.cash,balance:s.cash.balance+(_eNew-_eOld),transactions:s.cash.transactions.map(t=>t.id===a.tx.id?a.tx:t)}};}
     case"DEL_CASH_TX":return{...s,cash:{...s.cash,balance:s.cash.balance-(a.tx.status==="Reconciled"?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0),transactions:s.cash.transactions.filter(t=>t.id!==a.tx.id)}};
@@ -2172,7 +2039,7 @@ const reducer=(s,a)=>{
       if(!txns||!txns.length)return s;
       const enrichStamped=(txList,startSn)=>{
         let sn=startSn;
-        return txList.map(t=>{const u=applyUpiEnrichment(t);return{...t,...(u||{}),_sn:t._sn??sn++};});
+        return txList.map(t=>{return{...t,_sn:t._sn??sn++};});
       };
       if(accType==="bank"){
         return{...s,banks:s.banks.map(b=>{
@@ -2415,7 +2282,7 @@ const reducer=(s,a)=>{
   }
 };
 
-/* ── SVG charts, UI primitives, SmsScanModal, ImportTxModal, VirtualList, TxLedger ── */
+/* ── SVG charts, UI primitives, ImportTxModal, VirtualList, TxLedger ── */
 /* ── SVG CHARTS ─────────────────────────────────────────────────────────── */
 const DonutChart=({data,size=170})=>{
   const total=data.reduce((s,d)=>s+d.value,0);
@@ -2682,135 +2549,7 @@ const parseAmt=(raw)=>{
   return isNaN(n)?0:Math.abs(n);
 };
 
-/* ══════════════════════════════════════════════════════════════════════════
-   SMS AUTO-PARSER
-   Parses raw Indian bank SMS alerts into transaction objects.
-   Covers: HDFC, SBI, ICICI, Axis, Kotak, IndusInd, Yes Bank, Federal,
-           IDFC, Canara, PNB, BOB, AU Small Finance, Paytm, PhonePe.
-   ══════════════════════════════════════════════════════════════════════════ */
-const SMS_PATTERNS=[
-  /* ── Debit patterns ── */
-  {type:"debit", re:/(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)\s*(?:has been |is |)(?:debited|deducted|spent|withdrawn)/i},
-  {type:"debit", re:/debited.*?(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)/i},
-  {type:"debit", re:/(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)\s*debited/i},
-  {type:"debit", re:/spent\s+(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)/i},
-  {type:"debit", re:/withdrawn.*?(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)/i},
-  /* ── Credit patterns ── */
-  {type:"credit",re:/(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)\s*(?:has been |is |)(?:credited|received|deposited)/i},
-  {type:"credit",re:/credited.*?(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)/i},
-  {type:"credit",re:/(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)\s*credited/i},
-  {type:"credit",re:/received.*?(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)/i},
-];
-const SMS_DATE_PATTERNS=[
-  /(\d{2}[\/\-]\d{2}[\/\-]\d{2,4})/,
-  /(\d{2}[A-Za-z]{3}\d{2,4})/,
-  /(\d{2}\s+[A-Za-z]{3}\s+\d{2,4})/,
-  /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{4}/i,
-];
-const SMS_REF_RE=/(?:Ref(?:erence|\.?)\s*(?:No\.?|#)?|UPI|UTR|Txn|Ref)[:\s#]*([A-Z0-9]{8,})/i;
-const SMS_DESC_RE=/(?:at|to|from|via|Info:|at merchant|merchant)\s+([A-Za-z0-9 &\-\/.,']+?)(?:\s+on|\s+Ref|\s+UPI|\s+Avl|\s+Available|\s+Bal|$)/i;
 
-function parseSmsDate(raw){
-  const MONTHS={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
-  if(!raw)return TODAY();
-  raw=raw.trim();
-  /* DD/MM/YY or DD-MM-YY or DD/MM/YYYY */
-  let m=raw.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{2,4})$/);
-  if(m){const yr=m[3].length===2?"20"+m[3]:m[3];return `${yr}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;}
-  /* DDMonYY or DDMonYYYY */
-  m=raw.match(/^(\d{2})([A-Za-z]{3})(\d{2,4})$/);
-  if(m){const mo=MONTHS[m[2].toLowerCase()];const yr=m[3].length===2?"20"+m[3]:m[3];if(mo)return `${yr}-${String(mo).padStart(2,"0")}-${m[1].padStart(2,"0")}`;}
-  return TODAY();
-}
-
-function parseSingleSms(sms){
-  if(!sms||!sms.trim())return null;
-  let type=null,amount=0;
-  for(const p of SMS_PATTERNS){
-    const m=sms.match(p.re);
-    if(m){type=p.type;amount=parseFloat(m[1].replace(/,/g,""));break;}
-  }
-  if(!type||!amount)return null;
-  let dateStr=TODAY();
-  for(const dp of SMS_DATE_PATTERNS){const dm=sms.match(dp);if(dm){dateStr=parseSmsDate(dm[1]);break;}}
-  const refM=sms.match(SMS_REF_RE);
-  const ref=refM?refM[1]:"";
-  const descM=sms.match(SMS_DESC_RE);
-  const desc=(descM?descM[1].trim():"SMS Import").replace(/\s+/g," ").slice(0,80);
-  return{id:uid(),date:dateStr,amount,type,desc:desc||"SMS Import",txNum:ref,payee:"",cat:"",notes:"",status:"Unreconciled",
-    txType:type==="credit"?"Deposit":"Withdrawal"};
-}
-
-const SmsScanModal=({onImport,onClose,accType="bank"})=>{
-  const[raw,setRaw]=useState("");
-  const[parsed,setParsed]=useState(null);
-  const[step,setStep]=useState("input");
-
-  const parseSms=()=>{
-    const lines=raw.split(/\n+/).map(l=>l.trim()).filter(Boolean);
-    /* Group multi-line SMS: blank line = separator; or each line is an SMS */
-    const smsList=[];
-    let cur="";
-    lines.forEach(l=>{if(l==="---"||l===""){if(cur.trim())smsList.push(cur.trim());cur="";}else cur+=" "+l;});
-    if(cur.trim())smsList.push(cur.trim());
-    /* Also try each line independently as a complete SMS */
-    if(smsList.length===0)smsList.push(...lines);
-    const ok=[],fail=[];
-    smsList.forEach((s,i)=>{const r=parseSingleSms(s);if(r)ok.push(r);else if(s.length>10)fail.push(i+1);});
-    setParsed({ok,fail,total:smsList.length});
-    setStep("preview");
-  };
-
-  return React.createElement(Modal,{title:"Parse Bank SMS",onClose,w:620},
-    step==="input"&&React.createElement("div",null,
-      React.createElement("div",{style:{fontSize:13,color:"var(--text4)",marginBottom:14,lineHeight:1.7}},
-        "Paste one or more bank SMS alerts below. Separate multiple messages with a blank line or '---'. Supports HDFC, SBI, ICICI, Axis, Kotak, IndusInd, Yes Bank, Federal, and more."
-      ),
-      React.createElement("textarea",{
-        className:"inp",
-        value:raw,
-        onChange:e=>setRaw(e.target.value),
-        placeholder:"Paste SMS here…\n\nExample:\nHDFC Bank: Rs.1500.00 debited from a/c **4321 on 20-03-26 to VPA zomato@hdfcbank. Ref 456789012345.\n\n---\nDear SBI Customer, Rs.85000 credited to A/c No. XXXX1234 on 01-03-26 by NEFT. Ref No INB24031234567.",
-        style:{width:"100%",minHeight:200,fontFamily:"'DM Sans',sans-serif",fontSize:12,resize:"vertical",lineHeight:1.6}
-      }),
-      React.createElement("div",{style:{display:"flex",gap:8,marginTop:12,flexWrap:"wrap"}},
-        React.createElement(Btn,{onClick:parseSms,disabled:!raw.trim()},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"search",size:13})," Parse SMS →")),
-        React.createElement(Btn,{v:"secondary",onClick:onClose},"Cancel")
-      )
-    ),
-    step==="preview"&&parsed&&React.createElement("div",null,
-      React.createElement("div",{style:{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap"}},
-        React.createElement("div",{style:{flex:1,background:"rgba(22,163,74,.08)",border:"1px solid rgba(22,163,74,.25)",borderRadius:8,padding:"10px 14px"}},
-          React.createElement("div",{style:{fontSize:10,color:"#16a34a",textTransform:"uppercase",letterSpacing:.5}},"Parsed"),
-          React.createElement("div",{style:{fontSize:22,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#16a34a"}},parsed.ok.length)
-        ),
-        parsed.fail.length>0&&React.createElement("div",{style:{flex:1,background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.25)",borderRadius:8,padding:"10px 14px"}},
-          React.createElement("div",{style:{fontSize:10,color:"#ef4444",textTransform:"uppercase",letterSpacing:.5}},"Unrecognised"),
-          React.createElement("div",{style:{fontSize:22,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#ef4444"}},parsed.fail.length)
-        )
-      ),
-      parsed.ok.length>0&&React.createElement("div",{style:{border:"1px solid var(--border)",borderRadius:8,overflow:"hidden",marginBottom:12}},
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 70px 80px",padding:"6px 10px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Date"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Description"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Type"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Amount")),
-        React.createElement("div",{style:{maxHeight:240,overflowY:"auto"}},
-          parsed.ok.map(tx=>React.createElement("div",{key:tx.id,style:{display:"grid",gridTemplateColumns:"90px 1fr 70px 80px",padding:"7px 10px",borderBottom:"1px solid var(--border2)",alignItems:"center"}},
-            React.createElement("div",{style:{fontSize:11,color:"var(--text4)",fontFamily:"'Sora',sans-serif"}},tx.date),
-            React.createElement("div",{style:{fontSize:12,color:"var(--text2)",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},tx.desc+(tx.txNum?" · "+tx.txNum:"")),
-            React.createElement("span",{style:{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:10,background:tx.type==="credit"?"rgba(22,163,74,.15)":"rgba(239,68,68,.15)",color:tx.type==="credit"?"#16a34a":"#ef4444"}},tx.type),
-            React.createElement("div",{style:{fontSize:12,fontWeight:700,color:tx.type==="credit"?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif",textAlign:"right"}},INR(tx.amount))
-          ))
-        )
-      ),
-      parsed.fail.length>0&&React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:10}},
-        "ℹ Unrecognised SMS (no amount/direction found): messages "+parsed.fail.join(", ")
-      ),
-      React.createElement("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
-        React.createElement(Btn,{onClick:()=>{onImport(parsed.ok);},disabled:!parsed.ok.length},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"check",size:13})," Import "+parsed.ok.length+" Transactions")),
-        React.createElement(Btn,{v:"secondary",onClick:()=>setStep("input")},"← Edit SMS"),
-        React.createElement(Btn,{v:"secondary",onClick:onClose},"Cancel")
-      )
-    )
-  );
-};
 
 /* ══════════════════════════════════════════════════════════════════════════
    EXPORT LEDGER TO EXCEL
@@ -3428,7 +3167,6 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
   const[splitTx,setSplitTx]=useState(null);
   const[confirmDel,setConfirmDel]=useState(null);
   const[importOpen,setImportOpen]=useState(false);
-  const[smsOpen,setSmsOpen]=useState(false);
   const[bulkCatOpen,setBulkCatOpen]=useState(false);
   const[bulkDelOpen,setBulkDelOpen]=useState(false);
   const[ctxMenu,setCtxMenu]=useState(null);
@@ -3678,7 +3416,6 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
       React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,padding:"8px 10px",borderBottom:"1px solid var(--border)",background:"var(--bg4)",flexShrink:0,flexWrap:"wrap"}},
         React.createElement("button",{onClick:onNew,style:tbBtn("var(--accent)","var(--accentbg)")},"+ New"),
         React.createElement("button",{onClick:()=>setImportOpen(true),title:"Import from Excel",style:{...tbBtn("#0e7490","rgba(14,116,144,.12)"),minWidth:"auto"}},"⬆"),
-        React.createElement("button",{onClick:()=>setSmsOpen(true),title:"Parse bank SMS",style:{...tbBtn("#6d28d9","rgba(109,40,217,.10)"),minWidth:"auto"}},React.createElement(Icon,{n:"phone",size:16})),
         React.createElement("button",{onClick:()=>handleSort(sortKey,sortDir==="asc"?"desc":"asc"),style:{...tbBtn("var(--text4)","var(--bg3)"),minWidth:"auto"}},
           (sortDir==="desc"?"↓ ":"↑ ")+({date:"Date",desc_col:"Desc",payee:"Payee",cat:"Category",out:"Out",in:"In",balance:"Balance"}[sortKey]||"Date")
         ),
@@ -3824,8 +3561,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
       /* Edit modal */
       editTx&&React.createElement(TxEditModal,{tx:editTx,categories,payees,txTypes,allAccounts:allAccounts||[],onSave:(updated)=>{onEdit(updated,editTx);setEditTx(null);setSelId(updated.id);},onClose:()=>setEditTx(null)}),
       confirmDel&&React.createElement(ConfirmModal,{msg:`Delete "${confirmDel.desc||confirmDel.payee||"this transaction"}"? This will adjust your balance.`,onConfirm:()=>{onDelete(confirmDel);setConfirmDel(null);setSelId(null);},onCancel:()=>setConfirmDel(null)}),
-      importOpen&&React.createElement(ImportTxModal,{accType,categories,existingTxns:transactions,onUpsert:updates=>{if(onUpsert)onUpsert(updates);},onMassUpdateStatus:(ids,status)=>{if(onMassUpdateStatus)onMassUpdateStatus(ids,status);},onImport:txns=>{if(onImport)onImport(txns);setImportOpen(false);},onClose:()=>setImportOpen(false)}),
-      smsOpen&&React.createElement(SmsScanModal,{accType,onImport:txns=>{if(onImport)onImport(txns);setSmsOpen(false);},onClose:()=>setSmsOpen(false)})
+      importOpen&&React.createElement(ImportTxModal,{accType,categories,existingTxns:transactions,onUpsert:updates=>{if(onUpsert)onUpsert(updates);},onMassUpdateStatus:(ids,status)=>{if(onMassUpdateStatus)onMassUpdateStatus(ids,status);},onImport:txns=>{if(onImport)onImport(txns);setImportOpen(false);},onClose:()=>setImportOpen(false)})
     );
   }
   /* ── END MOBILE VIEW ─────────────────────────────────────────────────── */
@@ -4335,7 +4071,6 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
             React.createElement("button",{onClick:()=>{if(!selTx)return;const updated={...selTx,status:selTx.status==="Reconciled"?"Unreconciled":"Reconciled"};onEdit(updated,selTx);},disabled:!selTx,style:tbBtn("#16a34a","rgba(22,163,74,.12)",!selTx)},(selTx&&selTx.status)==="Reconciled"?"○ Unreconcile":"✓ Reconcile"),
             React.createElement("div",{style:{width:1,height:22,background:"var(--border)",margin:"0 4px"}}),
             React.createElement("button",{onClick:()=>setImportOpen(true),style:tbBtn("#0e7490","rgba(14,116,144,.12)")},"⬆ Import Excel"),
-            React.createElement("button",{onClick:()=>setSmsOpen(true),style:tbBtn("#6d28d9","rgba(109,40,217,.10)")},"Parse SMS"),
             React.createElement("button",{onClick:()=>exportLedgerXlsx(filtered,accountName,snMap),style:tbBtn("#16a34a","rgba(22,163,74,.10)")},"⬇ Export Excel"),
             React.createElement("div",{style:{flex:1}}),
             /* Active filter summary chips — visible when panel is hidden */
@@ -4390,12 +4125,6 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
       onMassUpdateStatus:(ids,status)=>{if(onMassUpdateStatus)onMassUpdateStatus(ids,status);},
       onImport:txns=>{if(onImport)onImport(txns);setImportOpen(false);},
       onClose:()=>setImportOpen(false)
-    }),
-    /* ── SMS parser modal */
-    smsOpen&&React.createElement(SmsScanModal,{
-      accType,
-      onImport:txns=>{if(onImport)onImport(txns);setSmsOpen(false);},
-      onClose:()=>setSmsOpen(false)
     }),
     /* ── Bulk categorize modal */
     ctxMenu&&React.createElement(React.Fragment,null,
