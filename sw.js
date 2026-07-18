@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════════════
-   finsight — Service Worker  (v6.11.0 — full offline support + push notifications)
+   finsight — Service Worker  (v6.12.0 — full offline support + push notifications)
    ══════════════════════════════════════════════════════════════════════════
    Strategies:
    • Navigation / HTML  → network-first, fallback to cache, fallback to /
@@ -14,7 +14,7 @@
    • Pending actions written to IDB so the app can reconcile on next open
    ══════════════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'finsights-v6-11-0';
+const CACHE_NAME = 'finsights-v6-12-0';
 const MAX_RUNTIME_CACHE_ENTRIES = 80;
 const MAX_CACHE_AGE_MS = 30 * 24 * 3600 * 1000; // 30 days
 
@@ -63,7 +63,7 @@ async function trimCache(cacheName, maxEntries) {
 function isStale(response) {
   if (!response) return true;
   const dateHeader = response.headers.get('sw-fetched-on');
-  if (!dateHeader) return false;
+  if (!dateHeader) return true;
   return Date.now() - Number(dateHeader) > MAX_CACHE_AGE_MS;
 }
 
@@ -324,18 +324,29 @@ async function handleNotificationAction(reminderId, action, postponeDate) {
   if (!reminder) return;
 
   const updated = applyReminderAction(reminder, action, postponeDate);
-  await updateReminderInIDB(updated);
+  try {
+    await updateReminderInIDB(updated);
+  } catch (e) {
+    console.warn('[SW] Failed to update reminder in IDB:', e);
+    return;
+  }
 
-  // Write pending so the app can replay this on next open
-  await writePendingAction({ reminderId, action, date: postponeDate || null });
+  try {
+    await writePendingAction({ reminderId, action, date: postponeDate || null });
+  } catch (e) {
+    console.warn('[SW] Failed to write pending action:', e);
+  }
 
-  // Broadcast to any open clients so they can dispatch immediately
-  await broadcastToClients({
-    type:       "REMINDER_ACTION",
-    action,
-    reminderId,
-    date:       postponeDate || null,
-  });
+  try {
+    await broadcastToClients({
+      type:       "REMINDER_ACTION",
+      action,
+      reminderId,
+      date:       postponeDate || null,
+    });
+  } catch (e) {
+    console.warn('[SW] Failed to broadcast:', e);
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -362,7 +373,7 @@ self.addEventListener('install', event => {
           PRECACHE_CDN.map(url =>
             fetch(url, { mode: 'cors', cache: 'reload' })
               .then(resp => {
-                if (resp.ok || resp.type === 'opaque') {
+                if (resp.ok) {
                   return cache.put(url, stampedClone(resp));
                 }
                 console.warn('[SW] CDN precache failed:', url, resp.status);
@@ -474,7 +485,7 @@ self.addEventListener('message', event => {
   if (!data) return;
 
   if (data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
+    event.waitUntil(self.skipWaiting());
   }
 
   if (data.type === 'TRIM_CACHE') {
@@ -587,6 +598,7 @@ self.addEventListener('fetch', event => {
         if (event.request.destination === 'image') {
           return new Response('', { status: 503, headers: { 'Content-Type': 'image/svg+xml' } });
         }
+        return new Response('', { status: 503, statusText: 'Offline' });
       });
     })
   );

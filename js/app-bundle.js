@@ -896,7 +896,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="6.11.0";
+const APP_VERSION="6.12.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1162,10 +1162,10 @@ const calcFDMaturity=(principal,ratePercent,startDate,maturityDate,compoundFreq)
   if(isNaN(start.getTime())||isNaN(end.getTime()))return principal||0;
   const days=Math.max(0,Math.round((end-start)/(1000*60*60*24)));
   if(days<=0)return principal||0;
-  const years=days/365;
   const r=ratePercent/100;
   const n=compoundFreq==="annually"?1:compoundFreq==="half-yearly"?2:4;
-  const maturity=principal*Math.pow(1+r/n,n*years);
+  const completedPeriods=Math.floor(days/365*n);
+  const maturity=principal*Math.pow(1+r/n,completedPeriods);
   return Math.round(maturity);
 };
 
@@ -1232,7 +1232,7 @@ const computeXIRR=(cashflows,dates,guess=0.1)=>{
     r=nr;
     if(r<=-1)r=-0.9999; /* clamp to prevent negative base in pow */
   }
-  if(!isFinite(r)||r<=-1||r>50)return null; /* >5000% XIRR is almost certainly a convergence error */
+  if(!isFinite(r)||r<=-1||r>5)return null; /* >500% XIRR is almost certainly a convergence error */
   return Math.round(r*10000)/100; /* return as % with 2 decimal places */
 };
 
@@ -1268,7 +1268,7 @@ const computeCapitalGains=(shares,mf)=>{
 
   /* ── Equity shares (always equity rules: 12-month threshold) ── */
   shares.forEach(sh=>{
-    if(!sh.buyDate||!sh.currentPrice||!sh.buyPrice||!sh.qty)return;
+    if(!sh||!sh.buyDate||!sh.currentPrice||!sh.buyPrice||!sh.qty)return;
     const buyD=new Date(sh.buyDate+"T12:00:00");
     const todD=new Date(today+"T12:00:00");
     const daysHeld=Math.floor((todD-buyD)/86400000);
@@ -1431,8 +1431,8 @@ const reducer=(s,a)=>{
       const netDelta=toDelete.filter(t=>t.status==="Reconciled").reduce((d,t)=>d+(t.type==="credit"?t.amount:-t.amount),0);
       return{...s,cash:{...s.cash,balance:s.cash.balance-netDelta,transactions:s.cash.transactions.filter(t=>!a.ids.has(t.id))}};
     }
-    case"REORDER_BANKS":{const bs=[...s.banks];const[mv]=bs.splice(a.from,1);bs.splice(a.to,0,mv);return{...s,banks:bs};}
-    case"REORDER_CARDS":{const cs=[...s.cards];const[mv]=cs.splice(a.from,1);cs.splice(a.to,0,mv);return{...s,cards:cs};}
+    case"REORDER_BANKS":{const bs=[...s.banks];if(a.from===a.to||a.from<0||a.from>=bs.length||a.to<0||a.to>=bs.length)return s;const[mv]=bs.splice(a.from,1);bs.splice(a.to,0,mv);return{...s,banks:bs};}
+    case"REORDER_CARDS":{const cs=[...s.cards];if(a.from===a.to||a.from<0||a.from>=cs.length||a.to<0||a.to>=cs.length)return s;const[mv]=cs.splice(a.from,1);cs.splice(a.to,0,mv);return{...s,cards:cs};}
     case"TOGGLE_BANK_HIDDEN":return{...s,banks:s.banks.map(b=>b.id===a.id?{...b,hidden:!b.hidden}:b)};
     case"TOGGLE_CARD_HIDDEN":return{...s,cards:s.cards.map(c=>c.id===a.id?{...c,hidden:!c.hidden}:c)};
     case"EDIT_BANK":return{...s,banks:s.banks.map(b=>{
@@ -1502,7 +1502,7 @@ const reducer=(s,a)=>{
     case"DUP_CASH_TX":{const sn=nextSn(s.cash.transactions);const _dcRec=a.tx.status==="Reconciled";return{...s,cash:{...s.cash,balance:s.cash.balance+(_dcRec?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0),transactions:[...s.cash.transactions,{...a.tx,id:uid(),_sn:sn,_addedAt:new Date().toISOString()}]}};}
     case"ADD_MF":return{...s,mf:[...s.mf,a.p]};
     case"EDIT_MF":return{...s,mf:s.mf.map(m=>m.id===a.p.id?{...m,...a.p}:m)};
-    case"UPD_MF_NAV":return{...s,mf:a.p};
+    case"UPD_MF_NAV":{const navMap=new Map((a.p||[]).map(m=>[m.id,m]));return{...s,mf:s.mf.map(m=>navMap.has(m.id)?{...m,...navMap.get(m.id)}:m)};}
     case"DEL_MF":{
       const _delCode=(s.mf.find(m=>m.id===a.id)||{}).schemeCode||"";
       const _cleanNavs={};
@@ -2031,7 +2031,22 @@ const reducer=(s,a)=>{
       if(at==="cash")return{...s,cash:{...s.cash,transactions:s.cash.transactions.map(upd)}};
       return s;
     }
-    case"RESTORE_ALL":return{...EMPTY_STATE(),...a.data};
+    case"RESTORE_ALL":{const d=a.data||{};return{...EMPTY_STATE(),...d,
+      banks:Array.isArray(d.banks)?d.banks:[],
+      cards:Array.isArray(d.cards)?d.cards:[],
+      cash:d.cash&&typeof d.cash==="object"?d.cash:{balance:0,transactions:[]},
+      mf:Array.isArray(d.mf)?d.mf:[],
+      shares:Array.isArray(d.shares)?d.shares:[],
+      fd:Array.isArray(d.fd)?d.fd:[],
+      re:Array.isArray(d.re)?d.re:[],
+      pf:Array.isArray(d.pf)?d.pf:[],
+      loans:Array.isArray(d.loans)?d.loans:[],
+      goals:Array.isArray(d.goals)?d.goals:[],
+      notes:Array.isArray(d.notes)?d.notes:[],
+      categories:Array.isArray(d.categories)?d.categories:[],
+      payees:Array.isArray(d.payees)?d.payees:[],
+      historyCache:d.historyCache&&typeof d.historyCache==="object"?d.historyCache:{},
+    };}
     case"RESET_ALL":return{...EMPTY_STATE()};
     /* Bulk import: a.accType = bank|card|cash, a.accId, a.txns = array of tx objects */
     case"IMPORT_BULK_TX":{
@@ -2546,7 +2561,7 @@ const dmyFmt=d=>{
 const parseAmt=(raw)=>{
   if(raw===null||raw===undefined||raw==="")return 0;
   const n=parseFloat(raw.toString().replace(/[^0-9.\-]/g,""));
-  return isNaN(n)?0:Math.abs(n);
+  return isNaN(n)?0:n;
 };
 
 
@@ -4713,8 +4728,10 @@ var ReminderToastManager = ({state, dispatch}) => {
 
   // Reset index if we run out of reminders
   useEffect(()=>{
-    if(currentIdx>=due.length && due.length>0) setCurrentIdx(due.length-1);
-  },[due.length, currentIdx]);
+    if(due.length===0){setCurrentIdx(0);return;}
+    if(currentIdx>=due.length) setCurrentIdx(due.length-1);
+    else if(currentIdx<0) setCurrentIdx(0);
+  },[due.length]);
 
   const reminder = due[currentIdx] || null;
   if(!reminder) return null;
@@ -5478,7 +5495,7 @@ var _gdriveExchangeCodeForTokens = async (authCode) => {
     });
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
-      console.warn("[GDrive] Code exchange failed:", resp.status, err);
+      console.warn("[GDrive] Code exchange failed:", resp.status);
       return null;
     }
     const data = await resp.json();
@@ -6944,12 +6961,12 @@ var MFXirrRow=({m,dispatch,askDelete})=>{
             autoFocus:true,
             style:{padding:"4px 8px",fontSize:12,width:80,borderRadius:6},
             onKeyDown:e=>{
-              if(e.key==="Enter"){dispatch({type:"EDIT_MF",p:{id:m.id,manualXirr:xirrInput!==""?parseFloat(xirrInput):null}});setEditingXirr(false);}
+              if(e.key==="Enter"){const v=xirrInput!==""?parseFloat(xirrInput):null;dispatch({type:"EDIT_MF",p:{id:m.id,manualXirr:v!==null&&isFinite(v)?v:null}});setEditingXirr(false);}
               if(e.key==="Escape")setEditingXirr(false);
             }
           }),
           React.createElement("button",{
-            onClick:()=>{dispatch({type:"EDIT_MF",p:{id:m.id,manualXirr:xirrInput!==""?parseFloat(xirrInput):null}});setEditingXirr(false);},
+            onClick:()=>{const v=xirrInput!==""?parseFloat(xirrInput):null;dispatch({type:"EDIT_MF",p:{id:m.id,manualXirr:v!==null&&isFinite(v)?v:null}});setEditingXirr(false);},
             style:{background:"rgba(22,163,74,.1)",border:"1px solid rgba(22,163,74,.3)",borderRadius:5,color:"#16a34a",cursor:"pointer",fontSize:11,padding:"3px 7px",fontFamily:"'DM Sans',sans-serif",fontWeight:700}
           },"✓"),
           React.createElement("button",{
@@ -8668,8 +8685,10 @@ var CalculatorSection=React.memo(()=>{
   const safeEval=str=>{
     /* Replace × ÷ − (Unicode) with JS operators, then eval safely */
     const cleaned=str.replace(/×/g,"*").replace(/÷/g,"/").replace(/−/g,"-");
-    /* Only allow digits, operators, dot, parens, spaces */
+    /* Only allow digits, operators, dot, parens, spaces — ^ and $ anchor for full match */
     if(!/^[0-9+\-*/().\s]+$/.test(cleaned))throw new Error("invalid");
+    /* Additional length check to prevent ReDoS */
+    if(cleaned.length>100)throw new Error("expression too long");
     /* eslint-disable-next-line no-new-func */
     return Function('"use strict";return ('+cleaned+')')();
   };
@@ -8917,7 +8936,7 @@ var NotesSection=React.memo(({notes=[],dispatch})=>{
     if(due.length>0){
       setReminderAlert(due);
     }
-  },[]);
+  },[notes]);
 
   const filtered=notes.filter(n=>{
     const q=deferredNotesSearch.toLowerCase();
@@ -10097,8 +10116,14 @@ var getStorageStatsAsync=async()=>{
    The caller uses this to dispatch matching PRUNE actions so in-memory
    state stays in sync with what was actually persisted to localStorage. */
 var _emergencyCompact=(s)=>{
-  /* Pass 1: wipe the history cache (largest variable cache) */
-  const p1={...s,historyCache:{}};
+  /* Pass 1: wipe the history cache (largest variable cache) — use _stripped base */
+  const _base=(({eodPrices,eodNavs,...rest})=>({
+    ...rest,
+    banks:(rest.banks||[]).map(b=>({...b,transactions:[]})),
+    cards:(rest.cards||[]).map(c=>({...c,transactions:[]})),
+    cash:{...(rest.cash||{}),transactions:[]},
+  }))(s);
+  const p1={..._base,historyCache:{}};
   try{localStorage.setItem(LS_KEY,JSON.stringify(p1));console.warn("[MM] Storage: historyCache cleared to recover space.");return"historyCache";}catch{}
   /* Pass 2: shrink EOD prices to last 7 days */
   const eodKeys=Object.keys(s.eodPrices||{}).sort();
@@ -10148,7 +10173,7 @@ var saveState=(s)=>{
     /* Specifically handle QuotaExceededError */
     if(e&&(e.name==="QuotaExceededError"||e.name==="NS_ERROR_DOM_QUOTA_REACHED"||e.code===22)){
       console.warn("[MM] QuotaExceededError — attempting emergency compaction…");
-      return _emergencyCompact(s);
+      return _emergencyCompact(_stripped);
     }else{
       console.warn("Failed to save state:",e);
       return null;
@@ -10172,8 +10197,18 @@ var _saveEodCaches=(state)=>{
 /* ── PIN SECURITY ─────────────────────────────────────────────────────────── */
 /* Hash a PIN string with SHA-256; returns lowercase hex string */
 var hashPin=async(pin)=>{
-  const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(pin));
+  const existingSalt=tryGetPinSalt();
+  const salt=existingSalt||getOrCreatePinSalt();
+  const combined=new TextEncoder().encode(salt+pin);
+  const buf=await crypto.subtle.digest("SHA-256",combined);
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+};
+var LS_PIN_SALT="mm_v7_pin_salt";
+var tryGetPinSalt=()=>{try{return localStorage.getItem(LS_PIN_SALT)||"";}catch{return "";}};
+var getOrCreatePinSalt=()=>{
+  let salt=tryGetPinSalt();
+  if(!salt){salt=Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,"0")).join("");try{localStorage.setItem(LS_PIN_SALT,salt);}catch{}}
+  return salt;
 };
 var getPinHash=()=>{try{return localStorage.getItem(LS_PIN)||"";}catch{return "";}};
 
@@ -10208,6 +10243,8 @@ var decryptBackup=async(envelope,password)=>{
   return JSON.parse(new TextDecoder().decode(plaintext));
 };
 var savePinHash=(h)=>{try{if(h)localStorage.setItem(LS_PIN,h);else localStorage.removeItem(LS_PIN);}catch{}};
+var _pinFailCount=0;
+var _pinLockoutUntil=0;
 var isSessionUnlocked=()=>{try{return sessionStorage.getItem(SS_UNLOCK)==="1";}catch{return false;}};
 var setSessionUnlocked=()=>{try{sessionStorage.setItem(SS_UNLOCK,"1");}catch{}};
 var clearSessionUnlock=()=>{try{sessionStorage.removeItem(SS_UNLOCK);}catch{}};
@@ -10704,23 +10741,23 @@ var _fsaDbOpen=()=>new Promise((res,rej)=>{
 /* ── Receipt file handle helpers ── */
 var rcptKey=(txId,name)=>txId+":"+name;
 var rcptSaveHandle=async(txId,name,handle)=>{
-  try{const db=await _fsaDbOpen();await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const r=tx.objectStore(RCPT_IDB_STORE).put(handle,rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}catch{}
+  try{const db=await _fsaDbOpen();try{await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const r=tx.objectStore(RCPT_IDB_STORE).put(handle,rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}finally{db.close();}}catch{}
 };
 var rcptGetHandle=async(txId,name)=>{
-  try{const db=await _fsaDbOpen();return await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readonly");const r=tx.objectStore(RCPT_IDB_STORE).get(rcptKey(txId,name));r.onsuccess=e=>res(e.target.result||null);r.onerror=e=>rej(e.target.error);});}catch{return null;}
+  try{const db=await _fsaDbOpen();try{return await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readonly");const r=tx.objectStore(RCPT_IDB_STORE).get(rcptKey(txId,name));r.onsuccess=e=>res(e.target.result||null);r.onerror=e=>rej(e.target.error);});}finally{db.close();}}catch{return null;}
 };
 var rcptDelHandle=async(txId,name)=>{
-  try{const db=await _fsaDbOpen();await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const r=tx.objectStore(RCPT_IDB_STORE).delete(rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}catch{}
+  try{const db=await _fsaDbOpen();try{await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const r=tx.objectStore(RCPT_IDB_STORE).delete(rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}finally{db.close();}}catch{}
 };
 var rcptDelAllForTx=async(txId)=>{
   try{
     const db=await _fsaDbOpen();
-    const keys=await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readonly");const r=tx.objectStore(RCPT_IDB_STORE).getAllKeys();r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);});
-    const toDelete=keys.filter(k=>k.startsWith(txId+":"));
-    if(!toDelete.length)return;
-    await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const store=tx.objectStore(RCPT_IDB_STORE);toDelete.forEach(k=>store.delete(k));tx.oncomplete=()=>res();tx.onerror=e=>rej(e.target.error);});
+    try{
+      const keys=await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readonly");const r=tx.objectStore(RCPT_IDB_STORE).getAllKeys();r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);});
+      const toDelete=keys.filter(k=>k.startsWith(txId+":"));
+      if(toDelete.length){await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const store=tx.objectStore(RCPT_IDB_STORE);toDelete.forEach(k=>store.delete(k));tx.oncomplete=()=>res();tx.onerror=e=>rej(e.target.error);});}
+    }finally{db.close();}
   }catch{}
-  /* Also remove stored blob content */
   await rcptDelAllBlobsForTx(txId);
 };
 
@@ -10737,22 +10774,23 @@ var rcptSaveBlobData=async(txId,name,file)=>{
   try{
     const b64=await _rcptReadFileAsB64(file);
     const db=await _fsaDbOpen();
-    await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readwrite");const r=tx.objectStore(RCPT_BLOB_STORE).put({b64,mimeType:file.type},rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});
+    try{await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readwrite");const r=tx.objectStore(RCPT_BLOB_STORE).put({b64,mimeType:file.type},rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}finally{db.close();}
   }catch{}
 };
 var rcptGetBlobData=async(txId,name)=>{
-  try{const db=await _fsaDbOpen();return await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readonly");const r=tx.objectStore(RCPT_BLOB_STORE).get(rcptKey(txId,name));r.onsuccess=e=>res(e.target.result||null);r.onerror=e=>rej(e.target.error);});}catch{return null;}
+  try{const db=await _fsaDbOpen();try{return await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readonly");const r=tx.objectStore(RCPT_BLOB_STORE).get(rcptKey(txId,name));r.onsuccess=e=>res(e.target.result||null);r.onerror=e=>rej(e.target.error);});}finally{db.close();}}catch{return null;}
 };
 var rcptDelBlobData=async(txId,name)=>{
-  try{const db=await _fsaDbOpen();await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readwrite");const r=tx.objectStore(RCPT_BLOB_STORE).delete(rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}catch{}
+  try{const db=await _fsaDbOpen();try{await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readwrite");const r=tx.objectStore(RCPT_BLOB_STORE).delete(rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}finally{db.close();}}catch{}
 };
 var rcptDelAllBlobsForTx=async(txId)=>{
   try{
     const db=await _fsaDbOpen();
-    const keys=await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readonly");const r=tx.objectStore(RCPT_BLOB_STORE).getAllKeys();r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);});
-    const toDelete=keys.filter(k=>k.startsWith(txId+":"));
-    if(!toDelete.length)return;
-    await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readwrite");const store=tx.objectStore(RCPT_BLOB_STORE);toDelete.forEach(k=>store.delete(k));tx.oncomplete=()=>res();tx.onerror=e=>rej(e.target.error);});
+    try{
+      const keys=await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readonly");const r=tx.objectStore(RCPT_BLOB_STORE).getAllKeys();r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);});
+      const toDelete=keys.filter(k=>k.startsWith(txId+":"));
+      if(toDelete.length){await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readwrite");const store=tx.objectStore(RCPT_BLOB_STORE);toDelete.forEach(k=>store.delete(k));tx.oncomplete=()=>res();tx.onerror=e=>rej(e.target.error);});}
+    }finally{db.close();}
   }catch{}
 };
 /* Gather ALL blob entries — used by backup export */
@@ -11060,7 +11098,7 @@ var loadTxFromIDB=async()=>{
       const tryResolve=()=>{
         if(++done<2)return;
         db.close();
-        if(!keysResult||!valuesResult){res(null);return;}
+        if(!keysResult||!valuesResult||keysResult.length!==valuesResult.length){db.close();res(null);return;}
         const banks={},cards={};let cashTxns=[];
         keysResult.forEach((key,i)=>{
           const val=valuesResult[i]||[];
@@ -11167,11 +11205,20 @@ var PinLockScreen=({onUnlock})=>{
 
   const verify=async(pin)=>{
     setChecking(true);
+    if(_pinLockoutUntil&&Date.now()<_pinLockoutUntil){
+      const secs=Math.ceil((_pinLockoutUntil-Date.now())/1000);
+      setErr("Too many attempts. Wait "+secs+"s.");
+      setTimeout(()=>setChecking(false),700);
+      return;
+    }
     const hash=await hashPin(pin);
     if(hash===getPinHash()){
+      _pinFailCount=0;
       setSessionUnlocked();
       onUnlock();
     }else{
+      _pinFailCount++;
+      if(_pinFailCount>=5){_pinLockoutUntil=Date.now()+60000;_pinFailCount=0;}
       setShake(true);
       setErr("Incorrect PIN. Try again.");
       setTimeout(()=>{setShake(false);setDigits([]);setChecking(false);},700);
@@ -11438,16 +11485,16 @@ var usePersistentReducer=(reducer,init)=>{
         console.log("[GDrive] Found newer state on Drive (",remoteTime,") — applying…");
         _lastPulledAt=remoteTime;
         const remote_state = remote.state;
-        /* Persist to localStorage so data survives reload */
         try {
           saveState({ ...EMPTY_STATE(), ...remote_state });
           localStorage.setItem(LS_EOD_PRICES, JSON.stringify(remote_state.eodPrices || {}));
           localStorage.setItem(LS_EOD_NAVS,   JSON.stringify(remote_state.eodNavs   || {}));
         } catch {}
-        /* Clear IDB then write transactions */
         try { await clearTxIDB(); } catch {}
         try { await saveTxToIDB(remote_state); } catch {}
         dispatch({type:"RESTORE_ALL",data:remote.state});
+        /* Force a clean debounced save after pull to prevent stale local state overwrite */
+        if(timerRef.current)clearTimeout(timerRef.current);
         window.dispatchEvent(new CustomEvent("gdrive:pulled",{detail:{time:remoteTime}}));
       }catch(e){console.warn("[GDrive] Pull failed:",e);}
     };
@@ -11587,21 +11634,20 @@ var usePersistentReducer=(reducer,init)=>{
          _mmResetting is set to true just before window.location.reload() and
          naturally resets to false on the fresh page load. */
       if(_mmResetting)return;
-      stateRef.current=state;
-      saveState(state);
-      /* Best-effort IDB flush on close — completes if browser grants grace period */
-      saveTxToIDB(state).catch(()=>{});
+      const s=stateRef.current;
+      saveState(s);
+      saveTxToIDB(s).catch(()=>{});
       try{
-        const _ePJson=JSON.stringify(state.eodPrices||{});
-        const _eNJson=JSON.stringify(state.eodNavs||{});
-        if(Object.keys(state.eodPrices||{}).length>0)localStorage.setItem(LS_EOD_PRICES,_ePJson);
-        if(Object.keys(state.eodNavs||{}).length>0)localStorage.setItem(LS_EOD_NAVS,_eNJson);
+        const _ePJson=JSON.stringify(s.eodPrices||{});
+        const _eNJson=JSON.stringify(s.eodNavs||{});
+        if(Object.keys(s.eodPrices||{}).length>0)localStorage.setItem(LS_EOD_PRICES,_ePJson);
+        if(Object.keys(s.eodNavs||{}).length>0)localStorage.setItem(LS_EOD_NAVS,_eNJson);
       }catch{}
     };
     window.addEventListener("beforeunload",flush);
     window.addEventListener("pagehide",flush);
     return()=>{window.removeEventListener("beforeunload",flush);window.removeEventListener("pagehide",flush);};
-  },[state]);
+  },[]);
   return[state,dispatch,idbHydrated];
 };
 
@@ -15318,7 +15364,10 @@ const Dashboard=React.memo(({data,isMobile,onJumpToTx})=>{
         const p=pts[idx];
         tipRef.current.style.display="block";
         tipRef.current.style.left=Math.min(frac*100,78)+"%";
-        tipRef.current.innerHTML=`<strong>${p.lbl}</strong><br/>${INRs(p.nw)}`;
+        tipRef.current.textContent="";
+  const s1=document.createElement("strong");s1.textContent=p.lbl;tipRef.current.appendChild(s1);
+  tipRef.current.appendChild(document.createElement("br"));
+  tipRef.current.appendChild(document.createTextNode(INRs(p.nw)));
       };
       const onSvgLeave=()=>{if(tipRef.current)tipRef.current.style.display="none";};
       /* one-click save current month snapshot */
@@ -16318,7 +16367,7 @@ const GlobalSearchModal=({state,onClose,onJumpToTx,setTab,setTheme,setQuickAddOp
     };
     document.addEventListener("keydown",handler);
     return()=>document.removeEventListener("keydown",handler);
-  });
+  },[items,onClose,execute]);
 
   /* 200ms debounce for the scan */
   React.useEffect(()=>{
@@ -16567,7 +16616,7 @@ const ImportMFModal=({onImport,onClose})=>{
         const data=all.slice(hi+1).filter(r=>r.some(c=>c!==""));
         if(!hdrs.length||!data.length){setParseErr("No data found. Check the file has headers and data rows.");return;}
         const gi=k=>detectCol(hdrs,ALIASES[k]);
-        const get=(row,k)=>{const i=gi(k);return i>=0?(row[i]??"")+"":" ";};
+        const get=(row,k)=>{const i=gi(k);return i>=0?(row[i]??"")+"":"";};
         const items=[],skipped=[];
         data.forEach((row,i)=>{
           const name=(get(row,"name")).trim();
@@ -16734,13 +16783,16 @@ const ImportMFTxnsModal=({onImport,onClose})=>{
           let date=dateStr;
           if(/^\d{2}[\/-]\d{2}[\/-]\d{4}$/.test(dateStr)){
             const parts=dateStr.split(/[\/-]/);
-            date=parts[2]+"-"+parts[1]+"-"+parts[0];
+            const p1=parseInt(parts[0],10),p2=parseInt(parts[1],10);
+            if(p1>12){date=parts[2]+"-"+parts[1]+"-"+parts[0];}
+            else if(p2>12){date=parts[2]+"-"+parts[0]+"-"+parts[1];}
+            else{date=parts[2]+"-"+parts[1]+"-"+parts[0];}
           }else if(/^\d{4}[\/-]\d{2}[\/-]\d{2}$/.test(dateStr)){
             date=dateStr.replace(/\//g,"-");
           }
           const orderRaw=get(row,ci.order).toLowerCase();
           const orderType=orderRaw.includes("sell")||orderRaw.includes("redeem")?"sell":"buy";
-          const units=parseFloat((get(row,ci.units)).replace(/[^0-9.\-]/g,""))||0;
+          const units=Math.abs(parseFloat((get(row,ci.units)).replace(/[^0-9.\-]/g,""))||0);
           const nav=parseFloat((get(row,ci.nav)).replace(/[^0-9.\-]/g,""))||0;
           const amount=parseFloat((get(row,ci.amount)).replace(/[^0-9.\-]/g,""))||0;
           let folio=get(row,ci.folio);
@@ -17122,7 +17174,7 @@ const ImportFDModal=({onImport,onClose})=>{
         const data=all.slice(hi+1).filter(r=>r.some(c=>c!==""));
         if(!hdrs.length||!data.length){setParseErr("No data found. Check the file has headers and data rows.");return;}
         const gi=k=>detectCol(hdrs,ALIASES[k]);
-        const get=(row,k)=>{const i=gi(k);return i>=0?(row[i]??"")+"":" ";};
+        const get=(row,k)=>{const i=gi(k);return i>=0?(row[i]??"")+"":"";};
         const items=[],skipped=[];
         data.forEach((row,i)=>{
           const bank=(get(row,"bank")).trim();
@@ -18296,11 +18348,9 @@ const ShareHistoryPanel=({sh,eodPrices,historyCache={},dispatch})=>{
   React.useEffect(()=>{
     if(!tkr||!sh.buyDate){setHistPts(null);setHistLoading(false);return;}
 
-    /* Check cache first — bypassed when refreshKey changes (forced refresh) */
     const cached=historyCache[tkr];
     const now=Date.now();
     const cacheAge=cached?.timestamp?(now-cached.timestamp):Infinity;
-    /* Cache is valid for 24 h; a forced refresh sets timestamp:0 to bust it */
     const isCacheValid=refreshKey===0&&cached&&cacheAge<(24*60*60*1000)&&cached.fromDate===sh.buyDate;
 
     if(isCacheValid&&cached.data&&cached.data.length>=2){
@@ -18309,7 +18359,6 @@ const ShareHistoryPanel=({sh,eodPrices,historyCache={},dispatch})=>{
       return;
     }
 
-    /* Fetch fresh data */
     let cancelled=false;
     setHistLoading(true);
     setHistPts(null);
@@ -18324,7 +18373,7 @@ const ShareHistoryPanel=({sh,eodPrices,historyCache={},dispatch})=>{
       })
       .catch(()=>{if(!cancelled){setHistPts([]);setHistLoading(false);}});
     return()=>{cancelled=true;};
-  },[tkr,sh.buyDate,historyCache,dispatch,refreshKey]);
+  },[tkr,sh.buyDate,dispatch,refreshKey]);
 
   /* ── 1. Loading ── */
   if(histLoading)return React.createElement("div",{style:{
@@ -24877,12 +24926,12 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                   React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,background:"rgba(109,40,217,.04)",borderBottom:"1px solid var(--border2)",fontSize:10,fontWeight:600}},
                     React.createElement("div",{style:{padding:"7px 10px",color:"var(--text5)",fontStyle:"italic"}},"Benchmark"),
                     React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:"var(--text6)"}},"—"),
-                    _idxChgs.map(idx=>React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct),fontWeight:700}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
+                    _idxChgs.map((idx,i)=>React.createElement("div",{key:i,style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct),fontWeight:700}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
                   ),
-                  _fundChgs.length>0?_fundChgs.map(f=>React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,borderBottom:"1px solid var(--border2)",fontSize:10,":last-child":{borderBottom:"none"}}},
+                  _fundChgs.length>0?_fundChgs.map((f,fi)=>React.createElement("div",{key:fi,style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,borderBottom:"1px solid var(--border2)",fontSize:10,":last-child":{borderBottom:"none"}}},
                     React.createElement("div",{style:{padding:"7px 10px",color:"var(--text2)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},_sn(f.name)),
                     React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(f.chgPct),fontWeight:600}},(f.chgPct>=0?"▲ +":"▼ ")+Math.abs(f.chgPct).toFixed(2)+"%"),
-                    _idxChgs.map(idx=>React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
+                    _idxChgs.map((idx,ii)=>React.createElement("div",{key:ii,style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
                   )):_hasNavPair||!_fundCount?null:React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr",gap:0,padding:"16px 10px",fontSize:10,color:"var(--text6)",textAlign:"center",fontStyle:"italic"}},
                     "Refresh NAV again tomorrow to see per-fund day-over-day changes.")
                   ),
@@ -24893,13 +24942,13 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                       React.createElement("span",null,_netChgPct!==null?_pct(_netChgPct):"—"),
                       React.createElement("span",{style:{fontSize:9,fontWeight:600,opacity:.85}},_netChgAbs!==0?INR(_netChgAbs):"")
                     ),
-                    _idxChgs.map(()=>React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:"var(--text6)"}},"—"))
+                    _idxChgs.map((_,i)=>React.createElement("div",{key:i,style:{padding:"8px 10px",textAlign:"right",color:"var(--text6)"}},"—"))
                   ),
                   /* ── Summary: Net Indices Change (same period) ── */
                   React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,background:"rgba(37,99,235,.06)",borderBottom:"1px solid var(--border2)",fontSize:10,fontWeight:700}},
                     React.createElement("div",{style:{padding:"8px 10px",color:"#2563eb"}},"Net Indices"),
                     React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:"var(--text6)"}},"—"),
-                    _idxChgs.map(idx=>React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
+                    _idxChgs.map((idx,i)=>React.createElement("div",{key:i,style:{padding:"8px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
                   )
               )
             );
@@ -26027,7 +26076,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
               currentValue:parseFloat(editMf.currentValue)||null,
               startDate:editMf.startDate||null,
               notes:editMf.notes||"",
-              manualXirr:editMf.manualXirr!==""&&editMf.manualXirr!=null?parseFloat(editMf.manualXirr):null,
+              manualXirr:editMf.manualXirr!==""&&editMf.manualXirr!=null?(()=>{const v=parseFloat(editMf.manualXirr);return v!==null&&isFinite(v)?v:null;})():null,
             }});
             setEditMf(null);
           },
@@ -39838,7 +39887,8 @@ const hexAlpha=(hex,a)=>{
 const useIsMobile=()=>{
   const[mobile,setMobile]=React.useState(()=>window.innerWidth<=768);
   React.useEffect(()=>{
-    const handler=()=>setMobile(window.innerWidth<=768);
+    let ticking=false;
+    const handler=()=>{if(!ticking){ticking=true;requestAnimationFrame(()=>{setMobile(window.innerWidth<=768);ticking=false;});}};
     window.addEventListener("resize",handler,{passive:true});
     return()=>window.removeEventListener("resize",handler);
   },[]);
@@ -40218,7 +40268,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
   const specialInc = stcgNet + ltcgTaxable + buybackAmt;
   const grossTotal = netNorm + specialInc;
 
-  const computeTax = (reg, overrideNetNorm, overrideGrossTotal) => {
+    const computeTax = (reg, overrideNetNorm, overrideGrossTotal) => {
     /* When called for the alt-regime comparison, callers pass the correct net normal income
        and gross total recomputed under the alt regime's deduction set.  The current-regime
        call passes nothing and uses the module-level values. */
@@ -40233,7 +40283,9 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
         rebate = Math.min(normTax, REBATE_NEW_MAX);
       } else {
         const excess = _grossTotal - REBATE_NEW_THRESHOLD;
-        if (normTax > excess) marginalRelief = normTax - excess;
+        const totalTaxBeforeRelief = normTax + specialInc > 0 ? (stcgTax + ltcgTax + buybackTax) : 0;
+        const totalTaxEstimate = normTax + totalTaxBeforeRelief;
+        if (totalTaxEstimate > excess) marginalRelief = totalTaxEstimate - excess;
       }
     } else {
       if (_grossTotal <= REBATE_OLD_THRESHOLD) rebate = Math.min(normTax, REBATE_OLD_MAX);
@@ -40244,10 +40296,10 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
        • Sec 112A(9): surcharge on LTCG u/s 112A is capped at 15%.
        • Sec 111A(2): surcharge on STCG u/s 111A is capped at 15%.
        • Under New Regime (Budget 2023): overall surcharge cap is 25% (37% slab removed).
-       Compute surcharge separately for normal income and special-rate income. */
+       Surcharge is computed on tax BEFORE rebate u/s 87A (per IT Act). */
     const fullSCRate    = scRate(_grossTotal, reg);
     const cappedSCRate  = Math.min(fullSCRate, 0.15); // LTCG/STCG cap
-    const sc_normal     = normTaxAfterRebate * fullSCRate;
+    const sc_normal     = normTax * fullSCRate;
     const sc_special    = (stcgTax + ltcgTax + buybackTax) * cappedSCRate;
     const sc            = sc_normal + sc_special;
     const specialTax    = stcgTax + ltcgTax + buybackTax;
@@ -41542,10 +41594,10 @@ function App(){
   const[chatBotOpen,setChatBotOpen]=useState(false);
   const[themeId,setThemeId]=useState(loadTheme);
   const setTheme=id=>{setThemeId(id);applyTheme(id);saveTheme(id);};
-  React.useEffect(()=>{applyTheme(themeId);},[]);
+  React.useEffect(()=>{applyTheme(themeId);},[themeId]);
   const[fontId,setFontId]=useState(loadFont);
   const setFont=id=>{setFontId(id);applyFont(id);saveFont(id);};
-  React.useEffect(()=>{applyFont(fontId);},[]);
+  React.useEffect(()=>{applyFont(fontId);},[fontId]);
   /* ── Backup age monitor ── */
   const[backupBanner,setBackupBanner]=useState(null); /* {ageDays,lastDate} or null */
   /* ── Keyboard shortcuts: Ctrl/Cmd+K = global search, Ctrl/Cmd+Z = undo ── */
