@@ -814,27 +814,22 @@ const _EA=Object.freeze([]);   /* stable empty-array fallback  */
 const _EO=Object.freeze({});   /* stable empty-object fallback */
 
 const THEMES=[
-  {id:"sky",         name:"Sky Blue",    desc:"Airy light sky-blue",       dark:false, preview:["#f0f9ff","#0ea5e9","#bae6fd","#0284c7"]},
-  {id:"slate",       name:"Slate",       desc:"Cool blue-grey minimal",    dark:false, preview:["#f4f6f8","#4a6888","#bcc8d8","#385470"]},
-  {id:"nordic",      name:"Nordic",      desc:"Crisp cool steel blue",     dark:false, preview:["#f4f7f9","#3a6888","#b8ccdc","#2c5272"]},
-  {id:"moss",        name:"Moss",        desc:"Deep earthy olive moss",    dark:false, preview:["#f5f8f3","#526e3c","#bcd0b0","#3e5830"]},
-  {id:"mint",        name:"Mint",        desc:"Fresh cool emerald mint",   dark:false, preview:["#f2fbf8","#1a8a68","#a8d8c8","#147054"]},
-  {id:"rose",        name:"Rose",        desc:"Soft warm pink rose",       dark:false, preview:["#fef2f2","#e11d48","#f5d0d0","#be123c"]},
-  {id:"lavender",    name:"Lavender",    desc:"Light purple lavender",     dark:false, preview:["#f8f6ff","#7c3aed","#ddd8f5","#6d28d9"]},
-  {id:"sunset",      name:"Sunset",      desc:"Warm orange sunset",        dark:false, preview:["#fff8f0","#ea580c","#f8e0c8","#c2410c"]},
-  {id:"ocean",       name:"Ocean",       desc:"Deep teal ocean",           dark:false, preview:["#f0fafc","#0891b2","#c8ecf0","#0e7490"]},
-  {id:"coral",       name:"Coral",       desc:"Vibrant warm coral pink",   dark:false, preview:["#fff0ee","#e11d48","#fcc8c0","#be123c"]},
-  {id:"electric",    name:"Electric",    desc:"Bright electric blue",      dark:false, preview:["#eef4ff","#2563eb","#b8d0f8","#1d4ed8"]},
-  {id:"lime",        name:"Lime",        desc:"Vivid lime green",          dark:false, preview:["#f1fae8","#65a30d","#c8e4ac","#4d7c08"]},
-  {id:"tangerine",   name:"Tangerine",   desc:"Warm bold tangerine",       dark:false, preview:["#fff7ed","#ea580c","#fac8a8","#c2410c"]},
-  {id:"fuchsia",     name:"Fuchsia",     desc:"Bold vibrant fuchsia",      dark:false, preview:["#fdf2ff","#d946ef","#f0ccf0","#c026d3"]},
-  {id:"sky-dark",    name:"Sky Dark",    desc:"Deep space blue",           dark:true,  preview:["#070b12","#38bdf8","#1e3a5a","#0ea5e9"]},
-  {id:"slate-dark",  name:"Slate Dark",  desc:"Charcoal steel",            dark:true,  preview:["#080b10","#6a8aaa","#28344a","#4a6888"]},
-  {id:"nordic-dark", name:"Nordic Dark", desc:"Midnight arctic",           dark:true,  preview:["#070c12","#5a8aaa","#22364e","#3a6888"]},
-  {id:"moss-dark",   name:"Moss Dark",   desc:"Deep forest",               dark:true,  preview:["#080c06","#6e9a52","#2a3e26","#526e3c"]},
-  {id:"mint-dark",   name:"Mint Dark",   desc:"Dark emerald",              dark:true,  preview:["#060e0c","#2ab888","#1e4236","#1a8a68"]},
+  {id:"violet",      name:"Violet Light",  desc:"Rich purple-violet",   dark:false, preview:["#f8f6ff","#7c3aed","#ddd8f5","#6d28d9"]},
+  {id:"indigo",      name:"Indigo Light",  desc:"Deep indigo-blue",     dark:false, preview:["#eef2ff","#4f46e5","#c8d4f8","#4338ca"]},
+  {id:"blue",        name:"Blue Light",    desc:"Classic bright blue",  dark:false, preview:["#eff6ff","#2563eb","#bfdbfe","#1d4ed8"]},
+  {id:"green",       name:"Green Light",   desc:"Fresh emerald green",  dark:false, preview:["#f0fdf4","#16a34a","#bbf7d0","#15803d"]},
+  {id:"yellow",      name:"Yellow Light",  desc:"Warm golden yellow",   dark:false, preview:["#fffbeb","#ca8a04","#fde68a","#a16207"]},
+  {id:"orange",      name:"Orange Light",  desc:"Vibrant fiery orange", dark:false, preview:["#fff7ed","#ea580c","#fed7aa","#c2410c"]},
+  {id:"red",         name:"Red Light",     desc:"Bold crimson red",     dark:false, preview:["#fef2f2","#dc2626","#fecaca","#b91c1c"]},
+  {id:"violet-dark", name:"Violet Dark",   desc:"Deep violet night",    dark:true,  preview:["#0c0818","#a78bfa","#38245e","#8b5cf6"]},
+  {id:"indigo-dark", name:"Indigo Dark",   desc:"Indigo midnight",      dark:true,  preview:["#08081a","#818cf8","#2e2c62","#6366f1"]},
+  {id:"blue-dark",   name:"Blue Dark",     desc:"Deep ocean blue",      dark:true,  preview:["#070c18","#60a5fa","#26406a","#3b82f6"]},
+  {id:"green-dark",  name:"Green Dark",    desc:"Forest emerald",       dark:true,  preview:["#060e08","#4ade80","#224232","#22c55e"]},
+  {id:"yellow-dark", name:"Yellow Dark",   desc:"Dark amber glow",      dark:true,  preview:["#100c04","#facc15","#4e462a","#eab308"]},
+  {id:"orange-dark", name:"Orange Dark",   desc:"Ember orange night",   dark:true,  preview:["#120a04","#fb923c","#523e24","#f97316"]},
+  {id:"red-dark",    name:"Red Dark",      desc:"Dark blood red",       dark:true,  preview:["#140606","#f87171","#582828","#ef4444"]},
 ];
-const loadTheme=()=>{try{const t=localStorage.getItem(LS_THEME);if(t&&THEMES.find(th=>th.id===t))return t;}catch{}const mq=window.matchMedia("(prefers-color-scheme: dark)");return mq&&mq.matches?"sky-dark":"electric";};
+const loadTheme=()=>{try{const t=localStorage.getItem(LS_THEME);if(t&&THEMES.find(th=>th.id===t))return t;}catch{}const mq=window.matchMedia("(prefers-color-scheme: dark)");return mq&&mq.matches?"blue-dark":"blue";};
 const saveTheme=id=>{try{localStorage.setItem(LS_THEME,id);}catch{}};
 const applyTheme=id=>{document.documentElement.setAttribute("data-theme",id);if(id.endsWith("-dark")){document.documentElement.style.setProperty("color-scheme","dark");}else{document.documentElement.style.removeProperty("color-scheme");}setTimeout(syncPAL,0);};
 
@@ -896,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="6.12.0";
+const APP_VERSION="6.13.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
