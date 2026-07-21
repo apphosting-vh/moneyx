@@ -1205,6 +1205,433 @@ window.TechIndicators = (function () {
     return signals;
   }
 
+  /* ═══════════════════════════════════════════════════════════════════════
+     EXIT SCORE — Momentum Trading Exit Scoring Engine (0–100)
+     5 factors: Trend(35) + Momentum(25) + Volume(20) + Volatility(10) + Structure(10)
+     ═══════════════════════════════════════════════════════════════════════ */
+  function computeExitScore(candles, ind) {
+    if (!candles || candles.length < 10 || !ind) return null;
+
+    var lc = ind.lastClose;
+    if (lc === null || lc === undefined) return null;
+
+    /* ── Helper: get last N values from a raw array ── */
+    function lastN(arr, n) {
+      var out = [];
+      for (var i = arr.length - 1; i >= 0 && out.length < n; i--) {
+        if (arr[i] !== null && arr[i] !== undefined) out.unshift(arr[i]);
+      }
+      return out;
+    }
+
+    /* ── Raw arrays for slope/crossover detection ── */
+    var obvArr = calcOBV(candles);
+    var pvtArr = calcPVT(candles);
+    var atrArr = calcATR(candles, 14);
+
+    var obvLast2 = lastN(obvArr, 2);
+    var pvtLast2 = lastN(pvtArr, 2);
+    var atrLast2 = lastN(atrArr, 2);
+
+    /* ── Prior indicators for crossover detection ── */
+    var indPrior = candles.length >= 12 ? computeAll(candles.slice(0, -1)) : null;
+
+    /* ═══════════════════════════════════════════════════════════════════
+       1. TREND REVERSAL (Max 35 pts)
+       ═══════════════════════════════════════════════════════════════════ */
+    var trend = 0;
+
+    if (ind.ema_9 !== null && lc < ind.ema_9) trend += 3;
+    if (ind.ema_21 !== null && lc < ind.ema_21) trend += 4;
+    if (ind.ema_50 !== null && lc < ind.ema_50) trend += 5;
+    if (ind.sma_20 !== null && lc < ind.sma_20) trend += 2;
+    if (ind.sma_50 !== null && lc < ind.sma_50) trend += 3;
+    if (ind.supertrend !== null && lc < ind.supertrend) trend += 5;
+
+    if (ind.ichimoku) {
+      var cloudTop = Math.max(ind.ichimoku.senkouA || 0, ind.ichimoku.senkouB || 0);
+      if (lc < cloudTop || (ind.ichimoku.kijun && lc < ind.ichimoku.kijun)) trend += 4;
+    }
+
+    if (ind.psar !== null && lc < ind.psar) trend += 2;
+    if (ind.vwap !== null && lc < ind.vwap) trend += 2;
+    if (ind.anchored_vwap !== null && lc < ind.anchored_vwap) trend += 3;
+    if (ind.mtfAlignment !== null && ind.mtfAlignment <= 70) trend += 2;
+
+    trend = Math.min(trend, 35);
+
+    /* ═══════════════════════════════════════════════════════════════════
+       2. MOMENTUM WEAKNESS (Max 25 pts)
+       ═══════════════════════════════════════════════════════════════════ */
+    var momentum = 0;
+
+    if (ind.rsi_14 !== null && ind.rsi_14 < 60) momentum += 4;
+    // MACD: Bearish Cross — histogram was ≥0 last bar, now <0
+    if (ind.macd && ind.macd.histogram !== null && ind.macd.histogram < 0) {
+      var macdCross = !indPrior || !indPrior.macd || indPrior.macd.histogram === null || indPrior.macd.histogram >= 0;
+      if (macdCross) momentum += 5;
+    }
+    if (ind.stc !== null && ind.stc < 75) momentum += 3;
+    // TSI: Bearish Cross — was >0 last bar, now ≤0
+    if (ind.tsi !== null && ind.tsi <= 0) {
+      var tsiCross = !indPrior || indPrior.tsi === null || indPrior.tsi > 0;
+      if (tsiCross) momentum += 3;
+    }
+    if (ind.roc_12 !== null && ind.roc_12 < 0) momentum += 3;
+    if (ind.momentum_10 !== null && ind.momentum_10 < 0) momentum += 2;
+    // Stochastic RSI: Bearish Cross — K was ≥D last bar, now K < D
+    if (ind.stochRSI && ind.stochRSI.k !== null && ind.stochRSI.d !== null && ind.stochRSI.k < ind.stochRSI.d) {
+      var stochCross = !indPrior || !indPrior.stochRSI || indPrior.stochRSI.k === null || indPrior.stochRSI.d === null || indPrior.stochRSI.k >= indPrior.stochRSI.d;
+      if (stochCross) momentum += 3;
+    }
+    if (ind.cci_20 !== null && ind.cci_20 < 100) momentum += 2;
+
+    momentum = Math.min(momentum, 25);
+
+    /* ═══════════════════════════════════════════════════════════════════
+       3. VOLUME DISTRIBUTION (Max 20 pts)
+       ═══════════════════════════════════════════════════════════════════ */
+    var vol = 0;
+
+    if (obvLast2.length === 2 && obvLast2[1] < obvLast2[0]) vol += 5;
+    if (ind.cmf_20 !== null && ind.cmf_20 < 0) vol += 4;
+    // MFI: Falls below 80 — was ≥80 last bar, now <80
+    if (ind.mfi_14 !== null && ind.mfi_14 < 80) {
+      var mfiCross = !indPrior || indPrior.mfi_14 === null || indPrior.mfi_14 >= 80;
+      if (mfiCross) vol += 3;
+    }
+    if (pvtLast2.length === 2 && pvtLast2[1] < pvtLast2[0]) vol += 3;
+    // KVO: Bearish Cross — was >0 last bar, now ≤0
+    if (ind.kvo !== null && ind.kvo <= 0) {
+      var kvoCross = !indPrior || indPrior.kvo === null || indPrior.kvo > 0;
+      if (kvoCross) vol += 3;
+    }
+
+    if (ind.smartMoney) {
+      var smBearish = ind.smartMoney.bos === 'bearish_bos' || ind.smartMoney.choch === 'bearish_choch';
+      if (smBearish) vol += 2;
+    }
+
+    vol = Math.min(vol, 20);
+
+    /* ═══════════════════════════════════════════════════════════════════
+       4. VOLATILITY EXHAUSTION (Max 10 pts)
+       ═══════════════════════════════════════════════════════════════════ */
+    var vold = 0;
+
+    if (atrLast2.length === 2 && atrLast2[1] > atrLast2[0] && ind.adx_14 !== null && ind.adx_14 < 25) vold += 2;
+
+    if (ind.bb && ind.bb.upper !== null) {
+      var lastCandle = candles[candles.length - 1];
+      if (lastCandle && lastCandle.h >= ind.bb.upper && lc < ind.bb.upper) vold += 2;
+    }
+
+    if (ind.keltner && ind.keltner.upper !== null) {
+      var lastCandle2 = candles[candles.length - 1];
+      if (lastCandle2 && lastCandle2.h >= ind.keltner.upper && lc < ind.keltner.upper) vold += 2;
+    }
+
+    if (ind.donchian && ind.donchian.lower !== null && lc < ind.donchian.lower) vold += 2;
+    if (ind.squeezeMomentum !== null && ind.squeezeMomentum < 0) vold += 2;
+
+    vold = Math.min(vold, 10);
+
+    /* ═══════════════════════════════════════════════════════════════════
+       5. MARKET STRUCTURE (Max 10 pts)
+       ═══════════════════════════════════════════════════════════════════ */
+    var struct = 0;
+
+    if (ind.volumeProfile && ind.volumeProfile.poc !== null && lc < ind.volumeProfile.poc) struct += 4;
+    if (ind.darvasBox && ind.darvasBox.breakout === 'down') struct += 3;
+
+    if (ind.smartMoney && ind.smartMoney.swingHighs && ind.smartMoney.swingLows) {
+      var sh = ind.smartMoney.swingHighs;
+      var sl = ind.smartMoney.swingLows;
+      if (sh.length >= 2 && sl.length >= 2) {
+        if (sh[sh.length - 1].price < sh[sh.length - 2].price && sl[sl.length - 1].price < sl[sl.length - 2].price) struct += 3;
+      }
+    }
+
+    struct = Math.min(struct, 10);
+
+    /* ═══════════════════════════════════════════════════════════════════
+       TOTAL + DECISION
+       ═══════════════════════════════════════════════════════════════════ */
+    var total = trend + momentum + vol + vold + struct;
+
+    var decision;
+    if (total <= 20) decision = { label: "Hold Position", action: "hold", color: "#22c55e" };
+    else if (total <= 35) decision = { label: "Tighten Trailing Stop", action: "tighten", color: "#84cc16" };
+    else if (total <= 50) decision = { label: "Book 25% Profit", action: "book25", color: "#eab308" };
+    else if (total <= 65) decision = { label: "Exit 50% Position", action: "exit50", color: "#f97316" };
+    else if (total <= 80) decision = { label: "Exit Full Position", action: "exitAll", color: "#ef4444" };
+    else decision = { label: "Immediate Exit", action: "exitNow", color: "#dc2626" };
+
+    /* ═══════════════════════════════════════════════════════════════════
+       CRITICAL OVERRIDES
+       ═══════════════════════════════════════════════════════════════════ */
+    var overrides = [];
+
+    if (ind.supertrend !== null && lc < ind.supertrend && ind.ema_21 !== null && lc < ind.ema_21) {
+      overrides.push("SuperTrend Sell + Close below EMA(21)");
+    }
+
+    var obvFalling = obvLast2.length === 2 && obvLast2[1] < obvLast2[0];
+    if (ind.anchored_vwap !== null && lc < ind.anchored_vwap && obvFalling && ind.cmf_20 !== null && ind.cmf_20 < 0) {
+      overrides.push("Close below AVWAP + OBV falling + CMF bearish");
+    }
+
+    var macdBearish = ind.macd && ind.macd.histogram !== null && ind.macd.histogram < 0;
+    var tsiBearish = ind.tsi !== null && ind.tsi <= 0;
+    var stcBearish = ind.stc !== null && ind.stc <= 50;
+    if (macdBearish && tsiBearish && stcBearish) {
+      overrides.push("MACD + TSI + STC all bearish simultaneously");
+    }
+
+    var vpBreak = ind.volumeProfile && ind.volumeProfile.poc !== null && lc < ind.volumeProfile.poc;
+    var darvasBreak = ind.darvasBox && ind.darvasBox.breakout === 'down';
+    if (vpBreak || darvasBreak) {
+      var avgVol = 0, volCount = 0;
+      for (var vi = Math.max(0, candles.length - 21); vi < candles.length - 1; vi++) {
+        avgVol += candles[vi].v; volCount++;
+      }
+      avgVol = volCount > 0 ? avgVol / volCount : 0;
+      if (avgVol > 0 && candles[candles.length - 1].v > avgVol * 1.5) {
+        overrides.push(vpBreak ? "Volume Profile POC breakdown on strong volume" : "Darvas Box breakdown on strong volume");
+      }
+    }
+
+    return {
+      total: total, trend: trend, trendMax: 35,
+      momentum: momentum, momentumMax: 25,
+      volume: vol, volumeMax: 20,
+      volatility: vold, volatilityMax: 10,
+      structure: struct, structureMax: 10,
+      decision: decision, overrides: overrides
+    };
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     ENTRY SCORE — Momentum Trading Entry Scoring Engine (0–100)
+     5 factors: Trend(35) + Momentum(25) + Volume(20) + Breakout(10) + Structure(10)
+     ═══════════════════════════════════════════════════════════════════════ */
+  function computeEntryScore(candles, ind, currentPrice) {
+    if (!candles || candles.length < 12 || !ind) return null;
+
+    var lc = (currentPrice && currentPrice > 0) ? currentPrice : ind.lastClose;
+    if (lc === null || lc === undefined) return null;
+
+    function lastN(arr, n) {
+      var out = [];
+      for (var i = arr.length - 1; i >= 0 && out.length < n; i--) {
+        if (arr[i] !== null && arr[i] !== undefined) out.unshift(arr[i]);
+      }
+      return out;
+    }
+
+    var obvArr = calcOBV(candles);
+    var pvtArr = calcPVT(candles);
+    var atrArr = calcATR(candles, 14);
+    var obvLast2 = lastN(obvArr, 2);
+    var pvtLast2 = lastN(pvtArr, 2);
+    var atrLast2 = lastN(atrArr, 2);
+
+    var indPrior = candles.length >= 12 ? computeAll(candles.slice(0, -1)) : null;
+
+    /* ═══════════════════════════════════════════════════════════════════
+       1. TREND STRENGTH (Max 35 pts)
+       ═══════════════════════════════════════════════════════════════════ */
+    var trend = 0;
+    if (ind.ema_9 !== null && lc > ind.ema_9) trend += 2;
+    if (ind.ema_21 !== null && lc > ind.ema_21) trend += 4;
+    if (ind.ema_50 !== null && lc > ind.ema_50) trend += 5;
+    if (ind.sma_20 !== null && lc > ind.sma_20) trend += 2;
+    if (ind.sma_50 !== null && lc > ind.sma_50) trend += 3;
+    if (ind.sma_200 !== null && lc > ind.sma_200) trend += 2;
+    if (ind.supertrend !== null && lc > ind.supertrend) trend += 5;
+    if (ind.ichimoku) {
+      var cloudTop = Math.max(ind.ichimoku.senkouA || 0, ind.ichimoku.senkouB || 0);
+      if (lc > cloudTop) trend += 4;
+    }
+    if (ind.psar !== null && lc > ind.psar) trend += 2;
+    if (ind.vwap !== null && lc > ind.vwap) trend += 2;
+    if (ind.anchored_vwap !== null && lc > ind.anchored_vwap) trend += 2;
+    if (ind.mtfAlignment !== null && ind.mtfAlignment >= 70) trend += 2;
+    trend = Math.min(trend, 35);
+
+    /* ═══════════════════════════════════════════════════════════════════
+       2. MOMENTUM CONFIRMATION (Max 25 pts)
+       ═══════════════════════════════════════════════════════════════════ */
+    var momentum = 0;
+    if (ind.rsi_14 !== null && ind.rsi_14 >= 55 && ind.rsi_14 <= 70) momentum += 4;
+    if (ind.macd && ind.macd.histogram !== null && ind.macd.histogram > 0) {
+      var macdCross = !indPrior || !indPrior.macd || indPrior.macd.histogram === null || indPrior.macd.histogram <= 0;
+      if (macdCross) momentum += 5;
+    }
+    if (ind.stc !== null && ind.stc > 75) momentum += 3;
+    if (ind.tsi !== null && ind.tsi > 0) {
+      var tsiCross = !indPrior || indPrior.tsi === null || indPrior.tsi <= 0;
+      if (tsiCross) momentum += 3;
+    }
+    if (ind.roc_12 !== null && ind.roc_12 > 0) momentum += 3;
+    if (ind.momentum_10 !== null && ind.momentum_10 > 0) momentum += 2;
+    if (ind.stochRSI && ind.stochRSI.k !== null && ind.stochRSI.d !== null && ind.stochRSI.k > ind.stochRSI.d) {
+      var stochCross = !indPrior || !indPrior.stochRSI || indPrior.stochRSI.k === null || indPrior.stochRSI.d === null || indPrior.stochRSI.k <= indPrior.stochRSI.d;
+      if (stochCross) momentum += 3;
+    }
+    if (ind.cci_20 !== null && ind.cci_20 > 100) momentum += 2;
+    momentum = Math.min(momentum, 25);
+
+    /* ═══════════════════════════════════════════════════════════════════
+       3. VOLUME ACCUMULATION (Max 20 pts)
+       ═══════════════════════════════════════════════════════════════════ */
+    var vol = 0;
+    if (obvLast2.length === 2 && obvLast2[1] > obvLast2[0]) vol += 5;
+    if (ind.cmf_20 !== null && ind.cmf_20 > 0) vol += 4;
+    if (ind.mfi_14 !== null && ind.mfi_14 >= 55 && ind.mfi_14 <= 80) vol += 3;
+    if (pvtLast2.length === 2 && pvtLast2[1] > pvtLast2[0]) vol += 3;
+    if (ind.kvo !== null && ind.kvo > 0) {
+      var kvoCross = !indPrior || indPrior.kvo === null || indPrior.kvo <= 0;
+      if (kvoCross) vol += 3;
+    }
+    if (ind.smartMoney) {
+      var smBullish = ind.smartMoney.bos === 'bullish_bos' || ind.smartMoney.choch === 'bullish_choch';
+      if (smBullish) vol += 2;
+    }
+    vol = Math.min(vol, 20);
+
+    /* ═══════════════════════════════════════════════════════════════════
+       4. BREAKOUT & VOLATILITY (Max 10 pts)
+       ═══════════════════════════════════════════════════════════════════ */
+    var brk = 0;
+    if (atrLast2.length === 2 && atrLast2[1] > atrLast2[0]) brk += 2;
+    if (ind.bb && ind.bb.upper !== null && lc > ind.bb.upper) brk += 2;
+    if (ind.keltner && ind.keltner.upper !== null && lc > ind.keltner.upper) brk += 2;
+    if (ind.donchian && ind.donchian.upper !== null && lc >= ind.donchian.upper) brk += 2;
+    if (ind.ttmSqueeze === false && indPrior && indPrior.ttmSqueeze === true) brk += 2;
+    else if (ind.squeezeMomentum !== null && ind.squeezeMomentum > 0 && indPrior && indPrior.squeezeMomentum !== null && indPrior.squeezeMomentum <= 0) brk += 2;
+    brk = Math.min(brk, 10);
+
+    /* ═══════════════════════════════════════════════════════════════════
+       5. MARKET STRUCTURE (Max 10 pts)
+       ═══════════════════════════════════════════════════════════════════ */
+    var struct = 0;
+    if (ind.volumeProfile && ind.volumeProfile.poc !== null && lc > ind.volumeProfile.poc) struct += 4;
+    if (ind.darvasBox && ind.darvasBox.breakout === 'up') struct += 3;
+    if (ind.smartMoney && ind.smartMoney.swingHighs && ind.smartMoney.swingLows) {
+      var sh = ind.smartMoney.swingHighs;
+      var sl = ind.smartMoney.swingLows;
+      if (sh.length >= 2 && sl.length >= 2) {
+        if (sh[sh.length - 1].price > sh[sh.length - 2].price && sl[sl.length - 1].price > sl[sl.length - 2].price) struct += 3;
+      }
+    }
+    struct = Math.min(struct, 10);
+
+    /* ═══════════════════════════════════════════════════════════════════
+       TOTAL + DECISION
+       ═══════════════════════════════════════════════════════════════════ */
+    var total = trend + momentum + vol + brk + struct;
+
+    var decision;
+    if (total >= 90) decision = { label: "Strong Buy", action: "strongBuy", color: "#15803d" };
+    else if (total >= 80) decision = { label: "Buy", action: "buy", color: "#22c55e" };
+    else if (total >= 70) decision = { label: "Buy on Pullback", action: "pullback", color: "#84cc16" };
+    else if (total >= 60) decision = { label: "Neutral", action: "neutral", color: "#eab308" };
+    else decision = { label: "Avoid", action: "avoid", color: "#ef4444" };
+
+    /* ═══════════════════════════════════════════════════════════════════
+       PHASE 1: MANDATORY TREND FILTERS
+       ═══════════════════════════════════════════════════════════════════ */
+    var filterFails = 0;
+    if (ind.ema_21 === null || lc <= ind.ema_21) filterFails++;
+    if (ind.supertrend === null || lc <= ind.supertrend) filterFails++;
+    if (ind.mtfAlignment === null || ind.mtfAlignment < 70) filterFails++;
+    var phase1Pass = filterFails < 2;
+
+    /* ═══════════════════════════════════════════════════════════════════
+       HIGH-CONFIDENCE BUY OVERRIDES
+       ═══════════════════════════════════════════════════════════════════ */
+    var overrides = [];
+    if (ind.supertrend !== null && lc > ind.supertrend && ind.mtfAlignment !== null && ind.mtfAlignment >= 70) {
+      overrides.push("SuperTrend Buy + MTF Alignment Bullish");
+    }
+    if (ind.ema_21 !== null && ind.ema_50 !== null && ind.ema_21 > ind.ema_50 && ind.anchored_vwap !== null && lc > ind.anchored_vwap) {
+      overrides.push("EMA(21) > EMA(50) + Price above AVWAP");
+    }
+    if (ind.macd && ind.macd.histogram !== null && ind.macd.histogram > 0) {
+      var macdX = !indPrior || !indPrior.macd || indPrior.macd.histogram === null || indPrior.macd.histogram <= 0;
+      if (macdX) overrides.push("MACD bullish crossover");
+    }
+    var obvRising = obvLast2.length === 2 && obvLast2[1] > obvLast2[0];
+    if (obvRising && ind.cmf_20 !== null && ind.cmf_20 > 0) {
+      overrides.push("OBV rising + CMF > 0");
+    }
+    if (ind.ttmSqueeze === false && indPrior && indPrior.ttmSqueeze === true) {
+      overrides.push("TTM Squeeze bullish release");
+    }
+    var darvasUp = ind.darvasBox && ind.darvasBox.breakout === 'up';
+    var donchianUp = ind.donchian && ind.donchian.upper !== null && lc >= ind.donchian.upper;
+    if ((darvasUp || donchianUp) && obvRising) {
+      var avgVol = 0, volCount = 0;
+      for (var vi = Math.max(0, candles.length - 21); vi < candles.length - 1; vi++) {
+        avgVol += candles[vi].v; volCount++;
+      }
+      avgVol = volCount > 0 ? avgVol / volCount : 0;
+      if (avgVol > 0 && candles[candles.length - 1].v > avgVol * 1.5) {
+        overrides.push((darvasUp ? "Darvas" : "Donchian") + " breakout on strong volume");
+      }
+    }
+
+    return {
+      total: total, trend: trend, trendMax: 35,
+      momentum: momentum, momentumMax: 25,
+      volume: vol, volumeMax: 20,
+      breakout: brk, breakoutMax: 10,
+      structure: struct, structureMax: 10,
+      decision: decision, overrides: overrides,
+      phase1Pass: phase1Pass, filterFails: filterFails
+    };
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     MULTI-TIMEFRAME ENTRY SCORE
+     Weekly(20%) + Daily(65%) + Hourly(15%)
+     ═══════════════════════════════════════════════════════════════════════ */
+  function computeMultiTFEntryScore(candlesWeekly, indW, candlesDaily, indD, candlesHourly, indH, currentPrice) {
+    var weekly = candlesWeekly && indW ? computeEntryScore(candlesWeekly, indW, currentPrice) : null;
+    var daily = candlesDaily && indD ? computeEntryScore(candlesDaily, indD, currentPrice) : null;
+    var hourly = candlesHourly && indH ? computeEntryScore(candlesHourly, indH, currentPrice) : null;
+
+    var wTotal = weekly ? weekly.total : 0;
+    var dTotal = daily ? daily.total : 0;
+    var hTotal = hourly ? hourly.total : 0;
+
+    var wCount = weekly ? 1 : 0;
+    var dCount = daily ? 1 : 0;
+    var hCount = hourly ? 1 : 0;
+    var denom = wCount * 0.20 + dCount * 0.65 + hCount * 0.15;
+
+    var finalScore = denom > 0 ? Math.round((wTotal * 0.20 + dTotal * 0.65 + hTotal * 0.15) / denom) : 0;
+
+    var decision;
+    if (finalScore >= 90) decision = { label: "Strong Buy", action: "strongBuy", color: "#15803d" };
+    else if (finalScore >= 80) decision = { label: "Buy", action: "buy", color: "#22c55e" };
+    else if (finalScore >= 70) decision = { label: "Buy on Pullback", action: "pullback", color: "#84cc16" };
+    else if (finalScore >= 60) decision = { label: "Neutral", action: "neutral", color: "#eab308" };
+    else decision = { label: "Avoid", action: "avoid", color: "#ef4444" };
+
+    var phase3Pass = finalScore >= 80 && daily && daily.trend >= 20 && hourly && hourly.total >= 60;
+
+    var allOverrides = [].concat(weekly ? weekly.overrides : [], daily ? daily.overrides : [], hourly ? hourly.overrides : []);
+
+    return {
+      weekly: weekly, daily: daily, hourly: hourly,
+      finalScore: finalScore, decision: decision,
+      phase1Pass: daily ? daily.phase1Pass : false,
+      phase3Pass: phase3Pass, overrides: allOverrides
+    };
+  }
+
   return {
     calcSMA: calcSMA,
     calcEMA: calcEMA,
@@ -1242,6 +1669,9 @@ window.TechIndicators = (function () {
     calcMTFAlignment: calcMTFAlignment,
     computeAll: computeAll,
     interpret: interpret,
+    computeExitScore: computeExitScore,
+    computeEntryScore: computeEntryScore,
+    computeMultiTFEntryScore: computeMultiTFEntryScore,
     round: round
   };
 })();

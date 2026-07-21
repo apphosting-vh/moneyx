@@ -304,6 +304,95 @@ window.TechnicalIndicatorsPanel = (function () {
     );
   }
 
+  /* ── Exit Score Card ────────────────────────────────────────────────── */
+  function ExitScoreCard(candles, ind) {
+    var es = TI.computeExitScore(candles, ind);
+    if (!es) return null;
+
+    var factors = [
+      { label: "Trend", val: es.trend, max: es.trendMax, color: "#3b82f6" },
+      { label: "Momentum", val: es.momentum, max: es.momentumMax, color: "#a855f7" },
+      { label: "Volume", val: es.volume, max: es.volumeMax, color: "#f59e0b" },
+      { label: "Volatility", val: es.volatility, max: es.volatilityMax, color: "#06b6d4" },
+      { label: "Structure", val: es.structure, max: es.structureMax, color: "#ec4899" },
+    ];
+
+    return React.createElement("div", {
+      style: {
+        padding: "14px 18px", borderRadius: 12, marginBottom: 16,
+        background: "var(--bg3)", border: "2px solid " + es.decision.color + "33",
+      }
+    },
+      /* Header row */
+      React.createElement("div", {
+        style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }
+      },
+        React.createElement("div", null,
+          React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: "var(--text)", fontFamily: "'Sora',sans-serif" } }, "Exit Score"),
+          React.createElement("div", { style: { fontSize: 10, color: "var(--text6)", marginTop: 2 } },
+            "Momentum Trading Exit Engine · 0–100"
+          )
+        ),
+        React.createElement("div", {
+          style: {
+            display: "flex", alignItems: "center", gap: 10,
+          }
+        },
+          React.createElement("div", { style: { textAlign: "right" } },
+            React.createElement("div", { style: { fontSize: 10, color: "var(--text5)", fontWeight: 600 } }, "Decision"),
+            React.createElement("div", { style: { fontSize: 12, fontWeight: 800, color: es.decision.color, fontFamily: "'Sora',sans-serif" } }, es.decision.label)
+          ),
+          React.createElement("div", {
+            style: {
+              width: 56, height: 56, borderRadius: "50%",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              background: es.decision.color + "18", border: "2.5px solid " + es.decision.color,
+              flexShrink: 0,
+            }
+          },
+            React.createElement("span", {
+              style: { fontSize: 20, fontWeight: 900, color: es.decision.color, fontFamily: "'Sora',sans-serif", lineHeight: 1 }
+            }, es.total)
+          )
+        )
+      ),
+
+      /* Factor breakdown */
+      React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } },
+        factors.map(function (f) {
+          var pct = f.max > 0 ? (f.val / f.max * 100) : 0;
+          return React.createElement("div", { key: f.label, style: { display: "flex", alignItems: "center", gap: 8 } },
+            React.createElement("span", { style: { width: 68, fontSize: 10, fontWeight: 600, color: "var(--text4)", textAlign: "right", flexShrink: 0 } }, f.label),
+            React.createElement("div", { style: { flex: 1, height: 6, borderRadius: 3, background: "var(--bg5)", overflow: "hidden" } },
+              React.createElement("div", {
+                style: {
+                  width: pct + "%", height: "100%", borderRadius: 3,
+                  background: f.color, transition: "width .3s",
+                }
+              })
+            ),
+            React.createElement("span", { style: { width: 40, fontSize: 10, fontWeight: 700, color: "var(--text4)", fontFamily: "'Sora',sans-serif", textAlign: "right" } },
+              f.val + "/" + f.max
+            )
+          );
+        })
+      ),
+
+      /* Overrides */
+      es.overrides.length > 0 && React.createElement("div", {
+        style: {
+          marginTop: 10, padding: "8px 12px", borderRadius: 8,
+          background: "rgba(239,68,68,.06)", border: "1px solid rgba(239,68,68,.2)",
+        }
+      },
+        React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color: "#ef4444", marginBottom: 4 } }, "⚠ Critical Overrides"),
+        es.overrides.map(function (o, i) {
+          return React.createElement("div", { key: i, style: { fontSize: 10, color: "#ef4444", lineHeight: 1.5 } }, "• " + o);
+        })
+      )
+    );
+  }
+
   /* ── Main Panel Component ──────────────────────────────────────────────── */
   function TechnicalIndicatorsPanelInner(props) {
     var shares = props.shares || [];
@@ -499,6 +588,9 @@ window.TechnicalIndicatorsPanel = (function () {
       /* Score gauge */
       indicators && signals && signals._score && ScoreGauge(signals._score),
 
+      /* Exit Score */
+      indicators && candles && ExitScoreCard(candles, indicators),
+
       /* Category tabs */
       React.createElement("div", {
         style: { display: "flex", gap: 4, marginBottom: 14, flexWrap: "wrap" }
@@ -579,6 +671,7 @@ window.TechnicalIndicatorsPanel = (function () {
     var _h = useState(0), refreshTick = _h[0], setRefreshTick = _h[1];
     var _i = useState(false), autoRefresh = _i[0], setAutoRefresh = _i[1];
     var _j = useState(null), dataSource = _j[0], setDataSource = _j[1];
+    var _k = useState(null), candles = _k[0], setCandles = _k[1];
     var timerRef = useRef(null);
 
     var fetchData = useCallback(async function () {
@@ -595,6 +688,7 @@ window.TechnicalIndicatorsPanel = (function () {
           return;
         }
         setDataSource(source);
+        setCandles(data);
         var ind = TI.computeAll(data);
         setIndicators(ind);
         var sig = TI.interpret(ind);
@@ -745,6 +839,9 @@ window.TechnicalIndicatorsPanel = (function () {
           )
         );
       })(),
+
+      /* Exit Score */
+      indicators && candles && ExitScoreCard(candles, indicators),
 
       /* Category filter pills */
       React.createElement("div", {

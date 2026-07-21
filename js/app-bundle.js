@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.0.0";
+const APP_VERSION="7.4.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -5891,6 +5891,8 @@ var gdriveUpsertSyncFile = async (state, manual) => {
         insightPrefs: { ...EMPTY_STATE().insightPrefs, ...(state.insightPrefs || {}) },
         chatbotTraining: {customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},
         avApiKey: localStorage.getItem("mm_av_api_key")||"",
+        entryScores: localStorage.getItem(LS_ENTRY_SCORES)||"[]",
+        entrySnapshots: localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",
       },
     };
     const content = JSON.stringify(payload, null, 2);
@@ -6158,6 +6160,8 @@ var gdriveAutoBackup = async (state) => {
         insightPrefs:         { ...EMPTY_STATE().insightPrefs, ...(state.insightPrefs || {}) },
         chatbotTraining:      { customCatRules: _cbTr.customCatRules||[], accountAliases: _cbTr.accountAliases||[] },
         avApiKey:             localStorage.getItem("mm_av_api_key")||"",
+        entryScores:          localStorage.getItem(LS_ENTRY_SCORES)||"[]",
+        entrySnapshots:       localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",
       },
     };
 
@@ -6454,6 +6458,10 @@ var CloudBackupPanel = ({ state, dispatch }) => {
           localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(remote.state.chatbotTraining));
         if(remote.state.avApiKey)
           localStorage.setItem("mm_av_api_key",remote.state.avApiKey);
+        if(remote.state.entryScores)
+          localStorage.setItem(LS_ENTRY_SCORES,remote.state.entryScores);
+        if(remote.state.entrySnapshots)
+          localStorage.setItem(LS_ENTRY_SNAPSHOTS,remote.state.entrySnapshots);
       } catch {}
       try { await clearTxIDB(); }          catch {}
       try { await saveTxToIDB(_restoreData); } catch {}
@@ -8250,7 +8258,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                   const _cbTr=(()=>{try{return JSON.parse(localStorage.getItem("mm_v7_chatbot_training")||"{}");} catch{return{};}})();
                   const payload={version:8,exportedAt:new Date().toISOString(),
                     summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,reminders:(state.reminders||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,shareSnapshots:Object.values(state.soldShareSnapshots||{}).reduce((s,a)=>s+a.length,0),eodDays:Object.keys(state.eodPrices||{}).length,eodNavDays:Object.keys(state.eodNavs||{}).length,hasTaxData:!!(state.taxData),hasTaxData2627:!!(state.taxData2627),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),brokerCashBalance:state.brokerCashBalance||0,chatbotCatRules:(_cbTr.customCatRules||[]).length,chatbotAliases:(_cbTr.accountAliases||[]).length},
-                    data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},soldShareSnapshots:state.soldShareSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,taxData2627:state.taxData2627||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],reminders:state.reminders||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})},chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},avApiKey:localStorage.getItem("mm_av_api_key")||""}
+                    data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},soldShareSnapshots:state.soldShareSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,taxData2627:state.taxData2627||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],reminders:state.reminders||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})},chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},avApiKey:localStorage.getItem("mm_av_api_key")||"",entryScores:localStorage.getItem(LS_ENTRY_SCORES)||"[]",entrySnapshots:localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]"}
                   };
                   const enc=await encryptBackup(payload,pw);
                   const blob=new Blob([JSON.stringify(enc)],{type:"application/json"});
@@ -8316,6 +8324,8 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                     insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})},
                     chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},
                     avApiKey:localStorage.getItem("mm_av_api_key")||"",
+                    entryScores:localStorage.getItem(LS_ENTRY_SCORES)||"[]",
+                    entrySnapshots:localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",
                   }
                 };
                 const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
@@ -8402,6 +8412,10 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                           localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(d.chatbotTraining));
                         if(d.avApiKey)
                           localStorage.setItem("mm_av_api_key",d.avApiKey);
+                        if(d.entryScores)
+                          localStorage.setItem(LS_ENTRY_SCORES,d.entryScores);
+                        if(d.entrySnapshots)
+                          localStorage.setItem(LS_ENTRY_SNAPSHOTS,d.entrySnapshots);
                       }catch{}
                       /* ── Overwrite IDB transactions so next-boot hydration loads
                          the restored data instead of the pre-restore snapshot.
@@ -8466,6 +8480,8 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                       localStorage.removeItem(TAX_LS_KEY);
                       localStorage.removeItem(CALC_LS_KEY);
                       localStorage.removeItem("mm_v7_chatbot_training");
+                      localStorage.removeItem(LS_ENTRY_SCORES);
+                      localStorage.removeItem(LS_ENTRY_SNAPSHOTS);
                       /* Stamp reset time as the new local-edit anchor.
                          Removing this key would leave it empty, which makes the
                          Drive boot-pull guard (remoteTs && localTs && remote<=local)
@@ -10008,6 +10024,8 @@ var buildBackupPayload=async(st)=>{
       insightPrefs:{...EMPTY_STATE().insightPrefs,...(st.insightPrefs||{})},
       chatbotTraining:{customCatRules:_cbTraining.customCatRules||[],accountAliases:_cbTraining.accountAliases||[]},
       avApiKey:localStorage.getItem("mm_av_api_key")||"",
+      entryScores:localStorage.getItem(LS_ENTRY_SCORES)||"[]",
+      entrySnapshots:localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",
     }
   };
 };
@@ -10104,6 +10122,8 @@ var MM_LS_KEYS=[
   {key:"itr3_ay2627_v1",       label:"Tax Estimator (legacy key)"},
   {key:CALC_LS_KEY,            label:"Financial Calculator inputs & results"},
   {key:"mm_av_api_key",        label:"Alpha Vantage API Key"},
+  {key:LS_ENTRY_SCORES,       label:"Entry Score Entries"},
+  {key:LS_ENTRY_SNAPSHOTS,    label:"Entry Score Snapshots"},
 ];
 
 /* The true localStorage limit — 5 MB, enforced per-origin by all major browsers
@@ -11038,6 +11058,8 @@ var fsaWriteFile=async(handle,data)=>{
         insightPrefs:{...EMPTY_STATE().insightPrefs,...(data.insightPrefs||{})},
         chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},
         avApiKey:localStorage.getItem("mm_av_api_key")||"",
+        entryScores:localStorage.getItem(LS_ENTRY_SCORES)||"[]",
+        entrySnapshots:localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",
       }
     };
     const writable=await handle.createWritable();
@@ -11062,6 +11084,8 @@ var fsaReadFile=async(handle)=>{
     /* Restore chatbot training data to its own localStorage key */
     if(d.chatbotTraining){try{localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(d.chatbotTraining));}catch{}}
     if(d.avApiKey){try{localStorage.setItem("mm_av_api_key",d.avApiKey);}catch{}}
+    if(d.entryScores){try{localStorage.setItem(LS_ENTRY_SCORES,d.entryScores);}catch{}}
+    if(d.entrySnapshots){try{localStorage.setItem(LS_ENTRY_SNAPSHOTS,d.entrySnapshots);}catch{}}
     return _safe(d);
   }catch(e){console.warn("[FSA] Read failed:",e);return null;}
 };
@@ -19507,6 +19531,7 @@ const PreviousTrades=({soldShareSnapshots={},dispatch})=>{
   const fyKeys=Object.keys(soldShareSnapshots).sort().reverse(); /* Most recent FY first */
   const[collapsed,setCollapsed]=React.useState({});
   const[editSnap,setEditSnap]=React.useState(null);
+  const[techExpanded,setTechExpanded]=React.useState({});
   const toggleFY=(fy)=>setCollapsed(p=>({...p,[fy]:!p[fy]}));
   const collapseAll=()=>setCollapsed(fyKeys.reduce((m,fy)=>(m[fy]=true,m),{}));
   const expandAll=()=>setCollapsed({});
@@ -19722,6 +19747,63 @@ const PreviousTrades=({soldShareSnapshots={},dispatch})=>{
                     pts:sn.chartPts,qty:sn.qty,buyPrice:sn.buyPrice,
                     color:snIsGain?"#16a34a":"#ef4444",gradId:snGradId
                   })
+                );
+              })(),
+              /* ── Technical Indicators (if saved) ── */
+              sn.techData&&(()=>{
+                const td=sn.techData;
+                const tKey="tech_"+(sn.id||"x");
+                const isTechOpen=!!techExpanded[tKey];
+                const ind_=td.indicators||{};
+                const trendSignals=[];
+                if(ind_.supertrendDir==="up")trendSignals.push({label:"SuperTrend Buy",col:"#16a34a"});
+                else if(ind_.supertrendDir==="down")trendSignals.push({label:"SuperTrend Sell",col:"#ef4444"});
+                if(ind_.rsi_14!==null&&ind_.rsi_14!==undefined){
+                  const rsiCol=ind_.rsi_14>70?"#ef4444":ind_.rsi_14<30?"#16a34a":"#eab308";
+                  trendSignals.push({label:"RSI "+ind_.rsi_14.toFixed(1),col:rsiCol});
+                }
+                if(ind_.macd&&ind_.macd.histogram!==null){
+                  const macdCol=ind_.macd.histogram>0?"#16a34a":"#ef4444";
+                  trendSignals.push({label:"MACD "+(ind_.macd.histogram>0?"\u25b2":"\u25bc"),col:macdCol});
+                }
+                if(ind_.adx!==null&&ind_.adx!==undefined){
+                  trendSignals.push({label:"ADX "+ind_.adx.toFixed(1),col:ind_.adx>25?"#3b82f6":"var(--text5)"});
+                }
+                if(ind_.ema_21!==null&&ind_.ema_21!==undefined&&td.lastClose){
+                  const aboveEma=td.lastClose>ind_.ema_21;
+                  trendSignals.push({label:"Price "+(aboveEma?">":"<")+" EMA21",col:aboveEma?"#16a34a":"#ef4444"});
+                }
+                const exitLabel=td.exitScore?td.exitScore.decision.label+" ("+td.exitScore.total+")":null;
+                const exitCol=td.exitScore?td.exitScore.decision.color:null;
+                return React.createElement("div",{style:{marginBottom:8,borderRadius:8,background:"var(--bg4)",border:"1px solid var(--border)",overflow:"hidden"}},
+                  React.createElement("div",{onClick:()=>setTechExpanded(p=>({...p,[tKey]:!p[tKey]})),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 10px",cursor:"pointer"}},
+                    React.createElement("span",{style:{fontSize:10,fontWeight:700,color:"var(--text3)",display:"flex",alignItems:"center",gap:5}},
+                      React.createElement(Icon,{n:"bolt",size:11,color:"#ea580c"}),
+                      (isTechOpen?"▾ ":"▸ ")+"Technical Indicators",
+                      td.source&&React.createElement("span",{style:{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"rgba(234,88,12,.1)",color:"#ea580c",border:"1px solid rgba(234,88,12,.2)"}},td.source)
+                    ),
+                    exitLabel&&React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:5,background:exitCol+"18",color:exitCol,border:"1px solid "+exitCol+"33"}},exitLabel)
+                  ),
+                  isTechOpen&&React.createElement("div",{style:{padding:"6px 10px 8px",borderTop:"1px solid var(--border)"}},
+                    trendSignals.length>0&&React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:4,marginBottom:6}},
+                      trendSignals.map((sig,i)=>React.createElement("span",{key:i,style:{fontSize:9,fontWeight:600,padding:"2px 6px",borderRadius:4,background:sig.col+"18",color:sig.col,border:"1px solid "+sig.col+"33"}},sig.label))
+                    ),
+                    td.interpretationText&&React.createElement("div",{style:{fontSize:9,color:"var(--text5)",lineHeight:1.5,marginBottom:4}},td.interpretationText),
+                    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}},
+                      [["EMA9",ind_.ema_9],["EMA21",ind_.ema_21],["EMA50",ind_.ema_50],["SMA200",ind_.sma_200],
+                       ["BB Upper",ind_.bollinger&&ind_.bollinger.upper],["BB Lower",ind_.bollinger&&ind_.bollinger.lower],
+                       ["ATR(14)",ind_.atr_14],["CMF(20)",ind_.cmf_20],
+                       ["MFI(14)",ind_.mfi_14],["CCI(20)",ind_.cci_20],
+                       ["VWAP",ind_.vwap],["PSAR",ind_.psar]
+                      ].filter(x=>x[1]!==null&&x[1]!==undefined).map(([lbl,val])=>
+                        React.createElement("div",{key:lbl,style:{display:"flex",justifyContent:"space-between",padding:"2px 0",fontSize:9}},
+                          React.createElement("span",{style:{color:"var(--text5)"}},lbl),
+                          React.createElement("span",{style:{fontWeight:600,color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},
+                            typeof val==="number"?val.toFixed(2):typeof val==="object"?JSON.stringify(val):String(val))
+                        )
+                      )
+                    )
+                  )
                 );
               })(),
               /* Notes */
@@ -24434,11 +24516,320 @@ const SwingHoldOptimizer=({shares,soldShareSnapshots={}})=>{
   );
 };
 
+/* ══════════════════════════════════════════════════════════════════════════
+   Entry Score Panel — Momentum Trading Entry Scoring Engine
+   ══════════════════════════════════════════════════════════════════════════ */
+const LS_ENTRY_SCORES="mm_entry_scores";
+const LS_ENTRY_SNAPSHOTS="mm_entry_score_snapshots";
+const EntryScorePanel=({shares})=>{
+  const TI=window.TechIndicators;
+  const DF=window.OHLCVFetcher;
+  const[entries,setEntries]=useState(()=>{
+    try{return JSON.parse(localStorage.getItem(LS_ENTRY_SCORES)||"[]");}catch{return[];}
+  });
+  const[showAdd,setShowAdd]=useState(false);
+  const[addTicker,setAddTicker]=useState("");
+  const[addPrice,setAddPrice]=useState("");
+  const[adding,setAdding]=useState(false);
+  const[addErr,setAddErr]=useState("");
+  const[expandedId,setExpandedId]=useState(null);
+  const[snapshots,setSnapshots]=useState(()=>{
+    try{return JSON.parse(localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]");}catch{return[];}
+  });
+  const[showSnapshots,setShowSnapshots]=useState(false);
+  const[expandedYear,setExpandedYear]=useState(null);
+  const[expandedMonth,setExpandedMonth]=useState(null);
+  const[expandedWeek,setExpandedWeek]=useState(null);
+  const[expandedDay,setExpandedDay]=useState(null);
+
+  const saveEntries=(arr)=>{setEntries(arr);try{localStorage.setItem(LS_ENTRY_SCORES,JSON.stringify(arr));}catch{};};
+  const deleteEntry=(id)=>{saveEntries(entries.filter(e=>e.id!==id));};
+
+  const saveSnapshots=(arr)=>{setSnapshots(arr);try{localStorage.setItem(LS_ENTRY_SNAPSHOTS,JSON.stringify(arr));}catch{};};
+  const saveSnapshot=(entry)=>{
+    const snap={id:Date.now(),ticker:entry.ticker,currentPrice:entry.currentPrice,savedAt:new Date().toISOString(),result:entry.result,entryAddedAt:entry.addedAt};
+    saveSnapshots([snap,...snapshots]);
+  };
+  const deleteSnapshot=(id)=>{saveSnapshots(snapshots.filter(s=>s.id!==id));};
+
+  const getWeekNumber=(d)=>{
+    const date=new Date(d);date.setHours(0,0,0,0);
+    date.setDate(date.getDate()+3-(date.getDay()+6)%7);
+    const week1=new Date(date.getFullYear(),0,4);
+    return Math.round(((date.getTime()-week1.getTime())/86400000-3+(week1.getDay()+6)%7)/7)+1;
+  };
+  const getWeekRange=(d)=>{
+    const date=new Date(d);const day=date.getDay()||7;
+    const mon=new Date(date);mon.setDate(date.getDate()-day+1);
+    const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+    return mon.toLocaleDateString("en-IN",{month:"short",day:"numeric"})+" - "+sun.toLocaleDateString("en-IN",{month:"short",day:"numeric"});
+  };
+
+  const groupSnapshots=()=>{
+    const years={};
+    snapshots.forEach(snap=>{
+      const d=new Date(snap.savedAt);
+      const yKey=String(d.getFullYear());
+      const yLabel=yKey;
+      const mKey=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+      const mLabel=d.toLocaleDateString("en-IN",{month:"long"});
+      const wNum=getWeekNumber(d);
+      const wKey=mKey+"-W"+wNum;
+      const wLabel="Week "+wNum+" ("+getWeekRange(d)+")";
+      const dayKey=snap.savedAt.slice(0,10);
+      const dayLabel=d.toLocaleDateString("en-IN",{weekday:"short",month:"short",day:"numeric"});
+      if(!years[yKey])years[yKey]={label:yLabel,months:{}};
+      if(!years[yKey].months[mKey])years[yKey].months[mKey]={label:mLabel,weeks:{}};
+      if(!years[yKey].months[mKey].weeks[wKey])years[yKey].months[mKey].weeks[wKey]={label:wLabel,days:{}};
+      if(!years[yKey].months[mKey].weeks[wKey].days[dayKey])years[yKey].months[mKey].weeks[wKey].days[dayKey]={label:dayLabel,snaps:[]};
+      years[yKey].months[mKey].weeks[wKey].days[dayKey].snaps.push(snap);
+    });
+    return years;
+  };
+
+  const fetchAndScore=async()=>{
+    if(!addTicker.trim()){setAddErr("Enter a ticker.");return;}
+    const price=parseFloat(addPrice);
+    if(!price||price<=0){setAddErr("Enter a valid current price.");return;}
+    setAdding(true);setAddErr("");
+    try{
+      const tk=addTicker.trim().toUpperCase();
+      const[resW,resD,resH]=await Promise.all([
+        DF.fetchOHLCVCached(tk,"weekly"),
+        DF.fetchOHLCVCached(tk,"daily"),
+        DF.fetchOHLCVCached(tk,"1h"),
+      ]);
+      if(!resW.data||resW.data.length<12){setAddErr("Insufficient weekly data for "+tk);setAdding(false);return;}
+      if(!resD.data||resD.data.length<12){setAddErr("Insufficient daily data for "+tk);setAdding(false);return;}
+      const indW=TI.computeAll(resW.data);
+      const indD=TI.computeAll(resD.data);
+      const indH=resH.data&&resH.data.length>=12?TI.computeAll(resH.data):null;
+      const result=TI.computeMultiTFEntryScore(resW.data,indW,resD.data,indD,resH.data,indH,price);
+      const entry={id:Date.now(),ticker:tk,currentPrice:price,addedAt:new Date().toISOString(),result};
+      saveEntries([entry,...entries]);
+      setAddTicker("");setAddPrice("");setShowAdd(false);
+    }catch(e){setAddErr("Error: "+(e.message||"Failed"));}
+    setAdding(false);
+  };
+
+  const factorBar=(label,val,max,color)=>{
+    const pct=max>0?(val/max*100):0;
+    return React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+      React.createElement("span",{style:{width:60,fontSize:9,fontWeight:600,color:"var(--text4)",textAlign:"right",flexShrink:0}},label),
+      React.createElement("div",{style:{flex:1,height:5,borderRadius:3,background:"var(--bg5)",overflow:"hidden"}},
+        React.createElement("div",{style:{width:pct+"%",height:"100%",borderRadius:3,background:color,transition:"width .3s"}})
+      ),
+      React.createElement("span",{style:{width:32,fontSize:9,fontWeight:700,color:"var(--text4)",fontFamily:"'Sora',sans-serif",textAlign:"right"}},val+"/"+max)
+    );
+  };
+
+  const tfSection=(label,score)=>{
+    if(!score)return React.createElement("div",{style:{fontSize:10,color:"var(--text6)",padding:"4px 0"}},label+": No data");
+    return React.createElement("div",{style:{marginBottom:8}},
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}},
+        React.createElement("span",{style:{fontSize:10,fontWeight:700,color:"var(--text3)"}},label),
+        React.createElement("span",{style:{fontSize:11,fontWeight:800,color:score.decision.color,fontFamily:"'Sora',sans-serif"}},score.total+" · "+score.decision.label)
+      ),
+      React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:3}},
+        factorBar("Trend",score.trend,score.trendMax,"#3b82f6"),
+        factorBar("Momentum",score.momentum,score.momentumMax,"#a855f7"),
+        factorBar("Volume",score.volume,score.volumeMax,"#f59e0b"),
+        factorBar("Breakout",score.breakout,score.breakoutMax,"#06b6d4"),
+        factorBar("Structure",score.structure,score.structureMax,"#ec4899"),
+      )
+    );
+  };
+
+  const snapshotCard=(snap)=>{
+    const r=snap.result;
+    return React.createElement("div",{key:snap.id,style:{padding:12,borderRadius:10,background:"var(--bg4)",border:"1px solid var(--border)",marginBottom:8}},
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}},
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},snap.ticker),
+          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},"\u23f0 "+new Date(snap.savedAt).toLocaleString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})),
+          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:1}},"\u2022 Price: \u20b9"+Number(snap.currentPrice).toLocaleString("en-IN"))
+        ),
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
+          React.createElement("div",{textAlign:"right"},
+            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",fontWeight:600}},"Score"),
+            React.createElement("div",{style:{fontSize:20,fontWeight:900,color:r.decision.color,fontFamily:"'Sora',sans-serif",lineHeight:1}},r.finalScore)
+          ),
+          React.createElement("div",{onClick:()=>deleteSnapshot(snap.id),style:{cursor:"pointer",padding:4,borderRadius:6,color:"var(--text6)",fontSize:14,title:"Delete snapshot"}},"\u2715")
+        )
+      ),
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,padding:"4px 8px",borderRadius:6,background:r.decision.color+"12",marginBottom:6}},
+        React.createElement("span",{style:{fontSize:11,fontWeight:800,color:r.decision.color,fontFamily:"'Sora',sans-serif"}},r.decision.label),
+        !r.phase1Pass&&React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"#ef4444",padding:"2px 5px",borderRadius:4,background:"rgba(239,68,68,.1)"}},r.filterFails+"/3 filters"),
+        r.phase3Pass&&React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"#16a34a",padding:"2px 5px",borderRadius:4,background:"rgba(22,163,74,.1)"}}, "Phase 3")
+      ),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}},
+        ["weekly","daily","hourly"].map(tf=>{
+          const s=r[tf];
+          const label=tf==="weekly"?"Weekly":tf==="daily"?"Daily":"Hourly";
+          return React.createElement("div",{key:tf,style:{padding:"4px 6px",borderRadius:6,background:"var(--bg5)",textAlign:"center"}},
+            React.createElement("div",{style:{fontSize:8,fontWeight:600,color:"var(--text5)",marginBottom:1}},label),
+            React.createElement("div",{style:{fontSize:12,fontWeight:800,color:s?s.decision.color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},s?s.total:"N/A"),
+            s&&React.createElement("div",{style:{fontSize:8,color:s.decision.color,fontWeight:600}},s.decision.label)
+          );
+        })
+      )
+    );
+  };
+
+  const renderSnapshots=()=>{
+    const grouped=groupSnapshots();
+    const yKeys=Object.keys(grouped).sort().reverse();
+    if(yKeys.length===0)return React.createElement("div",{style:{textAlign:"center",padding:30,color:"var(--text6)",fontSize:12}},"No saved snapshots yet.");
+    return yKeys.map(yKey=>{
+      const y=grouped[yKey];
+      const mKeys=Object.keys(y.months).sort().reverse();
+      const isYExp=expandedYear===yKey;
+      const totalSnaps=mKeys.reduce((acc,mKey)=>acc+Object.values(y.months[mKey].weeks).reduce((a,w)=>a+Object.values(w.days).reduce((b,d)=>b+d.snaps.length,0),0),0);
+      return React.createElement("div",{key:yKey,style:{marginBottom:10,borderRadius:10,background:"var(--bg3)",border:"1px solid var(--border)",overflow:"hidden"}},
+        React.createElement("div",{onClick:()=>setExpandedYear(isYExp?null:yKey),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 14px",cursor:"pointer",background:isYExp?"var(--bg4)":"transparent"}},
+          React.createElement("span",{style:{fontSize:13,fontWeight:800,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},(isYExp?"▾ ":"▸ ")+y.label),
+          React.createElement("span",{style:{fontSize:10,color:"var(--text5)",fontWeight:600}},totalSnaps+" snapshot"+(totalSnaps!==1?"s":""))
+        ),
+        isYExp&&mKeys.map(mKey=>{
+          const m=y.months[mKey];
+          const wKeys=Object.keys(m.weeks).sort().reverse();
+          const isMExp=expandedMonth===mKey;
+          const mSnaps=wKeys.reduce((acc,wKey)=>acc+Object.values(m.weeks[wKey].days).reduce((a,d)=>a+d.snaps.length,0),0);
+          return React.createElement("div",{key:mKey,style:{borderTop:"1px solid var(--border)"}},
+            React.createElement("div",{onClick:()=>setExpandedMonth(isMExp?null:mKey),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 14px 8px 28px",cursor:"pointer",background:isMExp?"var(--bg4)":"transparent"}},
+              React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"var(--text)"}},(isMExp?"▾ ":"▸ ")+m.label),
+              React.createElement("span",{style:{fontSize:10,color:"var(--text5)",fontWeight:600}},mSnaps+" snap"+(mSnaps!==1?"s":""))
+            ),
+            isMExp&&wKeys.map(wKey=>{
+              const w=m.weeks[wKey];
+              const dKeys=Object.keys(w.days).sort().reverse();
+              const isWExp=expandedWeek===wKey;
+              const wSnaps=dKeys.reduce((a,dKey)=>a+w.days[dKey].snaps.length,0);
+              return React.createElement("div",{key:wKey,style:{borderTop:"1px solid var(--border)"}},
+                React.createElement("div",{onClick:()=>setExpandedWeek(isWExp?null:wKey),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 14px 7px 42px",cursor:"pointer",background:isWExp?"var(--bg4)":"transparent"}},
+                  React.createElement("span",{style:{fontSize:11,fontWeight:600,color:"var(--text2)"}},(isWExp?"▾ ":"▸ ")+w.label),
+                  React.createElement("span",{style:{fontSize:9,color:"var(--text5)"}},wSnaps+" snap"+(wSnaps!==1?"s":""))
+                ),
+                isWExp&&dKeys.map(dKey=>{
+                  const day=w.days[dKey];
+                  const isDExp=expandedDay===dKey;
+                  return React.createElement("div",{key:dKey,style:{borderTop:"1px solid var(--border)"}},
+                    React.createElement("div",{onClick:()=>setExpandedDay(isDExp?null:dKey),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 14px 6px 56px",cursor:"pointer",background:isDExp?"var(--bg4)":"transparent"}},
+                      React.createElement("span",{style:{fontSize:10,fontWeight:600,color:"var(--text3)"}},(isDExp?"▾ ":"▸ ")+day.label),
+                      React.createElement("span",{style:{fontSize:9,color:"var(--text5)"}},day.snaps.length+" snap"+(day.snaps.length!==1?"s":""))
+                    ),
+                    isDExp&&React.createElement("div",{style:{padding:"6px 14px 6px 66px"}},
+                      day.snaps.map(snap=>snapshotCard(snap))
+                    )
+                  );
+                })
+              );
+            })
+          );
+        })
+      );
+    });
+  };
+
+  return React.createElement("div",null,
+    React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
+      React.createElement("div",null,
+        React.createElement("div",{style:{fontSize:15,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},"Entry Score"),
+        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},"Momentum Trading Entry Engine · Weekly(20%) + Daily(65%) + Hourly(15%)")
+      ),
+      React.createElement("button",{onClick:()=>setShowAdd(true),style:{padding:"8px 16px",borderRadius:8,fontSize:12,fontWeight:700,border:"none",background:"var(--accent)",color:"#fff",cursor:"pointer"}},
+        "+ Add Entry"
+      )
+    ),
+    showAdd&&React.createElement("div",{style:{marginBottom:16,padding:16,borderRadius:12,background:"var(--bg3)",border:"1px solid var(--border)"}},
+      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text)",marginBottom:10}},"Add New Entry"),
+      React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",alignItems:"flex-end"}},
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:10,fontWeight:600,color:"var(--text5)",marginBottom:4}},"Ticker"),
+          React.createElement("input",{type:"text",placeholder:"e.g. RELIANCE",value:addTicker,onChange:e=>setAddTicker(e.target.value.toUpperCase()),
+            style:{padding:"8px 12px",borderRadius:8,fontSize:12,background:"var(--bg4)",border:"1px solid var(--border)",color:"var(--text2)",outline:"none",width:140}})
+        ),
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:10,fontWeight:600,color:"var(--text5)",marginBottom:4}},"Current Price (\u20b9)"),
+          React.createElement("input",{type:"number",placeholder:"e.g. 2500",value:addPrice,onChange:e=>setAddPrice(e.target.value),
+            style:{padding:"8px 12px",borderRadius:8,fontSize:12,background:"var(--bg4)",border:"1px solid var(--border)",color:"var(--text2)",outline:"none",width:120}})
+        ),
+        React.createElement("button",{
+          onClick:fetchAndScore,disabled:adding,
+          style:{padding:"8px 18px",borderRadius:8,fontSize:12,fontWeight:700,border:"none",background:adding?"var(--bg5)":"var(--accent)",color:adding?"var(--text6)":"#fff",cursor:adding?"wait":"pointer"}
+        },adding?"Calculating...":"Calculate Score"),
+        React.createElement("button",{onClick:()=>{setShowAdd(false);setAddErr("");},style:{padding:"8px 14px",borderRadius:8,fontSize:12,fontWeight:600,border:"1px solid var(--border)",background:"var(--bg4)",color:"var(--text5)",cursor:"pointer"}},"Cancel")
+      ),
+      addErr&&React.createElement("div",{style:{marginTop:8,fontSize:11,color:addErr.startsWith("Error")?"#ef4444":"#eab308"}},addErr)
+    ),
+    entries.length===0&&React.createElement("div",{style:{textAlign:"center",padding:40,color:"var(--text6)",fontSize:13}},
+      "No entry scores yet. Click \"+ Add Entry\" to analyze a stock."
+    ),
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(380px,1fr))",gap:14}},
+      entries.map(entry=>{
+        const r=entry.result;
+        const isExpanded=expandedId===entry.id;
+        return React.createElement("div",{key:entry.id,style:{padding:16,borderRadius:12,background:"var(--bg3)",border:"2px solid "+r.decision.color+"33"}},
+          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}},
+            React.createElement("div",null,
+              React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},entry.ticker),
+              React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},"Added "+new Date(entry.addedAt).toLocaleDateString()+" \u00b7 \u20b9"+INR(entry.currentPrice))
+            ),
+            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
+              React.createElement("div",{textAlign:"right"},
+                React.createElement("div",{style:{fontSize:10,color:"var(--text5)",fontWeight:600}},"Final Score"),
+                React.createElement("div",{style:{fontSize:22,fontWeight:900,color:r.decision.color,fontFamily:"'Sora',sans-serif",lineHeight:1}},r.finalScore)
+              ),
+              React.createElement("div",{onClick:()=>saveSnapshot(entry),style:{cursor:"pointer",padding:4,borderRadius:6,color:"var(--accent)",fontSize:13,title:"Save Snapshot"}},React.createElement(Icon,{n:"image",size:14,color:"var(--accent)"})),
+              React.createElement("div",{onClick:()=>deleteEntry(entry.id),style:{cursor:"pointer",padding:4,borderRadius:6,color:"var(--text6)",fontSize:14},title:"Delete"},React.createElement(Icon,{n:"close",size:14}))
+            )
+          ),
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:8,background:r.decision.color+"12"}},
+            React.createElement("span",{style:{fontSize:12,fontWeight:800,color:r.decision.color,fontFamily:"'Sora',sans-serif"}},r.decision.label),
+            !r.phase1Pass&&React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"#ef4444",padding:"2px 6px",borderRadius:4,background:"rgba(239,68,68,.1)"}},r.filterFails+"/3 filters failed"),
+            r.phase3Pass&&React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"#16a34a",padding:"2px 6px",borderRadius:4,background:"rgba(22,163,74,.1)"}}, "Phase 3 Pass")
+          ),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:8}},
+            ["weekly","daily","hourly"].map(tf=>{
+              const s=r[tf];
+              const label=tf==="weekly"?"Weekly (20%)":tf==="daily"?"Daily (65%)":"Hourly (15%)";
+              return React.createElement("div",{key:tf,style:{padding:"6px 8px",borderRadius:8,background:"var(--bg4)",textAlign:"center"}},
+                React.createElement("div",{style:{fontSize:9,fontWeight:600,color:"var(--text5)",marginBottom:2}},label),
+                React.createElement("div",{style:{fontSize:14,fontWeight:800,color:s?s.decision.color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},s?s.total:"N/A"),
+                s&&React.createElement("div",{style:{fontSize:8,color:s.decision.color,fontWeight:600}},s.decision.label)
+              );
+            })
+          ),
+          React.createElement("div",{onClick:()=>setExpandedId(isExpanded?null:entry.id),style:{fontSize:10,color:"var(--accent)",cursor:"pointer",fontWeight:600,marginBottom:6,textAlign:"center"}},
+            isExpanded?"\u25b2 Hide Details":"\u25bc Show Details"
+          ),
+          isExpanded&&React.createElement("div",{style:{marginTop:8}},
+            r.daily&&tfSection("Daily Breakdown",r.daily),
+            r.weekly&&tfSection("Weekly Breakdown",r.weekly),
+            r.hourly&&tfSection("Hourly Breakdown",r.hourly),
+            r.overrides.length>0&&React.createElement("div",{style:{marginTop:8,padding:"8px 10px",borderRadius:8,background:"rgba(22,163,74,.06)",border:"1px solid rgba(22,163,74,.2)"}},
+              React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#16a34a",marginBottom:4}},"High-Confidence Signals"),
+              r.overrides.map((o,i)=>React.createElement("div",{key:i,style:{fontSize:10,color:"#16a34a",lineHeight:1.5}},"\u2022 "+o))
+            )
+          )
+        );
+      })
+    ),
+    React.createElement("div",{style:{marginTop:24,borderTop:"1px solid var(--border)",paddingTop:20}},
+      React.createElement("div",{onClick:()=>setShowSnapshots(!showSnapshots),style:{display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",marginBottom:showSnapshots?12:0,padding:"8px 0"}},
+        React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},(showSnapshots?"▾ ":"▸ ")+"Saved Snapshots"),
+        snapshots.length>0&&React.createElement("span",{style:{fontSize:10,fontWeight:600,color:"var(--text5)",background:"var(--bg4)",padding:"3px 8px",borderRadius:10}},snapshots.length+" snapshot"+(snapshots.length!==1?"s":""))
+      ),
+      showSnapshots&&React.createElement("div",{style:{marginTop:4}},renderSnapshots())
+    )
+  );
+};
+
 const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},eodIndices={},historyCache={},soldShareSnapshots={},brokerCashBalance=0,banks=[],scheduled=[],isMobile})=>{
   const[ready,setReady]=useState(false);
   React.useEffect(()=>{const t=setTimeout(()=>setReady(true),120);return()=>clearTimeout(t);},[]);
   const[tab,setTab]=useState(defaultTab);const[open,setOpen]=useState(false);const[navLoad,setNavLoad]=useState(false);
-  const[sharesSubTab,setSharesSubTab]=useState("holdings"); /* "holdings" | "profitability" | "timeholding" | "winloss" | "capitaleff" | "behavioural" | "timing" | "risk" | "pattern" | "drawdown" | "multitime" | "frequency" | "swing" */
+  const[sharesSubTab,setSharesSubTab]=useState("holdings"); /* "holdings" | "profitability" | "timeholding" | "winloss" | "capitaleff" | "behavioural" | "timing" | "risk" | "pattern" | "drawdown" | "multitime" | "frequency" | "swing" | "entryscore" */
   React.useEffect(()=>{setTab(defaultTab);},[defaultTab]);
   React.useEffect(()=>{if(tab!=="shares")setSharesSubTab("holdings");},[tab]);
   const[srch,setSrch]=useState("");const[results,setResults]=useState([]);const[searching,setSearching]=useState(false);
@@ -25208,7 +25599,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
     tab==="shares"&&React.createElement(MarketTicker),
     /* ── Shares sub-tab bar ── */
     tab==="shares"&&React.createElement("div",{style:{display:"flex",gap:2,marginBottom:20,flexWrap:"wrap"}},
-      [{key:"holdings",label:"Holdings",svg:"chart"},{key:"profitability",label:"Returns",svg:"invest"},{key:"timeholding",label:"Holding",svg:"clock"},{key:"winloss",label:"Win/Loss",svg:"target"},{key:"capitaleff",label:"Capital",svg:"crystal"},{key:"behavioural",label:"Behaviour",svg:"lightbulb"},{key:"timing",label:"Timing",svg:"alarmclock"},{key:"risk",label:"Risk",svg:"warning"},{key:"pattern",label:"Pattern",svg:"bolt"},{key:"drawdown",label:"Drawdown",svg:"warning"},{key:"multitime",label:"Multi-TF",svg:"chart"},{key:"frequency",label:"Frequency",svg:"alarmclock"},{key:"swing",label:"Swing",svg:"target"}].map(st=>
+      [{key:"holdings",label:"Holdings",svg:"chart"},{key:"profitability",label:"Returns",svg:"invest"},{key:"timeholding",label:"Holding",svg:"clock"},{key:"winloss",label:"Win/Loss",svg:"target"},{key:"capitaleff",label:"Capital",svg:"crystal"},{key:"behavioural",label:"Behaviour",svg:"lightbulb"},{key:"timing",label:"Timing",svg:"alarmclock"},{key:"risk",label:"Risk",svg:"warning"},{key:"pattern",label:"Pattern",svg:"bolt"},{key:"drawdown",label:"Drawdown",svg:"warning"},{key:"multitime",label:"Multi-TF",svg:"chart"},{key:"frequency",label:"Frequency",svg:"alarmclock"},{key:"swing",label:"Swing",svg:"target"},{key:"entryscore",label:"Entry Score",svg:"trendingup"}].map(st=>
         React.createElement("button",{
           key:st.key,
           onClick:()=>setSharesSubTab(st.key),
@@ -25371,7 +25762,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                 "Edit"
               ),
               React.createElement("button",{
-                onClick:()=>{
+                onClick:async()=>{
                   const snapId=uid();
                   const now=TODAY();
                   const currentVal_=sh.qty*sh.currentPrice;
@@ -25394,6 +25785,73 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                       .slice(-30)
                       .map(d=>({date:d,value:sh.qty*eodPrices[d][tkr_]}));
                   }
+                  /* ── Fetch technical indicators ── */
+                  let techData=null;
+                  try{
+                    const TI_=window.TechIndicators;
+                    const DF_=window.OHLCVFetcher;
+                    if(TI_&&DF_&&tkr_){
+                      const res=await DF_.fetchOHLCVCached(tkr_,"daily");
+                      if(res&&res.data&&res.data.length>=12){
+                        const ind=TI_.computeAll(res.data);
+                        const exitScore=TI_.computeExitScore(res.data,ind);
+                        techData={
+                          source:res.source||null,
+                          lastClose:ind.lastClose,
+                          indicators:{
+                            ema_9:ind.ema_9,ema_21:ind.ema_21,ema_50:ind.ema_50,
+                            sma_20:ind.sma_20,sma_50:ind.sma_50,sma_200:ind.sma_200,
+                            rsi_14:ind.rsi_14,
+                            macd:ind.macd,
+                            supertrend:ind.supertrend,supertrendDir:ind.supertrendDir,
+                            bollinger:ind.bb,
+                            adx:ind.adx,
+                            atr_14:ind.atr_14,
+                            obv:ind.obv,
+                            cmf_20:ind.cmf_20,
+                            stochRSI:ind.stochRSI,
+                            cci_20:ind.cci_20,
+                            roc_12:ind.roc_12,
+                            momentum_10:ind.momentum_10,
+                            vwap:ind.vwap,
+                            psar:ind.psar,
+                            ichimoku:ind.ichimoku,
+                            donchian:ind.donchian,
+                            keltner:ind.keltner,
+                            hma_20:ind.hma_20,
+                            kama:ind.kama,
+                            tsi:ind.tsi,
+                            stc:ind.stc,
+                            mfi_14:ind.mfi_14,
+                            pvt:ind.pvt,
+                            kvo:ind.kvo,
+                            anchored_vwap:ind.anchored_vwap,
+                            volumeProfile:ind.volumeProfile,
+                            ttmSqueeze:ind.ttmSqueeze,
+                            squeezeMomentum:ind.squeezeMomentum,
+                            darvasBox:ind.darvasBox,
+                            smartMoney:ind.smartMoney,
+                          },
+                          exitScore:exitScore?{
+                            total:exitScore.total,trend:exitScore.trend,momentum:exitScore.momentum,
+                            volume:exitScore.volume,volatility:exitScore.volatility,structure:exitScore.structure,
+                            decision:exitScore.decision,
+                          }:null,
+                          interpretation:TI_.interpret(ind),
+                          interpretationText:(() => {
+                            try{
+                              const s=TI_.interpret(ind);
+                              const bullish=Object.values(s).filter(v=>v==="bullish").length;
+                              const bearish=Object.values(s).filter(v=>v==="bearish").length;
+                              const ob=Object.values(s).filter(v=>v==="overbought").length;
+                              const os=Object.values(s).filter(v=>v==="oversold").length;
+                              return bullish+" bullish · "+bearish+" bearish"+(ob?" · "+ob+" overbought":"")+(os?" · "+os+" oversold":"");
+                            }catch{return null;}
+                          })(),
+                        };
+                      }
+                    }
+                  }catch(e){/* Tech fetch failed — save snapshot without tech data */}
                   const snapshot={
                     id:snapId,
                     savedAt:now,
@@ -25405,6 +25863,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                     brokerage:sh.brokerage||0,
                     priceTs:sh.priceTs||null,
                     chartPts:chartPts_,
+                    techData:techData,
                   };
                   dispatch({type:"SAVE_SHARE_SNAPSHOT",savedAt:now,snapshot});
                 },
@@ -25500,6 +25959,8 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
     tab==="shares"&&sharesSubTab==="frequency"&&React.createElement(TradeFrequencyAnalytics,{shares,soldShareSnapshots}),
     /* ── Swing-Specific Holding Period Optimiser sub-tab ── */
     tab==="shares"&&sharesSubTab==="swing"&&React.createElement(SwingHoldOptimizer,{shares,soldShareSnapshots}),
+    /* ── Entry Score sub-tab ── */
+    tab==="shares"&&sharesSubTab==="entryscore"&&React.createElement(EntryScorePanel,{shares}),
     /* ── FD content */
     tab==="fd"&&(!fd.length?React.createElement(Empty,{icon:React.createElement(Icon,{n:"bank",size:18}),text:"No FDs added yet"}):
       React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(275px,1fr))",gap:14}},
@@ -32798,6 +33259,10 @@ const FSAStoragePanel=({state,dispatch})=>{
           localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(data.chatbotTraining));
         if(data.avApiKey)
           localStorage.setItem("mm_av_api_key",data.avApiKey);
+        if(data.entryScores)
+          localStorage.setItem(LS_ENTRY_SCORES,data.entryScores);
+        if(data.entrySnapshots)
+          localStorage.setItem(LS_ENTRY_SNAPSHOTS,data.entrySnapshots);
       }catch{}
       /* ── Overwrite IDB transactions so next-boot hydration loads
          the restored data instead of the pre-restore snapshot.
@@ -42754,7 +43219,7 @@ function App(){
           React.createElement(ReportsSection,{data:state,isMobile,onJumpToLedger}))),
       React.createElement("div",{style:{display:tab==="settings"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Settings"},
-          React.createElement(SettingsSection,{state,dispatch,themeId,setTheme,fontId,setFont,isMobile,onResetAll:async()=>{_mmResetting=true;dispatch({type:"RESET_ALL"});try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_EOD_PRICES);localStorage.removeItem(LS_EOD_NAVS);localStorage.removeItem(LS_THEME);localStorage.removeItem(TAX_LS_KEY);localStorage.removeItem(CALC_LS_KEY);localStorage.removeItem("mm_v7_chatbot_training");/* Stamp reset time so Drive boot pull cannot undo the reset */localStorage.setItem(LS_LAST_LOCAL_EDIT,new Date().toISOString());localStorage.removeItem(LS_GDRIVE_LAST_SYNC);}catch{}/* Clear transactions from IndexedDB so no stale data survives reload */try{await clearTxIDB();}catch{}setTimeout(()=>window.location.reload(),100);}}))),
+          React.createElement(SettingsSection,{state,dispatch,themeId,setTheme,fontId,setFont,isMobile,onResetAll:async()=>{_mmResetting=true;dispatch({type:"RESET_ALL"});try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_EOD_PRICES);localStorage.removeItem(LS_EOD_NAVS);localStorage.removeItem(LS_THEME);localStorage.removeItem(TAX_LS_KEY);localStorage.removeItem(CALC_LS_KEY);localStorage.removeItem("mm_v7_chatbot_training");localStorage.removeItem(LS_ENTRY_SCORES);localStorage.removeItem(LS_ENTRY_SNAPSHOTS);/* Stamp reset time so Drive boot pull cannot undo the reset */localStorage.setItem(LS_LAST_LOCAL_EDIT,new Date().toISOString());localStorage.removeItem(LS_GDRIVE_LAST_SYNC);}catch{}/* Clear transactions from IndexedDB so no stale data survives reload */try{await clearTxIDB();}catch{}setTimeout(()=>window.location.reload(),100);}}))),
       React.createElement("div",{style:{display:tab==="info"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"About"},
           React.createElement(InfoSection,{isMobile}))),
