@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.11.0";
+const APP_VERSION="7.12.2";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -7468,7 +7468,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
 
   // ── Share Edit Modal
   const ShareEditModal=({sh,onClose})=>{
-    const[f,setF]=useState({company:sh.company,ticker:sh.ticker,qty:String(sh.qty),buyPrice:String(sh.buyPrice),currentPrice:String(sh.currentPrice),buyDate:sh.buyDate||TODAY(),notes:sh.notes||""});
+    const[f,setF]=useState({company:sh.company,ticker:sh.ticker,qty:String(sh.qty),buyPrice:String(sh.buyPrice),currentPrice:String(sh.currentPrice),buyDate:sh.buyDate||TODAY(),notes:sh.notes||"",entryScore:sh.entryScore!=null?String(sh.entryScore):""});
     const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
     return React.createElement(Modal,{title:"Edit Share Holding",onClose,w:420},
       React.createElement("div",{className:"grid-2col"},
@@ -7477,11 +7477,12 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
         React.createElement(Field,{label:"Quantity"},React.createElement("input",{className:"inp",type:"number",value:f.qty,onChange:set("qty")})),
         React.createElement(Field,{label:"Buy Price (₹)"},React.createElement("input",{className:"inp",type:"number",value:f.buyPrice,onChange:set("buyPrice")})),
         React.createElement(Field,{label:"Date of Acquisition"},React.createElement("input",{className:"inp",type:"date",value:f.buyDate,onChange:set("buyDate")})),
-        React.createElement(Field,{label:"Current Price (₹)"},React.createElement("input",{className:"inp",type:"number",value:f.currentPrice,onChange:set("currentPrice")}))
+        React.createElement(Field,{label:"Current Price (₹)"},React.createElement("input",{className:"inp",type:"number",value:f.currentPrice,onChange:set("currentPrice")})),
+        React.createElement(Field,{label:"Entry Score (0–100)"},React.createElement("input",{className:"inp",type:"number",min:"0",max:"100",placeholder:"0",value:f.entryScore,onChange:set("entryScore")}))
       ),
       React.createElement(Field,{label:"Notes"},React.createElement("textarea",{className:"inp",value:f.notes,onChange:set("notes"),placeholder:"Broker, target price, holding notes…",style:{resize:"vertical",minHeight:60,lineHeight:1.6,fontSize:13}})),
       React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,marginTop:4}},
-        React.createElement(Btn,{onClick:()=>{dispatch({type:"EDIT_SHARE",p:{id:sh.id,...f,qty:+f.qty,buyPrice:+f.buyPrice,currentPrice:+f.currentPrice,buyDate:f.buyDate||TODAY()}});onClose();},sx:{flex:"1 1 120px",justifyContent:"center"}},"Save Changes"),
+        React.createElement(Btn,{onClick:()=>{dispatch({type:"EDIT_SHARE",p:{id:sh.id,...f,qty:+f.qty,buyPrice:+f.buyPrice,currentPrice:+f.currentPrice,buyDate:f.buyDate||TODAY(),entryScore:f.entryScore?+f.entryScore:null}});onClose();},sx:{flex:"1 1 120px",justifyContent:"center"}},"Save Changes"),
         React.createElement(Btn,{v:"secondary",onClick:onClose,sx:{justifyContent:"center",minWidth:70}},"Cancel")
       )
     );
@@ -24635,7 +24636,7 @@ const EntryScorePanel=({shares})=>{
         factorBar("Trend",score.trendScore,score.trendMax,"#3b82f6",false),
         factorBar("Momentum",score.momentumScore,score.momentumMax,"#a855f7",false),
         factorBar("Volume",score.volumeScore,score.volumeMax,"#06b6d4",false),
-        factorBar("Volatility",score.volatilityScore,score.volatilityMax,"#f59e0b",false)
+        factorBar("Structure",score.structureScore,score.structureMax,"#ec4899",false)
       )
     );
   };
@@ -24840,7 +24841,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
   React.useEffect(()=>{if(tab!=="shares")setSharesSubTab("holdings");},[tab]);
   const[srch,setSrch]=useState("");const[results,setResults]=useState([]);const[searching,setSearching]=useState(false);
   const[mfF,setMfF]=useState({name:"",schemeCode:"",units:"",avgNav:"",invested:"",notes:""});
-  const[shF,setShF]=useState({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:""});
+  const[shF,setShF]=useState({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:"",entryScore:""});
   const[shAddingTrade,setShAddingTrade]=useState(false); /* true while fetching chart for past trade */
   const[editShare,setEditShare]=useState(null);
   const[fdF,setFdF]=useState({bank:"",amount:"",rate:"",startDate:TODAY(),maturityDate:"",maturityAmount:"",compoundFreq:"quarterly",notes:""});
@@ -25800,7 +25801,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                       const res=await DF_.fetchOHLCVCached(tkr_,"daily");
                       if(res&&res.data&&res.data.length>=12){
                         const ind=TI_.computeAll(res.data);
-                        const exitScore=TI_.computeExitScore(res.data,ind);
+                        const exitScore=TI_.computeExitScore(res.data,ind,{entryPrice:sh.buyPrice,buyDate:sh.buyDate,currentPrice:sh.currentPrice});
                         techData={
                           source:res.source||null,
                           lastClose:ind.lastClose,
@@ -25840,7 +25841,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                           },
                           exitScore:exitScore?{
                             total:exitScore.total,trend:exitScore.trend,momentum:exitScore.momentum,
-                            volume:exitScore.volume,volatility:exitScore.volatility,structure:exitScore.structure,
+                            volume:exitScore.volume,structure:exitScore.structure,
                             decision:exitScore.decision,
                           }:null,
                           interpretation:TI_.interpret(ind),
@@ -25933,7 +25934,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
           ),
           /* ── Expanded Technical Indicators panel ── */
           expandedTech[sh.id]&&window.TechnicalIndicatorsInline&&React.createElement("div",{style:{marginTop:-4,marginBottom:12,padding:"16px",borderRadius:"0 0 14px 14px",background:"var(--bg3)",border:"1px solid var(--border)",borderTop:"none"}},
-            React.createElement(window.TechnicalIndicatorsInline,{ticker:sh.ticker,company:sh.company,buyPrice:sh.buyPrice,buyDate:sh.buyDate,currentPrice:sh.currentPrice})
+            React.createElement(window.TechnicalIndicatorsInline,{ticker:sh.ticker,company:sh.company,buyPrice:sh.buyPrice,buyDate:sh.buyDate,currentPrice:sh.currentPrice,entryScore:sh.entryScore})
           )
           );
         })
@@ -26325,6 +26326,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         React.createElement(Field,{label:"Buy Price (₹)"},React.createElement("input",{className:"inp",type:"number",value:editShare.buyPrice,onChange:e=>setEditShare(p=>({...p,buyPrice:e.target.value}))})),
         React.createElement(Field,{label:"Date of Acquisition"},React.createElement("input",{className:"inp",type:"date",value:editShare.buyDate||"",onChange:e=>setEditShare(p=>({...p,buyDate:e.target.value}))})),
         React.createElement(Field,{label:"Current Price (₹)"},React.createElement("input",{className:"inp",type:"number",value:editShare.currentPrice,onChange:e=>setEditShare(p=>({...p,currentPrice:e.target.value}))})),
+        React.createElement(Field,{label:"Entry Score (0–100)"},React.createElement("input",{className:"inp",type:"number",min:"0",max:"100",placeholder:"0",value:editShare.entryScore||"",onChange:e=>setEditShare(p=>({...p,entryScore:e.target.value}))})),
         React.createElement(Field,{label:"Brokerage / Fees (₹)"},React.createElement("input",{className:"inp",type:"number",value:editShare.brokerage||"",onChange:e=>setEditShare(p=>({...p,brokerage:e.target.value}))}))
       ),
       React.createElement(Field,{label:"Notes"},React.createElement("textarea",{className:"inp",value:editShare.notes||"",onChange:e=>setEditShare(p=>({...p,notes:e.target.value})),placeholder:"Broker, target price, holding notes…",style:{resize:"vertical",minHeight:60,lineHeight:1.6,fontSize:12}})),
@@ -26350,13 +26352,14 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
             buyDate:editShare.buyDate||TODAY(),
             brokerage:+editShare.brokerage||0,
             notes:editShare.notes||"",
+            entryScore:editShare.entryScore?+editShare.entryScore:null,
           }});
           setEditShare(null);
         },sx:{flex:"1 1 120px",justifyContent:"center"}},"Save Changes"),
         React.createElement(Btn,{v:"secondary",onClick:()=>setEditShare(null),sx:{justifyContent:"center",minWidth:70}},"Cancel")
       )
     ),
-    open&&tab==="shares"&&React.createElement(Modal,{title:"Add Share",onClose:()=>{setOpen(false);setShF({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:""});},w:520},
+    open&&tab==="shares"&&React.createElement(Modal,{title:"Add Share",onClose:()=>{setOpen(false);setShF({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:"",entryScore:""});},w:520},
       /* ── Mode toggle: Active holding vs Past trade ── */
       React.createElement("div",{style:{display:"flex",borderRadius:9,overflow:"hidden",border:"1px solid var(--border2)",marginBottom:16}},
         React.createElement("button",{
@@ -26432,14 +26435,18 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         React.createElement(Field,{label:"Brokerage / Fees (₹)"},React.createElement("input",{className:"inp",type:"number",placeholder:"0 (optional)",value:shF.brokerage,onChange:e=>setShF(p=>({...p,brokerage:e.target.value}))})),
         React.createElement(Field,{label:"Notes (optional)"},React.createElement("textarea",{className:"inp",placeholder:"Broker, exchange, strategy notes…",value:shF.notes,onChange:e=>setShF(p=>({...p,notes:e.target.value})),style:{resize:"vertical",minHeight:52,lineHeight:1.6,fontSize:12}}))
       ),
+      React.createElement("div",{className:"grid-2col"},
+        React.createElement(Field,{label:"Entry Score (0–100, optional)"},React.createElement("input",{className:"inp",type:"number",min:"0",max:"100",placeholder:"0 (optional)",value:shF.entryScore,onChange:e=>setShF(p=>({...p,entryScore:e.target.value}))})),
+        React.createElement("div",null)
+      ),
       /* ── Action buttons ── */
       React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,marginTop:4}},
         /* Active holding submit */
         !shF.sellDate&&React.createElement(Btn,{
           onClick:()=>{
             if(!shF.company||!shF.qty)return;
-            dispatch({type:"ADD_SHARE",p:{id:uid(),...shF,qty:+shF.qty,buyPrice:+shF.buyPrice,currentPrice:+shF.currentPrice,buyDate:shF.buyDate||TODAY(),brokerage:+shF.brokerage||0}});
-            setShF({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:""});
+            dispatch({type:"ADD_SHARE",p:{id:uid(),...shF,qty:+shF.qty,buyPrice:+shF.buyPrice,currentPrice:+shF.currentPrice,buyDate:shF.buyDate||TODAY(),brokerage:+shF.brokerage||0,entryScore:shF.entryScore?+shF.entryScore:null}});
+            setShF({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:"",entryScore:""});
             setOpen(false);
           },
           sx:{flex:"1 1 auto",justifyContent:"center"}
@@ -26487,7 +26494,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
             };
             dispatch({type:"SAVE_SHARE_SNAPSHOT",savedAt:sellD,snapshot});
             setShAddingTrade(false);
-            setShF({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:""});
+            setShF({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:"",entryScore:""});
             setOpen(false);
           },
           sx:{flex:"1 1 auto",justifyContent:"center",background:"#6d28d9",borderColor:"#6d28d9"},
@@ -26496,7 +26503,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
             ?React.createElement(React.Fragment,null,React.createElement("span",{className:"spinr"},"⟳")," Fetching chart…")
             :React.createElement(React.Fragment,null,React.createElement(Icon,{n:"save",size:12,style:{marginRight:4}}),"Save to Previous Trades")
         ),
-        React.createElement(Btn,{v:"secondary",onClick:()=>{setOpen(false);setShF({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:""});}},shAddingTrade?"":"Cancel")
+        React.createElement(Btn,{v:"secondary",onClick:()=>{setOpen(false);setShF({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:"",entryScore:""});}},shAddingTrade?"":"Cancel")
       )
     ),
     open&&tab==="fd"&&React.createElement(Modal,{title:"Add Fixed Deposit",onClose:()=>setOpen(false),w:480},

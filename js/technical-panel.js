@@ -305,16 +305,15 @@ window.TechnicalIndicatorsPanel = (function () {
   }
 
   /* ── Exit Score Card ────────────────────────────────────────────────── */
-  function ExitScoreCard(candles, ind, buyPrice, buyDate, currentPrice) {
-    var es = TI.computeExitScore(candles, ind);
+  function ExitScoreCard(candles, ind, buyPrice, buyDate, currentPrice, entryScore) {
+    var es = TI.computeExitScore(candles, ind, {entryPrice: buyPrice, buyDate: buyDate, currentPrice: currentPrice, entryScore: entryScore});
     if (!es) return null;
 
     var factors = [
-      { label: "Trend", val: es.trend, max: es.trendMax, color: "#3b82f6" },
-      { label: "Momentum", val: es.momentum, max: es.momentumMax, color: "#a855f7" },
-      { label: "Volume", val: es.volume, max: es.volumeMax, color: "#f59e0b" },
-      { label: "Volatility", val: es.volatility, max: es.volatilityMax, color: "#06b6d4" },
-      { label: "Structure", val: es.structure, max: es.structureMax, color: "#ec4899" },
+      { label: "Trend Breakdown", val: es.trend, max: es.trendMax, color: "#3b82f6" },
+      { label: "Momentum Exhaustion", val: es.momentum, max: es.momentumMax, color: "#a855f7" },
+      { label: "Volume Distribution", val: es.volume, max: es.volumeMax, color: "#f59e0b" },
+      { label: "Structure Breakdown", val: es.structure, max: es.structureMax, color: "#ec4899" },
     ];
 
     /* ── Exit Recommendations ── */
@@ -375,7 +374,7 @@ window.TechnicalIndicatorsPanel = (function () {
         React.createElement("div", null,
           React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: "var(--text)", fontFamily: "'Sora',sans-serif" } }, "Exit Score"),
           React.createElement("div", { style: { fontSize: 10, color: "var(--text6)", marginTop: 2 } },
-            "Momentum Trading Exit Engine \u00b7 0\u2013100"
+            "Momentum Exit Engine \u00b7 0\u2013100 \u00b7 4 Components"
           )
         ),
         React.createElement("div", {
@@ -421,6 +420,27 @@ window.TechnicalIndicatorsPanel = (function () {
             )
           );
         })
+      ),
+
+      /* Modifier summary (penalties/bonuses) */
+      es.modifiers && (es.modifiers.penalties !== 0 || es.modifiers.bonuses !== 0) && React.createElement("div", {
+        style: {
+          marginTop: 6, padding: "8px 10px", borderRadius: 6,
+          background: "var(--bg4)", border: "1px solid var(--border)",
+        }
+      },
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: (es.modifiers.hardFilters && es.modifiers.hardFilters.length > 0) ? 4 : 0, fontSize: 10, color: "var(--text5)" } },
+          React.createElement("span", { style: { fontWeight: 600 } }, "Base: " + es.modifiers.raw),
+          es.modifiers.penalties !== 0 && React.createElement("span", { style: { color: "#16a34a", fontWeight: 700 } }, "Penalties: " + es.modifiers.penalties),
+          es.modifiers.bonuses !== 0 && React.createElement("span", { style: { color: "#ef4444", fontWeight: 700 } }, "Bonuses: +" + es.modifiers.bonuses),
+          React.createElement("span", { style: { fontWeight: 700, color: "var(--text3)", marginLeft: "auto" } }, "\u2192 " + es.total)
+        ),
+        es.modifiers.hardFilters && es.modifiers.hardFilters.length > 0 && React.createElement("div", { style: { marginTop: 2 } },
+          es.modifiers.hardFilters.map(function (f, i) {
+            var isBonus = f.indexOf("(+") >= 0;
+            return React.createElement("div", { key: i, style: { fontSize: 10, color: isBonus ? "#16a34a" : "#ef4444", lineHeight: 1.6 } }, isBonus ? "\u2713 " + f : "\u26a0 " + f);
+          })
+        )
       ),
 
       /* Overrides */
@@ -761,6 +781,7 @@ window.TechnicalIndicatorsPanel = (function () {
     var buyPrice = props.buyPrice || null;
     var buyDate = props.buyDate || null;
     var currentPrice = props.currentPrice || null;
+    var entryScore = props.entryScore != null ? props.entryScore : null;
 
     var _a = useState("daily"), timeframe = _a[0], setTimeframe = _a[1];
     var _b = useState(null), indicators = _b[0], setIndicators = _b[1];
@@ -942,7 +963,7 @@ window.TechnicalIndicatorsPanel = (function () {
       })(),
 
       /* Exit Score */
-      indicators && candles && ExitScoreCard(candles, indicators, buyPrice, buyDate, currentPrice),
+      indicators && candles && ExitScoreCard(candles, indicators, buyPrice, buyDate, currentPrice, entryScore),
 
       /* Category filter pills */
       React.createElement("div", {
