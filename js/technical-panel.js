@@ -305,7 +305,7 @@ window.TechnicalIndicatorsPanel = (function () {
   }
 
   /* ── Exit Score Card ────────────────────────────────────────────────── */
-  function ExitScoreCard(candles, ind) {
+  function ExitScoreCard(candles, ind, buyPrice, buyDate, currentPrice) {
     var es = TI.computeExitScore(candles, ind);
     if (!es) return null;
 
@@ -316,6 +316,51 @@ window.TechnicalIndicatorsPanel = (function () {
       { label: "Volatility", val: es.volatility, max: es.volatilityMax, color: "#06b6d4" },
       { label: "Structure", val: es.structure, max: es.structureMax, color: "#ec4899" },
     ];
+
+    /* ── Exit Recommendations ── */
+    var exitRecs = null;
+    var ep = buyPrice && buyPrice > 0 ? buyPrice : null;
+    var cp = currentPrice && currentPrice > 0 ? currentPrice : (ind && ind.lastClose ? ind.lastClose : null);
+    var atr = ind && ind.atr_14 ? ind.atr_14 : null;
+    if (ep && cp && atr) {
+      var holdingDays = 0;
+      if (buyDate) {
+        var bd = new Date(buyDate + "T12:00:00");
+        var now = new Date();
+        holdingDays = Math.floor((now - bd) / 864e5);
+      }
+      var target = ep * 1.04;
+      var stopLoss = ep - (atr * 1.5);
+      var highWatermark = cp;
+      if (candles && candles.length > 0) {
+        for (var ci = 0; ci < candles.length; ci++) {
+          if (candles[ci].h > highWatermark) highWatermark = candles[ci].h;
+        }
+      }
+      var trailingStop = highWatermark - (atr * 2);
+      var pnlPct = ep > 0 ? ((cp - ep) / ep * 100) : 0;
+      var aboveEntry2Pct = cp >= ep * 1.02;
+
+      var rules = [];
+      rules.push({ label: "Take Profit (+4%)", price: target, trigger: cp >= target, active: cp >= target, type: "exit", color: "#16a34a" });
+      rules.push({ label: "Stop Loss (1.5\u00d7ATR)", price: stopLoss, trigger: cp <= stopLoss, active: cp <= stopLoss, type: "exit", color: "#ef4444" });
+      if (aboveEntry2Pct) {
+        rules.push({ label: "Trailing Stop (2\u00d7ATR from high)", price: trailingStop, trigger: cp <= trailingStop, active: cp <= trailingStop, type: "exit", color: "#ef4444" });
+      }
+      var timeStopActive = holdingDays >= 20 && cp < ep * 1.02;
+      rules.push({ label: "Time Stop (20d, <2% gain)", price: null, trigger: timeStopActive, active: timeStopActive, type: "exit", color: "#f97316" });
+      var partialActive = aboveEntry2Pct && holdingDays >= 3 && !cp >= target;
+      rules.push({ label: "Partial Exit 50% (+2%, 3d+)", price: ep * 1.02, trigger: partialActive, active: partialActive && !timeStopActive, type: "partial", color: "#eab308" });
+
+      var activeRule = null;
+      if (cp >= target) activeRule = rules[0];
+      else if (cp <= stopLoss) activeRule = rules[1];
+      else if (aboveEntry2Pct && cp <= trailingStop) activeRule = rules[2];
+      else if (timeStopActive) activeRule = rules[3];
+      else if (partialActive && !timeStopActive) activeRule = rules[4];
+
+      exitRecs = { rules: rules, activeRule: activeRule, pnlPct: pnlPct, holdingDays: holdingDays, target: target, stopLoss: stopLoss, trailingStop: trailingStop };
+    }
 
     return React.createElement("div", {
       style: {
@@ -330,7 +375,7 @@ window.TechnicalIndicatorsPanel = (function () {
         React.createElement("div", null,
           React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: "var(--text)", fontFamily: "'Sora',sans-serif" } }, "Exit Score"),
           React.createElement("div", { style: { fontSize: 10, color: "var(--text6)", marginTop: 2 } },
-            "Momentum Trading Exit Engine · 0–100"
+            "Momentum Trading Exit Engine \u00b7 0\u2013100"
           )
         ),
         React.createElement("div", {
@@ -385,10 +430,63 @@ window.TechnicalIndicatorsPanel = (function () {
           background: "rgba(239,68,68,.06)", border: "1px solid rgba(239,68,68,.2)",
         }
       },
-        React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color: "#ef4444", marginBottom: 4 } }, "⚠ Critical Overrides"),
+        React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color: "#ef4444", marginBottom: 4 } }, "\u26a0 Critical Overrides"),
         es.overrides.map(function (o, i) {
-          return React.createElement("div", { key: i, style: { fontSize: 10, color: "#ef4444", lineHeight: 1.5 } }, "• " + o);
+          return React.createElement("div", { key: i, style: { fontSize: 10, color: "#ef4444", lineHeight: 1.5 } }, "\u2022 " + o);
         })
+      ),
+
+      /* ── Exit Price Recommendations ── */
+      exitRecs && React.createElement("div", {
+        style: {
+          marginTop: 12, padding: "12px 14px", borderRadius: 10,
+          background: "var(--bg4)", border: "1px solid var(--border)",
+        }
+      },
+        React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 } },
+          React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: "var(--text)", fontFamily: "'Sora',sans-serif" } }, "Exit Price Recommendations"),
+          React.createElement("div", { style: { display: "flex", gap: 12, fontSize: 10 } },
+            React.createElement("span", { style: { color: "var(--text5)" } }, "Entry: \u20b9" + INR(ep)),
+            React.createElement("span", { style: { color: "var(--text5)" } }, "Current: \u20b9" + INR(cp)),
+            React.createElement("span", { style: { color: exitRecs.pnlPct >= 0 ? "#16a34a" : "#ef4444", fontWeight: 700 } }, (exitRecs.pnlPct >= 0 ? "+" : "") + exitRecs.pnlPct.toFixed(1) + "%"),
+            React.createElement("span", { style: { color: "var(--text5)" } }, exitRecs.holdingDays + "d held")
+          )
+        ),
+        exitRecs.activeRule && React.createElement("div", {
+          style: {
+            padding: "8px 12px", borderRadius: 8, marginBottom: 10,
+            background: (exitRecs.activeRule.type === "exit" ? "rgba(239,68,68,.08)" : "rgba(234,179,8,.08)"),
+            border: "1px solid " + (exitRecs.activeRule.type === "exit" ? "rgba(239,68,68,.25)" : "rgba(234,179,8,.3)"),
+          }
+        },
+          React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color: exitRecs.activeRule.color, marginBottom: 2 } },
+            "\u26a0 " + exitRecs.activeRule.type.toUpperCase() + " SIGNAL"
+          ),
+          React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: "var(--text)" } }, exitRecs.activeRule.label),
+          exitRecs.activeRule.price !== null && React.createElement("div", { style: { fontSize: 10, color: "var(--text5)", marginTop: 2 } },
+            "At \u20b9" + INR(exitRecs.activeRule.price)
+          )
+        ),
+        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 6 } },
+          exitRecs.rules.map(function (r, i) {
+            return React.createElement("div", {
+              key: i,
+              style: {
+                padding: "8px 10px", borderRadius: 8,
+                background: r.active ? (r.type === "exit" ? "rgba(239,68,68,.08)" : "rgba(234,179,8,.08)") : "var(--bg3)",
+                border: "1px solid " + (r.active ? (r.type === "exit" ? "rgba(239,68,68,.25)" : "rgba(234,179,8,.3)") : "var(--border)"),
+              }
+            },
+              React.createElement("div", { style: { fontSize: 9, fontWeight: 600, color: r.active ? r.color : "var(--text5)", marginBottom: 3 } }, r.label),
+              React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: r.active ? "var(--text)" : "var(--text5)", fontFamily: "'Sora',sans-serif" } },
+                r.price !== null ? "\u20b9" + INR(r.price) : "\u2014"
+              ),
+              React.createElement("div", { style: { fontSize: 9, color: r.active ? r.color : "var(--text6)", marginTop: 2 } },
+                r.active ? "\u25cf ACTIVE" : "Pending"
+              )
+            );
+          })
+        )
       )
     );
   }
@@ -660,6 +758,9 @@ window.TechnicalIndicatorsPanel = (function () {
   function TechnicalIndicatorsInline(props) {
     var ticker = (props.ticker || "").toUpperCase();
     var company = props.company || ticker;
+    var buyPrice = props.buyPrice || null;
+    var buyDate = props.buyDate || null;
+    var currentPrice = props.currentPrice || null;
 
     var _a = useState("daily"), timeframe = _a[0], setTimeframe = _a[1];
     var _b = useState(null), indicators = _b[0], setIndicators = _b[1];
@@ -841,7 +942,7 @@ window.TechnicalIndicatorsPanel = (function () {
       })(),
 
       /* Exit Score */
-      indicators && candles && ExitScoreCard(candles, indicators),
+      indicators && candles && ExitScoreCard(candles, indicators, buyPrice, buyDate, currentPrice),
 
       /* Category filter pills */
       React.createElement("div", {

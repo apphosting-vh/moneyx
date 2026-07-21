@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.10.0";
+const APP_VERSION="7.11.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -25933,7 +25933,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
           ),
           /* ── Expanded Technical Indicators panel ── */
           expandedTech[sh.id]&&window.TechnicalIndicatorsInline&&React.createElement("div",{style:{marginTop:-4,marginBottom:12,padding:"16px",borderRadius:"0 0 14px 14px",background:"var(--bg3)",border:"1px solid var(--border)",borderTop:"none"}},
-            React.createElement(window.TechnicalIndicatorsInline,{ticker:sh.ticker,company:sh.company})
+            React.createElement(window.TechnicalIndicatorsInline,{ticker:sh.ticker,company:sh.company,buyPrice:sh.buyPrice,buyDate:sh.buyDate,currentPrice:sh.currentPrice})
           )
           );
         })
