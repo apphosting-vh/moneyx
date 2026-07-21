@@ -829,7 +829,7 @@ const THEMES=[
   {id:"orange-dark", name:"Orange Dark",   desc:"Ember orange night",   dark:true,  preview:["#120a04","#fb923c","#523e24","#f97316"]},
   {id:"red-dark",    name:"Red Dark",      desc:"Dark blood red",       dark:true,  preview:["#140606","#f87171","#582828","#ef4444"]},
 ];
-const loadTheme=()=>{try{const t=localStorage.getItem(LS_THEME);if(t&&THEMES.find(th=>th.id===t))return t;}catch{}const mq=window.matchMedia("(prefers-color-scheme: dark)");return mq&&mq.matches?"blue-dark":"blue";};
+const loadTheme=()=>{try{const t=localStorage.getItem(LS_THEME);if(t&&THEMES.find(th=>th.id===t))return t;}catch{}return "blue";};
 const saveTheme=id=>{try{localStorage.setItem(LS_THEME,id);}catch{}};
 const applyTheme=id=>{document.documentElement.setAttribute("data-theme",id);if(id.endsWith("-dark")){document.documentElement.style.setProperty("color-scheme","dark");}else{document.documentElement.style.removeProperty("color-scheme");}setTimeout(syncPAL,0);};
 
@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.4.0";
+const APP_VERSION="7.7.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -16429,7 +16429,7 @@ const SplitTxModal=({tx,categories,onSave,onClose})=>{
    Fuzzy-searches all transactions, accounts, notes and payees. Click any
    result to jump directly to it.
    ══════════════════════════════════════════════════════════════════════════ */
-const GlobalSearchModal=({state,onClose,onJumpToTx,setTab,setTheme,setQuickAddOpen,onWhatsNew})=>{
+const GlobalSearchModal=({state,onClose,onJumpToTx,setTab,setTheme,setQuickAddOpen})=>{
   const[q,setQ]=useState("");
   const[debouncedQ,setDebouncedQ]=useState("");
   const inputRef=React.useRef(null);
@@ -16496,11 +16496,10 @@ const GlobalSearchModal=({state,onClose,onJumpToTx,setTab,setTheme,setQuickAddOp
     const nav=(window.__mm_visibleNAV||[]).map(n=>({kind:"cmd",icon:n.id,label:"Go to "+n.label,action:()=>setTab(n.id)}));
     const acts=[
       {kind:"cmd",icon:"plus",label:"Quick Add Transaction",action:()=>{setQuickAddOpen&&setQuickAddOpen(true);}},
-      {kind:"cmd",icon:"sparkles",label:"What's new in this version",action:()=>{onWhatsNew&&onWhatsNew();}},
     ];
     const themes=(window.THEMES||[]).map(t=>({kind:"cmd",icon:"palette",label:"Theme: "+t.name,action:()=>{setTheme&&setTheme(t.id);}}));
     return[...nav,...acts,...themes];
-  },[setTab,setQuickAddOpen,setTheme,onWhatsNew]);
+  },[setTab,setQuickAddOpen,setTheme]);
 
   /* Flat list for keyboard nav (commands first, then results) */
   const items=React.useMemo(()=>{
@@ -24628,14 +24627,18 @@ const EntryScorePanel=({shares})=>{
     return React.createElement("div",{style:{marginBottom:8}},
       React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}},
         React.createElement("span",{style:{fontSize:10,fontWeight:700,color:"var(--text3)"}},label),
-        React.createElement("span",{style:{fontSize:11,fontWeight:800,color:score.decision.color,fontFamily:"'Sora',sans-serif"}},score.total+" · "+score.decision.label)
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+          !score.eligible&&React.createElement("span",{style:{fontSize:8,fontWeight:700,padding:"1px 5px",borderRadius:3,background:"rgba(239,68,68,.1)",color:"#ef4444"}}, "Not Eligible"),
+          React.createElement("span",{style:{fontSize:11,fontWeight:800,color:score.decision.color,fontFamily:"'Sora',sans-serif"}},score.total+" · "+score.decision.label)
+        )
       ),
       React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:3}},
-        factorBar("Trend",score.trend,score.trendMax,"#3b82f6"),
-        factorBar("Momentum",score.momentum,score.momentumMax,"#a855f7"),
-        factorBar("Volume",score.volume,score.volumeMax,"#f59e0b"),
-        factorBar("Breakout",score.breakout,score.breakoutMax,"#06b6d4"),
-        factorBar("Structure",score.structure,score.structureMax,"#ec4899"),
+        factorBar("Momentum Confirmation",score.momentum,score.momentumMax,"#a855f7"),
+        factorBar("Volume Accumulation",score.volume,score.volumeMax,"#f59e0b"),
+        factorBar("Trend Strength",score.trend,score.trendMax,"#3b82f6"),
+        factorBar("Breakout & Volatility",score.breakout,score.breakoutMax,"#06b6d4"),
+        factorBar("Market Structure",score.structure,score.structureMax,"#ec4899"),
+        score.freshBonus>0&&factorBar("Fresh Signal Bonus",score.freshBonus,score.freshBonusMax,"#22d3ee"),
       )
     );
   };
@@ -24786,13 +24789,14 @@ const EntryScorePanel=({shares})=>{
           ),
           React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:8,background:r.decision.color+"12"}},
             React.createElement("span",{style:{fontSize:12,fontWeight:800,color:r.decision.color,fontFamily:"'Sora',sans-serif"}},r.decision.label),
-            !r.phase1Pass&&React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"#ef4444",padding:"2px 6px",borderRadius:4,background:"rgba(239,68,68,.1)"}},r.filterFails+"/3 filters failed"),
-            r.phase3Pass&&React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"#16a34a",padding:"2px 6px",borderRadius:4,background:"rgba(22,163,74,.1)"}}, "Phase 3 Pass")
+            r.eligible&&React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"#16a34a",padding:"2px 6px",borderRadius:4,background:"rgba(22,163,74,.1)"}}, "Eligible"),
+            !r.eligible&&React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"#ef4444",padding:"2px 6px",borderRadius:4,background:"rgba(239,68,68,.1)"}}, "Not Eligible"),
+            r.execution&&React.createElement("span",{style:{fontSize:9,fontWeight:700,color:r.execution.score>=66?"#16a34a":"#eab308",padding:"2px 6px",borderRadius:4,background:(r.execution.score>=66?"rgba(22,163,74,.1)":"rgba(234,179,8,.1)")}}, "Execution: "+r.execution.passed+"/"+r.execution.total)
           ),
           React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:8}},
             ["weekly","daily","hourly"].map(tf=>{
               const s=r[tf];
-              const label=tf==="weekly"?"Weekly (20%)":tf==="daily"?"Daily (65%)":"Hourly (15%)";
+              const label=tf==="weekly"?"Weekly (10%)":tf==="daily"?"Daily (55%)":"Hourly (35%)";
               return React.createElement("div",{key:tf,style:{padding:"6px 8px",borderRadius:8,background:"var(--bg4)",textAlign:"center"}},
                 React.createElement("div",{style:{fontSize:9,fontWeight:600,color:"var(--text5)",marginBottom:2}},label),
                 React.createElement("div",{style:{fontSize:14,fontWeight:800,color:s?s.decision.color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},s?s.total:"N/A"),
@@ -24800,16 +24804,32 @@ const EntryScorePanel=({shares})=>{
               );
             })
           ),
+          !r.eligible&&r.eligibilityDetails&&r.eligibilityDetails.length>0&&React.createElement("div",{style:{padding:"6px 10px",borderRadius:8,background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.15)",marginBottom:8}},
+            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"#ef4444",marginBottom:3}},"Eligibility Failures:"),
+            r.eligibilityDetails.map((d,i)=>React.createElement("div",{key:i,style:{fontSize:9,color:"#ef4444",lineHeight:1.5}},"\u2717 "+d))
+          ),
           React.createElement("div",{onClick:()=>setExpandedId(isExpanded?null:entry.id),style:{fontSize:10,color:"var(--accent)",cursor:"pointer",fontWeight:600,marginBottom:6,textAlign:"center"}},
             isExpanded?"\u25b2 Hide Details":"\u25bc Show Details"
           ),
           isExpanded&&React.createElement("div",{style:{marginTop:8}},
+            r.execution&&React.createElement("div",{style:{marginBottom:8,padding:"8px 10px",borderRadius:8,background:"var(--bg4)",border:"1px solid var(--border)"}},
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}},
+                React.createElement("span",{style:{fontSize:10,fontWeight:700,color:"var(--text3)"}}, "Stage 3: Execution Score (Hourly)"),
+                React.createElement("span",{style:{fontSize:11,fontWeight:800,color:r.execution.score>=66?"#16a34a":"#eab308",fontFamily:"'Sora',sans-serif"}},r.execution.score+" / 100")
+              ),
+              React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:3}},
+                r.execution.checks.map((c,i)=>React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",gap:4,fontSize:9,padding:"2px 0"}},
+                  React.createElement("span",{style:{color:c.ok?"#16a34a":"#ef4444",fontWeight:700}},c.ok?"\u2713":"\u2717"),
+                  React.createElement("span",{style:{color:c.ok?"var(--text3)":"var(--text5)"}},c.label)
+                ))
+              )
+            ),
             r.daily&&tfSection("Daily Breakdown",r.daily),
             r.weekly&&tfSection("Weekly Breakdown",r.weekly),
             r.hourly&&tfSection("Hourly Breakdown",r.hourly),
-            r.overrides.length>0&&React.createElement("div",{style:{marginTop:8,padding:"8px 10px",borderRadius:8,background:"rgba(22,163,74,.06)",border:"1px solid rgba(22,163,74,.2)"}},
-              React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#16a34a",marginBottom:4}},"High-Confidence Signals"),
-              r.overrides.map((o,i)=>React.createElement("div",{key:i,style:{fontSize:10,color:"#16a34a",lineHeight:1.5}},"\u2022 "+o))
+            r.overrides.length>0&&React.createElement("div",{style:{marginTop:8,padding:"8px 10px",borderRadius:8,background:"rgba(34,211,238,.06)",border:"1px solid rgba(34,211,238,.2)"}},
+              React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#22d3ee",marginBottom:4}},"Fresh Momentum Signals"),
+              r.overrides.map((o,i)=>React.createElement("div",{key:i,style:{fontSize:10,color:"#22d3ee",lineHeight:1.5}},"\u2022 "+o))
             )
           )
         );
@@ -42135,13 +42155,6 @@ function App(){
   const dismissToast=React.useCallback(id=>setToasts(ts=>ts.filter(x=>x.id!==id)),[]);
   /* pushUndo already surfaces via the undo toast block below (ToastHost) */
   /* ── "What's New" — show once per version ── */
-  const[whatsNew,setWhatsNew]=useState(false);
-  React.useEffect(()=>{
-    try{
-      const seen=localStorage.getItem("mm_seen_version");
-      if(seen!==APP_VERSION){setWhatsNew(true);localStorage.setItem("mm_seen_version",APP_VERSION);}
-    }catch{}
-  },[]);
   /* ── Global search ── */
   const[searchOpen,setSearchOpen]=useState(false);
   /* ── Quick-add FAB ── */
@@ -43247,14 +43260,14 @@ function App(){
       onClose:id=>{ if(id==="_undo"){setUndoSnap(null);} else {dismissToast(id);} }
     }),
     /* ── "What's New" modal (once per version) ── */
-    whatsNew&&React.createElement(WhatsNewModal,{onClose:()=>setWhatsNew(false)}),
+    
     /* ── Global Search Modal (⌘K command palette) ── */
     searchOpen&&React.createElement(GlobalSearchModal,{
       state,
       onClose:()=>setSearchOpen(false),
       onJumpToTx:(accType,accId,txId)=>{onJumpToTx(accType,accId,txId);},
       setTab,setTheme,setQuickAddOpen,
-      onWhatsNew:()=>{setWhatsNew(true);}
+
     }),
     /* ── Quick-Add FAB ── */
     !["settings","info"].includes(tab)&&React.createElement(React.Fragment,null,
