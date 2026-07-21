@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="6.13.0";
+const APP_VERSION="7.0.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -5890,6 +5890,7 @@ var gdriveUpsertSyncFile = async (state, manual) => {
         reminders:    state.reminders    || [],
         insightPrefs: { ...EMPTY_STATE().insightPrefs, ...(state.insightPrefs || {}) },
         chatbotTraining: {customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},
+        avApiKey: localStorage.getItem("mm_av_api_key")||"",
       },
     };
     const content = JSON.stringify(payload, null, 2);
@@ -6156,6 +6157,7 @@ var gdriveAutoBackup = async (state) => {
         reminders:            state.reminders            || [],
         insightPrefs:         { ...EMPTY_STATE().insightPrefs, ...(state.insightPrefs || {}) },
         chatbotTraining:      { customCatRules: _cbTr.customCatRules||[], accountAliases: _cbTr.accountAliases||[] },
+        avApiKey:             localStorage.getItem("mm_av_api_key")||"",
       },
     };
 
@@ -6450,6 +6452,8 @@ var CloudBackupPanel = ({ state, dispatch }) => {
         localStorage.setItem(LS_EOD_NAVS,   JSON.stringify(_restoreData.eodNavs   || {}));
         if(remote.state.chatbotTraining)
           localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(remote.state.chatbotTraining));
+        if(remote.state.avApiKey)
+          localStorage.setItem("mm_av_api_key",remote.state.avApiKey);
       } catch {}
       try { await clearTxIDB(); }          catch {}
       try { await saveTxToIDB(_restoreData); } catch {}
@@ -7313,6 +7317,59 @@ var ChatbotTrainingPanel=({state})=>{
 };
 /* ══ END CHATBOT TRAINING PANEL ══ */
 
+/* ── API KEYS PANEL (Settings → API Keys) ─────────────────────────────────── */
+var ApiKeysPanel=React.memo(function(){
+  var useState=React.useState;
+  var _a=useState(function(){try{return localStorage.getItem("mm_av_api_key")||"";}catch(e){return "";}});
+  var avKeyInput=_a[0],setAvKeyInput=_a[1];
+  var _b=useState(false);
+  var avSaved=_b[0],setAvSaved=_b[1];
+  return React.createElement("div",{className:"fu"},
+    React.createElement("div",{style:{marginBottom:24}},
+      React.createElement("h3",{style:{fontFamily:"'Sora',sans-serif",fontSize:18,fontWeight:700,color:"var(--text)"}},"API Keys"),
+      React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4}},"Manage API keys for data services. Keys are stored locally in your browser and never sent to any server except the respective API provider.")
+    ),
+    React.createElement(Card,{sx:{marginBottom:16}},
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:18}},
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:12,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:600,marginBottom:2}},"Data Providers")
+        )
+      ),
+      React.createElement("div",{style:{padding:"14px 18px",borderRadius:10,border:"1px solid var(--border)",background:"var(--bg4)",marginBottom:12}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:12}},
+          React.createElement("div",{style:{width:36,height:36,borderRadius:8,background:"rgba(34,197,94,.12)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},React.createElement(Icon,{n:"trendingdown",size:18})),
+          React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)"}},"Alpha Vantage"),
+            React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:1}},"Daily OHLCV data for Shares Technical Indicators (25 free requests/day)")
+          )
+        ),
+        React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginBottom:10,lineHeight:1.6}},
+          "Provides daily OHLCV candles for the Shares Technical Indicators panel. Without a key, daily data falls back to Yahoo Finance. Get a free key at ",
+          React.createElement("a",{href:"https://www.alphavantage.co/support/#api-key",target:"_blank",rel:"noopener",style:{color:"var(--accent)",textDecoration:"underline"}},"alphavantage.co"),
+          "."
+        ),
+        React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center"}},
+          React.createElement("input",{type:"text",placeholder:"Enter Alpha Vantage API Key",value:avKeyInput,onChange:function(e){setAvKeyInput(e.target.value);setAvSaved(false);},style:{flex:1,padding:"9px 14px",borderRadius:8,fontSize:13,background:"var(--bg3)",border:"1px solid var(--border)",color:"var(--text2)",fontFamily:"monospace",outline:"none"}}),
+          React.createElement("button",{onClick:function(){try{localStorage.setItem("mm_av_api_key",avKeyInput||"");}catch(e){}setAvSaved(true);setTimeout(function(){setAvSaved(false);},2000);},style:{padding:"9px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:avSaved?"#16a34a":"var(--accent)",color:"#fff",border:"none",cursor:"pointer",transition:"background .2s",whiteSpace:"nowrap"}},avSaved?"\u2713 Saved":"Save")
+        ),
+        avKeyInput&&!avSaved&&React.createElement("div",{style:{marginTop:8,fontSize:11,color:"#16a34a",display:"flex",alignItems:"center",gap:4}},"Key will be saved locally in your browser.")
+      ),
+      React.createElement("div",{style:{padding:"14px 18px",borderRadius:10,border:"1px solid var(--border)",background:"var(--bg4)"}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:8}},
+          React.createElement("div",{style:{width:36,height:36,borderRadius:8,background:"rgba(99,102,241,.12)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},React.createElement(Icon,{n:"cloud",size:18})),
+          React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)"}},"Yahoo Finance"),
+            React.createElement("div",{style:{fontSize:11,color:"#16a34a",marginTop:1,fontWeight:600}},"Active (No key required)")
+          )
+        ),
+        React.createElement("div",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.6}},
+          "Used for intraday data and as a fallback when Alpha Vantage is unavailable. Always available — no API key needed."
+        )
+      )
+    )
+  );
+});
+
 var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,onResetAll,isMobile})=>{
   const[stab,setStab]=useState("appearance");
   const[confirm,setConfirm]=useState(null);
@@ -7454,6 +7511,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
     {id:"emailconfig",label:"Email Config",icon:React.createElement(Icon,{n:"mail",size:16})},
     {id:"tabmgmt",     label:"Tab Management",icon:React.createElement(Icon,{n:"tabs",size:16})},
     {id:"backup",label:"Data & Backup",icon:React.createElement(Icon,{n:"save",size:16})},
+    {id:"apikeys",    label:"API Keys",     icon:React.createElement(Icon,{n:"key",size:16})},
     {id:"chatbotTraining",label:"Chatbot Training",icon:React.createElement(Icon,{n:"robot",size:16})},
   ];
 
@@ -8044,6 +8102,9 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
         );
       })(),
 
+      /* ══ API KEYS ══ */
+      stab==="apikeys"&&React.createElement(ApiKeysPanel,null),
+
       stab==="chatbotTraining"&&React.createElement(ChatbotTrainingPanel,{state}),
       stab==="backup"&&React.createElement("div",{className:"fu"},
         React.createElement("div",{style:{marginBottom:24}},
@@ -8189,7 +8250,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                   const _cbTr=(()=>{try{return JSON.parse(localStorage.getItem("mm_v7_chatbot_training")||"{}");} catch{return{};}})();
                   const payload={version:8,exportedAt:new Date().toISOString(),
                     summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,reminders:(state.reminders||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,shareSnapshots:Object.values(state.soldShareSnapshots||{}).reduce((s,a)=>s+a.length,0),eodDays:Object.keys(state.eodPrices||{}).length,eodNavDays:Object.keys(state.eodNavs||{}).length,hasTaxData:!!(state.taxData),hasTaxData2627:!!(state.taxData2627),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),brokerCashBalance:state.brokerCashBalance||0,chatbotCatRules:(_cbTr.customCatRules||[]).length,chatbotAliases:(_cbTr.accountAliases||[]).length},
-                    data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},soldShareSnapshots:state.soldShareSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,taxData2627:state.taxData2627||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],reminders:state.reminders||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})},chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]}}
+                    data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},soldShareSnapshots:state.soldShareSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,taxData2627:state.taxData2627||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],reminders:state.reminders||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})},chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},avApiKey:localStorage.getItem("mm_av_api_key")||""}
                   };
                   const enc=await encryptBackup(payload,pw);
                   const blob=new Blob([JSON.stringify(enc)],{type:"application/json"});
@@ -8254,6 +8315,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                     reminders:state.reminders||[],
                     insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})},
                     chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},
+                    avApiKey:localStorage.getItem("mm_av_api_key")||"",
                   }
                 };
                 const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
@@ -8338,6 +8400,8 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                           localStorage.setItem(LS_EOD_NAVS,JSON.stringify(_restoreData.eodNavs));
                         if(d.chatbotTraining)
                           localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(d.chatbotTraining));
+                        if(d.avApiKey)
+                          localStorage.setItem("mm_av_api_key",d.avApiKey);
                       }catch{}
                       /* ── Overwrite IDB transactions so next-boot hydration loads
                          the restored data instead of the pre-restore snapshot.
@@ -9943,6 +10007,7 @@ var buildBackupPayload=async(st)=>{
       reminders:st.reminders||[],
       insightPrefs:{...EMPTY_STATE().insightPrefs,...(st.insightPrefs||{})},
       chatbotTraining:{customCatRules:_cbTraining.customCatRules||[],accountAliases:_cbTraining.accountAliases||[]},
+      avApiKey:localStorage.getItem("mm_av_api_key")||"",
     }
   };
 };
@@ -10038,6 +10103,7 @@ var MM_LS_KEYS=[
   {key:"mm_fsa_no_warn",       label:"FSA warning preference"},
   {key:"itr3_ay2627_v1",       label:"Tax Estimator (legacy key)"},
   {key:CALC_LS_KEY,            label:"Financial Calculator inputs & results"},
+  {key:"mm_av_api_key",        label:"Alpha Vantage API Key"},
 ];
 
 /* The true localStorage limit — 5 MB, enforced per-origin by all major browsers
@@ -10971,6 +11037,7 @@ var fsaWriteFile=async(handle,data)=>{
         reminders:data.reminders||[],
         insightPrefs:{...EMPTY_STATE().insightPrefs,...(data.insightPrefs||{})},
         chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},
+        avApiKey:localStorage.getItem("mm_av_api_key")||"",
       }
     };
     const writable=await handle.createWritable();
@@ -10994,6 +11061,7 @@ var fsaReadFile=async(handle)=>{
     if(!d)return null;
     /* Restore chatbot training data to its own localStorage key */
     if(d.chatbotTraining){try{localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(d.chatbotTraining));}catch{}}
+    if(d.avApiKey){try{localStorage.setItem("mm_av_api_key",d.avApiKey);}catch{}}
     return _safe(d);
   }catch(e){console.warn("[FSA] Read failed:",e);return null;}
 };
@@ -24394,6 +24462,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
   const[priceStatus,setPriceStatus]=useState(null); /* {ok:bool, msg:string, ts:Date} */
   const[brokerCashEdit,setBrokerCashEdit]=useState(false);
   const[brokerCashInput,setBrokerCashInput]=useState("");
+  const[expandedTech,setExpandedTech]=useState({}); /* {shareId: true} for expanded technicals */
 
   const fetchNAV=async()=>{
     setNavLoad(true);
@@ -25175,7 +25244,8 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
           const prevClose=prevEODDate?(eodPrices[prevEODDate][(sh.ticker||"").trim().toUpperCase()]||null):null;
           const dayChgPct=prevClose&&sh.currentPrice>0?((sh.currentPrice-prevClose)/prevClose*100):null;
           const dayChgAbs=prevClose?sh.currentPrice-prevClose:null;
-          return React.createElement(Card,{key:sh.id},
+          return React.createElement(React.Fragment,{key:sh.id},
+            React.createElement(Card,null,
             /* ── Header: company + ticker + market value */
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}},
               React.createElement("div",null,
@@ -25352,6 +25422,24 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                 React.createElement(Icon,{n:"image",size:13,color:"var(--text5)"}),
                 "Save Snapshot"
               ),
+              React.createElement("button",{
+                onClick:()=>setExpandedTech(p=>({...p,[sh.id]:!p[sh.id]})),
+                style:{
+                  display:"inline-flex",alignItems:"center",gap:5,
+                  padding:"5px 13px",borderRadius:7,cursor:"pointer",fontSize:11,fontWeight:600,
+                  fontFamily:"'DM Sans',sans-serif",
+                  border:"1px solid "+(expandedTech[sh.id]?"rgba(234,88,12,.5)":"rgba(234,88,12,.35)"),
+                  background:expandedTech[sh.id]?"rgba(234,88,12,.16)":"rgba(234,88,12,.08)",
+                  color:"#ea580c",
+                  transition:"all .15s",
+                },
+                onMouseEnter:e=>{e.currentTarget.style.background="rgba(234,88,12,.16)";e.currentTarget.style.borderColor="rgba(234,88,12,.6)";},
+                onMouseLeave:e=>{e.currentTarget.style.background=expandedTech[sh.id]?"rgba(234,88,12,.16)":"rgba(234,88,12,.08)";e.currentTarget.style.borderColor=expandedTech[sh.id]?"rgba(234,88,12,.5)":"rgba(234,88,12,.35)";},
+                title:"Show technical indicators for "+sh.ticker
+              },
+                React.createElement(Icon,{n:"bolt",size:13,color:"var(--text5)"}),
+                expandedTech[sh.id]?"Hide Technicals":"Technicals"
+              ),
               React.createElement("span",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic"}},"Saves current values to Previous Trades before selling")
             ),
             /* Note anchor */
@@ -25377,6 +25465,11 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                       )
                     : React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic"}},"Click to add a note…")
                 )
+          ),
+          /* ── Expanded Technical Indicators panel ── */
+          expandedTech[sh.id]&&window.TechnicalIndicatorsInline&&React.createElement("div",{style:{marginTop:-4,marginBottom:12,padding:"16px",borderRadius:"0 0 14px 14px",background:"var(--bg3)",border:"1px solid var(--border)",borderTop:"none"}},
+            React.createElement(window.TechnicalIndicatorsInline,{ticker:sh.ticker,company:sh.company})
+          )
           );
         })
       )
@@ -32703,6 +32796,8 @@ const FSAStoragePanel=({state,dispatch})=>{
           localStorage.setItem(LS_EOD_NAVS,JSON.stringify(_restoreData.eodNavs));
         if(data.chatbotTraining)
           localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(data.chatbotTraining));
+        if(data.avApiKey)
+          localStorage.setItem("mm_av_api_key",data.avApiKey);
       }catch{}
       /* ── Overwrite IDB transactions so next-boot hydration loads
          the restored data instead of the pre-restore snapshot.

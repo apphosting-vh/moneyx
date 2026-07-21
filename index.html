@@ -233,6 +233,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.29.7/babel.min.js" defer></script>
 <!-- Preload Babel so it downloads in parallel with React without delaying FCP -->
 <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.29.7/babel.min.js" as="script" crossorigin/>
+<!-- Technical indicators: calculation engine, OHLCV data fetcher, and UI panel -->
+<script src="./js/indicators.js" defer></script>
+<script src="./js/data-fetcher.js" defer></script>
+<script src="./js/technical-panel.js" defer></script>
 <!-- Google Identity Services — for Google Drive cloud sync (token-only, no sign-in) -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <!-- xlsx (~1.0 MB) + jsPDF (~700 KB) are intentionally absent here.
