@@ -1413,7 +1413,8 @@ window.TechIndicators = (function () {
 
   /* ═══════════════════════════════════════════════════════════════════════
      ENTRY SCORE — Momentum Trading Entry Scoring Engine (0–100)
-     5 factors: Trend(35) + Momentum(25) + Volume(20) + Breakout(10) + Structure(10)
+     4 components: Trend(30) + Momentum(30) + Volume(20) + Volatility(20)
+     Per-indicator per-timeframe scoring → weighted TF combination
      ═══════════════════════════════════════════════════════════════════════ */
   function computeEntryScore(candles, ind, currentPrice) {
     if (!candles || candles.length < 12 || !ind) return null;
@@ -1421,274 +1422,226 @@ window.TechIndicators = (function () {
     var lc = (currentPrice && currentPrice > 0) ? currentPrice : ind.lastClose;
     if (lc === null || lc === undefined) return null;
 
-    function lastN(arr, n) {
+    /* ── Compute +DI / -DI from candles (ADX needs them) ── */
+    var diData = (function () {
+      var period = 14;
+      if (candles.length < period + 1) return { plusDI: null, minusDI: null, prevPlusDI: null };
+      var plusDM = [], minusDM = [], trArr = [];
+      for (var i = 1; i < candles.length; i++) {
+        var upMove = candles[i].h - candles[i - 1].h;
+        var downMove = candles[i - 1].l - candles[i].l;
+        plusDM.push(upMove > downMove && upMove > 0 ? upMove : 0);
+        minusDM.push(downMove > upMove && downMove > 0 ? downMove : 0);
+        var hl = candles[i].h - candles[i].l;
+        var hc = Math.abs(candles[i].h - candles[i - 1].c);
+        var lc2 = Math.abs(candles[i].l - candles[i - 1].c);
+        trArr.push(Math.max(hl, hc, lc2));
+      }
+      var smTR = 0, smPDM = 0, smMDM = 0;
+      for (var i = 0; i < period; i++) { smTR += trArr[i]; smPDM += plusDM[i]; smMDM += minusDM[i]; }
+      var pDArr = [], mDArr = [];
+      for (var i = period; i < trArr.length; i++) {
+        smTR = smTR - smTR / period + trArr[i];
+        smPDM = smPDM - smPDM / period + plusDM[i];
+        smMDM = smMDM - smMDM / period + minusDM[i];
+        pDArr.push(smTR > 0 ? 100 * smPDM / smTR : 0);
+        mDArr.push(smTR > 0 ? 100 * smMDM / smTR : 0);
+      }
+      var len = pDArr.length;
+      return { plusDI: len > 0 ? round(pDArr[len - 1], 2) : null, minusDI: len > 0 ? round(mDArr[len - 1], 2) : null, prevPlusDI: len > 1 ? round(pDArr[len - 2], 2) : null };
+    })();
+
+    /* ── Precompute arrays ── */
+    var obvArr = calcOBV(candles);
+    var atrArr = calcATR(candles, 14);
+    var vwapArr = calcVWAP(candles);
+    var bbArr = calcBollingerBands(candles);
+    var bbWidthPrev = null, bbWidthCurr = null;
+    if (bbArr) {
+      for (var i = bbArr.length - 2; i < bbArr.length; i++) {
+        if (bbArr[i] && bbArr[i].upper !== null && bbArr[i].middle !== null && bbArr[i].lower !== null && bbArr[i].middle > 0) {
+          var w = (bbArr[i].upper - bbArr[i].lower) / bbArr[i].middle;
+          if (bbWidthPrev === null) bbWidthPrev = w; else bbWidthCurr = w;
+        }
+      }
+    }
+    var upVolCount = 0, totalVol = 0;
+    for (var i = Math.max(0, candles.length - 5); i < candles.length; i++) {
+      totalVol += candles[i].v || 0;
+      if (i > 0 && candles[i].c > candles[i - 1].c) upVolCount += candles[i].v || 0;
+    }
+    var upVolRatio = totalVol > 0 ? upVolCount / totalVol : 0.5;
+    var avgVolArr = (function () {
       var out = [];
-      for (var i = arr.length - 1; i >= 0 && out.length < n; i--) {
-        if (arr[i] !== null && arr[i] !== undefined) out.unshift(arr[i]);
+      var sum = 0;
+      for (var i = 0; i < candles.length; i++) {
+        sum += candles[i].v || 0;
+        out.push(i >= 19 ? sum / 20 : null);
+        if (i >= 19) sum -= (candles[i - 19].v || 0);
       }
       return out;
+    })();
+    var curAvgVol = avgVolArr.length > 0 ? avgVolArr[avgVolArr.length - 1] : null;
+    var volSurge = (curAvgVol !== null && curAvgVol > 0 && candles.length > 0) ? (candles[candles.length - 1].v || 0) / curAvgVol : null;
+
+    /* ── Previous candle indicators for crossover detection ── */
+    var indPrior = candles.length >= 13 ? computeAll(candles.slice(0, -1)) : null;
+
+    /* ═══════════════════════════════════════════════════════════════════
+       COMPONENT 1: TREND (max 10+10+10 = 30)
+       ═══════════════════════════════════════════════════════════════════ */
+    var trendScore = 0;
+    /* EMA Alignment (10) */
+    if (ind.ema_9 !== null && ind.ema_21 !== null && ind.ema_50 !== null) {
+      if (ind.ema_9 > ind.ema_21 && ind.ema_21 > ind.ema_50 && lc > ind.ema_9) trendScore += 10;
+      else if (ind.ema_9 > ind.ema_21 && lc > ind.ema_9) trendScore += 7;
+      else if (ind.ema_9 > ind.ema_21) trendScore += 5;
+      else if (ind.ema_9 < ind.ema_21 && ind.ema_21 < ind.ema_50 && lc < ind.ema_9) trendScore += 0;
+      else trendScore += 2;
     }
-
-    function isRising(arr, lookback) {
-      var vals = lastN(arr, lookback || 2);
-      if (vals.length < 2) return false;
-      return vals[vals.length - 1] > vals[vals.length - 2];
+    /* MACD Signal (10) */
+    if (ind.macd) {
+      var mMacd = ind.macd.macd || 0, mSig = ind.macd.signal || 0, mHist = ind.macd.histogram;
+      var mHistPrev = indPrior && indPrior.macd ? indPrior.macd.histogram : null;
+      if (mMacd > mSig && mHist !== null && mHistPrev !== null && mHist > mHistPrev) trendScore += 10;
+      else if (mMacd > mSig && mHist !== null && mHist > 0) trendScore += 7;
+      else if (mMacd > mSig) trendScore += 5;
+      else if (mMacd < mSig && mHist !== null && mHist < 0) trendScore += 0;
+      else trendScore += 3;
     }
-
-    var obvArr = calcOBV(candles);
-    var pvtArr = calcPVT(candles);
-    var atrArr = calcATR(candles, 14);
-    var obvLast2 = lastN(obvArr, 2);
-    var pvtLast2 = lastN(pvtArr, 2);
-    var atrLast2 = lastN(atrArr, 2);
-
-    var indPrior = candles.length >= 12 ? computeAll(candles.slice(0, -1)) : null;
-    var indPrior2 = candles.length >= 13 ? computeAll(candles.slice(0, -2)) : null;
-    var indPrior3 = candles.length >= 14 ? computeAll(candles.slice(0, -3)) : null;
-
-    function recentCrossover(p0, p1, p2, p3) {
-      if (!p0) return false;
-      if (p0 && !p1) return true;
-      if (p0 && p1 && !p2) return true;
-      if (p0 && p1 && p2 && !p3) return true;
-      return false;
+    /* ADX Strength (10) */
+    if (ind.adx_14 !== null) {
+      if (ind.adx_14 >= 25 && diData.plusDI !== null && diData.minusDI !== null && diData.plusDI > diData.minusDI) trendScore += 10;
+      else if (ind.adx_14 >= 20 && diData.plusDI !== null && diData.minusDI !== null && diData.plusDI > diData.minusDI) trendScore += 7;
+      else if (ind.adx_14 >= 20) trendScore += 5;
+      else if (ind.adx_14 >= 15) trendScore += 3;
+      else trendScore += 1;
     }
 
     /* ═══════════════════════════════════════════════════════════════════
-       STAGE 1: ELIGIBILITY FILTER (All 5 must pass)
+       COMPONENT 2: MOMENTUM (max 10+10+10 = 30)
        ═══════════════════════════════════════════════════════════════════ */
-    var eligible = true;
-    var eligibilityDetails = [];
-    if (ind.ema_21 === null || ind.ema_50 === null || ind.ema_21 <= ind.ema_50) { eligible = false; eligibilityDetails.push("EMA(21) below EMA(50)"); }
-    if (ind.supertrendDir !== "up") { eligible = false; eligibilityDetails.push("SuperTrend not Buy"); }
-    if (ind.mtfAlignment === null || ind.mtfAlignment < 70) { eligible = false; eligibilityDetails.push("MTF Alignment not Bullish"); }
-    if (ind.ema_21 === null || lc <= ind.ema_21) { eligible = false; eligibilityDetails.push("Price below EMA(21)"); }
-    var resistances = [];
-    if (ind.bb && ind.bb.upper) resistances.push(ind.bb.upper);
-    if (ind.keltner && ind.keltner.upper) resistances.push(ind.keltner.upper);
-    if (ind.donchian && ind.donchian.upper) resistances.push(ind.donchian.upper);
-    if (ind.ichimoku) {
-      var cloudTop = Math.max(ind.ichimoku.senkouA || 0, ind.ichimoku.senkouB || 0);
-      if (cloudTop > 0) resistances.push(cloudTop);
+    var momentumScore = 0;
+    /* RSI (10) */
+    if (ind.rsi_14 !== null) {
+      if (ind.rsi_14 >= 50 && ind.rsi_14 <= 65) momentumScore += 10;
+      else if ((ind.rsi_14 >= 40 && ind.rsi_14 < 50) || (ind.rsi_14 > 65 && ind.rsi_14 <= 70)) momentumScore += 7;
+      else if (ind.rsi_14 > 70 && ind.rsi_14 <= 75) momentumScore += 4;
+      else if (ind.rsi_14 > 80 || ind.rsi_14 < 30) momentumScore += 0;
+      else momentumScore += 3;
     }
-    var nearResistance = false;
-    for (var ri = 0; ri < resistances.length; ri++) {
-      if (resistances[ri] > 0 && lc > 0 && resistances[ri] <= lc * 1.05 && resistances[ri] >= lc * 0.97) {
-        nearResistance = true; break;
+    /* Stochastic Oscillator (10) */
+    if (ind.stochRSI) {
+      var stK = ind.stochRSI.k, stD = ind.stochRSI.d;
+      if (stK !== null && stD !== null) {
+        var stKPrev = indPrior && indPrior.stochRSI ? indPrior.stochRSI.k : null;
+        if (stK > stD && stK < 80) momentumScore += 10;
+        else if (stK > stD && stK >= 80) momentumScore += 5;
+        else if (stK < 20 && stK > stD && stKPrev !== null && stKPrev <= stD) momentumScore += 10;
+        else momentumScore += 2;
       }
     }
-    if (nearResistance) { eligible = false; eligibilityDetails.push("Major resistance within 3-5%"); }
+    /* CCI (10) */
+    if (ind.cci_20 !== null) {
+      if (ind.cci_20 >= 0 && ind.cci_20 <= 100) momentumScore += 10;
+      else if (ind.cci_20 > 100 && ind.cci_20 <= 200) momentumScore += 7;
+      else if (ind.cci_20 > 200 || ind.cci_20 < -100) momentumScore += 3;
+      else momentumScore += 5;
+    }
 
     /* ═══════════════════════════════════════════════════════════════════
-       STAGE 2: MOMENTUM SCORE (0–100)
+       COMPONENT 3: VOLUME (max 8+6+6 = 20)
        ═══════════════════════════════════════════════════════════════════ */
-
-    /* ── 2a. MOMENTUM CONFIRMATION (Max 35 pts) ── */
-    var mom = 0;
-    if (ind.macd && ind.macd.histogram !== null && ind.macd.histogram > 0) {
-      var macdCross = !indPrior || !indPrior.macd || indPrior.macd.histogram === null || indPrior.macd.histogram <= 0;
-      var macdCross3 = recentCrossover(
-        ind.macd && ind.macd.histogram > 0,
-        indPrior && indPrior.macd && indPrior.macd.histogram > 0,
-        indPrior2 && indPrior2.macd && indPrior2.macd.histogram > 0,
-        indPrior3 && indPrior3.macd && indPrior3.macd.histogram > 0
-      );
-      if (macdCross3) mom += 8;
+    var volumeScore = 0;
+    /* OBV Trend (8) */
+    if (obvArr && obvArr.length >= 20) {
+      var obvSma20 = 0, obvCnt = 0;
+      for (var i = obvArr.length - 20; i < obvArr.length; i++) { if (obvArr[i] !== null) { obvSma20 += obvArr[i]; obvCnt++; } }
+      obvSma20 = obvCnt > 0 ? obvSma20 / obvCnt : 0;
+      var obvLast = obvArr[obvArr.length - 1];
+      if (obvLast !== null && obvLast > obvSma20) volumeScore += 8;
+      else if (obvLast !== null && obvArr.length >= 2 && obvArr[obvArr.length - 2] !== null && obvLast > obvArr[obvArr.length - 2]) volumeScore += 5;
+      else volumeScore += 2;
     }
-    var rsiRising = ind.rsi_14 !== null && indPrior && indPrior.rsi_14 !== null && ind.rsi_14 > indPrior.rsi_14;
-    if (ind.rsi_14 !== null && ind.rsi_14 >= 55 && ind.rsi_14 <= 68 && rsiRising) mom += 6;
-    if (ind.tsi !== null && ind.tsi > 0) mom += 5;
-    if (ind.stc !== null && ind.stc > 75) mom += 5;
-    if (ind.roc_12 !== null && ind.roc_12 > 0) mom += 4;
-    if (ind.stochRSI && ind.stochRSI.k !== null && ind.stochRSI.d !== null && ind.stochRSI.k > ind.stochRSI.d) mom += 4;
-    if (ind.cci_20 !== null && ind.cci_20 > 100) mom += 3;
-    mom = Math.min(mom, 35);
-
-    /* ── 2b. VOLUME ACCUMULATION (Max 25 pts) ── */
-    var vol = 0;
-    var obvRising = obvLast2.length === 2 && obvLast2[1] > obvLast2[0];
-    if (obvRising) vol += 7;
-    if (ind.cmf_20 !== null && ind.cmf_20 > 0) vol += 5;
-    if (ind.smartMoney) {
-      var smBullish = ind.smartMoney.bos === 'bullish_bos' || ind.smartMoney.choch === 'bullish_choch';
-      if (smBullish) vol += 5;
+    /* VWAP Position (6) */
+    if (ind.vwap !== null) {
+      if (lc > ind.vwap) volumeScore += 6;
+      else volumeScore += 1;
     }
-    var pvtRising = pvtLast2.length === 2 && pvtLast2[1] > pvtLast2[0];
-    if (pvtRising) vol += 4;
-    if (ind.kvo !== null && ind.kvo > 0) vol += 2;
-    if (ind.mfi_14 !== null && ind.mfi_14 >= 55 && ind.mfi_14 <= 80) vol += 2;
-    vol = Math.min(vol, 25);
-
-    /* ── 2c. TREND STRENGTH (Max 20 pts) ── */
-    var trend = 0;
-    if (ind.ema_21 !== null && lc > ind.ema_21) trend += 6;
-    if (ind.ema_9 !== null && ind.ema_21 !== null && ind.ema_9 > ind.ema_21) trend += 4;
-    if (ind.supertrendDir === "up") trend += 4;
-    if (ind.anchored_vwap !== null && lc > ind.anchored_vwap) trend += 3;
-    if (ind.vwap !== null && lc > ind.vwap) trend += 2;
-    if (ind.ichimoku) {
-      var cloudTop2 = Math.max(ind.ichimoku.senkouA || 0, ind.ichimoku.senkouB || 0);
-      if (lc > cloudTop2) trend += 1;
+    /* Volume Surge (6) */
+    if (volSurge !== null) {
+      if (volSurge >= 1.5) volumeScore += 6;
+      else if (volSurge >= 1.2) volumeScore += 4;
+      else volumeScore += 2;
     }
-    trend = Math.min(trend, 20);
-
-    /* ── 2d. BREAKOUT & VOLATILITY (Max 15 pts) ── */
-    var brk = 0;
-    if (ind.darvasBox && ind.darvasBox.breakout === 'up') brk += 5;
-    if (ind.ttmSqueeze === false && indPrior && indPrior.ttmSqueeze === true) brk += 4;
-    else if (ind.squeezeMomentum !== null && ind.squeezeMomentum > 0 && indPrior && indPrior.squeezeMomentum !== null && indPrior.squeezeMomentum <= 0) brk += 4;
-    if (ind.donchian && ind.donchian.upper !== null && lc >= ind.donchian.upper) brk += 3;
-    if (atrLast2.length === 2 && atrLast2[1] > atrLast2[0]) brk += 2;
-    var bbExpand = ind.bb && ind.bb.upper !== null && ind.bb.lower !== null && ind.keltner && ind.keltner.upper !== null && ind.keltner.lower !== null;
-    if (bbExpand) {
-      var bbWidth = ind.bb.upper - ind.bb.lower;
-      var kcWidth = ind.keltner.upper - ind.keltner.lower;
-      if (bbWidth > kcWidth) brk += 1;
-    }
-    brk = Math.min(brk, 15);
-
-    /* ── 2e. MARKET STRUCTURE (Max 5 pts) ── */
-    var struct = 0;
-    if (ind.volumeProfile && ind.volumeProfile.poc !== null && lc > ind.volumeProfile.poc) struct += 3;
-    if (ind.smartMoney && ind.smartMoney.swingHighs && ind.smartMoney.swingLows) {
-      var sh = ind.smartMoney.swingHighs;
-      var sl = ind.smartMoney.swingLows;
-      if (sh.length >= 2 && sl.length >= 2) {
-        if (sh[sh.length - 1].price > sh[sh.length - 2].price && sl[sl.length - 1].price > sl[sl.length - 2].price) struct += 2;
-      }
-    }
-    struct = Math.min(struct, 5);
-
-    /* ── FRESH SIGNAL BONUS (Max +10 pts) ── */
-    var freshBonus = 0;
-    var freshSignals = [];
-
-    var macdNow = ind.macd && ind.macd.histogram !== null && ind.macd.histogram > 0;
-    var macdP1 = indPrior && indPrior.macd && indPrior.macd.histogram !== null && indPrior.macd.histogram > 0;
-    var macdP2 = indPrior2 && indPrior2.macd && indPrior2.macd.histogram !== null && indPrior2.macd.histogram > 0;
-    var macdP3 = indPrior3 && indPrior3.macd && indPrior3.macd.histogram !== null && indPrior3.macd.histogram > 0;
-    if (macdNow && recentCrossover(macdNow, macdP1, macdP2, macdP3)) {
-      freshBonus += 2; freshSignals.push("MACD crossover (last 3 sessions)");
-    }
-
-    if (ind.supertrendDir === "up") {
-      var stNow = true;
-      var stP1 = indPrior && indPrior.supertrendDir === "up";
-      var stP2 = indPrior2 && indPrior2.supertrendDir === "up";
-      var stP3 = indPrior3 && indPrior3.supertrendDir === "up";
-      if (recentCrossover(stNow, stP1, stP2, stP3)) {
-        freshBonus += 2; freshSignals.push("SuperTrend Buy (last 3 sessions)");
-      }
-    }
-
-    var ttmNow = ind.ttmSqueeze === false;
-    var ttmP1 = indPrior && indPrior.ttmSqueeze === false;
-    var ttmP2 = indPrior2 && indPrior2.ttmSqueeze === false;
-    var ttmP3 = indPrior3 && indPrior3.ttmSqueeze === false;
-    if (ttmNow && recentCrossover(ttmNow, ttmP1, ttmP2, ttmP3)) {
-      freshBonus += 2; freshSignals.push("TTM Squeeze release (last 3 sessions)");
-    }
-
-    var ema9xNow = ind.ema_9 !== null && ind.ema_21 !== null && ind.ema_9 > ind.ema_21;
-    var ema9xP1 = indPrior && indPrior.ema_9 !== null && indPrior.ema_21 !== null && indPrior.ema_9 > indPrior.ema_21;
-    var ema9xP2 = indPrior2 && indPrior2.ema_9 !== null && indPrior2.ema_21 !== null && indPrior2.ema_9 > indPrior2.ema_21;
-    var ema9xP3 = indPrior3 && indPrior3.ema_9 !== null && indPrior3.ema_21 !== null && indPrior3.ema_9 > indPrior3.ema_21;
-    if (ema9xNow && recentCrossover(ema9xNow, ema9xP1, ema9xP2, ema9xP3)) {
-      freshBonus += 2; freshSignals.push("EMA9 crossed EMA21 (last 3 sessions)");
-    }
-
-    var darvasNow = ind.darvasBox && ind.darvasBox.breakout === 'up';
-    var darvasP1 = indPrior && indPrior.darvasBox && indPrior.darvasBox.breakout === 'up';
-    var darvasP2 = indPrior2 && indPrior2.darvasBox && indPrior2.darvasBox.breakout === 'up';
-    if (darvasNow && recentCrossover(darvasNow, darvasP1, darvasP2, false)) {
-      freshBonus += 2; freshSignals.push("Darvas breakout (last 2 sessions)");
-    }
-
-    freshBonus = Math.min(freshBonus, 10);
 
     /* ═══════════════════════════════════════════════════════════════════
-       TOTAL + DECISION
+       COMPONENT 4: VOLATILITY & RISK (max 8+6+6 = 20)
        ═══════════════════════════════════════════════════════════════════ */
-    var total = mom + vol + trend + brk + struct + freshBonus;
-    total = Math.min(total, 100);
+    var volatilityScore = 0;
+    /* ATR Risk/Reward (8) */
+    var atrPct = (ind.atr_14 !== null && lc > 0) ? (ind.atr_14 / lc * 100) : null;
+    if (atrPct !== null) {
+      if (atrPct < 2) volatilityScore += 8;
+      else if (atrPct < 3) volatilityScore += 5;
+      else if (atrPct < 4) volatilityScore += 3;
+      else volatilityScore += 1;
+    }
+    /* Bollinger Band Position (6) */
+    if (ind.bb && ind.bb.upper !== null && ind.bb.middle !== null && ind.bb.lower !== null) {
+      if (lc > ind.bb.middle && lc < ind.bb.upper) volatilityScore += 6;
+      else if (lc > ind.bb.lower && lc <= ind.bb.middle) volatilityScore += 3;
+      else volatilityScore += 1;
+    }
+    /* R:R Ratio with 4% target, 1.5x ATR stop (6) */
+    if (ind.atr_14 !== null && lc > 0) {
+      var target = lc * 1.04;
+      var stopLoss = lc - (ind.atr_14 * 1.5);
+      var risk = lc - stopLoss;
+      var reward = target - lc;
+      var rrRatio = risk > 0 ? reward / risk : 0;
+      if (rrRatio >= 2) volatilityScore += 6;
+      else if (rrRatio >= 1.5) volatilityScore += 4;
+      else if (rrRatio >= 1) volatilityScore += 2;
+      else volatilityScore += 0;
+    }
 
+    /* ═══════════════════════════════════════════════════════════════════
+       RAW SCORE
+       ═══════════════════════════════════════════════════════════════════ */
+    var rawScore = trendScore + momentumScore + volumeScore + volatilityScore;
+    var total = Math.round(rawScore * 10) / 10;
+    total = Math.max(0, Math.min(100, total));
+
+    /* ═══════════════════════════════════════════════════════════════════
+       DECISION
+       ═══════════════════════════════════════════════════════════════════ */
     var decision;
-    if (total >= 92) decision = { label: "Strong Buy", action: "strongBuy", color: "#15803d" };
-    else if (total >= 85) decision = { label: "Buy", action: "buy", color: "#22c55e" };
-    else if (total >= 78) decision = { label: "Buy on Breakout/Pullback", action: "pullback", color: "#84cc16" };
-    else if (total >= 70) decision = { label: "Watchlist", action: "watchlist", color: "#eab308" };
-    else decision = { label: "Avoid", action: "avoid", color: "#ef4444" };
+    if (total >= 80) decision = { label: "Strong Buy", action: "strongBuy", color: "#15803d", position: "Full position" };
+    else if (total >= 65) decision = { label: "Buy", action: "buy", color: "#22c55e", position: "75% position" };
+    else if (total >= 50) decision = { label: "Watchlist", action: "watchlist", color: "#eab308", position: "50% or paper trade" };
+    else if (total >= 35) decision = { label: "Neutral", action: "neutral", color: "#f97316", position: "Wait" };
+    else decision = { label: "Avoid", action: "avoid", color: "#ef4444", position: "Look elsewhere" };
 
     return {
-      total: total,
-      eligible: eligible, eligibilityDetails: eligibilityDetails,
-      momentum: mom, momentumMax: 35,
-      volume: vol, volumeMax: 25,
-      trend: trend, trendMax: 20,
-      breakout: brk, breakoutMax: 15,
-      structure: struct, structureMax: 5,
-      freshBonus: freshBonus, freshBonusMax: 10, freshSignals: freshSignals,
-      decision: decision,
-      overrides: freshSignals
+      total: total, rawScore: rawScore,
+      trendScore: trendScore, trendMax: 30,
+      momentumScore: momentumScore, momentumMax: 30,
+      volumeScore: volumeScore, volumeMax: 20,
+      volatilityScore: volatilityScore, volatilityMax: 20,
+      decision: decision
     };
   }
 
   /* ═══════════════════════════════════════════════════════════════════════
-     STAGE 3: EXECUTION SCORE (Hourly)
-     ═══════════════════════════════════════════════════════════════════════ */
-  function computeExecutionScore(candles, ind) {
-    if (!candles || !ind) return null;
-    var lc = ind.lastClose;
-    if (lc === null || lc === undefined) return null;
-
-    var obvArr = calcOBV(candles);
-    var obvLast2 = [];
-    for (var i = obvArr.length - 1; i >= 0 && obvLast2.length < 2; i--) {
-      if (obvArr[i] !== null && obvArr[i] !== undefined) obvLast2.unshift(obvArr[i]);
-    }
-
-    var checks = [];
-    var passed = 0;
-    var total = 6;
-
-    if (ind.ema_9 !== null && ind.ema_21 !== null && ind.ema_9 > ind.ema_21) { passed++; checks.push({ label: "EMA9 > EMA21", ok: true }); }
-    else checks.push({ label: "EMA9 > EMA21", ok: false });
-
-    if (ind.vwap !== null && lc > ind.vwap) { passed++; checks.push({ label: "Price above VWAP", ok: true }); }
-    else checks.push({ label: "Price above VWAP", ok: false });
-
-    if (ind.macd && ind.macd.histogram !== null && ind.macd.histogram > 0) { passed++; checks.push({ label: "MACD bullish", ok: true }); }
-    else checks.push({ label: "MACD bullish", ok: false });
-
-    if (obvLast2.length === 2 && obvLast2[1] > obvLast2[0]) { passed++; checks.push({ label: "OBV rising", ok: true }); }
-    else checks.push({ label: "OBV rising", ok: false });
-
-    var atrArr = calcATR(candles, 14);
-    var atrLast2 = [];
-    for (var j = atrArr.length - 1; j >= 0 && atrLast2.length < 2; j--) {
-      if (atrArr[j] !== null && atrArr[j] !== undefined) atrLast2.unshift(atrArr[j]);
-    }
-    if (atrLast2.length === 2 && atrLast2[1] > atrLast2[0]) { passed++; checks.push({ label: "Volume expansion", ok: true }); }
-    else checks.push({ label: "Volume expansion", ok: false });
-
-    if (ind.donchian && ind.donchian.upper !== null && lc >= ind.donchian.upper) { passed++; checks.push({ label: "No overhead resistance", ok: true }); }
-    else if (ind.bb && ind.bb.upper !== null && lc > ind.bb.upper) { passed++; checks.push({ label: "No overhead resistance", ok: true }); }
-    else checks.push({ label: "No overhead resistance", ok: false });
-
-    var score = total > 0 ? Math.round((passed / total) * 100) : 0;
-
-    return { score: score, passed: passed, total: total, checks: checks };
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════════
      MULTI-TIMEFRAME ENTRY SCORE
-     Weekly(10%) + Daily(55%) + Hourly(35%)
+     Daily(50%) + Weekly(30%) + Hourly(20%)
+     Penalty/bonus modifiers
      ═══════════════════════════════════════════════════════════════════════ */
   function computeMultiTFEntryScore(candlesWeekly, indW, candlesDaily, indD, candlesHourly, indH, currentPrice) {
     var weekly = candlesWeekly && indW ? computeEntryScore(candlesWeekly, indW, currentPrice) : null;
     var daily = candlesDaily && indD ? computeEntryScore(candlesDaily, indD, currentPrice) : null;
     var hourly = candlesHourly && indH ? computeEntryScore(candlesHourly, indH, currentPrice) : null;
-    var execution = candlesHourly && indH ? computeExecutionScore(candlesHourly, indH) : null;
 
     var wTotal = weekly ? weekly.total : 0;
     var dTotal = daily ? daily.total : 0;
@@ -1697,27 +1650,128 @@ window.TechIndicators = (function () {
     var wCount = weekly ? 1 : 0;
     var dCount = daily ? 1 : 0;
     var hCount = hourly ? 1 : 0;
-    var denom = wCount * 0.10 + dCount * 0.55 + hCount * 0.35;
+    var denom = wCount * 0.30 + dCount * 0.50 + hCount * 0.20;
 
-    var finalScore = denom > 0 ? Math.round((wTotal * 0.10 + dTotal * 0.55 + hTotal * 0.35) / denom) : 0;
+    var baseScore = denom > 0 ? Math.round(((wTotal * 0.30 + dTotal * 0.50 + hTotal * 0.20) / denom) * 10) / 10 : 0;
+
+    var lc = (currentPrice && currentPrice > 0) ? currentPrice : (indD ? indD.lastClose : null);
+
+    /* ── Penalty Modifiers ── */
+    var penalties = 0;
+    var hardFilters = [];
+
+    /* Overbought RSI > 75 → −5 */
+    if (indD && indD.rsi_14 !== null && indD.rsi_14 > 75) {
+      penalties -= 5;
+      hardFilters.push("RSI > 75 — Overbought (−5)");
+    }
+
+    /* Volume Divergence: price up 5d, volume down 5d → −8 */
+    if (candlesDaily && candlesDaily.length >= 10) {
+      var priceUp5d = candlesDaily[candlesDaily.length - 1].c > candlesDaily[candlesDaily.length - 6].c;
+      var volRecent = 0, volPrev = 0;
+      for (var i = 0; i < 5; i++) { volRecent += candlesDaily[candlesDaily.length - 1 - i].v || 0; volPrev += candlesDaily[candlesDaily.length - 6 - i].v || 0; }
+      if (priceUp5d && volRecent < volPrev) {
+        penalties -= 8;
+        hardFilters.push("Volume Divergence — price up, volume down (−8)");
+      }
+    }
+
+    /* Conflicting Timeframes: daily bullish but weekly bearish → −10 */
+    if (daily && weekly) {
+      var dailyBull = indD && indD.ema_9 !== null && indD.ema_21 !== null && indD.ema_50 !== null && indD.ema_9 > indD.ema_21 && indD.ema_21 > indD.ema_50;
+      var weeklyBear = indW && indW.ema_9 !== null && indW.ema_21 !== null && (indW.ema_9 < indW.ema_21 || indW.ema_21 < indW.ema_50);
+      if (dailyBull && weeklyBear) {
+        penalties -= 10;
+        hardFilters.push("Conflicting Timeframes — daily bullish, weekly bearish (−10)");
+      }
+    }
+
+    /* Near Resistance: price within 1% of BB upper / Keltner upper → −5 */
+    if (indD && lc && lc > 0) {
+      var resistances = [];
+      if (indD.bb && indD.bb.upper !== null) resistances.push(indD.bb.upper);
+      if (indD.keltner && indD.keltner.upper !== null) resistances.push(indD.keltner.upper);
+      if (indD.donchian && indD.donchian.upper !== null) resistances.push(indD.donchian.upper);
+      for (var ri = 0; ri < resistances.length; ri++) {
+        if (resistances[ri] > 0 && Math.abs(resistances[ri] - lc) / lc < 0.01) {
+          penalties -= 5;
+          hardFilters.push("Near Resistance — within 1% of upper band (−5)");
+          break;
+        }
+      }
+    }
+
+    /* ── Bonus Modifiers ── */
+    var bonuses = 0;
+
+    /* Fresh Breakout: price > 20d high + volume > 1.5x avg → +5 */
+    if (candlesDaily && candlesDaily.length >= 20 && lc) {
+      var high20 = 0;
+      for (var i = candlesDaily.length - 20; i < candlesDaily.length; i++) { if (candlesDaily[i].h > high20) high20 = candlesDaily[i].h; }
+      var avgVol20 = 0;
+      for (var i = candlesDaily.length - 20; i < candlesDaily.length; i++) avgVol20 += candlesDaily[i].v || 0;
+      avgVol20 = avgVol20 / 20;
+      var curVol = candlesDaily[candlesDaily.length - 1].v || 0;
+      if (lc > high20 && avgVol20 > 0 && curVol > avgVol20 * 1.5) {
+        bonuses += 5;
+        hardFilters.push("Fresh Breakout — new 20d high with volume surge (+5)");
+      }
+    }
+
+    /* Multi-TF Alignment: all 3 bullish → +5 */
+    if (weekly && daily && hourly) {
+      var wBull = indW && indW.ema_9 !== null && indW.ema_21 !== null && indW.ema_50 !== null && indW.ema_9 > indW.ema_21 && indW.ema_21 > indW.ema_50;
+      var dBull = indD && indD.ema_9 !== null && indD.ema_21 !== null && indD.ema_50 !== null && indD.ema_9 > indD.ema_21 && indD.ema_21 > indD.ema_50;
+      var hBull = indH && indH.ema_9 !== null && indH.ema_21 !== null && indH.ema_50 !== null && indH.ema_9 > indH.ema_21 && indH.ema_21 > indH.ema_50;
+      if (wBull && dBull && hBull) {
+        bonuses += 5;
+        hardFilters.push("Multi-TF Alignment — all timeframes bullish (+5)");
+      }
+    }
+
+    /* Sector Momentum: rising OBV in all available timeframes → +3 */
+    var obvBullCount = 0, obvTFCount = 0;
+    [{ c: candlesWeekly, i: indW }, { c: candlesDaily, i: indD }, { c: candlesHourly, i: indH }].forEach(function (tf) {
+      if (tf.c && tf.c.length >= 22) {
+        obvTFCount++;
+        var oArr = calcOBV(tf.c);
+        if (oArr && oArr.length >= 2 && oArr[oArr.length - 1] !== null && oArr[oArr.length - 2] !== null && oArr[oArr.length - 1] > oArr[oArr.length - 2]) obvBullCount++;
+      }
+    });
+    if (obvTFCount >= 2 && obvBullCount === obvTFCount) {
+      bonuses += 3;
+      hardFilters.push("Sector Momentum — rising OBV all timeframes (+3)");
+    }
+
+    /* Earnings Clarity: ADX > 20 in all available timeframes → +2 */
+    var adxBullCount = 0, adxTFCount = 0;
+    [indW, indD, indH].forEach(function (tfInd) {
+      if (tfInd && tfInd.adx_14 !== null) {
+        adxTFCount++;
+        if (tfInd.adx_14 > 20) adxBullCount++;
+      }
+    });
+    if (adxTFCount >= 2 && adxBullCount === adxTFCount) {
+      bonuses += 2;
+      hardFilters.push("Earnings Clarity — ADX > 20 all timeframes (+2)");
+    }
+
+    var finalScore = Math.round((baseScore + penalties + bonuses) * 10) / 10;
+    finalScore = Math.max(0, Math.min(100, finalScore));
 
     var decision;
-    if (finalScore >= 92) decision = { label: "Strong Buy", action: "strongBuy", color: "#15803d" };
-    else if (finalScore >= 85) decision = { label: "Buy", action: "buy", color: "#22c55e" };
-    else if (finalScore >= 78) decision = { label: "Buy on Breakout/Pullback", action: "pullback", color: "#84cc16" };
-    else if (finalScore >= 70) decision = { label: "Watchlist", action: "watchlist", color: "#eab308" };
-    else decision = { label: "Avoid", action: "avoid", color: "#ef4444" };
-
-    var eligible = daily ? daily.eligible : false;
-
-    var allOverrides = [].concat(daily ? daily.freshSignals : [], hourly ? hourly.freshSignals : []);
+    if (finalScore >= 80) decision = { label: "Strong Buy", action: "strongBuy", color: "#15803d", position: "Full position" };
+    else if (finalScore >= 65) decision = { label: "Buy", action: "buy", color: "#22c55e", position: "75% position" };
+    else if (finalScore >= 50) decision = { label: "Watchlist", action: "watchlist", color: "#eab308", position: "50% or paper trade" };
+    else if (finalScore >= 35) decision = { label: "Neutral", action: "neutral", color: "#f97316", position: "Wait" };
+    else decision = { label: "Avoid", action: "avoid", color: "#ef4444", position: "Look elsewhere" };
 
     return {
       weekly: weekly, daily: daily, hourly: hourly,
-      execution: execution,
+      baseScore: baseScore, penalties: penalties, bonuses: bonuses,
       finalScore: finalScore, decision: decision,
-      eligible: eligible, eligibilityDetails: daily ? daily.eligibilityDetails : [],
-      overrides: allOverrides
+      hardFilters: hardFilters, overrides: hardFilters
     };
   }
 
@@ -1760,7 +1814,6 @@ window.TechIndicators = (function () {
     interpret: interpret,
     computeExitScore: computeExitScore,
     computeEntryScore: computeEntryScore,
-    computeExecutionScore: computeExecutionScore,
     computeMultiTFEntryScore: computeMultiTFEntryScore,
     round: round
   };

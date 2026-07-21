@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.7.0";
+const APP_VERSION="7.10.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -24531,7 +24531,7 @@ const EntryScorePanel=({shares})=>{
   const[addPrice,setAddPrice]=useState("");
   const[adding,setAdding]=useState(false);
   const[addErr,setAddErr]=useState("");
-  const[expandedId,setExpandedId]=useState(null);
+  const[expandedIds,setExpandedIds]=useState({});
   const[snapshots,setSnapshots]=useState(()=>{
     try{return JSON.parse(localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]");}catch{return[];}
   });
@@ -24588,8 +24588,7 @@ const EntryScorePanel=({shares})=>{
 
   const fetchAndScore=async()=>{
     if(!addTicker.trim()){setAddErr("Enter a ticker.");return;}
-    const price=parseFloat(addPrice);
-    if(!price||price<=0){setAddErr("Enter a valid current price.");return;}
+    const price=parseFloat(addPrice)||0;
     setAdding(true);setAddErr("");
     try{
       const tk=addTicker.trim().toUpperCase();
@@ -24611,14 +24610,15 @@ const EntryScorePanel=({shares})=>{
     setAdding(false);
   };
 
-  const factorBar=(label,val,max,color)=>{
-    const pct=max>0?(val/max*100):0;
+  const factorBar=(label,val,max,color,hasNeg)=>{
+    const pct=max>0?(Math.abs(val)/max*100):0;
+    const barColor=val<0?"#ef4444":color;
     return React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
-      React.createElement("span",{style:{width:60,fontSize:9,fontWeight:600,color:"var(--text4)",textAlign:"right",flexShrink:0}},label),
+      React.createElement("span",{style:{width:90,fontSize:9,fontWeight:600,color:"var(--text4)",textAlign:"right",flexShrink:0}},label),
       React.createElement("div",{style:{flex:1,height:5,borderRadius:3,background:"var(--bg5)",overflow:"hidden"}},
-        React.createElement("div",{style:{width:pct+"%",height:"100%",borderRadius:3,background:color,transition:"width .3s"}})
+        React.createElement("div",{style:{width:pct+"%",height:"100%",borderRadius:3,background:barColor,transition:"width .3s"}})
       ),
-      React.createElement("span",{style:{width:32,fontSize:9,fontWeight:700,color:"var(--text4)",fontFamily:"'Sora',sans-serif",textAlign:"right"}},val+"/"+max)
+      React.createElement("span",{style:{width:38,fontSize:9,fontWeight:700,color:val<0?"#ef4444":"var(--text4)",fontFamily:"'Sora',sans-serif",textAlign:"right"}},(val>=0?"+":"")+val+"/"+max)
     );
   };
 
@@ -24628,17 +24628,14 @@ const EntryScorePanel=({shares})=>{
       React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}},
         React.createElement("span",{style:{fontSize:10,fontWeight:700,color:"var(--text3)"}},label),
         React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
-          !score.eligible&&React.createElement("span",{style:{fontSize:8,fontWeight:700,padding:"1px 5px",borderRadius:3,background:"rgba(239,68,68,.1)",color:"#ef4444"}}, "Not Eligible"),
           React.createElement("span",{style:{fontSize:11,fontWeight:800,color:score.decision.color,fontFamily:"'Sora',sans-serif"}},score.total+" · "+score.decision.label)
         )
       ),
       React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:3}},
-        factorBar("Momentum Confirmation",score.momentum,score.momentumMax,"#a855f7"),
-        factorBar("Volume Accumulation",score.volume,score.volumeMax,"#f59e0b"),
-        factorBar("Trend Strength",score.trend,score.trendMax,"#3b82f6"),
-        factorBar("Breakout & Volatility",score.breakout,score.breakoutMax,"#06b6d4"),
-        factorBar("Market Structure",score.structure,score.structureMax,"#ec4899"),
-        score.freshBonus>0&&factorBar("Fresh Signal Bonus",score.freshBonus,score.freshBonusMax,"#22d3ee"),
+        factorBar("Trend",score.trendScore,score.trendMax,"#3b82f6",false),
+        factorBar("Momentum",score.momentumScore,score.momentumMax,"#a855f7",false),
+        factorBar("Volume",score.volumeScore,score.volumeMax,"#06b6d4",false),
+        factorBar("Volatility",score.volatilityScore,score.volatilityMax,"#f59e0b",false)
       )
     );
   };
@@ -24650,7 +24647,7 @@ const EntryScorePanel=({shares})=>{
         React.createElement("div",null,
           React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},snap.ticker),
           React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},"\u23f0 "+new Date(snap.savedAt).toLocaleString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})),
-          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:1}},"\u2022 Price: \u20b9"+Number(snap.currentPrice).toLocaleString("en-IN"))
+          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:1}},"\u2022 Price: "+(snap.currentPrice>0?"\u20b9"+Number(snap.currentPrice).toLocaleString("en-IN"):"Last Close"))
         ),
         React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
           React.createElement("div",{textAlign:"right"},
@@ -24662,8 +24659,8 @@ const EntryScorePanel=({shares})=>{
       ),
       React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,padding:"4px 8px",borderRadius:6,background:r.decision.color+"12",marginBottom:6}},
         React.createElement("span",{style:{fontSize:11,fontWeight:800,color:r.decision.color,fontFamily:"'Sora',sans-serif"}},r.decision.label),
-        !r.phase1Pass&&React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"#ef4444",padding:"2px 5px",borderRadius:4,background:"rgba(239,68,68,.1)"}},r.filterFails+"/3 filters"),
-        r.phase3Pass&&React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"#16a34a",padding:"2px 5px",borderRadius:4,background:"rgba(22,163,74,.1)"}}, "Phase 3")
+        React.createElement("span",{style:{fontSize:9,fontWeight:600,color:"var(--text5)",fontStyle:"italic"}},r.decision.position),
+        r.hardFilters&&r.hardFilters.length>0&&React.createElement("span",{style:{fontSize:8,fontWeight:700,color:"#ef4444",padding:"1px 4px",borderRadius:3,background:"rgba(239,68,68,.1)"}},r.hardFilters.length+" filter")
       ),
       React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}},
         ["weekly","daily","hourly"].map(tf=>{
@@ -24738,7 +24735,7 @@ const EntryScorePanel=({shares})=>{
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
       React.createElement("div",null,
         React.createElement("div",{style:{fontSize:15,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},"Entry Score"),
-        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},"Momentum Trading Entry Engine · Weekly(20%) + Daily(65%) + Hourly(15%)")
+        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:2}},"Momentum Trading Entry Engine · Weekly(30%) + Daily(50%) + Hourly(20%)")
       ),
       React.createElement("button",{onClick:()=>setShowAdd(true),style:{padding:"8px 16px",borderRadius:8,fontSize:12,fontWeight:700,border:"none",background:"var(--accent)",color:"#fff",cursor:"pointer"}},
         "+ Add Entry"
@@ -24753,8 +24750,8 @@ const EntryScorePanel=({shares})=>{
             style:{padding:"8px 12px",borderRadius:8,fontSize:12,background:"var(--bg4)",border:"1px solid var(--border)",color:"var(--text2)",outline:"none",width:140}})
         ),
         React.createElement("div",null,
-          React.createElement("div",{style:{fontSize:10,fontWeight:600,color:"var(--text5)",marginBottom:4}},"Current Price (\u20b9)"),
-          React.createElement("input",{type:"number",placeholder:"e.g. 2500",value:addPrice,onChange:e=>setAddPrice(e.target.value),
+          React.createElement("div",{style:{fontSize:10,fontWeight:600,color:"var(--text5)",marginBottom:4}},"Current Price (\u20b9) (optional)"),
+          React.createElement("input",{type:"number",placeholder:"Optional — uses last close",value:addPrice,onChange:e=>setAddPrice(e.target.value),
             style:{padding:"8px 12px",borderRadius:8,fontSize:12,background:"var(--bg4)",border:"1px solid var(--border)",color:"var(--text2)",outline:"none",width:120}})
         ),
         React.createElement("button",{
@@ -24771,12 +24768,12 @@ const EntryScorePanel=({shares})=>{
     React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(380px,1fr))",gap:14}},
       entries.map(entry=>{
         const r=entry.result;
-        const isExpanded=expandedId===entry.id;
+        const isExpanded=!!expandedIds[entry.id];
         return React.createElement("div",{key:entry.id,style:{padding:16,borderRadius:12,background:"var(--bg3)",border:"2px solid "+r.decision.color+"33"}},
           React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}},
             React.createElement("div",null,
               React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},entry.ticker),
-              React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},"Added "+new Date(entry.addedAt).toLocaleDateString()+" \u00b7 \u20b9"+INR(entry.currentPrice))
+              React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},"Added "+new Date(entry.addedAt).toLocaleDateString()+" \u00b7 "+(entry.currentPrice>0?"\u20b9"+INR(entry.currentPrice):"Last Close"))
             ),
             React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
               React.createElement("div",{textAlign:"right"},
@@ -24789,14 +24786,13 @@ const EntryScorePanel=({shares})=>{
           ),
           React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"6px 10px",borderRadius:8,background:r.decision.color+"12"}},
             React.createElement("span",{style:{fontSize:12,fontWeight:800,color:r.decision.color,fontFamily:"'Sora',sans-serif"}},r.decision.label),
-            r.eligible&&React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"#16a34a",padding:"2px 6px",borderRadius:4,background:"rgba(22,163,74,.1)"}}, "Eligible"),
-            !r.eligible&&React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"#ef4444",padding:"2px 6px",borderRadius:4,background:"rgba(239,68,68,.1)"}}, "Not Eligible"),
-            r.execution&&React.createElement("span",{style:{fontSize:9,fontWeight:700,color:r.execution.score>=66?"#16a34a":"#eab308",padding:"2px 6px",borderRadius:4,background:(r.execution.score>=66?"rgba(22,163,74,.1)":"rgba(234,179,8,.1)")}}, "Execution: "+r.execution.passed+"/"+r.execution.total)
+            React.createElement("span",{style:{fontSize:9,fontWeight:600,color:"var(--text5)",fontStyle:"italic"}},r.decision.position),
+            r.hardFilters&&r.hardFilters.length>0&&React.createElement("span",{style:{fontSize:8,fontWeight:700,color:"#ef4444",padding:"2px 5px",borderRadius:3,background:"rgba(239,68,68,.1)"}},r.hardFilters.length+" filter"+(r.hardFilters.length>1?"s":""))
           ),
           React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:8}},
             ["weekly","daily","hourly"].map(tf=>{
               const s=r[tf];
-              const label=tf==="weekly"?"Weekly (10%)":tf==="daily"?"Daily (55%)":"Hourly (35%)";
+              const label=tf==="weekly"?"Weekly (30%)":tf==="daily"?"Daily (50%)":"Hourly (20%)";
               return React.createElement("div",{key:tf,style:{padding:"6px 8px",borderRadius:8,background:"var(--bg4)",textAlign:"center"}},
                 React.createElement("div",{style:{fontSize:9,fontWeight:600,color:"var(--text5)",marginBottom:2}},label),
                 React.createElement("div",{style:{fontSize:14,fontWeight:800,color:s?s.decision.color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},s?s.total:"N/A"),
@@ -24804,32 +24800,22 @@ const EntryScorePanel=({shares})=>{
               );
             })
           ),
-          !r.eligible&&r.eligibilityDetails&&r.eligibilityDetails.length>0&&React.createElement("div",{style:{padding:"6px 10px",borderRadius:8,background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.15)",marginBottom:8}},
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"#ef4444",marginBottom:3}},"Eligibility Failures:"),
-            r.eligibilityDetails.map((d,i)=>React.createElement("div",{key:i,style:{fontSize:9,color:"#ef4444",lineHeight:1.5}},"\u2717 "+d))
-          ),
-          React.createElement("div",{onClick:()=>setExpandedId(isExpanded?null:entry.id),style:{fontSize:10,color:"var(--accent)",cursor:"pointer",fontWeight:600,marginBottom:6,textAlign:"center"}},
+          React.createElement("div",{onClick:()=>setExpandedIds(prev=>({...prev,[entry.id]:!prev[entry.id]})),style:{fontSize:10,color:"var(--accent)",cursor:"pointer",fontWeight:600,marginBottom:6,textAlign:"center"}},
             isExpanded?"\u25b2 Hide Details":"\u25bc Show Details"
           ),
           isExpanded&&React.createElement("div",{style:{marginTop:8}},
-            r.execution&&React.createElement("div",{style:{marginBottom:8,padding:"8px 10px",borderRadius:8,background:"var(--bg4)",border:"1px solid var(--border)"}},
-              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}},
-                React.createElement("span",{style:{fontSize:10,fontWeight:700,color:"var(--text3)"}}, "Stage 3: Execution Score (Hourly)"),
-                React.createElement("span",{style:{fontSize:11,fontWeight:800,color:r.execution.score>=66?"#16a34a":"#eab308",fontFamily:"'Sora',sans-serif"}},r.execution.score+" / 100")
-              ),
-              React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:3}},
-                r.execution.checks.map((c,i)=>React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",gap:4,fontSize:9,padding:"2px 0"}},
-                  React.createElement("span",{style:{color:c.ok?"#16a34a":"#ef4444",fontWeight:700}},c.ok?"\u2713":"\u2717"),
-                  React.createElement("span",{style:{color:c.ok?"var(--text3)":"var(--text5)"}},c.label)
-                ))
-              )
-            ),
             r.daily&&tfSection("Daily Breakdown",r.daily),
             r.weekly&&tfSection("Weekly Breakdown",r.weekly),
             r.hourly&&tfSection("Hourly Breakdown",r.hourly),
-            r.overrides.length>0&&React.createElement("div",{style:{marginTop:8,padding:"8px 10px",borderRadius:8,background:"rgba(34,211,238,.06)",border:"1px solid rgba(34,211,238,.2)"}},
-              React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#22d3ee",marginBottom:4}},"Fresh Momentum Signals"),
-              r.overrides.map((o,i)=>React.createElement("div",{key:i,style:{fontSize:10,color:"#22d3ee",lineHeight:1.5}},"\u2022 "+o))
+            r.hardFilters&&r.hardFilters.length>0&&React.createElement("div",{style:{marginTop:8,padding:"8px 10px",borderRadius:8,background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.15)"}},
+              React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text3)",marginBottom:4}},"Penalties & Bonuses"),
+              r.hardFilters.map((f,i)=>{
+                var isBonus=f.indexOf("(+")>=0;
+                return React.createElement("div",{key:i,style:{fontSize:10,color:isBonus?"#16a34a":"#ef4444",lineHeight:1.5}},isBonus?"✓ ":"⚠ "+f);
+              }),
+              React.createElement("div",{style:{fontSize:9,color:"var(--text5)",marginTop:4}},
+                "Base: "+r.baseScore+" | Penalties: "+r.penalties+" | Bonuses: "+r.bonuses+" → Final: "+r.finalScore
+              )
             )
           )
         );
