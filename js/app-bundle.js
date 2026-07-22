@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.14.0";
+const APP_VERSION="7.15.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -6162,6 +6162,8 @@ var gdriveAutoBackup = async (state) => {
         avApiKey:             localStorage.getItem("mm_av_api_key")||"",
         entryScores:          localStorage.getItem(LS_ENTRY_SCORES)||"[]",
         entrySnapshots:       localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",
+        screenerData:         localStorage.getItem(_SCREENER_KEY)||null,
+        screenerSnapshots:    localStorage.getItem(_SCREENER_SNAPS_KEY)||null,
       },
     };
 
@@ -8259,7 +8261,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                   const _cbTr=(()=>{try{return JSON.parse(localStorage.getItem("mm_v7_chatbot_training")||"{}");} catch{return{};}})();
                   const payload={version:8,exportedAt:new Date().toISOString(),
                     summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,reminders:(state.reminders||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,shareSnapshots:Object.values(state.soldShareSnapshots||{}).reduce((s,a)=>s+a.length,0),eodDays:Object.keys(state.eodPrices||{}).length,eodNavDays:Object.keys(state.eodNavs||{}).length,hasTaxData:!!(state.taxData),hasTaxData2627:!!(state.taxData2627),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),brokerCashBalance:state.brokerCashBalance||0,chatbotCatRules:(_cbTr.customCatRules||[]).length,chatbotAliases:(_cbTr.accountAliases||[]).length},
-                    data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},soldShareSnapshots:state.soldShareSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,taxData2627:state.taxData2627||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],reminders:state.reminders||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})},chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},avApiKey:localStorage.getItem("mm_av_api_key")||"",entryScores:localStorage.getItem(LS_ENTRY_SCORES)||"[]",entrySnapshots:localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]"}
+                    data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},soldShareSnapshots:state.soldShareSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,taxData2627:state.taxData2627||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],reminders:state.reminders||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})},chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},                    avApiKey:localStorage.getItem("mm_av_api_key")||"",entryScores:localStorage.getItem(LS_ENTRY_SCORES)||"[]",entrySnapshots:localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",screenerData:localStorage.getItem(_SCREENER_KEY)||null,screenerSnapshots:localStorage.getItem(_SCREENER_SNAPS_KEY)||null}
                   };
                   const enc=await encryptBackup(payload,pw);
                   const blob=new Blob([JSON.stringify(enc)],{type:"application/json"});
@@ -8327,6 +8329,8 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                     avApiKey:localStorage.getItem("mm_av_api_key")||"",
                     entryScores:localStorage.getItem(LS_ENTRY_SCORES)||"[]",
                     entrySnapshots:localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",
+                    screenerData:localStorage.getItem(_SCREENER_KEY)||null,
+                    screenerSnapshots:localStorage.getItem(_SCREENER_SNAPS_KEY)||null,
                   }
                 };
                 const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
@@ -8417,6 +8421,10 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                           localStorage.setItem(LS_ENTRY_SCORES,d.entryScores);
                         if(d.entrySnapshots)
                           localStorage.setItem(LS_ENTRY_SNAPSHOTS,d.entrySnapshots);
+                        if(d.screenerData)
+                          localStorage.setItem(_SCREENER_KEY,d.screenerData);
+                        if(d.screenerSnapshots)
+                          localStorage.setItem(_SCREENER_SNAPS_KEY,d.screenerSnapshots);
                       }catch{}
                       /* ── Overwrite IDB transactions so next-boot hydration loads
                          the restored data instead of the pre-restore snapshot.
@@ -11087,6 +11095,8 @@ var fsaReadFile=async(handle)=>{
     if(d.avApiKey){try{localStorage.setItem("mm_av_api_key",d.avApiKey);}catch{}}
     if(d.entryScores){try{localStorage.setItem(LS_ENTRY_SCORES,d.entryScores);}catch{}}
     if(d.entrySnapshots){try{localStorage.setItem(LS_ENTRY_SNAPSHOTS,d.entrySnapshots);}catch{}}
+    if(d.screenerData){try{localStorage.setItem(_SCREENER_KEY,d.screenerData);}catch{}}
+    if(d.screenerSnapshots){try{localStorage.setItem(_SCREENER_SNAPS_KEY,d.screenerSnapshots);}catch{}}
     return _safe(d);
   }catch(e){console.warn("[FSA] Read failed:",e);return null;}
 };
@@ -24902,6 +24912,10 @@ const _SCREENER_KEY="finsight-screener-data";
 const _loadScreenerCache=()=>{try{const raw=localStorage.getItem(_SCREENER_KEY);if(raw){const d=JSON.parse(raw);if(d&&Array.isArray(d.results))return d;}}catch(e){}return{results:[],timestamps:{},scanTime:0};};
 const _screenerCache=_loadScreenerCache();
 
+const _SCREENER_SNAPS_KEY="finsight-screener-snapshots";
+const _loadScreenerSnaps=()=>{try{const raw=localStorage.getItem(_SCREENER_SNAPS_KEY);if(raw){const d=JSON.parse(raw);if(Array.isArray(d))return d;}}catch(e){}return[];};
+const _saveScreenerSnaps=(arr)=>{try{localStorage.setItem(_SCREENER_SNAPS_KEY,JSON.stringify(arr));}catch(e){}};
+
 const StockScreener=()=>{
   const TI=window.TechIndicators;
   const DF=window.OHLCVFetcher;
@@ -24915,6 +24929,21 @@ const StockScreener=()=>{
   const[timestamps,setTimestamps]=useState(()=>_screenerCache.timestamps);
   const[scanTime,setScanTime]=useState(()=>_screenerCache.scanTime||0);
   const[refreshingMap,setRefreshingMap]=useState({});
+  const[snapshots,setSnapshots]=useState(()=>_loadScreenerSnaps());
+
+  const saveSnapshot=()=>{
+    if(!results.length)return;
+    const snap={id:Date.now(),scanTime,results:JSON.parse(JSON.stringify(results)),timestamps:JSON.parse(JSON.stringify(timestamps))};
+    const updated=[snap,...snapshots];
+    setSnapshots(updated);
+    _saveScreenerSnaps(updated);
+  };
+
+  const deleteSnapshot=(id)=>{
+    const updated=snapshots.filter(s=>s.id!==id);
+    setSnapshots(updated);
+    _saveScreenerSnaps(updated);
+  };
 
   React.useEffect(()=>{
     const id="screener-spin-keyframes";
@@ -25047,6 +25076,10 @@ const StockScreener=()=>{
       ),
       React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center"}},
         results.length>0&&!scanning?React.createElement("button",{
+          onClick:saveSnapshot,
+          style:{padding:"8px 14px",borderRadius:8,fontSize:11,fontWeight:600,border:"1px solid var(--accent)",background:"var(--accentbg)",color:"var(--accent)",cursor:"pointer"}
+        },"Save Snapshot"):null,
+        results.length>0&&!scanning?React.createElement("button",{
           onClick:purgeData,
           style:{padding:"8px 14px",borderRadius:8,fontSize:11,fontWeight:600,border:"1px solid var(--border)",background:"var(--bg4)",color:"var(--text5)",cursor:"pointer"}
         },"Purge Data"):null,
@@ -25122,7 +25155,131 @@ const StockScreener=()=>{
     ),
     !scanning&&results.length===0&&React.createElement("div",{style:{textAlign:"center",padding:40,color:"var(--text6)",fontSize:13}},
       "Click \"Scan Nifty 100\" to analyze all stocks"
-    )
+    ),
+    React.createElement(ScreenerSnapshots,{snapshots,deleteSnapshot})
+  );
+};
+
+const ScreenerSnapshots=({snapshots,deleteSnapshot})=>{
+  const[openSnaps,setOpenSnaps]=useState({});
+  const[openGroups,setOpenGroups]=useState({});
+
+  if(!snapshots.length)return null;
+
+  const fmtDate=(ts)=>{const d=new Date(ts);return{year:d.getFullYear(),month:d.toLocaleString("en-IN",{month:"long"}),day:d.getDate(),dayStr:d.toLocaleString("en-IN",{day:"2-digit",month:"short",year:"numeric"}),time:d.toLocaleString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"})};};
+
+  const grouped={};
+  snapshots.forEach(snap=>{
+    const f=fmtDate(snap.scanTime);
+    const yk=String(f.year);
+    const mk=yk+"-"+f.month;
+    const dk=mk+"-"+f.day;
+    if(!grouped[yk])grouped[yk]={};
+    if(!grouped[yk][mk])grouped[yk][mk]={};
+    if(!grouped[yk][mk][dk])grouped[yk][mk][dk]=[];
+    grouped[yk][mk][dk].push({...snap,_f:f});
+  });
+
+  const toggleGroup=(k)=>setOpenGroups(p=>({...p,[k]:!p[k]}));
+  const toggleSnap=(k)=>setOpenSnaps(p=>({...p,[k]:!p[k]}));
+
+  const cardStyle={background:"var(--bg3)",border:"1px solid var(--border)",borderRadius:10,marginBottom:16,overflow:"hidden"};
+  const headerStyle={display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",padding:"10px 14px",userSelect:"none",transition:"background .15s"};
+  const arrowStyle=(open)=>({display:"inline-block",transition:"transform .2s",transform:open?"rotate(90deg)":"rotate(0deg)",fontSize:10,marginRight:8,color:"var(--text5)"});
+
+  const snapThStyle={padding:"5px 8px",fontSize:9,fontWeight:700,color:"var(--text6)",textAlign:"left",borderBottom:"1px solid var(--border)",whiteSpace:"nowrap"};
+  const snapTdStyle={padding:"4px 8px",fontSize:10,borderBottom:"1px solid var(--border)",whiteSpace:"nowrap"};
+
+  const renderSnapTable=(results)=>{
+    return React.createElement("div",{style:{overflowX:"auto"}},
+      React.createElement("table",{style:{width:"100%",borderCollapse:"collapse",minWidth:600}},
+        React.createElement("thead",null,
+          React.createElement("tr",null,
+            ["ticker","name","price","finalScore","weekly","daily","hourly"].map(k=>{
+              const labels={ticker:"Ticker",name:"Company",price:"Price (\u20b9)",finalScore:"Score",weekly:"Weekly",daily:"Daily",hourly:"Hourly"};
+              return React.createElement("th",{key:k,style:snapThStyle},labels[k]);
+            })
+          )
+        ),
+        React.createElement("tbody",null,
+          results.map(r=>{
+            const d=r.result.decision;
+            return React.createElement("tr",{key:r.s.t},
+              React.createElement("td",{style:{...snapTdStyle,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},r.s.t.replace(".NS","")),
+              React.createElement("td",{style:{...snapTdStyle,color:"var(--text4)",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis"}},r.s.n),
+              React.createElement("td",{style:{...snapTdStyle,fontWeight:600,color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},"\u20b9"+Number(Math.round(r.lc)).toLocaleString("en-IN")),
+              React.createElement("td",{style:snapTdStyle},
+                React.createElement("div",{style:{display:"inline-flex",alignItems:"center",gap:4}},
+                  React.createElement("span",{style:{fontSize:11,fontWeight:900,color:d.color,fontFamily:"'Sora',sans-serif"}},r.result.finalScore),
+                  React.createElement("span",{style:{fontSize:8,fontWeight:700,color:d.color,padding:"1px 5px",borderRadius:3,background:d.color+"18"}},d.label)
+                )
+              ),
+              React.createElement("td",{style:snapTdStyle},r.result.weekly?React.createElement("span",{style:{fontWeight:700,color:r.result.weekly.decision.color}},r.result.weekly.total):"—"),
+              React.createElement("td",{style:snapTdStyle},r.result.daily?React.createElement("span",{style:{fontWeight:700,color:r.result.daily.decision.color}},r.result.daily.total):"—"),
+              React.createElement("td",{style:snapTdStyle},r.result.hourly?React.createElement("span",{style:{fontWeight:700,color:r.result.hourly.decision.color}},r.result.hourly.total):"—")
+            );
+          })
+        )
+      )
+    );
+  };
+
+  return React.createElement("div",{style:{marginTop:20}},
+    React.createElement("div",{style:{fontSize:14,fontWeight:800,color:"var(--text)",fontFamily:"'Sora',sans-serif",marginBottom:4}},"Saved Snapshots"),
+    React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginBottom:14}},"Historical screener snapshots grouped by date"),
+    Object.keys(grouped).sort((a,b)=>b-a).map(year=>{
+      const yearKey="y-"+year;
+      const yearOpen=!!openGroups[yearKey];
+      const months=grouped[year];
+      return React.createElement("div",{key:year,style:cardStyle},
+        React.createElement("div",{style:{...headerStyle,background:"var(--bg4)"},onClick:()=>toggleGroup(yearKey)},
+          React.createElement("div",null,React.createElement("span",{style:arrowStyle(yearOpen)},"\u25b6"),React.createElement("span",{style:{fontSize:13,fontWeight:800,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},year),
+            React.createElement("span",{style:{fontSize:10,color:"var(--text6)",marginLeft:8}},Object.values(months).reduce((a,m)=>a+Object.values(m).reduce((b,d)=>b+d.length,0),0)+" snapshots")
+          )
+        ),
+        yearOpen&&React.createElement("div",{style:{padding:"0 10px 10px"}},
+          Object.keys(months).sort((a,b)=>months[b].length-months[a].length||b.localeCompare(a)).map(month=>{
+            const mk=yearKey+"-"+month;
+            const monthOpen=!!openGroups[mk];
+            const days=months[month];
+            return React.createElement("div",{key:month,style:{marginBottom:8}},
+              React.createElement("div",{style:{...headerStyle,padding:"6px 10px",borderRadius:6,background:"var(--bg5)"},onClick:()=>toggleGroup(mk)},
+                React.createElement("div",null,React.createElement("span",{style:arrowStyle(monthOpen)},"\u25b6"),React.createElement("span",{style:{fontSize:11,fontWeight:700,color:"var(--text4)"}},month),
+                  React.createElement("span",{style:{fontSize:9,color:"var(--text6)",marginLeft:6}},Object.values(days).reduce((a,d)=>a+d.length,0)+" snapshots")
+                )
+              ),
+              monthOpen&&React.createElement("div",{style:{paddingLeft:14}},
+                Object.keys(days).sort((a,b)=>b.localeCompare(a)).map(dayKey=>{
+                  const dk=mk+"-"+dayKey;
+                  const dayOpen=!!openGroups[dk];
+                  const snaps=days[dayKey];
+                  return React.createElement("div",{key:dayKey,style:{marginBottom:4}},
+                    snaps.map((snap,i)=>{
+                      const snapKey=dk+"-"+snap.id;
+                      const isOpen=!!openSnaps[snapKey];
+                      return React.createElement("div",{key:snap.id,style:{marginBottom:4,border:"1px solid var(--border)",borderRadius:8,overflow:"hidden",background:"var(--bg3)"}},
+                        React.createElement("div",{style:{...headerStyle,padding:"7px 10px"},onClick:()=>toggleSnap(snapKey)},
+                          React.createElement("div",null,
+                            React.createElement("span",{style:arrowStyle(isOpen)},"\u25b6"),
+                            React.createElement("span",{style:{fontSize:10,fontWeight:600,color:"var(--text3)"}},snap._f.dayStr+" "+snap._f.time),
+                            React.createElement("span",{style:{fontSize:9,color:"var(--text6)",marginLeft:6}},snap.results.length+" stocks")
+                          ),
+                          React.createElement("button",{
+                            onClick:(e)=>{e.stopPropagation();deleteSnapshot(snap.id);},
+                            style:{padding:"3px 8px",borderRadius:4,fontSize:9,fontWeight:600,border:"1px solid rgba(239,68,68,.2)",background:"rgba(239,68,68,.06)",color:"#ef4444",cursor:"pointer"}
+                          },"Delete")
+                        ),
+                        isOpen&&renderSnapTable(snap.results)
+                      );
+                    })
+                  );
+                })
+              )
+            );
+          })
+        )
+      );
+    })
   );
 };
 
