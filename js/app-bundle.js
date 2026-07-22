@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.15.0";
+const APP_VERSION="7.17.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -19540,11 +19540,27 @@ const SnapshotChartPanel=({sn,dispatch})=>{
 const PreviousTrades=({soldShareSnapshots={},dispatch})=>{
   const fyKeys=Object.keys(soldShareSnapshots).sort().reverse(); /* Most recent FY first */
   const[collapsed,setCollapsed]=React.useState({});
+  const[monthCollapsed,setMonthCollapsed]=React.useState({});
   const[editSnap,setEditSnap]=React.useState(null);
-  const[techExpanded,setTechExpanded]=React.useState({});
+  const[snapDetailExpanded,setSnapDetailExpanded]=React.useState({});
+  const[snapTech,setSnapTech]=React.useState({});
   const toggleFY=(fy)=>setCollapsed(p=>({...p,[fy]:!p[fy]}));
-  const collapseAll=()=>setCollapsed(fyKeys.reduce((m,fy)=>(m[fy]=true,m),{}));
-  const expandAll=()=>setCollapsed({});
+  const toggleMonth=(mk)=>setMonthCollapsed(p=>({...p,[mk]:!p[mk]}));
+  const collapseAll=()=>{
+    const c={};
+    fyKeys.forEach(fy=>{
+      c[fy]=true;
+      const snaps=soldShareSnapshots[fy]||[];
+      snaps.forEach(sn=>{
+        const d=new Date(sn.savedAt+"T12:00:00");
+        const mk=fy+"-"+d.toLocaleString("en-IN",{month:"long"});
+        c[mk]=true;
+      });
+    });
+    setCollapsed(c);setMonthCollapsed(c);
+  };
+  const expandAll=()=>{setCollapsed({});setMonthCollapsed({});};
+  const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
   const saveEditedSnapshot=()=>{
     if(!editSnap)return;
     const{fyKey:_editFyKey,...snapData}=editSnap;
@@ -19619,8 +19635,43 @@ const PreviousTrades=({soldShareSnapshots={},dispatch})=>{
             "Net P&L: "+(totalPnl>=0?"+":"")+INR(totalPnl)
           )
         ),
-        /* Snapshot cards grid */
-        !isCollapsed&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(680px,1fr))",gap:20}},
+        /* Snapshot cards grid — grouped by month */
+        !isCollapsed&&(()=>{
+          const monthGroups={};
+          snaps.forEach(sn=>{
+            const d=new Date(sn.savedAt+"T12:00:00");
+            const mKey=fy+"-"+d.toLocaleString("en-IN",{month:"long"});
+            const mLabel=d.toLocaleString("en-IN",{month:"long",year:"numeric"});
+            if(!monthGroups[mKey])monthGroups[mKey]={label:mLabel,snaps:[]};
+            monthGroups[mKey].snaps.push(sn);
+          });
+          const mKeys=Object.keys(monthGroups).sort((a,b)=>{
+            const aSn=monthGroups[a].snaps[0];
+            const bSn=monthGroups[b].snaps[0];
+            const aD=new Date(aSn.savedAt+"T12:00:00");
+            const bD=new Date(bSn.savedAt+"T12:00:00");
+            return bD-aD;
+          });
+          return mKeys.map(mk=>{
+            const mg=monthGroups[mk];
+            const mIsCollapsed=!!monthCollapsed[mk];
+            const mPnl=mg.snaps.reduce((s,sn)=>s+sn.pnl,0);
+            return React.createElement("div",{key:mk,style:{marginBottom:12,marginLeft:12,borderLeft:"2px solid var(--border2)",paddingLeft:12}},
+              React.createElement("div",{onClick:()=>toggleMonth(mk),style:{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",borderRadius:8,marginBottom:mIsCollapsed?0:8,cursor:"pointer",background:"var(--bg5)",border:"1px solid var(--border)",transition:"all .15s"}},
+                React.createElement("span",{style:{fontSize:10,color:"var(--text6)",transition:"transform .2s",display:"inline-block",transform:mIsCollapsed?"rotate(-90deg)":"rotate(0deg)"}},"▼"),
+                React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"var(--text3)",flex:1}},mg.label),
+                React.createElement("span",{style:{fontSize:10,padding:"2px 7px",borderRadius:7,background:"rgba(109,40,217,.08)",color:"#6d28d9",border:"1px solid rgba(109,40,217,.15)",fontWeight:600}},
+                  mg.snaps.length+" trade"+(mg.snaps.length!==1?"s":"")
+                ),
+                React.createElement("span",{style:{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:7,
+                  background:mPnl>=0?"rgba(22,163,74,.08)":"rgba(239,68,68,.08)",
+                  color:mPnl>=0?"#16a34a":"#ef4444",
+                  border:"1px solid "+(mPnl>=0?"rgba(22,163,74,.2)":"rgba(239,68,68,.2)"),
+                }},
+                  (mPnl>=0?"+":"")+INR(mPnl)
+                )
+              ),
+              !mIsCollapsed&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(680px,1fr))",gap:16}},
           snaps.map((sn,idx)=>{
             const isGain=sn.pnl>=0;
             const priceDiff=sn.sellPrice-sn.buyPrice;
@@ -19762,56 +19813,185 @@ const PreviousTrades=({soldShareSnapshots={},dispatch})=>{
               /* ── Technical Indicators (if saved) ── */
               sn.techData&&(()=>{
                 const td=sn.techData;
-                const tKey="tech_"+(sn.id||"x");
-                const isTechOpen=!!techExpanded[tKey];
-                const ind_=td.indicators||{};
-                const trendSignals=[];
-                if(ind_.supertrendDir==="up")trendSignals.push({label:"SuperTrend Buy",col:"#16a34a"});
-                else if(ind_.supertrendDir==="down")trendSignals.push({label:"SuperTrend Sell",col:"#ef4444"});
-                if(ind_.rsi_14!==null&&ind_.rsi_14!==undefined){
-                  const rsiCol=ind_.rsi_14>70?"#ef4444":ind_.rsi_14<30?"#16a34a":"#eab308";
-                  trendSignals.push({label:"RSI "+ind_.rsi_14.toFixed(1),col:rsiCol});
-                }
-                if(ind_.macd&&ind_.macd.histogram!==null){
-                  const macdCol=ind_.macd.histogram>0?"#16a34a":"#ef4444";
-                  trendSignals.push({label:"MACD "+(ind_.macd.histogram>0?"\u25b2":"\u25bc"),col:macdCol});
-                }
-                if(ind_.adx!==null&&ind_.adx!==undefined){
-                  trendSignals.push({label:"ADX "+ind_.adx.toFixed(1),col:ind_.adx>25?"#3b82f6":"var(--text5)"});
-                }
-                if(ind_.ema_21!==null&&ind_.ema_21!==undefined&&td.lastClose){
-                  const aboveEma=td.lastClose>ind_.ema_21;
-                  trendSignals.push({label:"Price "+(aboveEma?">":"<")+" EMA21",col:aboveEma?"#16a34a":"#ef4444"});
-                }
+                const tKey="sn_"+(sn.id||"x");
+                const ind=td.indicators||{};
+                const interp=td.interpretation||{};
+                const isExp=!!snapDetailExpanded[tKey];
+                const isTech=!!snapTech[tKey];
+                const snapFactorBar=(label,val,max,color)=>{
+                  if(val==null||max==null)return null;
+                  const pct=max>0?(Math.abs(val)/max*100):0;
+                  const barColor=val<0?"#ef4444":color;
+                  return React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
+                    React.createElement("span",{style:{width:65,fontSize:8,fontWeight:600,color:"var(--text5)",textAlign:"right",flexShrink:0}},label),
+                    React.createElement("div",{style:{flex:1,height:4,borderRadius:2,background:"var(--bg5)",overflow:"hidden"}},
+                      React.createElement("div",{style:{width:pct+"%",height:"100%",borderRadius:2,background:barColor}})
+                    ),
+                    React.createElement("span",{style:{width:32,fontSize:8,fontWeight:700,color:val<0?"#ef4444":"var(--text5)",fontFamily:"'Sora',sans-serif",textAlign:"right"}},(val>=0?"+":"")+val+"/"+max)
+                  );
+                };
+                const SIG_COLORS={
+                  bullish:{bg:"rgba(22,163,74,.12)",border:"rgba(22,163,74,.3)",text:"#16a34a",label:"Bullish"},
+                  bearish:{bg:"rgba(239,68,68,.12)",border:"rgba(239,68,68,.3)",text:"#ef4444",label:"Bearish"},
+                  overbought:{bg:"rgba(234,88,12,.12)",border:"rgba(234,88,12,.3)",text:"#ea580c",label:"Overbought"},
+                  oversold:{bg:"rgba(37,99,235,.12)",border:"rgba(37,99,235,.3)",text:"#2563eb",label:"Oversold"},
+                  neutral:{bg:"var(--bg5)",border:"var(--border)",text:"var(--text5)",label:"Neutral"},
+                  trending:{bg:"rgba(168,85,247,.12)",border:"rgba(168,85,247,.3)",text:"#a855f7",label:"Trending"},
+                  ranging:{bg:"var(--bg5)",border:"var(--border)",text:"var(--text5)",label:"Ranging"},
+                };
+                const INDICATORS=[
+                  {name:"SMA (20)",key:"sma_20",cat:"Trend",type:"line"},
+                  {name:"SMA (50)",key:"sma_50",cat:"Trend",type:"line"},
+                  {name:"SMA (200)",key:"sma_200",cat:"Trend",type:"line"},
+                  {name:"EMA (9)",key:"ema_9",cat:"Trend",type:"line"},
+                  {name:"EMA (21)",key:"ema_21",cat:"Trend",type:"line"},
+                  {name:"EMA (50)",key:"ema_50",cat:"Trend",type:"line"},
+                  {name:"WMA (20)",key:"wma_20",cat:"Trend",type:"line"},
+                  {name:"VWAP",key:"vwap",cat:"Volume",type:"line"},
+                  {name:"RSI (14)",key:"rsi_14",cat:"Momentum",type:"oscillator",range:[0,100]},
+                  {name:"MACD",key:"macd",cat:"Momentum",type:"macd"},
+                  {name:"ATR (14)",key:"atr_14",cat:"Volatility",type:"line"},
+                  {name:"Bollinger Bands",key:"bollinger",cat:"Volatility",type:"bands"},
+                  {name:"ADX (14)",key:"adx",cat:"Trend",type:"oscillator",range:[0,100]},
+                  {name:"SuperTrend",key:"supertrend",cat:"Trend",type:"line"},
+                  {name:"Ichimoku Cloud",key:"ichimoku",cat:"Trend",type:"ichimoku"},
+                  {name:"Donchian Channels",key:"donchian",cat:"Volatility",type:"bands"},
+                  {name:"Keltner Channels",key:"keltner",cat:"Volatility",type:"bands"},
+                  {name:"OBV",key:"obv",cat:"Volume",type:"volume"},
+                  {name:"CMF (20)",key:"cmf_20",cat:"Volume",type:"oscillator",range:[-1,1]},
+                  {name:"Stochastic RSI",key:"stochRSI",cat:"Momentum",type:"stoch"},
+                  {name:"CCI (20)",key:"cci_20",cat:"Momentum",type:"oscillator",range:[-200,200]},
+                  {name:"ROC (12)",key:"roc_12",cat:"Momentum",type:"oscillator"},
+                  {name:"Momentum (10)",key:"momentum_10",cat:"Momentum",type:"oscillator"},
+                  {name:"Parabolic SAR",key:"psar",cat:"Trend",type:"line"},
+                  {name:"HMA (16)",key:"hma_20",cat:"Trend",type:"line"},
+                  {name:"KAMA (10)",key:"kama",cat:"Trend",type:"line"},
+                  {name:"TSI",key:"tsi",cat:"Momentum",type:"oscillator"},
+                  {name:"STC",key:"stc",cat:"Momentum",type:"oscillator",range:[0,100]},
+                  {name:"MFI (14)",key:"mfi_14",cat:"Volume",type:"oscillator",range:[0,100]},
+                  {name:"PVT",key:"pvt",cat:"Volume",type:"volume"},
+                  {name:"KVO",key:"kvo",cat:"Volume",type:"oscillator"},
+                  {name:"Anchored VWAP",key:"anchored_vwap",cat:"Volume",type:"line"},
+                  {name:"Volume Profile",key:"volumeProfile",cat:"Volume",type:"volumeProfile"},
+                  {name:"TTM Squeeze",key:"ttmSqueeze",cat:"Volatility",type:"squeeze"},
+                  {name:"Squeeze Momentum",key:"squeezeMomentum",cat:"Momentum",type:"oscillator"},
+                  {name:"Darvas Box",key:"darvasBox",cat:"Volatility",type:"darvas"},
+                  {name:"Smart Money",key:"smartMoney",cat:"Volume",type:"smartMoney"},
+                  {name:"MTF Alignment",key:"mtfAlignment",cat:"Trend",type:"oscillator",range:[0,100]},
+                ];
+                const fmtVal=(v,dec)=>{
+                  if(v===null||v===undefined||isNaN(v))return"—";
+                  dec=dec!==undefined?dec:2;
+                  if(Math.abs(v)>=1e9)return(v/1e9).toFixed(1)+"B";
+                  if(Math.abs(v)>=1e7)return(v/1e7).toFixed(1)+"Cr";
+                  if(Math.abs(v)>=1e5)return(v/1e3).toFixed(1)+"K";
+                  return Number(v).toFixed(dec);
+                };
+                const fmtVol_=(v)=>{
+                  if(v===null||v===undefined)return"—";
+                  if(v>=1e9)return(v/1e9).toFixed(2)+"B";
+                  if(v>=1e7)return(v/1e7).toFixed(2)+"Cr";
+                  if(v>=1e5)return(v/1e5).toFixed(2)+"L";
+                  if(v>=1000)return(v/1000).toFixed(1)+"K";
+                  return v.toString();
+                };
+                const fmtValInd=(ind,val)=>{
+                  if(val===null||val===undefined)return"—";
+                  if(typeof val==="object"){
+                    if(ind.type==="macd")return fmtVal(val.macd,4);
+                    if(ind.type==="stoch")return"%K: "+fmtVal(val.k)+" / %D: "+fmtVal(val.d);
+                    if(ind.type==="bands")return fmtVal(val.middle);
+                    if(ind.type==="ichimoku")return fmtVal(val.tenkan);
+                    if(ind.type==="darvas")return val.boxTop?fmtVal(val.boxTop)+" / "+fmtVal(val.boxBottom):"—";
+                    if(ind.type==="smartMoney")return val.bos?val.bos.replace("_"," ").toUpperCase():"—";
+                    if(ind.type==="volumeProfile")return val.poc?"POC: "+fmtVal(val.poc):"—";
+                    return"—";
+                  }
+                  if(ind.type==="volume")return fmtVol_(val);
+                  if(ind.type==="squeeze")return val?"Squeeze ON":"Squeeze OFF";
+                  return fmtVal(val);
+                };
+                const renderSnIndicators=(indData,interpData)=>{
+                  if(!indData)return React.createElement("div",{style:{fontSize:9,color:"var(--text6)",padding:"4px 0"}},"No data");
+                  return React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:"1px 6px"}},
+                    INDICATORS.map((ind)=>{
+                      const val=indData[ind.key];
+                      const sig=interpData?interpData[ind.key]:null;
+                      const sigC=sig&&sig!=="neutral"?SIG_COLORS[sig]||null:null;
+                      if(val===null||val===undefined)return null;
+                      const valStr=fmtValInd(ind,val);
+                      return React.createElement("div",{key:ind.key,style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"2px 4px",borderRadius:4,gap:4}},
+                        React.createElement("span",{style:{fontSize:9,color:"var(--text5)",flex:"0 0 auto",whiteSpace:"nowrap"}},ind.name),
+                        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:3,flex:1,justifyContent:"flex-end",minWidth:0}},
+                          React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"var(--text3)",fontFamily:"'Sora',sans-serif",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},valStr),
+                          sigC&&React.createElement("span",{style:{fontSize:7,fontWeight:700,padding:"1px 4px",borderRadius:4,background:sigC.bg,border:"1px solid "+sigC.border,color:sigC.text,whiteSpace:"nowrap",flexShrink:0}},sigC.label)
+                        )
+                      );
+                    })
+                  );
+                };
                 const exitLabel=td.exitScore?td.exitScore.decision.label+" ("+td.exitScore.total+")":null;
                 const exitCol=td.exitScore?td.exitScore.decision.color:null;
                 return React.createElement("div",{style:{marginBottom:8,borderRadius:8,background:"var(--bg4)",border:"1px solid var(--border)",overflow:"hidden"}},
-                  React.createElement("div",{onClick:()=>setTechExpanded(p=>({...p,[tKey]:!p[tKey]})),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 10px",cursor:"pointer"}},
+                  React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 10px",borderBottom:(isExp||isTech)?"1px solid var(--border)":"none"}},
                     React.createElement("span",{style:{fontSize:10,fontWeight:700,color:"var(--text3)",display:"flex",alignItems:"center",gap:5}},
                       React.createElement(Icon,{n:"bolt",size:11,color:"#ea580c"}),
-                      (isTechOpen?"▾ ":"▸ ")+"Technical Indicators",
+                      "Exit Score & Technical Indicators",
                       td.source&&React.createElement("span",{style:{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"rgba(234,88,12,.1)",color:"#ea580c",border:"1px solid rgba(234,88,12,.2)"}},td.source)
                     ),
                     exitLabel&&React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:5,background:exitCol+"18",color:exitCol,border:"1px solid "+exitCol+"33"}},exitLabel)
                   ),
-                  isTechOpen&&React.createElement("div",{style:{padding:"6px 10px 8px",borderTop:"1px solid var(--border)"}},
-                    trendSignals.length>0&&React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:4,marginBottom:6}},
-                      trendSignals.map((sig,i)=>React.createElement("span",{key:i,style:{fontSize:9,fontWeight:600,padding:"2px 6px",borderRadius:4,background:sig.col+"18",color:sig.col,border:"1px solid "+sig.col+"33"}},sig.label))
+                  React.createElement("div",{style:{display:"flex",justifyContent:"center",gap:12,padding:"5px 10px"}},
+                    React.createElement("div",{onClick:()=>setSnapDetailExpanded(p=>({...p,[tKey]:!p[tKey]})),style:{fontSize:9,color:"var(--accent)",cursor:"pointer",fontWeight:600}},
+                      isExp?"\u25b2 Hide Details":"\u25bc Show Details"
                     ),
-                    td.interpretationText&&React.createElement("div",{style:{fontSize:9,color:"var(--text5)",lineHeight:1.5,marginBottom:4}},td.interpretationText),
-                    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}},
-                      [["EMA9",ind_.ema_9],["EMA21",ind_.ema_21],["EMA50",ind_.ema_50],["SMA200",ind_.sma_200],
-                       ["BB Upper",ind_.bollinger&&ind_.bollinger.upper],["BB Lower",ind_.bollinger&&ind_.bollinger.lower],
-                       ["ATR(14)",ind_.atr_14],["CMF(20)",ind_.cmf_20],
-                       ["MFI(14)",ind_.mfi_14],["CCI(20)",ind_.cci_20],
-                       ["VWAP",ind_.vwap],["PSAR",ind_.psar]
-                      ].filter(x=>x[1]!==null&&x[1]!==undefined).map(([lbl,val])=>
-                        React.createElement("div",{key:lbl,style:{display:"flex",justifyContent:"space-between",padding:"2px 0",fontSize:9}},
-                          React.createElement("span",{style:{color:"var(--text5)"}},lbl),
-                          React.createElement("span",{style:{fontWeight:600,color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},
-                            typeof val==="number"?val.toFixed(2):typeof val==="object"?JSON.stringify(val):String(val))
+                    React.createElement("div",{onClick:()=>setSnapTech(p=>({...p,[tKey]:!p[tKey]})),style:{fontSize:9,color:isTech?"var(--text5)":"#f97316",cursor:"pointer",fontWeight:600}},
+                      "\u26a1 "+(isTech?"Hide Technicals":"Technicals")
+                    )
+                  ),
+                  isExp&&td.exitScore&&React.createElement("div",{style:{padding:"6px 10px 8px",borderTop:"1px solid var(--border)"}},
+                    (()=>{
+                      const es=td.exitScore;
+                      return React.createElement("div",{style:{padding:"6px 8px",borderRadius:6,background:"var(--bg5)",border:"1px solid var(--border)"}},
+                        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}},
+                          React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"var(--text3)"}},"Exit Score Breakdown"),
+                          React.createElement("span",{style:{fontSize:10,fontWeight:800,color:es.decision.color,fontFamily:"'Sora',sans-serif"}},es.total+" · "+es.decision.label)
+                        ),
+                        React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:2}},
+                          snapFactorBar("Trend",es.trend,es.trendMax||10,"#3b82f6"),
+                          snapFactorBar("Momentum",es.momentum,es.momentumMax||10,"#a855f7"),
+                          snapFactorBar("Volume",es.volume,es.volumeMax||10,"#06b6d4"),
+                          snapFactorBar("Structure",es.structure,es.structureMax||10,"#ec4899")
+                        ),
+                        es.hardFilters&&es.hardFilters.length>0&&React.createElement("div",{style:{marginTop:6,padding:"6px 8px",borderRadius:6,background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.15)"}},
+                          React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text3)",marginBottom:3}},"Hard Filters"),
+                          es.hardFilters.map((f,i)=>{
+                            var isBonus=f.indexOf("(+")>=0;
+                            var valMatch=f.match(/\([+\-\u2212]?\d+\)$/);
+                            var valStr=valMatch?valMatch[0]:"";
+                            var label=valStr?f.replace(valStr,"").replace(/\s*—\s*/," — ").trim():f;
+                            return React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:4,fontSize:9,lineHeight:1.4}},
+                              React.createElement("span",{style:{color:"var(--text3)",flex:1,minWidth:0,overflow:"hidden",wordBreak:"break-word"}},isBonus?"✓ "+label:"⚠ "+label),
+                              valStr&&React.createElement("span",{style:{fontSize:9,fontWeight:800,color:"var(--text3)",background:"var(--bg4)",padding:"1px 5px",borderRadius:3,fontFamily:"'Sora',sans-serif",flexShrink:0}},valStr)
+                            );
+                          })
                         )
-                      )
+                      );
+                    })()
+                  ),
+                  isTech&&React.createElement("div",{style:{padding:"6px 10px",borderTop:"1px solid var(--border)"}},
+                    td.interpretationText&&React.createElement("div",{style:{fontSize:9,color:"var(--text5)",lineHeight:1.4,marginBottom:6}},td.interpretationText),
+                    ind.weekly&&React.createElement("div",{style:{marginBottom:6}},
+                      React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text4)",marginBottom:3,textTransform:"uppercase",letterSpacing:.5}},"Weekly"),
+                      renderSnIndicators(ind.weekly,interp)
+                    ),
+                    ind.daily&&React.createElement("div",{style:{marginBottom:6}},
+                      React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text4)",marginBottom:3,textTransform:"uppercase",letterSpacing:.5}},"Daily"),
+                      renderSnIndicators(ind.daily,interp)
+                    ),
+                    ind.hourly&&React.createElement("div",null,
+                      React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text4)",marginBottom:3,textTransform:"uppercase",letterSpacing:.5}},"Hourly"),
+                      renderSnIndicators(ind.hourly,interp)
                     )
                   )
                 );
@@ -19852,9 +20032,11 @@ const PreviousTrades=({soldShareSnapshots={},dispatch})=>{
               )
             );
           })
-        )
-      );
-    }),
+        );
+      });
+    })(),
+  );
+}),
     editSnap&&React.createElement(Modal,{title:"Edit Previous Trade Snapshot",onClose:()=>setEditSnap(null),w:520},
       React.createElement("div",{className:"grid-2col"},
         React.createElement(Field,{label:"Company"},React.createElement("input",{className:"inp",value:editSnap.company||"",onChange:e=>setEditSnap(p=>({...p,company:e.target.value}))})),
@@ -24550,7 +24732,6 @@ const EntryScorePanel=({shares})=>{
   const[showSnapshots,setShowSnapshots]=useState(false);
   const[expandedYear,setExpandedYear]=useState(null);
   const[expandedMonth,setExpandedMonth]=useState(null);
-  const[expandedWeek,setExpandedWeek]=useState(null);
   const[expandedDay,setExpandedDay]=useState(null);
 
   const saveEntries=(arr)=>{setEntries(arr);try{localStorage.setItem(LS_ENTRY_SCORES,JSON.stringify(arr));}catch{};};
@@ -24576,7 +24757,7 @@ const EntryScorePanel=({shares})=>{
           const indH=resH.data&&resH.data.length>=12?TI.computeAll(resH.data):null;
           const result=TI.computeMultiTFEntryScore(resW.data,indW,resD.data,indD,resH.data,indH,entry.currentPrice||0);
           const idx=updated.findIndex(e=>e.id===entry.id);
-          if(idx>=0)updated[idx]={...updated[idx],result};
+          if(idx>=0)updated[idx]={...updated[idx],result,indicators:{weekly:indW,daily:indD,hourly:indH}};
         }catch(e){}
       }
       saveEntries(updated);
@@ -24585,42 +24766,23 @@ const EntryScorePanel=({shares})=>{
 
   const saveSnapshots=(arr)=>{setSnapshots(arr);try{localStorage.setItem(LS_ENTRY_SNAPSHOTS,JSON.stringify(arr));}catch{};};
   const saveSnapshot=(entry)=>{
-    const snap={id:Date.now(),ticker:entry.ticker,currentPrice:entry.currentPrice,savedAt:new Date().toISOString(),result:entry.result,entryAddedAt:entry.addedAt};
+    const snap={id:Date.now(),ticker:entry.ticker,currentPrice:entry.currentPrice,savedAt:new Date().toISOString(),result:JSON.parse(JSON.stringify(entry.result)),indicators:entry.indicators?JSON.parse(JSON.stringify(entry.indicators)):null,entryAddedAt:entry.addedAt};
     saveSnapshots([snap,...snapshots]);
   };
   const deleteSnapshot=(id)=>{saveSnapshots(snapshots.filter(s=>s.id!==id));};
-
-  const getWeekNumber=(d)=>{
-    const date=new Date(d);date.setHours(0,0,0,0);
-    date.setDate(date.getDate()+3-(date.getDay()+6)%7);
-    const week1=new Date(date.getFullYear(),0,4);
-    return Math.round(((date.getTime()-week1.getTime())/86400000-3+(week1.getDay()+6)%7)/7)+1;
-  };
-  const getWeekRange=(d)=>{
-    const date=new Date(d);const day=date.getDay()||7;
-    const mon=new Date(date);mon.setDate(date.getDate()-day+1);
-    const sun=new Date(mon);sun.setDate(mon.getDate()+6);
-    return mon.toLocaleDateString("en-IN",{month:"short",day:"numeric"})+" - "+sun.toLocaleDateString("en-IN",{month:"short",day:"numeric"});
-  };
 
   const groupSnapshots=()=>{
     const years={};
     snapshots.forEach(snap=>{
       const d=new Date(snap.savedAt);
       const yKey=String(d.getFullYear());
-      const yLabel=yKey;
-      const mKey=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
-      const mLabel=d.toLocaleDateString("en-IN",{month:"long"});
-      const wNum=getWeekNumber(d);
-      const wKey=mKey+"-W"+wNum;
-      const wLabel="Week "+wNum+" ("+getWeekRange(d)+")";
-      const dayKey=snap.savedAt.slice(0,10);
-      const dayLabel=d.toLocaleDateString("en-IN",{weekday:"short",month:"short",day:"numeric"});
-      if(!years[yKey])years[yKey]={label:yLabel,months:{}};
-      if(!years[yKey].months[mKey])years[yKey].months[mKey]={label:mLabel,weeks:{}};
-      if(!years[yKey].months[mKey].weeks[wKey])years[yKey].months[mKey].weeks[wKey]={label:wLabel,days:{}};
-      if(!years[yKey].months[mKey].weeks[wKey].days[dayKey])years[yKey].months[mKey].weeks[wKey].days[dayKey]={label:dayLabel,snaps:[]};
-      years[yKey].months[mKey].weeks[wKey].days[dayKey].snaps.push(snap);
+      const mKey=yKey+"-"+d.toLocaleString("en-IN",{month:"long"});
+      const dayKey=mKey+"-"+d.getDate();
+      const dayLabel=d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
+      if(!years[yKey])years[yKey]={};
+      if(!years[yKey][mKey])years[yKey][mKey]={};
+      if(!years[yKey][mKey][dayKey])years[yKey][mKey][dayKey]={label:dayLabel,snaps:[]};
+      years[yKey][mKey][dayKey].snaps.push(snap);
     });
     return years;
   };
@@ -24642,7 +24804,7 @@ const EntryScorePanel=({shares})=>{
       const indD=TI.computeAll(resD.data);
       const indH=resH.data&&resH.data.length>=12?TI.computeAll(resH.data):null;
       const result=TI.computeMultiTFEntryScore(resW.data,indW,resD.data,indD,resH.data,indH,price);
-      const entry={id:Date.now(),ticker:tk,currentPrice:price,addedAt:new Date().toISOString(),result};
+      const entry={id:Date.now(),ticker:tk,currentPrice:price,addedAt:new Date().toISOString(),result,indicators:{weekly:indW,daily:indD,hourly:indH}};
       saveEntries([entry,...entries]);
       setAddTicker("");setAddPrice("");setShowAdd(false);
     }catch(e){setAddErr("Error: "+(e.message||"Failed"));}
@@ -24679,8 +24841,86 @@ const EntryScorePanel=({shares})=>{
     );
   };
 
+  const[snapExpanded,setSnapExpanded]=useState({});
+  const[snapTech,setSnapTech]=useState({});
+
   const snapshotCard=(snap)=>{
     const r=snap.result;
+    const ind=snap.indicators||{};
+    const isExp=!!snapExpanded[snap.id];
+    const isTech=!!snapTech[snap.id];
+    const snapFactorBar=(label,val,max,color)=>{
+      if(val==null||max==null)return null;
+      const pct=max>0?(Math.abs(val)/max*100):0;
+      const barColor=val<0?"#ef4444":color;
+      return React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
+        React.createElement("span",{style:{width:65,fontSize:8,fontWeight:600,color:"var(--text5)",textAlign:"right",flexShrink:0}},label),
+        React.createElement("div",{style:{flex:1,height:4,borderRadius:2,background:"var(--bg5)",overflow:"hidden"}},
+          React.createElement("div",{style:{width:pct+"%",height:"100%",borderRadius:2,background:barColor}})
+        ),
+        React.createElement("span",{style:{width:32,fontSize:8,fontWeight:700,color:val<0?"#ef4444":"var(--text5)",fontFamily:"'Sora',sans-serif",textAlign:"right"}},(val>=0?"+":"")+val+"/"+max)
+      );
+    };
+    const snapTfSection=(label,score)=>{
+      if(!score)return null;
+      return React.createElement("div",{style:{marginBottom:6}},
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}},
+          React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"var(--text3)"}},label),
+          React.createElement("span",{style:{fontSize:10,fontWeight:800,color:score.decision.color,fontFamily:"'Sora',sans-serif"}},score.total+" · "+score.decision.label)
+        ),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:2}},
+          snapFactorBar("Trend",score.trendScore,score.trendMax,"#3b82f6"),
+          snapFactorBar("Momentum",score.momentumScore,score.momentumMax,"#a855f7"),
+          snapFactorBar("Volume",score.volumeScore,score.volumeMax,"#06b6d4"),
+          snapFactorBar("Structure",score.structureScore,score.structureMax,"#ec4899")
+        )
+      );
+    };
+    const indRow=(label,val,signal)=>{
+      if(val==null)return null;
+      const sigColor=signal==="bullish"?"#22c55e":signal==="bearish"?"#ef4444":signal==="overbought"?"#f59e0b":signal==="oversold"?"#3b82f6":"var(--text5)";
+      return React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"2px 0"}},
+        React.createElement("span",{style:{fontSize:9,color:"var(--text5)"}},label),
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
+          React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},typeof val==="number"?val.toFixed(2):"—"),
+          signal&&React.createElement("span",{style:{fontSize:7,fontWeight:700,color:sigColor,padding:"1px 4px",borderRadius:3,background:sigColor+"15"}},signal)
+        )
+      );
+    };
+    const renderIndicators=(indData)=>{
+      if(!indData)return React.createElement("div",{style:{fontSize:9,color:"var(--text6)",padding:"4px 0"}},"No data");
+      const lc=indData.lastClose;
+      return React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"2px 8px"}},
+        indRow("RSI (14)",indData.rsi_14,indData.rsi_14>70?"overbought":indData.rsi_14<30?"oversold":"neutral"),
+        indRow("ADX (14)",indData.adx_14,indData.adx_14>25?"trending":"ranging"),
+        indRow("MACD",indData.macd?indData.macd.macd:null,indData.macd&&indData.macd.histogram>0?"bullish":"bearish"),
+        indRow("MACD Signal",indData.macd?indData.macd.signal:null),
+        indRow("EMA 9",indData.ema_9,lc&&indData.ema_9?lc>indData.ema_9?"bullish":"bearish":null),
+        indRow("EMA 21",indData.ema_21,lc&&indData.ema_21?lc>indData.ema_21?"bullish":"bearish":null),
+        indRow("EMA 50",indData.ema_50,lc&&indData.ema_50?lc>indData.ema_50?"bullish":"bearish":null),
+        indRow("SMA 20",indData.sma_20,lc&&indData.sma_20?lc>indData.sma_20?"bullish":"bearish":null),
+        indRow("SMA 50",indData.sma_50,lc&&indData.sma_50?lc>indData.sma_50?"bullish":"bearish":null),
+        indRow("Supertrend",indData.supertrend,lc&&indData.supertrend?lc>indData.supertrend?"bullish":"bearish":null),
+        indRow("ATR (14)",indData.atr_14),
+        indRow("CCI (20)",indData.cci_20,indData.cci_20>100?"overbought":indData.cci_20<-100?"oversold":"neutral"),
+        indRow("MFI (14)",indData.mfi_14,indData.mfi_14>80?"overbought":indData.mfi_14<20?"oversold":"neutral"),
+        indRow("Stoch RSI K",indData.stochRSI?indData.stochRSI.k:null,indData.stochRSI&&indData.stochRSI.k>80?"overbought":indData.stochRSI&&indData.stochRSI.k<20?"oversold":"neutral"),
+        indRow("BB Upper",indData.bb?indData.bb.upper:null),
+        indRow("BB Lower",indData.bb?indData.bb.lower:null),
+        indRow("OBV",indData.obv),
+        indRow("VWAP",indData.vwap),
+        indRow("ROC (12)",indData.roc_12,indData.roc_12>0?"bullish":"bearish"),
+        indRow("PSAR",indData.psar,lc&&indData.psar?lc>indData.psar?"bullish":"bearish":null),
+        indRow("WMA 20",indData.wma_20),
+        indRow("HMA 16",indData.hma_16),
+        indRow("KAMA 10",indData.kama_10),
+        indRow("CMF (20)",indData.cmf_20,indData.cmf_20>0?"bullish":"bearish"),
+        indRow("TSI",indData.tsi,indData.tsi>0?"bullish":"bearish"),
+        indRow("STC",indData.stc,indData.stc>0?"bullish":"bearish"),
+        indRow("KVO",indData.kvo,indData.kvo>0?"bullish":"bearish"),
+        indRow("PVT",indData.pvt)
+      );
+    };
     return React.createElement("div",{key:snap.id,style:{padding:12,borderRadius:10,background:"var(--bg4)",border:"1px solid var(--border)",marginBottom:8}},
       React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}},
         React.createElement("div",null,
@@ -24711,6 +24951,52 @@ const EntryScorePanel=({shares})=>{
             s&&React.createElement("div",{style:{fontSize:8,color:s.decision.color,fontWeight:600}},s.decision.label)
           );
         })
+      ),
+      React.createElement("div",{style:{display:"flex",justifyContent:"center",gap:12,marginTop:8}},
+        React.createElement("div",{onClick:()=>setSnapExpanded(p=>({...p,[snap.id]:!p[snap.id]})),style:{fontSize:9,color:"var(--accent)",cursor:"pointer",fontWeight:600}},
+          isExp?"\u25b2 Hide Details":"\u25bc Show Details"
+        ),
+        ind&&React.createElement("div",{onClick:()=>setSnapTech(p=>({...p,[snap.id]:!p[snap.id]})),style:{fontSize:9,color:isTech?"var(--text5)":"#f97316",cursor:"pointer",fontWeight:600}},
+          "\u26a1 "+(isTech?"Hide Technicals":"Technicals")
+        )
+      ),
+      isExp&&React.createElement("div",{style:{marginTop:8,padding:"6px 0"}},
+        r.daily&&snapTfSection("Daily (50%)",r.daily),
+        r.weekly&&snapTfSection("Weekly (30%)",r.weekly),
+        r.hourly&&snapTfSection("Hourly (20%)",r.hourly),
+        r.hardFilters&&r.hardFilters.length>0&&React.createElement("div",{style:{marginTop:6,padding:"6px 8px",borderRadius:6,background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.15)"}},
+          React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text3)",marginBottom:3}},"Penalties & Bonuses"),
+          r.hardFilters.map((f,i)=>{
+            var isBonus=f.indexOf("(+")>=0;
+            var valMatch=f.match(/\([+\-\u2212]?\d+\)$/);
+            var valStr=valMatch?valMatch[0]:"";
+            var label=valStr?f.replace(valStr,"").replace(/\s*—\s*/," — ").trim():f;
+            return React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:4,fontSize:9,lineHeight:1.4}},
+              React.createElement("span",{style:{color:"var(--text3)",flex:1,minWidth:0,overflow:"hidden",wordBreak:"break-word"}},isBonus?"✓ "+label:"⚠ "+label),
+              valStr&&React.createElement("span",{style:{fontSize:9,fontWeight:800,color:"var(--text3)",background:"var(--bg4)",padding:"1px 5px",borderRadius:3,fontFamily:"'Sora',sans-serif",flexShrink:0}},valStr)
+            );
+          }),
+          React.createElement("div",{style:{fontSize:8,color:"var(--text5)",marginTop:3}},
+            "Base: "+r.baseScore+" | Penalties: "+r.penalties+" | Bonuses: "+r.bonuses+" → Final: "+r.finalScore
+          )
+        )
+      ),
+      isTech&&ind&&React.createElement("div",{style:{marginTop:8,padding:"8px",borderRadius:8,background:"var(--bg5)",border:"1px solid var(--border)"}},
+        React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text4)",marginBottom:6}},"Technical Indicators"),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
+          ind.weekly&&React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:8,fontWeight:700,color:"var(--text5)",marginBottom:3,textTransform:"uppercase",letterSpacing:.5}},"Weekly"),
+            renderIndicators(ind.weekly)
+          ),
+          ind.daily&&React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:8,fontWeight:700,color:"var(--text5)",marginBottom:3,textTransform:"uppercase",letterSpacing:.5}},"Daily"),
+            renderIndicators(ind.daily)
+          ),
+          ind.hourly&&React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:8,fontWeight:700,color:"var(--text5)",marginBottom:3,textTransform:"uppercase",letterSpacing:.5}},"Hourly"),
+            renderIndicators(ind.hourly)
+          )
+        )
       )
     );
   };
@@ -24720,48 +25006,34 @@ const EntryScorePanel=({shares})=>{
     const yKeys=Object.keys(grouped).sort().reverse();
     if(yKeys.length===0)return React.createElement("div",{style:{textAlign:"center",padding:30,color:"var(--text6)",fontSize:12}},"No saved snapshots yet.");
     return yKeys.map(yKey=>{
-      const y=grouped[yKey];
-      const mKeys=Object.keys(y.months).sort().reverse();
+      const months=grouped[yKey];
       const isYExp=expandedYear===yKey;
-      const totalSnaps=mKeys.reduce((acc,mKey)=>acc+Object.values(y.months[mKey].weeks).reduce((a,w)=>a+Object.values(w.days).reduce((b,d)=>b+d.snaps.length,0),0),0);
+      const totalSnaps=Object.values(months).reduce((a,m)=>a+Object.values(m).reduce((b,d)=>b+d.snaps.length,0),0);
       return React.createElement("div",{key:yKey,style:{marginBottom:10,borderRadius:10,background:"var(--bg3)",border:"1px solid var(--border)",overflow:"hidden"}},
         React.createElement("div",{onClick:()=>setExpandedYear(isYExp?null:yKey),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 14px",cursor:"pointer",background:isYExp?"var(--bg4)":"transparent"}},
-          React.createElement("span",{style:{fontSize:13,fontWeight:800,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},(isYExp?"▾ ":"▸ ")+y.label),
+          React.createElement("span",{style:{fontSize:13,fontWeight:800,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},(isYExp?"▾ ":"▸ ")+yKey),
           React.createElement("span",{style:{fontSize:10,color:"var(--text5)",fontWeight:600}},totalSnaps+" snapshot"+(totalSnaps!==1?"s":""))
         ),
-        isYExp&&mKeys.map(mKey=>{
-          const m=y.months[mKey];
-          const wKeys=Object.keys(m.weeks).sort().reverse();
+        isYExp&&Object.keys(months).sort().reverse().map(mKey=>{
+          const days=months[mKey];
           const isMExp=expandedMonth===mKey;
-          const mSnaps=wKeys.reduce((acc,wKey)=>acc+Object.values(m.weeks[wKey].days).reduce((a,d)=>a+d.snaps.length,0),0);
+          const mSnaps=Object.values(days).reduce((a,d)=>a+d.snaps.length,0);
           return React.createElement("div",{key:mKey,style:{borderTop:"1px solid var(--border)"}},
             React.createElement("div",{onClick:()=>setExpandedMonth(isMExp?null:mKey),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 14px 8px 28px",cursor:"pointer",background:isMExp?"var(--bg4)":"transparent"}},
-              React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"var(--text)"}},(isMExp?"▾ ":"▸ ")+m.label),
+              React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"var(--text)"}},(isMExp?"▾ ":"▸ ")+mKey.split("-").slice(1).join("-")),
               React.createElement("span",{style:{fontSize:10,color:"var(--text5)",fontWeight:600}},mSnaps+" snap"+(mSnaps!==1?"s":""))
             ),
-            isMExp&&wKeys.map(wKey=>{
-              const w=m.weeks[wKey];
-              const dKeys=Object.keys(w.days).sort().reverse();
-              const isWExp=expandedWeek===wKey;
-              const wSnaps=dKeys.reduce((a,dKey)=>a+w.days[dKey].snaps.length,0);
-              return React.createElement("div",{key:wKey,style:{borderTop:"1px solid var(--border)"}},
-                React.createElement("div",{onClick:()=>setExpandedWeek(isWExp?null:wKey),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 14px 7px 42px",cursor:"pointer",background:isWExp?"var(--bg4)":"transparent"}},
-                  React.createElement("span",{style:{fontSize:11,fontWeight:600,color:"var(--text2)"}},(isWExp?"▾ ":"▸ ")+w.label),
-                  React.createElement("span",{style:{fontSize:9,color:"var(--text5)"}},wSnaps+" snap"+(wSnaps!==1?"s":""))
+            isMExp&&Object.keys(days).sort().reverse().map(dayKey=>{
+              const day=days[dayKey];
+              const isDExp=expandedDay===dayKey;
+              return React.createElement("div",{key:dayKey,style:{borderTop:"1px solid var(--border)"}},
+                React.createElement("div",{onClick:()=>setExpandedDay(isDExp?null:dayKey),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 14px 6px 42px",cursor:"pointer",background:isDExp?"var(--bg4)":"transparent"}},
+                  React.createElement("span",{style:{fontSize:10,fontWeight:600,color:"var(--text3)"}},(isDExp?"▾ ":"▸ ")+day.label),
+                  React.createElement("span",{style:{fontSize:9,color:"var(--text5)"}},day.snaps.length+" snap"+(day.snaps.length!==1?"s":""))
                 ),
-                isWExp&&dKeys.map(dKey=>{
-                  const day=w.days[dKey];
-                  const isDExp=expandedDay===dKey;
-                  return React.createElement("div",{key:dKey,style:{borderTop:"1px solid var(--border)"}},
-                    React.createElement("div",{onClick:()=>setExpandedDay(isDExp?null:dKey),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 14px 6px 56px",cursor:"pointer",background:isDExp?"var(--bg4)":"transparent"}},
-                      React.createElement("span",{style:{fontSize:10,fontWeight:600,color:"var(--text3)"}},(isDExp?"▾ ":"▸ ")+day.label),
-                      React.createElement("span",{style:{fontSize:9,color:"var(--text5)"}},day.snaps.length+" snap"+(day.snaps.length!==1?"s":""))
-                    ),
-                    isDExp&&React.createElement("div",{style:{padding:"6px 14px 6px 66px"}},
-                      day.snaps.map(snap=>snapshotCard(snap))
-                    )
-                  );
-                })
+                isDExp&&React.createElement("div",{style:{padding:"6px 14px 6px 56px"}},
+                  day.snaps.map(snap=>snapshotCard(snap))
+                )
               );
             })
           );
@@ -26243,62 +26515,55 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                       .slice(-30)
                       .map(d=>({date:d,value:sh.qty*eodPrices[d][tkr_]}));
                   }
-                  /* ── Fetch technical indicators ── */
+                  /* ── Fetch technical indicators (multi-TF) ── */
                   let techData=null;
                   try{
                     const TI_=window.TechIndicators;
                     const DF_=window.OHLCVFetcher;
                     if(TI_&&DF_&&tkr_){
-                      const res=await DF_.fetchOHLCVCached(tkr_,"daily");
-                      if(res&&res.data&&res.data.length>=12){
-                        const ind=TI_.computeAll(res.data);
-                        const exitScore=TI_.computeExitScore(res.data,ind,{entryPrice:sh.buyPrice,buyDate:sh.buyDate,currentPrice:sh.currentPrice});
+                      const[resW,resD,resH]=await Promise.all([
+                        DF_.fetchOHLCVCached(tkr_,"weekly"),
+                        DF_.fetchOHLCVCached(tkr_,"daily"),
+                        DF_.fetchOHLCVCached(tkr_,"1h"),
+                      ]);
+                      if(resD&&resD.data&&resD.data.length>=12){
+                        const indD=TI_.computeAll(resD.data);
+                        const indW=resW&&resW.data&&resW.data.length>=12?TI_.computeAll(resW.data):null;
+                        const indH=resH&&resH.data&&resH.data.length>=12?TI_.computeAll(resH.data):null;
+                        const exitScore=TI_.computeExitScore(resD.data,indD,{entryPrice:sh.buyPrice,buyDate:sh.buyDate,currentPrice:sh.currentPrice});
+                        const stripInd=(ind)=>ind?{
+                          ema_9:ind.ema_9,ema_21:ind.ema_21,ema_50:ind.ema_50,
+                          sma_20:ind.sma_20,sma_50:ind.sma_50,sma_200:ind.sma_200,
+                          rsi_14:ind.rsi_14,macd:ind.macd,
+                          supertrend:ind.supertrend,supertrendDir:ind.supertrendDir,
+                          bollinger:ind.bb,adx:ind.adx,atr_14:ind.atr_14,
+                          obv:ind.obv,cmf_20:ind.cmf_20,stochRSI:ind.stochRSI,
+                          cci_20:ind.cci_20,roc_12:ind.roc_12,momentum_10:ind.momentum_10,
+                          vwap:ind.vwap,psar:ind.psar,ichimoku:ind.ichimoku,
+                          donchian:ind.donchian,keltner:ind.keltner,
+                          hma_20:ind.hma_20,kama:ind.kama,
+                          tsi:ind.tsi,stc:ind.stc,mfi_14:ind.mfi_14,
+                          pvt:ind.pvt,kvo:ind.kvo,anchored_vwap:ind.anchored_vwap,
+                          volumeProfile:ind.volumeProfile,ttmSqueeze:ind.ttmSqueeze,
+                          squeezeMomentum:ind.squeezeMomentum,darvasBox:ind.darvasBox,
+                          smartMoney:ind.smartMoney,lastClose:ind.lastClose,
+                        }:null;
                         techData={
-                          source:res.source||null,
-                          lastClose:ind.lastClose,
-                          indicators:{
-                            ema_9:ind.ema_9,ema_21:ind.ema_21,ema_50:ind.ema_50,
-                            sma_20:ind.sma_20,sma_50:ind.sma_50,sma_200:ind.sma_200,
-                            rsi_14:ind.rsi_14,
-                            macd:ind.macd,
-                            supertrend:ind.supertrend,supertrendDir:ind.supertrendDir,
-                            bollinger:ind.bb,
-                            adx:ind.adx,
-                            atr_14:ind.atr_14,
-                            obv:ind.obv,
-                            cmf_20:ind.cmf_20,
-                            stochRSI:ind.stochRSI,
-                            cci_20:ind.cci_20,
-                            roc_12:ind.roc_12,
-                            momentum_10:ind.momentum_10,
-                            vwap:ind.vwap,
-                            psar:ind.psar,
-                            ichimoku:ind.ichimoku,
-                            donchian:ind.donchian,
-                            keltner:ind.keltner,
-                            hma_20:ind.hma_20,
-                            kama:ind.kama,
-                            tsi:ind.tsi,
-                            stc:ind.stc,
-                            mfi_14:ind.mfi_14,
-                            pvt:ind.pvt,
-                            kvo:ind.kvo,
-                            anchored_vwap:ind.anchored_vwap,
-                            volumeProfile:ind.volumeProfile,
-                            ttmSqueeze:ind.ttmSqueeze,
-                            squeezeMomentum:ind.squeezeMomentum,
-                            darvasBox:ind.darvasBox,
-                            smartMoney:ind.smartMoney,
-                          },
+                          source:resD.source||null,
+                          lastClose:indD.lastClose,
+                          indicators:{weekly:stripInd(indW),daily:stripInd(indD),hourly:stripInd(indH)},
                           exitScore:exitScore?{
                             total:exitScore.total,trend:exitScore.trend,momentum:exitScore.momentum,
                             volume:exitScore.volume,structure:exitScore.structure,
+                            trendMax:exitScore.trendMax,momentumMax:exitScore.momentumMax,
+                            volumeMax:exitScore.volumeMax,structureMax:exitScore.structureMax,
+                            hardFilters:exitScore.hardFilters||[],
                             decision:exitScore.decision,
                           }:null,
-                          interpretation:TI_.interpret(ind),
+                          interpretation:TI_.interpret(indD),
                           interpretationText:(() => {
                             try{
-                              const s=TI_.interpret(ind);
+                              const s=TI_.interpret(indD);
                               const bullish=Object.values(s).filter(v=>v==="bullish").length;
                               const bearish=Object.values(s).filter(v=>v==="bearish").length;
                               const ob=Object.values(s).filter(v=>v==="overbought").length;
