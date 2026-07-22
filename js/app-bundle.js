@@ -19672,7 +19672,7 @@ const PreviousTrades=({soldShareSnapshots={},dispatch})=>{
                 )
               ),
               !mIsCollapsed&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(680px,1fr))",gap:16}},
-          snaps.map((sn,idx)=>{
+          mg.snaps.map((sn,idx)=>{
             const isGain=sn.pnl>=0;
             const priceDiff=sn.sellPrice-sn.buyPrice;
             return React.createElement(Card,{key:sn.id||idx,sx:{
@@ -20032,8 +20032,9 @@ const PreviousTrades=({soldShareSnapshots={},dispatch})=>{
               )
             );
           })
-        );
-      });
+        )
+      );
+    });
     })(),
   );
 }),
