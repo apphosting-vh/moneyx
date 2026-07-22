@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.12.9";
+const APP_VERSION="7.12.10";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -24676,7 +24676,7 @@ const EntryScorePanel=({shares})=>{
         React.createElement("div",null,
           React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},snap.ticker),
           React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},"\u23f0 "+new Date(snap.savedAt).toLocaleString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})),
-          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:1}},"\u2022 Price: "+(snap.currentPrice>0?"\u20b9"+Number(snap.currentPrice).toLocaleString("en-IN"):"Last Close"))
+          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:1}},"\u2022 Price: "+(snap.currentPrice>0?"\u20b9"+Number(snap.currentPrice).toLocaleString("en-IN"):(r.lastClose?"\u20b9"+Number(r.lastClose).toLocaleString("en-IN")+" (Last Close)":"Last Close")))
         ),
         React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
           React.createElement("div",{textAlign:"right"},
@@ -24802,7 +24802,7 @@ const EntryScorePanel=({shares})=>{
           React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}},
             React.createElement("div",null,
               React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},entry.ticker),
-              React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},"Added "+new Date(entry.addedAt).toLocaleDateString()+" \u00b7 "+(entry.currentPrice>0?"\u20b9"+INR(entry.currentPrice):"Last Close"))
+              React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},"Added "+new Date(entry.addedAt).toLocaleDateString()+" \u00b7 "+(entry.currentPrice>0?"\u20b9"+INR(entry.currentPrice):(r.lastClose?"\u20b9"+INR(r.lastClose)+" (Last Close)":"Last Close")))
             ),
             React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10}},
               React.createElement("div",{textAlign:"right"},

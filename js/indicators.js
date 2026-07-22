@@ -2567,7 +2567,8 @@ window.TechIndicators = (function () {
       weekly: weekly, daily: daily, hourly: hourly,
       baseScore: baseScore, penalties: penalties, bonuses: bonuses,
       finalScore: finalScore, decision: decision,
-      hardFilters: hardFilters, overrides: hardFilters
+      hardFilters: hardFilters, overrides: hardFilters,
+      lastClose: lc
     };
   }
 
