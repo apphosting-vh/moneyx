@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.18.0";
+const APP_VERSION="7.18.1";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -24799,6 +24799,7 @@ const EntryScorePanel=({shares})=>{
     saveSnapshots([snap,...snapshots]);
   };
   const deleteSnapshot=(id)=>{saveSnapshots(snapshots.filter(s=>s.id!==id));};
+  const deleteSnapshotsWhere=(pred)=>{saveSnapshots(snapshots.filter(s=>!pred(s)));};
 
   const groupSnapshots=()=>{
     const years={};
@@ -25050,7 +25051,10 @@ const EntryScorePanel=({shares})=>{
           return React.createElement("div",{key:mKey,style:{borderTop:"1px solid var(--border)"}},
             React.createElement("div",{onClick:()=>setExpandedMonth(isMExp?null:mKey),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 14px 8px 28px",cursor:"pointer",background:isMExp?"var(--bg4)":"transparent"}},
               React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"var(--text)"}},(isMExp?"▾ ":"▸ ")+mKey.split("-").slice(1).join("-")),
-              React.createElement("span",{style:{fontSize:10,color:"var(--text5)",fontWeight:600}},mSnaps+" snap"+(mSnaps!==1?"s":""))
+              React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+                React.createElement("span",{style:{fontSize:10,color:"var(--text5)",fontWeight:600}},mSnaps+" snap"+(mSnaps!==1?"s":"")),
+                React.createElement("span",{onClick:(e)=>{e.stopPropagation();if(window.confirm("Delete all "+mSnaps+" snapshot"+(mSnaps!==1?"s":"")+" in "+mKey.split("-").slice(1).join("-")+"?"))deleteSnapshotsWhere(s=>{const d=new Date(s.savedAt);return String(d.getFullYear())+"-"+d.toLocaleString("en-IN",{month:"long"})===mKey;});},style:{fontSize:9,color:"#ef4444",cursor:"pointer",fontWeight:700,padding:"2px 6px",borderRadius:4,background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.2)",whiteSpace:"nowrap"}},mSnaps===1?"Delete":"Delete All")
+              )
             ),
             isMExp&&Object.keys(days).sort().reverse().map(dayKey=>{
               const day=days[dayKey];
@@ -25058,7 +25062,10 @@ const EntryScorePanel=({shares})=>{
               return React.createElement("div",{key:dayKey,style:{borderTop:"1px solid var(--border)"}},
                 React.createElement("div",{onClick:()=>setExpandedDay(isDExp?null:dayKey),style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 14px 6px 42px",cursor:"pointer",background:isDExp?"var(--bg4)":"transparent"}},
                   React.createElement("span",{style:{fontSize:10,fontWeight:600,color:"var(--text3)"}},(isDExp?"▾ ":"▸ ")+day.label),
-                  React.createElement("span",{style:{fontSize:9,color:"var(--text5)"}},day.snaps.length+" snap"+(day.snaps.length!==1?"s":""))
+                  React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+                    React.createElement("span",{style:{fontSize:9,color:"var(--text5)"}},day.snaps.length+" snap"+(day.snaps.length!==1?"s":"")),
+                    React.createElement("span",{onClick:(e)=>{e.stopPropagation();if(window.confirm("Delete all "+day.snaps.length+" snapshot"+(day.snaps.length!==1?"s":"")+" on "+day.label+"?"))deleteSnapshotsWhere(s=>{const d=new Date(s.savedAt);const dk=mKey+"-"+d.getDate();return dk===dayKey;});},style:{fontSize:9,color:"#ef4444",cursor:"pointer",fontWeight:700,padding:"2px 6px",borderRadius:4,background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.2)",whiteSpace:"nowrap"}},day.snaps.length===1?"Delete":"Delete All")
+                  )
                 ),
                 isDExp&&React.createElement("div",{style:{padding:"6px 14px 6px 56px"}},
                   day.snaps.map(snap=>snapshotCard(snap))
@@ -25242,6 +25249,13 @@ const StockScreener=()=>{
 
   const deleteSnapshot=(id)=>{
     const updated=snapshots.filter(s=>s.id!==id);
+    setSnapshots(updated);
+    _saveScreenerSnaps(updated);
+  };
+
+  const deleteSnapshotsBatch=(ids)=>{
+    const idSet=new Set(ids);
+    const updated=snapshots.filter(s=>!idSet.has(s.id));
     setSnapshots(updated);
     _saveScreenerSnaps(updated);
   };
@@ -25457,11 +25471,11 @@ const StockScreener=()=>{
     !scanning&&results.length===0&&React.createElement("div",{style:{textAlign:"center",padding:40,color:"var(--text6)",fontSize:13}},
       "Click \"Scan Nifty 100\" to analyze all stocks"
     ),
-    React.createElement(ScreenerSnapshots,{snapshots,deleteSnapshot})
+    React.createElement(ScreenerSnapshots,{snapshots,deleteSnapshot,deleteSnapshotsBatch})
   );
 };
 
-const ScreenerSnapshots=({snapshots,deleteSnapshot})=>{
+const ScreenerSnapshots=({snapshots,deleteSnapshot,deleteSnapshotsBatch})=>{
   const[openSnaps,setOpenSnaps]=useState({});
   const[openGroups,setOpenGroups]=useState({});
 
@@ -25543,11 +25557,13 @@ const ScreenerSnapshots=({snapshots,deleteSnapshot})=>{
             const mk=yearKey+"-"+month;
             const monthOpen=!!openGroups[mk];
             const days=months[month];
+            const monthSnapCount=Object.values(days).reduce((a,d)=>a+d.length,0);
             return React.createElement("div",{key:month,style:{marginBottom:8}},
               React.createElement("div",{style:{...headerStyle,padding:"6px 10px",borderRadius:6,background:"var(--bg5)"},onClick:()=>toggleGroup(mk)},
                 React.createElement("div",null,React.createElement("span",{style:arrowStyle(monthOpen)},"\u25b6"),React.createElement("span",{style:{fontSize:11,fontWeight:700,color:"var(--text4)"}},month),
-                  React.createElement("span",{style:{fontSize:9,color:"var(--text6)",marginLeft:6}},Object.values(days).reduce((a,d)=>a+d.length,0)+" snapshots")
-                )
+                  React.createElement("span",{style:{fontSize:9,color:"var(--text6)",marginLeft:6}},monthSnapCount+" snapshots")
+                ),
+                React.createElement("span",{onClick:(e)=>{e.stopPropagation();const ids=Object.values(days).flat().map(s=>s.id);if(window.confirm("Delete all "+monthSnapCount+" snapshot"+(monthSnapCount!==1?"s":"")+" in "+month+"?"))deleteSnapshotsBatch(ids);},style:{fontSize:9,color:"#ef4444",cursor:"pointer",fontWeight:700,padding:"2px 7px",borderRadius:4,background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.2)",whiteSpace:"nowrap"}},monthSnapCount===1?"Delete":"Delete All")
               ),
               monthOpen&&React.createElement("div",{style:{paddingLeft:14}},
                 Object.keys(days).sort((a,b)=>b.localeCompare(a)).map(dayKey=>{
