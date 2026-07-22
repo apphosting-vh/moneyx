@@ -1701,7 +1701,7 @@ window.TechIndicators = (function () {
     // Weekly Trend Intact (−8): approximate with MTF alignment +60 and MACD bullish
     if (mtfAlign >= 60 && macdHist > 0) {
       penalties -= 8;
-      hardFilters.push("Weekly Trend Intact \u2014 MTF alignment strong (\u22128)");
+      hardFilters.push("Weekly Trend Intact \u2014 MTF alignment " + round(mtfAlign,1) + ", MACD hist " + round(macdHist,2) + " (\u22128)");
     }
 
     // Low-Volume Pullback (−6): price declining 3d + volume < 70% avg
@@ -1717,24 +1717,28 @@ window.TechIndicators = (function () {
       avgVol = vc > 0 ? avgVol / vc : 0;
       var curVol = candles[candles.length - 1].v;
       if (priceDeclining && avgVol > 0 && curVol < avgVol * 0.7) {
+        var volRatio = avgVol > 0 ? round(curVol / avgVol * 100, 0) : 0;
         penalties -= 6;
-        hardFilters.push("Low-Volume Pullback \u2014 declining on thin volume (\u22126)");
+        hardFilters.push("Low-Volume Pullback \u2014 price declining 3d, vol " + volRatio + "% of avg (\u22126)");
       }
     }
 
     // Near Support (−5): within 1.5% of major support (single check, only when above)
     var nearSupport = false;
+    var nearSupportDist = "";
     if (lc > 0) {
       if (bbLower > 0 && lc > bbLower) {
-        if ((lc - bbLower) / lc < 0.015) nearSupport = true;
+        var dBB = (lc - bbLower) / lc;
+        if (dBB < 0.015) { nearSupport = true; nearSupportDist = "BB lower " + round(bbLower,2) + " (" + round(dBB * 100,2) + "%)"; }
       }
       if (!nearSupport && kcLower > 0 && lc > kcLower) {
-        if ((lc - kcLower) / lc < 0.015) nearSupport = true;
+        var dKC = (lc - kcLower) / lc;
+        if (dKC < 0.015) { nearSupport = true; nearSupportDist = "KC lower " + round(kcLower,2) + " (" + round(dKC * 100,2) + "%)"; }
       }
     }
     if (nearSupport) {
       penalties -= 5;
-      hardFilters.push("Near Support \u2014 within 1.5% of lower band (\u22125)");
+      hardFilters.push("Near Support \u2014 " + nearSupportDist + " (\u22125)");
     }
 
     // Fresh Entry (−5): holding < 3 days + entry score was > 70
@@ -1742,7 +1746,7 @@ window.TechIndicators = (function () {
       var holdDays = Math.floor((new Date() - new Date(posBuyDate + "T12:00:00")) / 864e5);
       if (holdDays < 3 && posEntryScore > 70) {
         penalties -= 5;
-        hardFilters.push("Fresh Entry \u2014 held < 3 days with strong entry score (\u22125)");
+        hardFilters.push("Fresh Entry \u2014 held " + holdDays + "d, entry score " + posEntryScore + " (\u22125)");
       }
     }
 
@@ -1754,10 +1758,10 @@ window.TechIndicators = (function () {
       var lossPct = (epVal - lc) / epVal;
       if (lossPct > 0.03) {
         bonuses += 5;
-        hardFilters.push("Deep Loss \u2014 > 3% below entry (+5)");
+        hardFilters.push("Deep Loss \u2014 " + round(lossPct * 100, 1) + "% below entry (" + round(epVal,2) + " → " + round(lc,2) + ") (+5)");
       } else if (lossPct > 0.015) {
         bonuses += 3;
-        hardFilters.push("Moderate Loss \u2014 > 1.5% below entry (+3)");
+        hardFilters.push("Moderate Loss \u2014 " + round(lossPct * 100, 1) + "% below entry (" + round(epVal,2) + " → " + round(lc,2) + ") (+3)");
       }
     }
 
@@ -1766,13 +1770,13 @@ window.TechIndicators = (function () {
     var belowFastMA = (ema9 > 0 && lc < ema9) && (ema21 > 0 && lc < ema21);
     if (belowFastMA && macdBearish && adxVal > 20) {
       bonuses += 5;
-      hardFilters.push("Dual TF Breakdown \u2014 below EMAs + MACD bearish (+5)");
+      hardFilters.push("Dual TF Breakdown \u2014 price " + round(lc,2) + " < EMA9 " + round(ema9,2) + " & EMA21 " + round(ema21,2) + ", MACD " + round(macdHist,2) + " (+5)");
     }
 
     // Smart Money Exit (≈ +3): SELLING + MTF misalignment
     if (smStatus === "SELLING" && ind.mtfAlignment !== null && mtfAlign < 40) {
       bonuses += 3;
-      hardFilters.push("Smart Money Exit \u2014 institutional selling (+3)");
+      hardFilters.push("Smart Money Exit \u2014 MTF alignment " + round(mtfAlign,1) + " (+3)");
     }
 
     /* ═══════════════════════════════════════════════════════════════════
@@ -2456,7 +2460,7 @@ window.TechIndicators = (function () {
     /* Overbought RSI > 80 → −5 */
     if (indD && rsiVal > 80) {
       penalties -= 5;
-      hardFilters.push("RSI > 80 \u2014 Overbought (\u22125)");
+      hardFilters.push("RSI > 80 \u2014 RSI " + round(rsiVal,1) + " (\u22125)");
     }
 
     /* Volume Divergence: price up 5d, volume down 5d → −8 */
@@ -2465,8 +2469,9 @@ window.TechIndicators = (function () {
       var volRecent = 0, volPrev = 0;
       for (var i = 0; i < 5; i++) { volRecent += candlesDaily[candlesDaily.length - 1 - i].v || 0; volPrev += candlesDaily[candlesDaily.length - 6 - i].v || 0; }
       if (priceUp5d && volRecent < volPrev) {
+        var volChg = volPrev > 0 ? round((volRecent - volPrev) / volPrev * 100, 0) : 0;
         penalties -= 8;
-        hardFilters.push("Volume Divergence \u2014 price up, volume down (\u22128)");
+        hardFilters.push("Volume Divergence \u2014 price up 5d, vol " + volChg + "% (\u22128)");
       }
     }
 
@@ -2475,19 +2480,21 @@ window.TechIndicators = (function () {
     var weeklyBear = (wEma9 > 0 && wEma21 > 0 && (wEma9 < wEma21 || (wEma50 > 0 && wEma21 < wEma50)));
     if (daily && weekly && dailyBull && weeklyBear) {
       penalties -= 10;
-      hardFilters.push("Conflicting Timeframes \u2014 daily bullish, weekly bearish (\u221210)");
+      hardFilters.push("Conflicting Timeframes \u2014 daily EMA " + round(dEma9,0) + "/" + round(dEma21,0) + "/" + round(dEma50,0) + " vs weekly " + round(wEma9,0) + "/" + round(wEma21,0) + "/" + round(wEma50,0) + " (\u221210)");
     }
 
     /* Near Resistance: price within 1% of major resistance → −5 */
     if (indD && lc && lc > 0) {
       var resistances = [];
-      if (indD.bb && indD.bb.upper !== null) resistances.push(indD.bb.upper);
-      if (indD.keltner && indD.keltner.upper !== null) resistances.push(indD.keltner.upper);
-      if (indD.donchian && indD.donchian.upper !== null) resistances.push(indD.donchian.upper);
+      var resistLabels = [];
+      if (indD.bb && indD.bb.upper !== null) { resistances.push(indD.bb.upper); resistLabels.push("BB"); }
+      if (indD.keltner && indD.keltner.upper !== null) { resistances.push(indD.keltner.upper); resistLabels.push("KC"); }
+      if (indD.donchian && indD.donchian.upper !== null) { resistances.push(indD.donchian.upper); resistLabels.push("DC"); }
       for (var ri = 0; ri < resistances.length; ri++) {
         if (resistances[ri] > 0 && Math.abs(resistances[ri] - lc) / lc < 0.01) {
+          var resDist = round(Math.abs(resistances[ri] - lc) / lc * 100, 2);
           penalties -= 5;
-          hardFilters.push("Near Resistance \u2014 within 1% of upper band (\u22125)");
+          hardFilters.push("Near Resistance \u2014 " + resistLabels[ri] + " " + round(resistances[ri],2) + " (" + resDist + "% away) (\u22125)");
           break;
         }
       }
@@ -2523,8 +2530,9 @@ window.TechIndicators = (function () {
       avgVol20 = avgVol20 / 20;
       var curVol = candlesDaily[candlesDaily.length - 1].v || 0;
       if (lc > high20 && avgVol20 > 0 && curVol > avgVol20 * 1.5) {
+        var volMult = round(curVol / avgVol20, 1);
         bonuses += 5;
-        hardFilters.push("Fresh Breakout \u2014 new 20d high with volume surge (+5)");
+        hardFilters.push("Fresh Breakout \u2014 price " + round(lc,2) + " > 20d high " + round(high20,2) + ", vol " + volMult + "x avg (+5)");
       }
     }
 
@@ -2534,34 +2542,7 @@ window.TechIndicators = (function () {
     var hBull = (hEma9 > 0 && hEma21 > 0 && hEma50 > 0 && hEma9 > hEma21 && hEma21 > hEma50);
     if (weekly && daily && hourly && wBull && dBull && hBull) {
       bonuses += 5;
-      hardFilters.push("Multi-TF Alignment \u2014 all 3 timeframes bullish (+5)");
-    }
-
-    /* Sector Momentum: rising OBV in all available timeframes → +3 */
-    var obvBullCount = 0, obvTFCount = 0;
-    [{ c: candlesWeekly, i: indW }, { c: candlesDaily, i: indD }, { c: candlesHourly, i: indH }].forEach(function (tf) {
-      if (tf.c && tf.c.length >= 22) {
-        obvTFCount++;
-        var oArr = calcOBV(tf.c);
-        if (oArr && oArr.length >= 2 && oArr[oArr.length - 1] !== null && oArr[oArr.length - 2] !== null && oArr[oArr.length - 1] > oArr[oArr.length - 2]) obvBullCount++;
-      }
-    });
-    if (obvTFCount >= 2 && obvBullCount === obvTFCount) {
-      bonuses += 3;
-      hardFilters.push("Sector Momentum \u2014 rising OBV all timeframes (+3)");
-    }
-
-    /* Earnings Clarity: no earnings risk (ADX > 20 in all TFs) → +2 */
-    var adxBullCount = 0, adxTFCount = 0;
-    [indW, indD, indH].forEach(function (tfInd) {
-      if (tfInd && tfInd.adx_14 !== null) {
-        adxTFCount++;
-        if (tfInd.adx_14 > 20) adxBullCount++;
-      }
-    });
-    if (adxTFCount >= 2 && adxBullCount === adxTFCount) {
-      bonuses += 2;
-      hardFilters.push("Earnings Clarity \u2014 ADX > 20 all timeframes (+2)");
+      hardFilters.push("Multi-TF Alignment \u2014 W " + round(wEma9,0)+"/"+round(wEma21,0)+"/"+round(wEma50,0) + " D " + round(dEma9,0)+"/"+round(dEma21,0)+"/"+round(dEma50,0) + " H " + round(hEma9,0)+"/"+round(hEma21,0)+"/"+round(hEma50,0) + " (+5)");
     }
 
     /* Smart Money + MTF Confirmation → +3 */
@@ -2569,7 +2550,7 @@ window.TechIndicators = (function () {
     var smMTFReady = (daily && daily.trendScore >= 20) ? true : false;
     if (smBull && smMTFReady) {
       bonuses += 3;
-      hardFilters.push("Smart Money + MTF \u2014 institutional buying confirmed (+3)");
+      hardFilters.push("Smart Money + MTF \u2014 trend score " + daily.trendScore + " (+3)");
     }
 
     var finalScore = Math.round((baseScore + penalties + bonuses) * 10) / 10;

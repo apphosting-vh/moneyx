@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.12.3";
+const APP_VERSION="7.12.4";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -24818,7 +24818,13 @@ const EntryScorePanel=({shares})=>{
               React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text3)",marginBottom:4}},"Penalties & Bonuses"),
               r.hardFilters.map((f,i)=>{
                 var isBonus=f.indexOf("(+")>=0;
-                return React.createElement("div",{key:i,style:{fontSize:10,color:isBonus?"#16a34a":"#ef4444",lineHeight:1.5}},isBonus?"✓ ":"⚠ "+f);
+                var valMatch=f.match(/([\(\u2212+\-]\d+[\)]|\([+]\d+\))/);
+                var valStr=valMatch?valMatch[0]:"";
+                var label=valStr?f.replace(valStr,"").replace(/\s*—\s*/," — ").trim():f;
+                return React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:6,lineHeight:1.5,fontSize:10}},
+                  React.createElement("span",{style:{color:isBonus?"#16a34a":"#ef4444",flex:1}},isBonus?"✓ ":"⚠ "+label),
+                  valStr&&React.createElement("span",{style:{fontSize:10,fontWeight:800,color:isBonus?"#16a34a":"#ef4444",background:isBonus?"rgba(22,163,74,.1)":"rgba(239,68,68,.1)",padding:"1px 6px",borderRadius:4,fontFamily:"'Sora',sans-serif",flexShrink:0}},valStr)
+                );
               }),
               React.createElement("div",{style:{fontSize:9,color:"var(--text5)",marginTop:4}},
                 "Base: "+r.baseScore+" | Penalties: "+r.penalties+" | Bonuses: "+r.bonuses+" → Final: "+r.finalScore

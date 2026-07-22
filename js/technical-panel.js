@@ -438,7 +438,13 @@ window.TechnicalIndicatorsPanel = (function () {
         es.modifiers.hardFilters && es.modifiers.hardFilters.length > 0 && React.createElement("div", { style: { marginTop: 2 } },
           es.modifiers.hardFilters.map(function (f, i) {
             var isBonus = f.indexOf("(+") >= 0;
-            return React.createElement("div", { key: i, style: { fontSize: 10, color: isBonus ? "#16a34a" : "#ef4444", lineHeight: 1.6 } }, isBonus ? "\u2713 " + f : "\u26a0 " + f);
+            var valMatch = f.match(/([\(\u2212+\-]\d+[\)]|\([+]\d+\))/);
+            var valStr = valMatch ? valMatch[0] : "";
+            var label = valStr ? f.replace(valStr, "").replace(/\s*—\s*/, " — ").trim() : f;
+            return React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, lineHeight: 1.6, fontSize: 10 } },
+              React.createElement("span", { style: { color: isBonus ? "#16a34a" : "#ef4444", flex: 1 } }, isBonus ? "\u2713 " + label : "\u26a0 " + label),
+              valStr && React.createElement("span", { style: { fontSize: 10, fontWeight: 800, color: isBonus ? "#16a34a" : "#ef4444", background: isBonus ? "rgba(22,163,74,.1)" : "rgba(239,68,68,.1)", padding: "1px 6px", borderRadius: 4, fontFamily: "'Sora',sans-serif", flexShrink: 0 } }, valStr)
+            );
           })
         )
       ),
