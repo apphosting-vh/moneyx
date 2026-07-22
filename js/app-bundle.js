@@ -6464,6 +6464,10 @@ var CloudBackupPanel = ({ state, dispatch }) => {
           localStorage.setItem(LS_ENTRY_SCORES,remote.state.entryScores);
         if(remote.state.entrySnapshots)
           localStorage.setItem(LS_ENTRY_SNAPSHOTS,remote.state.entrySnapshots);
+        if(remote.state.screenerData)
+          localStorage.setItem(_SCREENER_KEY,remote.state.screenerData);
+        if(remote.state.screenerSnapshots)
+          localStorage.setItem(_SCREENER_SNAPS_KEY,remote.state.screenerSnapshots);
       } catch {}
       try { await clearTxIDB(); }          catch {}
       try { await saveTxToIDB(_restoreData); } catch {}
@@ -10746,6 +10750,11 @@ var _gdriveUpsertSyncFileV1 = async (state) => {
         reminders: state.reminders || [],
         insightPrefs: { ...EMPTY_STATE().insightPrefs, ...(state.insightPrefs || {}) },
         chatbotTraining: {customCatRules:_cbTrV1.customCatRules||[],accountAliases:_cbTrV1.accountAliases||[]},
+        avApiKey:localStorage.getItem("mm_av_api_key")||"",
+        entryScores:localStorage.getItem(LS_ENTRY_SCORES)||"[]",
+        entrySnapshots:localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",
+        screenerData:localStorage.getItem(_SCREENER_KEY)||null,
+        screenerSnapshots:localStorage.getItem(_SCREENER_SNAPS_KEY)||null,
       },
     };
     const content = JSON.stringify(payload);
@@ -11069,6 +11078,8 @@ var fsaWriteFile=async(handle,data)=>{
         avApiKey:localStorage.getItem("mm_av_api_key")||"",
         entryScores:localStorage.getItem(LS_ENTRY_SCORES)||"[]",
         entrySnapshots:localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",
+        screenerData:localStorage.getItem(_SCREENER_KEY)||null,
+        screenerSnapshots:localStorage.getItem(_SCREENER_SNAPS_KEY)||null,
       }
     };
     const writable=await handle.createWritable();
@@ -33995,6 +34006,10 @@ const FSAStoragePanel=({state,dispatch})=>{
           localStorage.setItem(LS_ENTRY_SCORES,data.entryScores);
         if(data.entrySnapshots)
           localStorage.setItem(LS_ENTRY_SNAPSHOTS,data.entrySnapshots);
+        if(data.screenerData)
+          localStorage.setItem(_SCREENER_KEY,data.screenerData);
+        if(data.screenerSnapshots)
+          localStorage.setItem(_SCREENER_SNAPS_KEY,data.screenerSnapshots);
       }catch{}
       /* ── Overwrite IDB transactions so next-boot hydration loads
          the restored data instead of the pre-restore snapshot.
