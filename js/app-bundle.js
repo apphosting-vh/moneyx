@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.17.0";
+const APP_VERSION="7.18.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -5893,6 +5893,8 @@ var gdriveUpsertSyncFile = async (state, manual) => {
         avApiKey: localStorage.getItem("mm_av_api_key")||"",
         entryScores: localStorage.getItem(LS_ENTRY_SCORES)||"[]",
         entrySnapshots: localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",
+        screenerData: localStorage.getItem(_SCREENER_KEY)||null,
+        screenerSnapshots: localStorage.getItem(_SCREENER_SNAPS_KEY)||null,
       },
     };
     const content = JSON.stringify(payload, null, 2);
@@ -10128,6 +10130,7 @@ var MM_LS_KEYS=[
   {key:LS_EOD_PRICES,  label:"EOD share prices cache (separate)"},
   {key:LS_EOD_NAVS,    label:"EOD mutual fund NAVs cache (separate)"},
   {key:LS_THEME,       label:"Theme preference"},
+  {key:LS_FONT,        label:"Font preference"},
   {key:"mm_v7_pin",    label:"PIN hash"},
   {key:"mm_nav_col",   label:"Sidebar collapse state"},
   {key:"mm_db_hidden_widgets", label:"Dashboard widget visibility"},
@@ -10135,8 +10138,10 @@ var MM_LS_KEYS=[
   {key:"itr3_ay2627_v1",       label:"Tax Estimator (legacy key)"},
   {key:CALC_LS_KEY,            label:"Financial Calculator inputs & results"},
   {key:"mm_av_api_key",        label:"Alpha Vantage API Key"},
-  {key:LS_ENTRY_SCORES,       label:"Entry Score Entries"},
-  {key:LS_ENTRY_SNAPSHOTS,    label:"Entry Score Snapshots"},
+  {key:"mm_entry_scores",      label:"Entry Score Entries"},
+  {key:"mm_entry_score_snapshots", label:"Entry Score Snapshots"},
+  {key:"finsight-screener-data",    label:"Nifty 100 Screener Data"},
+  {key:"finsight-screener-snapshots", label:"Screener Snapshots"},
 ];
 
 /* The true localStorage limit — 5 MB, enforced per-origin by all major browsers
@@ -11598,6 +11603,18 @@ var usePersistentReducer=(reducer,init)=>{
           saveState({ ...EMPTY_STATE(), ...remote_state });
           localStorage.setItem(LS_EOD_PRICES, JSON.stringify(remote_state.eodPrices || {}));
           localStorage.setItem(LS_EOD_NAVS,   JSON.stringify(remote_state.eodNavs   || {}));
+          if(remote_state.chatbotTraining)
+            localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(remote_state.chatbotTraining));
+          if(remote_state.avApiKey)
+            localStorage.setItem("mm_av_api_key",remote_state.avApiKey);
+          if(remote_state.entryScores)
+            localStorage.setItem(LS_ENTRY_SCORES,remote_state.entryScores);
+          if(remote_state.entrySnapshots)
+            localStorage.setItem(LS_ENTRY_SNAPSHOTS,remote_state.entrySnapshots);
+          if(remote_state.screenerData)
+            localStorage.setItem(_SCREENER_KEY,remote_state.screenerData);
+          if(remote_state.screenerSnapshots)
+            localStorage.setItem(_SCREENER_SNAPS_KEY,remote_state.screenerSnapshots);
         } catch {}
         try { await clearTxIDB(); } catch {}
         try { await saveTxToIDB(remote_state); } catch {}
@@ -34299,6 +34316,10 @@ const StorageGauge=({dispatch,state})=>{
     if(type==="hist") dispatch({type:"PRUNE_HISTORY_CACHE"});
     else if(type==="eod") dispatch({type:"PRUNE_EOD_PRICES",days:7});
     else if(type==="nav") dispatch({type:"PRUNE_EOD_NAVS",days:14});
+    else if(type==="screener"){
+      try{localStorage.removeItem(_SCREENER_KEY);}catch{}
+      try{localStorage.removeItem(_SCREENER_SNAPS_KEY);}catch{}
+    }
     /* Wait for state to settle then re-measure */
     await new Promise(r=>setTimeout(r,600));
     const s=await getStorageStatsAsync();
@@ -34310,7 +34331,10 @@ const StorageGauge=({dispatch,state})=>{
   const histBytes=(cacheBreakdown.find(c=>c.key==="_histcache")||{}).bytes||0;
   const eodBytes=(cacheBreakdown.find(c=>c.key==="_eodprices")||{}).bytes||0;
   const navBytes=(cacheBreakdown.find(c=>c.key==="_eodnavs")||{}).bytes||0;
-  const anyCacheToFree=histBytes>0||eodBytes>0||navBytes>0;
+  const screenerBytes=(stats.keys.find(k=>k.key===_SCREENER_KEY)||{}).bytes||0;
+  const screenerSnapsBytes=(stats.keys.find(k=>k.key===_SCREENER_SNAPS_KEY)||{}).bytes||0;
+  const totalScreenerBytes=screenerBytes+screenerSnapsBytes;
+  const anyCacheToFree=histBytes>0||eodBytes>0||navBytes>0||totalScreenerBytes>0;
 
   return React.createElement("div",{style:{marginBottom:16}},
 
@@ -34461,6 +34485,23 @@ const StorageGauge=({dispatch,state})=>{
             disabled:pruning==="nav",
             style:{padding:"6px 14px",borderRadius:8,border:"1px solid rgba(79,70,229,.3)",background:"rgba(79,70,229,.08)",color:"#4f46e5",fontSize:11,fontWeight:700,cursor:pruning?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap",opacity:pruning?"0.6":"1"}
           },pruning==="nav"?"Pruning…":"Prune to 14d")
+        ),
+
+        /* Prune Screener Data */
+        totalScreenerBytes>0&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"var(--bg3)",border:"1px solid var(--border2)",borderRadius:10}},
+          React.createElement("div",{style:{flex:1}},
+            React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)"}},"Nifty 100 Screener Data & Snapshots"),
+            React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},
+              fmtBytes(totalScreenerBytes)+
+              (screenerBytes>0&&screenerSnapsBytes>0?" · "+fmtBytes(screenerBytes)+" live + "+fmtBytes(screenerSnapsBytes)+" snapshots":"")+
+              " · Re-scanned on next open"
+            )
+          ),
+          React.createElement("button",{
+            onClick:()=>doCompact("screener"),
+            disabled:pruning==="screener",
+            style:{padding:"6px 14px",borderRadius:8,border:"1px solid rgba(239,68,68,.3)",background:"rgba(239,68,68,.08)",color:"#ef4444",fontSize:11,fontWeight:700,cursor:pruning?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap",opacity:pruning?"0.6":"1"}
+          },pruning==="screener"?"Clearing…":"Clear")
         )
       )
     ),
