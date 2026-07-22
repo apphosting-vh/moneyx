@@ -431,8 +431,8 @@ window.TechnicalIndicatorsPanel = (function () {
       },
         React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: (es.modifiers.hardFilters && es.modifiers.hardFilters.length > 0) ? 4 : 0, fontSize: 10, color: "var(--text5)" } },
           React.createElement("span", { style: { fontWeight: 600 } }, "Base: " + es.modifiers.raw),
-          es.modifiers.penalties !== 0 && React.createElement("span", { style: { color: "#16a34a", fontWeight: 700 } }, "Penalties: " + es.modifiers.penalties),
-          es.modifiers.bonuses !== 0 && React.createElement("span", { style: { color: "#ef4444", fontWeight: 700 } }, "Bonuses: +" + es.modifiers.bonuses),
+          es.modifiers.penalties !== 0 && React.createElement("span", { style: { color: "var(--text3)", fontWeight: 700 } }, "Penalties: " + es.modifiers.penalties),
+          es.modifiers.bonuses !== 0 && React.createElement("span", { style: { color: "var(--text3)", fontWeight: 700 } }, "Bonuses: +" + es.modifiers.bonuses),
           React.createElement("span", { style: { fontWeight: 700, color: "var(--text3)", marginLeft: "auto" } }, "\u2192 " + es.total)
         ),
         es.modifiers.hardFilters && es.modifiers.hardFilters.length > 0 && React.createElement("div", { style: { marginTop: 2 } },
@@ -442,8 +442,8 @@ window.TechnicalIndicatorsPanel = (function () {
             var valStr = valMatch ? valMatch[0] : "";
             var label = valStr ? f.replace(valStr, "").replace(/\s*—\s*/, " — ").trim() : f;
             return React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, lineHeight: 1.6, fontSize: 10 } },
-              React.createElement("span", { style: { color: isBonus ? "#16a34a" : "#ef4444", flex: 1 } }, isBonus ? "\u2713 " + label : "\u26a0 " + label),
-              valStr && React.createElement("span", { style: { fontSize: 10, fontWeight: 800, color: isBonus ? "#16a34a" : "#ef4444", background: isBonus ? "rgba(22,163,74,.1)" : "rgba(239,68,68,.1)", padding: "1px 6px", borderRadius: 4, fontFamily: "'Sora',sans-serif", flexShrink: 0 } }, valStr)
+              React.createElement("span", { style: { color: "var(--text3)", flex: 1 } }, isBonus ? "\u2713 " + label : "\u26a0 " + label),
+              valStr && React.createElement("span", { style: { fontSize: 10, fontWeight: 800, color: "var(--text3)", background: "var(--bg4)", padding: "1px 6px", borderRadius: 4, fontFamily: "'Sora',sans-serif", flexShrink: 0 } }, valStr)
             );
           })
         )
