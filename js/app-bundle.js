@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.12.6";
+const APP_VERSION="7.12.7";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -24818,7 +24818,7 @@ const EntryScorePanel=({shares})=>{
               React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text3)",marginBottom:4}},"Penalties & Bonuses"),
               r.hardFilters.map((f,i)=>{
                 var isBonus=f.indexOf("(+")>=0;
-                var valMatch=f.match(/([\(\u2212+\-]\d+[\)]|\([+]\d+\))/);
+                var valMatch=f.match(/\([+\-\u2212]?\d+\)$/);
                 var valStr=valMatch?valMatch[0]:"";
                 var label=valStr?f.replace(valStr,"").replace(/\s*—\s*/," — ").trim():f;
                 return React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:6,lineHeight:1.5,fontSize:10}},

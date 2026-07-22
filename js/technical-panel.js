@@ -438,7 +438,7 @@ window.TechnicalIndicatorsPanel = (function () {
         es.modifiers.hardFilters && es.modifiers.hardFilters.length > 0 && React.createElement("div", { style: { marginTop: 2 } },
           es.modifiers.hardFilters.map(function (f, i) {
             var isBonus = f.indexOf("(+") >= 0;
-            var valMatch = f.match(/([\(\u2212+\-]\d+[\)]|\([+]\d+\))/);
+            var valMatch = f.match(/\([+\-\u2212]?\d+\)$/);
             var valStr = valMatch ? valMatch[0] : "";
             var label = valStr ? f.replace(valStr, "").replace(/\s*—\s*/, " — ").trim() : f;
             return React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, lineHeight: 1.6, fontSize: 10 } },
