@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.12.10";
+const APP_VERSION="7.14.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -24874,11 +24874,263 @@ const EntryScorePanel=({shares})=>{
   );
 };
 
+const NIFTY_100=[
+  {t:"ABB.NS",n:"ABB India"},{t:"ADANIENSOL.NS",n:"Adani Energy Solutions"},{t:"ADANIENT.NS",n:"Adani Enterprises"},{t:"ADANIGREEN.NS",n:"Adani Green Energy"},{t:"ADANIPORTS.NS",n:"Adani Ports & SEZ"},
+  {t:"ADANIPOWER.NS",n:"Adani Power"},{t:"AMBUJACEM.NS",n:"Ambuja Cements"},{t:"APOLLOHOSP.NS",n:"Apollo Hospitals"},{t:"ASIANPAINT.NS",n:"Asian Paints"},{t:"AXISBANK.NS",n:"Axis Bank"},
+  {t:"BAJAJ-AUTO.NS",n:"Bajaj Auto"},{t:"BAJAJFINSV.NS",n:"Bajaj Finserv"},{t:"BAJAJHLDNG.NS",n:"Bajaj Holdings"},{t:"BAJFINANCE.NS",n:"Bajaj Finance"},{t:"BANKBARODA.NS",n:"Bank of Baroda"},
+  {t:"BEL.NS",n:"Bharat Electronics"},{t:"BHARTIARTL.NS",n:"Bharti Airtel"},{t:"BOSCHLTD.NS",n:"Bosch"},{t:"BPCL.NS",n:"Bharat Petroleum"},{t:"BRITANNIA.NS",n:"Britannia Industries"},
+  {t:"CANBK.NS",n:"Canara Bank"},{t:"CGPOWER.NS",n:"CG Power & Industrial"},{t:"CHOLAFIN.NS",n:"Cholamandalam Finance"},{t:"CIPLA.NS",n:"Cipla"},{t:"COALINDIA.NS",n:"Coal India"},
+  {t:"CUMMINSIND.NS",n:"Cummins India"},{t:"DIVISLAB.NS",n:"Divi's Laboratories"},{t:"DLF.NS",n:"DLF"},{t:"DMART.NS",n:"Avenue Supermarts"},{t:"DRREDDY.NS",n:"Dr. Reddy's Laboratories"},
+  {t:"EICHERMOT.NS",n:"Eicher Motors"},{t:"ENRIN.NS",n:"Enrin India"},{t:"ETERNAL.NS",n:"Eternal"},{t:"GAIL.NS",n:"GAIL India"},{t:"GODREJCP.NS",n:"Godrej Consumer Products"},{t:"GRASIM.NS",n:"Grasim Industries"},
+  {t:"HAL.NS",n:"Hindustan Aeronautics"},{t:"HCLTECH.NS",n:"HCL Technologies"},{t:"HDFCAMC.NS",n:"HDFC Asset Management"},{t:"HDFCBANK.NS",n:"HDFC Bank"},{t:"HDFCLIFE.NS",n:"HDFC Life Insurance"},
+  {t:"HINDALCO.NS",n:"Hindalco Industries"},{t:"HINDUNILVR.NS",n:"Hindustan Unilever"},{t:"HINDZINC.NS",n:"Hindustan Zinc"},{t:"HYUNDAI.NS",n:"Hyundai Motor India"},{t:"ICICIBANK.NS",n:"ICICI Bank"},
+  {t:"INDHOTEL.NS",n:"Indian Hotels"},{t:"INDIGO.NS",n:"InterGlobe Aviation"},{t:"INFY.NS",n:"Infosys"},{t:"IOC.NS",n:"Indian Oil"},{t:"IRFC.NS",n:"Indian Railway Finance"},
+  {t:"ITC.NS",n:"ITC"},{t:"JINDALSTEL.NS",n:"Jindal Steel & Power"},{t:"JIOFIN.NS",n:"Jio Financial Services"},{t:"JSWSTEEL.NS",n:"JSW Steel"},{t:"KOTAKBANK.NS",n:"Kotak Mahindra Bank"},
+  {t:"LODHA.NS",n:"Macrotech Developers"},{t:"LT.NS",n:"Larsen & Toubro"},{t:"LTIM.NS",n:"LTIMindtree"},{t:"M&M.NS",n:"Mahindra & Mahindra"},{t:"MARUTI.NS",n:"Maruti Suzuki"},
+  {t:"MAXHEALTH.NS",n:"Max Healthcare"},{t:"MAZDOCK.NS",n:"Mazagon Dock Shipbuilders"},{t:"MOTHERSON.NS",n:"Motherson Sumi"},{t:"MUTHOOTFIN.NS",n:"Muthoot Finance"},{t:"NESTLEIND.NS",n:"Nestle India"},
+  {t:"NTPC.NS",n:"NTPC"},{t:"ONGC.NS",n:"Oil & Natural Gas Corp"},{t:"PFC.NS",n:"Power Finance Corp"},{t:"PIDILITIND.NS",n:"Pidilite Industries"},{t:"PNB.NS",n:"Punjab National Bank"},
+  {t:"POWERGRID.NS",n:"Power Grid Corp"},{t:"RECLTD.NS",n:"REC"},{t:"RELIANCE.NS",n:"Reliance Industries"},{t:"SBILIFE.NS",n:"SBI Life Insurance"},{t:"SBIN.NS",n:"State Bank of India"},
+  {t:"SHREECEM.NS",n:"Shree Cement"},{t:"SHRIRAMFIN.NS",n:"Shriram Finance"},{t:"SIEMENS.NS",n:"Siemens"},{t:"SOLARINDS.NS",n:"Solar Industries"},  {t:"SUNPHARMA.NS",n:"Sun Pharmaceutical"},
+  {t:"TATACAP.NS",n:"Tata Capital"},{t:"TATACONSUM.NS",n:"Tata Consumer Products"},{t:"TATAPOWER.NS",n:"Tata Power"},{t:"TATASTEEL.NS",n:"Tata Steel"},{t:"TCS.NS",n:"Tata Consultancy Services"},{t:"TECHM.NS",n:"Tech Mahindra"},
+  {t:"TITAN.NS",n:"Titan Company"},{t:"TMCV.NS",n:"Tata Motors CV"},{t:"TMPV.NS",n:"Tata Motors PV"},{t:"TORNTPHARM.NS",n:"Torrent Pharma"},{t:"TRENT.NS",n:"Trent"},{t:"TVSMOTOR.NS",n:"TVS Motor"},{t:"ULTRACEMCO.NS",n:"UltraTech Cement"},
+  {t:"UNIONBANK.NS",n:"Union Bank of India"},{t:"UNITDSPR.NS",n:"United Spirits"},{t:"VBL.NS",n:"Varun Beverages"},{t:"VEDL.NS",n:"Vedanta"},{t:"WIPRO.NS",n:"Wipro"},
+  {t:"ZYDUSLIFE.NS",n:"Zydus Lifesciences"}
+];
+const _nseen=new Set();const NIFTY_100_UNIQUE=NIFTY_100.filter(s=>{if(_nseen.has(s.t))return false;_nseen.add(s.t);return true;});
+
+const _SCREENER_KEY="finsight-screener-data";
+const _loadScreenerCache=()=>{try{const raw=localStorage.getItem(_SCREENER_KEY);if(raw){const d=JSON.parse(raw);if(d&&Array.isArray(d.results))return d;}}catch(e){}return{results:[],timestamps:{},scanTime:0};};
+const _screenerCache=_loadScreenerCache();
+
+const StockScreener=()=>{
+  const TI=window.TechIndicators;
+  const DF=window.OHLCVFetcher;
+  const[results,setResults]=useState(()=>_screenerCache.results);
+  const[scanning,setScanning]=useState(false);
+  const[progress,setProgress]=useState({done:0,total:0,current:""});
+  const[sortKey,setSortKey]=useState("finalScore");
+  const[sortDir,setSortDir]=useState("desc");
+  const[scanErr,setScanErr]=useState("");
+  const[filter,setFilter]=useState("all");
+  const[timestamps,setTimestamps]=useState(()=>_screenerCache.timestamps);
+  const[scanTime,setScanTime]=useState(()=>_screenerCache.scanTime||0);
+  const[refreshingMap,setRefreshingMap]=useState({});
+
+  React.useEffect(()=>{
+    const id="screener-spin-keyframes";
+    if(!document.getElementById(id)){
+      const s=document.createElement("style");s.id=id;
+      s.textContent="@keyframes screener-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}";
+      document.head.appendChild(s);
+    }
+    return()=>{const el=document.getElementById(id);if(el)el.remove();};
+  },[]);
+
+  React.useEffect(()=>{_screenerCache.results=results;_screenerCache.timestamps=timestamps;_screenerCache.scanTime=scanTime;try{localStorage.setItem(_SCREENER_KEY,JSON.stringify({results,timestamps,scanTime}));}catch(e){}},[results,timestamps,scanTime]);
+
+  const purgeData=()=>{try{localStorage.removeItem(_SCREENER_KEY);}catch(e){}_screenerCache.results=[];_screenerCache.timestamps={};_screenerCache.scanTime=0;setResults([]);setTimestamps({});setScanTime(0);};
+
+  const refreshStock=async(s)=>{
+    if(!TI||!DF)return;
+    setRefreshingMap(p=>({...p,[s.t]:true}));
+    try{
+      const tk=s.t.replace(".NS","");
+      const[resW,resD,resH]=await Promise.all([
+        DF.fetchOHLCVCached(tk,"weekly"),
+        DF.fetchOHLCVCached(tk,"daily"),
+        DF.fetchOHLCVCached(tk,"1h")
+      ]);
+      if(!resW.data||resW.data.length<12||!resD.data||resD.data.length<12){
+        setRefreshingMap(p=>({...p,[s.t]:false}));return;
+      }
+      const indW=TI.computeAll(resW.data);
+      const indD=TI.computeAll(resD.data);
+      const indH=resH.data&&resH.data.length>=12?TI.computeAll(resH.data):null;
+      const lc=indD?indD.lastClose:0;
+      const result=TI.computeMultiTFEntryScore(resW.data,indW,resD.data,indD,resH.data,indH,lc);
+      setResults(p=>{
+        const idx=p.findIndex(r=>r.s.t===s.t);
+        if(idx>=0){const copy=[...p];copy[idx]={s,result,lc};return copy;}
+        return [...p,{s,result,lc}];
+      });
+      setTimestamps(p=>({...p,[s.t]:Date.now()}));
+    }catch(e){}
+    setRefreshingMap(p=>({...p,[s.t]:false}));
+  };
+
+  const startScan=async()=>{
+    if(scanning||!TI||!DF)return;
+    setScanning(true);setResults([]);setScanErr("");
+    const stocks=NIFTY_100_UNIQUE;
+    const total=stocks.length;
+    setProgress({done:0,total,current:"Starting..."});
+    const out=[];
+    const BATCH=3;
+    for(let i=0;i<stocks.length;i+=BATCH){
+      const batch=stocks.slice(i,i+BATCH);
+      const promises=batch.map(async(s)=>{
+        try{
+          const tk=s.t.replace(".NS","");
+          const[resW,resD,resH]=await Promise.all([
+            DF.fetchOHLCVCached(tk,"weekly"),
+            DF.fetchOHLCVCached(tk,"daily"),
+            DF.fetchOHLCVCached(tk,"1h")
+          ]);
+          if(!resW.data||resW.data.length<12||!resD.data||resD.data.length<12)return null;
+          const indW=TI.computeAll(resW.data);
+          const indD=TI.computeAll(resD.data);
+          const indH=resH.data&&resH.data.length>=12?TI.computeAll(resH.data):null;
+          const lc=indD?indD.lastClose:0;
+          const result=TI.computeMultiTFEntryScore(resW.data,indW,resD.data,indD,resH.data,indH,lc);
+          return{s,result,lc};
+        }catch(e){return null;}
+      });
+      const batchResults=await Promise.all(promises);
+      batchResults.forEach(r=>{if(r)out.push(r);});
+      setProgress({done:Math.min(i+BATCH,total),total,current:batch.map(s=>s.t.replace(".NS","")).join(", ")});
+      if(i+BATCH<stocks.length)await new Promise(r=>setTimeout(r,300));
+    }
+    out.sort((a,b)=>b.result.finalScore-a.result.finalScore);
+    setResults(out);
+    const now=Date.now();
+    const ts={};out.forEach(r=>{ts[r.s.t]=now;});
+    setTimestamps(ts);
+    setScanTime(now);
+    setScanning(false);
+    setProgress({done:total,total:"",current:""});
+  };
+
+  const toggleSort=(key)=>{
+    if(sortKey===key)setSortDir(d=>d==="desc"?"asc":"desc");
+    else{setSortKey(key);setSortDir("desc");}
+  };
+
+  const sorted=[...results].sort((a,b)=>{
+    let av,bv;
+    if(sortKey==="ticker"){av=a.s.t;bv=b.s.t;return sortDir==="asc"?av.localeCompare(bv):bv.localeCompare(av);}
+    if(sortKey==="name"){av=a.s.n;bv=b.s.n;return sortDir==="asc"?av.localeCompare(bv):bv.localeCompare(av);}
+    if(sortKey==="price"){av=a.lc;bv=b.lc;}
+    else if(sortKey==="weekly"){av=a.result.weekly?a.result.weekly.total:0;bv=b.result.weekly?b.result.weekly.total:0;}
+    else if(sortKey==="daily"){av=a.result.daily?a.result.daily.total:0;bv=b.result.daily?b.result.daily.total:0;}
+    else if(sortKey==="hourly"){av=a.result.hourly?a.result.hourly.total:0;bv=b.result.hourly?b.result.hourly.total:0;}
+    else{av=a.result.finalScore;bv=b.result.finalScore;}
+    return sortDir==="asc"?av-bv:bv-av;
+  });
+
+  const filtered=filter==="all"?sorted:sorted.filter(r=>{
+    if(filter==="buy")return r.result.finalScore>=65;
+    if(filter==="watchlist")return r.result.finalScore>=50&&r.result.finalScore<65;
+    if(filter==="avoid")return r.result.finalScore<50;
+    return true;
+  });
+
+  const countBuy=results.filter(r=>r.result.finalScore>=65).length;
+  const countWatch=results.filter(r=>r.result.finalScore>=50&&r.result.finalScore<65).length;
+  const countAvoid=results.filter(r=>r.result.finalScore<50).length;
+
+  const arrow=(key)=>{
+    if(sortKey!==key)return"";
+    return sortDir==="desc"?" \u25bc":" \u25b2";
+  };
+
+  const thStyle={padding:"8px 10px",fontSize:10,fontWeight:700,color:"var(--text5)",textAlign:"left",borderBottom:"2px solid var(--border)",cursor:"pointer",whiteSpace:"nowrap",userSelect:"none"};
+  const tdStyle={padding:"7px 10px",fontSize:11,borderBottom:"1px solid var(--border)"};
+
+  return React.createElement("div",{style:{marginTop:4}},
+    React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:10}},
+      React.createElement("div",null,
+        React.createElement("div",{style:{fontSize:16,fontWeight:800,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},"Nifty 100 Screener"),
+        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},
+          "Real-time multi-timeframe entry score for all Nifty 100 stocks",
+          scanTime&&!scanning?React.createElement("span",{style:{marginLeft:6,color:"var(--text6)",fontSize:9}},"Last scanned: "+new Date(scanTime).toLocaleString("en-IN",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})):""
+        )
+      ),
+      React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center"}},
+        results.length>0&&!scanning?React.createElement("button",{
+          onClick:purgeData,
+          style:{padding:"8px 14px",borderRadius:8,fontSize:11,fontWeight:600,border:"1px solid var(--border)",background:"var(--bg4)",color:"var(--text5)",cursor:"pointer"}
+        },"Purge Data"):null,
+        React.createElement("button",{
+          onClick:startScan,disabled:scanning,
+          style:{padding:"8px 18px",borderRadius:8,fontSize:12,fontWeight:700,border:"none",background:scanning?"var(--bg5)":"var(--accent)",color:scanning?"var(--text6)":"#fff",cursor:scanning?"wait":"pointer"}
+        },scanning?"Scanning... ("+progress.done+"/"+progress.total+")":"Scan Nifty 100")
+      )
+    ),
+    scanning&&React.createElement("div",{style:{marginBottom:12,padding:"10px 14px",borderRadius:8,background:"var(--bg4)",border:"1px solid var(--border)"}},
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
+        React.createElement("span",{style:{fontSize:11,fontWeight:600,color:"var(--text3)"}},
+          "Progress: "+progress.done+"/"+(progress.total||NIFTY_100_UNIQUE.length)+" stocks"),
+        React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},progress.current)
+      ),
+      React.createElement("div",{style:{height:6,borderRadius:3,background:"var(--bg5)",overflow:"hidden"}},
+        React.createElement("div",{style:{height:"100%",borderRadius:3,background:"var(--accent)",transition:"width .3s",width:(progress.total>0?(progress.done/progress.total*100):0)+"%"}})
+      )
+    ),
+    scanErr&&React.createElement("div",{style:{marginBottom:10,padding:"8px 12px",borderRadius:8,background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.15)",fontSize:11,color:"#ef4444"}},scanErr),
+    results.length>0&&React.createElement("div",null,
+      React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}},
+        [{k:"all",l:"All ("+results.length+")"},{k:"buy",l:"Buy ("+countBuy+")"},{k:"watchlist",l:"Watch ("+countWatch+")"},{k:"avoid",l:"Avoid ("+countAvoid+")"}].map(f=>
+          React.createElement("button",{key:f.k,onClick:()=>setFilter(f.k),style:{
+            padding:"5px 12px",borderRadius:6,fontSize:10,fontWeight:filter===f.k?700:500,border:"none",
+            background:filter===f.k?"var(--accent)":"var(--bg4)",color:filter===f.k?"#fff":"var(--text5)",cursor:"pointer"
+          }},f.l)
+        )
+      ),
+      React.createElement("div",{style:{overflowX:"auto",borderRadius:10,border:"1px solid var(--border)",background:"var(--bg3)"}},
+          React.createElement("table",{style:{width:"100%",borderCollapse:"collapse",minWidth:860}},
+          React.createElement("thead",null,
+            React.createElement("tr",null,
+              ["ticker","name","price","finalScore","weekly","daily","hourly","actions"].map(k=>{
+                const labels={ticker:"Ticker",name:"Company",price:"Price (\u20b9)",finalScore:"Score",weekly:"Weekly",daily:"Daily",hourly:"Hourly",actions:"Last Refreshed"};
+                return React.createElement("th",{key:k,style:{...thStyle,cursor:k==="actions"?"default":"pointer"},onClick:k==="actions"?undefined:()=>toggleSort(k)},labels[k]+(k==="actions"?"":arrow(k)));
+              })
+            )
+          ),
+          React.createElement("tbody",null,
+            filtered.map(r=>{
+              const d=r.result.decision;
+              return React.createElement("tr",{key:r.s.t,style:{background:"var(--bg3)",transition:"background .15s"}},
+                React.createElement("td",{style:{...tdStyle,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},r.s.t.replace(".NS","")),
+                React.createElement("td",{style:{...tdStyle,color:"var(--text4)",maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},r.s.n),
+                React.createElement("td",{style:{...tdStyle,fontWeight:600,color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},"\u20b9"+Number(Math.round(r.lc)).toLocaleString("en-IN")),
+                React.createElement("td",{style:{...tdStyle}},
+                  React.createElement("div",{style:{display:"inline-flex",alignItems:"center",gap:6}},
+                    React.createElement("span",{style:{fontSize:13,fontWeight:900,color:d.color,fontFamily:"'Sora',sans-serif"}},r.result.finalScore),
+                    React.createElement("span",{style:{fontSize:9,fontWeight:700,color:d.color,padding:"2px 6px",borderRadius:4,background:d.color+"18"}},d.label)
+                  )
+                ),
+                React.createElement("td",{style:tdStyle},r.result.weekly?React.createElement("span",{style:{fontWeight:700,color:r.result.weekly.decision.color}},r.result.weekly.total):"—"),
+                React.createElement("td",{style:tdStyle},r.result.daily?React.createElement("span",{style:{fontWeight:700,color:r.result.daily.decision.color}},r.result.daily.total):"—"),
+                React.createElement("td",{style:tdStyle},r.result.hourly?React.createElement("span",{style:{fontWeight:700,color:r.result.hourly.decision.color}},r.result.hourly.total):"—"),
+                React.createElement("td",{style:{...tdStyle,whiteSpace:"nowrap"}},
+                  React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+                    React.createElement("button",{
+                      onClick:()=>refreshStock(r.s),disabled:!!refreshingMap[r.s.t],
+                      style:{width:24,height:24,borderRadius:6,border:"1px solid var(--border)",background:"var(--bg4)",cursor:refreshingMap[r.s.t]?"wait":"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,padding:0,color:"var(--text5)",flexShrink:0}
+                    },refreshingMap[r.s.t]?React.createElement("span",{style:{display:"inline-block",animation:"screener-spin .8s linear infinite"}}, "\u21bb"):"\u21bb"),
+                    React.createElement("span",{style:{fontSize:10,color:"var(--text6)"}},timestamps[r.s.t]?new Date(timestamps[r.s.t]).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"}):"—")
+                  )
+                )
+              );
+            })
+          )
+        )
+      ),
+      React.createElement("div",{style:{marginTop:8,fontSize:9,color:"var(--text6)",textAlign:"center"}},
+        "Sorted by entry score "+(sortDir==="desc"?"descending":"ascending")+" \u00b7 "+filtered.length+" stocks shown"
+      )
+    ),
+    !scanning&&results.length===0&&React.createElement("div",{style:{textAlign:"center",padding:40,color:"var(--text6)",fontSize:13}},
+      "Click \"Scan Nifty 100\" to analyze all stocks"
+    )
+  );
+};
+
 const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},eodIndices={},historyCache={},soldShareSnapshots={},brokerCashBalance=0,banks=[],scheduled=[],isMobile})=>{
   const[ready,setReady]=useState(false);
   React.useEffect(()=>{const t=setTimeout(()=>setReady(true),120);return()=>clearTimeout(t);},[]);
   const[tab,setTab]=useState(defaultTab);const[open,setOpen]=useState(false);const[navLoad,setNavLoad]=useState(false);
-  const[sharesSubTab,setSharesSubTab]=useState("holdings"); /* "holdings" | "profitability" | "timeholding" | "winloss" | "capitaleff" | "behavioural" | "timing" | "risk" | "pattern" | "drawdown" | "multitime" | "frequency" | "swing" | "entryscore" */
+  const[sharesSubTab,setSharesSubTab]=useState("holdings"); /* "holdings" | "profitability" | "timeholding" | "winloss" | "capitaleff" | "behavioural" | "timing" | "risk" | "pattern" | "drawdown" | "multitime" | "frequency" | "swing" | "entryscore" | "screener" */
   React.useEffect(()=>{setTab(defaultTab);},[defaultTab]);
   React.useEffect(()=>{if(tab!=="shares")setSharesSubTab("holdings");},[tab]);
   const[srch,setSrch]=useState("");const[results,setResults]=useState([]);const[searching,setSearching]=useState(false);
@@ -25648,7 +25900,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
     tab==="shares"&&React.createElement(MarketTicker),
     /* ── Shares sub-tab bar ── */
     tab==="shares"&&React.createElement("div",{style:{display:"flex",gap:2,marginBottom:20,flexWrap:"wrap"}},
-      [{key:"holdings",label:"Holdings",svg:"chart"},{key:"profitability",label:"Returns",svg:"invest"},{key:"timeholding",label:"Holding",svg:"clock"},{key:"winloss",label:"Win/Loss",svg:"target"},{key:"capitaleff",label:"Capital",svg:"crystal"},{key:"behavioural",label:"Behaviour",svg:"lightbulb"},{key:"timing",label:"Timing",svg:"alarmclock"},{key:"risk",label:"Risk",svg:"warning"},{key:"pattern",label:"Pattern",svg:"bolt"},{key:"drawdown",label:"Drawdown",svg:"warning"},{key:"multitime",label:"Multi-TF",svg:"chart"},{key:"frequency",label:"Frequency",svg:"alarmclock"},{key:"swing",label:"Swing",svg:"target"},{key:"entryscore",label:"Entry Score",svg:"trendingup"}].map(st=>
+      [{key:"holdings",label:"Holdings",svg:"chart"},{key:"profitability",label:"Returns",svg:"invest"},{key:"timeholding",label:"Holding",svg:"clock"},{key:"winloss",label:"Win/Loss",svg:"target"},{key:"capitaleff",label:"Capital",svg:"crystal"},{key:"behavioural",label:"Behaviour",svg:"lightbulb"},{key:"timing",label:"Timing",svg:"alarmclock"},{key:"risk",label:"Risk",svg:"warning"},{key:"pattern",label:"Pattern",svg:"bolt"},{key:"drawdown",label:"Drawdown",svg:"warning"},{key:"multitime",label:"Multi-TF",svg:"chart"},{key:"frequency",label:"Frequency",svg:"alarmclock"},{key:"swing",label:"Swing",svg:"target"},{key:"entryscore",label:"Entry Score",svg:"trendingup"},{key:"screener",label:"Screener",svg:"search"}].map(st=>
         React.createElement("button",{
           key:st.key,
           onClick:()=>setSharesSubTab(st.key),
@@ -26010,6 +26262,8 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
     tab==="shares"&&sharesSubTab==="swing"&&React.createElement(SwingHoldOptimizer,{shares,soldShareSnapshots}),
     /* ── Entry Score sub-tab ── */
     tab==="shares"&&sharesSubTab==="entryscore"&&React.createElement(EntryScorePanel,{shares}),
+    /* ── Stock Screener sub-tab */
+    tab==="shares"&&sharesSubTab==="screener"&&React.createElement(StockScreener),
     /* ── FD content */
     tab==="fd"&&(!fd.length?React.createElement(Empty,{icon:React.createElement(Icon,{n:"bank",size:18}),text:"No FDs added yet"}):
       React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(275px,1fr))",gap:14}},
