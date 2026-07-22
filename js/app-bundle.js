@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.12.7";
+const APP_VERSION="7.12.9";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -24545,6 +24545,33 @@ const EntryScorePanel=({shares})=>{
 
   const saveEntries=(arr)=>{setEntries(arr);try{localStorage.setItem(LS_ENTRY_SCORES,JSON.stringify(arr));}catch{};};
   const deleteEntry=(id)=>{saveEntries(entries.filter(e=>e.id!==id));};
+
+  useEffect(()=>{
+    if(!entries.length||!TI||!DF)return;
+    const OLD_KEYWORDS=/Overbought|price up, volume down|bullish, weekly bearish|within 1% of upper|new 20d high with volume surge|all 3 timeframes bullish|institutional buying|rising OBV|ADX > 20 all|MTF alignment strong|declining on thin volume|within 1.5% of lower|held < 3 days with strong|> 3% below entry|> 1.5% below entry|below EMAs \+ MACD|institutional selling/;
+    const stale=entries.filter(e=>{
+      if(!e.result||!e.result.hardFilters||!e.result.hardFilters.length)return false;
+      return e.result.hardFilters.some(f=>OLD_KEYWORDS.test(f));
+    });
+    if(!stale.length)return;
+    (async()=>{
+      const updated=[...entries];
+      for(const entry of stale){
+        try{
+          const tk=entry.ticker.toUpperCase();
+          const[resW,resD,resH]=await Promise.all([DF.fetchOHLCVCached(tk,"weekly"),DF.fetchOHLCVCached(tk,"daily"),DF.fetchOHLCVCached(tk,"1h")]);
+          if(!resW.data||resW.data.length<12||!resD.data||resD.data.length<12)continue;
+          const indW=TI.computeAll(resW.data);
+          const indD=TI.computeAll(resD.data);
+          const indH=resH.data&&resH.data.length>=12?TI.computeAll(resH.data):null;
+          const result=TI.computeMultiTFEntryScore(resW.data,indW,resD.data,indD,resH.data,indH,entry.currentPrice||0);
+          const idx=updated.findIndex(e=>e.id===entry.id);
+          if(idx>=0)updated[idx]={...updated[idx],result};
+        }catch(e){}
+      }
+      saveEntries(updated);
+    })();
+  },[]);
 
   const saveSnapshots=(arr)=>{setSnapshots(arr);try{localStorage.setItem(LS_ENTRY_SNAPSHOTS,JSON.stringify(arr));}catch{};};
   const saveSnapshot=(entry)=>{
