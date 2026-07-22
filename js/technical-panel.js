@@ -442,7 +442,7 @@ window.TechnicalIndicatorsPanel = (function () {
             var valStr = valMatch ? valMatch[0] : "";
             var label = valStr ? f.replace(valStr, "").replace(/\s*—\s*/, " — ").trim() : f;
             return React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, lineHeight: 1.6, fontSize: 10 } },
-              React.createElement("span", { style: { color: "var(--text3)", flex: 1 } }, isBonus ? "\u2713 " + label : "\u26a0 " + label),
+              React.createElement("span", { style: { color: "var(--text3)", flex: 1, minWidth: 0, overflow: "hidden", wordBreak: "break-word" } }, isBonus ? "\u2713 " + label : "\u26a0 " + label),
               valStr && React.createElement("span", { style: { fontSize: 10, fontWeight: 800, color: "var(--text3)", background: "var(--bg4)", padding: "1px 6px", borderRadius: 4, fontFamily: "'Sora',sans-serif", flexShrink: 0 } }, valStr)
             );
           })
