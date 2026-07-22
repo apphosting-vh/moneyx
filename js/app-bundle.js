@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.18.1";
+const APP_VERSION="7.18.2";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -25194,25 +25194,25 @@ const EntryScorePanel=({shares})=>{
 
 const NIFTY_100=[
   {t:"ABB.NS",n:"ABB India"},{t:"ADANIENSOL.NS",n:"Adani Energy Solutions"},{t:"ADANIENT.NS",n:"Adani Enterprises"},{t:"ADANIGREEN.NS",n:"Adani Green Energy"},{t:"ADANIPORTS.NS",n:"Adani Ports & SEZ"},
-  {t:"ADANIPOWER.NS",n:"Adani Power"},{t:"AMBUJACEM.NS",n:"Ambuja Cements"},{t:"APOLLOHOSP.NS",n:"Apollo Hospitals"},{t:"ASIANPAINT.NS",n:"Asian Paints"},{t:"AXISBANK.NS",n:"Axis Bank"},
-  {t:"BAJAJ-AUTO.NS",n:"Bajaj Auto"},{t:"BAJAJFINSV.NS",n:"Bajaj Finserv"},{t:"BAJAJHLDNG.NS",n:"Bajaj Holdings"},{t:"BAJFINANCE.NS",n:"Bajaj Finance"},{t:"BANKBARODA.NS",n:"Bank of Baroda"},
-  {t:"BEL.NS",n:"Bharat Electronics"},{t:"BHARTIARTL.NS",n:"Bharti Airtel"},{t:"BOSCHLTD.NS",n:"Bosch"},{t:"BPCL.NS",n:"Bharat Petroleum"},{t:"BRITANNIA.NS",n:"Britannia Industries"},
-  {t:"CANBK.NS",n:"Canara Bank"},{t:"CGPOWER.NS",n:"CG Power & Industrial"},{t:"CHOLAFIN.NS",n:"Cholamandalam Finance"},{t:"CIPLA.NS",n:"Cipla"},{t:"COALINDIA.NS",n:"Coal India"},
-  {t:"CUMMINSIND.NS",n:"Cummins India"},{t:"DIVISLAB.NS",n:"Divi's Laboratories"},{t:"DLF.NS",n:"DLF"},{t:"DMART.NS",n:"Avenue Supermarts"},{t:"DRREDDY.NS",n:"Dr. Reddy's Laboratories"},
-  {t:"EICHERMOT.NS",n:"Eicher Motors"},{t:"ENRIN.NS",n:"Enrin India"},{t:"ETERNAL.NS",n:"Eternal"},{t:"GAIL.NS",n:"GAIL India"},{t:"GODREJCP.NS",n:"Godrej Consumer Products"},{t:"GRASIM.NS",n:"Grasim Industries"},
-  {t:"HAL.NS",n:"Hindustan Aeronautics"},{t:"HCLTECH.NS",n:"HCL Technologies"},{t:"HDFCAMC.NS",n:"HDFC Asset Management"},{t:"HDFCBANK.NS",n:"HDFC Bank"},{t:"HDFCLIFE.NS",n:"HDFC Life Insurance"},
-  {t:"HINDALCO.NS",n:"Hindalco Industries"},{t:"HINDUNILVR.NS",n:"Hindustan Unilever"},{t:"HINDZINC.NS",n:"Hindustan Zinc"},{t:"HYUNDAI.NS",n:"Hyundai Motor India"},{t:"ICICIBANK.NS",n:"ICICI Bank"},
-  {t:"INDHOTEL.NS",n:"Indian Hotels"},{t:"INDIGO.NS",n:"InterGlobe Aviation"},{t:"INFY.NS",n:"Infosys"},{t:"IOC.NS",n:"Indian Oil"},{t:"IRFC.NS",n:"Indian Railway Finance"},
-  {t:"ITC.NS",n:"ITC"},{t:"JINDALSTEL.NS",n:"Jindal Steel & Power"},{t:"JIOFIN.NS",n:"Jio Financial Services"},{t:"JSWSTEEL.NS",n:"JSW Steel"},{t:"KOTAKBANK.NS",n:"Kotak Mahindra Bank"},
-  {t:"LODHA.NS",n:"Macrotech Developers"},{t:"LT.NS",n:"Larsen & Toubro"},{t:"LTIM.NS",n:"LTIMindtree"},{t:"M&M.NS",n:"Mahindra & Mahindra"},{t:"MARUTI.NS",n:"Maruti Suzuki"},
-  {t:"MAXHEALTH.NS",n:"Max Healthcare"},{t:"MAZDOCK.NS",n:"Mazagon Dock Shipbuilders"},{t:"MOTHERSON.NS",n:"Motherson Sumi"},{t:"MUTHOOTFIN.NS",n:"Muthoot Finance"},{t:"NESTLEIND.NS",n:"Nestle India"},
-  {t:"NTPC.NS",n:"NTPC"},{t:"ONGC.NS",n:"Oil & Natural Gas Corp"},{t:"PFC.NS",n:"Power Finance Corp"},{t:"PIDILITIND.NS",n:"Pidilite Industries"},{t:"PNB.NS",n:"Punjab National Bank"},
-  {t:"POWERGRID.NS",n:"Power Grid Corp"},{t:"RECLTD.NS",n:"REC"},{t:"RELIANCE.NS",n:"Reliance Industries"},{t:"SBILIFE.NS",n:"SBI Life Insurance"},{t:"SBIN.NS",n:"State Bank of India"},
-  {t:"SHREECEM.NS",n:"Shree Cement"},{t:"SHRIRAMFIN.NS",n:"Shriram Finance"},{t:"SIEMENS.NS",n:"Siemens"},{t:"SOLARINDS.NS",n:"Solar Industries"},  {t:"SUNPHARMA.NS",n:"Sun Pharmaceutical"},
-  {t:"TATACAP.NS",n:"Tata Capital"},{t:"TATACONSUM.NS",n:"Tata Consumer Products"},{t:"TATAPOWER.NS",n:"Tata Power"},{t:"TATASTEEL.NS",n:"Tata Steel"},{t:"TCS.NS",n:"Tata Consultancy Services"},{t:"TECHM.NS",n:"Tech Mahindra"},
-  {t:"TITAN.NS",n:"Titan Company"},{t:"TMCV.NS",n:"Tata Motors CV"},{t:"TMPV.NS",n:"Tata Motors PV"},{t:"TORNTPHARM.NS",n:"Torrent Pharma"},{t:"TRENT.NS",n:"Trent"},{t:"TVSMOTOR.NS",n:"TVS Motor"},{t:"ULTRACEMCO.NS",n:"UltraTech Cement"},
-  {t:"UNIONBANK.NS",n:"Union Bank of India"},{t:"UNITDSPR.NS",n:"United Spirits"},{t:"VBL.NS",n:"Varun Beverages"},{t:"VEDL.NS",n:"Vedanta"},{t:"WIPRO.NS",n:"Wipro"},
-  {t:"ZYDUSLIFE.NS",n:"Zydus Lifesciences"}
+  {t:"ADANIPOWER.NS",n:"Adani Power"},{t:"AMBUJACEM.NS",n:"Ambuja Cements"},{t:"APOLLOHOSP.NS",n:"Apollo Hospitals"},{t:"ASIANPAINT.NS",n:"Asian Paints"},{t:"DMART.NS",n:"Avenue Supermarts"},
+  {t:"AXISBANK.NS",n:"Axis Bank"},{t:"BAJAJ-AUTO.NS",n:"Bajaj Auto"},{t:"BAJFINANCE.NS",n:"Bajaj Finance"},{t:"BAJAJFINSV.NS",n:"Bajaj Finserv"},{t:"BAJAJHLDNG.NS",n:"Bajaj Holdings"},
+  {t:"BANKBARODA.NS",n:"Bank of Baroda"},{t:"BEL.NS",n:"Bharat Electronics"},{t:"BPCL.NS",n:"Bharat Petroleum"},{t:"BHARTIARTL.NS",n:"Bharti Airtel"},{t:"BOSCHLTD.NS",n:"Bosch"},
+  {t:"BRITANNIA.NS",n:"Britannia Industries"},{t:"CGPOWER.NS",n:"CG Power & Industrial"},{t:"CANBK.NS",n:"Canara Bank"},{t:"CHOLAFIN.NS",n:"Cholamandalam Finance"},{t:"CIPLA.NS",n:"Cipla"},
+  {t:"COALINDIA.NS",n:"Coal India"},{t:"CUMMINSIND.NS",n:"Cummins India"},{t:"DLF.NS",n:"DLF"},{t:"DIVISLAB.NS",n:"Divi's Laboratories"},{t:"DRREDDY.NS",n:"Dr. Reddy's Laboratories"},
+  {t:"EICHERMOT.NS",n:"Eicher Motors"},{t:"ETERNAL.NS",n:"Eternal"},{t:"GAIL.NS",n:"GAIL India"},{t:"GODREJCP.NS",n:"Godrej Consumer Products"},{t:"GRASIM.NS",n:"Grasim Industries"},
+  {t:"HCLTECH.NS",n:"HCL Technologies"},{t:"HDFCAMC.NS",n:"HDFC Asset Management"},{t:"HDFCBANK.NS",n:"HDFC Bank"},{t:"HDFCLIFE.NS",n:"HDFC Life Insurance"},{t:"HINDALCO.NS",n:"Hindalco Industries"},
+  {t:"HAL.NS",n:"Hindustan Aeronautics"},{t:"HINDUNILVR.NS",n:"Hindustan Unilever"},{t:"HINDZINC.NS",n:"Hindustan Zinc"},{t:"HYUNDAI.NS",n:"Hyundai Motor India"},{t:"ICICIBANK.NS",n:"ICICI Bank"},
+  {t:"ITC.NS",n:"ITC"},{t:"INDHOTEL.NS",n:"Indian Hotels"},{t:"IOC.NS",n:"Indian Oil"},{t:"IRFC.NS",n:"Indian Railway Finance"},{t:"INFY.NS",n:"Infosys"},
+  {t:"INDIGO.NS",n:"InterGlobe Aviation"},{t:"JSWSTEEL.NS",n:"JSW Steel"},{t:"JINDALSTEL.NS",n:"Jindal Steel & Power"},{t:"JIOFIN.NS",n:"Jio Financial Services"},{t:"KOTAKBANK.NS",n:"Kotak Mahindra Bank"},
+  {t:"LTM.NS",n:"LTIMindtree"},{t:"LT.NS",n:"Larsen & Toubro"},{t:"LODHA.NS",n:"Macrotech Developers"},{t:"M&M.NS",n:"Mahindra & Mahindra"},{t:"MARUTI.NS",n:"Maruti Suzuki"},
+  {t:"MAXHEALTH.NS",n:"Max Healthcare"},{t:"MAZDOCK.NS",n:"Mazagon Dock Shipbuilders"},{t:"MUTHOOTFIN.NS",n:"Muthoot Finance"},{t:"NTPC.NS",n:"NTPC"},{t:"NESTLEIND.NS",n:"Nestle India"},
+  {t:"ONGC.NS",n:"Oil & Natural Gas Corp"},{t:"PIDILITIND.NS",n:"Pidilite Industries"},{t:"PFC.NS",n:"Power Finance Corp"},{t:"POWERGRID.NS",n:"Power Grid Corp"},{t:"PNB.NS",n:"Punjab National Bank"},
+  {t:"RECLTD.NS",n:"REC"},{t:"RELIANCE.NS",n:"Reliance Industries"},{t:"SBILIFE.NS",n:"SBI Life Insurance"},{t:"MOTHERSON.NS",n:"Motherson Sumi"},{t:"SHREECEM.NS",n:"Shree Cement"},
+  {t:"SHRIRAMFIN.NS",n:"Shriram Finance"},{t:"ENRIN.NS",n:"Enrin India"},{t:"SIEMENS.NS",n:"Siemens"},{t:"SOLARINDS.NS",n:"Solar Industries"},{t:"SBIN.NS",n:"State Bank of India"},
+  {t:"SUNPHARMA.NS",n:"Sun Pharmaceutical"},{t:"TVSMOTOR.NS",n:"TVS Motor"},{t:"TATACAP.NS",n:"Tata Capital"},{t:"TCS.NS",n:"Tata Consultancy Services"},{t:"TATACONSUM.NS",n:"Tata Consumer Products"},
+  {t:"TMCV.NS",n:"Tata Motors CV"},{t:"TMPV.NS",n:"Tata Motors PV"},{t:"TATAPOWER.NS",n:"Tata Power"},{t:"TATASTEEL.NS",n:"Tata Steel"},{t:"TECHM.NS",n:"Tech Mahindra"},
+  {t:"TITAN.NS",n:"Titan Company"},{t:"TORNTPHARM.NS",n:"Torrent Pharma"},{t:"TRENT.NS",n:"Trent"},{t:"ULTRACEMCO.NS",n:"UltraTech Cement"},{t:"UNIONBANK.NS",n:"Union Bank of India"},
+  {t:"UNITDSPR.NS",n:"United Spirits"},{t:"VBL.NS",n:"Varun Beverages"},{t:"VEDL.NS",n:"Vedanta"},{t:"WIPRO.NS",n:"Wipro"},{t:"ZYDUSLIFE.NS",n:"Zydus Lifesciences"}
 ];
 const _nseen=new Set();const NIFTY_100_UNIQUE=NIFTY_100.filter(s=>{if(_nseen.has(s.t))return false;_nseen.add(s.t);return true;});
 
