@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.12.2";
+const APP_VERSION="7.12.3";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -24533,6 +24533,7 @@ const EntryScorePanel=({shares})=>{
   const[adding,setAdding]=useState(false);
   const[addErr,setAddErr]=useState("");
   const[expandedIds,setExpandedIds]=useState({});
+  const[expandedTech,setExpandedTech]=useState({});
   const[snapshots,setSnapshots]=useState(()=>{
     try{return JSON.parse(localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]");}catch{return[];}
   });
@@ -24801,8 +24802,13 @@ const EntryScorePanel=({shares})=>{
               );
             })
           ),
-          React.createElement("div",{onClick:()=>setExpandedIds(prev=>({...prev,[entry.id]:!prev[entry.id]})),style:{fontSize:10,color:"var(--accent)",cursor:"pointer",fontWeight:600,marginBottom:6,textAlign:"center"}},
-            isExpanded?"\u25b2 Hide Details":"\u25bc Show Details"
+          React.createElement("div",{style:{display:"flex",justifyContent:"center",gap:12,marginBottom:6}},
+            React.createElement("div",{onClick:()=>setExpandedIds(prev=>({...prev,[entry.id]:!prev[entry.id]})),style:{fontSize:10,color:"var(--accent)",cursor:"pointer",fontWeight:600}},
+              isExpanded?"\u25b2 Hide Details":"\u25bc Show Details"
+            ),
+            window.TechnicalIndicatorsInline&&React.createElement("div",{onClick:()=>setExpandedTech(prev=>({...prev,[entry.id]:!prev[entry.id]})),style:{fontSize:10,color:!!expandedTech[entry.id]?"var(--text5)":"#f97316",cursor:"pointer",fontWeight:600}},
+              "\u26a1 "+(expandedTech[entry.id]?"Hide Technicals":"Technicals")
+            )
           ),
           isExpanded&&React.createElement("div",{style:{marginTop:8}},
             r.daily&&tfSection("Daily Breakdown",r.daily),
@@ -24818,6 +24824,9 @@ const EntryScorePanel=({shares})=>{
                 "Base: "+r.baseScore+" | Penalties: "+r.penalties+" | Bonuses: "+r.bonuses+" → Final: "+r.finalScore
               )
             )
+          ),
+          expandedTech[entry.id]&&window.TechnicalIndicatorsInline&&React.createElement("div",{style:{marginTop:8,padding:"16px",borderRadius:10,background:"var(--bg3)",border:"1px solid var(--border)"}},
+            React.createElement(window.TechnicalIndicatorsInline,{ticker:entry.ticker,currentPrice:entry.currentPrice,showExitScore:false})
           )
         );
       })

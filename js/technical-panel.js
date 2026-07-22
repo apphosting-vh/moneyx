@@ -782,6 +782,7 @@ window.TechnicalIndicatorsPanel = (function () {
     var buyDate = props.buyDate || null;
     var currentPrice = props.currentPrice || null;
     var entryScore = props.entryScore != null ? props.entryScore : null;
+    var showExitScore = props.showExitScore !== false;
 
     var _a = useState("daily"), timeframe = _a[0], setTimeframe = _a[1];
     var _b = useState(null), indicators = _b[0], setIndicators = _b[1];
@@ -963,7 +964,7 @@ window.TechnicalIndicatorsPanel = (function () {
       })(),
 
       /* Exit Score */
-      indicators && candles && ExitScoreCard(candles, indicators, buyPrice, buyDate, currentPrice, entryScore),
+      showExitScore && indicators && candles && ExitScoreCard(candles, indicators, buyPrice, buyDate, currentPrice, entryScore),
 
       /* Category filter pills */
       React.createElement("div", {
