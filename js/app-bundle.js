@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.18.3";
+const APP_VERSION="7.18.4";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -25533,11 +25533,11 @@ const ScreenerSnapshots=({snapshots,deleteSnapshot,deleteSnapshotsBatch})=>{
 
   const renderSnapTable=(results)=>{
     return React.createElement("div",{style:{overflowX:"auto"}},
-      React.createElement("table",{style:{width:"100%",borderCollapse:"collapse",minWidth:600}},
+      React.createElement("table",{style:{width:"100%",borderCollapse:"collapse",minWidth:900}},
         React.createElement("thead",null,
           React.createElement("tr",null,
-            ["ticker","name","price","finalScore","weekly","daily","hourly"].map(k=>{
-              const labels={ticker:"Ticker",name:"Company",price:"Price (\u20b9)",finalScore:"Score",weekly:"Weekly",daily:"Daily",hourly:"Hourly"};
+            ["ticker","name","price","todayChg","dayChg","weekChg","monthChg","finalScore","weekly","daily","hourly"].map(k=>{
+              const labels={ticker:"Ticker",name:"Company",price:"Price (\u20b9)",todayChg:"Today %",dayChg:"1D Chg %",weekChg:"1W Chg %",monthChg:"1M Chg %",finalScore:"Score",weekly:"Weekly",daily:"Daily",hourly:"Hourly"};
               return React.createElement("th",{key:k,style:snapThStyle},labels[k]);
             })
           )
@@ -25549,6 +25549,10 @@ const ScreenerSnapshots=({snapshots,deleteSnapshot,deleteSnapshotsBatch})=>{
               React.createElement("td",{style:{...snapTdStyle,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},r.s.t.replace(".NS","")),
               React.createElement("td",{style:{...snapTdStyle,color:"var(--text4)",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis"}},r.s.n),
               React.createElement("td",{style:{...snapTdStyle,fontWeight:600,color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},"\u20b9"+Number(Math.round(r.lc)).toLocaleString("en-IN")),
+              React.createElement("td",{style:{...snapTdStyle,fontWeight:600,fontFamily:"'Sora',sans-serif",color:r.todayChg!=null?(r.todayChg>=0?"#22c55e":"#ef4444"):"var(--text6)"}},r.todayChg!=null?(r.todayChg>=0?"+":"")+Number(r.todayChg).toFixed(2)+"%":"--"),
+              React.createElement("td",{style:{...snapTdStyle,fontWeight:600,fontFamily:"'Sora',sans-serif",color:r.dayChg!=null?(r.dayChg>=0?"#22c55e":"#ef4444"):"var(--text6)"}},r.dayChg!=null?(r.dayChg>=0?"+":"")+Number(r.dayChg).toFixed(2)+"%":"--"),
+              React.createElement("td",{style:{...snapTdStyle,fontWeight:600,fontFamily:"'Sora',sans-serif",color:r.weekChg!=null?(r.weekChg>=0?"#22c55e":"#ef4444"):"var(--text6)"}},r.weekChg!=null?(r.weekChg>=0?"+":"")+Number(r.weekChg).toFixed(2)+"%":"--"),
+              React.createElement("td",{style:{...snapTdStyle,fontWeight:600,fontFamily:"'Sora',sans-serif",color:r.monthChg!=null?(r.monthChg>=0?"#22c55e":"#ef4444"):"var(--text6)"}},r.monthChg!=null?(r.monthChg>=0?"+":"")+Number(r.monthChg).toFixed(2)+"%":"--"),
               React.createElement("td",{style:snapTdStyle},
                 React.createElement("div",{style:{display:"inline-flex",alignItems:"center",gap:4}},
                   React.createElement("span",{style:{fontSize:11,fontWeight:900,color:d.color,fontFamily:"'Sora',sans-serif"}},r.result.finalScore),
