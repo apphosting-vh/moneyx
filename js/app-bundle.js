@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.18.2";
+const APP_VERSION="7.18.3";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -25292,10 +25292,19 @@ const StockScreener=()=>{
       const indH=resH.data&&resH.data.length>=12?TI.computeAll(resH.data):null;
       const lc=indD?indD.lastClose:0;
       const result=TI.computeMultiTFEntryScore(resW.data,indW,resD.data,indD,resH.data,indH,lc);
+      const dc=resD.data;
+      const lc1=dc.length>=2?dc[dc.length-2].c:null;
+      const lc2=dc.length>=3?dc[dc.length-3].c:null;
+      const lc5=dc.length>=6?dc[dc.length-6].c:null;
+      const lc21=dc.length>=23?dc[dc.length-23].c:null;
+      const todayChg=lc>0&&lc1!=null&&lc1>0?Math.round((lc-lc1)/lc1*10000)/100:null;
+      const dayChg=lc1!=null&&lc2!=null&&lc2>0?Math.round((lc1-lc2)/lc2*10000)/100:null;
+      const weekChg=lc>0&&lc5!=null&&lc5>0?Math.round((lc-lc5)/lc5*10000)/100:null;
+      const monthChg=lc>0&&lc21!=null&&lc21>0?Math.round((lc-lc21)/lc21*10000)/100:null;
       setResults(p=>{
         const idx=p.findIndex(r=>r.s.t===s.t);
-        if(idx>=0){const copy=[...p];copy[idx]={s,result,lc};return copy;}
-        return [...p,{s,result,lc}];
+        if(idx>=0){const copy=[...p];copy[idx]={s,result,lc,dayChg,weekChg,monthChg,todayChg};return copy;}
+        return [...p,{s,result,lc,dayChg,weekChg,monthChg,todayChg}];
       });
       setTimestamps(p=>({...p,[s.t]:Date.now()}));
     }catch(e){}
@@ -25326,7 +25335,16 @@ const StockScreener=()=>{
           const indH=resH.data&&resH.data.length>=12?TI.computeAll(resH.data):null;
           const lc=indD?indD.lastClose:0;
           const result=TI.computeMultiTFEntryScore(resW.data,indW,resD.data,indD,resH.data,indH,lc);
-          return{s,result,lc};
+          const dc=resD.data;
+          const lc1=dc.length>=2?dc[dc.length-2].c:null;
+          const lc2=dc.length>=3?dc[dc.length-3].c:null;
+          const lc5=dc.length>=6?dc[dc.length-6].c:null;
+          const lc21=dc.length>=23?dc[dc.length-23].c:null;
+          const todayChg=lc>0&&lc1!=null&&lc1>0?Math.round((lc-lc1)/lc1*10000)/100:null;
+          const dayChg=lc1!=null&&lc2!=null&&lc2>0?Math.round((lc1-lc2)/lc2*10000)/100:null;
+          const weekChg=lc>0&&lc5!=null&&lc5>0?Math.round((lc-lc5)/lc5*10000)/100:null;
+          const monthChg=lc>0&&lc21!=null&&lc21>0?Math.round((lc-lc21)/lc21*10000)/100:null;
+          return{s,result,lc,dayChg,weekChg,monthChg,todayChg};
         }catch(e){return null;}
       });
       const batchResults=await Promise.all(promises);
@@ -25354,6 +25372,10 @@ const StockScreener=()=>{
     if(sortKey==="ticker"){av=a.s.t;bv=b.s.t;return sortDir==="asc"?av.localeCompare(bv):bv.localeCompare(av);}
     if(sortKey==="name"){av=a.s.n;bv=b.s.n;return sortDir==="asc"?av.localeCompare(bv):bv.localeCompare(av);}
     if(sortKey==="price"){av=a.lc;bv=b.lc;}
+    else if(sortKey==="todayChg"){av=a.todayChg!=null?a.todayChg:-999;bv=b.todayChg!=null?b.todayChg:-999;}
+    else if(sortKey==="dayChg"){av=a.dayChg!=null?a.dayChg:-999;bv=b.dayChg!=null?b.dayChg:-999;}
+    else if(sortKey==="weekChg"){av=a.weekChg!=null?a.weekChg:-999;bv=b.weekChg!=null?b.weekChg:-999;}
+    else if(sortKey==="monthChg"){av=a.monthChg!=null?a.monthChg:-999;bv=b.monthChg!=null?b.monthChg:-999;}
     else if(sortKey==="weekly"){av=a.result.weekly?a.result.weekly.total:0;bv=b.result.weekly?b.result.weekly.total:0;}
     else if(sortKey==="daily"){av=a.result.daily?a.result.daily.total:0;bv=b.result.daily?b.result.daily.total:0;}
     else if(sortKey==="hourly"){av=a.result.hourly?a.result.hourly.total:0;bv=b.result.hourly?b.result.hourly.total:0;}
@@ -25425,11 +25447,11 @@ const StockScreener=()=>{
         )
       ),
       React.createElement("div",{style:{overflowX:"auto",borderRadius:10,border:"1px solid var(--border)",background:"var(--bg3)"}},
-          React.createElement("table",{style:{width:"100%",borderCollapse:"collapse",minWidth:860}},
+          React.createElement("table",{style:{width:"100%",borderCollapse:"collapse",minWidth:1120}},
           React.createElement("thead",null,
             React.createElement("tr",null,
-              ["ticker","name","price","finalScore","weekly","daily","hourly","actions"].map(k=>{
-                const labels={ticker:"Ticker",name:"Company",price:"Price (\u20b9)",finalScore:"Score",weekly:"Weekly",daily:"Daily",hourly:"Hourly",actions:"Last Refreshed"};
+              ["ticker","name","price","todayChg","dayChg","weekChg","monthChg","finalScore","weekly","daily","hourly","actions"].map(k=>{
+                const labels={ticker:"Ticker",name:"Company",price:"Price (\u20b9)",todayChg:"Today %",dayChg:"1D Chg %",weekChg:"1W Chg %",monthChg:"1M Chg %",finalScore:"Score",weekly:"Weekly",daily:"Daily",hourly:"Hourly",actions:"Last Refreshed"};
                 return React.createElement("th",{key:k,style:{...thStyle,cursor:k==="actions"?"default":"pointer"},onClick:k==="actions"?undefined:()=>toggleSort(k)},labels[k]+(k==="actions"?"":arrow(k)));
               })
             )
@@ -25441,6 +25463,10 @@ const StockScreener=()=>{
                 React.createElement("td",{style:{...tdStyle,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},r.s.t.replace(".NS","")),
                 React.createElement("td",{style:{...tdStyle,color:"var(--text4)",maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},r.s.n),
                 React.createElement("td",{style:{...tdStyle,fontWeight:600,color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},"\u20b9"+Number(Math.round(r.lc)).toLocaleString("en-IN")),
+                React.createElement("td",{style:{...tdStyle,fontWeight:600,fontFamily:"'Sora',sans-serif",color:r.todayChg!=null?(r.todayChg>=0?"#22c55e":"#ef4444"):"var(--text6)"}},r.todayChg!=null?(r.todayChg>=0?"+":"")+Number(r.todayChg).toFixed(2)+"%":"--"),
+                React.createElement("td",{style:{...tdStyle,fontWeight:600,fontFamily:"'Sora',sans-serif",color:r.dayChg!=null?(r.dayChg>=0?"#22c55e":"#ef4444"):"var(--text6)"}},r.dayChg!=null?(r.dayChg>=0?"+":"")+Number(r.dayChg).toFixed(2)+"%":"--"),
+                React.createElement("td",{style:{...tdStyle,fontWeight:600,fontFamily:"'Sora',sans-serif",color:r.weekChg!=null?(r.weekChg>=0?"#22c55e":"#ef4444"):"var(--text6)"}},r.weekChg!=null?(r.weekChg>=0?"+":"")+Number(r.weekChg).toFixed(2)+"%":"--"),
+                React.createElement("td",{style:{...tdStyle,fontWeight:600,fontFamily:"'Sora',sans-serif",color:r.monthChg!=null?(r.monthChg>=0?"#22c55e":"#ef4444"):"var(--text6)"}},r.monthChg!=null?(r.monthChg>=0?"+":"")+Number(r.monthChg).toFixed(2)+"%":"--"),
                 React.createElement("td",{style:{...tdStyle}},
                   React.createElement("div",{style:{display:"inline-flex",alignItems:"center",gap:6}},
                     React.createElement("span",{style:{fontSize:13,fontWeight:900,color:d.color,fontFamily:"'Sora',sans-serif"}},r.result.finalScore),
