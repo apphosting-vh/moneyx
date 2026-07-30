@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.18.5";
+const APP_VERSION="7.18.6";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -3569,7 +3569,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
         })
       ,
       /* Edit modal */
-      editTx&&React.createElement(TxEditModal,{tx:editTx,categories,payees,txTypes,allAccounts:allAccounts||[],onSave:(updated)=>{onEdit(updated,editTx);setEditTx(null);setSelId(updated.id);},onClose:()=>setEditTx(null)}),
+      editTx&&React.createElement(TxEditModal,{tx:editTx,categories,payees,txTypes,allAccounts:allAccounts||[],currentAccountId,onSave:(updated)=>{onEdit(updated,editTx);setEditTx(null);setSelId(updated.id);},onClose:()=>setEditTx(null)}),
       confirmDel&&React.createElement(ConfirmModal,{msg:`Delete "${confirmDel.desc||confirmDel.payee||"this transaction"}"? This will adjust your balance.`,onConfirm:()=>{onDelete(confirmDel);setConfirmDel(null);setSelId(null);},onCancel:()=>setConfirmDel(null)}),
       importOpen&&React.createElement(ImportTxModal,{accType,categories,existingTxns:transactions,onUpsert:updates=>{if(onUpsert)onUpsert(updates);},onMassUpdateStatus:(ids,status)=>{if(onMassUpdateStatus)onMassUpdateStatus(ids,status);},onImport:txns=>{if(onImport)onImport(txns);setImportOpen(false);},onClose:()=>setImportOpen(false)})
     );
@@ -3937,10 +3937,10 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
               style:{width:13,height:13,accentColor:"var(--accent)",cursor:"pointer"}
             })
           ),
-          /* Reconcile tick + Star */
-          React.createElement("div",{style:{padding:"4px 4px",display:"flex",alignItems:"center",justifyContent:"center",gap:2}},
+          /* Reconcile tick + Star (click to toggle) */
+          React.createElement("div",{style:{padding:"4px 4px",display:"flex",alignItems:"center",justifyContent:"center",gap:2,cursor:"pointer"},onClick:e=>{e.stopPropagation();if(onEdit)onEdit({...tx,_starred:!tx._starred},tx);}},
             isReconciled&&React.createElement("span",{style:{color:"#16a34a",fontSize:13,fontWeight:700}},"✓"),
-            tx._starred&&React.createElement("span",{style:{color:"#d97706",fontSize:13,fontWeight:700,textShadow:"0 0 4px rgba(217,119,6,.3)"}},React.createElement(Icon,{n:"star",size:13,col:"#d97706"}))
+            React.createElement("span",{style:{color:tx._starred?"#d97706":"var(--text6)",fontSize:13,fontWeight:700,textShadow:tx._starred?"0 0 4px rgba(217,119,6,.3)":"none",opacity:tx._starred?1:.35,transition:"all .15s"}},React.createElement(Icon,{n:"star",size:13,col:tx._starred?"#d97706":"var(--text6)"}))
           ),
           /* SN */
           React.createElement("div",{style:{padding:"4px 4px",fontSize:12,color:"var(--text5)",fontFamily:"'Sora',sans-serif"}},globalIdx),
@@ -4116,7 +4116,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
     ),
     /* ── Edit modal */
     editTx&&React.createElement(TxEditModal,{
-      tx:editTx,categories,payees,txTypes,allAccounts:allAccounts||[],
+      tx:editTx,categories,payees,txTypes,allAccounts:allAccounts||[],currentAccountId,
       onSave:(updated)=>{onEdit(updated,editTx);setEditTx(null);setSelId(updated.id);},
       onClose:()=>setEditTx(null)
     }),
@@ -12556,8 +12556,8 @@ const AccAttachPanel=({accId,attachments=[],onSave})=>{
   );
 };
 
-const TxEditModal=({tx,categories,payees,txTypes,onSave,onClose,allAccounts=[]})=>{
-  const[f,setF]=useState({...tx,amount:String(tx.amount),_receipts:tx._receipts||[]});
+const TxEditModal=({tx,categories,payees,txTypes,onSave,onClose,allAccounts=[],currentAccountId=""})=>{
+  const[f,setF]=useState({...tx,amount:String(tx.amount),_receipts:tx._receipts||[],srcId:tx.srcId||currentAccountId||""});
   const[showTax,setShowTax]=useState(!!(tx.gstRate&&+tx.gstRate>0)||!!(tx.tdsRate&&+tx.tdsRate>0));
   const[activeTxTypes,setActiveTxTypes]=useState(txTypes); // tracks correct type list for selected account
   const isTransfer=f.txType==="Transfer";
