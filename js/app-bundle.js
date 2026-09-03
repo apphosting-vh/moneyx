@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.18.8";
+const APP_VERSION="7.18.9";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -18865,14 +18865,14 @@ const FDTimeline=({fd})=>{
    via the same CORS-proxy pattern used elsewhere. Falls back silently to null
    so the embedded history is used unchanged when offline / blocked.
    ══════════════════════════════════════════════════════════════════════════ */
-let _niftyLiveCache=null;   /* {value, date} */
+let _niftyLiveCache=null;   /* {value, date, series:[{date,value}]} */
 let _niftyLivePromise=null;
 const fetchNiftyLive=async()=>{
   if(_niftyLiveCache)return _niftyLiveCache;
   if(_niftyLivePromise)return _niftyLivePromise;
   const run=async()=>{
     const period2=Math.floor(Date.now()/1000);
-    const period1=period2-60*60*24*7; /* last 7 days is enough for the latest close */
+    const period1=period2-60*60*24*400; /* ~400 days of daily closes so snapshots ending weeks/months ago still connect to today */
     const yUrl="https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?period1="+period1+"&period2="+period2+"&interval=1d";
     const proxies=[
       "https://api.cors.lol/?url="+encodeURIComponent(yUrl),
@@ -18889,14 +18889,16 @@ const fetchNiftyLive=async()=>{
         if(!res)continue;
         const ts=res.timestamp, q=res.indicators&&res.indicators.quote&&res.indicators.quote[0];
         if(!ts||!q||!q.close)continue;
-        let idx=ts.length-1;
-        while(idx>0&&(q.close[idx]==null))idx--;
-        const close=q.close[idx];
-        const t=ts[idx];
-        if(close==null)continue;
-        const dt=new Date(t*1000);
-        const iso=dt.toISOString().slice(0,10);
-        _niftyLiveCache={value:Math.round(close*100)/100,date:iso};
+        const series=[];
+        for(let i=0;i<ts.length;i++){
+          const c=q.close[i];
+          if(c==null)continue;
+          series.push({date:new Date(ts[i]*1000).toISOString().slice(0,10),value:Math.round(c*100)/100});
+        }
+        series.sort((a,b)=>a.date<b.date?-1:1);
+        const lastPt=series[series.length-1];
+        if(!lastPt)continue;
+        _niftyLiveCache={value:lastPt.value,date:lastPt.date,series};
         return _niftyLiveCache;
       }catch(e){}
     }
@@ -19077,11 +19079,13 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   /* Merge live Nifty value into the embedded history so the line extends to the
      most recent close (fetched at runtime). Replaces any same-date entry. */
   const niftyHist={...NIFTY50_HISTORY};
-  if(niftyLive&&niftyLive.value){
-    const ld=niftyLive.date;
-    let _replaced=false;
-    for(const k of Object.keys(niftyHist)){if(k===ld){niftyHist[k]=niftyLive.value;_replaced=true;break;}}
-    if(!_replaced)niftyHist[ld]=niftyLive.value;
+  if(niftyLive){
+    if(niftyLive.series&&niftyLive.series.length){
+      /* Merge every live daily close so gap days between the bundled snapshot and today are filled */
+      niftyLive.series.forEach(s=>{niftyHist[s.date]=s.value;});
+    }else if(niftyLive.value&&niftyLive.date){
+      niftyHist[niftyLive.date]=niftyLive.value;
+    }
   }
   const domStart=_toTime((filteredPoints[0]&&filteredPoints[0].rawDate)||"");
   const domEnd=_toTime((filteredPoints[filteredPoints.length-1]&&filteredPoints[filteredPoints.length-1].rawDate)||"");
