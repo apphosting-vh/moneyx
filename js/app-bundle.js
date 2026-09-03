@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.18.13";
+const APP_VERSION="7.18.14";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -19184,12 +19184,23 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
 
   const stride=Math.max(1,Math.ceil(filteredPoints.length/8));
 
-  /* ── Drawdown from peak (as % of peak value) ── */
+  /* ── Drawdown from peak (as % of peak value) ──
+     Built on a unitized time-weighted return index so external cash flows
+     (buys/sells) don't create phantom drawdowns or mask real ones. Over each
+     interval the factor = value_i / (value_{i-1} + flow_i), where flow_i is the
+     day's net txn amount; chaining these factors strips out the cash flows. */
   const drawdowns=React.useMemo(()=>{
-    const res=[];let peak=-Infinity;
+    const res=[];let idx=0,peak=-Infinity;
     filteredPoints.forEach((d,i)=>{
-      if(d.value>peak)peak=d.value;
-      res[i]=peak>0?((d.value-peak)/peak*100):0;
+      if(i===0){idx=100;}
+      else{
+        const prevVal=filteredPoints[i-1].value||0;
+        const flow=(d.txns||[]).reduce((s,t)=>s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
+        const open=prevVal+flow;
+        if(open>0&&d.value>=0)idx=idx*(d.value/open);
+      }
+      if(idx>peak)peak=idx;
+      res[i]=peak>0?((idx-peak)/peak*100):0;
     });
     return res;
   },[filteredPoints]);
