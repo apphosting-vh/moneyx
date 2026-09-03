@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.18.12";
+const APP_VERSION="7.18.13";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -18867,6 +18867,38 @@ const FDTimeline=({fd})=>{
    ══════════════════════════════════════════════════════════════════════════ */
 let _niftyLiveCache=null;   /* {value, date, series:[{date,value}]} */
 let _niftyLivePromise=null;
+
+/* Persist the fetched Nifty 50 daily series to localStorage so gap days survive
+   reloads — no need to click Refresh every time the app is reopened. */
+var LS_NIFTY_LIVE="mm_nifty_live";
+var _niftyPersistRead=()=>{
+  try{
+    const raw=localStorage.getItem(LS_NIFTY_LIVE);
+    if(!raw)return null;
+    const o=JSON.parse(raw);
+    if(!o||!Array.isArray(o.series)||!o.series.length)return null;
+    const st=o.series.slice().sort((a,b)=>a.date<b.date?-1:1);
+    const last=st[st.length-1];
+    return {value:last.value,date:last.date,series:st,savedAt:o.savedAt||0};
+  }catch(e){return null;}
+};
+var _niftyPersistWrite=(series,savedAt)=>{
+  try{
+    /* Merge with any previously persisted series so coverage grows backward */
+    let merged=[...(series||[])];
+    const prev=_niftyPersistRead();
+    if(prev&&prev.series){
+      const map={};merged.forEach(s=>{map[s.date]=s.value;});
+      prev.series.forEach(s=>{if(!(s.date in map))merged.push(s);});
+    }
+    merged.sort((a,b)=>a.date<b.date?-1:1);
+    localStorage.setItem(LS_NIFTY_LIVE,JSON.stringify({series:merged,savedAt:savedAt||Date.now()}));
+    return merged;
+  }catch(e){return series||[];}
+};
+/* Seed the module cache from persisted data so the chart's first render already
+   has the gap-filled daily series (no network / no Refresh needed on reopen). */
+if(!_niftyLiveCache){const _p=_niftyPersistRead();if(_p&&_p.series&&_p.series.length)_niftyLiveCache=_p;}
 const fetchNiftyLive=async()=>{
   if(_niftyLiveCache)return _niftyLiveCache;
   if(_niftyLivePromise)return _niftyLivePromise;
@@ -18899,6 +18931,7 @@ const fetchNiftyLive=async()=>{
         const lastPt=series[series.length-1];
         if(!lastPt)continue;
         _niftyLiveCache={value:lastPt.value,date:lastPt.date,series};
+        _niftyLiveCache.series=_niftyPersistWrite(series,Date.now());
         return _niftyLiveCache;
       }catch(e){}
     }
