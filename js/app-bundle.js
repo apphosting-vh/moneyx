@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.18.9";
+const APP_VERSION="7.18.10";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -18917,12 +18917,19 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const[datePreset,setDatePreset]=React.useState("all");
   const[indexed,setIndexed]=React.useState(false);
   const[showBreakdown,setShowBreakdown]=React.useState(false);
+  const[niftyLoading,setNiftyLoading]=React.useState(false);
 
   React.useEffect(()=>{
     let alive=true;
     fetchNiftyLive().then(v=>{if(alive&&v)setNiftyLive(v);}).catch(()=>{});
     return()=>{alive=false;};
   },[]);
+
+  const refreshNifty=()=>{
+    setNiftyLoading(true);
+    _niftyLiveCache=null; _niftyLivePromise=null; /* bypass session cache to force a fresh fetch */
+    fetchNiftyLive().then(v=>{setNiftyLoading(false);if(v)setNiftyLive(v);}).catch(()=>setNiftyLoading(false));
+  };
 
   /* ── Build timeline data points ── */
   const dataPoints=React.useMemo(()=>{
@@ -19375,7 +19382,11 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         React.createElement("span",{style:{marginLeft:4,fontSize:8,fontWeight:700,padding:"1px 6px",borderRadius:5,
           background:niftyLive?"rgba(37,99,235,.12)":"rgba(120,120,120,.12)",
           color:niftyLive?"#2563eb":"var(--text6)",border:"1px solid "+(niftyLive?"rgba(37,99,235,.3)":"var(--border2)")}},
-          niftyLive?"LIVE":"cached")
+          niftyLive?"LIVE":"cached"),
+        React.createElement("button",{onClick:refreshNifty,disabled:niftyLoading,title:"Re-fetch Nifty 50 to fill missing gap days",
+          style:{marginLeft:4,fontSize:9,fontWeight:700,padding:"2px 8px",borderRadius:5,cursor:niftyLoading?"default":"pointer",
+          background:"transparent",color:"var(--text2)",border:"1px solid var(--border2)",opacity:niftyLoading?.5:1}},
+          niftyLoading?"Fetching…":"Refresh")
       ),
       React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
         React.createElement("svg",{width:26,height:12,style:{overflow:"visible"}},
