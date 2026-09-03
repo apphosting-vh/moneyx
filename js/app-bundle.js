@@ -19236,6 +19236,26 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const hyC=hoverIdx!==null?_yC(hoverIdx):null;
   const hN=hoverIdx!==null&&niftyValsAt[hoverIdx]!=null?niftyValsAt[hoverIdx]:null;
   const hyN=hoverIdx!==null&&hN!=null?yFnN(indexed&&niftyStartVal>0?hN/niftyStartVal*100:hN):null;
+  /* Hovered point's money-weighted (Modified Dietz) return from range start, shared by
+     the tooltip's RETURN row and ALPHA row. Only prior points (j<hoverIdx) count as
+     cash flows so a same-day txn on the hovered date doesn't create an MD artifact. */
+  const hpPortPct=(()=>{
+    if(hoverIdx===null||!filteredPoints.length)return null;
+    const rs=filteredPoints[0];
+    if(!rs||!rs.value||rs.value<=0)return null;
+    const subDays=(_t(hp.rawDate)-_t(rs.rawDate))/86400000;
+    let sNet=0,sWeight=0;
+    for(let j=0;j<hoverIdx;j++){
+      const p=filteredPoints[j];
+      const dayFlow=(p.txns||[]).reduce((s,t)=>s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
+      sNet+=dayFlow;
+      const el=(_t(p.rawDate)-_t(rs.rawDate))/86400000;
+      const w=subDays>0?Math.max(0,(subDays-el)/subDays):0;
+      sWeight+=dayFlow*w;
+    }
+    const den=rs.value+sWeight;
+    return den>0?((hp.value-rs.value-sNet)/den*100):null;
+  })();
   const _hpHasTxns=hoverIdx!==null&&filteredPoints[hoverIdx]&&filteredPoints[hoverIdx].txns&&filteredPoints[hoverIdx].txns.length>0;
   const _hpTxns=_hpHasTxns?filteredPoints[hoverIdx].txns:null;
   const _txnRows=_hpTxns?_hpTxns.slice(0,5):null;
@@ -19690,32 +19710,14 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
             return React.createElement("text",{x:tipX+tipW-14,y:tipY+91,textAnchor:"end",fill:col,fontSize:10.5,fontWeight:700},
               (nd>=0?"+":"")+INRfmt(Math.round(nd)));
           })(),
-          /* NAV return vs start (money-weighted Modified Dietz from range start to the
-             hovered point). Only prior points (j<hoverIdx) count as cash flows so a
-             buy/sell landing exactly on the hovered date doesn't create a Modified
-             Dietz endpoint artifact; this keeps it consistent with the chip. */
+          /* NAV return vs start (money-weighted from range start to the hovered point,
+             shared with the ALPHA row via hpPortPct) */
           (()=>{
-            const rangeStart=filteredPoints[0];
-            let navPct=null;
-            if(rangeStart&&rangeStart.value>0&&hoverIdx!==null){
-              const subDays=(_t(hp.rawDate)-_t(rangeStart.rawDate))/86400000;
-              let sNet=0,sWeight=0;
-              for(let j=0;j<hoverIdx;j++){
-                const p=filteredPoints[j];
-                const dayFlow=(p.txns||[]).reduce((s,t)=>s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
-                sNet+=dayFlow;
-                const el=(_t(p.rawDate)-_t(rangeStart.rawDate))/86400000;
-                const w=subDays>0?Math.max(0,(subDays-el)/subDays):0;
-                sWeight+=dayFlow*w;
-              }
-              const den=rangeStart.value+sWeight;
-              if(den>0)navPct=((hp.value-rangeStart.value-sNet)/den*100);
-            }
-            if(navPct==null)return null;
-            const col=navPct>=0?"#10b981":"#ef4444";
+            if(hpPortPct==null)return null;
+            const col=hpPortPct>=0?"#10b981":"#ef4444";
             return React.createElement("g",null,
               React.createElement("text",{x:tipX+14,y:tipY+108,fill:"var(--text5)",fontSize:9,fontWeight:600,letterSpacing:.3},"RETURN FROM RANGE START"),
-              React.createElement("text",{x:tipX+14,y:tipY+123,fill:col,fontSize:12,fontWeight:700},PCTfmt(navPct))
+              React.createElement("text",{x:tipX+14,y:tipY+123,fill:col,fontSize:12,fontWeight:700},PCTfmt(hpPortPct))
             );
           })(),
           /* Nifty row (value + % from range start) */
@@ -19723,7 +19725,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
             const niftyStartVal=rangeMetrics&&rangeMetrics.niftyStart!=null?rangeMetrics.niftyStart:null;
             const niftyPct=niftyStartVal&&niftyStartVal>0?((hN-niftyStartVal)/niftyStartVal*100):null;
             const niftyCol=niftyPct!=null&&niftyPct>=0?"#2563eb":"#dc2626";
-            const alpha=hN!=null&&rangeMetrics&&rangeMetrics.portPct!=null?rangeMetrics.portPct-(niftyPct!=null?niftyPct:0):null;
+            const alpha=hpPortPct!=null&&niftyPct!=null?hpPortPct-niftyPct:null;
             return React.createElement(React.Fragment,null,
               React.createElement("line",{x1:tipX+10,y1:tipY+131,x2:tipX+tipW-10,y2:tipY+131,
                 stroke:"var(--border2)",strokeWidth:.8,opacity:.6}),
