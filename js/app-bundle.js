@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.18.6";
+const APP_VERSION="7.18.7";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -16914,6 +16914,9 @@ const ImportMFTxnsModal=({onImport,onClose})=>{
             else{date=parts[2]+"-"+parts[1]+"-"+parts[0];}
           }else if(/^\d{4}[\/-]\d{2}[\/-]\d{2}$/.test(dateStr)){
             date=dateStr.replace(/\//g,"-");
+          }else{
+            /* DD-MMM-YYYY (and any other known AMFI/mfapi format) → ISO */
+            date=mfNavDateToISO(dateStr)||dateStr;
           }
           const orderRaw=get(row,ci.order).toLowerCase();
           const orderType=orderRaw.includes("sell")||orderRaw.includes("redeem")?"sell":"buy";
@@ -18907,6 +18910,11 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const svgRef=React.useRef(null);
   const[hoverIdx,setHoverIdx]=React.useState(null);
   const[niftyLive,setNiftyLive]=React.useState(_niftyLiveCache);
+  const[dateFrom,setDateFrom]=React.useState("");
+  const[dateTo,setDateTo]=React.useState("");
+  const[datePreset,setDatePreset]=React.useState("all");
+  const[indexed,setIndexed]=React.useState(false);
+  const[showBreakdown,setShowBreakdown]=React.useState(false);
 
   React.useEffect(()=>{
     let alive=true;
@@ -18950,8 +18958,13 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         }
       });
       let holdingVal=0;
-      Object.entries(fundState).forEach(([fn,fs])=>{if(fs.units>0&&lastNav[fn])holdingVal+=fs.units*lastNav[fn];});
-      if(runningCost>0)pts.push({date:toLabel(date),rawDate:date,cost:runningCost,value:holdingVal});
+      const fundVals={};
+      Object.entries(fundState).forEach(([fn,fs])=>{if(fs.units>0&&lastNav[fn]){const fv=fs.units*lastNav[fn];holdingVal+=fv;fundVals[fn]=fv;}});
+      if(runningCost>0)pts.push({
+        date:toLabel(date),rawDate:date,cost:runningCost,value:holdingVal,
+        fundVals:fundVals,
+        txns:byDate[date].map(t=>({type:t.orderType,fund:t.fundName,amount:+t.amount||0,nav:+t.nav||0}))
+      });
     });
     if(mf&&mf.length>0&&pts.length>0){
       const activeMf=(mf||[]).filter(m=>m.units>0);
@@ -18962,21 +18975,58 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
       const todayRaw=now.toISOString().slice(0,10);
       const lastPt=pts[pts.length-1];
       if(curVal>0&&curCost>0){
-        if(lastPt.rawDate===todayRaw)pts[pts.length-1]={date:todayLabel,rawDate:todayRaw,cost:curCost,value:curVal};
-        else pts.push({date:todayLabel,rawDate:todayRaw,cost:curCost,value:curVal});
+        const fundVals={};
+        activeMf.forEach(m=>{const fv=(m.currentValue&&m.currentValue>0?m.currentValue:0);if(fv>0)fundVals[m.name]=fv;});
+        const todayTxn=byDate[todayRaw]||[];
+        const newPt={date:todayLabel,rawDate:todayRaw,cost:curCost,value:curVal,fundVals:fundVals,
+          txns:todayTxn.map(t=>({type:t.orderType,fund:t.fundName,amount:+t.amount||0,nav:+t.nav||0}))};
+        if(lastPt.rawDate===todayRaw)pts[pts.length-1]=newPt;
+        else pts.push(newPt);
       }
     }
     return pts;
   },[mfTxns,mf]);
 
-  if(dataPoints.length<2)return React.createElement("div",{style:{padding:"20px",textAlign:"center",fontSize:12,color:"var(--text6)"}},"Not enough transaction history to plot evolution.");
+  /* ── Date range presets & filtering ── */
+  const _t=iso=>{const p=(iso||"").split("-");return p.length===3?Date.UTC(+p[0],+p[1]-1,+p[2]):0;};
+  const allFrom=dataPoints.length>0?dataPoints[0].rawDate:"";
+  const allTo=dataPoints.length>0?dataPoints[dataPoints.length-1].rawDate:"";
+  const applyPreset=preset=>{
+    setDatePreset(preset);
+    if(preset==="all"){setDateFrom("");setDateTo("");return;}
+    /* Normalize legacy non-ISO rawDates so preset bounds are always valid ISO */
+    const _iso=ds=>mfNavDateToISO(ds)||ds;
+    const _allFrom=_iso(allFrom),_allTo=_iso(allTo);
+    const to=(_allTo||new Date().toISOString().slice(0,10));
+    let from=to;
+    const yrs=preset==="1y"?1:preset==="3y"?3:preset==="5y"?5:0;
+    const dt=new Date(_t(to));
+    if(yrs>0){dt.setUTCFullYear(dt.getUTCFullYear()-yrs);from=dt.toISOString().slice(0,10);}
+    if(_t(from)<_t(_allFrom))from=_allFrom;
+    setDateFrom(from);setDateTo(to||"");
+  };
+  const filteredPoints=React.useMemo(()=>{
+    if(!dateFrom&&!dateTo)return dataPoints;
+    /* Normalize both sides to ISO so legacy DD-MM-YYYY / DD-MMM-YYYY dates compare correctly */
+    const _iso=ds=>mfNavDateToISO(ds)||ds;
+    const f=_iso(dateFrom),t=_iso(dateTo);
+    let dpts=dataPoints;
+    if(f)dpts=dpts.filter(d=>_iso(d.rawDate)>=f);
+    if(t)dpts=dpts.filter(d=>_iso(d.rawDate)<=t);
+    return dpts;
+  },[dataPoints,dateFrom,dateTo]);
 
   /* ── Chart geometry ── */
-  const W=960,padL=72,padR=28,padT=20,padB=32,svgH=220;
+  const W=960,padL=72,padR=28,padT=20,padB=32,svgH=260;
   const chartW=W-padL-padR,chartH=svgH-padT-padB;
 
-  const costs=dataPoints.map(d=>d.cost);
-  const vals=dataPoints.map(d=>d.value);
+  /* Indexed mode: normalize portfolio value + nifty to 100 at range start */
+  const first=filteredPoints[0]||{value:0,cost:0,rawDate:""};
+  const last=filteredPoints[filteredPoints.length-1]||{value:0,cost:0,rawDate:""};
+  const idxScale=v=>first.value>0?(v/first.value*100):v;
+  const costScale=v=>first.cost>0?(v/first.cost*100):v;
+  const costs=(indexed?filteredPoints.map(d=>costScale(d.cost)):filteredPoints.map(d=>d.cost));
+  const vals=(indexed?filteredPoints.map(d=>idxScale(d.value)):filteredPoints.map(d=>d.value));
   const allVals=[...costs,...vals];
   const rawMn=Math.min(...allVals);
   const rawMx=Math.max(...allVals,1);
@@ -18984,9 +19034,10 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const mn=Math.max(0,rawMn-padV);
   const mx=rawMx+padV;
   const range=mx-mn||1;
-  const xStep=chartW/(dataPoints.length-1);
+  const xStep=chartW/(filteredPoints.length-1);
   const yFn=v=>padT+chartH*(1-(v-mn)/range);
   const xFn=i=>padL+i*xStep;
+  const nTicks=4;
 
   /* ── Smooth cubic-bezier path builder ── */
   const smoothPath=pts=>{
@@ -19001,13 +19052,13 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     return d;
   };
 
-  const costXY=dataPoints.map((d,i)=>[xFn(i),yFn(d.cost)]);
-  const valXY=dataPoints.map((d,i)=>[xFn(i),yFn(d.value)]);
+  const costXY=filteredPoints.map((d,i)=>[xFn(i),yFn(costs[i])]);
+  const valXY=filteredPoints.map((d,i)=>[xFn(i),yFn(vals[i])]);
   const baseY=padT+chartH;
   const costPath=smoothPath(costXY);
   const valPath=smoothPath(valXY);
-  const costAreaPath=costPath+` L${xFn(dataPoints.length-1)},${baseY} L${xFn(0)},${baseY} Z`;
-  const valAreaPath=valPath+` L${xFn(dataPoints.length-1)},${baseY} L${xFn(0)},${baseY} Z`;
+  const costAreaPath=costPath+` L${xFn(filteredPoints.length-1)},${baseY} L${xFn(0)},${baseY} Z`;
+  const valAreaPath=valPath+` L${xFn(filteredPoints.length-1)},${baseY} L${xFn(0)},${baseY} Z`;
 
   /* ── Nifty 50 overlay (secondary right axis, index points) ──
      Build an independent time-series mapped onto the chart's full date domain
@@ -19023,8 +19074,8 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     for(const k of Object.keys(niftyHist)){if(k===ld){niftyHist[k]=niftyLive.value;_replaced=true;break;}}
     if(!_replaced)niftyHist[ld]=niftyLive.value;
   }
-  const domStart=_toTime(dataPoints[0].rawDate);
-  const domEnd=_toTime(dataPoints[dataPoints.length-1].rawDate);
+  const domStart=_toTime((filteredPoints[0]&&filteredPoints[0].rawDate)||"");
+  const domEnd=_toTime((filteredPoints[filteredPoints.length-1]&&filteredPoints[filteredPoints.length-1].rawDate)||"");
   const domSpan=(domEnd-domStart)||1;
   const _xTime=iso=>padL+(chartW*(_toTime(iso)-domStart)/domSpan);
   const histEntries=Object.keys(niftyHist)
@@ -19032,27 +19083,31 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     .sort()
     .map(d=>[ _xTime(d), niftyHist[d] ]);
   const niftyHasData=histEntries.length>=2;
-  const niftyRawMn=niftyHasData?Math.min(...histEntries.map(e=>e[1])):0;
-  const niftyRawMx=niftyHasData?Math.max(...histEntries.map(e=>e[1])):1;
+  /* Find nifty baseline for indexed mode = first hist entry value */
+  const niftyStartVal=niftyHasData?histEntries[0][1]:null;
+  /* Indexed nifty: rescale to % where start = 100 */
+  const niftyValues=histEntries.map(e=>e[1]);
+  const niftyIdxValues=indexed&&niftyStartVal>0?niftyValues.map(v=>v/niftyStartVal*100):niftyValues;
+  const niftyRawMn=niftyHasData?Math.min(...niftyIdxValues):0;
+  const niftyRawMx=niftyHasData?Math.max(...niftyIdxValues):1;
   const niftyPadV=(niftyRawMx-niftyRawMn)*0.10||1;
   const niftyMn=Math.max(0,niftyRawMn-niftyPadV);
   const niftyMx=niftyRawMx+niftyPadV;
   const niftyRange=niftyMx-niftyMn||1;
   const yFnN=v=>padT+chartH*(1-(v-niftyMn)/niftyRange);
-  const niftyXY=histEntries.map(([x,v])=>[x,yFnN(v)]);
+  const niftyXY=histEntries.map(([x,v],i)=>[x,yFnN(niftyIdxValues[i])]);
   const niftyPath=niftyXY.length>=2?smoothPath(niftyXY):"";
   const niftyColor="#2563eb";
   const niftyTicks=Array.from({length:nTicks},(_,i)=>niftyRawMn+(niftyRawMx-niftyRawMn)/(nTicks-1)*i);
   if(niftyTicks.length)niftyTicks[nTicks-1]=niftyRawMx;
   /* Per-portfolio-point Nifty value for hover tooltip (nearest history date <= point date) */
   const _histSorted=Object.keys(niftyHist).sort();
-  const niftyValsAt=dataPoints.map(dp=>{
+  const niftyValsAt=filteredPoints.map(dp=>{
     let best=null;
     for(const hd of _histSorted){if(_toTime(hd)<=_toTime(dp.rawDate))best=niftyHist[hd];else break;}
     return best;
   });
 
-  const last=dataPoints[dataPoints.length-1];
   const isGain=last.value>=last.cost;
   const totalGainPct=last.cost>0?((last.value-last.cost)/last.cost*100):0;
   const valColor=isGain?"#10b981":"#ef4444";
@@ -19066,29 +19121,39 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     return"₹"+Math.round(v);
   };
   const INRfmt=v=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(v);
+  const PCTfmt=v=>(v>=0?"+":"")+v.toFixed(2)+"%";
 
   /* ── Nice Y-axis ticks (4 evenly spaced) ── */
-  const nTicks=4;
   const rawRange=rawMx-rawMn||1;
   const tickStep=rawRange/(nTicks-1);
   const yTicks=Array.from({length:nTicks},(_,i)=>rawMn+tickStep*i);
   yTicks[nTicks-1]=rawMx;
 
-  const stride=Math.max(1,Math.ceil(dataPoints.length/8));
+  const stride=Math.max(1,Math.ceil(filteredPoints.length/8));
+
+  /* ── Drawdown from peak (as % of peak value) ── */
+  const drawdowns=React.useMemo(()=>{
+    const res=[];let peak=-Infinity;
+    filteredPoints.forEach((d,i)=>{
+      if(d.value>peak)peak=d.value;
+      res[i]=peak>0?((d.value-peak)/peak*100):0;
+    });
+    return res;
+  },[filteredPoints]);
 
   /* ── Peak / trough milestone markers ── */
   const milestones=React.useMemo(()=>{
-    if(dataPoints.length<5)return[];
+    if(filteredPoints.length<5)return[];
     let peakIdx=0,troughIdx=0;
-    dataPoints.forEach((d,i)=>{
-      if(d.value>dataPoints[peakIdx].value)peakIdx=i;
-      if(d.value<dataPoints[troughIdx].value)troughIdx=i;
+    filteredPoints.forEach((d,i)=>{
+      if(d.value>filteredPoints[peakIdx].value)peakIdx=i;
+      if(d.value<filteredPoints[troughIdx].value)troughIdx=i;
     });
     const res=[];
-    if(peakIdx!==dataPoints.length-1&&peakIdx!==0)res.push({idx:peakIdx,type:"peak"});
+    if(peakIdx!==filteredPoints.length-1&&peakIdx!==0)res.push({idx:peakIdx,type:"peak"});
     if(troughIdx!==0&&troughIdx!==peakIdx)res.push({idx:troughIdx,type:"trough"});
     return res;
-  },[dataPoints]);
+  },[filteredPoints]);
 
   /* ── Hover ── */
   const handleMouseMove=e=>{
@@ -19096,20 +19161,129 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     const rect=svg.getBoundingClientRect();
     const svgX=(e.clientX-rect.left)*(W/rect.width)-padL;
     const idx=Math.round(svgX/xStep);
-    setHoverIdx(Math.max(0,Math.min(dataPoints.length-1,idx)));
+    setHoverIdx(Math.max(0,Math.min(filteredPoints.length-1,idx)));
   };
+  const _yV=i=>yFn(indexed?idxScale(filteredPoints[i].value):filteredPoints[i].value);
+  const _yC=i=>yFn(indexed?costScale(filteredPoints[i].cost):filteredPoints[i].cost);
 
-  const hp=hoverIdx!==null?dataPoints[hoverIdx]:null;
+  const hp=hoverIdx!==null?filteredPoints[hoverIdx]:null;
   const hx=hoverIdx!==null?xFn(hoverIdx):null;
-  const hyV=hoverIdx!==null?yFn(dataPoints[hoverIdx].value):null;
-  const hyC=hoverIdx!==null?yFn(dataPoints[hoverIdx].cost):null;
+  const hyV=hoverIdx!==null?_yV(hoverIdx):null;
+  const hyC=hoverIdx!==null?_yC(hoverIdx):null;
   const hN=hoverIdx!==null&&niftyValsAt[hoverIdx]!=null?niftyValsAt[hoverIdx]:null;
-  const hyN=hoverIdx!==null&&hN!=null?yFnN(hN):null;
-  const tipW=230,tipH=128;
+  const hyN=hoverIdx!==null&&hN!=null?yFnN(indexed&&niftyStartVal>0?hN/niftyStartVal*100:hN):null;
+  const _hpHasTxns=hoverIdx!==null&&filteredPoints[hoverIdx]&&filteredPoints[hoverIdx].txns&&filteredPoints[hoverIdx].txns.length>0;
+  const tipW=240,tipH=200+(hN!=null?30:0)+(_hpHasTxns?20:0);
   const tipX=hx!==null?(hx+tipW+padR+4>W?hx-tipW-14:hx+14):0;
   const tipY=hyV!==null?Math.max(padT,Math.min(padT+chartH-tipH,hyV-tipH/2)):0;
 
+  /* ── Range comparison metrics (portfolio vs nifty) ── */
+  const rangeMetrics=React.useMemo(()=>{
+    if(filteredPoints.length<2)return null;
+    const start=filteredPoints[0],end=filteredPoints[filteredPoints.length-1];
+    const portPct=start.value>0?((end.value-start.value)/start.value*100):null;
+    const portAmt=end.value-start.value;
+    const niftyStart=filteredPoints[0]?niftyValsAt[0]:null;
+    const niftyEnd=niftyValsAt[niftyValsAt.length-1]!=null?niftyValsAt[niftyValsAt.length-1]:null;
+    const niftyPct=(niftyStart&&niftyEnd&&niftyStart>0)?((niftyEnd-niftyStart)/niftyStart*100):null;
+    const alpha=(portPct!=null&&niftyPct!=null)?portPct-niftyPct:null;
+    /* CAGR over the range */
+    let cagr=null;
+    if(start.value>0&&end.value>0){
+      const days=(_t(end.rawDate)-_t(start.rawDate))/86400000;
+      if(days>0){const mult=end.value/start.value;cagr=mult>0?((Math.pow(mult,365/days)-1)*100):null;}
+    }
+    return{portPct,portAmt,niftyStart,niftyEnd,niftyPct,alpha,cagr};
+  },[filteredPoints,niftyValsAt]);
+
+  /* ── Max drawdown from the drawdowns series ── */
+  const maxDrawdown=drawdowns.length>0?Math.min(...drawdowns):0;
+
+  /* ── Per-fund latest breakdown ── */
+  const fundBreakdown=React.useMemo(()=>{
+    if(!filteredPoints.length)return[];
+    const fv=filteredPoints[filteredPoints.length-1].fundVals||{};
+    return Object.entries(fv).map(([name,val])=>({name,val})).sort((a,b)=>b.val-a.val);
+  },[filteredPoints]);
+
+  if(dataPoints.length<2)return React.createElement("div",{style:{padding:"20px",textAlign:"center",fontSize:12,color:"var(--text6)"}},"Not enough transaction history to plot evolution.");
+  if(filteredPoints.length<2)return React.createElement("div",{style:{padding:"20px",textAlign:"center",fontSize:12,color:"var(--text6)"}},"Not enough data points in the selected date range.");
+
   return React.createElement("div",null,
+
+    /* ── Controls row: date range presets + indexed toggle ── */
+    React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,alignItems:"center",marginBottom:10}},
+      /* Preset buttons */
+      React.createElement("div",{style:{display:"flex",gap:5,overflowX:"auto",paddingBottom:2}},
+        [["all","All"],["1y","1Y"],["3y","3Y"],["5y","5Y"]].map(([k,l])=>{
+          const active=datePreset===k&&!dateFrom;
+          return React.createElement("button",{key:k,
+            onClick:()=>applyPreset(k),
+            style:{fontSize:10,fontWeight:active?700:400,color:active?"#6d28d9":"var(--text5)",
+              background:active?"rgba(109,40,217,.12)":"transparent",
+              border:"1px solid "+(active?"rgba(109,40,217,.4)":"var(--border)"),
+              borderRadius:16,padding:"4px 12px",cursor:"pointer",whiteSpace:"nowrap",fontFamily:"'DM Sans',sans-serif"}}
+          ,l);
+        })
+      ),
+      /* From / To date inputs */
+      React.createElement("div",{style:{display:"flex",gap:6,alignItems:"center",flex:1,minWidth:220,maxWidth:340}},
+        React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"From"),
+        React.createElement("input",{type:"date",value:dateFrom||"",onChange:e=>{setDateFrom(e.target.value);setDatePreset(e.target.value?"custom":"all");},
+          style:{flex:1,minWidth:0,background:"transparent",border:"1px solid "+(dateFrom?"#6d28d9":"var(--border)"),borderRadius:7,color:"var(--text)",fontFamily:"'DM Sans',sans-serif",fontSize:11,padding:"4px 8px",outline:"none"}}),
+        React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"To"),
+        React.createElement("input",{type:"date",value:dateTo||"",onChange:e=>{setDateTo(e.target.value);setDatePreset(e.target.value?"custom":"all");},
+          style:{flex:1,minWidth:0,background:"transparent",border:"1px solid "+(dateTo?"#6d28d9":"var(--border)"),borderRadius:7,color:"var(--text)",fontFamily:"'DM Sans',sans-serif",fontSize:11,padding:"4px 8px",outline:"none"}}),
+        (dateFrom||dateTo)&&React.createElement("button",{onClick:()=>{setDateFrom("");setDateTo("");setDatePreset("all");},
+          style:{fontSize:10,color:"var(--text5)",background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",padding:0,textDecoration:"underline"}},"reset")
+      ),
+      /* Indexed toggle */
+      React.createElement("div",{style:{display:"flex",alignItems:"center",background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:18,padding:2,marginLeft:"auto"}},
+        [["0","₹ Values"],["1","% Returns"]].map(([v,l])=>{
+          const active=(indexed?"1":"0")===v;
+          return React.createElement("button",{key:v,onClick:()=>setIndexed(v==="1"),
+            style:{fontSize:10,fontWeight:active?700:400,color:active?"#fff":"var(--text5)",
+              background:active?"#6d28d9":"transparent",border:"none",borderRadius:16,
+              padding:"4px 10px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}}
+          ,l);
+        })
+      )
+    ),
+
+    /* ── Range comparison metrics strip (only when data spans a range) ── */
+    rangeMetrics&&React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",marginBottom:10}},
+      /* Portfolio return */
+      React.createElement("div",{style:{flex:1,minWidth:130,padding:"10px 12px",borderRadius:10,background:"rgba(16,185,129,.06)",border:"1px solid rgba(16,185,129,.25)"}},
+        React.createElement("div",{style:{fontSize:8.5,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,color:"var(--text5)",marginBottom:3}},"Portfolio Return"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:14,color:rangeMetrics.portPct>=0?"#10b981":"#ef4444"}},
+          INRfmt(Math.round(rangeMetrics.portAmt))),
+        React.createElement("div",{style:{fontSize:10,fontWeight:600,color:rangeMetrics.portPct>=0?"#10b981":"#ef4444",marginTop:1}},
+          PCTfmt(rangeMetrics.portPct))
+      ),
+      /* Nifty return */
+      rangeMetrics.niftyPct!=null&&React.createElement("div",{style:{flex:1,minWidth:120,padding:"10px 12px",borderRadius:10,background:"rgba(37,99,235,.06)",border:"1px solid rgba(37,99,235,.25)"}},
+        React.createElement("div",{style:{fontSize:8.5,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,color:"var(--text5)",marginBottom:3}},"Nifty 50 Return"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:14,color:rangeMetrics.niftyPct>=0?"#2563eb":"#ef4444"}},
+          PCTfmt(rangeMetrics.niftyPct)),
+        React.createElement("div",{style:{fontSize:9.5,color:"var(--text6)",marginTop:1}},
+          rangeMetrics.niftyStart?Math.round(rangeMetrics.niftyStart).toLocaleString("en-IN")+" → "+Math.round(rangeMetrics.niftyEnd).toLocaleString("en-IN"):"")
+      ),
+      /* Alpha */
+      rangeMetrics.alpha!=null&&React.createElement("div",{style:{flex:1,minWidth:120,padding:"10px 12px",borderRadius:10,background:rangeMetrics.alpha>=0?"rgba(16,185,129,.06)":"rgba(239,68,68,.06)",border:"1px solid "+(rangeMetrics.alpha>=0?"rgba(16,185,129,.25)":"rgba(239,68,68,.25)")}},
+        React.createElement("div",{style:{fontSize:8.5,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,color:"var(--text5)",marginBottom:3}},"Alpha vs Nifty"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:14,color:rangeMetrics.alpha>=0?"#10b981":"#ef4444"}},
+          PCTfmt(rangeMetrics.alpha)),
+        React.createElement("div",{style:{fontSize:9.5,color:"var(--text6)",marginTop:1}},"portfolio − index")
+      ),
+      /* CAGR */
+      rangeMetrics.cagr!=null&&React.createElement("div",{style:{flex:1,minWidth:120,padding:"10px 12px",borderRadius:10,background:"rgba(109,40,217,.06)",border:"1px solid rgba(109,40,217,.25)"}},
+        React.createElement("div",{style:{fontSize:8.5,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,color:"var(--text5)",marginBottom:3}},"CAGR (annualised)"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:14,color:rangeMetrics.cagr>=0?"#6d28d9":"#ef4444"}},
+          PCTfmt(rangeMetrics.cagr)),
+        React.createElement("div",{style:{fontSize:9.5,color:"var(--text6)",marginTop:1}},"over selected period")
+      )
+    ),
+
     /* ── Stats strip ── */
     React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}},
       /* CoA card */
@@ -19149,37 +19323,56 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         React.createElement("div",{style:{fontSize:11,color:valColor,opacity:.85,marginTop:2,fontWeight:600}},
           (isGain?"▲ +":"▼ ")+totalGainPct.toFixed(2)+"% on CoA"
         )
+      ),
+      /* Max drawdown card */
+      React.createElement("div",{style:{flex:1,minWidth:140,padding:"12px 16px",borderRadius:12,
+        background:"linear-gradient(135deg,rgba(239,68,68,.10) 0%,rgba(239,68,68,.03) 100%)",
+        border:"1px solid rgba(239,68,68,.22)",position:"relative",overflow:"hidden"}},
+        React.createElement("div",{style:{position:"absolute",right:-12,top:-12,width:56,height:56,
+          borderRadius:"50%",background:"rgba(239,68,68,.06)"}}),
+        React.createElement("div",{style:{fontSize:9,fontWeight:700,textTransform:"uppercase",
+          letterSpacing:.9,color:"#b91c1c",marginBottom:4}},"Max Drawdown"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:18,
+          color:"#ef4444",letterSpacing:-.3}},maxDrawdown.toFixed(1)+"%"),
+        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},"from running peak")
       )
     ),
 
     /* ── Legend ── */
-    React.createElement("div",{style:{display:"flex",gap:20,marginBottom:8,fontSize:11,
+    React.createElement("div",{style:{display:"flex",gap:16,marginBottom:8,fontSize:11,
       color:"var(--text5)",flexWrap:"wrap",alignItems:"center"}},
-      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7}},
-        React.createElement("svg",{width:28,height:12,style:{overflow:"visible"}},
-          React.createElement("line",{x1:0,y1:6,x2:28,y2:6,stroke:"#f59e0b",strokeWidth:2,strokeDasharray:"6,4",strokeLinecap:"round"})
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+        React.createElement("svg",{width:26,height:12,style:{overflow:"visible"}},
+          React.createElement("line",{x1:0,y1:6,x2:26,y2:6,stroke:"#f59e0b",strokeWidth:2,strokeDasharray:"6,4",strokeLinecap:"round"})
         ),
         React.createElement("span",null,"Cost of Acquisition")
       ),
-      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7}},
-        React.createElement("svg",{width:28,height:12,style:{overflow:"visible"}},
-          React.createElement("line",{x1:0,y1:6,x2:28,y2:6,stroke:valColor,strokeWidth:2.5,strokeLinecap:"round"}),
-          React.createElement("circle",{cx:14,cy:6,r:3.5,fill:valColor})
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+        React.createElement("svg",{width:26,height:12,style:{overflow:"visible"}},
+          React.createElement("line",{x1:0,y1:6,x2:26,y2:6,stroke:valColor,strokeWidth:2.5,strokeLinecap:"round"}),
+          React.createElement("circle",{cx:13,cy:6,r:3.5,fill:valColor})
         ),
-        React.createElement("span",null,"Holding Value ("+(isGain?"in profit":"in loss")+")")
+        React.createElement("span",null,"Holding Value")
       ),
-      niftyHasData&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7}},
-        React.createElement("svg",{width:28,height:12,style:{overflow:"visible"}},
-          React.createElement("line",{x1:0,y1:6,x2:28,y2:6,stroke:"#2563eb",strokeWidth:2,strokeDasharray:"5,3",strokeLinecap:"round"})
+      niftyHasData&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+        React.createElement("svg",{width:26,height:12,style:{overflow:"visible"}},
+          React.createElement("line",{x1:0,y1:6,x2:26,y2:6,stroke:"#2563eb",strokeWidth:2,strokeDasharray:"5,3",strokeLinecap:"round"})
         ),
-        React.createElement("span",null,"Nifty 50 (index points)"),
-        React.createElement("span",{style:{marginLeft:6,fontSize:8,fontWeight:700,padding:"1px 6px",borderRadius:5,
+        React.createElement("span",null,indexed?"Nifty 50 (% returns)":"Nifty 50 (index)"),
+        React.createElement("span",{style:{marginLeft:4,fontSize:8,fontWeight:700,padding:"1px 6px",borderRadius:5,
           background:niftyLive?"rgba(37,99,235,.12)":"rgba(120,120,120,.12)",
           color:niftyLive?"#2563eb":"var(--text6)",border:"1px solid "+(niftyLive?"rgba(37,99,235,.3)":"var(--border2)")}},
           niftyLive?"LIVE":"cached")
       ),
-      React.createElement("div",{style:{marginLeft:"auto",fontSize:10,color:"var(--text6)",fontStyle:"italic"}},
-        dataPoints.length+" data points · "+mfTxns.length+" transactions"
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+        React.createElement("svg",{width:26,height:12,style:{overflow:"visible"}},
+          React.createElement("path",{d:"M2,2 L24,2 L13,10 Z",fill:"#10b981"}),
+          React.createElement("line",{x1:2,y1:10,x2:24,y2:10,stroke:"#ef4444",strokeWidth:2})
+        ),
+        React.createElement("span",null,"Buy · Sell")
+      ),
+      React.createElement("div",{style:{marginLeft:"auto",fontSize:9,color:"var(--text6)",fontStyle:"italic",textAlign:"right",lineHeight:1.5}},
+        "pts "+filteredPoints.length+"/"+dataPoints.length+" · "+(dateFrom||dateTo?(dateFrom||"-")+" → "+(dateTo||"-"):"all")+(indexed?" · %":" · ₹")+" · "+mfTxns.length+" txns"
       )
     ),
 
@@ -19233,14 +19426,14 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
           stroke:"var(--border2)",strokeWidth:i===0?1:.7,
           strokeDasharray:i===0?"none":"3,8",opacity:.7}),
         React.createElement("text",{x:padL-8,y:yFn(v)+3.5,textAnchor:"end",
-          fill:"var(--text5)",fontSize:9.5,fontWeight:600},INRshort(v))
+          fill:"var(--text5)",fontSize:9.5,fontWeight:600},indexed?Math.round(v)+"%":INRshort(v))
       )),
 
-      /* Nifty 50 right-axis labels (index points) */
+      /* Nifty 50 right-axis labels (index points or % when indexed) */
       niftyHasData&&niftyTicks.map((v,i)=>React.createElement("g",{key:"pev_yn"+i},
         React.createElement("text",{x:W-padR+6,y:yFnN(v)+3.5,textAnchor:"start",
           fill:"#2563eb",fontSize:9.5,fontWeight:600,opacity:.85},
-          Math.round(v).toLocaleString("en-IN"))
+          indexed?Math.round(v)+"%":Math.round(v).toLocaleString("en-IN"))
       )),
 
       /* Area fills (clipped) */
@@ -19267,7 +19460,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
 
       /* Milestone markers (peak / trough) */
       milestones.map(({idx,type})=>{
-        const mx2=xFn(idx),my2=yFn(dataPoints[idx].value);
+        const mx2=xFn(idx),my2=_yV(idx);
         const isPeak=type==="peak";
         const col=isPeak?"#f59e0b":valColor;
         const lbl=isPeak?"Peak":"Low";
@@ -19280,13 +19473,44 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
           React.createElement("text",{x:mx2,y:my2-(isPeak?24:30),textAnchor:"middle",
             fill:col,fontSize:8.5,fontWeight:700,opacity:.9},lbl),
           React.createElement("text",{x:mx2,y:my2-(isPeak?13:19),textAnchor:"middle",
-            fill:col,fontSize:7.5,fontWeight:600,opacity:.8},INRshort(dataPoints[idx].value))
+            fill:col,fontSize:7.5,fontWeight:600,opacity:.8},INRshort(filteredPoints[idx].value))
+        );
+      }),
+
+      /* Drawdown area overlay — red ribbon between the value line and the
+         running-peak baseline, showing depth of drawdown from the peak. */
+      filteredPoints.length>2&&(()=>{
+        const _v=i=>indexed?idxScale(filteredPoints[i].value):filteredPoints[i].value;
+        const _peak=i=>{const dd=drawdowns[i],v=_v(i);return dd<0?v/(1+dd/100):v;};
+        const n=filteredPoints.length;
+        /* Build upper (peak) curve forward, lower (value) curve backward */
+        const wentry=i=>`${xFn(i)},${yFn(_peak(i))}`;
+        const valentry=i=>`${xFn(i)},${yFn(_v(i))}`;
+        let d=`M${wentry(0)}`;
+        for(let i=1;i<n;i++){const x0=xFn(i-1),y0=yFn(_peak(i-1)),x1=xFn(i),y1=yFn(_peak(i)),cx=(x0+x1)/2;d+=` C${cx},${y0} ${cx},${y1} ${x1},${y1}`;}
+        d+=` L${valentry(n-1)}`;
+        for(let i=n-2;i>=0;i--){const x0=xFn(i+1),y0=yFn(_v(i+1)),x1=xFn(i),y1=yFn(_v(i)),cx=(x0+x1)/2;d+=` C${cx},${y0} ${cx},${y1} ${x1},${y1}`;}
+        d+=" Z";
+        return React.createElement("path",{d,fill:"rgba(239,68,68,.08)",stroke:"none",pointerEvents:"none"});
+      })(),
+
+      /* Transaction markers (buy ▲ up, sell ▼ down) at value-line points */
+      filteredPoints.map((d,i)=>{
+        if(!d.txns||d.txns.length===0)return null;
+        const mx2=xFn(i),my2=_yV(i);
+        const buys=d.txns.filter(t=>t.type==="buy").length;
+        const sells=d.txns.filter(t=>t.type!=="buy").length;
+        return React.createElement("g",{key:"pev_tx"+i},
+          buys>0&&React.createElement("path",{d:`M${mx2},${my2-3} L${mx2-5},${my2-9} L${mx2+5},${my2-9} Z`,
+            fill:"#10b981",stroke:"var(--modal-bg)",strokeWidth:1.2}),
+          sells>0&&React.createElement("path",{d:`M${mx2},${my2+3} L${mx2-5},${my2+9} L${mx2+5},${my2+9} Z`,
+            fill:"#ef4444",stroke:"var(--modal-bg)",strokeWidth:1.2})
         );
       }),
 
       /* X-axis date labels */
-      dataPoints.map((d,i)=>{
-        const isLast=i===dataPoints.length-1;
+      filteredPoints.map((d,i)=>{
+        const isLast=i===filteredPoints.length-1;
         if(i%stride!==0&&!isLast)return null;
         const _dp=d.date.split("-");
         const shortDate=_dp.length===3?_dp[1]+"-"+_dp[2].slice(2):d.date;
@@ -19328,44 +19552,117 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
           React.createElement("rect",{x:tipX,y:tipY,width:tipW,height:6,rx:12,fill:valColor,opacity:.9}),
           React.createElement("rect",{x:tipX,y:tipY+3,width:tipW,height:6,fill:valColor,opacity:.9}),
           /* Date */
-          React.createElement("text",{x:tipX+14,y:tipY+24,fill:"var(--text3)",fontSize:11,fontWeight:700,letterSpacing:.2},hp.date),
+          React.createElement("text",{x:tipX+14,y:tipY+22,fill:"var(--text3)",fontSize:11,fontWeight:700,letterSpacing:.2},hp.date),
           /* Separator */
-          React.createElement("line",{x1:tipX+10,y1:tipY+30,x2:tipX+tipW-10,y2:tipY+30,
+          React.createElement("line",{x1:tipX+10,y1:tipY+28,x2:tipX+tipW-10,y2:tipY+28,
             stroke:"var(--border2)",strokeWidth:.8,opacity:.6}),
-          /* Val row */
+          /* HOLDING VALUE row */
           (()=>{
             const diff=hp.value-hp.cost;
             const pct=hp.cost>0?((diff/hp.cost)*100).toFixed(2):"0.00";
             const col=diff>=0?"#10b981":"#ef4444";
             const sign=diff>=0?"▲ +":"▼ ";
             return React.createElement("g",null,
-              React.createElement("text",{x:tipX+14,y:tipY+48,fill:"var(--text5)",fontSize:9.5,fontWeight:600,letterSpacing:.3},"HOLDING VALUE"),
-              React.createElement("text",{x:tipX+14,y:tipY+64,fill:col,fontSize:14,fontWeight:800},
+              React.createElement("text",{x:tipX+14,y:tipY+43,fill:"var(--text5)",fontSize:9,fontWeight:600,letterSpacing:.3},"HOLDING VALUE"),
+              React.createElement("text",{x:tipX+14,y:tipY+59,fill:col,fontSize:13.5,fontWeight:800},
                 INRfmt(Math.round(hp.value))),
-              React.createElement("text",{x:tipX+tipW-14,y:tipY+64,textAnchor:"end",fill:col,fontSize:10,fontWeight:700},
+              React.createElement("text",{x:tipX+tipW-14,y:tipY+59,textAnchor:"end",fill:col,fontSize:10,fontWeight:700},
                 sign+pct+"%")
             );
           })(),
-          /* CoA row */
-          React.createElement("text",{x:tipX+14,y:tipY+81,fill:"var(--text5)",fontSize:9.5,fontWeight:600,letterSpacing:.3},"COST OF ACQUISITION"),
-          React.createElement("text",{x:tipX+14,y:tipY+97,fill:"#d97706",fontSize:13,fontWeight:700},
+          /* COST OF ACQUISITION row */
+          React.createElement("text",{x:tipX+14,y:tipY+76,fill:"var(--text5)",fontSize:9,fontWeight:600,letterSpacing:.3},"COST OF ACQUISITION"),
+          React.createElement("text",{x:tipX+14,y:tipY+91,fill:"#d97706",fontSize:12,fontWeight:700},
             INRfmt(Math.round(hp.cost))),
-          /* Nifty row */
-          hN!==null&&React.createElement(React.Fragment,null,
-            React.createElement("line",{x1:tipX+10,y1:tipY+105,x2:tipX+tipW-10,y2:tipY+105,
-              stroke:"var(--border2)",strokeWidth:.8,opacity:.6}),
-            React.createElement("text",{x:tipX+14,y:tipY+119,fill:"#2563eb",fontSize:9.5,fontWeight:600,letterSpacing:.3},"NIFTY 50"),
-            React.createElement("text",{x:tipX+14,y:tipY+124,fill:"#2563eb",fontSize:13,fontWeight:700},
-              Math.round(hN).toLocaleString("en-IN"))
-          ),
-          /* Net */
           (()=>{
             const nd=hp.value-hp.cost;
             const col=nd>=0?"#10b981":"#ef4444";
-            return React.createElement("text",{x:tipX+tipW-14,y:tipY+97,textAnchor:"end",fill:col,fontSize:11,fontWeight:700},
+            return React.createElement("text",{x:tipX+tipW-14,y:tipY+91,textAnchor:"end",fill:col,fontSize:10.5,fontWeight:700},
               (nd>=0?"+":"")+INRfmt(Math.round(nd)));
+          })(),
+          /* NAV return vs start (from-range % change) */
+          (()=>{
+            const rangeStart=filteredPoints[0];
+            let navPct=null;
+            if(rangeStart&&rangeStart.value>0)navPct=((hp.value-rangeStart.value)/rangeStart.value)*100;
+            if(navPct==null)return null;
+            const col=navPct>=0?"#10b981":"#ef4444";
+            return React.createElement("g",null,
+              React.createElement("text",{x:tipX+14,y:tipY+108,fill:"var(--text5)",fontSize:9,fontWeight:600,letterSpacing:.3},"RETURN FROM RANGE START"),
+              React.createElement("text",{x:tipX+14,y:tipY+123,fill:col,fontSize:12,fontWeight:700},PCTfmt(navPct))
+            );
+          })(),
+          /* Nifty row (value + % from range start) */
+          hN!==null&&(()=>{
+            const niftyStartVal=rangeMetrics&&rangeMetrics.niftyStart!=null?rangeMetrics.niftyStart:null;
+            const niftyPct=niftyStartVal&&niftyStartVal>0?((hN-niftyStartVal)/niftyStartVal*100):null;
+            const niftyCol=niftyPct!=null&&niftyPct>=0?"#2563eb":"#dc2626";
+            const alpha=hN!=null&&rangeMetrics&&rangeMetrics.portPct!=null?rangeMetrics.portPct-(niftyPct!=null?niftyPct:0):null;
+            return React.createElement(React.Fragment,null,
+              React.createElement("line",{x1:tipX+10,y1:tipY+131,x2:tipX+tipW-10,y2:tipY+131,
+                stroke:"var(--border2)",strokeWidth:.8,opacity:.6}),
+              React.createElement("text",{x:tipX+14,y:tipY+145,fill:"#2563eb",fontSize:9,fontWeight:600,letterSpacing:.3},"NIFTY 50"),
+              React.createElement("text",{x:tipX+14,y:tipY+160,fill:"#2563eb",fontSize:12,fontWeight:700},
+                Math.round(hN).toLocaleString("en-IN")),
+              niftyPct!=null&&React.createElement("text",{x:tipX+tipW-14,y:tipY+160,textAnchor:"end",fill:niftyCol,fontSize:10.5,fontWeight:700},
+                PCTfmt(niftyPct)),
+              alpha!=null&&React.createElement(React.Fragment,null,
+                React.createElement("text",{x:tipX+14,y:tipY+174,fill:"var(--text5)",fontSize:8.5,fontWeight:600,letterSpacing:.3},"ALPHA (PF − NIFTY)"),
+                React.createElement("text",{x:tipX+tipW-14,y:tipY+174,textAnchor:"end",fill:alpha>=0?"#10b981":"#ef4444",fontSize:10,fontWeight:700},
+                  PCTfmt(alpha))
+              )
+            );
+          })(),
+          /* Transactions at this point */
+          hp.txns&&hp.txns.length>0&&(()=>{
+            const buys=hp.txns.filter(t=>t.type==="buy");
+            const sells=hp.txns.filter(t=>t.type!=="buy");
+            const rows=[...buys.slice(0,3).map(t=>"▲ Buy "+INRshort(t.amount)),...sells.slice(0,3).map(t=>"▼ Sell "+INRshort(t.amount))];
+            return React.createElement(React.Fragment,null,
+              React.createElement("line",{x1:tipX+10,y1:tipY+178,x2:tipX+tipW-10,y2:tipY+178,
+                stroke:"var(--border2)",strokeWidth:.8,opacity:.6}),
+              React.createElement("text",{x:tipX+14,y:tipY+191,fill:"var(--text5)",fontSize:8.5,fontWeight:600,letterSpacing:.3},"TRANSACTIONS"),
+              React.createElement("text",{x:tipX+tipW-14,y:tipY+191,textAnchor:"end",fill:"var(--text3)",fontSize:9.5,fontWeight:700},
+                rows.join(" · "))
+            );
           })()
         )
+      )
+    ),
+
+    /* ── Per-Fund Breakdown (collapsible) ── */
+    React.createElement("div",{style:{marginTop:10,border:"1px solid var(--border)",borderRadius:10,overflow:"hidden"}},
+      React.createElement("button",{onClick:()=>setShowBreakdown(!showBreakdown),
+        style:{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"9px 12px",
+          background:"var(--bg4)",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",
+          fontSize:11,fontWeight:700,color:"var(--text4)",textAlign:"left"}},
+        React.createElement("span",{style:{display:"inline-block",transition:"transform .15s",transform:showBreakdown?"rotate(90deg)":"none",fontSize:10}},">"),
+        "Per-Fund Breakdown",
+        React.createElement("span",{style:{marginLeft:"auto",fontSize:9.5,fontWeight:600,color:"var(--text5)"}},
+          fundBreakdown.length+" fund"+(fundBreakdown.length!==1?"s":"")+" · "+INRfmt(Math.round(fundBreakdown.reduce((s,f)=>s+f.val,0)))
+        )
+      ),
+      showBreakdown&&React.createElement("div",{style:{borderTop:"1px solid var(--border)"}},
+        fundBreakdown.length===0?React.createElement("div",{style:{padding:"12px",fontSize:11,color:"var(--text6)",textAlign:"center"}},"No fund value data in selected range."):
+        fundBreakdown.map((f,i)=>{
+          const total=fundBreakdown.reduce((s,x)=>s+x.val,0);
+          const pct=total>0?(f.val/total*100):0;
+          const col=["#6d28d9","#0891b2","#d97706","#16a34a","#db2777","#4f46e5","#0ea5e9","#f97316"][i%8];
+          return React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderBottom:i<fundBreakdown.length-1?"1px solid var(--border)":"none"}},
+            React.createElement("div",{style:{width:8,height:8,borderRadius:2,background:col,flexShrink:0}}),
+            React.createElement("div",{style:{flex:1,minWidth:0}},
+              React.createElement("div",{style:{fontSize:11,fontWeight:600,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},f.name),
+              React.createElement("div",{style:{fontSize:9.5,color:"var(--text6)"}},"share of portfolio"),
+              React.createElement("div",{style:{height:4,borderRadius:2,background:"var(--border)",marginTop:3,overflow:"hidden"}},
+                React.createElement("div",{style:{width:pct+"%",height:"100%",background:col}})
+              )
+            ),
+            React.createElement("div",{style:{textAlign:"right",flexShrink:0}},
+              React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)"}},INRfmt(Math.round(f.val))),
+              React.createElement("div",{style:{fontSize:9.5,fontWeight:600,color:col}},pct.toFixed(1)+"%")
+            )
+          );
+        })
       )
     )
   );
