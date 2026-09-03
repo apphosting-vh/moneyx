@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.18.14";
+const APP_VERSION="7.18.15";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -19276,7 +19276,11 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
        Falls back to simple niftyPct when per-day index data is unavailable. */
     let niftyMW=null;
     if(niftyStart>0&&niftyEnd>0){
-      let idxFin=start.value||0,flowSum=0,flowWeight=0;
+      /* Index portfolio: start the same ₹ base in the index AND grow the starting
+         value at the index rate (mirroring how the portfolio's end.value already
+         embeds the growth of start.value). Omitting this term understates the
+         index return and overstates Alpha. */
+      let idxFin=start.value*(niftyEnd/niftyStart),flowSum=0,flowWeight=0;
       filteredPoints.forEach((p,i)=>{
         if(i===0)return;
         const iv=niftyValsAt[i];
