@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.18.11";
+const APP_VERSION="7.18.12";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -19196,7 +19196,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const _hpTxns=_hpHasTxns?filteredPoints[hoverIdx].txns:null;
   const _txnRows=_hpTxns?_hpTxns.slice(0,5):null;
   const _txnMore=_hpTxns&&_hpTxns.length>5?_hpTxns.length-5:0;
-  const tipW=240,tipH=200+(hN!=null?30:0)+(_hpHasTxns?(24+(_txnRows?_txnRows.length*15:0)+(_txnMore?15:0)):0);
+  const tipW=_hpHasTxns?300:240,tipH=200+(hN!=null?30:0)+(_hpHasTxns?(28+(_txnRows?_txnRows.length*26:0)+(_txnMore?15:0)):0);
   const tipX=hx!==null?(hx+tipW+padR+4>W?hx-tipW-14:hx+14):0;
   const tipY=hyV!==null?Math.max(padT,Math.min(padT+chartH-tipH,hyV-tipH/2)):0;
 
@@ -19651,15 +19651,20 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
                 const buy=t.type==="buy";
                 const units=t.nav>0?+(t.amount/t.nav).toFixed(2):0;
                 const col=buy?"#10b981":"#ef4444";
+                const y1=tipY+206+i*26,y2=tipY+220+i*26;
+                const fund=String(t.fund||"");
+                const fundClip=fund.length>16?fund.slice(0,15)+"…":fund;
                 return React.createElement(React.Fragment,{key:i},
-                  React.createElement("text",{x:tipX+14,y:tipY+206+i*15,fill:col,fontSize:10,fontWeight:800},
-                    (buy?"▲ Buy":"▼ Sell")+" · "+String(t.fund||"").slice(0,14)),
-                  React.createElement("text",{x:tipX+tipW-14,y:tipY+206+i*15,textAnchor:"end",fill:"var(--text3)",fontSize:9.5,fontWeight:700},
-                    INRfmt(Math.round(t.amount))+" · "+units+"u"+(t.nav>0?" @"+t.nav:""))
+                  React.createElement("text",{x:tipX+14,y:y1,fill:col,fontSize:10,fontWeight:800},
+                    (buy?"▲ Buy":"▼ Sell")+"  "+fundClip),
+                  React.createElement("text",{x:tipX+tipW-14,y:y1,textAnchor:"end",fill:"var(--text3)",fontSize:10,fontWeight:800},
+                    INRfmt(Math.round(t.amount))),
+                  React.createElement("text",{x:tipX+14,y:y2,fill:"var(--text5)",fontSize:9,fontWeight:600},
+                    units+"u"+(t.nav>0?" @ "+t.nav:""))
                 );
               }),
-              _txnMore>0&&React.createElement("text",{x:tipX+tipW-14,y:tipY+206+_txnRows.length*15,textAnchor:"end",
-                fill:"var(--text5)",fontSize:9,fontWeight:600},"+"+_txnMore+" more")
+              _txnMore>0&&React.createElement("text",{x:tipX+14,y:tipY+206+_txnRows.length*26,fill:"var(--text5)",
+                fontSize:9,fontWeight:600},"+"+_txnMore+" more")
             );
           })()
         )
