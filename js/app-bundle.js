@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.18.15";
+const APP_VERSION="7.18.16";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -19690,11 +19690,27 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
             return React.createElement("text",{x:tipX+tipW-14,y:tipY+91,textAnchor:"end",fill:col,fontSize:10.5,fontWeight:700},
               (nd>=0?"+":"")+INRfmt(Math.round(nd)));
           })(),
-          /* NAV return vs start (from-range % change) */
+          /* NAV return vs start (money-weighted Modified Dietz from range start to the
+             hovered point). Only prior points (j<hoverIdx) count as cash flows so a
+             buy/sell landing exactly on the hovered date doesn't create a Modified
+             Dietz endpoint artifact; this keeps it consistent with the chip. */
           (()=>{
             const rangeStart=filteredPoints[0];
             let navPct=null;
-            if(rangeStart&&rangeStart.value>0)navPct=((hp.value-rangeStart.value)/rangeStart.value)*100;
+            if(rangeStart&&rangeStart.value>0&&hoverIdx!==null){
+              const subDays=(_t(hp.rawDate)-_t(rangeStart.rawDate))/86400000;
+              let sNet=0,sWeight=0;
+              for(let j=0;j<hoverIdx;j++){
+                const p=filteredPoints[j];
+                const dayFlow=(p.txns||[]).reduce((s,t)=>s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
+                sNet+=dayFlow;
+                const el=(_t(p.rawDate)-_t(rangeStart.rawDate))/86400000;
+                const w=subDays>0?Math.max(0,(subDays-el)/subDays):0;
+                sWeight+=dayFlow*w;
+              }
+              const den=rangeStart.value+sWeight;
+              if(den>0)navPct=((hp.value-rangeStart.value-sNet)/den*100);
+            }
             if(navPct==null)return null;
             const col=navPct>=0?"#10b981":"#ef4444";
             return React.createElement("g",null,
