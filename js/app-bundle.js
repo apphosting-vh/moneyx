@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.18.7";
+const APP_VERSION="7.18.8";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -18924,7 +18924,9 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
 
   /* ── Build timeline data points ── */
   const dataPoints=React.useMemo(()=>{
-    const sorted=[...(mfTxns||[])].sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+    /* Trim whitespace from legacy txn dates (some imported dates carry leading spaces) */
+    const txns=(mfTxns||[]).map(t=>t.date&&typeof t.date==="string"?{...t,date:t.date.trim()}:t);
+    const sorted=[...txns].sort((a,b)=>(a.date||"").localeCompare(b.date||""));
     if(sorted.length<2)return[];
     const fundState={};
     const lastNav={};
@@ -19015,6 +19017,13 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     if(t)dpts=dpts.filter(d=>_iso(d.rawDate)<=t);
     return dpts;
   },[dataPoints,dateFrom,dateTo]);
+
+  try{if(window.__DBG&&window.__DBG.ms&&!window.__DBG.done){window.__DBG.done=true;
+    console.log("[MFCHART-DATA] allFrom raw="+JSON.stringify(dataPoints[0]&&dataPoints[0].rawDate)+" norm="+JSON.stringify(mfNavDateToISO(dataPoints[0]&&dataPoints[0].rawDate))+
+      "  first8="+JSON.stringify(dataPoints.slice(0,8).map(d=>d.rawDate))+
+      "  norm8="+JSON.stringify(dataPoints.slice(0,8).map(d=>mfNavDateToISO(d.rawDate)))+
+      "  total="+dataPoints.length+" lastRaw="+JSON.stringify(dataPoints[dataPoints.length-1].rawDate));
+  }}catch(_e){}
 
   /* ── Chart geometry ── */
   const W=960,padL=72,padR=28,padT=20,padB=32,svgH=260;
