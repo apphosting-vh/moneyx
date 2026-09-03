@@ -19237,19 +19237,54 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const rangeMetrics=React.useMemo(()=>{
     if(filteredPoints.length<2)return null;
     const start=filteredPoints[0],end=filteredPoints[filteredPoints.length-1];
-    const portPct=start.value>0?((end.value-start.value)/start.value*100):null;
-    const portAmt=end.value-start.value;
+    const n=filteredPoints.length;
+    const days=(_t(end.rawDate)-_t(start.rawDate))/86400000;
+    /* Money-weighted return (Modified Dietz) over the filtered period.
+       Daily net cash flows are taken from each point's actual txn amounts
+       (buys − sells), which are reliable — unlike cost deltas, the appended
+       today point recomputes cost from avgNav and would distort flows.
+       Each flow is weighted by the fraction of the period it stayed invested. */
+    let netFlow=0,weightedFlow=0;
+    filteredPoints.forEach((p,i)=>{
+      const dayFlow=(p.txns||[]).reduce((s,t)=>s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
+      netFlow+=dayFlow;
+      const el=(_t(p.rawDate)-_t(start.rawDate))/86400000;
+      const w=days>0?Math.max(0,(days-el)/days):0;
+      weightedFlow+=dayFlow*w;
+    });
+    /* profit attributable to returns (end − start − net new money) */
+    const portAmt=end.value-start.value-netFlow;
+    const denom=(start.value||0)+weightedFlow;
+    /* Modified Dietz return = profit / (beginning value + weighted cash flows) */
+    const portPct=denom>0?(portAmt/denom*100):null;
     const niftyStart=filteredPoints[0]?niftyValsAt[0]:null;
     const niftyEnd=niftyValsAt[niftyValsAt.length-1]!=null?niftyValsAt[niftyValsAt.length-1]:null;
     const niftyPct=(niftyStart&&niftyEnd&&niftyStart>0)?((niftyEnd-niftyStart)/niftyStart*100):null;
-    const alpha=(portPct!=null&&niftyPct!=null)?portPct-niftyPct:null;
-    /* CAGR over the range */
-    let cagr=null;
-    if(start.value>0&&end.value>0){
-      const days=(_t(end.rawDate)-_t(start.rawDate))/86400000;
-      if(days>0){const mult=end.value/start.value;cagr=mult>0?((Math.pow(mult,365/days)-1)*100):null;}
+    /* Money-weighted index return: the same portfolio cash flows reinvested in the
+       index at each txn date, so Alpha is a fair apples-to-apples comparison.
+       Falls back to simple niftyPct when per-day index data is unavailable. */
+    let niftyMW=null;
+    if(niftyStart>0&&niftyEnd>0){
+      let idxFin=start.value||0,flowSum=0,flowWeight=0;
+      filteredPoints.forEach((p,i)=>{
+        if(i===0)return;
+        const iv=niftyValsAt[i];
+        if(iv==null||iv<=0)return;
+        const f=(p.txns||[]).reduce((s,t)=>s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
+        if(!f)return;
+        const el=(_t(p.rawDate)-_t(start.rawDate))/86400000;
+        const w=days>0?Math.max(0,(days-el)/days):0;
+        idxFin+=f*(niftyEnd/iv);
+        flowSum+=f;flowWeight+=f*w;
+      });
+      const den=(start.value||0)+flowWeight;
+      if(den>0)niftyMW=((idxFin-start.value-flowSum)/den*100);
     }
-    return{portPct,portAmt,niftyStart,niftyEnd,niftyPct,alpha,cagr};
+    const alpha=(portPct!=null&&niftyMW!=null)?portPct-niftyMW:((portPct!=null&&niftyPct!=null)?portPct-niftyPct:null);
+    /* CAGR: annualise the money-weighted period return */
+    let cagr=null;
+    if(portPct!=null&&days>0){const m=1+portPct/100;cagr=(m>0)?((Math.pow(m,365/days)-1)*100):null;}
+    return{portPct,portAmt,niftyStart,niftyEnd,niftyPct,niftyMW,alpha,cagr};
   },[filteredPoints,niftyValsAt]);
 
   /* ── Max drawdown from the drawdowns series ── */
