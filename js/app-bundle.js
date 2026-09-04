@@ -769,6 +769,7 @@ const EMPTY_STATE=()=>({
   cash:{balance:0,transactions:[]},
   mf:[],
   mfTxns:[],
+  removedMf:[],
   shares:[],
   brokerCashBalance:0,
   fd:[],
@@ -891,7 +892,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.18.20";
+ const APP_VERSION="7.18.22";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1357,11 +1358,13 @@ const applyCatRule=(rules,tx)=>{
    existing MF metadata (schemeCode, nav, currentValue, navDate, manualXirr).
    invested = netUnits × avgNav (cost of currently held units = CoA),
    NOT total historical buy amount (which inflates after partial sells). ── */
-const _deriveMfHoldings=(txns,existingMf)=>{
+const _deriveMfHoldings=(txns,existingMf,removedMf)=>{
+  const _removed=new Set(removedMf||[]);
   const byFund={};
   txns.forEach(t=>{
     const key=t.fundName;
     if(!key)return;
+    if(_removed.has(key))return;
     if(!byFund[key])byFund[key]={fundName:key,folios:new Set(),txns:[]};
     byFund[key].txns.push(t);
     if(t.folio)byFund[key].folios.add(String(t.folio));
@@ -1398,7 +1401,25 @@ const _deriveMfHoldings=(txns,existingMf)=>{
   });
 };
 
+/* Merge a tombstone set into a (possibly cloud-restored) state and drop any
+   fund whose name is marked removed — so a deleted fund is never re-added,
+   even from a stale Drive/sync backup. Preserves mfTxns regardless. */
+const _mergeRemovedMf=(target,localRemoved)=>{
+  const _merged=[...new Set([...(localRemoved||[]),...(target.removedMf||[])])];
+  const _rm=new Set(_merged);
+  return{...target,removedMf:_merged,mf:(target.mf||[]).filter(m=>!m||!_rm.has(m.name))};
+};
+/* Read the locally persisted MF-deletion tombstone (safe from any restore path). */
+const _localRemovedMf=()=>{
+  try{
+    const _raw=localStorage.getItem(LS_KEY);
+    if(!_raw)return[];
+    const _p=JSON.parse(_raw);
+    return Array.isArray(_p.removedMf)?_p.removedMf:[];
+  }catch{return[];}
+};
 const reducer=(s,a)=>{
+  const _applyRemovedMf=_mergeRemovedMf;
   /* Returns max(_sn) + 1 across all transactions in an array — used to assign a permanent SN at creation time */
   const nextSn=txs=>txs.reduce((m,t)=>Math.max(m,t._sn||0),0)+1;
   switch(a.type){
@@ -1499,14 +1520,20 @@ const reducer=(s,a)=>{
     case"EDIT_MF":return{...s,mf:s.mf.map(m=>m.id===a.p.id?{...m,...a.p}:m)};
     case"UPD_MF_NAV":{const navMap=new Map((a.p||[]).map(m=>[m.id,m]));return{...s,mf:s.mf.map(m=>navMap.has(m.id)?{...m,...navMap.get(m.id)}:m)};}
     case"DEL_MF":{
-      const _delCode=(s.mf.find(m=>m.id===a.id)||{}).schemeCode||"";
+      const _del=(s.mf.find(m=>m.id===a.id)||{});
+      const _delCode=_del.schemeCode||"";
       const _cleanNavs={};
       Object.entries(s.eodNavs||{}).forEach(([date,navs])=>{
         const n={...navs};
         if(_delCode)delete n[_delCode];
         if(Object.keys(n).length>0)_cleanNavs[date]=n;
       });
-      return{...s,mf:s.mf.filter(m=>m.id!==a.id),eodNavs:_cleanNavs};
+      /* Tombstone: remember the deleted fund so it is never re-added from
+         txns or from a (possibly stale) Drive/sync restore — while its
+         mfTxns are intentionally preserved per user requirement. */
+      const _removed=(s.removedMf||[]).slice();
+      if(_del.name&&_removed.indexOf(_del.name)<0)_removed.push(_del.name);
+      return{...s,mf:s.mf.filter(m=>m.id!==a.id),removedMf:_removed,eodNavs:_cleanNavs};
     }
     /* ── MF EOD NAV snapshots ── */
     case"SET_EOD_NAVS":{
@@ -1633,23 +1660,23 @@ const reducer=(s,a)=>{
       const _deduped=(a.txns||[]).filter(t=>!_existingSigs.has(_sig(t)));
       const newTxns=_deduped.map((t,i)=>({...t,id:t.id||uid()}));
       const merged=[...(s.mfTxns||[]),...newTxns];
-      const derivedMf=_deriveMfHoldings(merged,s.mf||[]);
+      const derivedMf=_deriveMfHoldings(merged,s.mf||[],s.removedMf);
       return{...s,mfTxns:merged,mf:derivedMf};
     }
     case"ADD_MF_TXN":{
       const newTxn={...a.txn,id:a.txn.id||uid()};
       const merged=[...(s.mfTxns||[]),newTxn];
-      const derivedMf=_deriveMfHoldings(merged,s.mf||[]);
+      const derivedMf=_deriveMfHoldings(merged,s.mf||[],s.removedMf);
       return{...s,mfTxns:merged,mf:derivedMf};
     }
     case"EDIT_MF_TXN":{
       const updated=(s.mfTxns||[]).map(t=>t.id===a.txn.id?{...t,...a.txn}:t);
-      const derivedMf=_deriveMfHoldings(updated,s.mf||[]);
+      const derivedMf=_deriveMfHoldings(updated,s.mf||[],s.removedMf);
       return{...s,mfTxns:updated,mf:derivedMf};
     }
     case"DEL_MF_TXN":{
       const filtered=(s.mfTxns||[]).filter(t=>t.id!==a.id);
-      const derivedMf=_deriveMfHoldings(filtered,s.mf||[]);
+      const derivedMf=_deriveMfHoldings(filtered,s.mf||[],s.removedMf);
       return{...s,mfTxns:filtered,mf:derivedMf};
     }
     case"CLEAR_MF_TXNS":return{...s,mfTxns:[],mf:(s.mf||[]).filter(m=>!(s.mfTxns||[]).some(t=>t.fundName===m.name))};
@@ -1860,7 +1887,7 @@ const reducer=(s,a)=>{
         if(_units<=0)return s;
         const _sellTxn={id:uid(),fundName:sc.fundName,date:_runDate,orderType:"sell",amount:sc.amount,nav:_nav,units:_units,tag:"SWP"};
         const _allTxns=[...(s.mfTxns||[]),_sellTxn];
-        let ns={...s,mfTxns:_allTxns,mf:_deriveMfHoldings(_allTxns,s.mf||[])};
+        let ns={...s,mfTxns:_allTxns,mf:_deriveMfHoldings(_allTxns,s.mf||[],s.removedMf)};
         const _tgtBank=(s.banks||[]).find(b=>b.id===sc.targetAccId);
         if(_tgtBank){
           const _creditDate=_addWorkDays(_runDate,2);
@@ -2026,22 +2053,29 @@ const reducer=(s,a)=>{
       if(at==="cash")return{...s,cash:{...s.cash,transactions:s.cash.transactions.map(upd)}};
       return s;
     }
-    case"RESTORE_ALL":{const d=a.data||{};return{...EMPTY_STATE(),...d,
-      banks:Array.isArray(d.banks)?d.banks:[],
-      cards:Array.isArray(d.cards)?d.cards:[],
-      cash:d.cash&&typeof d.cash==="object"?d.cash:{balance:0,transactions:[]},
-      mf:Array.isArray(d.mf)?d.mf:[],
-      shares:Array.isArray(d.shares)?d.shares:[],
-      fd:Array.isArray(d.fd)?d.fd:[],
-      re:Array.isArray(d.re)?d.re:[],
-      pf:Array.isArray(d.pf)?d.pf:[],
-      loans:Array.isArray(d.loans)?d.loans:[],
-      goals:Array.isArray(d.goals)?d.goals:[],
-      notes:Array.isArray(d.notes)?d.notes:[],
-      categories:Array.isArray(d.categories)?d.categories:[],
-      payees:Array.isArray(d.payees)?d.payees:[],
-      historyCache:d.historyCache&&typeof d.historyCache==="object"?d.historyCache:{},
-    };}
+    case"RESTORE_ALL":{
+      const d=a.data||{};
+      const _base={...EMPTY_STATE(),...d,
+        removedMf:Array.isArray(d.removedMf)?d.removedMf:[],
+        banks:Array.isArray(d.banks)?d.banks:[],
+        cards:Array.isArray(d.cards)?d.cards:[],
+        cash:d.cash&&typeof d.cash==="object"?d.cash:{balance:0,transactions:[]},
+        mf:Array.isArray(d.mf)?d.mf:[],
+        shares:Array.isArray(d.shares)?d.shares:[],
+        fd:Array.isArray(d.fd)?d.fd:[],
+        re:Array.isArray(d.re)?d.re:[],
+        pf:Array.isArray(d.pf)?d.pf:[],
+        loans:Array.isArray(d.loans)?d.loans:[],
+        goals:Array.isArray(d.goals)?d.goals:[],
+        notes:Array.isArray(d.notes)?d.notes:[],
+        categories:Array.isArray(d.categories)?d.categories:[],
+        payees:Array.isArray(d.payees)?d.payees:[],
+        historyCache:d.historyCache&&typeof d.historyCache==="object"?d.historyCache:{},
+      };
+      /* Merge the local tombstone into the restored state and drop any fund the
+         user has deleted — so a stale Drive/sync restore can never resurrect it. */
+      return _applyRemovedMf(_base,s.removedMf);
+    }
     case"RESET_ALL":return{...EMPTY_STATE()};
     /* Bulk import: a.accType = bank|card|cash, a.accId, a.txns = array of tx objects */
     case"IMPORT_BULK_TX":{
@@ -6454,7 +6488,11 @@ var CloudBackupPanel = ({ state, dispatch }) => {
         insightPrefs: { ...EMPTY_STATE().insightPrefs, ...(remote.state.insightPrefs || {}) },
       };
 
-      saveState({ ...EMPTY_STATE(), ..._restoreData });
+      /* Merge this device's MF-deletion tombstone so a manual restore can never
+         resurrect a deleted fund before the reload occurs. */
+      const _restoreDataMerged = _mergeRemovedMf(_restoreData, (state && state.removedMf) || []);
+
+      saveState({ ...EMPTY_STATE(), ..._restoreDataMerged });
       try {
         localStorage.setItem(LS_EOD_PRICES, JSON.stringify(_restoreData.eodPrices || {}));
         localStorage.setItem(LS_EOD_NAVS,   JSON.stringify(_restoreData.eodNavs   || {}));
@@ -6472,13 +6510,13 @@ var CloudBackupPanel = ({ state, dispatch }) => {
           localStorage.setItem(_SCREENER_SNAPS_KEY,remote.state.screenerSnapshots);
       } catch {}
       try { await clearTxIDB(); }          catch {}
-      try { await saveTxToIDB(_restoreData); } catch {}
+      try { await saveTxToIDB(_restoreDataMerged); } catch {}
 
       _syncSaveLocal(remote.modifiedTime);
       _syncSaveLocalEdit(remote.modifiedTime);
       setLastSync(remote.modifiedTime);
 
-      dispatch({ type: "RESTORE_ALL", data: _restoreData });
+      dispatch({ type: "RESTORE_ALL", data: _restoreDataMerged });
       setPullMsg("✓ Restored from Drive (" + fmtTs(remote.modifiedTime) + "). Refreshing…");
       setTimeout(() => window.location.reload(), 1800);
     } catch (e) {
@@ -8413,7 +8451,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                         insightPrefs:{...EMPTY_STATE().insightPrefs,...(d.insightPrefs||{})},
                       };
                       /* ── Synchronously persist to localStorage BEFORE reload ── */
-                      saveState({...EMPTY_STATE(),..._restoreData});
+                      saveState({...EMPTY_STATE(),..._mergeRemovedMf(_restoreData,_localRemovedMf())});
                       try{
                         if(_restoreData.eodPrices&&Object.keys(_restoreData.eodPrices).length>0)
                           localStorage.setItem(LS_EOD_PRICES,JSON.stringify(_restoreData.eodPrices));
@@ -10079,6 +10117,7 @@ var loadState=()=>{
       cards:(parsed.cards||def.cards),
       cash:(parsed.cash||def.cash),
       mf:(parsed.mf||def.mf),
+      removedMf:(parsed.removedMf||[]),
       shares:(parsed.shares||def.shares),
       brokerCashBalance:(parsed.brokerCashBalance||def.brokerCashBalance||0),
       fd:(parsed.fd||def.fd),
@@ -11599,8 +11638,11 @@ var usePersistentReducer=(reducer,init)=>{
         console.log("[GDrive] Found newer state on Drive (",remoteTime,") — applying…");
         _lastPulledAt=remoteTime;
         const remote_state = remote.state;
+        /* Merge this device's MF-deletion tombstone into the pulled state BEFORE
+           persisting, so a stale Drive copy can never resurrect a deleted fund. */
+        const _mergedState = _mergeRemovedMf(remote_state, stateRef.current && stateRef.current.removedMf);
         try {
-          saveState({ ...EMPTY_STATE(), ...remote_state });
+          saveState({ ...EMPTY_STATE(), ..._mergedState });
           localStorage.setItem(LS_EOD_PRICES, JSON.stringify(remote_state.eodPrices || {}));
           localStorage.setItem(LS_EOD_NAVS,   JSON.stringify(remote_state.eodNavs   || {}));
           if(remote_state.chatbotTraining)
@@ -11617,8 +11659,8 @@ var usePersistentReducer=(reducer,init)=>{
             localStorage.setItem(_SCREENER_SNAPS_KEY,remote_state.screenerSnapshots);
         } catch {}
         try { await clearTxIDB(); } catch {}
-        try { await saveTxToIDB(remote_state); } catch {}
-        dispatch({type:"RESTORE_ALL",data:remote.state});
+        try { await saveTxToIDB(_mergedState); } catch {}
+        dispatch({type:"RESTORE_ALL",data:_mergedState});
         /* Force a clean debounced save after pull to prevent stale local state overwrite */
         if(timerRef.current)clearTimeout(timerRef.current);
         window.dispatchEvent(new CustomEvent("gdrive:pulled",{detail:{time:remoteTime}}));
@@ -29022,7 +29064,7 @@ const FSAStoragePanel=({state,dispatch})=>{
         reminders:data.reminders||[],
         insightPrefs:{...EMPTY_STATE().insightPrefs,...(data.insightPrefs||{})},
       };
-      saveState({...EMPTY_STATE(),..._restoreData});
+      saveState({...EMPTY_STATE(),..._mergeRemovedMf(_restoreData,_localRemovedMf())});
       try{
         if(_restoreData.eodPrices&&Object.keys(_restoreData.eodPrices).length>0)
           localStorage.setItem(LS_EOD_PRICES,JSON.stringify(_restoreData.eodPrices));
