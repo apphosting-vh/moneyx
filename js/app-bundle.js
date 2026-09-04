@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.18.17";
+const APP_VERSION="7.18.18";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -19245,7 +19245,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     if(!rs||!rs.value||rs.value<=0)return null;
     const subDays=(_t(hp.rawDate)-_t(rs.rawDate))/86400000;
     let sNet=0,sWeight=0;
-    for(let j=0;j<hoverIdx;j++){
+    for(let j=1;j<hoverIdx;j++){
       const p=filteredPoints[j];
       const dayFlow=(p.txns||[]).reduce((s,t)=>s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
       sNet+=dayFlow;
@@ -19269,14 +19269,35 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     if(filteredPoints.length<2)return null;
     const start=filteredPoints[0],end=filteredPoints[filteredPoints.length-1];
     const n=filteredPoints.length;
-    const days=(_t(end.rawDate)-_t(start.rawDate))/86400000;
+    /* Effective terminal value & date.
+       Historical chart values are marked at the last-transaction NAV. For random
+       lump-sum portfolios that can be stale and dated well before "today". When a
+       date range ends in the no-transaction tail (its `to` falls after the last
+       transaction), the ONLY reliable terminal valuation is the CURRENT/live NAV.
+       Using it — dated at the range's `to` — keeps returns/CAGR stable whether the
+       user picks to=yesterday or to=today, instead of swinging on a stale point. */
+    const activeMf=(mf||[]).filter(m=>m.units>0);
+    const liveTotal=activeMf.reduce((s,m)=>s+(m.currentValue&&m.currentValue>0?m.currentValue:m.invested),0);
+    const _toISO=ds=>mfNavDateToISO(ds)||ds;
+    const toTs=dateTo?_t(_toISO(dateTo)):0;
+    const inTail=toTs>0&&toTs>_t(end.rawDate);
+    const endVal=(inTail&&liveTotal>0)?liveTotal:(end.value||0);
+    const endTs=inTail?toTs:_t(end.rawDate);
+    const startTs=_t(start.rawDate);
+    const days=(endTs-startTs)/86400000;
     /* Money-weighted return (Modified Dietz) over the filtered period.
        Daily net cash flows are taken from each point's actual txn amounts
        (buys − sells), which are reliable — unlike cost deltas, the appended
        today point recomputes cost from avgNav and would distort flows.
-       Each flow is weighted by the fraction of the period it stayed invested. */
+       Each flow is weighted by the fraction of the period it stayed invested.
+       NOTE: the range-start (i=0) day's flow is EXCLUDED because start.value
+       already embeds it — the holding value at the period start is measured
+       after that day's transactions. Counting it again double-sums it into both
+       netFlow and weightedFlow, which understates the return (this mirrors the
+       i===0 skip already used in the niftyMW index comparison below). */
     let netFlow=0,weightedFlow=0;
     filteredPoints.forEach((p,i)=>{
+      if(i===0||_t(p.rawDate)>=endTs)return;
       const dayFlow=(p.txns||[]).reduce((s,t)=>s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
       netFlow+=dayFlow;
       const el=(_t(p.rawDate)-_t(start.rawDate))/86400000;
@@ -19284,7 +19305,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
       weightedFlow+=dayFlow*w;
     });
     /* profit attributable to returns (end − start − net new money) */
-    const portAmt=end.value-start.value-netFlow;
+    const portAmt=endVal-start.value-netFlow;
     const denom=(start.value||0)+weightedFlow;
     /* Modified Dietz return = profit / (beginning value + weighted cash flows) */
     const portPct=denom>0?(portAmt/denom*100):null;
@@ -19302,7 +19323,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
          index return and overstates Alpha. */
       let idxFin=start.value*(niftyEnd/niftyStart),flowSum=0,flowWeight=0;
       filteredPoints.forEach((p,i)=>{
-        if(i===0)return;
+        if(i===0||_t(p.rawDate)>=endTs)return;
         const iv=niftyValsAt[i];
         if(iv==null||iv<=0)return;
         const f=(p.txns||[]).reduce((s,t)=>s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
@@ -19325,13 +19346,14 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     let cagr=null;
     if(filteredPoints.length>=2){
       const xrDates=[],xrFlows=[];
-      xrDates.push(_t(start.rawDate)); xrFlows.push(-(start.value||0));
-      for(let i=1;i<filteredPoints.length-1;i++){
+      xrDates.push(startTs); xrFlows.push(-(start.value||0));
+      for(let i=1;i<filteredPoints.length;i++){
         const p=filteredPoints[i];
+        if(_t(p.rawDate)>=endTs)continue;
         const df=(p.txns||[]).reduce((s,t)=>s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
         xrDates.push(_t(p.rawDate)); xrFlows.push(-df);
       }
-      xrDates.push(_t(end.rawDate)); xrFlows.push(end.value||0);
+      xrDates.push(endTs); xrFlows.push(endVal||0);
       const yr=xrDates.map(d=>Math.max(0,Math.round((d-xrDates[0])/86400000))/365);
       const npv=r=>{let s=0;for(let i=0;i<xrFlows.length;i++){const b=Math.pow(1+r,yr[i]);if(!isFinite(b))return s>=0?Infinity:-Infinity;s+=xrFlows[i]/b;}return s;};
       let r=0.10,best=null,bestAbs=Infinity;
@@ -19350,7 +19372,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
       if(best!=null&&isFinite(best)&&best>-0.9999&&best<100)cagr=best*100;
     }
     return{portPct,portAmt,niftyStart,niftyEnd,niftyPct,niftyMW,alpha,cagr};
-  },[filteredPoints,niftyValsAt]);
+  },[filteredPoints,niftyValsAt,mf,dateTo]);
 
   /* ── Max drawdown from the drawdowns series ── */
   const maxDrawdown=drawdowns.length>0?Math.min(...drawdowns):0;
