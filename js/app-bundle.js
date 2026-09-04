@@ -17049,8 +17049,8 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,scheduled,banks,
   const buyUnits=txns.filter(t=>t.orderType==="buy").reduce((s,t)=>s+(+t.units||0),0);
   const sellUnits=txns.filter(t=>t.orderType==="sell").reduce((s,t)=>s+(+t.units||0),0);
   const netUnits=buyUnits-sellUnits;
-  const totalInvested=txns.filter(t=>t.orderType==="buy"&&!t.isSwitch).reduce((s,t)=>s+(+t.amount||0),0);
-  const totalRedeemed=txns.filter(t=>t.orderType==="sell"&&!t.isSwitch).reduce((s,t)=>s+(+t.amount||0),0);
+  const totalInvested=txns.filter(t=>t.orderType==="buy").reduce((s,t)=>s+(+t.amount||0),0);
+  const totalRedeemed=txns.filter(t=>t.orderType==="sell").reduce((s,t)=>s+(+t.amount||0),0);
   const folios=[...new Set(txns.map(t=>t.folio).filter(Boolean))];
   const handleAddTxn=()=>{
     setAddError("");
@@ -18998,22 +18998,17 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         const nav=+t.nav||0;
         const units=+t.units>0?+t.units:(nav>0&&+t.amount>0?+t.amount/nav:0);
         const amount=+t.amount>0?+t.amount:units*nav;
-        const sw=!!t.isSwitch;
         if(t.orderType==="buy"){
-          fs.units+=units;
-          /* Switch buys add units but recycle already-invested money, so they must
-             NOT grow invested/cost (runningCost) or the per-fund cost basis here. */
-          if(!sw){fs.totalCost+=amount;runningCost+=amount;}
+          fs.totalCost+=amount;fs.units+=units;
           fs.avgCostPerUnit=fs.units>0?fs.totalCost/fs.units:0;
+          runningCost+=amount;
         }else{
           const soldUnits=Math.min(units,fs.units);
           const costOfSold=fs.avgCostPerUnit*soldUnits;
           fs.totalCost=Math.max(0,fs.totalCost-costOfSold);
           fs.units=Math.max(0,fs.units-soldUnits);
           fs.avgCostPerUnit=fs.units>0?fs.totalCost/fs.units:0;
-          /* Switch sells keep the money inside the portfolio (it moves to another
-             fund), so they must NOT reduce portfolio invested/runningCost. */
-          if(!sw)runningCost=Math.max(0,runningCost-costOfSold);
+          runningCost=Math.max(0,runningCost-costOfSold);
         }
       });
       let holdingVal=0;
