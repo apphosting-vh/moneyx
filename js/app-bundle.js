@@ -892,7 +892,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.18.23";
+ const APP_VERSION="7.18.24";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -19749,7 +19749,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         d+=` L${valentry(n-1)}`;
         for(let i=n-2;i>=0;i--){const x0=xFn(i+1),y0=yFn(_v(i+1)),x1=xFn(i),y1=yFn(_v(i)),cx=(x0+x1)/2;d+=` C${cx},${y0} ${cx},${y1} ${x1},${y1}`;}
         d+=" Z";
-        return React.createElement("path",{d,fill:"rgba(239,68,68,.08)",stroke:"none",pointerEvents:"none"});
+        return React.createElement("path",{d,fill:"rgba(239,68,68,.22)",stroke:"none",pointerEvents:"none"});
       })(),
 
       /* Transaction markers (buy ▲ up, sell ▼ down) at value-line points */
