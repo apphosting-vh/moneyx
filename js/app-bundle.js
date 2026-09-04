@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.18.16";
+const APP_VERSION="7.18.17";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -19316,9 +19316,34 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
       if(den>0)niftyMW=((idxFin-start.value-flowSum)/den*100);
     }
     const alpha=(portPct!=null&&niftyMW!=null)?portPct-niftyMW:((portPct!=null&&niftyPct!=null)?portPct-niftyPct:null);
-    /* CAGR: annualise the money-weighted period return */
+    /* CAGR: annualised money-weighted return via XIRR (matches external tools).
+       Solves Σ CFᵢ/(1+r)^(tᵢ/365)=0, where buys are outflows and sells + the
+       final holding value are inflows, each discounted by its exact time in years. */
     let cagr=null;
-    if(portPct!=null&&days>0){const m=1+portPct/100;cagr=(m>0)?((Math.pow(m,365/days)-1)*100):null;}
+    if(filteredPoints.length>=2){
+      const xrDates=[],xrFlows=[];
+      filteredPoints.forEach((p,i)=>{
+        const df=(p.txns||[]).reduce((s,t)=>s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
+        xrDates.push(_t(p.rawDate));
+        xrFlows.push(i===filteredPoints.length-1?(end.value-df):(-df));
+      });
+      const yr=xrDates.map(d=>Math.max(0,Math.round((d-xrDates[0])/86400000))/365);
+      const npv=r=>{let s=0;for(let i=0;i<xrFlows.length;i++){const b=Math.pow(1+r,yr[i]);if(!isFinite(b))return s>=0?Infinity:-Infinity;s+=xrFlows[i]/b;}return s;};
+      let r=0.10,best=null,bestAbs=Infinity;
+      for(let it=0;it<150;it++){
+        const v=npv(r),ar=Math.abs(v);
+        if(ar<bestAbs){bestAbs=ar;best=r;}
+        if(ar<1e-6)break;
+        const eps=Math.max(1e-6,Math.abs(r)*1e-6);
+        const dv=(npv(r+eps)-npv(r-eps))/(2*eps);
+        if(!isFinite(dv)||Math.abs(dv)<1e-12)break;
+        let nr=r-v/dv;
+        if(!isFinite(nr)||nr<=-0.999999)nr=(r+0.15)/2;
+        if(Math.abs(nr-r)<1e-9){r=nr;break;}
+        r=nr;
+      }
+      if(best!=null&&isFinite(best)&&best>-0.9999)cagr=best*100;
+    }
     return{portPct,portAmt,niftyStart,niftyEnd,niftyPct,niftyMW,alpha,cagr};
   },[filteredPoints,niftyValsAt]);
 
