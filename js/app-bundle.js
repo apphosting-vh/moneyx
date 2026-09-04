@@ -19317,20 +19317,25 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     }
     const alpha=(portPct!=null&&niftyMW!=null)?portPct-niftyMW:((portPct!=null&&niftyPct!=null)?portPct-niftyPct:null);
     /* CAGR: annualised money-weighted return via XIRR (matches external tools).
-       Solves Σ CFᵢ/(1+r)^(tᵢ/365)=0, where buys are outflows and sells + the
-       final holding value are inflows, each discounted by its exact time in years. */
+       Solves Σ CFᵢ/(1+r)^(tᵢ/365)=0. Would-be cash flows: the opening portfolio
+       value is the initial outflow; buys are outflows, sells inflows, during the
+       range; the final holding value is the closing inflow. The opening value
+       MUST be included — for sub-ranges (1Y/3Y/5Y) the opening value dominates and
+       omitting it produced a wildly wrong spurious root. */
     let cagr=null;
     if(filteredPoints.length>=2){
       const xrDates=[],xrFlows=[];
-      filteredPoints.forEach((p,i)=>{
+      xrDates.push(_t(start.rawDate)); xrFlows.push(-(start.value||0));
+      for(let i=1;i<filteredPoints.length-1;i++){
+        const p=filteredPoints[i];
         const df=(p.txns||[]).reduce((s,t)=>s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
-        xrDates.push(_t(p.rawDate));
-        xrFlows.push(i===filteredPoints.length-1?(end.value-df):(-df));
-      });
+        xrDates.push(_t(p.rawDate)); xrFlows.push(-df);
+      }
+      xrDates.push(_t(end.rawDate)); xrFlows.push(end.value||0);
       const yr=xrDates.map(d=>Math.max(0,Math.round((d-xrDates[0])/86400000))/365);
       const npv=r=>{let s=0;for(let i=0;i<xrFlows.length;i++){const b=Math.pow(1+r,yr[i]);if(!isFinite(b))return s>=0?Infinity:-Infinity;s+=xrFlows[i]/b;}return s;};
       let r=0.10,best=null,bestAbs=Infinity;
-      for(let it=0;it<150;it++){
+      for(let it=0;it<200;it++){
         const v=npv(r),ar=Math.abs(v);
         if(ar<bestAbs){bestAbs=ar;best=r;}
         if(ar<1e-6)break;
@@ -19338,11 +19343,11 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         const dv=(npv(r+eps)-npv(r-eps))/(2*eps);
         if(!isFinite(dv)||Math.abs(dv)<1e-12)break;
         let nr=r-v/dv;
-        if(!isFinite(nr)||nr<=-0.999999)nr=(r+0.15)/2;
+        if(!isFinite(nr)||nr<=-0.999999||nr>100){nr=(r+0.15)/2;}
         if(Math.abs(nr-r)<1e-9){r=nr;break;}
         r=nr;
       }
-      if(best!=null&&isFinite(best)&&best>-0.9999)cagr=best*100;
+      if(best!=null&&isFinite(best)&&best>-0.9999&&best<100)cagr=best*100;
     }
     return{portPct,portAmt,niftyStart,niftyEnd,niftyPct,niftyMW,alpha,cagr};
   },[filteredPoints,niftyValsAt]);
