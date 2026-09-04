@@ -891,7 +891,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="7.18.19";
+const APP_VERSION="7.18.20";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -17020,25 +17020,25 @@ const ImportMFTxnsModal=({onImport,onClose})=>{
 /* ── MF TRANSACTIONS PANEL — shows all buy/sell txns for a specific fund ── */
 const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,scheduled,banks,mf})=>{
   const[showAdd,setShowAdd]=useState(false);
-  const[addForm,setAddForm]=useState({orderType:"buy",date:getISTDateStr?getISTDateStr():(new Date().toISOString().split("T")[0]),amount:"",nav:""});
+  const[addForm,setAddForm]=useState({orderType:"buy",date:getISTDateStr?getISTDateStr():(new Date().toISOString().split("T")[0]),amount:"",nav:"",isSwitch:false});
   const[addError,setAddError]=useState("");
   const[editTxnId,setEditTxnId]=useState(null);
-  const[editForm,setEditForm]=useState({orderType:"buy",date:"",amount:"",nav:"",folio:""});
+  const[editForm,setEditForm]=useState({orderType:"buy",date:"",amount:"",nav:"",folio:"",isSwitch:false});
   const[confirmDelId,setConfirmDelId]=useState(null);
   const[showSwpForm,setShowSwpForm]=useState(false);
   const[swpForm,setSwpForm]=useState({amount:"",frequency:"monthly",nextDate:"",endDate:"",targetAccId:""});
   const thisFundSwp=React.useMemo(()=>(scheduled||[]).filter(s=>s.isSwp&&s.fundName===fundName),[scheduled,fundName]);
   const startEdit=t=>{
     setEditTxnId(t.id);
-    setEditForm({orderType:t.orderType||"buy",date:t.date||"",amount:t.amount?String(t.amount):"",nav:t.nav?String(t.nav):"",folio:t.folio||""});
+    setEditForm({orderType:t.orderType||"buy",date:t.date||"",amount:t.amount?String(t.amount):"",nav:t.nav?String(t.nav):"",folio:t.folio||"",isSwitch:!!t.isSwitch});
   };
-  const cancelEdit=()=>{setEditTxnId(null);setEditForm({orderType:"buy",date:"",amount:"",nav:"",folio:""});};
+  const cancelEdit=()=>{setEditTxnId(null);setEditForm({orderType:"buy",date:"",amount:"",nav:"",folio:"",isSwitch:false});};
   const saveEdit=()=>{
     const amt=parseFloat(editForm.amount);
     const navP=parseFloat(editForm.nav);
     if(!amt||amt<=0||!navP||navP<=0||!editForm.date)return;
     const units=parseFloat((amt/navP).toFixed(4));
-    dispatch({type:"EDIT_MF_TXN",txn:{id:editTxnId,fundName,date:editForm.date,orderType:editForm.orderType,amount:amt,nav:navP,units,folio:editForm.folio||""}});
+    dispatch({type:"EDIT_MF_TXN",txn:{id:editTxnId,fundName,date:editForm.date,orderType:editForm.orderType,amount:amt,nav:navP,units,folio:editForm.folio||"",isSwitch:!!editForm.isSwitch}});
     cancelEdit();
   };
   const confirmDelete=t=>{setConfirmDelId(t.id);};
@@ -17049,8 +17049,8 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,scheduled,banks,
   const buyUnits=txns.filter(t=>t.orderType==="buy").reduce((s,t)=>s+(+t.units||0),0);
   const sellUnits=txns.filter(t=>t.orderType==="sell").reduce((s,t)=>s+(+t.units||0),0);
   const netUnits=buyUnits-sellUnits;
-  const totalInvested=txns.filter(t=>t.orderType==="buy").reduce((s,t)=>s+(+t.amount||0),0);
-  const totalRedeemed=txns.filter(t=>t.orderType==="sell").reduce((s,t)=>s+(+t.amount||0),0);
+  const totalInvested=txns.filter(t=>t.orderType==="buy"&&!t.isSwitch).reduce((s,t)=>s+(+t.amount||0),0);
+  const totalRedeemed=txns.filter(t=>t.orderType==="sell"&&!t.isSwitch).reduce((s,t)=>s+(+t.amount||0),0);
   const folios=[...new Set(txns.map(t=>t.folio).filter(Boolean))];
   const handleAddTxn=()=>{
     setAddError("");
@@ -17067,9 +17067,10 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,scheduled,banks,
       amount:amt,
       nav:navP,
       units,
+      isSwitch:!!addForm.isSwitch,
     }});
     setShowAdd(false);
-    setAddForm({orderType:"buy",date:getISTDateStr?getISTDateStr():(new Date().toISOString().split("T")[0]),amount:"",nav:""});
+    setAddForm({orderType:"buy",date:getISTDateStr?getISTDateStr():(new Date().toISOString().split("T")[0]),amount:"",nav:"",isSwitch:false});
   };
   return React.createElement(Modal,{title:"Transactions: "+fundName,onClose,w:780},
     /* Summary row */
@@ -17106,8 +17107,9 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,scheduled,banks,
           const isEditing=editTxnId===t.id;
           if(isEditing)return React.createElement("div",{key:t.id||i,style:{display:"grid",gridTemplateColumns:"minmax(80px,95px) minmax(45px,55px) minmax(70px,90px) minmax(65px,80px) minmax(80px,100px) minmax(80px,100px) 60px",padding:"4px 6px",borderBottom:"1px solid var(--accent)",background:"var(--accentbg)",fontSize:12,alignItems:"center",gap:2}},
             React.createElement("input",{type:"date",value:editForm.date,onChange:e=>setEditForm(f=>({...f,date:e.target.value})),style:{width:"100%",padding:"3px 5px",border:"1px solid var(--border)",borderRadius:5,fontSize:11,background:"var(--inp-bg)",color:"var(--text)",outline:"none"}}),
-            React.createElement("div",{style:{display:"flex",gap:3}},
-              ["buy","sell"].map(t2=>React.createElement("button",{key:t2,onClick:()=>setEditForm(f=>({...f,orderType:t2})),style:{flex:1,padding:"3px 0",borderRadius:4,fontSize:9,fontWeight:700,cursor:"pointer",border:"1px solid "+(editForm.orderType===t2?(t2==="buy"?"#16a34a":"#ef4444"):"var(--border2)"),background:editForm.orderType===t2?(t2==="buy"?"rgba(22,163,74,.12)":"rgba(239,68,68,.12)"):"transparent",color:editForm.orderType===t2?(t2==="buy"?"#16a34a":"#ef4444"):"var(--text5)"}},t2==="buy"?"B":"S"))
+            React.createElement("div",{style:{display:"flex",gap:3,alignItems:"center"}},
+              ["buy","sell"].map(t2=>React.createElement("button",{key:t2,onClick:()=>setEditForm(f=>({...f,orderType:t2})),style:{flex:1,padding:"3px 0",borderRadius:4,fontSize:9,fontWeight:700,cursor:"pointer",border:"1px solid "+(editForm.orderType===t2?(t2==="buy"?"#16a34a":"#ef4444"):"var(--border2)"),background:editForm.orderType===t2?(t2==="buy"?"rgba(22,163,74,.12)":"rgba(239,68,68,.12)"):"transparent",color:editForm.orderType===t2?(t2==="buy"?"#16a34a":"#ef4444"):"var(--text5)"}},t2==="buy"?"B":"S")),
+              React.createElement("button",{onClick:()=>setEditForm(f=>({...f,isSwitch:!f.isSwitch})),title:"Mark as switch (reallocation — excluded from invested & peak)",style:{padding:"3px 4px",borderRadius:4,fontSize:8,fontWeight:700,cursor:"pointer",border:"1px solid "+(editForm.isSwitch?"#0e7490":"var(--border2)"),background:editForm.isSwitch?"rgba(14,116,144,.15)":"transparent",color:editForm.isSwitch?"#0e7490":"var(--text5)"}},"SW")
             ),
             React.createElement("input",{type:"number",value:editForm.amount,onChange:e=>setEditForm(f=>({...f,amount:e.target.value})),style:{width:"100%",padding:"3px 5px",border:"1px solid var(--border)",borderRadius:5,fontSize:11,textAlign:"right",background:"var(--inp-bg)",color:"var(--text)",outline:"none"},min:"0",step:"0.01"}),
             React.createElement("input",{type:"number",value:editForm.nav,onChange:e=>setEditForm(f=>({...f,nav:e.target.value})),style:{width:"100%",padding:"3px 5px",border:"1px solid var(--border)",borderRadius:5,fontSize:11,textAlign:"right",background:"var(--inp-bg)",color:"var(--text)",outline:"none"},min:"0",step:"0.0001"}),
@@ -17127,13 +17129,15 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,scheduled,banks,
                 color:isBuy?"#16a34a":"#ef4444",
                 border:"1px solid "+(isBuy?"rgba(22,163,74,.25)":"rgba(239,68,68,.25)")
               }},isBuy?"BUY":"SELL"),
-              t.tag==="SWP"&&React.createElement("span",{style:{fontSize:8,fontWeight:700,padding:"1px 5px",borderRadius:4,background:"rgba(109,40,217,.12)",color:"#6d28d9",border:"1px solid rgba(109,40,217,.25)"}},"SWP")
+              t.tag==="SWP"&&React.createElement("span",{style:{fontSize:8,fontWeight:700,padding:"1px 5px",borderRadius:4,background:"rgba(109,40,217,.12)",color:"#6d28d9",border:"1px solid rgba(109,40,217,.25)"}},"SWP"),
+              t.isSwitch&&React.createElement("span",{style:{fontSize:8,fontWeight:700,padding:"1px 5px",borderRadius:4,background:"rgba(14,116,144,.12)",color:"#0e7490",border:"1px solid rgba(14,116,144,.25)"}},"SWITCH")
             ),
             React.createElement("div",{style:{textAlign:"right",color:isBuy?"#16a34a":"#ef4444",fontWeight:600,fontFamily:"'Sora',sans-serif"}},(isBuy?"+":"-")+(+t.units||0).toFixed(3)),
             React.createElement("div",{style:{textAlign:"right",color:"var(--text4)"}},t.nav?"₹"+Number(t.nav).toFixed(4):"--"),
             React.createElement("div",{style:{textAlign:"right",color:"var(--text3)",fontWeight:600}},INR(+t.amount||0)),
             React.createElement("div",{style:{textAlign:"right",color:"var(--text5)",fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.folio||"--"),
             React.createElement("div",{style:{display:"flex",gap:4,justifyContent:"center"}},
+              React.createElement("button",{onClick:()=>dispatch({type:"EDIT_MF_TXN",txn:{...t,isSwitch:!t.isSwitch}}),title:t.isSwitch?"Unmark as switch (reallocation, not new money)":"Mark as switch (reallocation — excluded from invested & peak)","style":{padding:"3px 5px",border:"none",borderRadius:4,background:t.isSwitch?"#0e7490":"var(--bg4)",color:t.isSwitch?"#fff":"var(--text4)",cursor:"pointer",fontSize:9,lineHeight:1,fontWeight:700,border:"1px solid "+(t.isSwitch?"#0e7490":"var(--border)")}},"SW"),
               React.createElement("button",{onClick:()=>startEdit(t),title:"Edit",style:{padding:"3px 5px",border:"none",borderRadius:4,background:"var(--accent)",color:"#fff",cursor:"pointer",fontSize:10,lineHeight:1}},"✎"),
               React.createElement("button",{onClick:()=>confirmDelete(t),title:"Delete",style:{padding:"3px 5px",border:"none",borderRadius:4,background:"#ef4444",color:"#fff",cursor:"pointer",fontSize:10,lineHeight:1}},"🗑")
             )
@@ -17166,6 +17170,12 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,scheduled,banks,
           React.createElement("input",{type:"number",className:"inp",value:addForm.nav,onChange:e=>setAddForm(f=>({...f,nav:e.target.value})),placeholder:"e.g. 45.32",min:"0",step:"0.0001"})
         )
       ),
+      /* Switch flag: marks a reallocation (sell one fund to buy another) so the
+         amount is excluded from invested/cost and all external-cash calculations. */
+      React.createElement("label",{style:{display:"flex",alignItems:"center",gap:8,marginTop:10,fontSize:11,color:"var(--text3)",cursor:"pointer",fontWeight:600}},
+        React.createElement("input",{type:"checkbox",checked:!!addForm.isSwitch,onChange:e=>setAddForm(f=>({...f,isSwitch:e.target.checked})),style:{accentColor:"#0e7490"}}),
+        "Switch (reallocation, not new money — excluded from invested & drawdown peak)")
+      ,
       /* Preview: calculated units */
       addForm.amount&&addForm.nav&&parseFloat(addForm.amount)>0&&parseFloat(addForm.nav)>0?
         React.createElement("div",{style:{marginTop:8,fontSize:11,color:"var(--text5)",fontStyle:"italic"}},"Units: "+(parseFloat(addForm.amount)/parseFloat(addForm.nav)).toFixed(4)):null,
@@ -18988,17 +18998,22 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         const nav=+t.nav||0;
         const units=+t.units>0?+t.units:(nav>0&&+t.amount>0?+t.amount/nav:0);
         const amount=+t.amount>0?+t.amount:units*nav;
+        const sw=!!t.isSwitch;
         if(t.orderType==="buy"){
-          fs.totalCost+=amount;fs.units+=units;
+          fs.units+=units;
+          /* Switch buys add units but recycle already-invested money, so they must
+             NOT grow invested/cost (runningCost) or the per-fund cost basis here. */
+          if(!sw){fs.totalCost+=amount;runningCost+=amount;}
           fs.avgCostPerUnit=fs.units>0?fs.totalCost/fs.units:0;
-          runningCost+=amount;
         }else{
           const soldUnits=Math.min(units,fs.units);
           const costOfSold=fs.avgCostPerUnit*soldUnits;
           fs.totalCost=Math.max(0,fs.totalCost-costOfSold);
           fs.units=Math.max(0,fs.units-soldUnits);
           fs.avgCostPerUnit=fs.units>0?fs.totalCost/fs.units:0;
-          runningCost=Math.max(0,runningCost-costOfSold);
+          /* Switch sells keep the money inside the portfolio (it moves to another
+             fund), so they must NOT reduce portfolio invested/runningCost. */
+          if(!sw)runningCost=Math.max(0,runningCost-costOfSold);
         }
       });
       let holdingVal=0;
@@ -19007,7 +19022,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
       if(runningCost>0)pts.push({
         date:toLabel(date),rawDate:date,cost:runningCost,value:holdingVal,
         fundVals:fundVals,
-        txns:byDate[date].map(t=>({type:t.orderType,fund:t.fundName,amount:+t.amount||0,nav:+t.nav||0}))
+        txns:byDate[date].map(t=>({type:t.orderType,fund:t.fundName,amount:+t.amount||0,nav:+t.nav||0,isSwitch:!!t.isSwitch}))
       });
     });
     if(mf&&mf.length>0&&pts.length>0){
@@ -19023,7 +19038,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         activeMf.forEach(m=>{const fv=(m.currentValue&&m.currentValue>0?m.currentValue:0);if(fv>0)fundVals[m.name]=fv;});
         const todayTxn=byDate[todayRaw]||[];
         const newPt={date:todayLabel,rawDate:todayRaw,cost:curCost,value:curVal,fundVals:fundVals,
-          txns:todayTxn.map(t=>({type:t.orderType,fund:t.fundName,amount:+t.amount||0,nav:+t.nav||0}))};
+          txns:todayTxn.map(t=>({type:t.orderType,fund:t.fundName,amount:+t.amount||0,nav:+t.nav||0,isSwitch:!!t.isSwitch}))};
         if(lastPt.rawDate===todayRaw)pts[pts.length-1]=newPt;
         else pts.push(newPt);
       }
@@ -19176,6 +19191,13 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const INRfmt=v=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(v);
   const PCTfmt=v=>(v>=0?"+":"")+v.toFixed(2)+"%";
 
+  /* ── Daily net external cash flow from a point's transactions ──
+     Buys are inflows, sells outflows. Switch-flagged txns (isSwitch) are a
+     reallocation of already-invested money — no external cash moves — so they
+     contribute 0. This single helper keeps drawdown, hover, MD, Nifty-MW and
+     XIRR consistent. */
+  const fday=txns=>(txns||[]).reduce((s,t)=>t&&t.isSwitch?s:s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
+
   /* ── Nice Y-axis ticks (4 evenly spaced) ── */
   const rawRange=rawMx-rawMn||1;
   const tickStep=rawRange/(nTicks-1);
@@ -19190,19 +19212,21 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
      interval the factor = value_i / (value_{i-1} + flow_i), where flow_i is the
      day's net txn amount; chaining these factors strips out the cash flows. */
   const drawdowns=React.useMemo(()=>{
-    const res=[];let idx=0,peak=-Infinity;
+    const res=[];let idx=0,peak=-Infinity,peakIdx=-1,troughIdx=-1,minDd=0;
     filteredPoints.forEach((d,i)=>{
       if(i===0){idx=100;}
       else{
         const prevVal=filteredPoints[i-1].value||0;
-        const flow=(d.txns||[]).reduce((s,t)=>s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
+        const flow=fday(d.txns);
         const open=prevVal+flow;
         if(open>0&&d.value>=0)idx=idx*(d.value/open);
       }
-      if(idx>peak)peak=idx;
-      res[i]=peak>0?((idx-peak)/peak*100):0;
+      if(idx>peak){peak=idx;peakIdx=i;}
+      const dd=peak>0?((idx-peak)/peak*100):0;
+      res[i]=dd;
+      if(dd<minDd){minDd=dd;troughIdx=i;}
     });
-    return res;
+    return {series:res,peakIdx,troughIdx,minDd};
   },[filteredPoints]);
 
   /* ── Peak / trough milestone markers ── */
@@ -19247,7 +19271,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     let sNet=0,sWeight=0;
     for(let j=1;j<hoverIdx;j++){
       const p=filteredPoints[j];
-      const dayFlow=(p.txns||[]).reduce((s,t)=>s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
+      const dayFlow=fday(p.txns);
       sNet+=dayFlow;
       const el=(_t(p.rawDate)-_t(rs.rawDate))/86400000;
       const w=subDays>0?Math.max(0,(subDays-el)/subDays):0;
@@ -19298,7 +19322,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     let netFlow=0,weightedFlow=0;
     filteredPoints.forEach((p,i)=>{
       if(i===0||_t(p.rawDate)>=endTs)return;
-      const dayFlow=(p.txns||[]).reduce((s,t)=>s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
+      const dayFlow=fday(p.txns);
       netFlow+=dayFlow;
       const el=(_t(p.rawDate)-_t(start.rawDate))/86400000;
       const w=days>0?Math.max(0,(days-el)/days):0;
@@ -19326,7 +19350,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         if(i===0||_t(p.rawDate)>=endTs)return;
         const iv=niftyValsAt[i];
         if(iv==null||iv<=0)return;
-        const f=(p.txns||[]).reduce((s,t)=>s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
+        const f=fday(p.txns);
         if(!f)return;
         const el=(_t(p.rawDate)-_t(start.rawDate))/86400000;
         const w=days>0?Math.max(0,(days-el)/days):0;
@@ -19350,7 +19374,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
       for(let i=1;i<filteredPoints.length;i++){
         const p=filteredPoints[i];
         if(_t(p.rawDate)>=endTs)continue;
-        const df=(p.txns||[]).reduce((s,t)=>s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
+        const df=fday(p.txns);
         xrDates.push(_t(p.rawDate)); xrFlows.push(-df);
       }
       xrDates.push(endTs); xrFlows.push(endVal||0);
@@ -19375,7 +19399,10 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   },[filteredPoints,niftyValsAt,mf,dateTo]);
 
   /* ── Max drawdown from the drawdowns series ── */
-  const maxDrawdown=drawdowns.length>0?Math.min(...drawdowns):0;
+  const maxDrawdown=drawdowns.troughIdx>=0?drawdowns.minDd:0;
+  /* Metadata about the deepest drawdown for the chip (dates + invested/holding at the trough). */
+  const ddPeak=drawdowns.peakIdx>=0?filteredPoints[drawdowns.peakIdx]:null;
+  const ddTrough=drawdowns.troughIdx>=0?filteredPoints[drawdowns.troughIdx]:null;
 
   /* ── Per-fund latest breakdown ── */
   const fundBreakdown=React.useMemo(()=>{
@@ -19503,7 +19530,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         )
       ),
       /* Max drawdown card */
-      React.createElement("div",{style:{flex:1,minWidth:140,padding:"12px 16px",borderRadius:12,
+      React.createElement("div",{style:{flex:1,minWidth:150,padding:"12px 16px",borderRadius:12,
         background:"linear-gradient(135deg,rgba(239,68,68,.10) 0%,rgba(239,68,68,.03) 100%)",
         border:"1px solid rgba(239,68,68,.22)",position:"relative",overflow:"hidden"}},
         React.createElement("div",{style:{position:"absolute",right:-12,top:-12,width:56,height:56,
@@ -19512,7 +19539,17 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
           letterSpacing:.9,color:"#b91c1c",marginBottom:4}},"Max Drawdown"),
         React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:18,
           color:"#ef4444",letterSpacing:-.3}},maxDrawdown.toFixed(1)+"%"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},"from running peak")
+        ddPeak&&React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2,fontWeight:600}},
+          "from "+ddPeak.date+" peak"),
+        ddTrough&&React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{borderTop:"1px solid rgba(239,68,68,.18)",margin:"8px 0 6px"}}),
+          React.createElement("div",{style:{fontSize:9,fontWeight:700,textTransform:"uppercase",
+            letterSpacing:.8,color:"#9a3412",marginBottom:3}},"Deepest Trough "+ddTrough.date),
+          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",lineHeight:1.5}},
+            "Holding "+INRfmt(Math.round(ddTrough.value||0))),
+          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",lineHeight:1.5}},
+            "Invested "+INRfmt(Math.round(ddTrough.cost||0)))
+        )
       )
     ),
 
@@ -19663,7 +19700,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
          running-peak baseline, showing depth of drawdown from the peak. */
       filteredPoints.length>2&&(()=>{
         const _v=i=>indexed?idxScale(filteredPoints[i].value):filteredPoints[i].value;
-        const _peak=i=>{const dd=drawdowns[i],v=_v(i);return dd<0?v/(1+dd/100):v;};
+        const _peak=i=>{const dd=drawdowns.series[i],v=_v(i);return dd<0?v/(1+dd/100):v;};
         const n=filteredPoints.length;
         /* Build upper (peak) curve forward, lower (value) curve backward */
         const wentry=i=>`${xFn(i)},${yFn(_peak(i))}`;
@@ -19802,18 +19839,19 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
               React.createElement("text",{x:tipX+14,y:tipY+191,fill:"var(--text5)",fontSize:8.5,fontWeight:600,letterSpacing:.3},label),
               _txnRows.map((t,i)=>{
                 const buy=t.type==="buy";
+                const sw=!!t.isSwitch;
                 const units=t.nav>0?+(t.amount/t.nav).toFixed(2):0;
-                const col=buy?"#10b981":"#ef4444";
+                const col=sw?"#0e7490":(buy?"#10b981":"#ef4444");
                 const y1=tipY+206+i*26,y2=tipY+220+i*26;
                 const fund=String(t.fund||"");
                 const fundClip=fund.length>16?fund.slice(0,15)+"…":fund;
                 return React.createElement(React.Fragment,{key:i},
                   React.createElement("text",{x:tipX+14,y:y1,fill:col,fontSize:10,fontWeight:800},
-                    (buy?"▲ Buy":"▼ Sell")+"  "+fundClip),
+                    (buy?"▲ Buy":"▼ Sell")+(sw?" [SW]":"")+"  "+fundClip),
                   React.createElement("text",{x:tipX+tipW-14,y:y1,textAnchor:"end",fill:"var(--text3)",fontSize:10,fontWeight:800},
-                    INRfmt(Math.round(t.amount))),
+                    sw?INRfmt(Math.round(t.amount))+" ↺":INRfmt(Math.round(t.amount))),
                   React.createElement("text",{x:tipX+14,y:y2,fill:"var(--text5)",fontSize:9,fontWeight:600},
-                    units+"u"+(t.nav>0?" @ "+t.nav:""))
+                    units+"u"+(t.nav>0?" @ "+t.nav:"")+(sw?" (switch)":""))
                 );
               }),
               _txnMore>0&&React.createElement("text",{x:tipX+14,y:tipY+206+_txnRows.length*26,fill:"var(--text5)",
