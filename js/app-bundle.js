@@ -19034,7 +19034,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     uniqueDates.forEach(date=>{
       (byDate[date]||[]).forEach(t=>{
         const fn=t.fundName;
-        if(!fundState[fn])fundState[fn]={units:0,totalCost:0,avgCostPerUnit:0};
+        if(!fundState[fn])fundState[fn]={units:0,totalCost:0,avgCostPerUnit:0,switchUnits:0};
         const fs=fundState[fn];
         if(+t.nav>0)lastNav[fn]=+t.nav;
         const nav=+t.nav||0;
@@ -19043,19 +19043,21 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         if(t.orderType==="buy"){
           fs.totalCost+=amount;fs.units+=units;
           fs.avgCostPerUnit=fs.units>0?fs.totalCost/fs.units:0;
+          if(t.isSwitch)fs.switchUnits+=units;
           runningCost+=amount;
         }else{
           const soldUnits=Math.min(units,fs.units);
           const costOfSold=fs.avgCostPerUnit*soldUnits;
           fs.totalCost=Math.max(0,fs.totalCost-costOfSold);
           fs.units=Math.max(0,fs.units-soldUnits);
+          fs.switchUnits=Math.max(0,Math.min(fs.switchUnits,fs.units));
           fs.avgCostPerUnit=fs.units>0?fs.totalCost/fs.units:0;
           runningCost=Math.max(0,runningCost-costOfSold);
         }
       });
       let holdingVal=0;
       const fundVals={};
-      Object.entries(fundState).forEach(([fn,fs])=>{if(fs.units>0&&lastNav[fn]){const fv=fs.units*lastNav[fn];holdingVal+=fv;fundVals[fn]=fv;}});
+      Object.entries(fundState).forEach(([fn,fs])=>{const valUnits=Math.max(0,(fs.units||0)-(fs.switchUnits||0));if(valUnits>0&&lastNav[fn]){const fv=valUnits*lastNav[fn];holdingVal+=fv;fundVals[fn]=fv;}});
       if(runningCost>0)pts.push({
         date:toLabel(date),rawDate:date,cost:runningCost,value:holdingVal,
         fundVals:fundVals,
