@@ -536,6 +536,48 @@ const fetchOneNav=async(code)=>{
   return fetchNavFromAMFI(code);
 };
 
+/* ── HISTORICAL NAV FETCHER ────────────────────────────────────────────────
+   Fetches the full daily NAV history for a scheme from mfapi.in (its response
+   `data[]` is the full chronological series, newest-first). Reduces it to an
+   ascending array of {date:"YYYY-MM-DD", nav:number} keeping the most recent
+   ~2600 trading points (≈10.4 years — covers the 10-year yearly view with
+   buffer). Used to power the MF Performance tables (30D / 90D / 6M / 1Y /
+   2Y / 3Y / 4Y / 5Y / 10Y). Returns [] on failure. */
+const fetchNavHistory=async(code)=>{
+  const base="https://api.mfapi.in/mf/"+code;
+  const proxies=[
+    base,
+    "https://api.cors.lol/?url="+encodeURIComponent(base),
+    "https://corsproxy.io/?"+encodeURIComponent(base),
+    "https://cors.eu.org/"+base,
+    "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(base),
+    "https://thingproxy.freeboard.io/fetch/"+base,
+    "https://api.allorigins.win/raw?url="+encodeURIComponent(base),
+    "https://api.allorigins.win/get?url="+encodeURIComponent(base),
+  ];
+  for(const url of proxies){
+    try{
+      const r=await _fetchX(url,{},10000);if(!r.ok)continue;
+      const txt=await _readBody(r,8000);
+      let json;try{json=JSON.parse(txt);}catch{continue;}
+      const d=_unwrapMfapi(json);
+      const arr=Array.isArray(d?.data)?d.data:[];
+      if(!arr.length)continue;
+      const out=[];
+      for(const ent of arr){
+        const nav=parseFloat(ent?.nav);
+        const iso=mfNavDateToISO(ent?.date||"");
+        if(nav>0&&/^\d{4}-\d{2}-\d{2}$/.test(iso))out.push({date:iso,nav});
+      }
+      if(out.length){
+        out.sort((x,y)=>x.date<y.date?-1:1);
+        return out.slice(-2600);
+      }
+    }catch{}
+  }
+  return[];
+};
+
 /* ══════════════════════════════════════════════════════════════════════════
    HISTORICAL PRICE FETCHER
    Fetches full daily closing prices for a share from the acquisition date
@@ -720,6 +762,7 @@ const INIT=()=>({
   eodNavs:{},
   eodIndices:{},
   historyCache:{},
+  mfHistNavs:{},
   hiddenTabs:[],
   taxData:null,
   taxData2627:null,
@@ -784,6 +827,7 @@ const EMPTY_STATE=()=>({
   eodNavs:{},
   eodIndices:{},
   historyCache:{},
+  mfHistNavs:{},
   hiddenTabs:[],
   taxData:null,
   taxData2627:null,
@@ -892,7 +936,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.18.24";
+ const APP_VERSION="7.19.24";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1568,6 +1612,23 @@ const reducer=(s,a)=>{
       const prunedIdx={};
       idxKeys.slice(-90).forEach(k=>{prunedIdx[k]=updatedIdx[k];});
       return{...s,eodIndices:prunedIdx};
+    }
+    /* ── Historical NAV series cache (per scheme code):
+       { [schemeCode]: [ {date:"YYYY-MM-DD", nav:number}, ... ] } ascending —
+       used by the MF Performance tables (30D / 90D / 6M / 1Y / 2Y / 3Y / 4Y /
+       5Y / 10Y). Stores ~2600 daily NAV points per fund, enough for the 10-year
+       yearly view. The `_v` stamp marks the cache layout version so older
+       short caches (previous limits) are re-fetched once. */
+    case"SET_MF_HIST":{
+      const _hist={...s.mfHistNavs||{}};
+      if(Array.isArray(a.series)&&a.series.length){
+        const SORTED=a.series.slice().sort((x,y)=>x.date<y.date?-1:1);
+        _hist[a.code]=SORTED.slice(-2600);
+      }else{
+        delete _hist[a.code];
+      }
+      _hist._v=3;
+      return{...s,mfHistNavs:_hist};
     }
     case"SET_BROKER_CASH":return{...s,brokerCashBalance:a.amount};
     case"ADD_SHARE":return{...s,shares:[...s.shares,a.p]};
@@ -10135,6 +10196,7 @@ var loadState=()=>{
       eodPrices:(function(){try{const r=localStorage.getItem(LS_EOD_PRICES);if(r)return JSON.parse(r);}catch{}return(parsed.eodPrices||{});})(),
       eodNavs:(function(){try{const r=localStorage.getItem(LS_EOD_NAVS);if(r)return normalizeEodNavKeys(JSON.parse(r));}catch{}return normalizeEodNavKeys(parsed.eodNavs||{});})(),
       historyCache:(parsed.historyCache||{}),
+      mfHistNavs:(parsed.mfHistNavs||{}),
       hiddenTabs:(parsed.hiddenTabs||[]),
       taxData:(parsed.taxData||null),
       taxData2627:(parsed.taxData2627||null),
@@ -20668,7 +20730,175 @@ const LS_ENTRY_SNAPSHOTS="mm_entry_score_snapshots";
 const _SCREENER_KEY="finsight-screener-data";
 const _SCREENER_SNAPS_KEY="finsight-screener-snapshots";
 
-const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},eodIndices={},historyCache={},soldShareSnapshots={},brokerCashBalance=0,banks=[],scheduled=[],isMobile})=>{
+/* ──────────────────────────────────────────────────────────────────────────
+   MF PERFORMANCE TABLES  (Last 30 Days / 90 Days / 6 Months / 1 Year)
+   Rows   = each held mutual fund
+   Columns= NAV % change buckets:
+     • Last 30 Days  → daily % change, one column per trading day
+     • Last 90 Days  → weekly % change (per ISO week), last 13 weeks
+     • Last 6 Months → month-on-month % change, last 6 months
+     • Last 1 Year   → month-on-month % change, last 12 months
+   Powered by the full daily NAV history fetched from mfapi.in and cached in
+   state.mfHistNavs (per schemeCode). Falls back gracefully when history is
+   not yet loaded by offering a "Fetch History" action.
+   ────────────────────────────────────────────────────────────────────────── */
+const MFPerformanceTables=React.memo(({mf,mfHistNavs={},dispatch})=>{
+  const active=(mf||[]).filter(m=>m.units>0&&m.schemeCode);
+  const [loading,setLoading]=useState({});
+  const [fired,setFired]=useState(false);
+  const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const parseISO=iso=>new Date(iso+"T12:00:00");
+  const fmtD=iso=>{if(!iso)return"--";const p=iso.split("-");return p[2]+" "+MON[parseInt(p[1],10)-1];};
+  const fmtM=iso=>{const p=iso.split("-");return MON[parseInt(p[1],10)-1]+" ’"+p[0].slice(2);};
+  const monKey=iso=>iso.slice(0,7);
+  const weekKeyMy=iso=>{const d=parseISO(iso);const day=d.getDay()||7;d.setDate(d.getDate()+4-day);const y=d.getFullYear();const m=Math.floor(((d-new Date(y,0,4))/864e5+(new Date(y,0,4).getDay()||7)-3)/7)+1;return y+"-W"+String(m).padStart(2,"0");};
+  const weekLabel=iso=>{const d=parseISO(iso);const day=d.getDay()||7;d.setDate(d.getDate()-(day-1));return d.getDate()+" "+MON[d.getMonth()];};
+  const sn=n=>{const r=(n||"").replace(/\s*-\s*(direct|regular)\s*(growth|idcw|dividend).*/i,"").replace(/\s*fund$/i,"").trim();return r.length>26?r.slice(0,24)+"…":r;};
+
+  const gridDates=(()=>{
+    const set={};
+    active.forEach(m=>{const s=mfHistNavs[m.schemeCode];if(Array.isArray(s))s.forEach(p=>{if(p&&p.date)set[p.date]=1;});});
+    return Object.keys(set).sort();
+  })();
+  const navMaps=(()=>{
+    const o={};
+    active.forEach(m=>{const s=mfHistNavs[m.schemeCode]||[];const mp={};s.forEach(p=>{mp[p.date]=p.nav;});o[m.schemeCode]=mp;});
+    return o;
+  })();
+  const hasHistory=m=>Array.isArray(mfHistNavs[m.schemeCode])&&mfHistNavs[m.schemeCode].length>1;
+  /* Stale = no usable history, OR cache built with an older layout (pre-10-year
+     version), OR latest cached NAV older than ~4 days — in all cases re-fetch
+     so the tables stay complete and current whenever the section is revisited. */
+  const isStale=m=>{
+    if((mfHistNavs._v||0)!==3)return true;
+    if(!hasHistory(m))return true;
+    const s=mfHistNavs[m.schemeCode];
+    const last=s[s.length-1]&&s[s.length-1].date;
+    if(!last)return true;
+    const cutoff=new Date(Date.now()-4*864e5).toISOString().slice(0,10);
+    return last<cutoff;
+  };
+  const missing=active.filter(m=>isStale(m));
+
+  const fetchOne=async m=>{
+    if(loading[m.schemeCode])return;
+    setLoading(p=>({...p,[m.schemeCode]:true}));
+    const series=await fetchNavHistory(m.schemeCode);
+    if(series.length)dispatch({type:"SET_MF_HIST",code:m.schemeCode,series});
+    setLoading(p=>({...p,[m.schemeCode]:false}));
+  };
+  const fetchAll=()=>Promise.all(active.filter(isStale).map(fetchOne));
+
+  React.useEffect(()=>{
+    if(fired||!active.length)return;
+    setFired(true);
+    if(active.some(isStale)){const t=setTimeout(()=>{fetchAll();},550);return()=>clearTimeout(t);}
+  },[fired]);
+
+  /* Column buckets built from the merged grid (all funds publish on the same trading days) */
+  const bucketize=(grid,count,keyFn,labelFn)=>{const by={};grid.forEach(d=>{const k=keyFn(d);(by[k]=by[k]||[]).push(d);});return Object.keys(by).sort().slice(-count).map(k=>({key:k,label:labelFn?labelFn(k,by[k][0]):fmtM(by[k][0]),dates:by[k]}));};
+  const quarterKey=iso=>{const p=iso.split("-");return p[0]+"-Q"+Math.ceil(parseInt(p[1],10)/3);};
+  const quarterLabel=k=>{const p=k.split("-Q");return"Q"+p[1]+" ’"+p[0].slice(2);};
+  const yearKey=iso=>iso.slice(0,4);
+  const yearLabel=k=>(k.slice(2)==="00"?"2000":"’"+k.slice(2));
+
+  const dailyCols=gridDates.slice(-30);
+  const weekBuckets=(()=>{const by={};gridDates.forEach(d=>{const k=weekKeyMy(d);(by[k]=by[k]||[]).push(d);});return Object.keys(by).sort().slice(-13).map(k=>({key:k,label:weekLabel(by[k][0]),dates:by[k]}));})();
+  const monthBuckets6=bucketize(gridDates,6,monKey);
+  const monthBuckets12=bucketize(gridDates,12,monKey);
+  const quarterBuckets8=bucketize(gridDates,8,quarterKey,quarterLabel);
+  const quarterBuckets12=bucketize(gridDates,12,quarterKey,quarterLabel);
+  const yearBuckets4=bucketize(gridDates,4,yearKey,yearLabel);
+  const yearBuckets5=bucketize(gridDates,5,yearKey,yearLabel);
+  const yearBuckets10=bucketize(gridDates,10,yearKey,yearLabel);
+
+  const bucketVals=(mp,buckets)=>buckets.map(b=>{
+    let start=null,end=null;
+    for(const d of b.dates){if(mp[d]&&start===null)start=mp[d];if(mp[d])end=mp[d];}
+    if(start&&end&&start>0&&start!==end)return ((end-start)/start*100);
+    return null;
+  });
+
+  const rowsFor=buckets=>active.filter(hasHistory).map(m=>({name:sn(m.name),vals:bucketVals(navMaps[m.schemeCode],buckets)}));
+
+  const dailyRows=active.filter(hasHistory).map(m=>{
+    const mp=navMaps[m.schemeCode];
+    return{name:sn(m.name),vals:dailyCols.map((d,i)=>{
+      if(i===0)return null;
+      const cur=mp[d],prev=mp[dailyCols[i-1]];
+      if(cur&&prev&&prev>0)return((cur-prev)/prev*100);
+      return null;
+    })};
+  });
+  const weeklyRows=rowsFor(weekBuckets);
+  const monthlyRows6=rowsFor(monthBuckets6);
+  const monthlyRows12=rowsFor(monthBuckets12);
+  const quarterlyRows8=rowsFor(quarterBuckets8);
+  const quarterlyRows12=rowsFor(quarterBuckets12);
+  const yearlyRows4=rowsFor(yearBuckets4);
+  const yearlyRows5=rowsFor(yearBuckets5);
+  const yearlyRows10=rowsFor(yearBuckets10);
+  const fmtCol=c=>React.createElement("div",{style:{padding:"7px 6px",textAlign:"right",whiteSpace:"nowrap"}},c);
+
+  const tableCard=(title,subtitle,cols,rows,minW,years)=>{
+    const gridCols="190px "+cols.map(()=>"minmax(62px,1fr)").join(" ")+" 92px"+(years?" 84px":"");
+    const pctCell=(v,pad,emph)=>{const col=v>=0?"#16a34a":"#ef4444";return React.createElement("div",{key:pad,style:{padding:"7px 6px",textAlign:"right",color:v===null||v===undefined?"var(--text5)":col,fontWeight:emph?800:undefined,background:v===null||v===undefined||!emph?"transparent":(v>=0?"rgba(22,163,74,.08)":"rgba(239,68,68,.08)")}},v===null||v===undefined?"—":(v>=0?"▲ +":"▼ ")+Math.abs(v).toFixed(2)+"%");};
+    const netOf=vals=>{let s=0,n=0;(vals||[]).forEach(v=>{if(v!==null&&v!==undefined){s+=v;n++;}});return n?s:null;};
+    return React.createElement(Card,{sx:{marginBottom:14,overflow:"hidden"}},
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7,padding:"14px 16px 8px",borderBottom:"1px solid var(--border2)"}},
+        React.createElement("div",{style:{width:3,height:14,borderRadius:2,background:"#6d28d9",flexShrink:0}}),
+        React.createElement("span",{style:{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:"var(--text5)"}},title),
+        React.createElement("span",{style:{fontSize:9,color:"var(--text6)",fontWeight:400,marginLeft:"auto",whiteSpace:"nowrap"}},subtitle)
+      ),
+      React.createElement("div",{style:{overflowX:"auto",WebkitOverflowScrolling:"touch"}},
+        React.createElement("div",{style:{minWidth:minW}},
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:gridCols,gap:0,background:"var(--bg5)",borderBottom:"2px solid var(--border)",fontSize:9,fontWeight:700,color:"var(--accent)",textTransform:"uppercase",letterSpacing:.5}},
+            React.createElement("div",{style:{padding:"7px 10px"}},"Fund"),
+            cols.map((c,i)=>fmtCol(c)),
+            React.createElement("div",{style:{padding:"7px 6px",textAlign:"right",whiteSpace:"nowrap",color:"#6d28d9"}},"Net % Change"),
+            years&&React.createElement("div",{style:{padding:"7px 6px",textAlign:"right",whiteSpace:"nowrap",color:"#0e7490"}},"XIRR %")
+          ),
+          rows.length?rows.map((r,ri)=>React.createElement("div",{key:ri,style:{display:"grid",gridTemplateColumns:gridCols,gap:0,borderBottom:"1px solid var(--border2)",fontSize:10,":last-child":{borderBottom:"none"}}},
+            React.createElement("div",{style:{padding:"7px 10px",color:"var(--text2)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},r.name),
+            (r.vals||[]).map((v,i)=>pctCell(v,i)),
+            pctCell(netOf(r.vals),"net",true),
+            years&&pctCell(netOf(r.vals)!==null?netOf(r.vals)/years:null,"xirr",true)
+          )):React.createElement("div",{style:{padding:"16px 10px",fontSize:10,color:"var(--text6)",textAlign:"center",fontStyle:"italic"}},"Loading NAV history…")
+        )
+      )
+    );
+  };
+
+  if(!active.length)return null;
+
+  return React.createElement("div",null,
+    /* ── Section header + Fetch History action ── */
+    React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7,margin:"18px 0 12px"}},
+      React.createElement("div",{style:{width:4,height:18,borderRadius:3,background:"#6d28d9",flexShrink:0}}),
+      React.createElement("div",{style:{flex:1}},
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},"Mutual Fund Performance"),
+        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:1}},"Daily · Weekly · Monthly · Quarterly · Yearly NAV movement across your holdings")
+      ),
+      React.createElement(Btn,{v:"secondary",sz:"sm",onClick:fetchAll,disabled:!missing.length||Object.values(loading).some(Boolean),sx:{fontSize:12}},
+        Object.values(loading).some(Boolean)?React.createElement(React.Fragment,null,React.createElement("span",{className:"spinr"},"⟳")," Loading…"):(missing.length?"⭳ Fetch NAV History":"⭳ History Up-to-date")
+      )
+    ),
+    missing.length>0&&React.createElement("div",{style:{marginBottom:12,padding:"8px 14px",borderRadius:9,fontSize:12,display:"flex",alignItems:"center",gap:8,background:"rgba(109,40,217,.07)",border:"1px solid rgba(109,40,217,.2)",color:"#6d28d9"}},
+      React.createElement("span",null,"Fetching NAV history for "+missing.length+" fund"+((missing.length===1)?"":"s")+" to build these tables.")
+    ),
+    tableCard("Last 30 Days","Daily NAV % change",dailyCols.map(d=>fmtD(d)),dailyRows,740),
+    tableCard("Last 90 Days","Weekly NAV % change · last 13 weeks",weekBuckets.map(w=>w.label),weeklyRows,1030),
+    tableCard("Last 6 Months","Month-on-month NAV % change",monthBuckets6.map(b=>b.label),monthlyRows6,690),
+    tableCard("Last 1 Year","Month-on-month NAV % change",monthBuckets12.map(b=>b.label),monthlyRows12,1090),
+    tableCard("Last 2 Years","Quarterly NAV % change · last 8 quarters",quarterBuckets8.map(b=>b.label),quarterlyRows8,890,2),
+    tableCard("Last 3 Years","Quarterly NAV % change · last 12 quarters",quarterBuckets12.map(b=>b.label),quarterlyRows12,1150,3),
+    tableCard("Last 4 Years","Yearly NAV % change",yearBuckets4.map(b=>b.label),yearlyRows4,650,4),
+    tableCard("Last 5 Years","Yearly NAV % change",yearBuckets5.map(b=>b.label),yearlyRows5,710,5),
+    tableCard("Last 10 Years","Yearly NAV % change",yearBuckets10.map(b=>b.label),yearlyRows10,1010,10)
+  );
+});
+
+const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},eodIndices={},historyCache={},soldShareSnapshots={},mfHistNavs={},brokerCashBalance=0,banks=[],scheduled=[],isMobile})=>{
   const[ready,setReady]=useState(false);
   React.useEffect(()=>{const t=setTimeout(()=>setReady(true),120);return()=>clearTimeout(t);},[]);
   const[tab,setTab]=useState(defaultTab);const[open,setOpen]=useState(false);const[navLoad,setNavLoad]=useState(false);
@@ -21251,6 +21481,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
               )
             );
           })(),
+      React.createElement(MFPerformanceTables,{mf,mfHistNavs:mfHistNavs||{},dispatch}),
       /* ── Portfolio Evolution Chart — always visible when txns are imported ── */
       (mfTxns||[]).length>=2&&React.createElement(Card,{sx:{marginBottom:14}},
         React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:8}},
@@ -39019,7 +39250,7 @@ function App(){
       /* InvestSection: five sub-tabs reuse the same component with different
          defaultTab — keep the && pattern so each sub-tab mounts independently */
       tab==="inv_mf"&&React.createElement(ErrorBoundary,{name:"Mutual Funds"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0,banks:state.banks,scheduled:state.scheduled||[]})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,mfHistNavs:state.mfHistNavs||_EO,brokerCashBalance:state.brokerCashBalance||0,banks:state.banks,scheduled:state.scheduled||[]})),
       tab==="inv_shares"&&React.createElement(ErrorBoundary,{name:"Shares"},
         React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"shares",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       tab==="inv_fd"&&React.createElement(ErrorBoundary,{name:"Fixed Deposits"},
