@@ -19519,10 +19519,31 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
   const _hpTxns=_hpHasTxns?filteredPoints[hoverIdx].txns:null;
   const _txnRows=_hpTxns?_hpTxns.slice(0,5):null;
   const _txnMore=_hpHasTxns&&_hpTxns.length>5?_hpTxns.length-5:0;
-  /* Index tooltip rows are stacked at 22px each; tipH + txn section shift by the extra rows */
+  /* ── Tooltip: fresh table-style design. Every element's baseline comes from a
+     single running cursor (_lay), so rows can never overlap no matter how many
+     index series or transactions appear. tipH/tipX/tipY all derive from _lay. ── */
   const _tipIdxN=idxHover.length;
-  const _tipIdxExtra=_tipIdxN>0?(_tipIdxN-1)*22:0;
-  const tipW=_hpHasTxns?300:240,tipH=200+(_tipIdxN>0?40+_tipIdxExtra:0)+(_hpHasTxns?(28+(_txnRows?_txnRows.length*26:0)+(_txnMore?15:0)):0);
+  const _lay=(()=>{
+    const B={};
+    B.date=22;                       /* header text                */
+    B.sep1=32;                       /* rule under header          */
+    B.m1=51;                         /* HOLDING VALUE row          */
+    B.m2=74;                         /* COST OF ACQUISITION row    */
+    B.m3=97;                         /* RETURN FROM RANGE START    */
+    const mEnd=hpPortPct!=null?B.m3:B.m2;
+    B.sep2=mEnd+13;                  /* rule above index rows      */
+    B.idx0=B.sep2+17;                /* first index row            */
+    B.alpha=B.idx0+_tipIdxN*25+2;    /* ALPHA row (below indices)  */
+    B.sep3=B.alpha+13;               /* rule above transactions    */
+    B.txHead=B.sep3+16;              /* TRANSACTIONS header        */
+    B.tx1=B.txHead+25;               /* first txn row (2 lines)    */
+    let bottom=B.alpha+18;
+    if(_hpHasTxns){bottom=B.tx1+(_txnRows?_txnRows.length*26:0)+(_txnMore?14:0)+10;}
+    B.bottom=Math.max(150,bottom);
+    return B;
+  })();
+  const tipW=306;
+  const tipH=_lay.bottom;
   const tipX=hx!==null?(hx+tipW+padR+4>W?hx-tipW-14:hx+14):0;
   const tipY=hyV!==null?Math.max(padT,Math.min(padT+chartH-tipH,hyV-tipH/2)):0;
 
@@ -20042,8 +20063,8 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
           fill:"#2563eb",stroke:"var(--modal-bg)",strokeWidth:2.5}),
         idxHover.filter(r=>r.def.key!=="nifty50").map(r=>React.createElement("circle",{key:"pev_ihd_"+r.def.key,cx:hx,cy:r.y,r:4.5,
           fill:r.def.color,stroke:"var(--modal-bg)",strokeWidth:2.5})),
-        /* Tooltip */
-        React.createElement("g",null,
+        /* Tooltip — whole group scaled to 80% about its own center */
+        React.createElement("g",{transform:"translate("+(tipX+tipW/2)+", "+(tipY+tipH/2)+") scale(0.7) translate("+(-(tipX+tipW/2))+", "+(-(tipY+tipH/2))+")"},
           /* Drop shadow */
           React.createElement("rect",{x:tipX+4,y:tipY+5,width:tipW,height:tipH,
             rx:12,fill:"rgba(0,0,0,.18)",style:{filter:"blur(6px)"}}),
@@ -20056,99 +20077,94 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
           /* Date */
           React.createElement("text",{x:tipX+14,y:tipY+22,fill:"var(--text3)",fontSize:11,fontWeight:700,letterSpacing:.2},hp.date),
           /* Separator */
-          React.createElement("line",{x1:tipX+10,y1:tipY+28,x2:tipX+tipW-10,y2:tipY+28,
+          React.createElement("line",{x1:tipX+10,y1:tipY+_lay.sep1,x2:tipX+tipW-10,y2:tipY+_lay.sep1,
             stroke:"var(--border2)",strokeWidth:.8,opacity:.6}),
-          /* HOLDING VALUE row */
+          /* ── Metrics (one row each: label | value | delta) ── */
           (()=>{
             const diff=hp.value-hp.cost;
-            const pct=hp.cost>0?((diff/hp.cost)*100).toFixed(2):"0.00";
-            const col=diff>=0?"#10b981":"#ef4444";
-            const sign=diff>=0?"▲ +":"▼ ";
-            return React.createElement("g",null,
-              React.createElement("text",{x:tipX+14,y:tipY+43,fill:"var(--text5)",fontSize:9,fontWeight:600,letterSpacing:.3},"HOLDING VALUE"),
-              React.createElement("text",{x:tipX+14,y:tipY+59,fill:col,fontSize:13.5,fontWeight:800},
+            const inc=diff>=0;
+            const col=inc?"#10b981":"#ef4444";
+            const pct=hp.cost>0?((Math.abs(diff)/hp.cost)*100).toFixed(2):"0.00";
+            const L=tipX+14,VM=tipX+tipW-92,VR=tipX+tipW-14;
+            return React.createElement(React.Fragment,null,
+              /* HOLDING VALUE */
+              React.createElement("text",{x:L,y:tipY+_lay.m1,fill:"var(--text5)",fontSize:8.5,fontWeight:700,letterSpacing:.4},"HOLDING VALUE"),
+              React.createElement("text",{x:VM,y:tipY+_lay.m1,textAnchor:"end",fill:"var(--text2)",fontSize:12.5,fontWeight:800},
                 INRfmt(Math.round(hp.value))),
-              React.createElement("text",{x:tipX+tipW-14,y:tipY+59,textAnchor:"end",fill:col,fontSize:10,fontWeight:700},
-                sign+pct+"%")
+              React.createElement("text",{x:VR,y:tipY+_lay.m1,textAnchor:"end",fill:col,fontSize:10,fontWeight:800},
+                (inc?"▲ +":"▼ ")+pct+"%"),
+              /* COST OF ACQUISITION */
+              React.createElement("text",{x:L,y:tipY+_lay.m2,fill:"var(--text5)",fontSize:8.5,fontWeight:700,letterSpacing:.4},"COST OF ACQUISITION"),
+              React.createElement("text",{x:VM,y:tipY+_lay.m2,textAnchor:"end",fill:"#d97706",fontSize:12,fontWeight:800},
+                INRfmt(Math.round(hp.cost))),
+              React.createElement("text",{x:VR,y:tipY+_lay.m2,textAnchor:"end",fill:col,fontSize:10,fontWeight:700},
+                (inc?"+":"−")+INRfmt(Math.round(Math.abs(diff)))),
+              /* RETURN FROM RANGE START */
+              hpPortPct!=null&&React.createElement(React.Fragment,null,
+                React.createElement("text",{x:L,y:tipY+_lay.m3,fill:"var(--text5)",fontSize:8.5,fontWeight:700,letterSpacing:.4},"RETURN FROM RANGE START"),
+                React.createElement("text",{x:VR,y:tipY+_lay.m3,textAnchor:"end",fill:col,fontSize:13,fontWeight:800},
+                  PCTfmt(hpPortPct))
+              )
             );
           })(),
-          /* COST OF ACQUISITION row */
-          React.createElement("text",{x:tipX+14,y:tipY+76,fill:"var(--text5)",fontSize:9,fontWeight:600,letterSpacing:.3},"COST OF ACQUISITION"),
-          React.createElement("text",{x:tipX+14,y:tipY+91,fill:"#d97706",fontSize:12,fontWeight:700},
-            INRfmt(Math.round(hp.cost))),
+          /* ── Index overlay rows + alpha (one line each) ── */
           (()=>{
-            const nd=hp.value-hp.cost;
-            const col=nd>=0?"#10b981":"#ef4444";
-            return React.createElement("text",{x:tipX+tipW-14,y:tipY+91,textAnchor:"end",fill:col,fontSize:10.5,fontWeight:700},
-              (nd>=0?"+":"")+INRfmt(Math.round(nd)));
-          })(),
-          /* NAV return vs start (money-weighted from range start to the hovered point,
-             shared with the ALPHA row via hpPortPct) */
-          (()=>{
-            if(hpPortPct==null)return null;
-            const col=hpPortPct>=0?"#10b981":"#ef4444";
-            return React.createElement("g",null,
-              React.createElement("text",{x:tipX+14,y:tipY+108,fill:"var(--text5)",fontSize:9,fontWeight:600,letterSpacing:.3},"RETURN FROM RANGE START"),
-              React.createElement("text",{x:tipX+14,y:tipY+123,fill:col,fontSize:12,fontWeight:700},PCTfmt(hpPortPct))
-            );
-          })(),
-          /* Index rows (value + % from range start), one per toggled-on index with data at this point */
-          idxHover.length>0&&(()=>{
             /* Alpha = PF return − NIFTY 50 return at the hovered point (uses the 50 series) */
             const n50row=idxHover.find(r=>r.def.key==="nifty50");
             const niftyStartVal2=rangeMetrics&&rangeMetrics.niftyStart!=null?rangeMetrics.niftyStart:(niftyStartVal!=null?niftyStartVal:null);
             const niftyPct=n50row&&niftyStartVal2&&niftyStartVal2>0?((n50row.val-niftyStartVal2)/niftyStartVal2*100):null;
             const alpha=hpPortPct!=null&&niftyPct!=null?hpPortPct-niftyPct:null;
+            const L=tipX+14,VM=tipX+tipW-92,VR=tipX+tipW-14;
             return React.createElement(React.Fragment,null,
-              React.createElement("line",{x1:tipX+10,y1:tipY+131,x2:tipX+tipW-10,y2:tipY+131,
+              React.createElement("line",{x1:tipX+10,y1:tipY+_lay.sep2,x2:tipX+tipW-10,y2:tipY+_lay.sep2,
                 stroke:"var(--border2)",strokeWidth:.8,opacity:.6}),
               idxHover.map((r,i)=>{
-                const baseY=140+i*22;
-                const col=r.val!=null&&niftyPct!=null? (r.def.key==="nifty50"? (niftyPct>=0?"#2563eb":"#dc2626") : r.def.color):r.def.color;
+                const baseY=tipY+_lay.idx0+i*25;
+                const col=(r.def.key==="nifty50"&&niftyPct!=null)?(niftyPct>=0?"#2563eb":"#dc2626"):r.def.color;
                 const pctBase=(r.def.key==="nifty50"&&niftyStartVal2!=null&&niftyStartVal2>0)?niftyStartVal2:(r.s.startVal!=null?r.s.startVal:null);
                 const pct=pctBase&&pctBase>0?((r.val-pctBase)/pctBase*100):null;
                 return React.createElement(React.Fragment,{key:r.def.key},
-                  React.createElement("text",{x:tipX+14,y:baseY,fill:r.def.color,fontSize:9,fontWeight:600,letterSpacing:.3},
+                  React.createElement("text",{x:L,y:baseY,fill:r.def.color,fontSize:9,fontWeight:700,letterSpacing:.4},
                     r.def.label.toUpperCase()),
-                  React.createElement("text",{x:tipX+14,y:baseY+15,fill:r.def.color,fontSize:12,fontWeight:700},
+                  React.createElement("text",{x:VM,y:baseY,textAnchor:"end",fill:"var(--text3)",fontSize:11.5,fontWeight:700},
                     Math.round(r.val).toLocaleString("en-IN")),
-                  pct!=null&&React.createElement("text",{x:tipX+tipW-14,y:baseY+15,textAnchor:"end",fill:col,fontSize:10.5,fontWeight:700},
+                  pct!=null&&React.createElement("text",{x:VR,y:baseY,textAnchor:"end",fill:col,fontSize:11,fontWeight:800},
                     PCTfmt(pct))
                 );
               }),
               alpha!=null&&React.createElement(React.Fragment,null,
-                React.createElement("text",{x:tipX+14,y:174+_tipIdxExtra,fill:"var(--text5)",fontSize:8.5,fontWeight:600,letterSpacing:.3},"ALPHA (PF − NIFTY)"),
-                React.createElement("text",{x:tipX+tipW-14,y:174+_tipIdxExtra,textAnchor:"end",fill:alpha>=0?"#10b981":"#ef4444",fontSize:10,fontWeight:700},
+                React.createElement("text",{x:L,y:tipY+_lay.alpha,fill:"var(--text5)",fontSize:8.5,fontWeight:700,letterSpacing:.4},"ALPHA VS NIFTY 50"),
+                React.createElement("text",{x:VR,y:tipY+_lay.alpha,textAnchor:"end",fill:alpha>=0?"#10b981":"#ef4444",fontSize:11,fontWeight:800},
                   PCTfmt(alpha))
               )
             );
           })(),
-          /* Transactions at this point */
-          _txnRows&&_txnRows.length>0&&(()=>{
-            const label="TRANSACTIONS"+(hp.txns.length>1?" ("+hp.txns.length+")":"");
-            const t0=178+_tipIdxExtra;
+          /* ── Transactions at this point ── */
+          _hpHasTxns&&_txnRows&&_txnRows.length>0&&(()=>{
+            const L=tipX+14,VR=tipX+tipW-14;
+            const head="TRANSACTIONS"+(hp.txns.length>1?" ("+hp.txns.length+")":"");
             return React.createElement(React.Fragment,null,
-              React.createElement("line",{x1:tipX+10,y1:tipY+t0,x2:tipX+tipW-10,y2:tipY+t0,
+              React.createElement("line",{x1:tipX+10,y1:tipY+_lay.sep3,x2:tipX+tipW-10,y2:tipY+_lay.sep3,
                 stroke:"var(--border2)",strokeWidth:.8,opacity:.6}),
-              React.createElement("text",{x:tipX+14,y:tipY+t0+13,fill:"var(--text5)",fontSize:8.5,fontWeight:600,letterSpacing:.3},label),
+              React.createElement("text",{x:L,y:tipY+_lay.txHead,fill:"var(--text5)",fontSize:8.5,fontWeight:700,letterSpacing:.4},head),
               _txnRows.map((t,i)=>{
                 const buy=t.type==="buy";
                 const sw=!!t.isSwitch;
                 const units=t.nav>0?+(t.amount/t.nav).toFixed(2):0;
                 const col=sw?"#0e7490":(buy?"#10b981":"#ef4444");
-                const y1=tipY+t0+28+i*26,y2=tipY+t0+42+i*26;
+                const y1=tipY+_lay.tx1+i*26,y2=y1+14;
                 const fund=String(t.fund||"");
-                const fundClip=fund.length>16?fund.slice(0,15)+"…":fund;
+                const fundClip=fund.length>24?fund.slice(0,23)+"…":fund;
                 return React.createElement(React.Fragment,{key:i},
-                  React.createElement("text",{x:tipX+14,y:y1,fill:col,fontSize:10,fontWeight:800},
+                  React.createElement("text",{x:L,y:y1,fill:col,fontSize:10,fontWeight:800},
                     (buy?"▲ Buy":"▼ Sell")+(sw?" [SW]":"")+"  "+fundClip),
-                  React.createElement("text",{x:tipX+tipW-14,y:y1,textAnchor:"end",fill:"var(--text3)",fontSize:10,fontWeight:800},
+                  React.createElement("text",{x:VR,y:y1,textAnchor:"end",fill:"var(--text3)",fontSize:10,fontWeight:800},
                     sw?INRfmt(Math.round(t.amount))+" ↺":INRfmt(Math.round(t.amount))),
-                  React.createElement("text",{x:tipX+14,y:y2,fill:"var(--text5)",fontSize:9,fontWeight:600},
+                  React.createElement("text",{x:L,y:y2,fill:"var(--text5)",fontSize:9,fontWeight:600},
                     units+"u"+(t.nav>0?" @ "+t.nav:"")+(sw?" (switch)":""))
                 );
               }),
-              _txnMore>0&&React.createElement("text",{x:tipX+14,y:tipY+t0+28+_txnRows.length*26,fill:"var(--text5)",
+              _txnMore>0&&React.createElement("text",{x:L,y:tipY+_lay.tx1+_txnRows.length*26,fill:"var(--text5)",
                 fontSize:9,fontWeight:600},"+"+_txnMore+" more")
             );
           })()
