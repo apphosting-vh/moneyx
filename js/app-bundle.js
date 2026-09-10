@@ -20102,7 +20102,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
               /* RETURN FROM RANGE START */
               hpPortPct!=null&&React.createElement(React.Fragment,null,
                 React.createElement("text",{x:L,y:tipY+_lay.m3,fill:"var(--text5)",fontSize:8.5,fontWeight:700,letterSpacing:.4},"RETURN FROM RANGE START"),
-                React.createElement("text",{x:VR,y:tipY+_lay.m3,textAnchor:"end",fill:col,fontSize:13,fontWeight:800},
+                React.createElement("text",{x:VR,y:tipY+_lay.m3,textAnchor:"end",fill:col,fontSize:12,fontWeight:800},
                   PCTfmt(hpPortPct))
               )
             );
