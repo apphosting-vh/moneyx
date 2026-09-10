@@ -19519,10 +19519,10 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
   const _hpTxns=_hpHasTxns?filteredPoints[hoverIdx].txns:null;
   const _txnRows=_hpTxns?_hpTxns.slice(0,5):null;
   const _txnMore=_hpHasTxns&&_hpTxns.length>5?_hpTxns.length-5:0;
-  /* Index tooltip rows are stacked at 15px each; tipH + txn section shift by the extra rows */
+  /* Index tooltip rows are stacked at 22px each; tipH + txn section shift by the extra rows */
   const _tipIdxN=idxHover.length;
-  const _tipIdxExtra=_tipIdxN>0?(_tipIdxN-1)*15:0;
-  const tipW=_hpHasTxns?300:240,tipH=200+(_tipIdxN>0?30+_tipIdxExtra:0)+(_hpHasTxns?(28+(_txnRows?_txnRows.length*26:0)+(_txnMore?15:0)):0);
+  const _tipIdxExtra=_tipIdxN>0?(_tipIdxN-1)*22:0;
+  const tipW=_hpHasTxns?300:240,tipH=200+(_tipIdxN>0?40+_tipIdxExtra:0)+(_hpHasTxns?(28+(_txnRows?_txnRows.length*26:0)+(_txnMore?15:0)):0);
   const tipX=hx!==null?(hx+tipW+padR+4>W?hx-tipW-14:hx+14):0;
   const tipY=hyV!==null?Math.max(padT,Math.min(padT+chartH-tipH,hyV-tipH/2)):0;
 
@@ -20103,7 +20103,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
               React.createElement("line",{x1:tipX+10,y1:tipY+131,x2:tipX+tipW-10,y2:tipY+131,
                 stroke:"var(--border2)",strokeWidth:.8,opacity:.6}),
               idxHover.map((r,i)=>{
-                const baseY=145+i*15;
+                const baseY=140+i*22;
                 const col=r.val!=null&&niftyPct!=null? (r.def.key==="nifty50"? (niftyPct>=0?"#2563eb":"#dc2626") : r.def.color):r.def.color;
                 const pctBase=(r.def.key==="nifty50"&&niftyStartVal2!=null&&niftyStartVal2>0)?niftyStartVal2:(r.s.startVal!=null?r.s.startVal:null);
                 const pct=pctBase&&pctBase>0?((r.val-pctBase)/pctBase*100):null;
