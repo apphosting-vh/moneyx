@@ -19131,6 +19131,35 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
     const uniqueDates=[...new Set(sorted.map(t=>t.date))].sort();
     const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     const toLabel=iso=>{const p=iso.split("-");return p.length===3?p[2]+"-"+MON[parseInt(p[1],10)-1]+"-"+p[0]:iso;};
+    /* ── NAV lookup infrastructure for gap-day interpolation ── */
+    const _normEodNavs=normalizeEodNavKeys(eodNavs||{});
+    const _fundSchemeMap={};
+    (mf||[]).forEach(m=>{if(m.name&&m.schemeCode)_fundSchemeMap[m.name]=m.schemeCode;});
+    const _histLookup={};
+    Object.entries(mfHistNavs||{}).forEach(([code,arr])=>{
+      if(code==="_v"||!Array.isArray(arr)||!arr.length)return;
+      _histLookup[code]=arr.slice().sort((a,b)=>a.date<b.date?-1:1);
+    });
+    const _isoMs=iso=>{const p=(iso||"").split("-");return p.length===3?Date.UTC(+p[0],+p[1]-1,+p[2]):0;};
+    const _getNav=(fn,iso)=>{
+      const sc=_fundSchemeMap[fn];if(!sc)return null;
+      const dayNavs=_normEodNavs[iso];
+      if(dayNavs&&dayNavs[sc]!=null)return dayNavs[sc];
+      const hist=_histLookup[sc];
+      if(hist&&hist.length){
+        for(let i=hist.length-1;i>=0;i--){
+          if(hist[i].date<=iso){
+            /* proximity guard: reject hist entries that predate the target by more
+               than 15 days — prevents using a much-newer NAV when the scheme's
+               history doesn't actually cover the requested date. */
+            if((_isoMs(iso)-_isoMs(hist[i].date))/86400000<=15)return hist[i].nav;
+            return null;
+          }
+        }
+      }
+      return null;
+    };
+    const _localIso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
     uniqueDates.forEach(date=>{
       (byDate[date]||[]).forEach(t=>{
         const fn=t.fundName;
@@ -19157,61 +19186,56 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
       });
       let holdingVal=0;
       const fundVals={};
-      Object.entries(fundState).forEach(([fn,fs])=>{const valUnits=Math.max(0,(fs.units||0)-(fs.switchUnits||0));if(valUnits>0&&lastNav[fn]){const fv=valUnits*lastNav[fn];holdingVal+=fv;fundVals[fn]=fv;}});
+      /* Prefer the fund's real daily NAV for this exact date (same source the
+         gap-day fill uses) so the transaction point connects smoothly to the
+         interpolated days — falling back to the transaction NAV when no daily
+         data is available. Without this, funds not transacted on a given date
+         were valued at a stale transaction NAV, causing a price jump at the seam. */
+      Object.entries(fundState).forEach(([fn,fs])=>{
+        const valUnits=Math.max(0,(fs.units||0)-(fs.switchUnits||0));
+        if(valUnits<=0)return;
+        const dailyNav=_getNav(fn,date);
+        const nav=(dailyNav!=null&&dailyNav>0)?dailyNav:lastNav[fn];
+        if(nav>0){const fv=valUnits*nav;holdingVal+=fv;fundVals[fn]=fv;}
+      });
+      /* Save a snapshot of fund units at this date so gap-day fill can use the
+         correct unit counts for the period starting after this transaction. */
+      const stateSnap={};
+      Object.entries(fundState).forEach(([fn,fs])=>{stateSnap[fn]={units:fs.units,switchUnits:fs.switchUnits};});
       if(runningCost>0)pts.push({
         date:toLabel(date),rawDate:date,cost:runningCost,value:holdingVal,
-        fundVals:fundVals,
+        fundVals:fundVals,stateSnap:stateSnap,
         txns:byDate[date].map(t=>({type:t.orderType,fund:t.fundName,amount:+t.amount||0,nav:+t.nav||0,isSwitch:!!t.isSwitch}))
       });
     });
-    /* ── Gap-day fill: interpolate holding values for days between the last
-       transaction date and today using daily NAV snapshots (eodNavs / mfHistNavs).
-       Without this, the chart draws a straight line from the last known
-       transaction-date value to today's live value, hiding all interim fluctuations. */
+    /* ── Gap-day fill: from the last recorded transaction to today, insert
+       daily holding-value points using eodNavs / mfHistNavs NAV data.
+       Fund units are frozen at the post-transaction snapshot (stateSnap). */
     if(pts.length>0){
-      const _normEodNavs=normalizeEodNavKeys(eodNavs||{});
-      const _fundSchemeMap={};
-      (mf||[]).forEach(m=>{if(m.name&&m.schemeCode)_fundSchemeMap[m.name]=m.schemeCode;});
-      const _histLookup={};
-      Object.entries(mfHistNavs||{}).forEach(([code,arr])=>{
-        if(code==="_v"||!Array.isArray(arr)||!arr.length)return;
-        _histLookup[code]=arr.slice().sort((a,b)=>a.date<b.date?-1:1);
-      });
-      const _getNav=(fn,iso)=>{
-        const sc=_fundSchemeMap[fn];if(!sc)return null;
-        const dayNavs=_normEodNavs[iso];
-        if(dayNavs&&dayNavs[sc]!=null)return dayNavs[sc];
-        const hist=_histLookup[sc];
-        if(hist&&hist.length){for(let i=hist.length-1;i>=0;i--){if(hist[i].date<=iso)return hist[i].nav;}}
-        return null;
-      };
-      const lastTxnPt=pts[pts.length-1];
-      const _startD=new Date(lastTxnPt.rawDate);
-      const _endD=new Date();
-      _endD.setHours(0,0,0,0);
-      _startD.setDate(_startD.getDate()+1);
-      if(_startD<=_endD){
-        const gapPts=[];
-        const _d=new Date(_startD);
-        while(_d<=_endD){
-          const _dow=_d.getDay();
-          if(_dow!==0&&_dow!==6){
-            const _iso=_d.toISOString().slice(0,10);
-            let _dayVal=0;
-            Object.entries(fundState).forEach(([fn,fs])=>{
-              const _vu=Math.max(0,(fs.units||0)-(fs.switchUnits||0));
-              if(_vu<=0)return;
-              const _nav=_getNav(fn,_iso);
-              if(_nav!=null&&_nav>0)_dayVal+=_vu*_nav;
-            });
-            if(_dayVal>0)gapPts.push({
-              date:toLabel(_iso),rawDate:_iso,cost:lastTxnPt.cost,value:_dayVal,
-              fundVals:{},txns:[]
-            });
+      const lastPt=pts[pts.length-1];
+      const snap=lastPt.stateSnap;
+      if(snap){
+        const _sp=lastPt.rawDate.split("-").map(Number);
+        const _gapStart=new Date(_sp[0],_sp[1]-1,_sp[2]+1);
+        const _gapEnd=new Date(); _gapEnd.setHours(0,0,0,0);
+        if(_gapStart<=_gapEnd){
+          const _gd=new Date(_gapStart);
+          while(_gd<=_gapEnd){
+            if(_gd.getDay()!==0&&_gd.getDay()!==6){
+              const _iso=_localIso(_gd);
+              let _dv=0;
+              Object.entries(snap).forEach(([fn,s])=>{
+                const _vu=Math.max(0,(s.units||0)-(s.switchUnits||0));
+                if(_vu<=0)return;
+                const _nav=_getNav(fn,_iso);
+                const nav=(_nav!=null&&_nav>0)?_nav:lastNav[fn];
+                if(nav>0)_dv+=_vu*nav;
+              });
+              if(_dv>0)pts.push({date:toLabel(_iso),rawDate:_iso,cost:lastPt.cost,value:_dv,fundVals:{},txns:[]});
+            }
+            _gd.setDate(_gd.getDate()+1);
           }
-          _d.setDate(_d.getDate()+1);
         }
-        if(gapPts.length)pts.push(...gapPts);
       }
     }
     if(mf&&mf.length>0&&pts.length>0){
@@ -19220,7 +19244,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
       const curVal=activeMf.reduce((s,m)=>s+(m.currentValue&&m.currentValue>0?m.currentValue:m.invested),0);
       const now=new Date();
       const todayLabel=now.getDate()+"-"+MON[now.getMonth()]+"-"+now.getFullYear();
-      const todayRaw=now.toISOString().slice(0,10);
+      const todayRaw=_localIso(now);
       const lastPt=pts[pts.length-1];
       if(curVal>0&&curCost>0){
         const fundVals={};
@@ -19802,7 +19826,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
       color:"var(--text5)",flexWrap:"wrap",alignItems:"center"}},
       React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
         React.createElement("svg",{width:26,height:12,style:{overflow:"visible"}},
-          React.createElement("line",{x1:0,y1:6,x2:26,y2:6,stroke:"#f59e0b",strokeWidth:2,strokeDasharray:"6,4",strokeLinecap:"round"})
+          React.createElement("line",{x1:0,y1:6,x2:26,y2:6,stroke:"#f59e0b",strokeWidth:2,strokeLinecap:"round"})
         ),
         React.createElement("span",null,"Cost of Acquisition")
       ),
@@ -19823,7 +19847,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
             border:"1px solid "+(on?s.def.color:"var(--border2)"),
             opacity:on?1:.45}},
           React.createElement("svg",{width:26,height:12,style:{overflow:"visible"}},
-            React.createElement("line",{x1:0,y1:6,x2:26,y2:6,stroke:s.def.color,strokeWidth:2,strokeDasharray:"5,3",strokeLinecap:"round"}),
+            React.createElement("line",{x1:0,y1:6,x2:26,y2:6,stroke:s.def.color,strokeWidth:2,strokeLinecap:"round"}),
             on&&React.createElement("circle",{cx:13,cy:6,r:3,fill:s.def.color})
           ),
           React.createElement("span",{style:{fontSize:10,fontWeight:on?700:500,color:on?s.def.color:"var(--text6)"}},
@@ -19917,9 +19941,9 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
         React.createElement("path",{d:valAreaPath,fill:`url(#${isGain?"pev_gain_g":"pev_loss_g"})`})
       ),
 
-      /* Cost line — amber dashed, smooth */
+      /* Cost line — amber, smooth */
       React.createElement("path",{d:costPath,fill:"none",stroke:"#f59e0b",strokeWidth:1.8,
-        strokeDasharray:"8,5",strokeLinejoin:"round",strokeLinecap:"round",opacity:.9,
+        strokeLinejoin:"round",strokeLinecap:"round",opacity:.9,
         clipPath:"url(#pev_clip)"}),
 
       /* Value line — glowing, smooth */
@@ -19928,9 +19952,9 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
         style:{filter:`drop-shadow(0 0 4px ${valColor}80)`},
         clipPath:"url(#pev_clip)"}),
 
-      /* Index overlay lines — dashed, secondary axis (only toggled-on indices) */
+      /* Index overlay lines — continuous, secondary axis (only toggled-on indices) */
       visibleIdx.map(s=>React.createElement("path",{key:"pev_idx_"+s.def.key,d:s.path,fill:"none",stroke:s.def.color,strokeWidth:1.8,
-        strokeDasharray:"7,4",strokeLinejoin:"round",strokeLinecap:"round",opacity:.85,
+        strokeLinejoin:"round",strokeLinecap:"round",opacity:.85,
         clipPath:"url(#pev_clip)"})),
 
       /* Milestone markers (peak / trough) */
