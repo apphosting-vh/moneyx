@@ -1,4 +1,6 @@
 const NIFTY50_HISTORY={"2017-01-31":8879.6,"2017-02-28":9173.75,"2017-03-31":9304.05,"2017-04-30":9621.25,"2017-05-31":9520.9,"2017-06-30":10077.1,"2017-07-31":9917.9,"2017-08-31":9788.6,"2017-09-30":10335.3,"2017-10-31":10226.55,"2017-11-30":10530.7,"2017-12-31":11027.7,"2018-01-31":10492.85,"2018-02-28":10113.7,"2018-03-31":10739.35,"2018-04-30":10736.15,"2018-05-31":10714.3,"2018-06-30":11356.5,"2018-07-31":11680.5,"2018-08-31":10930.45,"2018-09-30":10386.6,"2018-10-31":10876.75,"2018-11-30":10862.55,"2018-12-31":10830.95,"2019-01-31":10792.5,"2019-02-28":11623.9,"2019-03-31":11748.15,"2019-04-30":11922.8,"2019-05-31":11788.85,"2019-06-30":11118,"2019-07-31":11023.25,"2019-08-31":11474.45,"2019-09-30":11877.45,"2019-10-31":12056.05,"2019-11-30":12168.45,"2019-12-31":11962.1,"2020-01-31":11201.75,"2020-02-29":8597.75,"2020-03-31":9859.9,"2020-04-30":9580.3,"2020-05-31":10302.1,"2020-06-30":11073.45,"2020-07-31":11387.5,"2020-08-31":11247.55,"2020-09-30":11642.4,"2020-10-31":12968.95,"2020-11-30":13981.75,"2020-12-31":13634.6,"2021-01-31":14529.15,"2021-02-28":14690.7,"2021-03-31":14631.1,"2021-04-30":15582.8,"2021-05-31":15721.5,"2021-06-30":15763.05,"2021-07-31":17132.2,"2021-08-31":17618.15,"2021-09-30":17671.65,"2021-10-31":16983.2,"2021-11-30":17354.05,"2021-12-31":17339.85,"2022-01-31":16793.9,"2022-02-28":17464.75,"2022-03-31":17102.55,"2022-04-30":16584.55,"2022-05-31":15780.25,"2022-06-30":17158.25,"2022-07-31":17759.3,"2022-08-31":17094.35,"2022-09-30":18012.2,"2022-10-31":18758.35,"2022-11-30":18105.3,"2022-12-31":17662.15,"2023-01-31":17303.95,"2023-02-28":17359.75,"2023-03-31":18065,"2023-04-30":18534.4,"2023-05-31":19189.05,"2023-06-30":19753.8,"2023-07-31":19253.8,"2023-08-31":19638.3,"2023-09-30":19079.6,"2023-10-31":20133.15,"2023-11-30":21731.4,"2023-12-31":21725.7,"2024-01-31":21982.8,"2024-02-29":22326.9,"2024-03-31":22604.85,"2024-04-30":22530.7,"2024-05-31":24010.6,"2024-06-30":24951.15,"2024-07-31":25235.9,"2024-08-31":25810.85,"2024-09-30":24205.35,"2024-10-31":24131.1,"2024-11-30":23644.8,"2024-12-31":23508.4,"2025-01-31":22124.7,"2025-02-28":23519.35,"2025-03-31":24334.2,"2025-04-30":24750.7,"2025-05-31":25517.05,"2025-06-30":24768.35,"2025-07-31":24426.85,"2025-08-31":24611.1,"2025-09-30":25722.1,"2025-10-31":26202.95,"2025-11-30":26129.6,"2025-12-31":25320.65,"2026-01-31":25178.65,"2026-02-28":22331.4,"2026-03-31":23997.55,"2026-04-30":23547.75,"2026-05-31":23865.75,"2026-06-30":24270.85,"2026-07-07":24398.7};
+const NIFTY100_HISTORY={"2017-01-31":9170.95,"2017-02-28":9467.1,"2017-03-31":9652.45,"2017-04-30":9909.6,"2017-05-31":9835.4,"2017-06-30":10417.8,"2017-07-31":10286.55,"2017-08-31":10143.9,"2017-09-30":10740.85,"2017-10-31":10650.75,"2017-11-30":10985.15,"2017-12-31":11393.55,"2018-01-31":10861.4,"2018-02-28":10478.4,"2018-03-31":11145.9,"2018-04-30":11064.15,"2018-05-31":10993.45,"2018-06-30":11633.85,"2018-07-31":12003.1,"2018-08-31":11126.4,"2018-09-30":10604.6,"2018-10-31":11092.25,"2018-11-30":11110.15,"2018-12-31":10996.8,"2019-01-31":10959.9,"2019-02-28":11789.2,"2019-03-31":11874.25,"2019-04-30":12028.25,"2019-05-31":11882.1,"2019-06-30":11221.2,"2019-07-31":11155.1,"2019-08-31":11613.3,"2019-09-30":12037.25,"2019-10-31":12182.6,"2019-11-30":12267.75,"2019-12-31":12086.9,"2020-01-31":11316.3,"2020-02-29":8731.15,"2020-03-31":10006.9,"2020-04-30":9759.45,"2020-05-31":10486.9,"2020-06-30":11222.95,"2020-07-31":11496.05,"2020-08-31":11385.2,"2020-09-30":11748.95,"2020-10-31":13080.3,"2020-11-30":14090.75,"2020-12-31":13743.3,"2021-01-31":14667.6,"2021-02-28":14807.45,"2021-03-31":14790.6,"2021-04-30":15798.7,"2021-05-31":15959.4,"2021-06-30":16040.15,"2021-07-31":17373.1,"2021-08-31":17845.1,"2021-09-30":17880.8,"2021-10-31":17270.25,"2021-11-30":17618.8,"2021-12-31":17547.4,"2022-01-31":17016.55,"2022-02-28":17660.35,"2022-03-31":17457.2,"2022-04-30":16767.5,"2022-05-31":15929.4,"2022-06-30":17400.75,"2022-07-31":18112.4,"2022-08-31":17438.6,"2022-09-30":18243.4,"2022-10-31":18919.55,"2022-11-30":18258.75,"2022-12-31":17601.0,"2023-01-31":17083.8,"2023-02-28":17186.15,"2023-03-31":17903.95,"2023-04-30":18438.3,"2023-05-31":19099.55,"2023-06-30":19679.35,"2023-07-31":19204.8,"2023-08-31":19577.05,"2023-09-30":19035.35,"2023-10-31":20201.0,"2023-11-30":21918.8,"2023-12-31":22051.55,"2024-01-31":22526.3,"2024-02-29":22920.7,"2024-03-31":23436.5,"2024-04-30":23518.05,"2024-05-31":25007.25,"2024-06-30":26025.6,"2024-07-31":26274.35,"2024-08-31":26890.15,"2024-09-30":25059.5,"2024-10-31":25053.95,"2024-11-30":24495.55,"2024-12-31":24053.45,"2025-01-31":22479.45,"2025-02-28":24057.35,"2025-03-31":24843.8,"2025-04-30":25344.25,"2025-05-31":26139.5,"2025-06-30":25380.5,"2025-07-31":25003.05,"2025-08-31":25295.15,"2025-09-30":26369.5,"2025-10-31":26737.8,"2025-11-30":26689.3,"2025-12-31":25902.0,"2026-01-31":25897.55,"2026-02-28":22875.5,"2026-03-31":24896.0,"2026-04-30":24608.45,"2026-05-31":24915.6,"2026-06-30":25486.35,"2026-07-07":25409.65};
+const NIFTY200_HISTORY={"2017-01-31":4793.2,"2017-02-28":4955.8,"2017-03-31":5072.6,"2017-04-30":5174.6,"2017-05-31":5148.5,"2017-06-30":5443.95,"2017-07-31":5377.6,"2017-08-31":5312.7,"2017-09-30":5639.15,"2017-10-31":5618.85,"2017-11-30":5814.1,"2017-12-31":5979.2,"2018-01-31":5699.5,"2018-02-28":5499.35,"2018-03-31":5862.35,"2018-04-30":5772.75,"2018-05-31":5713.2,"2018-06-30":6032.3,"2018-07-31":6240.55,"2018-08-31":5735.05,"2018-09-30":5498.4,"2018-10-31":5732.9,"2018-11-30":5755.35,"2018-12-31":5666.45,"2019-01-31":5642.55,"2019-02-28":6079.95,"2019-03-31":6092.55,"2019-04-30":6177.85,"2019-05-31":6099.45,"2019-06-30":5731.9,"2019-07-31":5691.55,"2019-08-31":5914.85,"2019-09-30":6138.85,"2019-10-31":6220.7,"2019-11-30":6254.95,"2019-12-31":6207.85,"2020-01-31":5809.15,"2020-02-29":4433.85,"2020-03-31":5085.1,"2020-04-30":4963.4,"2020-05-31":5350.4,"2020-06-30":5715.65,"2020-07-31":5887.55,"2020-08-31":5848.9,"2020-09-30":6017.65,"2020-10-31":6727.7,"2020-11-30":7231.8,"2020-12-31":7076.8,"2021-01-31":7591.25,"2021-02-28":7671.6,"2021-03-31":7683.95,"2021-04-30":8204.9,"2021-05-31":8325.55,"2021-06-30":8396.15,"2021-07-31":9025.25,"2021-08-31":9318.55,"2021-09-30":9338.2,"2021-10-31":9028.3,"2021-11-30":9218.35,"2021-12-31":9179.15,"2022-01-31":8855.5,"2022-02-28":9207.0,"2022-03-31":9123.4,"2022-04-30":8745.65,"2022-05-31":8290.8,"2022-06-30":9087.65,"2022-07-31":9485.6,"2022-08-31":9147.45,"2022-09-30":9544.4,"2022-10-31":9876.55,"2022-11-30":9554.45,"2022-12-31":9222.05,"2023-01-31":8964.55,"2023-02-28":9007.9,"2023-03-31":9404.0,"2023-04-30":9724.8,"2023-05-31":10104.35,"2023-06-30":10445.9,"2023-07-31":10284.95,"2023-08-31":10510.25,"2023-09-30":10198.35,"2023-10-31":10887.35,"2023-11-30":11798.7,"2023-12-31":11953.8,"2024-01-31":12160.45,"2024-02-29":12329.75,"2024-03-31":12673.15,"2024-04-30":12742.8,"2024-05-31":13579.25,"2024-06-30":14170.8,"2024-07-31":14295.7,"2024-08-31":14610.8,"2024-09-30":13618.2,"2024-10-31":13627.0,"2024-11-30":13406.95,"2024-12-31":13064.55,"2025-01-31":12116.15,"2025-02-28":12982.75,"2025-03-31":13438.15,"2025-04-30":13798.4,"2025-05-31":14252.65,"2025-06-30":13814.0,"2025-07-31":13575.1,"2025-08-31":13739.95,"2025-09-30":14362.3,"2025-10-31":14579.35,"2025-11-30":14533.5,"2025-12-31":14093.05,"2026-01-31":14121.05,"2026-02-28":12492.1,"2026-03-31":13705.55,"2026-04-30":13663.7,"2026-05-31":13803.4,"2026-06-30":14106.3,"2026-07-07":14044.05};
 ﻿/* ── Utilities, hooks, formatting, price/NAV fetchers ── */
 const{useState,useReducer,useRef,useEffect,useCallback,useMemo,useDeferredValue}=React;
 /* ══════════════════════════════════════════════════════════════════════════
@@ -936,7 +938,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.19.24";
+ const APP_VERSION="7.19.25";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -5990,6 +5992,7 @@ var gdriveUpsertSyncFile = async (state, manual) => {
         entrySnapshots: localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",
         screenerData: localStorage.getItem(_SCREENER_KEY)||null,
         screenerSnapshots: localStorage.getItem(_SCREENER_SNAPS_KEY)||null,
+        niftyLive: localStorage.getItem(LS_NIFTY_LIVE)||null,
       },
     };
     const content = JSON.stringify(payload, null, 2);
@@ -6569,6 +6572,8 @@ var CloudBackupPanel = ({ state, dispatch }) => {
           localStorage.setItem(_SCREENER_KEY,remote.state.screenerData);
         if(remote.state.screenerSnapshots)
           localStorage.setItem(_SCREENER_SNAPS_KEY,remote.state.screenerSnapshots);
+        if(remote.state.niftyLive)
+          {localStorage.setItem(LS_NIFTY_LIVE,remote.state.niftyLive);_niftyLiveCache=_niftyPersistRead();}
       } catch {}
       try { await clearTxIDB(); }          catch {}
       try { await saveTxToIDB(_restoreDataMerged); } catch {}
@@ -10243,6 +10248,7 @@ var MM_LS_KEYS=[
   {key:"mm_entry_score_snapshots", label:"Entry Score Snapshots"},
   {key:"finsight-screener-data",    label:"Nifty 100 Screener Data"},
   {key:"finsight-screener-snapshots", label:"Screener Snapshots"},
+  {key:LS_NIFTY_LIVE,                label:"Nifty 50/100/200 live series cache"},
 ];
 
 /* The true localStorage limit — 5 MB, enforced per-origin by all major browsers
@@ -11186,6 +11192,7 @@ var fsaWriteFile=async(handle,data)=>{
         entrySnapshots:localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",
         screenerData:localStorage.getItem(_SCREENER_KEY)||null,
         screenerSnapshots:localStorage.getItem(_SCREENER_SNAPS_KEY)||null,
+        niftyLive:localStorage.getItem(LS_NIFTY_LIVE)||null,
       }
     };
     const writable=await handle.createWritable();
@@ -11214,6 +11221,7 @@ var fsaReadFile=async(handle)=>{
     if(d.entrySnapshots){try{localStorage.setItem(LS_ENTRY_SNAPSHOTS,d.entrySnapshots);}catch{}}
     if(d.screenerData){try{localStorage.setItem(_SCREENER_KEY,d.screenerData);}catch{}}
     if(d.screenerSnapshots){try{localStorage.setItem(_SCREENER_SNAPS_KEY,d.screenerSnapshots);}catch{}}
+    if(d.niftyLive){try{localStorage.setItem(LS_NIFTY_LIVE,d.niftyLive);_niftyLiveCache=_niftyPersistRead();}catch{}}
     return _safe(d);
   }catch(e){console.warn("[FSA] Read failed:",e);return null;}
 };
@@ -11719,6 +11727,8 @@ var usePersistentReducer=(reducer,init)=>{
             localStorage.setItem(_SCREENER_KEY,remote_state.screenerData);
           if(remote_state.screenerSnapshots)
             localStorage.setItem(_SCREENER_SNAPS_KEY,remote_state.screenerSnapshots);
+          if(remote_state.niftyLive)
+            {localStorage.setItem(LS_NIFTY_LIVE,remote_state.niftyLive);_niftyLiveCache=_niftyPersistRead();}
         } catch {}
         try { await clearTxIDB(); } catch {}
         try { await saveTxToIDB(_mergedState); } catch {}
@@ -18979,83 +18989,102 @@ const FDTimeline=({fd})=>{
    via the same CORS-proxy pattern used elsewhere. Falls back silently to null
    so the embedded history is used unchanged when offline / blocked.
    ══════════════════════════════════════════════════════════════════════════ */
-let _niftyLiveCache=null;   /* {value, date, series:[{date,value}]} */
+let _niftyLiveCache=null;   /* {nifty50:[{date,value}], nifty100:[...], nifty200:[...]} (+ legacy value/date hints) */
 let _niftyLivePromise=null;
 
-/* Persist the fetched Nifty 50 daily series to localStorage so gap days survive
-   reloads — no need to click Refresh every time the app is reopened. */
+/* Persist the fetched Nifty index daily series to localStorage so gap days survive
+   reloads — no need to click Refresh every time the app is reopened. Legacy blobs
+   that stored only Nifty 50 under `series` keep working (treated as nifty50). */
 var LS_NIFTY_LIVE="mm_nifty_live";
 var _niftyPersistRead=()=>{
   try{
     const raw=localStorage.getItem(LS_NIFTY_LIVE);
     if(!raw)return null;
     const o=JSON.parse(raw);
-    if(!o||!Array.isArray(o.series)||!o.series.length)return null;
-    const st=o.series.slice().sort((a,b)=>a.date<b.date?-1:1);
-    const last=st[st.length-1];
-    return {value:last.value,date:last.date,series:st,savedAt:o.savedAt||0};
+    if(!o)return null;
+    const sortSeries=a=>(a||[]).slice().sort((x,y)=>x.date<y.date?-1:1);
+    const n50=sortSeries(Array.isArray(o.nifty50)?o.nifty50:o.series);
+    const n100=sortSeries(Array.isArray(o.nifty100)?o.nifty100:null);
+    const n200=sortSeries(Array.isArray(o.nifty200)?o.nifty200:null);
+    if((!n50||!n50.length)&&(!n100||!n100.length)&&(!n200||!n200.length))return null;
+    const last=(n50&&n50.length)?n50[n50.length-1]:null;
+    return {nifty50:n50||[],nifty100:n100||[],nifty200:n200||[],value:last?last.value:null,date:last?last.date:null,savedAt:o.savedAt||0};
   }catch(e){return null;}
 };
-var _niftyPersistWrite=(series,savedAt)=>{
+var _niftyPersistWrite=(live,savedAt)=>{
   try{
     /* Merge with any previously persisted series so coverage grows backward */
-    let merged=[...(series||[])];
-    const prev=_niftyPersistRead();
-    if(prev&&prev.series){
-      const map={};merged.forEach(s=>{map[s.date]=s.value;});
-      prev.series.forEach(s=>{if(!(s.date in map))merged.push(s);});
-    }
-    merged.sort((a,b)=>a.date<b.date?-1:1);
-    localStorage.setItem(LS_NIFTY_LIVE,JSON.stringify({series:merged,savedAt:savedAt||Date.now()}));
-    return merged;
-  }catch(e){return series||[];}
+    const prev=_niftyPersistRead()||{nifty50:[],nifty100:[],nifty200:[]};
+    const merge=(cur,prevCur)=>{
+      const map={};(cur||[]).forEach(s=>{map[s.date]=s.value;});
+      (prevCur||[]).forEach(s=>{if(!(s.date in map))map[s.date]=s.value;});
+      return Object.keys(map).map(d=>({date:d,value:map[d]})).sort((a,b)=>a.date<b.date?-1:1);
+    };
+    const out={
+      nifty50:merge(live.nifty50,prev.nifty50),
+      nifty100:merge(live.nifty100,prev.nifty100),
+      nifty200:merge(live.nifty200,prev.nifty200),
+      savedAt:savedAt||Date.now()
+    };
+    localStorage.setItem(LS_NIFTY_LIVE,JSON.stringify(out));
+    return out;
+  }catch(e){return live;}
 };
 /* Seed the module cache from persisted data so the chart's first render already
    has the gap-filled daily series (no network / no Refresh needed on reopen). */
-if(!_niftyLiveCache){const _p=_niftyPersistRead();if(_p&&_p.series&&_p.series.length)_niftyLiveCache=_p;}
+if(!_niftyLiveCache){const _p=_niftyPersistRead();if(_p&&(_p.nifty50&&_p.nifty50.length))_niftyLiveCache=_p;}
 const fetchNiftyLive=async()=>{
   if(_niftyLiveCache)return _niftyLiveCache;
   if(_niftyLivePromise)return _niftyLivePromise;
+  const TICKER_DEFS=[
+    {key:"nifty50",sym:"%5ENSEI"},
+    {key:"nifty100",sym:"%5ECNX100"},
+    {key:"nifty200",sym:"%5ECNX200"},
+  ];
   const run=async()=>{
     const period2=Math.floor(Date.now()/1000);
     const period1=period2-60*60*24*400; /* ~400 days of daily closes so snapshots ending weeks/months ago still connect to today */
-    const yUrl="https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?period1="+period1+"&period2="+period2+"&interval=1d";
-    const proxies=[
-      "https://api.cors.lol/?url="+encodeURIComponent(yUrl),
-      "https://corsproxy.io/?"+encodeURIComponent(yUrl),
-      "https://cors.eu.org/"+yUrl,
-      "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(yUrl),
-    ];
-    for(const p of proxies){
-      try{
-        const r=await _fetchX(p,{},10000);if(!r.ok)continue;
-        const txt=await _readBody(r,8000);
-        let json;try{json=JSON.parse(_unwrap(txt));}catch{continue;}
-        const res=json&&json.chart&&json.chart.result&&json.chart.result[0];
-        if(!res)continue;
-        const ts=res.timestamp, q=res.indicators&&res.indicators.quote&&res.indicators.quote[0];
-        if(!ts||!q||!q.close)continue;
-        const series=[];
-        for(let i=0;i<ts.length;i++){
-          const c=q.close[i];
-          if(c==null)continue;
-          series.push({date:new Date(ts[i]*1000).toISOString().slice(0,10),value:Math.round(c*100)/100});
-        }
-        series.sort((a,b)=>a.date<b.date?-1:1);
-        const lastPt=series[series.length-1];
-        if(!lastPt)continue;
-        _niftyLiveCache={value:lastPt.value,date:lastPt.date,series};
-        _niftyLiveCache.series=_niftyPersistWrite(series,Date.now());
-        return _niftyLiveCache;
-      }catch(e){}
+    const out={nifty50:[],nifty100:[],nifty200:[]};
+    for(const td of TICKER_DEFS){
+      const yUrl="https://query1.finance.yahoo.com/v8/finance/chart/"+td.sym+"?period1="+period1+"&period2="+period2+"&interval=1d";
+      const proxies=[
+        "https://api.cors.lol/?url="+encodeURIComponent(yUrl),
+        "https://corsproxy.io/?"+encodeURIComponent(yUrl),
+        "https://cors.eu.org/"+yUrl,
+        "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(yUrl),
+      ];
+      for(const p of proxies){
+        try{
+          const r=await _fetchX(p,{},10000);if(!r.ok)continue;
+          const txt=await _readBody(r,8000);
+          let json;try{json=JSON.parse(_unwrap(txt));}catch{continue;}
+          const res=json&&json.chart&&json.chart.result&&json.chart.result[0];
+          if(!res)continue;
+          const ts=res.timestamp, q=res.indicators&&res.indicators.quote&&res.indicators.quote[0];
+          if(!ts||!q||!q.close)continue;
+          const series=[];
+          for(let i=0;i<ts.length;i++){
+            const c=q.close[i];
+            if(c==null)continue;
+            series.push({date:new Date(ts[i]*1000).toISOString().slice(0,10),value:Math.round(c*100)/100});
+          }
+          series.sort((a,b)=>a.date<b.date?-1:1);
+          if(series.length)out[td.key]=series;
+          break;
+        }catch(e){}
+      }
     }
-    return null;
+    if(!out.nifty50.length)return null;
+    const lastPt=out.nifty50[out.nifty50.length-1];
+    const persisted=_niftyPersistWrite(out,Date.now());
+    _niftyLiveCache={nifty50:persisted.nifty50, nifty100:persisted.nifty100, nifty200:persisted.nifty200, value:lastPt.value,date:lastPt.date};
+    return _niftyLiveCache;
   };
   _niftyLivePromise=run().finally(()=>{_niftyLivePromise=null;});
   return _niftyLivePromise;
 };
 
-const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
+const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
   const svgRef=React.useRef(null);
   const[hoverIdx,setHoverIdx]=React.useState(null);
   const[niftyLive,setNiftyLive]=React.useState(_niftyLiveCache);
@@ -19065,6 +19094,15 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const[indexed,setIndexed]=React.useState(false);
   const[showBreakdown,setShowBreakdown]=React.useState(false);
   const[niftyLoading,setNiftyLoading]=React.useState(false);
+  /* Index overlay toggles — Nifty 50 / 100 / 200 shown on demand. The right axis
+     rescales to the union of the toggled-on lines so each combination fits. */
+  const[indexLines,setIndexLines]=React.useState({nifty50:true,nifty100:true,nifty200:true});
+  const toggleIndexLine=k=>setIndexLines(s=>({...s,[k]:!s[k]}));
+  const IDX_DEFS=[
+    {key:"nifty50",label:"Nifty 50",color:"#2563eb",hist:NIFTY50_HISTORY},
+    {key:"nifty100",label:"Nifty 100",color:"#0ea5e9",hist:NIFTY100_HISTORY},
+    {key:"nifty200",label:"Nifty 200",color:"#8b5cf6",hist:NIFTY200_HISTORY},
+  ];
 
   React.useEffect(()=>{
     let alive=true;
@@ -19126,6 +19164,56 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         txns:byDate[date].map(t=>({type:t.orderType,fund:t.fundName,amount:+t.amount||0,nav:+t.nav||0,isSwitch:!!t.isSwitch}))
       });
     });
+    /* ── Gap-day fill: interpolate holding values for days between the last
+       transaction date and today using daily NAV snapshots (eodNavs / mfHistNavs).
+       Without this, the chart draws a straight line from the last known
+       transaction-date value to today's live value, hiding all interim fluctuations. */
+    if(pts.length>0){
+      const _normEodNavs=normalizeEodNavKeys(eodNavs||{});
+      const _fundSchemeMap={};
+      (mf||[]).forEach(m=>{if(m.name&&m.schemeCode)_fundSchemeMap[m.name]=m.schemeCode;});
+      const _histLookup={};
+      Object.entries(mfHistNavs||{}).forEach(([code,arr])=>{
+        if(code==="_v"||!Array.isArray(arr)||!arr.length)return;
+        _histLookup[code]=arr.slice().sort((a,b)=>a.date<b.date?-1:1);
+      });
+      const _getNav=(fn,iso)=>{
+        const sc=_fundSchemeMap[fn];if(!sc)return null;
+        const dayNavs=_normEodNavs[iso];
+        if(dayNavs&&dayNavs[sc]!=null)return dayNavs[sc];
+        const hist=_histLookup[sc];
+        if(hist&&hist.length){for(let i=hist.length-1;i>=0;i--){if(hist[i].date<=iso)return hist[i].nav;}}
+        return null;
+      };
+      const lastTxnPt=pts[pts.length-1];
+      const _startD=new Date(lastTxnPt.rawDate);
+      const _endD=new Date();
+      _endD.setHours(0,0,0,0);
+      _startD.setDate(_startD.getDate()+1);
+      if(_startD<=_endD){
+        const gapPts=[];
+        const _d=new Date(_startD);
+        while(_d<=_endD){
+          const _dow=_d.getDay();
+          if(_dow!==0&&_dow!==6){
+            const _iso=_d.toISOString().slice(0,10);
+            let _dayVal=0;
+            Object.entries(fundState).forEach(([fn,fs])=>{
+              const _vu=Math.max(0,(fs.units||0)-(fs.switchUnits||0));
+              if(_vu<=0)return;
+              const _nav=_getNav(fn,_iso);
+              if(_nav!=null&&_nav>0)_dayVal+=_vu*_nav;
+            });
+            if(_dayVal>0)gapPts.push({
+              date:toLabel(_iso),rawDate:_iso,cost:lastTxnPt.cost,value:_dayVal,
+              fundVals:{},txns:[]
+            });
+          }
+          _d.setDate(_d.getDate()+1);
+        }
+        if(gapPts.length)pts.push(...gapPts);
+      }
+    }
     if(mf&&mf.length>0&&pts.length>0){
       const activeMf=(mf||[]).filter(m=>m.units>0);
       const curCost=activeMf.reduce((s,m)=>s+(m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested),0);
@@ -19145,7 +19233,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
       }
     }
     return pts;
-  },[mfTxns,mf]);
+  },[mfTxns,mf,eodNavs,mfHistNavs]);
 
   /* ── Date range presets & filtering ── */
   const _t=iso=>{const p=(iso||"").split("-");return p.length===3?Date.UTC(+p[0],+p[1]-1,+p[2]):0;};
@@ -19227,55 +19315,71 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const costAreaPath=costPath+` L${xFn(filteredPoints.length-1)},${baseY} L${xFn(0)},${baseY} Z`;
   const valAreaPath=valPath+` L${xFn(filteredPoints.length-1)},${baseY} L${xFn(0)},${baseY} Z`;
 
-  /* ── Nifty 50 overlay (secondary right axis, index points) ──
-     Build an independent time-series mapped onto the chart's full date domain
-     so the line always spans the entire portfolio period (Jan 2017 to now),
-     independent of how sparse/irregular the portfolio transaction dates are. ── */
+  /* ── Index overlays (Nifty 50 / 100 / 200) on a shared secondary right axis ──
+     Each index builds an independent time-series mapped onto the chart's full date
+     domain so lines always span the entire portfolio period (Jan 2017 to now).
+     The right axis scale is the union of the currently-toggled lines and rescales
+     dynamically when the user toggles indices on/off. ── */
   const _toTime=iso=>{const p=iso.split("-");return Date.UTC(+p[0],+p[1]-1,+p[2]);};
-  /* Merge live Nifty value into the embedded history so the line extends to the
-     most recent close (fetched at runtime). Replaces any same-date entry. */
-  const niftyHist={...NIFTY50_HISTORY};
-  if(niftyLive){
-    if(niftyLive.series&&niftyLive.series.length){
-      /* Merge every live daily close so gap days between the bundled snapshot and today are filled */
-      niftyLive.series.forEach(s=>{niftyHist[s.date]=s.value;});
-    }else if(niftyLive.value&&niftyLive.date){
-      niftyHist[niftyLive.date]=niftyLive.value;
-    }
-  }
   const domStart=_toTime((filteredPoints[0]&&filteredPoints[0].rawDate)||"");
   const domEnd=_toTime((filteredPoints[filteredPoints.length-1]&&filteredPoints[filteredPoints.length-1].rawDate)||"");
   const domSpan=(domEnd-domStart)||1;
   const _xTime=iso=>padL+(chartW*(_toTime(iso)-domStart)/domSpan);
-  const histEntries=Object.keys(niftyHist)
-    .filter(d=>_toTime(d)>=domStart&&_toTime(d)<=domEnd)
-    .sort()
-    .map(d=>[ _xTime(d), niftyHist[d] ]);
-  const niftyHasData=histEntries.length>=2;
-  /* Find nifty baseline for indexed mode = first hist entry value */
-  const niftyStartVal=niftyHasData?histEntries[0][1]:null;
-  /* Indexed nifty: rescale to % where start = 100 */
-  const niftyValues=histEntries.map(e=>e[1]);
-  const niftyIdxValues=indexed&&niftyStartVal>0?niftyValues.map(v=>v/niftyStartVal*100):niftyValues;
-  const niftyRawMn=niftyHasData?Math.min(...niftyIdxValues):0;
-  const niftyRawMx=niftyHasData?Math.max(...niftyIdxValues):1;
-  const niftyPadV=(niftyRawMx-niftyRawMn)*0.10||1;
-  const niftyMn=Math.max(0,niftyRawMn-niftyPadV);
-  const niftyMx=niftyRawMx+niftyPadV;
-  const niftyRange=niftyMx-niftyMn||1;
-  const yFnN=v=>padT+chartH*(1-(v-niftyMn)/niftyRange);
-  const niftyXY=histEntries.map(([x,v],i)=>[x,yFnN(niftyIdxValues[i])]);
-  const niftyPath=niftyXY.length>=2?smoothPath(niftyXY):"";
-  const niftyColor="#2563eb";
-  const niftyTicks=Array.from({length:nTicks},(_,i)=>niftyRawMn+(niftyRawMx-niftyRawMn)/(nTicks-1)*i);
-  if(niftyTicks.length)niftyTicks[nTicks-1]=niftyRawMx;
-  /* Per-portfolio-point Nifty value for hover tooltip (nearest history date <= point date) */
-  const _histSorted=Object.keys(niftyHist).sort();
-  const niftyValsAt=filteredPoints.map(dp=>{
-    let best=null;
-    for(const hd of _histSorted){if(_toTime(hd)<=_toTime(dp.rawDate))best=niftyHist[hd];else break;}
-    return best;
+  /* Merge live daily closes into each index's embedded history so the line extends
+     to the most recent close (fetched at runtime). Replaces any same-date entry. */
+  const idxSeries=IDX_DEFS.map(def=>{
+    const hist={...def.hist};
+    const liveSeries=niftyLive?(niftyLive[def.key]||null):null;
+    if(liveSeries&&liveSeries.length){
+      /* Merge every live daily close so gap days between the bundled snapshot and today are filled */
+      liveSeries.forEach(s=>{hist[s.date]=s.value;});
+    }else if(def.key==="nifty50"&&niftyLive&&niftyLive.value&&niftyLive.date){
+      hist[niftyLive.date]=niftyLive.value;
+    }
+    const entries=Object.keys(hist)
+      .filter(d=>_toTime(d)>=domStart&&_toTime(d)<=domEnd)
+      .sort()
+      .map(d=>[ _xTime(d), hist[d] ]);
+    const hasData=entries.length>=2;
+    /* Find index baseline for indexed mode = first hist entry value */
+    const startVal=hasData?entries[0][1]:null;
+    /* Indexed: rescale to % where start = 100 */
+    const values=entries.map(e=>e[1]);
+    const dispValues=indexed&&startVal>0?values.map(v=>v/startVal*100):values;
+    return {def,hist,entries,hasData,startVal,values,dispValues,xy:[],path:"",valsAt:[]};
   });
+  /* Per-portfolio-point value for each index (nearest history date <= point date) */
+  idxSeries.forEach(s=>{
+    const _histSorted=Object.keys(s.hist).sort();
+    s.valsAt=filteredPoints.map(dp=>{
+      let best=null;
+      for(const hd of _histSorted){if(_toTime(hd)<=_toTime(dp.rawDate))best=s.hist[hd];else break;}
+      return best;
+    });
+  });
+  /* Right-axis scale covers the union of toggled-on index display values */
+  const visibleIdx=idxSeries.filter(s=>s.hasData&&indexLines[s.def.key]);
+  const _allIdxVals=[];
+  visibleIdx.forEach(s=>{if(s.dispValues&&s.dispValues.length)_allIdxVals.push(...s.dispValues);});
+  const idxRawMn=_allIdxVals.length?Math.min(..._allIdxVals):0;
+  const idxRawMx=_allIdxVals.length?Math.max(..._allIdxVals):1;
+  const idxPadV=(idxRawMx-idxRawMn)*0.10||1;
+  const idxMn=Math.max(0,idxRawMn-idxPadV);
+  const idxMx=idxRawMx+idxPadV;
+  const idxRange=idxMx-idxMn||1;
+  const yFnI=v=>padT+chartH*(1-(v-idxMn)/idxRange);
+  idxSeries.forEach(s=>{
+    s.xy=s.entries.map(([x,v],i)=>[x,yFnI(s.dispValues[i])]);
+    s.path=s.xy.length>=2?smoothPath(s.xy):"";
+  });
+  const idxTicks=Array.from({length:nTicks},(_,i)=>idxRawMn+(idxRawMx-idxRawMn)/(nTicks-1)*i);
+  if(idxTicks.length)idxTicks[idxTicks.length-1]=idxRawMx;
+  /* Keep Nifty 50 aliases for the alpha/metrics math below (always the 50 series). */
+  const nifty50S=idxSeries.find(s=>s.def.key==="nifty50")||{hist:NIFTY50_HISTORY,hasData:false,startVal:null,path:"",valsAt:[]};
+  const niftyStartVal=nifty50S.startVal;
+  const niftyValsAt=nifty50S.valsAt;
+  const idx100ValsAt=(idxSeries.find(s=>s.def.key==="nifty100")||{valsAt:[]}).valsAt;
+  const idx200ValsAt=(idxSeries.find(s=>s.def.key==="nifty200")||{valsAt:[]}).valsAt;
 
   const isGain=last.value>=last.cost;
   const totalGainPct=last.cost>0?((last.value-last.cost)/last.cost*100):0;
@@ -19359,8 +19463,14 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const hx=hoverIdx!==null?xFn(hoverIdx):null;
   const hyV=hoverIdx!==null?_yV(hoverIdx):null;
   const hyC=hoverIdx!==null?_yC(hoverIdx):null;
+  /* Hovered-point value + y for each VISIBLE index series (used for rings, dots and tooltip rows) */
+  const idxHover=visibleIdx.map(s=>{
+    const val=hoverIdx!==null&&s.valsAt[hoverIdx]!=null?s.valsAt[hoverIdx]:null;
+    const y=hoverIdx!==null&&val!=null?yFnI(indexed&&s.startVal>0?val/s.startVal*100:val):null;
+    return {def:s.def,s:s,val,y};
+  }).filter(r=>r.val!=null);
   const hN=hoverIdx!==null&&niftyValsAt[hoverIdx]!=null?niftyValsAt[hoverIdx]:null;
-  const hyN=hoverIdx!==null&&hN!=null?yFnN(indexed&&niftyStartVal>0?hN/niftyStartVal*100:hN):null;
+  const hyN=hN!=null?(function(){const s=nifty50S;return yFnI(indexed&&s.startVal>0?hN/s.startVal*100:hN);})():null;
   /* Hovered point's money-weighted (Modified Dietz) return from range start, shared by
      the tooltip's RETURN row and ALPHA row. Only prior points (j<hoverIdx) count as
      cash flows so a same-day txn on the hovered date doesn't create an MD artifact. */
@@ -19384,8 +19494,11 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const _hpHasTxns=hoverIdx!==null&&filteredPoints[hoverIdx]&&filteredPoints[hoverIdx].txns&&filteredPoints[hoverIdx].txns.length>0;
   const _hpTxns=_hpHasTxns?filteredPoints[hoverIdx].txns:null;
   const _txnRows=_hpTxns?_hpTxns.slice(0,5):null;
-  const _txnMore=_hpTxns&&_hpTxns.length>5?_hpTxns.length-5:0;
-  const tipW=_hpHasTxns?300:240,tipH=200+(hN!=null?30:0)+(_hpHasTxns?(28+(_txnRows?_txnRows.length*26:0)+(_txnMore?15:0)):0);
+  const _txnMore=_hpHasTxns&&_hpTxns.length>5?_hpTxns.length-5:0;
+  /* Index tooltip rows are stacked at 15px each; tipH + txn section shift by the extra rows */
+  const _tipIdxN=idxHover.length;
+  const _tipIdxExtra=_tipIdxN>0?(_tipIdxN-1)*15:0;
+  const tipW=_hpHasTxns?300:240,tipH=200+(_tipIdxN>0?30+_tipIdxExtra:0)+(_hpHasTxns?(28+(_txnRows?_txnRows.length*26:0)+(_txnMore?15:0)):0);
   const tipX=hx!==null?(hx+tipW+padR+4>W?hx-tipW-14:hx+14):0;
   const tipY=hyV!==null?Math.max(padT,Math.min(padT+chartH-tipH,hyV-tipH/2)):0;
 
@@ -19437,31 +19550,34 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     const niftyStart=filteredPoints[0]?niftyValsAt[0]:null;
     const niftyEnd=niftyValsAt[niftyValsAt.length-1]!=null?niftyValsAt[niftyValsAt.length-1]:null;
     const niftyPct=(niftyStart&&niftyEnd&&niftyStart>0)?((niftyEnd-niftyStart)/niftyStart*100):null;
-    /* Money-weighted index return: the same portfolio cash flows reinvested in the
-       index at each txn date, so Alpha is a fair apples-to-apples comparison.
-       Falls back to simple niftyPct when per-day index data is unavailable. */
-    let niftyMW=null;
-    if(niftyStart>0&&niftyEnd>0){
-      /* Index portfolio: start the same ₹ base in the index AND grow the starting
-         value at the index rate (mirroring how the portfolio's end.value already
-         embeds the growth of start.value). Omitting this term understates the
-         index return and overstates Alpha. */
-      let idxFin=start.value*(niftyEnd/niftyStart),flowSum=0,flowWeight=0;
-      filteredPoints.forEach((p,i)=>{
-        if(i===0||_t(p.rawDate)>=endTs)return;
-        const iv=niftyValsAt[i];
-        if(iv==null||iv<=0)return;
-        const f=fday(p.txns);
-        if(!f)return;
-        const el=(_t(p.rawDate)-_t(start.rawDate))/86400000;
-        const w=days>0?Math.max(0,(days-el)/days):0;
-        idxFin+=f*(niftyEnd/iv);
-        flowSum+=f;flowWeight+=f*w;
-      });
-      const den=(start.value||0)+flowWeight;
-      if(den>0)niftyMW=((idxFin-start.value-flowSum)/den*100);
-    }
-    const alpha=(portPct!=null&&niftyMW!=null)?portPct-niftyMW:((portPct!=null&&niftyPct!=null)?portPct-niftyPct:null);
+    /* ── Per-index helper: simple return + money-weighted return + alpha ── */
+    const _calcIdx=(idxVals)=>{
+      const iS=filteredPoints[0]?idxVals[0]:null;
+      const iE=idxVals[idxVals.length-1]!=null?idxVals[idxVals.length-1]:null;
+      const iPct=(iS&&iE&&iS>0)?((iE-iS)/iS*100):null;
+      let iMW=null;
+      if(iS>0&&iE>0){
+        let idxF=start.value*(iE/iS),fS=0,fW=0;
+        filteredPoints.forEach((p,i)=>{
+          if(i===0||_t(p.rawDate)>=endTs)return;
+          const iv=idxVals[i];if(iv==null||iv<=0)return;
+          const f=fday(p.txns);if(!f)return;
+          const el=(_t(p.rawDate)-_t(start.rawDate))/86400000;
+          const w=days>0?Math.max(0,(days-el)/days):0;
+          idxF+=f*(iE/iv);fS+=f;fW+=f*w;
+        });
+        const den=(start.value||0)+fW;
+        if(den>0)iMW=((idxF-start.value-fS)/den*100);
+      }
+      const a=(portPct!=null&&iMW!=null)?portPct-iMW:((portPct!=null&&iPct!=null)?portPct-iPct:null);
+      return{iStart:iS,iEnd:iE,iPct,iMW,alpha:a};
+    };
+    const _n50=_calcIdx(niftyValsAt);
+    const _n100=_calcIdx(idx100ValsAt);
+    const _n200=_calcIdx(idx200ValsAt);
+    /* backward-compat aliases (Nifty 50) */
+    const niftyMW=_n50.iMW;
+    const alpha=_n50.alpha;
     /* CAGR: annualised money-weighted return via XIRR (matches external tools).
        Solves Σ CFᵢ/(1+r)^(tᵢ/365)=0. Would-be cash flows: the opening portfolio
        value is the initial outflow; buys are outflows, sells inflows, during the
@@ -19496,8 +19612,12 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
       }
       if(best!=null&&isFinite(best)&&best>-0.9999&&best<100)cagr=best*100;
     }
-    return{portPct,portAmt,niftyStart,niftyEnd,niftyPct,niftyMW,alpha,cagr};
-  },[filteredPoints,niftyValsAt,mf,dateTo]);
+    return{portPct,portAmt,
+      niftyStart:_n50.iStart,niftyEnd:_n50.iEnd,niftyPct:_n50.iPct,niftyMW,alpha,
+      nifty100Pct:_n100.iPct,nifty100MW:_n100.iMW,alpha100:_n100.alpha,
+      nifty200Pct:_n200.iPct,nifty200MW:_n200.iMW,alpha200:_n200.alpha,
+      cagr};
+  },[filteredPoints,niftyValsAt,idx100ValsAt,idx200ValsAt,mf,dateTo]);
 
   /* ── Max drawdown from the drawdowns series ── */
   const maxDrawdown=drawdowns.troughIdx>=0?drawdowns.minDd:0;
@@ -19557,36 +19677,59 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     ),
 
     /* ── Range comparison metrics strip (only when data spans a range) ── */
-    rangeMetrics&&React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",marginBottom:10}},
+    rangeMetrics&&React.createElement("div",{style:{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}},
       /* Portfolio return */
-      React.createElement("div",{style:{flex:1,minWidth:130,padding:"10px 12px",borderRadius:10,background:"rgba(16,185,129,.06)",border:"1px solid rgba(16,185,129,.25)"}},
-        React.createElement("div",{style:{fontSize:8.5,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,color:"var(--text5)",marginBottom:3}},"Portfolio Return"),
-        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:14,color:rangeMetrics.portPct>=0?"#10b981":"#ef4444"}},
+      React.createElement("div",{style:{flex:"1 1 130px",minWidth:110,padding:"8px 10px",borderRadius:10,background:"rgba(16,185,129,.06)",border:"1px solid rgba(16,185,129,.25)"}},
+        React.createElement("div",{style:{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:.6,color:"var(--text5)",marginBottom:2}},"Portfolio Return"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:13,color:rangeMetrics.portPct>=0?"#10b981":"#ef4444"}},
           INRfmt(Math.round(rangeMetrics.portAmt))),
-        React.createElement("div",{style:{fontSize:10,fontWeight:600,color:rangeMetrics.portPct>=0?"#10b981":"#ef4444",marginTop:1}},
+        React.createElement("div",{style:{fontSize:9.5,fontWeight:600,color:rangeMetrics.portPct>=0?"#10b981":"#ef4444",marginTop:1}},
           PCTfmt(rangeMetrics.portPct))
       ),
-      /* Nifty return */
-      rangeMetrics.niftyPct!=null&&React.createElement("div",{style:{flex:1,minWidth:120,padding:"10px 12px",borderRadius:10,background:"rgba(37,99,235,.06)",border:"1px solid rgba(37,99,235,.25)"}},
-        React.createElement("div",{style:{fontSize:8.5,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,color:"var(--text5)",marginBottom:3}},"Nifty 50 Return"),
-        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:14,color:rangeMetrics.niftyPct>=0?"#2563eb":"#ef4444"}},
+      /* Nifty 50 Return */
+      rangeMetrics.niftyPct!=null&&React.createElement("div",{style:{flex:"1 1 100px",minWidth:90,padding:"8px 10px",borderRadius:10,background:"rgba(37,99,235,.06)",border:"1px solid rgba(37,99,235,.25)"}},
+        React.createElement("div",{style:{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:.6,color:"var(--text5)",marginBottom:2}},"Nifty 50 Return"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:13,color:rangeMetrics.niftyPct>=0?"#2563eb":"#ef4444"}},
           PCTfmt(rangeMetrics.niftyPct)),
-        React.createElement("div",{style:{fontSize:9.5,color:"var(--text6)",marginTop:1}},
-          rangeMetrics.niftyStart?Math.round(rangeMetrics.niftyStart).toLocaleString("en-IN")+" → "+Math.round(rangeMetrics.niftyEnd).toLocaleString("en-IN"):"")
+        rangeMetrics.niftyStart&&React.createElement("div",{style:{fontSize:8.5,color:"var(--text6)",marginTop:1}},
+          Math.round(rangeMetrics.niftyStart).toLocaleString("en-IN")+" → "+Math.round(rangeMetrics.niftyEnd).toLocaleString("en-IN"))
       ),
-      /* Alpha */
-      rangeMetrics.alpha!=null&&React.createElement("div",{style:{flex:1,minWidth:120,padding:"10px 12px",borderRadius:10,background:rangeMetrics.alpha>=0?"rgba(16,185,129,.06)":"rgba(239,68,68,.06)",border:"1px solid "+(rangeMetrics.alpha>=0?"rgba(16,185,129,.25)":"rgba(239,68,68,.25)")}},
-        React.createElement("div",{style:{fontSize:8.5,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,color:"var(--text5)",marginBottom:3}},"Alpha vs Nifty"),
-        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:14,color:rangeMetrics.alpha>=0?"#10b981":"#ef4444"}},
-          PCTfmt(rangeMetrics.alpha)),
-        React.createElement("div",{style:{fontSize:9.5,color:"var(--text6)",marginTop:1}},"portfolio − index")
+      /* Nifty 100 Return */
+      rangeMetrics.nifty100Pct!=null&&React.createElement("div",{style:{flex:"1 1 100px",minWidth:90,padding:"8px 10px",borderRadius:10,background:"rgba(14,165,233,.06)",border:"1px solid rgba(14,165,233,.25)"}},
+        React.createElement("div",{style:{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:.6,color:"var(--text5)",marginBottom:2}},"Nifty 100 Return"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:13,color:rangeMetrics.nifty100Pct>=0?"#0ea5e9":"#ef4444"}},
+          PCTfmt(rangeMetrics.nifty100Pct))
+      ),
+      /* Nifty 200 Return */
+      rangeMetrics.nifty200Pct!=null&&React.createElement("div",{style:{flex:"1 1 100px",minWidth:90,padding:"8px 10px",borderRadius:10,background:"rgba(139,92,246,.06)",border:"1px solid rgba(139,92,246,.25)"}},
+        React.createElement("div",{style:{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:.6,color:"var(--text5)",marginBottom:2}},"Nifty 200 Return"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:13,color:rangeMetrics.nifty200Pct>=0?"#8b5cf6":"#ef4444"}},
+          PCTfmt(rangeMetrics.nifty200Pct))
+      ),
+      /* Alpha vs Nifty 50 */
+      rangeMetrics.alpha!=null&&React.createElement("div",{style:{flex:"1 1 100px",minWidth:90,padding:"8px 10px",borderRadius:10,background:rangeMetrics.alpha>=0?"rgba(16,185,129,.06)":"rgba(239,68,68,.06)",border:"1px solid "+(rangeMetrics.alpha>=0?"rgba(16,185,129,.25)":"rgba(239,68,68,.25)")}},
+        React.createElement("div",{style:{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:.6,color:"var(--text5)",marginBottom:2}},"Alpha vs Nifty 50"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:13,color:rangeMetrics.alpha>=0?"#10b981":"#ef4444"}},
+          PCTfmt(rangeMetrics.alpha))
+      ),
+      /* Alpha vs Nifty 100 */
+      rangeMetrics.alpha100!=null&&React.createElement("div",{style:{flex:"1 1 100px",minWidth:90,padding:"8px 10px",borderRadius:10,background:rangeMetrics.alpha100>=0?"rgba(16,185,129,.06)":"rgba(239,68,68,.06)",border:"1px solid "+(rangeMetrics.alpha100>=0?"rgba(16,185,129,.25)":"rgba(239,68,68,.25)")}},
+        React.createElement("div",{style:{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:.6,color:"var(--text5)",marginBottom:2}},"Alpha vs Nifty 100"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:13,color:rangeMetrics.alpha100>=0?"#10b981":"#ef4444"}},
+          PCTfmt(rangeMetrics.alpha100))
+      ),
+      /* Alpha vs Nifty 200 */
+      rangeMetrics.alpha200!=null&&React.createElement("div",{style:{flex:"1 1 100px",minWidth:90,padding:"8px 10px",borderRadius:10,background:rangeMetrics.alpha200>=0?"rgba(16,185,129,.06)":"rgba(239,68,68,.06)",border:"1px solid "+(rangeMetrics.alpha200>=0?"rgba(16,185,129,.25)":"rgba(239,68,68,.25)")}},
+        React.createElement("div",{style:{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:.6,color:"var(--text5)",marginBottom:2}},"Alpha vs Nifty 200"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:13,color:rangeMetrics.alpha200>=0?"#10b981":"#ef4444"}},
+          PCTfmt(rangeMetrics.alpha200))
       ),
       /* CAGR */
-      rangeMetrics.cagr!=null&&React.createElement("div",{style:{flex:1,minWidth:120,padding:"10px 12px",borderRadius:10,background:"rgba(109,40,217,.06)",border:"1px solid rgba(109,40,217,.25)"}},
-        React.createElement("div",{style:{fontSize:8.5,fontWeight:700,textTransform:"uppercase",letterSpacing:.7,color:"var(--text5)",marginBottom:3}},"CAGR (annualised)"),
-        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:14,color:rangeMetrics.cagr>=0?"#6d28d9":"#ef4444"}},
+      rangeMetrics.cagr!=null&&React.createElement("div",{style:{flex:"1 1 100px",minWidth:90,padding:"8px 10px",borderRadius:10,background:"rgba(109,40,217,.06)",border:"1px solid rgba(109,40,217,.25)"}},
+        React.createElement("div",{style:{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:.6,color:"var(--text5)",marginBottom:2}},"CAGR"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:13,color:rangeMetrics.cagr>=0?"#6d28d9":"#ef4444"}},
           PCTfmt(rangeMetrics.cagr)),
-        React.createElement("div",{style:{fontSize:9.5,color:"var(--text6)",marginTop:1}},"over selected period")
+        React.createElement("div",{style:{fontSize:8.5,color:"var(--text6)",marginTop:1}},"annualised")
       )
     ),
 
@@ -19670,20 +19813,32 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         ),
         React.createElement("span",null,"Holding Value")
       ),
-      niftyHasData&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
-        React.createElement("svg",{width:26,height:12,style:{overflow:"visible"}},
-          React.createElement("line",{x1:0,y1:6,x2:26,y2:6,stroke:"#2563eb",strokeWidth:2,strokeDasharray:"5,3",strokeLinecap:"round"})
-        ),
-        React.createElement("span",null,indexed?"Nifty 50 (% returns)":"Nifty 50 (index)"),
-        React.createElement("span",{style:{marginLeft:4,fontSize:8,fontWeight:700,padding:"1px 6px",borderRadius:5,
-          background:niftyLive?"rgba(37,99,235,.12)":"rgba(120,120,120,.12)",
-          color:niftyLive?"#2563eb":"var(--text6)",border:"1px solid "+(niftyLive?"rgba(37,99,235,.3)":"var(--border2)")}},
-          niftyLive?"LIVE":"cached"),
-        React.createElement("button",{onClick:refreshNifty,disabled:niftyLoading,title:"Re-fetch Nifty 50 to fill missing gap days",
-          style:{marginLeft:4,fontSize:9,fontWeight:700,padding:"2px 8px",borderRadius:5,cursor:niftyLoading?"default":"pointer",
-          background:"transparent",color:"var(--text2)",border:"1px solid var(--border2)",opacity:niftyLoading?.5:1}},
-          niftyLoading?"Fetching…":"Refresh")
-      ),
+      /* Index legend toggles — click a chip to show/hide that index line (right axis rescales) */
+      idxSeries.filter(s=>s.hasData).map(s=>{
+        const on=indexLines[s.def.key];
+        return React.createElement("div",{key:s.def.key,onClick:()=>toggleIndexLine(s.def.key),
+          style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",userSelect:"none",
+            padding:"2px 8px",borderRadius:12,
+            background:on?`${s.def.color}22`:"transparent",
+            border:"1px solid "+(on?s.def.color:"var(--border2)"),
+            opacity:on?1:.45}},
+          React.createElement("svg",{width:26,height:12,style:{overflow:"visible"}},
+            React.createElement("line",{x1:0,y1:6,x2:26,y2:6,stroke:s.def.color,strokeWidth:2,strokeDasharray:"5,3",strokeLinecap:"round"}),
+            on&&React.createElement("circle",{cx:13,cy:6,r:3,fill:s.def.color})
+          ),
+          React.createElement("span",{style:{fontSize:10,fontWeight:on?700:500,color:on?s.def.color:"var(--text6)"}},
+            indexed?s.def.label+" (% returns)":s.def.label)
+        );
+      }),
+      /* LIVE/cached badge + refresh — acts on all three indices together */
+      React.createElement("span",{style:{fontSize:8,fontWeight:700,padding:"1px 6px",borderRadius:5,
+        background:niftyLive?"rgba(37,99,235,.12)":"rgba(120,120,120,.12)",
+        color:niftyLive?"#2563eb":"var(--text6)",border:"1px solid "+(niftyLive?"rgba(37,99,235,.3)":"var(--border2)")}},
+        niftyLive?"LIVE":"cached"),
+      React.createElement("button",{onClick:refreshNifty,disabled:niftyLoading,title:"Re-fetch Nifty 50/100/200 to fill missing gap days",
+        style:{fontSize:9,fontWeight:700,padding:"2px 8px",borderRadius:5,cursor:niftyLoading?"default":"pointer",
+        background:"transparent",color:"var(--text2)",border:"1px solid var(--border2)",opacity:niftyLoading?.5:1}},
+        niftyLoading?"Fetching…":"Refresh"),
       React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
         React.createElement("svg",{width:26,height:12,style:{overflow:"visible"}},
           React.createElement("path",{d:"M2,2 L24,2 L13,10 Z",fill:"#10b981"}),
@@ -19749,9 +19904,9 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
           fill:"var(--text5)",fontSize:9.5,fontWeight:600},indexed?Math.round(v)+"%":INRshort(v))
       )),
 
-      /* Nifty 50 right-axis labels (index points or % when indexed) */
-      niftyHasData&&niftyTicks.map((v,i)=>React.createElement("g",{key:"pev_yn"+i},
-        React.createElement("text",{x:W-padR+6,y:yFnN(v)+3.5,textAnchor:"start",
+      /* Index right-axis labels (union scale of the toggled-on index lines) */
+      visibleIdx.length>0&&idxTicks.map((v,i)=>React.createElement("g",{key:"pev_yn"+i},
+        React.createElement("text",{x:W-padR+6,y:yFnI(v)+3.5,textAnchor:"start",
           fill:"#2563eb",fontSize:9.5,fontWeight:600,opacity:.85},
           indexed?Math.round(v)+"%":Math.round(v).toLocaleString("en-IN"))
       )),
@@ -19773,10 +19928,10 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         style:{filter:`drop-shadow(0 0 4px ${valColor}80)`},
         clipPath:"url(#pev_clip)"}),
 
-      /* Nifty 50 overlay line — blue dashed, secondary axis */
-      niftyHasData&&React.createElement("path",{d:niftyPath,fill:"none",stroke:niftyColor,strokeWidth:1.8,
+      /* Index overlay lines — dashed, secondary axis (only toggled-on indices) */
+      visibleIdx.map(s=>React.createElement("path",{key:"pev_idx_"+s.def.key,d:s.path,fill:"none",stroke:s.def.color,strokeWidth:1.8,
         strokeDasharray:"7,4",strokeLinejoin:"round",strokeLinecap:"round",opacity:.85,
-        clipPath:"url(#pev_clip)"}),
+        clipPath:"url(#pev_clip)"})),
 
       /* Milestone markers (peak / trough) */
       milestones.map(({idx,type})=>{
@@ -19852,14 +20007,17 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         /* Rings behind dots */
         React.createElement("circle",{cx:hx,cy:hyC,r:9,fill:"#f59e0b",opacity:.12}),
         React.createElement("circle",{cx:hx,cy:hyV,r:9,fill:valColor,opacity:.15}),
-        hyN!==null&&React.createElement("circle",{cx:hx,cy:hyN,r:9,fill:niftyColor,opacity:.13}),
+        hyN!==null&&React.createElement("circle",{cx:hx,cy:hyN,r:9,fill:"#2563eb",opacity:.13}),
+        idxHover.filter(r=>r.def.key!=="nifty50").map(r=>React.createElement("circle",{key:"pev_ihr_"+r.def.key,cx:hx,cy:r.y,r:9,fill:r.def.color,opacity:.13})),
         /* Cost dot */
         React.createElement("circle",{cx:hx,cy:hyC,r:5,fill:"#f59e0b",stroke:"var(--modal-bg)",strokeWidth:2.5}),
         /* Value dot */
         React.createElement("circle",{cx:hx,cy:hyV,r:5.5,
           fill:valColor,stroke:"var(--modal-bg)",strokeWidth:2.5}),
         hyN!==null&&React.createElement("circle",{cx:hx,cy:hyN,r:4.5,
-          fill:niftyColor,stroke:"var(--modal-bg)",strokeWidth:2.5}),
+          fill:"#2563eb",stroke:"var(--modal-bg)",strokeWidth:2.5}),
+        idxHover.filter(r=>r.def.key!=="nifty50").map(r=>React.createElement("circle",{key:"pev_ihd_"+r.def.key,cx:hx,cy:r.y,r:4.5,
+          fill:r.def.color,stroke:"var(--modal-bg)",strokeWidth:2.5})),
         /* Tooltip */
         React.createElement("g",null,
           /* Drop shadow */
@@ -19910,23 +20068,33 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
               React.createElement("text",{x:tipX+14,y:tipY+123,fill:col,fontSize:12,fontWeight:700},PCTfmt(hpPortPct))
             );
           })(),
-          /* Nifty row (value + % from range start) */
-          hN!==null&&(()=>{
-            const niftyStartVal=rangeMetrics&&rangeMetrics.niftyStart!=null?rangeMetrics.niftyStart:null;
-            const niftyPct=niftyStartVal&&niftyStartVal>0?((hN-niftyStartVal)/niftyStartVal*100):null;
-            const niftyCol=niftyPct!=null&&niftyPct>=0?"#2563eb":"#dc2626";
+          /* Index rows (value + % from range start), one per toggled-on index with data at this point */
+          idxHover.length>0&&(()=>{
+            /* Alpha = PF return − NIFTY 50 return at the hovered point (uses the 50 series) */
+            const n50row=idxHover.find(r=>r.def.key==="nifty50");
+            const niftyStartVal2=rangeMetrics&&rangeMetrics.niftyStart!=null?rangeMetrics.niftyStart:(niftyStartVal!=null?niftyStartVal:null);
+            const niftyPct=n50row&&niftyStartVal2&&niftyStartVal2>0?((n50row.val-niftyStartVal2)/niftyStartVal2*100):null;
             const alpha=hpPortPct!=null&&niftyPct!=null?hpPortPct-niftyPct:null;
             return React.createElement(React.Fragment,null,
               React.createElement("line",{x1:tipX+10,y1:tipY+131,x2:tipX+tipW-10,y2:tipY+131,
                 stroke:"var(--border2)",strokeWidth:.8,opacity:.6}),
-              React.createElement("text",{x:tipX+14,y:tipY+145,fill:"#2563eb",fontSize:9,fontWeight:600,letterSpacing:.3},"NIFTY 50"),
-              React.createElement("text",{x:tipX+14,y:tipY+160,fill:"#2563eb",fontSize:12,fontWeight:700},
-                Math.round(hN).toLocaleString("en-IN")),
-              niftyPct!=null&&React.createElement("text",{x:tipX+tipW-14,y:tipY+160,textAnchor:"end",fill:niftyCol,fontSize:10.5,fontWeight:700},
-                PCTfmt(niftyPct)),
+              idxHover.map((r,i)=>{
+                const baseY=145+i*15;
+                const col=r.val!=null&&niftyPct!=null? (r.def.key==="nifty50"? (niftyPct>=0?"#2563eb":"#dc2626") : r.def.color):r.def.color;
+                const pctBase=(r.def.key==="nifty50"&&niftyStartVal2!=null&&niftyStartVal2>0)?niftyStartVal2:(r.s.startVal!=null?r.s.startVal:null);
+                const pct=pctBase&&pctBase>0?((r.val-pctBase)/pctBase*100):null;
+                return React.createElement(React.Fragment,{key:r.def.key},
+                  React.createElement("text",{x:tipX+14,y:baseY,fill:r.def.color,fontSize:9,fontWeight:600,letterSpacing:.3},
+                    r.def.label.toUpperCase()),
+                  React.createElement("text",{x:tipX+14,y:baseY+15,fill:r.def.color,fontSize:12,fontWeight:700},
+                    Math.round(r.val).toLocaleString("en-IN")),
+                  pct!=null&&React.createElement("text",{x:tipX+tipW-14,y:baseY+15,textAnchor:"end",fill:col,fontSize:10.5,fontWeight:700},
+                    PCTfmt(pct))
+                );
+              }),
               alpha!=null&&React.createElement(React.Fragment,null,
-                React.createElement("text",{x:tipX+14,y:tipY+174,fill:"var(--text5)",fontSize:8.5,fontWeight:600,letterSpacing:.3},"ALPHA (PF − NIFTY)"),
-                React.createElement("text",{x:tipX+tipW-14,y:tipY+174,textAnchor:"end",fill:alpha>=0?"#10b981":"#ef4444",fontSize:10,fontWeight:700},
+                React.createElement("text",{x:tipX+14,y:174+_tipIdxExtra,fill:"var(--text5)",fontSize:8.5,fontWeight:600,letterSpacing:.3},"ALPHA (PF − NIFTY)"),
+                React.createElement("text",{x:tipX+tipW-14,y:174+_tipIdxExtra,textAnchor:"end",fill:alpha>=0?"#10b981":"#ef4444",fontSize:10,fontWeight:700},
                   PCTfmt(alpha))
               )
             );
@@ -19934,16 +20102,17 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
           /* Transactions at this point */
           _txnRows&&_txnRows.length>0&&(()=>{
             const label="TRANSACTIONS"+(hp.txns.length>1?" ("+hp.txns.length+")":"");
+            const t0=178+_tipIdxExtra;
             return React.createElement(React.Fragment,null,
-              React.createElement("line",{x1:tipX+10,y1:tipY+178,x2:tipX+tipW-10,y2:tipY+178,
+              React.createElement("line",{x1:tipX+10,y1:tipY+t0,x2:tipX+tipW-10,y2:tipY+t0,
                 stroke:"var(--border2)",strokeWidth:.8,opacity:.6}),
-              React.createElement("text",{x:tipX+14,y:tipY+191,fill:"var(--text5)",fontSize:8.5,fontWeight:600,letterSpacing:.3},label),
+              React.createElement("text",{x:tipX+14,y:tipY+t0+13,fill:"var(--text5)",fontSize:8.5,fontWeight:600,letterSpacing:.3},label),
               _txnRows.map((t,i)=>{
                 const buy=t.type==="buy";
                 const sw=!!t.isSwitch;
                 const units=t.nav>0?+(t.amount/t.nav).toFixed(2):0;
                 const col=sw?"#0e7490":(buy?"#10b981":"#ef4444");
-                const y1=tipY+206+i*26,y2=tipY+220+i*26;
+                const y1=tipY+t0+28+i*26,y2=tipY+t0+42+i*26;
                 const fund=String(t.fund||"");
                 const fundClip=fund.length>16?fund.slice(0,15)+"…":fund;
                 return React.createElement(React.Fragment,{key:i},
@@ -19955,7 +20124,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
                     units+"u"+(t.nav>0?" @ "+t.nav:"")+(sw?" (switch)":""))
                 );
               }),
-              _txnMore>0&&React.createElement("text",{x:tipX+14,y:tipY+206+_txnRows.length*26,fill:"var(--text5)",
+              _txnMore>0&&React.createElement("text",{x:tipX+14,y:tipY+t0+28+_txnRows.length*26,fill:"var(--text5)",
                 fontSize:9,fontWeight:600},"+"+_txnMore+" more")
             );
           })()
@@ -21493,7 +21662,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
             (mfTxns||[]).length+" txns · "+(new Set((mfTxns||[]).map(t=>t.fundName))).size+" fund"+((new Set((mfTxns||[]).map(t=>t.fundName))).size!==1?"s":"")
           )
         ),
-        React.createElement(MFPortfolioEvolutionChart,{mfTxns:mfTxns,mf:mf.filter(m=>m.units>0)})
+        React.createElement(MFPortfolioEvolutionChart,{mfTxns:mfTxns,mf:mf.filter(m=>m.units>0),eodNavs:eodNavs,mfHistNavs:mfHistNavs})
       ),
 
       /* Filter out zero-unit (fully sold) holdings */
@@ -29315,6 +29484,8 @@ const FSAStoragePanel=({state,dispatch})=>{
           localStorage.setItem(_SCREENER_KEY,data.screenerData);
         if(data.screenerSnapshots)
           localStorage.setItem(_SCREENER_SNAPS_KEY,data.screenerSnapshots);
+        if(data.niftyLive)
+          {localStorage.setItem(LS_NIFTY_LIVE,data.niftyLive);_niftyLiveCache=_niftyPersistRead();}
       }catch{}
       /* ── Overwrite IDB transactions so next-boot hydration loads
          the restored data instead of the pre-restore snapshot.
