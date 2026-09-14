@@ -1,4 +1,6 @@
-﻿const NIFTY50_HISTORY={"2017-01-31":8879.6,"2017-02-28":9173.75,"2017-03-31":9304.05,"2017-04-30":9621.25,"2017-05-31":9520.9,"2017-06-30":10077.1,"2017-07-31":9917.9,"2017-08-31":9788.6,"2017-09-30":10335.3,"2017-10-31":10226.55,"2017-11-30":10530.7,"2017-12-31":11027.7,"2018-01-31":10492.85,"2018-02-28":10113.7,"2018-03-31":10739.35,"2018-04-30":10736.15,"2018-05-31":10714.3,"2018-06-30":11356.5,"2018-07-31":11680.5,"2018-08-31":10930.45,"2018-09-30":10386.6,"2018-10-31":10876.75,"2018-11-30":10862.55,"2018-12-31":10830.95,"2019-01-31":10792.5,"2019-02-28":11623.9,"2019-03-31":11748.15,"2019-04-30":11922.8,"2019-05-31":11788.85,"2019-06-30":11118,"2019-07-31":11023.25,"2019-08-31":11474.45,"2019-09-30":11877.45,"2019-10-31":12056.05,"2019-11-30":12168.45,"2019-12-31":11962.1,"2020-01-31":11201.75,"2020-02-29":8597.75,"2020-03-31":9859.9,"2020-04-30":9580.3,"2020-05-31":10302.1,"2020-06-30":11073.45,"2020-07-31":11387.5,"2020-08-31":11247.55,"2020-09-30":11642.4,"2020-10-31":12968.95,"2020-11-30":13981.75,"2020-12-31":13634.6,"2021-01-31":14529.15,"2021-02-28":14690.7,"2021-03-31":14631.1,"2021-04-30":15582.8,"2021-05-31":15721.5,"2021-06-30":15763.05,"2021-07-31":17132.2,"2021-08-31":17618.15,"2021-09-30":17671.65,"2021-10-31":16983.2,"2021-11-30":17354.05,"2021-12-31":17339.85,"2022-01-31":16793.9,"2022-02-28":17464.75,"2022-03-31":17102.55,"2022-04-30":16584.55,"2022-05-31":15780.25,"2022-06-30":17158.25,"2022-07-31":17759.3,"2022-08-31":17094.35,"2022-09-30":18012.2,"2022-10-31":18758.35,"2022-11-30":18105.3,"2022-12-31":17662.15,"2023-01-31":17303.95,"2023-02-28":17359.75,"2023-03-31":18065,"2023-04-30":18534.4,"2023-05-31":19189.05,"2023-06-30":19753.8,"2023-07-31":19253.8,"2023-08-31":19638.3,"2023-09-30":19079.6,"2023-10-31":20133.15,"2023-11-30":21731.4,"2023-12-31":21725.7,"2024-01-31":21982.8,"2024-02-29":22326.9,"2024-03-31":22604.85,"2024-04-30":22530.7,"2024-05-31":24010.6,"2024-06-30":24951.15,"2024-07-31":25235.9,"2024-08-31":25810.85,"2024-09-30":24205.35,"2024-10-31":24131.1,"2024-11-30":23644.8,"2024-12-31":23508.4,"2025-01-31":22124.7,"2025-02-28":23519.35,"2025-03-31":24334.2,"2025-04-30":24750.7,"2025-05-31":25517.05,"2025-06-30":24768.35,"2025-07-31":24426.85,"2025-08-31":24611.1,"2025-09-30":25722.1,"2025-10-31":26202.95,"2025-11-30":26129.6,"2025-12-31":25320.65,"2026-01-31":25178.65,"2026-02-28":22331.4,"2026-03-31":23997.55,"2026-04-30":23547.75,"2026-05-31":23865.75,"2026-06-30":24270.85,"2026-07-07":24398.7};
+const NIFTY50_HISTORY={"2017-01-31":8879.6,"2017-02-28":9173.75,"2017-03-31":9304.05,"2017-04-30":9621.25,"2017-05-31":9520.9,"2017-06-30":10077.1,"2017-07-31":9917.9,"2017-08-31":9788.6,"2017-09-30":10335.3,"2017-10-31":10226.55,"2017-11-30":10530.7,"2017-12-31":11027.7,"2018-01-31":10492.85,"2018-02-28":10113.7,"2018-03-31":10739.35,"2018-04-30":10736.15,"2018-05-31":10714.3,"2018-06-30":11356.5,"2018-07-31":11680.5,"2018-08-31":10930.45,"2018-09-30":10386.6,"2018-10-31":10876.75,"2018-11-30":10862.55,"2018-12-31":10830.95,"2019-01-31":10792.5,"2019-02-28":11623.9,"2019-03-31":11748.15,"2019-04-30":11922.8,"2019-05-31":11788.85,"2019-06-30":11118,"2019-07-31":11023.25,"2019-08-31":11474.45,"2019-09-30":11877.45,"2019-10-31":12056.05,"2019-11-30":12168.45,"2019-12-31":11962.1,"2020-01-31":11201.75,"2020-02-29":8597.75,"2020-03-31":9859.9,"2020-04-30":9580.3,"2020-05-31":10302.1,"2020-06-30":11073.45,"2020-07-31":11387.5,"2020-08-31":11247.55,"2020-09-30":11642.4,"2020-10-31":12968.95,"2020-11-30":13981.75,"2020-12-31":13634.6,"2021-01-31":14529.15,"2021-02-28":14690.7,"2021-03-31":14631.1,"2021-04-30":15582.8,"2021-05-31":15721.5,"2021-06-30":15763.05,"2021-07-31":17132.2,"2021-08-31":17618.15,"2021-09-30":17671.65,"2021-10-31":16983.2,"2021-11-30":17354.05,"2021-12-31":17339.85,"2022-01-31":16793.9,"2022-02-28":17464.75,"2022-03-31":17102.55,"2022-04-30":16584.55,"2022-05-31":15780.25,"2022-06-30":17158.25,"2022-07-31":17759.3,"2022-08-31":17094.35,"2022-09-30":18012.2,"2022-10-31":18758.35,"2022-11-30":18105.3,"2022-12-31":17662.15,"2023-01-31":17303.95,"2023-02-28":17359.75,"2023-03-31":18065,"2023-04-30":18534.4,"2023-05-31":19189.05,"2023-06-30":19753.8,"2023-07-31":19253.8,"2023-08-31":19638.3,"2023-09-30":19079.6,"2023-10-31":20133.15,"2023-11-30":21731.4,"2023-12-31":21725.7,"2024-01-31":21982.8,"2024-02-29":22326.9,"2024-03-31":22604.85,"2024-04-30":22530.7,"2024-05-31":24010.6,"2024-06-30":24951.15,"2024-07-31":25235.9,"2024-08-31":25810.85,"2024-09-30":24205.35,"2024-10-31":24131.1,"2024-11-30":23644.8,"2024-12-31":23508.4,"2025-01-31":22124.7,"2025-02-28":23519.35,"2025-03-31":24334.2,"2025-04-30":24750.7,"2025-05-31":25517.05,"2025-06-30":24768.35,"2025-07-31":24426.85,"2025-08-31":24611.1,"2025-09-30":25722.1,"2025-10-31":26202.95,"2025-11-30":26129.6,"2025-12-31":25320.65,"2026-01-31":25178.65,"2026-02-28":22331.4,"2026-03-31":23997.55,"2026-04-30":23547.75,"2026-05-31":23865.75,"2026-06-30":24270.85,"2026-07-07":24398.7};
+const NIFTY100_HISTORY={"2017-01-31":9170.95,"2017-02-28":9467.1,"2017-03-31":9652.45,"2017-04-30":9909.6,"2017-05-31":9835.4,"2017-06-30":10417.8,"2017-07-31":10286.55,"2017-08-31":10143.9,"2017-09-30":10740.85,"2017-10-31":10650.75,"2017-11-30":10985.15,"2017-12-31":11393.55,"2018-01-31":10861.4,"2018-02-28":10478.4,"2018-03-31":11145.9,"2018-04-30":11064.15,"2018-05-31":10993.45,"2018-06-30":11633.85,"2018-07-31":12003.1,"2018-08-31":11126.4,"2018-09-30":10604.6,"2018-10-31":11092.25,"2018-11-30":11110.15,"2018-12-31":10996.8,"2019-01-31":10959.9,"2019-02-28":11789.2,"2019-03-31":11874.25,"2019-04-30":12028.25,"2019-05-31":11882.1,"2019-06-30":11221.2,"2019-07-31":11155.1,"2019-08-31":11613.3,"2019-09-30":12037.25,"2019-10-31":12182.6,"2019-11-30":12267.75,"2019-12-31":12086.9,"2020-01-31":11316.3,"2020-02-29":8731.15,"2020-03-31":10006.9,"2020-04-30":9759.45,"2020-05-31":10486.9,"2020-06-30":11222.95,"2020-07-31":11496.05,"2020-08-31":11385.2,"2020-09-30":11748.95,"2020-10-31":13080.3,"2020-11-30":14090.75,"2020-12-31":13743.3,"2021-01-31":14667.6,"2021-02-28":14807.45,"2021-03-31":14790.6,"2021-04-30":15798.7,"2021-05-31":15959.4,"2021-06-30":16040.15,"2021-07-31":17373.1,"2021-08-31":17845.1,"2021-09-30":17880.8,"2021-10-31":17270.25,"2021-11-30":17618.8,"2021-12-31":17547.4,"2022-01-31":17016.55,"2022-02-28":17660.35,"2022-03-31":17457.2,"2022-04-30":16767.5,"2022-05-31":15929.4,"2022-06-30":17400.75,"2022-07-31":18112.4,"2022-08-31":17438.6,"2022-09-30":18243.4,"2022-10-31":18919.55,"2022-11-30":18258.75,"2022-12-31":17601.0,"2023-01-31":17083.8,"2023-02-28":17186.15,"2023-03-31":17903.95,"2023-04-30":18438.3,"2023-05-31":19099.55,"2023-06-30":19679.35,"2023-07-31":19204.8,"2023-08-31":19577.05,"2023-09-30":19035.35,"2023-10-31":20201.0,"2023-11-30":21918.8,"2023-12-31":22051.55,"2024-01-31":22526.3,"2024-02-29":22920.7,"2024-03-31":23436.5,"2024-04-30":23518.05,"2024-05-31":25007.25,"2024-06-30":26025.6,"2024-07-31":26274.35,"2024-08-31":26890.15,"2024-09-30":25059.5,"2024-10-31":25053.95,"2024-11-30":24495.55,"2024-12-31":24053.45,"2025-01-31":22479.45,"2025-02-28":24057.35,"2025-03-31":24843.8,"2025-04-30":25344.25,"2025-05-31":26139.5,"2025-06-30":25380.5,"2025-07-31":25003.05,"2025-08-31":25295.15,"2025-09-30":26369.5,"2025-10-31":26737.8,"2025-11-30":26689.3,"2025-12-31":25902.0,"2026-01-31":25897.55,"2026-02-28":22875.5,"2026-03-31":24896.0,"2026-04-30":24608.45,"2026-05-31":24915.6,"2026-06-30":25486.35,"2026-07-07":25409.65};
+const NIFTY200_HISTORY={"2017-01-31":4793.2,"2017-02-28":4955.8,"2017-03-31":5072.6,"2017-04-30":5174.6,"2017-05-31":5148.5,"2017-06-30":5443.95,"2017-07-31":5377.6,"2017-08-31":5312.7,"2017-09-30":5639.15,"2017-10-31":5618.85,"2017-11-30":5814.1,"2017-12-31":5979.2,"2018-01-31":5699.5,"2018-02-28":5499.35,"2018-03-31":5862.35,"2018-04-30":5772.75,"2018-05-31":5713.2,"2018-06-30":6032.3,"2018-07-31":6240.55,"2018-08-31":5735.05,"2018-09-30":5498.4,"2018-10-31":5732.9,"2018-11-30":5755.35,"2018-12-31":5666.45,"2019-01-31":5642.55,"2019-02-28":6079.95,"2019-03-31":6092.55,"2019-04-30":6177.85,"2019-05-31":6099.45,"2019-06-30":5731.9,"2019-07-31":5691.55,"2019-08-31":5914.85,"2019-09-30":6138.85,"2019-10-31":6220.7,"2019-11-30":6254.95,"2019-12-31":6207.85,"2020-01-31":5809.15,"2020-02-29":4433.85,"2020-03-31":5085.1,"2020-04-30":4963.4,"2020-05-31":5350.4,"2020-06-30":5715.65,"2020-07-31":5887.55,"2020-08-31":5848.9,"2020-09-30":6017.65,"2020-10-31":6727.7,"2020-11-30":7231.8,"2020-12-31":7076.8,"2021-01-31":7591.25,"2021-02-28":7671.6,"2021-03-31":7683.95,"2021-04-30":8204.9,"2021-05-31":8325.55,"2021-06-30":8396.15,"2021-07-31":9025.25,"2021-08-31":9318.55,"2021-09-30":9338.2,"2021-10-31":9028.3,"2021-11-30":9218.35,"2021-12-31":9179.15,"2022-01-31":8855.5,"2022-02-28":9207.0,"2022-03-31":9123.4,"2022-04-30":8745.65,"2022-05-31":8290.8,"2022-06-30":9087.65,"2022-07-31":9485.6,"2022-08-31":9147.45,"2022-09-30":9544.4,"2022-10-31":9876.55,"2022-11-30":9554.45,"2022-12-31":9222.05,"2023-01-31":8964.55,"2023-02-28":9007.9,"2023-03-31":9404.0,"2023-04-30":9724.8,"2023-05-31":10104.35,"2023-06-30":10445.9,"2023-07-31":10284.95,"2023-08-31":10510.25,"2023-09-30":10198.35,"2023-10-31":10887.35,"2023-11-30":11798.7,"2023-12-31":11953.8,"2024-01-31":12160.45,"2024-02-29":12329.75,"2024-03-31":12673.15,"2024-04-30":12742.8,"2024-05-31":13579.25,"2024-06-30":14170.8,"2024-07-31":14295.7,"2024-08-31":14610.8,"2024-09-30":13618.2,"2024-10-31":13627.0,"2024-11-30":13406.95,"2024-12-31":13064.55,"2025-01-31":12116.15,"2025-02-28":12982.75,"2025-03-31":13438.15,"2025-04-30":13798.4,"2025-05-31":14252.65,"2025-06-30":13814.0,"2025-07-31":13575.1,"2025-08-31":13739.95,"2025-09-30":14362.3,"2025-10-31":14579.35,"2025-11-30":14533.5,"2025-12-31":14093.05,"2026-01-31":14121.05,"2026-02-28":12492.1,"2026-03-31":13705.55,"2026-04-30":13663.7,"2026-05-31":13803.4,"2026-06-30":14106.3,"2026-07-07":14044.05};
 ﻿/* ── Utilities, hooks, formatting, price/NAV fetchers ── */
 const{useState,useReducer,useRef,useEffect,useCallback,useMemo,useDeferredValue}=React;
 /* ══════════════════════════════════════════════════════════════════════════
@@ -42,8 +44,12 @@ window.__loadExportLibs=(function(){
     _p=Promise.all([
       loadOne('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'),
       loadOne('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'),
+      loadOne('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'),
     ]).then(function(){
-      return loadOne('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js');
+      return Promise.all([
+        loadOne('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js'),
+        loadOne('https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js'),
+      ]);
     }).catch(function(err){ _p=null; throw err; });
     return _p;
   };
@@ -532,6 +538,48 @@ const fetchOneNav=async(code)=>{
   return fetchNavFromAMFI(code);
 };
 
+/* ── HISTORICAL NAV FETCHER ────────────────────────────────────────────────
+   Fetches the full daily NAV history for a scheme from mfapi.in (its response
+   `data[]` is the full chronological series, newest-first). Reduces it to an
+   ascending array of {date:"YYYY-MM-DD", nav:number} keeping the most recent
+   ~2600 trading points (≈10.4 years — covers the 10-year yearly view with
+   buffer). Used to power the MF Performance tables (30D / 90D / 6M / 1Y /
+   2Y / 3Y / 4Y / 5Y / 10Y). Returns [] on failure. */
+const fetchNavHistory=async(code)=>{
+  const base="https://api.mfapi.in/mf/"+code;
+  const proxies=[
+    base,
+    "https://api.cors.lol/?url="+encodeURIComponent(base),
+    "https://corsproxy.io/?"+encodeURIComponent(base),
+    "https://cors.eu.org/"+base,
+    "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(base),
+    "https://thingproxy.freeboard.io/fetch/"+base,
+    "https://api.allorigins.win/raw?url="+encodeURIComponent(base),
+    "https://api.allorigins.win/get?url="+encodeURIComponent(base),
+  ];
+  for(const url of proxies){
+    try{
+      const r=await _fetchX(url,{},10000);if(!r.ok)continue;
+      const txt=await _readBody(r,8000);
+      let json;try{json=JSON.parse(txt);}catch{continue;}
+      const d=_unwrapMfapi(json);
+      const arr=Array.isArray(d?.data)?d.data:[];
+      if(!arr.length)continue;
+      const out=[];
+      for(const ent of arr){
+        const nav=parseFloat(ent?.nav);
+        const iso=mfNavDateToISO(ent?.date||"");
+        if(nav>0&&/^\d{4}-\d{2}-\d{2}$/.test(iso))out.push({date:iso,nav});
+      }
+      if(out.length){
+        out.sort((x,y)=>x.date<y.date?-1:1);
+        return out.slice(-2600);
+      }
+    }catch{}
+  }
+  return[];
+};
+
 /* ══════════════════════════════════════════════════════════════════════════
    HISTORICAL PRICE FETCHER
    Fetches full daily closing prices for a share from the acquisition date
@@ -716,6 +764,7 @@ const INIT=()=>({
   eodNavs:{},
   eodIndices:{},
   historyCache:{},
+  mfHistNavs:{},
   hiddenTabs:[],
   taxData:null,
   taxData2627:null,
@@ -732,6 +781,10 @@ const INIT=()=>({
     pyfDayTarget:10,
     budgetPlans:{},
     yearlyBudgetPlans:{},
+    emailjsServiceId:"",
+    emailjsTemplateId:"",
+    emailjsPublicKey:"",
+    emailRecipient:"",
   },
   catRules:[],
   reminders:[],
@@ -761,6 +814,7 @@ const EMPTY_STATE=()=>({
   cash:{balance:0,transactions:[]},
   mf:[],
   mfTxns:[],
+  removedMf:[],
   shares:[],
   brokerCashBalance:0,
   fd:[],
@@ -775,6 +829,7 @@ const EMPTY_STATE=()=>({
   eodNavs:{},
   eodIndices:{},
   historyCache:{},
+  mfHistNavs:{},
   hiddenTabs:[],
   taxData:null,
   taxData2627:null,
@@ -806,27 +861,22 @@ const _EA=Object.freeze([]);   /* stable empty-array fallback  */
 const _EO=Object.freeze({});   /* stable empty-object fallback */
 
 const THEMES=[
-  {id:"sky",         name:"Sky Blue",    desc:"Airy light sky-blue",       dark:false, preview:["#f0f9ff","#0ea5e9","#bae6fd","#0284c7"]},
-  {id:"slate",       name:"Slate",       desc:"Cool blue-grey minimal",    dark:false, preview:["#f4f6f8","#4a6888","#bcc8d8","#385470"]},
-  {id:"nordic",      name:"Nordic",      desc:"Crisp cool steel blue",     dark:false, preview:["#f4f7f9","#3a6888","#b8ccdc","#2c5272"]},
-  {id:"moss",        name:"Moss",        desc:"Deep earthy olive moss",    dark:false, preview:["#f5f8f3","#526e3c","#bcd0b0","#3e5830"]},
-  {id:"mint",        name:"Mint",        desc:"Fresh cool emerald mint",   dark:false, preview:["#f2fbf8","#1a8a68","#a8d8c8","#147054"]},
-  {id:"rose",        name:"Rose",        desc:"Soft warm pink rose",       dark:false, preview:["#fef2f2","#e11d48","#f5d0d0","#be123c"]},
-  {id:"lavender",    name:"Lavender",    desc:"Light purple lavender",     dark:false, preview:["#f8f6ff","#7c3aed","#ddd8f5","#6d28d9"]},
-  {id:"sunset",      name:"Sunset",      desc:"Warm orange sunset",        dark:false, preview:["#fff8f0","#ea580c","#f8e0c8","#c2410c"]},
-  {id:"ocean",       name:"Ocean",       desc:"Deep teal ocean",           dark:false, preview:["#f0fafc","#0891b2","#c8ecf0","#0e7490"]},
-  {id:"coral",       name:"Coral",       desc:"Vibrant warm coral pink",   dark:false, preview:["#fff0ee","#e11d48","#fcc8c0","#be123c"]},
-  {id:"electric",    name:"Electric",    desc:"Bright electric blue",      dark:false, preview:["#eef4ff","#2563eb","#b8d0f8","#1d4ed8"]},
-  {id:"lime",        name:"Lime",        desc:"Vivid lime green",          dark:false, preview:["#f1fae8","#65a30d","#c8e4ac","#4d7c08"]},
-  {id:"tangerine",   name:"Tangerine",   desc:"Warm bold tangerine",       dark:false, preview:["#fff7ed","#ea580c","#fac8a8","#c2410c"]},
-  {id:"fuchsia",     name:"Fuchsia",     desc:"Bold vibrant fuchsia",      dark:false, preview:["#fdf2ff","#d946ef","#f0ccf0","#c026d3"]},
-  {id:"sky-dark",    name:"Sky Dark",    desc:"Deep space blue",           dark:true,  preview:["#070b12","#38bdf8","#1e3a5a","#0ea5e9"]},
-  {id:"slate-dark",  name:"Slate Dark",  desc:"Charcoal steel",            dark:true,  preview:["#080b10","#6a8aaa","#28344a","#4a6888"]},
-  {id:"nordic-dark", name:"Nordic Dark", desc:"Midnight arctic",           dark:true,  preview:["#070c12","#5a8aaa","#22364e","#3a6888"]},
-  {id:"moss-dark",   name:"Moss Dark",   desc:"Deep forest",               dark:true,  preview:["#080c06","#6e9a52","#2a3e26","#526e3c"]},
-  {id:"mint-dark",   name:"Mint Dark",   desc:"Dark emerald",              dark:true,  preview:["#060e0c","#2ab888","#1e4236","#1a8a68"]},
+  {id:"violet",      name:"Violet Light",  desc:"Rich purple-violet",   dark:false, preview:["#f8f6ff","#7c3aed","#ddd8f5","#6d28d9"]},
+  {id:"indigo",      name:"Indigo Light",  desc:"Deep indigo-blue",     dark:false, preview:["#eef2ff","#4f46e5","#c8d4f8","#4338ca"]},
+  {id:"blue",        name:"Blue Light",    desc:"Classic bright blue",  dark:false, preview:["#eff6ff","#2563eb","#bfdbfe","#1d4ed8"]},
+  {id:"green",       name:"Green Light",   desc:"Fresh emerald green",  dark:false, preview:["#f0fdf4","#16a34a","#bbf7d0","#15803d"]},
+  {id:"yellow",      name:"Yellow Light",  desc:"Warm golden yellow",   dark:false, preview:["#fffbeb","#ca8a04","#fde68a","#a16207"]},
+  {id:"orange",      name:"Orange Light",  desc:"Vibrant fiery orange", dark:false, preview:["#fff7ed","#ea580c","#fed7aa","#c2410c"]},
+  {id:"red",         name:"Red Light",     desc:"Bold crimson red",     dark:false, preview:["#fef2f2","#dc2626","#fecaca","#b91c1c"]},
+  {id:"violet-dark", name:"Violet Dark",   desc:"Deep violet night",    dark:true,  preview:["#0c0818","#a78bfa","#38245e","#8b5cf6"]},
+  {id:"indigo-dark", name:"Indigo Dark",   desc:"Indigo midnight",      dark:true,  preview:["#08081a","#818cf8","#2e2c62","#6366f1"]},
+  {id:"blue-dark",   name:"Blue Dark",     desc:"Deep ocean blue",      dark:true,  preview:["#070c18","#60a5fa","#26406a","#3b82f6"]},
+  {id:"green-dark",  name:"Green Dark",    desc:"Forest emerald",       dark:true,  preview:["#060e08","#4ade80","#224232","#22c55e"]},
+  {id:"yellow-dark", name:"Yellow Dark",   desc:"Dark amber glow",      dark:true,  preview:["#100c04","#facc15","#4e462a","#eab308"]},
+  {id:"orange-dark", name:"Orange Dark",   desc:"Ember orange night",   dark:true,  preview:["#120a04","#fb923c","#523e24","#f97316"]},
+  {id:"red-dark",    name:"Red Dark",      desc:"Dark blood red",       dark:true,  preview:["#140606","#f87171","#582828","#ef4444"]},
 ];
-const loadTheme=()=>{try{const t=localStorage.getItem(LS_THEME);if(t&&THEMES.find(th=>th.id===t))return t;}catch{}const mq=window.matchMedia("(prefers-color-scheme: dark)");return mq&&mq.matches?"sky-dark":"electric";};
+const loadTheme=()=>{try{const t=localStorage.getItem(LS_THEME);if(t&&THEMES.find(th=>th.id===t))return t;}catch{}return "blue";};
 const saveTheme=id=>{try{localStorage.setItem(LS_THEME,id);}catch{}};
 const applyTheme=id=>{document.documentElement.setAttribute("data-theme",id);if(id.endsWith("-dark")){document.documentElement.style.setProperty("color-scheme","dark");}else{document.documentElement.style.removeProperty("color-scheme");}setTimeout(syncPAL,0);};
 
@@ -888,7 +938,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-const APP_VERSION="6.7.0";
+ const APP_VERSION="7.19.25";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1154,10 +1204,10 @@ const calcFDMaturity=(principal,ratePercent,startDate,maturityDate,compoundFreq)
   if(isNaN(start.getTime())||isNaN(end.getTime()))return principal||0;
   const days=Math.max(0,Math.round((end-start)/(1000*60*60*24)));
   if(days<=0)return principal||0;
-  const years=days/365;
   const r=ratePercent/100;
   const n=compoundFreq==="annually"?1:compoundFreq==="half-yearly"?2:4;
-  const maturity=principal*Math.pow(1+r/n,n*years);
+  const completedPeriods=Math.floor(days/365*n);
+  const maturity=principal*Math.pow(1+r/n,completedPeriods);
   return Math.round(maturity);
 };
 
@@ -1224,7 +1274,7 @@ const computeXIRR=(cashflows,dates,guess=0.1)=>{
     r=nr;
     if(r<=-1)r=-0.9999; /* clamp to prevent negative base in pow */
   }
-  if(!isFinite(r)||r<=-1||r>50)return null; /* >5000% XIRR is almost certainly a convergence error */
+  if(!isFinite(r)||r<=-1||r>5)return null; /* >500% XIRR is almost certainly a convergence error */
   return Math.round(r*10000)/100; /* return as % with 2 decimal places */
 };
 
@@ -1260,7 +1310,7 @@ const computeCapitalGains=(shares,mf)=>{
 
   /* ── Equity shares (always equity rules: 12-month threshold) ── */
   shares.forEach(sh=>{
-    if(!sh.buyDate||!sh.currentPrice||!sh.buyPrice||!sh.qty)return;
+    if(!sh||!sh.buyDate||!sh.currentPrice||!sh.buyPrice||!sh.qty)return;
     const buyD=new Date(sh.buyDate+"T12:00:00");
     const todD=new Date(today+"T12:00:00");
     const daysHeld=Math.floor((todD-buyD)/86400000);
@@ -1306,139 +1356,6 @@ const computeCapitalGains=(shares,mf)=>{
   const ltcgTax=crossLtcg*0.125;
   return{stcgGain,stcgLoss,ltcgGain,ltcgLoss,ltcgExempt,ltcgTaxable,stcgTax,ltcgTax,totalTax:stcgTax+ltcgTax,details,skippedMF};
 };
-
-/* ══════════════════════════════════════════════════════════════════════════
-   UPI ENRICHMENT — maps raw UPI VPA / description noise to merchant names
-   and suggests categories. Applied on SMS parse, bulk import, and manual add.
-   Custom mappings persisted in localStorage key mm_upi_v1.
-   ══════════════════════════════════════════════════════════════════════════ */
-const UPI_LS="mm_upi_v1";
-const loadUpiMap=()=>{try{return JSON.parse(localStorage.getItem(UPI_LS)||"{}");}catch{return {};}};
-const saveUpiMap=m=>{try{localStorage.setItem(UPI_LS,JSON.stringify(m));}catch{}};
-
-/* Built-in VPA keyword → {name, cat} table (keyword matched case-insensitively in desc/payee) */
-const UPI_BUILTIN=[
-  /* Food delivery */
-  {k:"zomato",       name:"Zomato",           cat:"Food & Dining"},
-  {k:"swiggy",       name:"Swiggy",           cat:"Food & Dining"},
-  {k:"dunzo",        name:"Dunzo",            cat:"Shopping"},
-  {k:"blinkit",      name:"Blinkit",          cat:"Groceries"},
-  {k:"zepto",        name:"Zepto",            cat:"Groceries"},
-  {k:"bigbasket",    name:"BigBasket",        cat:"Groceries"},
-  {k:"grofers",      name:"Blinkit",          cat:"Groceries"},
-  {k:"jiomart",      name:"JioMart",          cat:"Groceries"},
-  /* E-commerce */
-  {k:"amazon",       name:"Amazon",           cat:"Shopping"},
-  {k:"flipkart",     name:"Flipkart",         cat:"Shopping"},
-  {k:"meesho",       name:"Meesho",           cat:"Shopping"},
-  {k:"myntra",       name:"Myntra",           cat:"Shopping"},
-  {k:"ajio",         name:"Ajio",             cat:"Shopping"},
-  {k:"nykaa",        name:"Nykaa",            cat:"Shopping"},
-  {k:"snapdeal",     name:"Snapdeal",         cat:"Shopping"},
-  {k:"tatacliq",     name:"Tata CLiQ",        cat:"Shopping"},
-  /* Utilities & bills */
-  {k:"bescom",       name:"BESCOM",           cat:"Utilities"},
-  {k:"msedcl",       name:"MSEDCL",           cat:"Utilities"},
-  {k:"tatapower",    name:"Tata Power",       cat:"Utilities"},
-  {k:"airtel",       name:"Airtel",           cat:"Utilities"},
-  {k:"jio",          name:"Jio",              cat:"Utilities"},
-  {k:"vodafone",     name:"Vodafone",         cat:"Utilities"},
-  {k:"bsnl",         name:"BSNL",             cat:"Utilities"},
-  {k:"mahanagar",    name:"MGL Gas",          cat:"Utilities"},
-  {k:"indraprastha", name:"IGL Gas",          cat:"Utilities"},
-  /* Travel */
-  {k:"irctc",        name:"IRCTC",            cat:"Travel"},
-  {k:"redbus",       name:"redBus",           cat:"Travel"},
-  {k:"makemytrip",   name:"MakeMyTrip",       cat:"Travel"},
-  {k:"goibibo",      name:"Goibibo",          cat:"Travel"},
-  {k:"cleartrip",    name:"Cleartrip",        cat:"Travel"},
-  {k:"ola",          name:"Ola",              cat:"Transport"},
-  {k:"uber",         name:"Uber",             cat:"Transport"},
-  {k:"rapido",       name:"Rapido",           cat:"Transport"},
-  {k:"blusmrt",      name:"BluSmart",         cat:"Transport"},
-  /* Health */
-  {k:"practo",       name:"Practo",           cat:"Health"},
-  {k:"pharmeasy",    name:"PharmEasy",        cat:"Health"},
-  {k:"netmeds",      name:"Netmeds",          cat:"Health"},
-  {k:"1mg",          name:"1mg",              cat:"Health"},
-  {k:"apollopharmacy",name:"Apollo Pharmacy", cat:"Health"},
-  {k:"medlife",      name:"Medlife",          cat:"Health"},
-  /* Entertainment */
-  {k:"netflix",      name:"Netflix",          cat:"Entertainment"},
-  {k:"hotstar",      name:"Disney+Hotstar",   cat:"Entertainment"},
-  {k:"spotify",      name:"Spotify",          cat:"Entertainment"},
-  {k:"youtube",      name:"YouTube Premium",  cat:"Entertainment"},
-  {k:"amazon.prime", name:"Amazon Prime",     cat:"Entertainment"},
-  {k:"sonyliv",      name:"SonyLIV",          cat:"Entertainment"},
-  {k:"zee5",         name:"ZEE5",             cat:"Entertainment"},
-  {k:"bookmyshow",   name:"BookMyShow",       cat:"Entertainment"},
-  /* Finance & investments */
-  {k:"zerodha",      name:"Zerodha",          cat:"Investments"},
-  {k:"groww",        name:"Groww",            cat:"Investments"},
-  {k:"kuvera",       name:"Kuvera",           cat:"Investments"},
-  {k:"coin",         name:"Zerodha Coin",     cat:"Investments"},
-  {k:"smallcase",    name:"Smallcase",        cat:"Investments"},
-  {k:"nps",          name:"NPS",              cat:"Investments"},
-  {k:"ppf",          name:"PPF",              cat:"Investments"},
-  /* Payment wallets */
-  {k:"paytm",        name:"Paytm",            cat:"Others"},
-  {k:"phonepe",      name:"PhonePe",          cat:"Others"},
-  {k:"gpay",         name:"Google Pay",       cat:"Others"},
-  {k:"bhim",         name:"BHIM UPI",         cat:"Others"},
-  /* Education */
-  {k:"byju",         name:"BYJU'S",           cat:"Education"},
-  {k:"unacademy",    name:"Unacademy",        cat:"Education"},
-  {k:"coursera",     name:"Coursera",         cat:"Education"},
-  {k:"udemy",        name:"Udemy",            cat:"Education"},
-  {k:"vedantu",      name:"Vedantu",          cat:"Education"},
-  /* Insurance */
-  {k:"lic",          name:"LIC",              cat:"Insurance"},
-  {k:"policybazaar", name:"PolicyBazaar",     cat:"Insurance"},
-  {k:"hdfcergo",     name:"HDFC ERGO",        cat:"Insurance"},
-  {k:"icicilomic",   name:"ICICI Lombard",    cat:"Insurance"},
-  {k:"starhealth",   name:"Star Health",      cat:"Insurance"},
-];
-
-/* UPI VPA regex: UPI-<name>-<VPA>-<ref> or <name>@<bank> */
-const UPI_DESC_RE=/UPI[-\s](?:CR|DR|COLL|PAY)?[-\s]?(?:\d+[-\s])?([A-Za-z0-9._-]+@[A-Za-z0-9]+)/i;
-const UPI_PAYTM_RE=/\b([A-Za-z0-9._]+@(?:paytm|upi|icici|ybl|okaxis|okicici|okhdfcbank|oksbi|ibl|axisbank|hdfcbank|sbi|indus|federal|kotak|rbl|idbi|bob|pnb|cnrb|barodampay|aubank|jsb|yesbank|freecharge))\b/i;
-
-function enrichUpiDesc(desc, payee){
-  const src=((desc||"")+" "+(payee||"")).toLowerCase();
-  /* Check built-in table first */
-  const custom=loadUpiMap();
-  /* Check custom mappings */
-  for(const [k,v] of Object.entries(custom)){
-    if(src.includes(k.toLowerCase()))return{name:v.name||k,cat:v.cat||""};
-  }
-  /* Check built-in */
-  for(const entry of UPI_BUILTIN){
-    if(src.includes(entry.k))return{name:entry.name,cat:entry.cat};
-  }
-  /* Try to extract VPA name part */
-  const m=src.match(UPI_PAYTM_RE)||src.match(UPI_DESC_RE);
-  if(m){
-    const vpa=m[1]||m[0];
-    const namePart=vpa.split("@")[0].replace(/[._-]/g," ").replace(/\b\w/g,c=>c.toUpperCase()).trim();
-    if(namePart&&namePart.length>2&&namePart.length<40)return{name:namePart,cat:""};
-  }
-  return null;
-}
-
-/* Apply UPI enrichment to a transaction — returns {desc?,payee?} overrides or null */
-function applyUpiEnrichment(tx){
-  const src=((tx.desc||"")+" "+(tx.payee||"")).toLowerCase();
-  if(!src.includes("upi")&&!src.includes("@"))return null;
-  const result=enrichUpiDesc(tx.desc,tx.payee);
-  if(!result)return null;
-  const out={};
-  /* Only set payee if empty or looks like a raw VPA */
-  if(!tx.payee||(tx.payee||"").includes("@"))out.payee=result.name;
-  /* Only set desc if it looks like raw UPI noise */
-  if(result.name&&(tx.desc||"").match(/^UPI[-\s]/i))out.desc=result.name;
-  if(result.cat&&!tx.cat)out.cat=result.cat;
-  return Object.keys(out).length?out:null;
-}
 
 /* ══════════════════════════════════════════════════════════════════════════
    AUTO-CAT RULE APPLICATION — applies a list of catRules to a single tx.
@@ -1487,11 +1404,13 @@ const applyCatRule=(rules,tx)=>{
    existing MF metadata (schemeCode, nav, currentValue, navDate, manualXirr).
    invested = netUnits × avgNav (cost of currently held units = CoA),
    NOT total historical buy amount (which inflates after partial sells). ── */
-const _deriveMfHoldings=(txns,existingMf)=>{
+const _deriveMfHoldings=(txns,existingMf,removedMf)=>{
+  const _removed=new Set(removedMf||[]);
   const byFund={};
   txns.forEach(t=>{
     const key=t.fundName;
     if(!key)return;
+    if(_removed.has(key))return;
     if(!byFund[key])byFund[key]={fundName:key,folios:new Set(),txns:[]};
     byFund[key].txns.push(t);
     if(t.folio)byFund[key].folios.add(String(t.folio));
@@ -1528,12 +1447,30 @@ const _deriveMfHoldings=(txns,existingMf)=>{
   });
 };
 
+/* Merge a tombstone set into a (possibly cloud-restored) state and drop any
+   fund whose name is marked removed — so a deleted fund is never re-added,
+   even from a stale Drive/sync backup. Preserves mfTxns regardless. */
+const _mergeRemovedMf=(target,localRemoved)=>{
+  const _merged=[...new Set([...(localRemoved||[]),...(target.removedMf||[])])];
+  const _rm=new Set(_merged);
+  return{...target,removedMf:_merged,mf:(target.mf||[]).filter(m=>!m||!_rm.has(m.name))};
+};
+/* Read the locally persisted MF-deletion tombstone (safe from any restore path). */
+const _localRemovedMf=()=>{
+  try{
+    const _raw=localStorage.getItem(LS_KEY);
+    if(!_raw)return[];
+    const _p=JSON.parse(_raw);
+    return Array.isArray(_p.removedMf)?_p.removedMf:[];
+  }catch{return[];}
+};
 const reducer=(s,a)=>{
+  const _applyRemovedMf=_mergeRemovedMf;
   /* Returns max(_sn) + 1 across all transactions in an array — used to assign a permanent SN at creation time */
   const nextSn=txs=>txs.reduce((m,t)=>Math.max(m,t._sn||0),0)+1;
   switch(a.type){
     case"ADD_BANK":return{...s,banks:[...s.banks,a.p]};
-    case"ADD_BANK_TX":{const b=s.banks.find(b=>b.id===a.id);const sn=b?nextSn(b.transactions):1;const _acr=applyCatRule(s.catRules||[],a.tx);const _upi=applyUpiEnrichment({...a.tx,...(_acr||{})});const _tx={...a.tx,...(_acr||{}),_sn:sn,...(_upi||{}),id:(a.tx.id||uid())};return{...s,banks:s.banks.map(b=>b.id===a.id?{...b,balance:b.balance+(_tx.status==="Reconciled"?(_tx.type==="credit"?_tx.amount:-_tx.amount):0),transactions:[...b.transactions,_tx]}:b)};}
+    case"ADD_BANK_TX":{const b=s.banks.find(b=>b.id===a.id);const sn=b?nextSn(b.transactions):1;const _acr=applyCatRule(s.catRules||[],a.tx);const _tx={...a.tx,...(_acr||{}),_sn:sn,id:(a.tx.id||uid())};return{...s,banks:s.banks.map(b=>b.id===a.id?{...b,balance:b.balance+(_tx.status==="Reconciled"?(_tx.type==="credit"?_tx.amount:-_tx.amount):0),transactions:[...b.transactions,_tx]}:b)};}
     case"UPD_BANK_BAL":return{...s,banks:s.banks.map(b=>b.id===a.id?(a.tx.status==="Reconciled"?{...b,balance:b.balance+(a.tx.type==="credit"?a.tx.amount:-a.tx.amount)}:b):b)};
     case"EDIT_BANK_TX":{const _bwas=a.old.status==="Reconciled";const _bis=a.tx.status==="Reconciled";const _bOld=_bwas?(a.old.type==="credit"?a.old.amount:-a.old.amount):0;const _bNew=_bis?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0;return{...s,banks:s.banks.map(b=>b.id===a.accId?{...b,balance:b.balance+(_bNew-_bOld),transactions:(b.transactions||[]).map(t=>t.id===a.tx.id?a.tx:t)}:b)};}
     case"DEL_BANK_TX":return{...s,banks:s.banks.map(b=>b.id===a.accId?{...b,balance:b.balance-(a.tx.status==="Reconciled"?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0),transactions:(b.transactions||[]).filter(t=>t.id!==a.tx.id)}:b)};
@@ -1556,8 +1493,8 @@ const reducer=(s,a)=>{
       const netDelta=toDelete.filter(t=>t.status==="Reconciled").reduce((d,t)=>d+(t.type==="credit"?t.amount:-t.amount),0);
       return{...s,cash:{...s.cash,balance:s.cash.balance-netDelta,transactions:s.cash.transactions.filter(t=>!a.ids.has(t.id))}};
     }
-    case"REORDER_BANKS":{const bs=[...s.banks];const[mv]=bs.splice(a.from,1);bs.splice(a.to,0,mv);return{...s,banks:bs};}
-    case"REORDER_CARDS":{const cs=[...s.cards];const[mv]=cs.splice(a.from,1);cs.splice(a.to,0,mv);return{...s,cards:cs};}
+    case"REORDER_BANKS":{const bs=[...s.banks];if(a.from===a.to||a.from<0||a.from>=bs.length||a.to<0||a.to>=bs.length)return s;const[mv]=bs.splice(a.from,1);bs.splice(a.to,0,mv);return{...s,banks:bs};}
+    case"REORDER_CARDS":{const cs=[...s.cards];if(a.from===a.to||a.from<0||a.from>=cs.length||a.to<0||a.to>=cs.length)return s;const[mv]=cs.splice(a.from,1);cs.splice(a.to,0,mv);return{...s,cards:cs};}
     case"TOGGLE_BANK_HIDDEN":return{...s,banks:s.banks.map(b=>b.id===a.id?{...b,hidden:!b.hidden}:b)};
     case"TOGGLE_CARD_HIDDEN":return{...s,cards:s.cards.map(c=>c.id===a.id?{...c,hidden:!c.hidden}:c)};
     case"EDIT_BANK":return{...s,banks:s.banks.map(b=>{
@@ -1607,7 +1544,7 @@ const reducer=(s,a)=>{
       return{...s,cash:{...s.cash,balance:_cashRec}};
     }
     case"ADD_CARD":return{...s,cards:[...s.cards,a.p]};
-    case"ADD_CARD_TX":{const c=s.cards.find(c=>c.id===a.id);const sn=c?nextSn(c.transactions):1;const _acr2=applyCatRule(s.catRules||[],a.tx);const _upi2=applyUpiEnrichment({...a.tx,...(_acr2||{})});const _tx2={...a.tx,...(_acr2||{}),_sn:sn,...(_upi2||{}),id:(a.tx.id||uid())};return{...s,cards:s.cards.map(c=>c.id===a.id?{...c,outstanding:Math.max(0,c.outstanding+(_tx2.status==="Reconciled"?(_tx2.type==="debit"?_tx2.amount:-_tx2.amount):0)),transactions:[...c.transactions,_tx2]}:c)};}
+    case"ADD_CARD_TX":{const c=s.cards.find(c=>c.id===a.id);const sn=c?nextSn(c.transactions):1;const _acr2=applyCatRule(s.catRules||[],a.tx);const _tx2={...a.tx,...(_acr2||{}),_sn:sn,id:(a.tx.id||uid())};return{...s,cards:s.cards.map(c=>c.id===a.id?{...c,outstanding:Math.max(0,c.outstanding+(_tx2.status==="Reconciled"?(_tx2.type==="debit"?_tx2.amount:-_tx2.amount):0)),transactions:[...c.transactions,_tx2]}:c)};}
     case"UPD_CARD_BAL":return{...s,cards:s.cards.map(c=>c.id===a.id?(a.tx.status==="Reconciled"?{...c,outstanding:Math.max(0,c.outstanding+(a.tx.type==="debit"?a.tx.amount:-a.tx.amount))}:c):c)};
     case"EDIT_CARD_TX":{const _cwas=a.old.status==="Reconciled";const _cis=a.tx.status==="Reconciled";const _cOld=_cwas?(a.old.type==="debit"?a.old.amount:-a.old.amount):0;const _cNew=_cis?(a.tx.type==="debit"?a.tx.amount:-a.tx.amount):0;return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,outstanding:Math.max(0,c.outstanding+(_cNew-_cOld)),transactions:(c.transactions||[]).map(t=>t.id===a.tx.id?a.tx:t)}:c)};}
     case"DEL_CARD_TX":return{...s,cards:s.cards.map(c=>c.id===a.accId?{...c,outstanding:Math.max(0,c.outstanding-(a.tx.status==="Reconciled"?(a.tx.type==="debit"?a.tx.amount:-a.tx.amount):0)),transactions:(c.transactions||[]).filter(t=>t.id!==a.tx.id)}:c)};
@@ -1620,23 +1557,29 @@ const reducer=(s,a)=>{
         sc.accId!==a.id&&sc.srcId!==a.id&&sc.tgtId!==a.id
       ),
     };
-    case"ADD_CASH_TX":{const sn=nextSn(s.cash.transactions);const _caRec=a.tx.status==="Reconciled";const _acr3=applyCatRule(s.catRules||[],a.tx);const _upi3=applyUpiEnrichment({...a.tx,...(_acr3||{})});const _tx3={...a.tx,...(_acr3||{}),_sn:sn,...(_upi3||{}),id:(a.tx.id||uid())};return{...s,cash:{balance:s.cash.balance+(_caRec?(_tx3.type==="credit"?_tx3.amount:-_tx3.amount):0),transactions:[...s.cash.transactions,_tx3]}};}
+    case"ADD_CASH_TX":{const sn=nextSn(s.cash.transactions);const _caRec=a.tx.status==="Reconciled";const _acr3=applyCatRule(s.catRules||[],a.tx);const _tx3={...a.tx,...(_acr3||{}),_sn:sn,id:(a.tx.id||uid())};return{...s,cash:{balance:s.cash.balance+(_caRec?(_tx3.type==="credit"?_tx3.amount:-_tx3.amount):0),transactions:[...s.cash.transactions,_tx3]}};}
     case"SET_CASH_BAL":return{...s,cash:{...s.cash,balance:a.val}};
     case"EDIT_CASH_TX":{const _ewas=a.old.status==="Reconciled";const _eis=a.tx.status==="Reconciled";const _eOld=_ewas?(a.old.type==="credit"?a.old.amount:-a.old.amount):0;const _eNew=_eis?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0;return{...s,cash:{...s.cash,balance:s.cash.balance+(_eNew-_eOld),transactions:s.cash.transactions.map(t=>t.id===a.tx.id?a.tx:t)}};}
     case"DEL_CASH_TX":return{...s,cash:{...s.cash,balance:s.cash.balance-(a.tx.status==="Reconciled"?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0),transactions:s.cash.transactions.filter(t=>t.id!==a.tx.id)}};
     case"DUP_CASH_TX":{const sn=nextSn(s.cash.transactions);const _dcRec=a.tx.status==="Reconciled";return{...s,cash:{...s.cash,balance:s.cash.balance+(_dcRec?(a.tx.type==="credit"?a.tx.amount:-a.tx.amount):0),transactions:[...s.cash.transactions,{...a.tx,id:uid(),_sn:sn,_addedAt:new Date().toISOString()}]}};}
     case"ADD_MF":return{...s,mf:[...s.mf,a.p]};
     case"EDIT_MF":return{...s,mf:s.mf.map(m=>m.id===a.p.id?{...m,...a.p}:m)};
-    case"UPD_MF_NAV":return{...s,mf:a.p};
+    case"UPD_MF_NAV":{const navMap=new Map((a.p||[]).map(m=>[m.id,m]));return{...s,mf:s.mf.map(m=>navMap.has(m.id)?{...m,...navMap.get(m.id)}:m)};}
     case"DEL_MF":{
-      const _delCode=(s.mf.find(m=>m.id===a.id)||{}).schemeCode||"";
+      const _del=(s.mf.find(m=>m.id===a.id)||{});
+      const _delCode=_del.schemeCode||"";
       const _cleanNavs={};
       Object.entries(s.eodNavs||{}).forEach(([date,navs])=>{
         const n={...navs};
         if(_delCode)delete n[_delCode];
         if(Object.keys(n).length>0)_cleanNavs[date]=n;
       });
-      return{...s,mf:s.mf.filter(m=>m.id!==a.id),eodNavs:_cleanNavs};
+      /* Tombstone: remember the deleted fund so it is never re-added from
+         txns or from a (possibly stale) Drive/sync restore — while its
+         mfTxns are intentionally preserved per user requirement. */
+      const _removed=(s.removedMf||[]).slice();
+      if(_del.name&&_removed.indexOf(_del.name)<0)_removed.push(_del.name);
+      return{...s,mf:s.mf.filter(m=>m.id!==a.id),removedMf:_removed,eodNavs:_cleanNavs};
     }
     /* ── MF EOD NAV snapshots ── */
     case"SET_EOD_NAVS":{
@@ -1671,6 +1614,23 @@ const reducer=(s,a)=>{
       const prunedIdx={};
       idxKeys.slice(-90).forEach(k=>{prunedIdx[k]=updatedIdx[k];});
       return{...s,eodIndices:prunedIdx};
+    }
+    /* ── Historical NAV series cache (per scheme code):
+       { [schemeCode]: [ {date:"YYYY-MM-DD", nav:number}, ... ] } ascending —
+       used by the MF Performance tables (30D / 90D / 6M / 1Y / 2Y / 3Y / 4Y /
+       5Y / 10Y). Stores ~2600 daily NAV points per fund, enough for the 10-year
+       yearly view. The `_v` stamp marks the cache layout version so older
+       short caches (previous limits) are re-fetched once. */
+    case"SET_MF_HIST":{
+      const _hist={...s.mfHistNavs||{}};
+      if(Array.isArray(a.series)&&a.series.length){
+        const SORTED=a.series.slice().sort((x,y)=>x.date<y.date?-1:1);
+        _hist[a.code]=SORTED.slice(-2600);
+      }else{
+        delete _hist[a.code];
+      }
+      _hist._v=3;
+      return{...s,mfHistNavs:_hist};
     }
     case"SET_BROKER_CASH":return{...s,brokerCashBalance:a.amount};
     case"ADD_SHARE":return{...s,shares:[...s.shares,a.p]};
@@ -1763,23 +1723,23 @@ const reducer=(s,a)=>{
       const _deduped=(a.txns||[]).filter(t=>!_existingSigs.has(_sig(t)));
       const newTxns=_deduped.map((t,i)=>({...t,id:t.id||uid()}));
       const merged=[...(s.mfTxns||[]),...newTxns];
-      const derivedMf=_deriveMfHoldings(merged,s.mf||[]);
+      const derivedMf=_deriveMfHoldings(merged,s.mf||[],s.removedMf);
       return{...s,mfTxns:merged,mf:derivedMf};
     }
     case"ADD_MF_TXN":{
       const newTxn={...a.txn,id:a.txn.id||uid()};
       const merged=[...(s.mfTxns||[]),newTxn];
-      const derivedMf=_deriveMfHoldings(merged,s.mf||[]);
+      const derivedMf=_deriveMfHoldings(merged,s.mf||[],s.removedMf);
       return{...s,mfTxns:merged,mf:derivedMf};
     }
     case"EDIT_MF_TXN":{
       const updated=(s.mfTxns||[]).map(t=>t.id===a.txn.id?{...t,...a.txn}:t);
-      const derivedMf=_deriveMfHoldings(updated,s.mf||[]);
+      const derivedMf=_deriveMfHoldings(updated,s.mf||[],s.removedMf);
       return{...s,mfTxns:updated,mf:derivedMf};
     }
     case"DEL_MF_TXN":{
       const filtered=(s.mfTxns||[]).filter(t=>t.id!==a.id);
-      const derivedMf=_deriveMfHoldings(filtered,s.mf||[]);
+      const derivedMf=_deriveMfHoldings(filtered,s.mf||[],s.removedMf);
       return{...s,mfTxns:filtered,mf:derivedMf};
     }
     case"CLEAR_MF_TXNS":return{...s,mfTxns:[],mf:(s.mf||[]).filter(m=>!(s.mfTxns||[]).some(t=>t.fundName===m.name))};
@@ -1990,7 +1950,7 @@ const reducer=(s,a)=>{
         if(_units<=0)return s;
         const _sellTxn={id:uid(),fundName:sc.fundName,date:_runDate,orderType:"sell",amount:sc.amount,nav:_nav,units:_units,tag:"SWP"};
         const _allTxns=[...(s.mfTxns||[]),_sellTxn];
-        let ns={...s,mfTxns:_allTxns,mf:_deriveMfHoldings(_allTxns,s.mf||[])};
+        let ns={...s,mfTxns:_allTxns,mf:_deriveMfHoldings(_allTxns,s.mf||[],s.removedMf)};
         const _tgtBank=(s.banks||[]).find(b=>b.id===sc.targetAccId);
         if(_tgtBank){
           const _creditDate=_addWorkDays(_runDate,2);
@@ -2156,7 +2116,29 @@ const reducer=(s,a)=>{
       if(at==="cash")return{...s,cash:{...s.cash,transactions:s.cash.transactions.map(upd)}};
       return s;
     }
-    case"RESTORE_ALL":return{...EMPTY_STATE(),...a.data};
+    case"RESTORE_ALL":{
+      const d=a.data||{};
+      const _base={...EMPTY_STATE(),...d,
+        removedMf:Array.isArray(d.removedMf)?d.removedMf:[],
+        banks:Array.isArray(d.banks)?d.banks:[],
+        cards:Array.isArray(d.cards)?d.cards:[],
+        cash:d.cash&&typeof d.cash==="object"?d.cash:{balance:0,transactions:[]},
+        mf:Array.isArray(d.mf)?d.mf:[],
+        shares:Array.isArray(d.shares)?d.shares:[],
+        fd:Array.isArray(d.fd)?d.fd:[],
+        re:Array.isArray(d.re)?d.re:[],
+        pf:Array.isArray(d.pf)?d.pf:[],
+        loans:Array.isArray(d.loans)?d.loans:[],
+        goals:Array.isArray(d.goals)?d.goals:[],
+        notes:Array.isArray(d.notes)?d.notes:[],
+        categories:Array.isArray(d.categories)?d.categories:[],
+        payees:Array.isArray(d.payees)?d.payees:[],
+        historyCache:d.historyCache&&typeof d.historyCache==="object"?d.historyCache:{},
+      };
+      /* Merge the local tombstone into the restored state and drop any fund the
+         user has deleted — so a stale Drive/sync restore can never resurrect it. */
+      return _applyRemovedMf(_base,s.removedMf);
+    }
     case"RESET_ALL":return{...EMPTY_STATE()};
     /* Bulk import: a.accType = bank|card|cash, a.accId, a.txns = array of tx objects */
     case"IMPORT_BULK_TX":{
@@ -2164,7 +2146,7 @@ const reducer=(s,a)=>{
       if(!txns||!txns.length)return s;
       const enrichStamped=(txList,startSn)=>{
         let sn=startSn;
-        return txList.map(t=>{const u=applyUpiEnrichment(t);return{...t,...(u||{}),_sn:t._sn??sn++};});
+        return txList.map(t=>{return{...t,_sn:t._sn??sn++};});
       };
       if(accType==="bank"){
         return{...s,banks:s.banks.map(b=>{
@@ -2407,7 +2389,7 @@ const reducer=(s,a)=>{
   }
 };
 
-/* ── SVG charts, UI primitives, SmsScanModal, ImportTxModal, VirtualList, TxLedger ── */
+/* ── SVG charts, UI primitives, ImportTxModal, VirtualList, TxLedger ── */
 /* ── SVG CHARTS ─────────────────────────────────────────────────────────── */
 const DonutChart=({data,size=170})=>{
   const total=data.reduce((s,d)=>s+d.value,0);
@@ -2671,138 +2653,10 @@ const dmyFmt=d=>{
 const parseAmt=(raw)=>{
   if(raw===null||raw===undefined||raw==="")return 0;
   const n=parseFloat(raw.toString().replace(/[^0-9.\-]/g,""));
-  return isNaN(n)?0:Math.abs(n);
+  return isNaN(n)?0:n;
 };
 
-/* ══════════════════════════════════════════════════════════════════════════
-   SMS AUTO-PARSER
-   Parses raw Indian bank SMS alerts into transaction objects.
-   Covers: HDFC, SBI, ICICI, Axis, Kotak, IndusInd, Yes Bank, Federal,
-           IDFC, Canara, PNB, BOB, AU Small Finance, Paytm, PhonePe.
-   ══════════════════════════════════════════════════════════════════════════ */
-const SMS_PATTERNS=[
-  /* ── Debit patterns ── */
-  {type:"debit", re:/(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)\s*(?:has been |is |)(?:debited|deducted|spent|withdrawn)/i},
-  {type:"debit", re:/debited.*?(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)/i},
-  {type:"debit", re:/(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)\s*debited/i},
-  {type:"debit", re:/spent\s+(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)/i},
-  {type:"debit", re:/withdrawn.*?(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)/i},
-  /* ── Credit patterns ── */
-  {type:"credit",re:/(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)\s*(?:has been |is |)(?:credited|received|deposited)/i},
-  {type:"credit",re:/credited.*?(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)/i},
-  {type:"credit",re:/(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)\s*credited/i},
-  {type:"credit",re:/received.*?(?:INR|Rs\.?|₹)\s*([\d,]+\.?\d*)/i},
-];
-const SMS_DATE_PATTERNS=[
-  /(\d{2}[\/\-]\d{2}[\/\-]\d{2,4})/,
-  /(\d{2}[A-Za-z]{3}\d{2,4})/,
-  /(\d{2}\s+[A-Za-z]{3}\s+\d{2,4})/,
-  /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{4}/i,
-];
-const SMS_REF_RE=/(?:Ref(?:erence|\.?)\s*(?:No\.?|#)?|UPI|UTR|Txn|Ref)[:\s#]*([A-Z0-9]{8,})/i;
-const SMS_DESC_RE=/(?:at|to|from|via|Info:|at merchant|merchant)\s+([A-Za-z0-9 &\-\/.,']+?)(?:\s+on|\s+Ref|\s+UPI|\s+Avl|\s+Available|\s+Bal|$)/i;
 
-function parseSmsDate(raw){
-  const MONTHS={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
-  if(!raw)return TODAY();
-  raw=raw.trim();
-  /* DD/MM/YY or DD-MM-YY or DD/MM/YYYY */
-  let m=raw.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{2,4})$/);
-  if(m){const yr=m[3].length===2?"20"+m[3]:m[3];return `${yr}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;}
-  /* DDMonYY or DDMonYYYY */
-  m=raw.match(/^(\d{2})([A-Za-z]{3})(\d{2,4})$/);
-  if(m){const mo=MONTHS[m[2].toLowerCase()];const yr=m[3].length===2?"20"+m[3]:m[3];if(mo)return `${yr}-${String(mo).padStart(2,"0")}-${m[1].padStart(2,"0")}`;}
-  return TODAY();
-}
-
-function parseSingleSms(sms){
-  if(!sms||!sms.trim())return null;
-  let type=null,amount=0;
-  for(const p of SMS_PATTERNS){
-    const m=sms.match(p.re);
-    if(m){type=p.type;amount=parseFloat(m[1].replace(/,/g,""));break;}
-  }
-  if(!type||!amount)return null;
-  let dateStr=TODAY();
-  for(const dp of SMS_DATE_PATTERNS){const dm=sms.match(dp);if(dm){dateStr=parseSmsDate(dm[1]);break;}}
-  const refM=sms.match(SMS_REF_RE);
-  const ref=refM?refM[1]:"";
-  const descM=sms.match(SMS_DESC_RE);
-  const desc=(descM?descM[1].trim():"SMS Import").replace(/\s+/g," ").slice(0,80);
-  return{id:uid(),date:dateStr,amount,type,desc:desc||"SMS Import",txNum:ref,payee:"",cat:"",notes:"",status:"Unreconciled",
-    txType:type==="credit"?"Deposit":"Withdrawal"};
-}
-
-const SmsScanModal=({onImport,onClose,accType="bank"})=>{
-  const[raw,setRaw]=useState("");
-  const[parsed,setParsed]=useState(null);
-  const[step,setStep]=useState("input");
-
-  const parseSms=()=>{
-    const lines=raw.split(/\n+/).map(l=>l.trim()).filter(Boolean);
-    /* Group multi-line SMS: blank line = separator; or each line is an SMS */
-    const smsList=[];
-    let cur="";
-    lines.forEach(l=>{if(l==="---"||l===""){if(cur.trim())smsList.push(cur.trim());cur="";}else cur+=" "+l;});
-    if(cur.trim())smsList.push(cur.trim());
-    /* Also try each line independently as a complete SMS */
-    if(smsList.length===0)smsList.push(...lines);
-    const ok=[],fail=[];
-    smsList.forEach((s,i)=>{const r=parseSingleSms(s);if(r)ok.push(r);else if(s.length>10)fail.push(i+1);});
-    setParsed({ok,fail,total:smsList.length});
-    setStep("preview");
-  };
-
-  return React.createElement(Modal,{title:"Parse Bank SMS",onClose,w:620},
-    step==="input"&&React.createElement("div",null,
-      React.createElement("div",{style:{fontSize:13,color:"var(--text4)",marginBottom:14,lineHeight:1.7}},
-        "Paste one or more bank SMS alerts below. Separate multiple messages with a blank line or '---'. Supports HDFC, SBI, ICICI, Axis, Kotak, IndusInd, Yes Bank, Federal, and more."
-      ),
-      React.createElement("textarea",{
-        className:"inp",
-        value:raw,
-        onChange:e=>setRaw(e.target.value),
-        placeholder:"Paste SMS here…\n\nExample:\nHDFC Bank: Rs.1500.00 debited from a/c **4321 on 20-03-26 to VPA zomato@hdfcbank. Ref 456789012345.\n\n---\nDear SBI Customer, Rs.85000 credited to A/c No. XXXX1234 on 01-03-26 by NEFT. Ref No INB24031234567.",
-        style:{width:"100%",minHeight:200,fontFamily:"'DM Sans',sans-serif",fontSize:12,resize:"vertical",lineHeight:1.6}
-      }),
-      React.createElement("div",{style:{display:"flex",gap:8,marginTop:12,flexWrap:"wrap"}},
-        React.createElement(Btn,{onClick:parseSms,disabled:!raw.trim()},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"search",size:13})," Parse SMS →")),
-        React.createElement(Btn,{v:"secondary",onClick:onClose},"Cancel")
-      )
-    ),
-    step==="preview"&&parsed&&React.createElement("div",null,
-      React.createElement("div",{style:{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap"}},
-        React.createElement("div",{style:{flex:1,background:"rgba(22,163,74,.08)",border:"1px solid rgba(22,163,74,.25)",borderRadius:8,padding:"10px 14px"}},
-          React.createElement("div",{style:{fontSize:10,color:"#16a34a",textTransform:"uppercase",letterSpacing:.5}},"Parsed"),
-          React.createElement("div",{style:{fontSize:22,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#16a34a"}},parsed.ok.length)
-        ),
-        parsed.fail.length>0&&React.createElement("div",{style:{flex:1,background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.25)",borderRadius:8,padding:"10px 14px"}},
-          React.createElement("div",{style:{fontSize:10,color:"#ef4444",textTransform:"uppercase",letterSpacing:.5}},"Unrecognised"),
-          React.createElement("div",{style:{fontSize:22,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#ef4444"}},parsed.fail.length)
-        )
-      ),
-      parsed.ok.length>0&&React.createElement("div",{style:{border:"1px solid var(--border)",borderRadius:8,overflow:"hidden",marginBottom:12}},
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"90px 1fr 70px 80px",padding:"6px 10px",background:"var(--bg4)",borderBottom:"1px solid var(--border)",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.4}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Date"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Description"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Type"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Amount")),
-        React.createElement("div",{style:{maxHeight:240,overflowY:"auto"}},
-          parsed.ok.map(tx=>React.createElement("div",{key:tx.id,style:{display:"grid",gridTemplateColumns:"90px 1fr 70px 80px",padding:"7px 10px",borderBottom:"1px solid var(--border2)",alignItems:"center"}},
-            React.createElement("div",{style:{fontSize:11,color:"var(--text4)",fontFamily:"'Sora',sans-serif"}},tx.date),
-            React.createElement("div",{style:{fontSize:12,color:"var(--text2)",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},tx.desc+(tx.txNum?" · "+tx.txNum:"")),
-            React.createElement("span",{style:{fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:10,background:tx.type==="credit"?"rgba(22,163,74,.15)":"rgba(239,68,68,.15)",color:tx.type==="credit"?"#16a34a":"#ef4444"}},tx.type),
-            React.createElement("div",{style:{fontSize:12,fontWeight:700,color:tx.type==="credit"?"#16a34a":"#ef4444",fontFamily:"'Sora',sans-serif",textAlign:"right"}},INR(tx.amount))
-          ))
-        )
-      ),
-      parsed.fail.length>0&&React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:10}},
-        "ℹ Unrecognised SMS (no amount/direction found): messages "+parsed.fail.join(", ")
-      ),
-      React.createElement("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
-        React.createElement(Btn,{onClick:()=>{onImport(parsed.ok);},disabled:!parsed.ok.length},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"check",size:13})," Import "+parsed.ok.length+" Transactions")),
-        React.createElement(Btn,{v:"secondary",onClick:()=>setStep("input")},"← Edit SMS"),
-        React.createElement(Btn,{v:"secondary",onClick:onClose},"Cancel")
-      )
-    )
-  );
-};
 
 /* ══════════════════════════════════════════════════════════════════════════
    EXPORT LEDGER TO EXCEL
@@ -3083,13 +2937,13 @@ const ImportTxModal=({onImport,onClose,categories,accType="bank",existingTxns=[]
   const downloadTemplate=()=>{
     const rows=[
       ["Date","Description","Payee","Debit","Credit","Reference","Category","Notes"],
-      ["01-01-2025","Groceries at DMart","DMart","1500","","","Food",""],
-      ["02-01-2025","Salary Credit","Employer","","75000","SAL202501","Income::Salary","Monthly salary"],
-      ["05-01-2025","Electricity Bill","BESCOM","2200","","EB2501","Housing::Utilities",""],
-      ["10-01-2025","Netflix Subscription","Netflix","649","","","Entertainment::OTT / Streaming",""],
-      ["15-01-2025","Petrol","Indian Oil","3000","","","Transport::Fuel",""],
+      ["01-01-2025","Groceries at DMart","DMart","1500","","","Groceries Food & Essentials::Groceries and Essentials",""],
+      ["02-01-2025","Salary Credit","Employer","","75000","SAL202501","Income::Freelancing Income","Monthly salary"],
+      ["05-01-2025","Electricity Bill","BESCOM","2200","","EB2501","Utilities and Bills::Electricity",""],
+      ["10-01-2025","Netflix Subscription","Netflix","649","","","Subscriptions::OTT Subscriptions",""],
+      ["15-01-2025","Petrol","Indian Oil","3000","","","Automobile::Petrol Fuels",""],
       ["20-01-2025","ATM Withdrawal","ATM","5000","","","",""],
-      ["25-01-2025","Rent Payment","Landlord","25000","","JAN25RENT","Housing::Rent","Monthly rent"],
+      ["25-01-2025","Rent Payment","Landlord","25000","","JAN25RENT","Utilities and Bills::Housing & Rent","Monthly rent"],
     ];
     const csv=rows.map(r=>r.map(c=>{
       const s=String(c);
@@ -3420,7 +3274,6 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
   const[splitTx,setSplitTx]=useState(null);
   const[confirmDel,setConfirmDel]=useState(null);
   const[importOpen,setImportOpen]=useState(false);
-  const[smsOpen,setSmsOpen]=useState(false);
   const[bulkCatOpen,setBulkCatOpen]=useState(false);
   const[bulkDelOpen,setBulkDelOpen]=useState(false);
   const[ctxMenu,setCtxMenu]=useState(null);
@@ -3670,7 +3523,6 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
       React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,padding:"8px 10px",borderBottom:"1px solid var(--border)",background:"var(--bg4)",flexShrink:0,flexWrap:"wrap"}},
         React.createElement("button",{onClick:onNew,style:tbBtn("var(--accent)","var(--accentbg)")},"+ New"),
         React.createElement("button",{onClick:()=>setImportOpen(true),title:"Import from Excel",style:{...tbBtn("#0e7490","rgba(14,116,144,.12)"),minWidth:"auto"}},"⬆"),
-        React.createElement("button",{onClick:()=>setSmsOpen(true),title:"Parse bank SMS",style:{...tbBtn("#6d28d9","rgba(109,40,217,.10)"),minWidth:"auto"}},React.createElement(Icon,{n:"phone",size:16})),
         React.createElement("button",{onClick:()=>handleSort(sortKey,sortDir==="asc"?"desc":"asc"),style:{...tbBtn("var(--text4)","var(--bg3)"),minWidth:"auto"}},
           (sortDir==="desc"?"↓ ":"↑ ")+({date:"Date",desc_col:"Desc",payee:"Payee",cat:"Category",out:"Out",in:"In",balance:"Balance"}[sortKey]||"Date")
         ),
@@ -3814,10 +3666,9 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
         })
       ,
       /* Edit modal */
-      editTx&&React.createElement(TxEditModal,{tx:editTx,categories,payees,txTypes,allAccounts:allAccounts||[],onSave:(updated)=>{onEdit(updated,editTx);setEditTx(null);setSelId(updated.id);},onClose:()=>setEditTx(null)}),
+      editTx&&React.createElement(TxEditModal,{tx:editTx,categories,payees,txTypes,allAccounts:allAccounts||[],currentAccountId,onSave:(updated)=>{onEdit(updated,editTx);setEditTx(null);setSelId(updated.id);},onClose:()=>setEditTx(null)}),
       confirmDel&&React.createElement(ConfirmModal,{msg:`Delete "${confirmDel.desc||confirmDel.payee||"this transaction"}"? This will adjust your balance.`,onConfirm:()=>{onDelete(confirmDel);setConfirmDel(null);setSelId(null);},onCancel:()=>setConfirmDel(null)}),
-      importOpen&&React.createElement(ImportTxModal,{accType,categories,existingTxns:transactions,onUpsert:updates=>{if(onUpsert)onUpsert(updates);},onMassUpdateStatus:(ids,status)=>{if(onMassUpdateStatus)onMassUpdateStatus(ids,status);},onImport:txns=>{if(onImport)onImport(txns);setImportOpen(false);},onClose:()=>setImportOpen(false)}),
-      smsOpen&&React.createElement(SmsScanModal,{accType,onImport:txns=>{if(onImport)onImport(txns);setSmsOpen(false);},onClose:()=>setSmsOpen(false)})
+      importOpen&&React.createElement(ImportTxModal,{accType,categories,existingTxns:transactions,onUpsert:updates=>{if(onUpsert)onUpsert(updates);},onMassUpdateStatus:(ids,status)=>{if(onMassUpdateStatus)onMassUpdateStatus(ids,status);},onImport:txns=>{if(onImport)onImport(txns);setImportOpen(false);},onClose:()=>setImportOpen(false)})
     );
   }
   /* ── END MOBILE VIEW ─────────────────────────────────────────────────── */
@@ -4183,10 +4034,10 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
               style:{width:13,height:13,accentColor:"var(--accent)",cursor:"pointer"}
             })
           ),
-          /* Reconcile tick + Star */
-          React.createElement("div",{style:{padding:"4px 4px",display:"flex",alignItems:"center",justifyContent:"center",gap:2}},
+          /* Reconcile tick + Star (click to toggle) */
+          React.createElement("div",{style:{padding:"4px 4px",display:"flex",alignItems:"center",justifyContent:"center",gap:2,cursor:"pointer"},onClick:e=>{e.stopPropagation();if(onEdit)onEdit({...tx,_starred:!tx._starred},tx);}},
             isReconciled&&React.createElement("span",{style:{color:"#16a34a",fontSize:13,fontWeight:700}},"✓"),
-            tx._starred&&React.createElement("span",{style:{color:"#d97706",fontSize:13,fontWeight:700,textShadow:"0 0 4px rgba(217,119,6,.3)"}},React.createElement(Icon,{n:"star",size:13,col:"#d97706"}))
+            React.createElement("span",{style:{color:tx._starred?"#d97706":"var(--text6)",fontSize:13,fontWeight:700,textShadow:tx._starred?"0 0 4px rgba(217,119,6,.3)":"none",opacity:tx._starred?1:.35,transition:"all .15s"}},React.createElement(Icon,{n:"star",size:13,col:tx._starred?"#d97706":"var(--text6)"}))
           ),
           /* SN */
           React.createElement("div",{style:{padding:"4px 4px",fontSize:12,color:"var(--text5)",fontFamily:"'Sora',sans-serif"}},globalIdx),
@@ -4327,7 +4178,6 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
             React.createElement("button",{onClick:()=>{if(!selTx)return;const updated={...selTx,status:selTx.status==="Reconciled"?"Unreconciled":"Reconciled"};onEdit(updated,selTx);},disabled:!selTx,style:tbBtn("#16a34a","rgba(22,163,74,.12)",!selTx)},(selTx&&selTx.status)==="Reconciled"?"○ Unreconcile":"✓ Reconcile"),
             React.createElement("div",{style:{width:1,height:22,background:"var(--border)",margin:"0 4px"}}),
             React.createElement("button",{onClick:()=>setImportOpen(true),style:tbBtn("#0e7490","rgba(14,116,144,.12)")},"⬆ Import Excel"),
-            React.createElement("button",{onClick:()=>setSmsOpen(true),style:tbBtn("#6d28d9","rgba(109,40,217,.10)")},"Parse SMS"),
             React.createElement("button",{onClick:()=>exportLedgerXlsx(filtered,accountName,snMap),style:tbBtn("#16a34a","rgba(22,163,74,.10)")},"⬇ Export Excel"),
             React.createElement("div",{style:{flex:1}}),
             /* Active filter summary chips — visible when panel is hidden */
@@ -4363,7 +4213,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
     ),
     /* ── Edit modal */
     editTx&&React.createElement(TxEditModal,{
-      tx:editTx,categories,payees,txTypes,allAccounts:allAccounts||[],
+      tx:editTx,categories,payees,txTypes,allAccounts:allAccounts||[],currentAccountId,
       onSave:(updated)=>{onEdit(updated,editTx);setEditTx(null);setSelId(updated.id);},
       onClose:()=>setEditTx(null)
     }),
@@ -4382,12 +4232,6 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
       onMassUpdateStatus:(ids,status)=>{if(onMassUpdateStatus)onMassUpdateStatus(ids,status);},
       onImport:txns=>{if(onImport)onImport(txns);setImportOpen(false);},
       onClose:()=>setImportOpen(false)
-    }),
-    /* ── SMS parser modal */
-    smsOpen&&React.createElement(SmsScanModal,{
-      accType,
-      onImport:txns=>{if(onImport)onImport(txns);setSmsOpen(false);},
-      onClose:()=>setSmsOpen(false)
     }),
     /* ── Bulk categorize modal */
     ctxMenu&&React.createElement(React.Fragment,null,
@@ -4976,8 +4820,10 @@ var ReminderToastManager = ({state, dispatch}) => {
 
   // Reset index if we run out of reminders
   useEffect(()=>{
-    if(currentIdx>=due.length && due.length>0) setCurrentIdx(due.length-1);
-  },[due.length, currentIdx]);
+    if(due.length===0){setCurrentIdx(0);return;}
+    if(currentIdx>=due.length) setCurrentIdx(due.length-1);
+    else if(currentIdx<0) setCurrentIdx(0);
+  },[due.length]);
 
   const reminder = due[currentIdx] || null;
   if(!reminder) return null;
@@ -5741,7 +5587,7 @@ var _gdriveExchangeCodeForTokens = async (authCode) => {
     });
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
-      console.warn("[GDrive] Code exchange failed:", resp.status, err);
+      console.warn("[GDrive] Code exchange failed:", resp.status);
       return null;
     }
     const data = await resp.json();
@@ -6141,6 +5987,12 @@ var gdriveUpsertSyncFile = async (state, manual) => {
         reminders:    state.reminders    || [],
         insightPrefs: { ...EMPTY_STATE().insightPrefs, ...(state.insightPrefs || {}) },
         chatbotTraining: {customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},
+        avApiKey: localStorage.getItem("mm_av_api_key")||"",
+        entryScores: localStorage.getItem(LS_ENTRY_SCORES)||"[]",
+        entrySnapshots: localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",
+        screenerData: localStorage.getItem(_SCREENER_KEY)||null,
+        screenerSnapshots: localStorage.getItem(_SCREENER_SNAPS_KEY)||null,
+        niftyLive: localStorage.getItem(LS_NIFTY_LIVE)||null,
       },
     };
     const content = JSON.stringify(payload, null, 2);
@@ -6407,6 +6259,11 @@ var gdriveAutoBackup = async (state) => {
         reminders:            state.reminders            || [],
         insightPrefs:         { ...EMPTY_STATE().insightPrefs, ...(state.insightPrefs || {}) },
         chatbotTraining:      { customCatRules: _cbTr.customCatRules||[], accountAliases: _cbTr.accountAliases||[] },
+        avApiKey:             localStorage.getItem("mm_av_api_key")||"",
+        entryScores:          localStorage.getItem(LS_ENTRY_SCORES)||"[]",
+        entrySnapshots:       localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",
+        screenerData:         localStorage.getItem(_SCREENER_KEY)||null,
+        screenerSnapshots:    localStorage.getItem(_SCREENER_SNAPS_KEY)||null,
       },
     };
 
@@ -6695,21 +6552,37 @@ var CloudBackupPanel = ({ state, dispatch }) => {
         insightPrefs: { ...EMPTY_STATE().insightPrefs, ...(remote.state.insightPrefs || {}) },
       };
 
-      saveState({ ...EMPTY_STATE(), ..._restoreData });
+      /* Merge this device's MF-deletion tombstone so a manual restore can never
+         resurrect a deleted fund before the reload occurs. */
+      const _restoreDataMerged = _mergeRemovedMf(_restoreData, (state && state.removedMf) || []);
+
+      saveState({ ...EMPTY_STATE(), ..._restoreDataMerged });
       try {
         localStorage.setItem(LS_EOD_PRICES, JSON.stringify(_restoreData.eodPrices || {}));
         localStorage.setItem(LS_EOD_NAVS,   JSON.stringify(_restoreData.eodNavs   || {}));
         if(remote.state.chatbotTraining)
           localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(remote.state.chatbotTraining));
+        if(remote.state.avApiKey)
+          localStorage.setItem("mm_av_api_key",remote.state.avApiKey);
+        if(remote.state.entryScores)
+          localStorage.setItem(LS_ENTRY_SCORES,remote.state.entryScores);
+        if(remote.state.entrySnapshots)
+          localStorage.setItem(LS_ENTRY_SNAPSHOTS,remote.state.entrySnapshots);
+        if(remote.state.screenerData)
+          localStorage.setItem(_SCREENER_KEY,remote.state.screenerData);
+        if(remote.state.screenerSnapshots)
+          localStorage.setItem(_SCREENER_SNAPS_KEY,remote.state.screenerSnapshots);
+        if(remote.state.niftyLive)
+          {localStorage.setItem(LS_NIFTY_LIVE,remote.state.niftyLive);_niftyLiveCache=_niftyPersistRead();}
       } catch {}
       try { await clearTxIDB(); }          catch {}
-      try { await saveTxToIDB(_restoreData); } catch {}
+      try { await saveTxToIDB(_restoreDataMerged); } catch {}
 
       _syncSaveLocal(remote.modifiedTime);
       _syncSaveLocalEdit(remote.modifiedTime);
       setLastSync(remote.modifiedTime);
 
-      dispatch({ type: "RESTORE_ALL", data: _restoreData });
+      dispatch({ type: "RESTORE_ALL", data: _restoreDataMerged });
       setPullMsg("✓ Restored from Drive (" + fmtTs(remote.modifiedTime) + "). Refreshing…");
       setTimeout(() => window.location.reload(), 1800);
     } catch (e) {
@@ -7207,12 +7080,12 @@ var MFXirrRow=({m,dispatch,askDelete})=>{
             autoFocus:true,
             style:{padding:"4px 8px",fontSize:12,width:80,borderRadius:6},
             onKeyDown:e=>{
-              if(e.key==="Enter"){dispatch({type:"EDIT_MF",p:{id:m.id,manualXirr:xirrInput!==""?parseFloat(xirrInput):null}});setEditingXirr(false);}
+              if(e.key==="Enter"){const v=xirrInput!==""?parseFloat(xirrInput):null;dispatch({type:"EDIT_MF",p:{id:m.id,manualXirr:v!==null&&isFinite(v)?v:null}});setEditingXirr(false);}
               if(e.key==="Escape")setEditingXirr(false);
             }
           }),
           React.createElement("button",{
-            onClick:()=>{dispatch({type:"EDIT_MF",p:{id:m.id,manualXirr:xirrInput!==""?parseFloat(xirrInput):null}});setEditingXirr(false);},
+            onClick:()=>{const v=xirrInput!==""?parseFloat(xirrInput):null;dispatch({type:"EDIT_MF",p:{id:m.id,manualXirr:v!==null&&isFinite(v)?v:null}});setEditingXirr(false);},
             style:{background:"rgba(22,163,74,.1)",border:"1px solid rgba(22,163,74,.3)",borderRadius:5,color:"#16a34a",cursor:"pointer",fontSize:11,padding:"3px 7px",fontFamily:"'DM Sans',sans-serif",fontWeight:700}
           },"✓"),
           React.createElement("button",{
@@ -7564,6 +7437,59 @@ var ChatbotTrainingPanel=({state})=>{
 };
 /* ══ END CHATBOT TRAINING PANEL ══ */
 
+/* ── API KEYS PANEL (Settings → API Keys) ─────────────────────────────────── */
+var ApiKeysPanel=React.memo(function(){
+  var useState=React.useState;
+  var _a=useState(function(){try{return localStorage.getItem("mm_av_api_key")||"";}catch(e){return "";}});
+  var avKeyInput=_a[0],setAvKeyInput=_a[1];
+  var _b=useState(false);
+  var avSaved=_b[0],setAvSaved=_b[1];
+  return React.createElement("div",{className:"fu"},
+    React.createElement("div",{style:{marginBottom:24}},
+      React.createElement("h3",{style:{fontFamily:"'Sora',sans-serif",fontSize:18,fontWeight:700,color:"var(--text)"}},"API Keys"),
+      React.createElement("p",{style:{color:"var(--text5)",fontSize:13,marginTop:4}},"Manage API keys for data services. Keys are stored locally in your browser and never sent to any server except the respective API provider.")
+    ),
+    React.createElement(Card,{sx:{marginBottom:16}},
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:18}},
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:12,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:600,marginBottom:2}},"Data Providers")
+        )
+      ),
+      React.createElement("div",{style:{padding:"14px 18px",borderRadius:10,border:"1px solid var(--border)",background:"var(--bg4)",marginBottom:12}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:12}},
+          React.createElement("div",{style:{width:36,height:36,borderRadius:8,background:"rgba(34,197,94,.12)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},React.createElement(Icon,{n:"trendingdown",size:18})),
+          React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)"}},"Alpha Vantage"),
+            React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:1}},"Daily OHLCV data for Shares Technical Indicators (25 free requests/day)")
+          )
+        ),
+        React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginBottom:10,lineHeight:1.6}},
+          "Provides daily OHLCV candles for the Shares Technical Indicators panel. Without a key, daily data falls back to Yahoo Finance. Get a free key at ",
+          React.createElement("a",{href:"https://www.alphavantage.co/support/#api-key",target:"_blank",rel:"noopener",style:{color:"var(--accent)",textDecoration:"underline"}},"alphavantage.co"),
+          "."
+        ),
+        React.createElement("div",{style:{display:"flex",gap:8,alignItems:"center"}},
+          React.createElement("input",{type:"text",placeholder:"Enter Alpha Vantage API Key",value:avKeyInput,onChange:function(e){setAvKeyInput(e.target.value);setAvSaved(false);},style:{flex:1,padding:"9px 14px",borderRadius:8,fontSize:13,background:"var(--bg3)",border:"1px solid var(--border)",color:"var(--text2)",fontFamily:"monospace",outline:"none"}}),
+          React.createElement("button",{onClick:function(){try{localStorage.setItem("mm_av_api_key",avKeyInput||"");}catch(e){}setAvSaved(true);setTimeout(function(){setAvSaved(false);},2000);},style:{padding:"9px 20px",borderRadius:8,fontSize:13,fontWeight:600,background:avSaved?"#16a34a":"var(--accent)",color:"#fff",border:"none",cursor:"pointer",transition:"background .2s",whiteSpace:"nowrap"}},avSaved?"\u2713 Saved":"Save")
+        ),
+        avKeyInput&&!avSaved&&React.createElement("div",{style:{marginTop:8,fontSize:11,color:"#16a34a",display:"flex",alignItems:"center",gap:4}},"Key will be saved locally in your browser.")
+      ),
+      React.createElement("div",{style:{padding:"14px 18px",borderRadius:10,border:"1px solid var(--border)",background:"var(--bg4)"}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:8}},
+          React.createElement("div",{style:{width:36,height:36,borderRadius:8,background:"rgba(99,102,241,.12)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},React.createElement(Icon,{n:"cloud",size:18})),
+          React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)"}},"Yahoo Finance"),
+            React.createElement("div",{style:{fontSize:11,color:"#16a34a",marginTop:1,fontWeight:600}},"Active (No key required)")
+          )
+        ),
+        React.createElement("div",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.6}},
+          "Used for intraday data and as a fallback when Alpha Vantage is unavailable. Always available — no API key needed."
+        )
+      )
+    )
+  );
+});
+
 var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,onResetAll,isMobile})=>{
   const[stab,setStab]=useState("appearance");
   const[confirm,setConfirm]=useState(null);
@@ -7654,7 +7580,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
 
   // ── Share Edit Modal
   const ShareEditModal=({sh,onClose})=>{
-    const[f,setF]=useState({company:sh.company,ticker:sh.ticker,qty:String(sh.qty),buyPrice:String(sh.buyPrice),currentPrice:String(sh.currentPrice),buyDate:sh.buyDate||TODAY(),notes:sh.notes||""});
+    const[f,setF]=useState({company:sh.company,ticker:sh.ticker,qty:String(sh.qty),buyPrice:String(sh.buyPrice),currentPrice:String(sh.currentPrice),buyDate:sh.buyDate||TODAY(),notes:sh.notes||"",entryScore:sh.entryScore!=null?String(sh.entryScore):""});
     const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
     return React.createElement(Modal,{title:"Edit Share Holding",onClose,w:420},
       React.createElement("div",{className:"grid-2col"},
@@ -7663,11 +7589,12 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
         React.createElement(Field,{label:"Quantity"},React.createElement("input",{className:"inp",type:"number",value:f.qty,onChange:set("qty")})),
         React.createElement(Field,{label:"Buy Price (₹)"},React.createElement("input",{className:"inp",type:"number",value:f.buyPrice,onChange:set("buyPrice")})),
         React.createElement(Field,{label:"Date of Acquisition"},React.createElement("input",{className:"inp",type:"date",value:f.buyDate,onChange:set("buyDate")})),
-        React.createElement(Field,{label:"Current Price (₹)"},React.createElement("input",{className:"inp",type:"number",value:f.currentPrice,onChange:set("currentPrice")}))
+        React.createElement(Field,{label:"Current Price (₹)"},React.createElement("input",{className:"inp",type:"number",value:f.currentPrice,onChange:set("currentPrice")})),
+        React.createElement(Field,{label:"Entry Score (0–100)"},React.createElement("input",{className:"inp",type:"number",min:"0",max:"100",placeholder:"0",value:f.entryScore,onChange:set("entryScore")}))
       ),
       React.createElement(Field,{label:"Notes"},React.createElement("textarea",{className:"inp",value:f.notes,onChange:set("notes"),placeholder:"Broker, target price, holding notes…",style:{resize:"vertical",minHeight:60,lineHeight:1.6,fontSize:13}})),
       React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,marginTop:4}},
-        React.createElement(Btn,{onClick:()=>{dispatch({type:"EDIT_SHARE",p:{id:sh.id,...f,qty:+f.qty,buyPrice:+f.buyPrice,currentPrice:+f.currentPrice,buyDate:f.buyDate||TODAY()}});onClose();},sx:{flex:"1 1 120px",justifyContent:"center"}},"Save Changes"),
+        React.createElement(Btn,{onClick:()=>{dispatch({type:"EDIT_SHARE",p:{id:sh.id,...f,qty:+f.qty,buyPrice:+f.buyPrice,currentPrice:+f.currentPrice,buyDate:f.buyDate||TODAY(),entryScore:f.entryScore?+f.entryScore:null}});onClose();},sx:{flex:"1 1 120px",justifyContent:"center"}},"Save Changes"),
         React.createElement(Btn,{v:"secondary",onClick:onClose,sx:{justifyContent:"center",minWidth:70}},"Cancel")
       )
     );
@@ -7702,8 +7629,10 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
     {id:"categories",label:"Categories",icon:React.createElement(Icon,{n:"tag",size:16})},
     {id:"payees",label:"Payees",icon:React.createElement(Icon,{n:"user",size:16})},
     {id:"insightprefs",label:"Insights Config",icon:React.createElement(Icon,{n:"target",size:16})},
+    {id:"emailconfig",label:"Email Config",icon:React.createElement(Icon,{n:"mail",size:16})},
     {id:"tabmgmt",     label:"Tab Management",icon:React.createElement(Icon,{n:"tabs",size:16})},
     {id:"backup",label:"Data & Backup",icon:React.createElement(Icon,{n:"save",size:16})},
+    {id:"apikeys",    label:"API Keys",     icon:React.createElement(Icon,{n:"key",size:16})},
     {id:"chatbotTraining",label:"Chatbot Training",icon:React.createElement(Icon,{n:"robot",size:16})},
   ];
 
@@ -8184,8 +8113,11 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
         editPayee&&React.createElement(PayeeEditModal,{p:editPayee,onClose:()=>setEditPayee(null)})
       ),
 
-      /* ══ DATA & BACKUP ══ */
+      /* ══ INSIGHTS CONFIG ══ */
       stab==="insightprefs"&&React.createElement(InsightPrefsPanel,{state,dispatch}),
+
+      /* ══ EMAIL CONFIG ══ */
+      stab==="emailconfig"&&React.createElement(EmailConfigPanel,{state,dispatch}),
 
       /* ══ TAB MANAGEMENT ══ */
       stab==="tabmgmt"&&(()=>{
@@ -8290,6 +8222,9 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
           )
         );
       })(),
+
+      /* ══ API KEYS ══ */
+      stab==="apikeys"&&React.createElement(ApiKeysPanel,null),
 
       stab==="chatbotTraining"&&React.createElement(ChatbotTrainingPanel,{state}),
       stab==="backup"&&React.createElement("div",{className:"fu"},
@@ -8436,7 +8371,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                   const _cbTr=(()=>{try{return JSON.parse(localStorage.getItem("mm_v7_chatbot_training")||"{}");} catch{return{};}})();
                   const payload={version:8,exportedAt:new Date().toISOString(),
                     summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,reminders:(state.reminders||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,shareSnapshots:Object.values(state.soldShareSnapshots||{}).reduce((s,a)=>s+a.length,0),eodDays:Object.keys(state.eodPrices||{}).length,eodNavDays:Object.keys(state.eodNavs||{}).length,hasTaxData:!!(state.taxData),hasTaxData2627:!!(state.taxData2627),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),brokerCashBalance:state.brokerCashBalance||0,chatbotCatRules:(_cbTr.customCatRules||[]).length,chatbotAliases:(_cbTr.accountAliases||[]).length},
-                    data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},soldShareSnapshots:state.soldShareSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,taxData2627:state.taxData2627||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],reminders:state.reminders||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})},chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]}}
+                    data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},soldShareSnapshots:state.soldShareSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,taxData2627:state.taxData2627||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],reminders:state.reminders||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})},chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},                    avApiKey:localStorage.getItem("mm_av_api_key")||"",entryScores:localStorage.getItem(LS_ENTRY_SCORES)||"[]",entrySnapshots:localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",screenerData:localStorage.getItem(_SCREENER_KEY)||null,screenerSnapshots:localStorage.getItem(_SCREENER_SNAPS_KEY)||null}
                   };
                   const enc=await encryptBackup(payload,pw);
                   const blob=new Blob([JSON.stringify(enc)],{type:"application/json"});
@@ -8501,6 +8436,11 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                     reminders:state.reminders||[],
                     insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})},
                     chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},
+                    avApiKey:localStorage.getItem("mm_av_api_key")||"",
+                    entryScores:localStorage.getItem(LS_ENTRY_SCORES)||"[]",
+                    entrySnapshots:localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",
+                    screenerData:localStorage.getItem(_SCREENER_KEY)||null,
+                    screenerSnapshots:localStorage.getItem(_SCREENER_SNAPS_KEY)||null,
                   }
                 };
                 const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
@@ -8577,7 +8517,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                         insightPrefs:{...EMPTY_STATE().insightPrefs,...(d.insightPrefs||{})},
                       };
                       /* ── Synchronously persist to localStorage BEFORE reload ── */
-                      saveState({...EMPTY_STATE(),..._restoreData});
+                      saveState({...EMPTY_STATE(),..._mergeRemovedMf(_restoreData,_localRemovedMf())});
                       try{
                         if(_restoreData.eodPrices&&Object.keys(_restoreData.eodPrices).length>0)
                           localStorage.setItem(LS_EOD_PRICES,JSON.stringify(_restoreData.eodPrices));
@@ -8585,6 +8525,16 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                           localStorage.setItem(LS_EOD_NAVS,JSON.stringify(_restoreData.eodNavs));
                         if(d.chatbotTraining)
                           localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(d.chatbotTraining));
+                        if(d.avApiKey)
+                          localStorage.setItem("mm_av_api_key",d.avApiKey);
+                        if(d.entryScores)
+                          localStorage.setItem(LS_ENTRY_SCORES,d.entryScores);
+                        if(d.entrySnapshots)
+                          localStorage.setItem(LS_ENTRY_SNAPSHOTS,d.entrySnapshots);
+                        if(d.screenerData)
+                          localStorage.setItem(_SCREENER_KEY,d.screenerData);
+                        if(d.screenerSnapshots)
+                          localStorage.setItem(_SCREENER_SNAPS_KEY,d.screenerSnapshots);
                       }catch{}
                       /* ── Overwrite IDB transactions so next-boot hydration loads
                          the restored data instead of the pre-restore snapshot.
@@ -8649,6 +8599,8 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                       localStorage.removeItem(TAX_LS_KEY);
                       localStorage.removeItem(CALC_LS_KEY);
                       localStorage.removeItem("mm_v7_chatbot_training");
+                      localStorage.removeItem(LS_ENTRY_SCORES);
+                      localStorage.removeItem(LS_ENTRY_SNAPSHOTS);
                       /* Stamp reset time as the new local-edit anchor.
                          Removing this key would leave it empty, which makes the
                          Drive boot-pull guard (remoteTs && localTs && remote<=local)
@@ -8927,8 +8879,10 @@ var CalculatorSection=React.memo(()=>{
   const safeEval=str=>{
     /* Replace × ÷ − (Unicode) with JS operators, then eval safely */
     const cleaned=str.replace(/×/g,"*").replace(/÷/g,"/").replace(/−/g,"-");
-    /* Only allow digits, operators, dot, parens, spaces */
+    /* Only allow digits, operators, dot, parens, spaces — ^ and $ anchor for full match */
     if(!/^[0-9+\-*/().\s]+$/.test(cleaned))throw new Error("invalid");
+    /* Additional length check to prevent ReDoS */
+    if(cleaned.length>100)throw new Error("expression too long");
     /* eslint-disable-next-line no-new-func */
     return Function('"use strict";return ('+cleaned+')')();
   };
@@ -9176,7 +9130,7 @@ var NotesSection=React.memo(({notes=[],dispatch})=>{
     if(due.length>0){
       setReminderAlert(due);
     }
-  },[]);
+  },[notes]);
 
   const filtered=notes.filter(n=>{
     const q=deferredNotesSearch.toLowerCase();
@@ -10188,6 +10142,9 @@ var buildBackupPayload=async(st)=>{
       reminders:st.reminders||[],
       insightPrefs:{...EMPTY_STATE().insightPrefs,...(st.insightPrefs||{})},
       chatbotTraining:{customCatRules:_cbTraining.customCatRules||[],accountAliases:_cbTraining.accountAliases||[]},
+      avApiKey:localStorage.getItem("mm_av_api_key")||"",
+      entryScores:localStorage.getItem(LS_ENTRY_SCORES)||"[]",
+      entrySnapshots:localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",
     }
   };
 };
@@ -10226,6 +10183,7 @@ var loadState=()=>{
       cards:(parsed.cards||def.cards),
       cash:(parsed.cash||def.cash),
       mf:(parsed.mf||def.mf),
+      removedMf:(parsed.removedMf||[]),
       shares:(parsed.shares||def.shares),
       brokerCashBalance:(parsed.brokerCashBalance||def.brokerCashBalance||0),
       fd:(parsed.fd||def.fd),
@@ -10243,6 +10201,7 @@ var loadState=()=>{
       eodPrices:(function(){try{const r=localStorage.getItem(LS_EOD_PRICES);if(r)return JSON.parse(r);}catch{}return(parsed.eodPrices||{});})(),
       eodNavs:(function(){try{const r=localStorage.getItem(LS_EOD_NAVS);if(r)return normalizeEodNavKeys(JSON.parse(r));}catch{}return normalizeEodNavKeys(parsed.eodNavs||{});})(),
       historyCache:(parsed.historyCache||{}),
+      mfHistNavs:(parsed.mfHistNavs||{}),
       hiddenTabs:(parsed.hiddenTabs||[]),
       taxData:(parsed.taxData||null),
       taxData2627:(parsed.taxData2627||null),
@@ -10277,12 +10236,19 @@ var MM_LS_KEYS=[
   {key:LS_EOD_PRICES,  label:"EOD share prices cache (separate)"},
   {key:LS_EOD_NAVS,    label:"EOD mutual fund NAVs cache (separate)"},
   {key:LS_THEME,       label:"Theme preference"},
+  {key:LS_FONT,        label:"Font preference"},
   {key:"mm_v7_pin",    label:"PIN hash"},
   {key:"mm_nav_col",   label:"Sidebar collapse state"},
   {key:"mm_db_hidden_widgets", label:"Dashboard widget visibility"},
   {key:"mm_fsa_no_warn",       label:"FSA warning preference"},
   {key:"itr3_ay2627_v1",       label:"Tax Estimator (legacy key)"},
   {key:CALC_LS_KEY,            label:"Financial Calculator inputs & results"},
+  {key:"mm_av_api_key",        label:"Alpha Vantage API Key"},
+  {key:"mm_entry_scores",      label:"Entry Score Entries"},
+  {key:"mm_entry_score_snapshots", label:"Entry Score Snapshots"},
+  {key:"finsight-screener-data",    label:"Nifty 100 Screener Data"},
+  {key:"finsight-screener-snapshots", label:"Screener Snapshots"},
+  {key:LS_NIFTY_LIVE,                label:"Nifty 50/100/200 live series cache"},
 ];
 
 /* The true localStorage limit — 5 MB, enforced per-origin by all major browsers
@@ -10356,8 +10322,14 @@ var getStorageStatsAsync=async()=>{
    The caller uses this to dispatch matching PRUNE actions so in-memory
    state stays in sync with what was actually persisted to localStorage. */
 var _emergencyCompact=(s)=>{
-  /* Pass 1: wipe the history cache (largest variable cache) */
-  const p1={...s,historyCache:{}};
+  /* Pass 1: wipe the history cache (largest variable cache) — use _stripped base */
+  const _base=(({eodPrices,eodNavs,...rest})=>({
+    ...rest,
+    banks:(rest.banks||[]).map(b=>({...b,transactions:[]})),
+    cards:(rest.cards||[]).map(c=>({...c,transactions:[]})),
+    cash:{...(rest.cash||{}),transactions:[]},
+  }))(s);
+  const p1={..._base,historyCache:{}};
   try{localStorage.setItem(LS_KEY,JSON.stringify(p1));console.warn("[MM] Storage: historyCache cleared to recover space.");return"historyCache";}catch{}
   /* Pass 2: shrink EOD prices to last 7 days */
   const eodKeys=Object.keys(s.eodPrices||{}).sort();
@@ -10407,7 +10379,7 @@ var saveState=(s)=>{
     /* Specifically handle QuotaExceededError */
     if(e&&(e.name==="QuotaExceededError"||e.name==="NS_ERROR_DOM_QUOTA_REACHED"||e.code===22)){
       console.warn("[MM] QuotaExceededError — attempting emergency compaction…");
-      return _emergencyCompact(s);
+      return _emergencyCompact(_stripped);
     }else{
       console.warn("Failed to save state:",e);
       return null;
@@ -10431,8 +10403,18 @@ var _saveEodCaches=(state)=>{
 /* ── PIN SECURITY ─────────────────────────────────────────────────────────── */
 /* Hash a PIN string with SHA-256; returns lowercase hex string */
 var hashPin=async(pin)=>{
-  const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(pin));
+  const existingSalt=tryGetPinSalt();
+  const salt=existingSalt||getOrCreatePinSalt();
+  const combined=new TextEncoder().encode(salt+pin);
+  const buf=await crypto.subtle.digest("SHA-256",combined);
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+};
+var LS_PIN_SALT="mm_v7_pin_salt";
+var tryGetPinSalt=()=>{try{return localStorage.getItem(LS_PIN_SALT)||"";}catch{return "";}};
+var getOrCreatePinSalt=()=>{
+  let salt=tryGetPinSalt();
+  if(!salt){salt=Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,"0")).join("");try{localStorage.setItem(LS_PIN_SALT,salt);}catch{}}
+  return salt;
 };
 var getPinHash=()=>{try{return localStorage.getItem(LS_PIN)||"";}catch{return "";}};
 
@@ -10467,6 +10449,8 @@ var decryptBackup=async(envelope,password)=>{
   return JSON.parse(new TextDecoder().decode(plaintext));
 };
 var savePinHash=(h)=>{try{if(h)localStorage.setItem(LS_PIN,h);else localStorage.removeItem(LS_PIN);}catch{}};
+var _pinFailCount=0;
+var _pinLockoutUntil=0;
 var isSessionUnlocked=()=>{try{return sessionStorage.getItem(SS_UNLOCK)==="1";}catch{return false;}};
 var setSessionUnlocked=()=>{try{sessionStorage.setItem(SS_UNLOCK,"1");}catch{}};
 var clearSessionUnlock=()=>{try{sessionStorage.removeItem(SS_UNLOCK);}catch{}};
@@ -10878,6 +10862,11 @@ var _gdriveUpsertSyncFileV1 = async (state) => {
         reminders: state.reminders || [],
         insightPrefs: { ...EMPTY_STATE().insightPrefs, ...(state.insightPrefs || {}) },
         chatbotTraining: {customCatRules:_cbTrV1.customCatRules||[],accountAliases:_cbTrV1.accountAliases||[]},
+        avApiKey:localStorage.getItem("mm_av_api_key")||"",
+        entryScores:localStorage.getItem(LS_ENTRY_SCORES)||"[]",
+        entrySnapshots:localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",
+        screenerData:localStorage.getItem(_SCREENER_KEY)||null,
+        screenerSnapshots:localStorage.getItem(_SCREENER_SNAPS_KEY)||null,
       },
     };
     const content = JSON.stringify(payload);
@@ -10963,23 +10952,23 @@ var _fsaDbOpen=()=>new Promise((res,rej)=>{
 /* ── Receipt file handle helpers ── */
 var rcptKey=(txId,name)=>txId+":"+name;
 var rcptSaveHandle=async(txId,name,handle)=>{
-  try{const db=await _fsaDbOpen();await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const r=tx.objectStore(RCPT_IDB_STORE).put(handle,rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}catch{}
+  try{const db=await _fsaDbOpen();try{await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const r=tx.objectStore(RCPT_IDB_STORE).put(handle,rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}finally{db.close();}}catch{}
 };
 var rcptGetHandle=async(txId,name)=>{
-  try{const db=await _fsaDbOpen();return await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readonly");const r=tx.objectStore(RCPT_IDB_STORE).get(rcptKey(txId,name));r.onsuccess=e=>res(e.target.result||null);r.onerror=e=>rej(e.target.error);});}catch{return null;}
+  try{const db=await _fsaDbOpen();try{return await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readonly");const r=tx.objectStore(RCPT_IDB_STORE).get(rcptKey(txId,name));r.onsuccess=e=>res(e.target.result||null);r.onerror=e=>rej(e.target.error);});}finally{db.close();}}catch{return null;}
 };
 var rcptDelHandle=async(txId,name)=>{
-  try{const db=await _fsaDbOpen();await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const r=tx.objectStore(RCPT_IDB_STORE).delete(rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}catch{}
+  try{const db=await _fsaDbOpen();try{await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const r=tx.objectStore(RCPT_IDB_STORE).delete(rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}finally{db.close();}}catch{}
 };
 var rcptDelAllForTx=async(txId)=>{
   try{
     const db=await _fsaDbOpen();
-    const keys=await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readonly");const r=tx.objectStore(RCPT_IDB_STORE).getAllKeys();r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);});
-    const toDelete=keys.filter(k=>k.startsWith(txId+":"));
-    if(!toDelete.length)return;
-    await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const store=tx.objectStore(RCPT_IDB_STORE);toDelete.forEach(k=>store.delete(k));tx.oncomplete=()=>res();tx.onerror=e=>rej(e.target.error);});
+    try{
+      const keys=await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readonly");const r=tx.objectStore(RCPT_IDB_STORE).getAllKeys();r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);});
+      const toDelete=keys.filter(k=>k.startsWith(txId+":"));
+      if(toDelete.length){await new Promise((res,rej)=>{const tx=db.transaction(RCPT_IDB_STORE,"readwrite");const store=tx.objectStore(RCPT_IDB_STORE);toDelete.forEach(k=>store.delete(k));tx.oncomplete=()=>res();tx.onerror=e=>rej(e.target.error);});}
+    }finally{db.close();}
   }catch{}
-  /* Also remove stored blob content */
   await rcptDelAllBlobsForTx(txId);
 };
 
@@ -10996,22 +10985,23 @@ var rcptSaveBlobData=async(txId,name,file)=>{
   try{
     const b64=await _rcptReadFileAsB64(file);
     const db=await _fsaDbOpen();
-    await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readwrite");const r=tx.objectStore(RCPT_BLOB_STORE).put({b64,mimeType:file.type},rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});
+    try{await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readwrite");const r=tx.objectStore(RCPT_BLOB_STORE).put({b64,mimeType:file.type},rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}finally{db.close();}
   }catch{}
 };
 var rcptGetBlobData=async(txId,name)=>{
-  try{const db=await _fsaDbOpen();return await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readonly");const r=tx.objectStore(RCPT_BLOB_STORE).get(rcptKey(txId,name));r.onsuccess=e=>res(e.target.result||null);r.onerror=e=>rej(e.target.error);});}catch{return null;}
+  try{const db=await _fsaDbOpen();try{return await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readonly");const r=tx.objectStore(RCPT_BLOB_STORE).get(rcptKey(txId,name));r.onsuccess=e=>res(e.target.result||null);r.onerror=e=>rej(e.target.error);});}finally{db.close();}}catch{return null;}
 };
 var rcptDelBlobData=async(txId,name)=>{
-  try{const db=await _fsaDbOpen();await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readwrite");const r=tx.objectStore(RCPT_BLOB_STORE).delete(rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}catch{}
+  try{const db=await _fsaDbOpen();try{await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readwrite");const r=tx.objectStore(RCPT_BLOB_STORE).delete(rcptKey(txId,name));r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});}finally{db.close();}}catch{}
 };
 var rcptDelAllBlobsForTx=async(txId)=>{
   try{
     const db=await _fsaDbOpen();
-    const keys=await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readonly");const r=tx.objectStore(RCPT_BLOB_STORE).getAllKeys();r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);});
-    const toDelete=keys.filter(k=>k.startsWith(txId+":"));
-    if(!toDelete.length)return;
-    await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readwrite");const store=tx.objectStore(RCPT_BLOB_STORE);toDelete.forEach(k=>store.delete(k));tx.oncomplete=()=>res();tx.onerror=e=>rej(e.target.error);});
+    try{
+      const keys=await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readonly");const r=tx.objectStore(RCPT_BLOB_STORE).getAllKeys();r.onsuccess=e=>res(e.target.result);r.onerror=e=>rej(e.target.error);});
+      const toDelete=keys.filter(k=>k.startsWith(txId+":"));
+      if(toDelete.length){await new Promise((res,rej)=>{const tx=db.transaction(RCPT_BLOB_STORE,"readwrite");const store=tx.objectStore(RCPT_BLOB_STORE);toDelete.forEach(k=>store.delete(k));tx.oncomplete=()=>res();tx.onerror=e=>rej(e.target.error);});}
+    }finally{db.close();}
   }catch{}
 };
 /* Gather ALL blob entries — used by backup export */
@@ -11197,6 +11187,12 @@ var fsaWriteFile=async(handle,data)=>{
         reminders:data.reminders||[],
         insightPrefs:{...EMPTY_STATE().insightPrefs,...(data.insightPrefs||{})},
         chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},
+        avApiKey:localStorage.getItem("mm_av_api_key")||"",
+        entryScores:localStorage.getItem(LS_ENTRY_SCORES)||"[]",
+        entrySnapshots:localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",
+        screenerData:localStorage.getItem(_SCREENER_KEY)||null,
+        screenerSnapshots:localStorage.getItem(_SCREENER_SNAPS_KEY)||null,
+        niftyLive:localStorage.getItem(LS_NIFTY_LIVE)||null,
       }
     };
     const writable=await handle.createWritable();
@@ -11220,6 +11216,12 @@ var fsaReadFile=async(handle)=>{
     if(!d)return null;
     /* Restore chatbot training data to its own localStorage key */
     if(d.chatbotTraining){try{localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(d.chatbotTraining));}catch{}}
+    if(d.avApiKey){try{localStorage.setItem("mm_av_api_key",d.avApiKey);}catch{}}
+    if(d.entryScores){try{localStorage.setItem(LS_ENTRY_SCORES,d.entryScores);}catch{}}
+    if(d.entrySnapshots){try{localStorage.setItem(LS_ENTRY_SNAPSHOTS,d.entrySnapshots);}catch{}}
+    if(d.screenerData){try{localStorage.setItem(_SCREENER_KEY,d.screenerData);}catch{}}
+    if(d.screenerSnapshots){try{localStorage.setItem(_SCREENER_SNAPS_KEY,d.screenerSnapshots);}catch{}}
+    if(d.niftyLive){try{localStorage.setItem(LS_NIFTY_LIVE,d.niftyLive);_niftyLiveCache=_niftyPersistRead();}catch{}}
     return _safe(d);
   }catch(e){console.warn("[FSA] Read failed:",e);return null;}
 };
@@ -11319,7 +11321,7 @@ var loadTxFromIDB=async()=>{
       const tryResolve=()=>{
         if(++done<2)return;
         db.close();
-        if(!keysResult||!valuesResult){res(null);return;}
+        if(!keysResult||!valuesResult||keysResult.length!==valuesResult.length){db.close();res(null);return;}
         const banks={},cards={};let cashTxns=[];
         keysResult.forEach((key,i)=>{
           const val=valuesResult[i]||[];
@@ -11426,11 +11428,20 @@ var PinLockScreen=({onUnlock})=>{
 
   const verify=async(pin)=>{
     setChecking(true);
+    if(_pinLockoutUntil&&Date.now()<_pinLockoutUntil){
+      const secs=Math.ceil((_pinLockoutUntil-Date.now())/1000);
+      setErr("Too many attempts. Wait "+secs+"s.");
+      setTimeout(()=>setChecking(false),700);
+      return;
+    }
     const hash=await hashPin(pin);
     if(hash===getPinHash()){
+      _pinFailCount=0;
       setSessionUnlocked();
       onUnlock();
     }else{
+      _pinFailCount++;
+      if(_pinFailCount>=5){_pinLockoutUntil=Date.now()+60000;_pinFailCount=0;}
       setShake(true);
       setErr("Incorrect PIN. Try again.");
       setTimeout(()=>{setShake(false);setDigits([]);setChecking(false);},700);
@@ -11697,16 +11708,33 @@ var usePersistentReducer=(reducer,init)=>{
         console.log("[GDrive] Found newer state on Drive (",remoteTime,") — applying…");
         _lastPulledAt=remoteTime;
         const remote_state = remote.state;
-        /* Persist to localStorage so data survives reload */
+        /* Merge this device's MF-deletion tombstone into the pulled state BEFORE
+           persisting, so a stale Drive copy can never resurrect a deleted fund. */
+        const _mergedState = _mergeRemovedMf(remote_state, stateRef.current && stateRef.current.removedMf);
         try {
-          saveState({ ...EMPTY_STATE(), ...remote_state });
+          saveState({ ...EMPTY_STATE(), ..._mergedState });
           localStorage.setItem(LS_EOD_PRICES, JSON.stringify(remote_state.eodPrices || {}));
           localStorage.setItem(LS_EOD_NAVS,   JSON.stringify(remote_state.eodNavs   || {}));
+          if(remote_state.chatbotTraining)
+            localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(remote_state.chatbotTraining));
+          if(remote_state.avApiKey)
+            localStorage.setItem("mm_av_api_key",remote_state.avApiKey);
+          if(remote_state.entryScores)
+            localStorage.setItem(LS_ENTRY_SCORES,remote_state.entryScores);
+          if(remote_state.entrySnapshots)
+            localStorage.setItem(LS_ENTRY_SNAPSHOTS,remote_state.entrySnapshots);
+          if(remote_state.screenerData)
+            localStorage.setItem(_SCREENER_KEY,remote_state.screenerData);
+          if(remote_state.screenerSnapshots)
+            localStorage.setItem(_SCREENER_SNAPS_KEY,remote_state.screenerSnapshots);
+          if(remote_state.niftyLive)
+            {localStorage.setItem(LS_NIFTY_LIVE,remote_state.niftyLive);_niftyLiveCache=_niftyPersistRead();}
         } catch {}
-        /* Clear IDB then write transactions */
         try { await clearTxIDB(); } catch {}
-        try { await saveTxToIDB(remote_state); } catch {}
-        dispatch({type:"RESTORE_ALL",data:remote.state});
+        try { await saveTxToIDB(_mergedState); } catch {}
+        dispatch({type:"RESTORE_ALL",data:_mergedState});
+        /* Force a clean debounced save after pull to prevent stale local state overwrite */
+        if(timerRef.current)clearTimeout(timerRef.current);
         window.dispatchEvent(new CustomEvent("gdrive:pulled",{detail:{time:remoteTime}}));
       }catch(e){console.warn("[GDrive] Pull failed:",e);}
     };
@@ -11846,21 +11874,20 @@ var usePersistentReducer=(reducer,init)=>{
          _mmResetting is set to true just before window.location.reload() and
          naturally resets to false on the fresh page load. */
       if(_mmResetting)return;
-      stateRef.current=state;
-      saveState(state);
-      /* Best-effort IDB flush on close — completes if browser grants grace period */
-      saveTxToIDB(state).catch(()=>{});
+      const s=stateRef.current;
+      saveState(s);
+      saveTxToIDB(s).catch(()=>{});
       try{
-        const _ePJson=JSON.stringify(state.eodPrices||{});
-        const _eNJson=JSON.stringify(state.eodNavs||{});
-        if(Object.keys(state.eodPrices||{}).length>0)localStorage.setItem(LS_EOD_PRICES,_ePJson);
-        if(Object.keys(state.eodNavs||{}).length>0)localStorage.setItem(LS_EOD_NAVS,_eNJson);
+        const _ePJson=JSON.stringify(s.eodPrices||{});
+        const _eNJson=JSON.stringify(s.eodNavs||{});
+        if(Object.keys(s.eodPrices||{}).length>0)localStorage.setItem(LS_EOD_PRICES,_ePJson);
+        if(Object.keys(s.eodNavs||{}).length>0)localStorage.setItem(LS_EOD_NAVS,_eNJson);
       }catch{}
     };
     window.addEventListener("beforeunload",flush);
     window.addEventListener("pagehide",flush);
     return()=>{window.removeEventListener("beforeunload",flush);window.removeEventListener("pagehide",flush);};
-  },[state]);
+  },[]);
   return[state,dispatch,idbHydrated];
 };
 
@@ -12643,8 +12670,8 @@ const AccAttachPanel=({accId,attachments=[],onSave})=>{
   );
 };
 
-const TxEditModal=({tx,categories,payees,txTypes,onSave,onClose,allAccounts=[]})=>{
-  const[f,setF]=useState({...tx,amount:String(tx.amount),_receipts:tx._receipts||[]});
+const TxEditModal=({tx,categories,payees,txTypes,onSave,onClose,allAccounts=[],currentAccountId=""})=>{
+  const[f,setF]=useState({...tx,amount:String(tx.amount),_receipts:tx._receipts||[],srcId:tx.srcId||currentAccountId||""});
   const[showTax,setShowTax]=useState(!!(tx.gstRate&&+tx.gstRate>0)||!!(tx.tdsRate&&+tx.tdsRate>0));
   const[activeTxTypes,setActiveTxTypes]=useState(txTypes); // tracks correct type list for selected account
   const isTransfer=f.txType==="Transfer";
@@ -15577,7 +15604,10 @@ const Dashboard=React.memo(({data,isMobile,onJumpToTx})=>{
         const p=pts[idx];
         tipRef.current.style.display="block";
         tipRef.current.style.left=Math.min(frac*100,78)+"%";
-        tipRef.current.innerHTML=`<strong>${p.lbl}</strong><br/>${INRs(p.nw)}`;
+        tipRef.current.textContent="";
+  const s1=document.createElement("strong");s1.textContent=p.lbl;tipRef.current.appendChild(s1);
+  tipRef.current.appendChild(document.createElement("br"));
+  tipRef.current.appendChild(document.createTextNode(INRs(p.nw)));
       };
       const onSvgLeave=()=>{if(tipRef.current)tipRef.current.style.display="none";};
       /* one-click save current month snapshot */
@@ -16552,7 +16582,7 @@ const SplitTxModal=({tx,categories,onSave,onClose})=>{
    Fuzzy-searches all transactions, accounts, notes and payees. Click any
    result to jump directly to it.
    ══════════════════════════════════════════════════════════════════════════ */
-const GlobalSearchModal=({state,onClose,onJumpToTx,setTab,setTheme,setQuickAddOpen,onWhatsNew})=>{
+const GlobalSearchModal=({state,onClose,onJumpToTx,setTab,setTheme,setQuickAddOpen})=>{
   const[q,setQ]=useState("");
   const[debouncedQ,setDebouncedQ]=useState("");
   const inputRef=React.useRef(null);
@@ -16577,7 +16607,7 @@ const GlobalSearchModal=({state,onClose,onJumpToTx,setTab,setTheme,setQuickAddOp
     };
     document.addEventListener("keydown",handler);
     return()=>document.removeEventListener("keydown",handler);
-  });
+  },[items,onClose,execute]);
 
   /* 200ms debounce for the scan */
   React.useEffect(()=>{
@@ -16619,11 +16649,10 @@ const GlobalSearchModal=({state,onClose,onJumpToTx,setTab,setTheme,setQuickAddOp
     const nav=(window.__mm_visibleNAV||[]).map(n=>({kind:"cmd",icon:n.id,label:"Go to "+n.label,action:()=>setTab(n.id)}));
     const acts=[
       {kind:"cmd",icon:"plus",label:"Quick Add Transaction",action:()=>{setQuickAddOpen&&setQuickAddOpen(true);}},
-      {kind:"cmd",icon:"sparkles",label:"What's new in this version",action:()=>{onWhatsNew&&onWhatsNew();}},
     ];
     const themes=(window.THEMES||[]).map(t=>({kind:"cmd",icon:"palette",label:"Theme: "+t.name,action:()=>{setTheme&&setTheme(t.id);}}));
     return[...nav,...acts,...themes];
-  },[setTab,setQuickAddOpen,setTheme,onWhatsNew]);
+  },[setTab,setQuickAddOpen,setTheme]);
 
   /* Flat list for keyboard nav (commands first, then results) */
   const items=React.useMemo(()=>{
@@ -16826,7 +16855,7 @@ const ImportMFModal=({onImport,onClose})=>{
         const data=all.slice(hi+1).filter(r=>r.some(c=>c!==""));
         if(!hdrs.length||!data.length){setParseErr("No data found. Check the file has headers and data rows.");return;}
         const gi=k=>detectCol(hdrs,ALIASES[k]);
-        const get=(row,k)=>{const i=gi(k);return i>=0?(row[i]??"")+"":" ";};
+        const get=(row,k)=>{const i=gi(k);return i>=0?(row[i]??"")+"":"";};
         const items=[],skipped=[];
         data.forEach((row,i)=>{
           const name=(get(row,"name")).trim();
@@ -16993,13 +17022,19 @@ const ImportMFTxnsModal=({onImport,onClose})=>{
           let date=dateStr;
           if(/^\d{2}[\/-]\d{2}[\/-]\d{4}$/.test(dateStr)){
             const parts=dateStr.split(/[\/-]/);
-            date=parts[2]+"-"+parts[1]+"-"+parts[0];
+            const p1=parseInt(parts[0],10),p2=parseInt(parts[1],10);
+            if(p1>12){date=parts[2]+"-"+parts[1]+"-"+parts[0];}
+            else if(p2>12){date=parts[2]+"-"+parts[0]+"-"+parts[1];}
+            else{date=parts[2]+"-"+parts[1]+"-"+parts[0];}
           }else if(/^\d{4}[\/-]\d{2}[\/-]\d{2}$/.test(dateStr)){
             date=dateStr.replace(/\//g,"-");
+          }else{
+            /* DD-MMM-YYYY (and any other known AMFI/mfapi format) → ISO */
+            date=mfNavDateToISO(dateStr)||dateStr;
           }
           const orderRaw=get(row,ci.order).toLowerCase();
           const orderType=orderRaw.includes("sell")||orderRaw.includes("redeem")?"sell":"buy";
-          const units=parseFloat((get(row,ci.units)).replace(/[^0-9.\-]/g,""))||0;
+          const units=Math.abs(parseFloat((get(row,ci.units)).replace(/[^0-9.\-]/g,""))||0);
           const nav=parseFloat((get(row,ci.nav)).replace(/[^0-9.\-]/g,""))||0;
           const amount=parseFloat((get(row,ci.amount)).replace(/[^0-9.\-]/g,""))||0;
           let folio=get(row,ci.folio);
@@ -17099,25 +17134,25 @@ const ImportMFTxnsModal=({onImport,onClose})=>{
 /* ── MF TRANSACTIONS PANEL — shows all buy/sell txns for a specific fund ── */
 const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,scheduled,banks,mf})=>{
   const[showAdd,setShowAdd]=useState(false);
-  const[addForm,setAddForm]=useState({orderType:"buy",date:getISTDateStr?getISTDateStr():(new Date().toISOString().split("T")[0]),amount:"",nav:""});
+  const[addForm,setAddForm]=useState({orderType:"buy",date:getISTDateStr?getISTDateStr():(new Date().toISOString().split("T")[0]),amount:"",nav:"",isSwitch:false});
   const[addError,setAddError]=useState("");
   const[editTxnId,setEditTxnId]=useState(null);
-  const[editForm,setEditForm]=useState({orderType:"buy",date:"",amount:"",nav:"",folio:""});
+  const[editForm,setEditForm]=useState({orderType:"buy",date:"",amount:"",nav:"",folio:"",isSwitch:false});
   const[confirmDelId,setConfirmDelId]=useState(null);
   const[showSwpForm,setShowSwpForm]=useState(false);
   const[swpForm,setSwpForm]=useState({amount:"",frequency:"monthly",nextDate:"",endDate:"",targetAccId:""});
   const thisFundSwp=React.useMemo(()=>(scheduled||[]).filter(s=>s.isSwp&&s.fundName===fundName),[scheduled,fundName]);
   const startEdit=t=>{
     setEditTxnId(t.id);
-    setEditForm({orderType:t.orderType||"buy",date:t.date||"",amount:t.amount?String(t.amount):"",nav:t.nav?String(t.nav):"",folio:t.folio||""});
+    setEditForm({orderType:t.orderType||"buy",date:t.date||"",amount:t.amount?String(t.amount):"",nav:t.nav?String(t.nav):"",folio:t.folio||"",isSwitch:!!t.isSwitch});
   };
-  const cancelEdit=()=>{setEditTxnId(null);setEditForm({orderType:"buy",date:"",amount:"",nav:"",folio:""});};
+  const cancelEdit=()=>{setEditTxnId(null);setEditForm({orderType:"buy",date:"",amount:"",nav:"",folio:"",isSwitch:false});};
   const saveEdit=()=>{
     const amt=parseFloat(editForm.amount);
     const navP=parseFloat(editForm.nav);
     if(!amt||amt<=0||!navP||navP<=0||!editForm.date)return;
     const units=parseFloat((amt/navP).toFixed(4));
-    dispatch({type:"EDIT_MF_TXN",txn:{id:editTxnId,fundName,date:editForm.date,orderType:editForm.orderType,amount:amt,nav:navP,units,folio:editForm.folio||""}});
+    dispatch({type:"EDIT_MF_TXN",txn:{id:editTxnId,fundName,date:editForm.date,orderType:editForm.orderType,amount:amt,nav:navP,units,folio:editForm.folio||"",isSwitch:!!editForm.isSwitch}});
     cancelEdit();
   };
   const confirmDelete=t=>{setConfirmDelId(t.id);};
@@ -17146,9 +17181,10 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,scheduled,banks,
       amount:amt,
       nav:navP,
       units,
+      isSwitch:!!addForm.isSwitch,
     }});
     setShowAdd(false);
-    setAddForm({orderType:"buy",date:getISTDateStr?getISTDateStr():(new Date().toISOString().split("T")[0]),amount:"",nav:""});
+    setAddForm({orderType:"buy",date:getISTDateStr?getISTDateStr():(new Date().toISOString().split("T")[0]),amount:"",nav:"",isSwitch:false});
   };
   return React.createElement(Modal,{title:"Transactions: "+fundName,onClose,w:780},
     /* Summary row */
@@ -17185,8 +17221,9 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,scheduled,banks,
           const isEditing=editTxnId===t.id;
           if(isEditing)return React.createElement("div",{key:t.id||i,style:{display:"grid",gridTemplateColumns:"minmax(80px,95px) minmax(45px,55px) minmax(70px,90px) minmax(65px,80px) minmax(80px,100px) minmax(80px,100px) 60px",padding:"4px 6px",borderBottom:"1px solid var(--accent)",background:"var(--accentbg)",fontSize:12,alignItems:"center",gap:2}},
             React.createElement("input",{type:"date",value:editForm.date,onChange:e=>setEditForm(f=>({...f,date:e.target.value})),style:{width:"100%",padding:"3px 5px",border:"1px solid var(--border)",borderRadius:5,fontSize:11,background:"var(--inp-bg)",color:"var(--text)",outline:"none"}}),
-            React.createElement("div",{style:{display:"flex",gap:3}},
-              ["buy","sell"].map(t2=>React.createElement("button",{key:t2,onClick:()=>setEditForm(f=>({...f,orderType:t2})),style:{flex:1,padding:"3px 0",borderRadius:4,fontSize:9,fontWeight:700,cursor:"pointer",border:"1px solid "+(editForm.orderType===t2?(t2==="buy"?"#16a34a":"#ef4444"):"var(--border2)"),background:editForm.orderType===t2?(t2==="buy"?"rgba(22,163,74,.12)":"rgba(239,68,68,.12)"):"transparent",color:editForm.orderType===t2?(t2==="buy"?"#16a34a":"#ef4444"):"var(--text5)"}},t2==="buy"?"B":"S"))
+            React.createElement("div",{style:{display:"flex",gap:3,alignItems:"center"}},
+              ["buy","sell"].map(t2=>React.createElement("button",{key:t2,onClick:()=>setEditForm(f=>({...f,orderType:t2})),style:{flex:1,padding:"3px 0",borderRadius:4,fontSize:9,fontWeight:700,cursor:"pointer",border:"1px solid "+(editForm.orderType===t2?(t2==="buy"?"#16a34a":"#ef4444"):"var(--border2)"),background:editForm.orderType===t2?(t2==="buy"?"rgba(22,163,74,.12)":"rgba(239,68,68,.12)"):"transparent",color:editForm.orderType===t2?(t2==="buy"?"#16a34a":"#ef4444"):"var(--text5)"}},t2==="buy"?"B":"S")),
+              React.createElement("button",{onClick:()=>setEditForm(f=>({...f,isSwitch:!f.isSwitch})),title:"Mark as switch (reallocation — excluded from invested & peak)",style:{padding:"3px 4px",borderRadius:4,fontSize:8,fontWeight:700,cursor:"pointer",border:"1px solid "+(editForm.isSwitch?"#0e7490":"var(--border2)"),background:editForm.isSwitch?"rgba(14,116,144,.15)":"transparent",color:editForm.isSwitch?"#0e7490":"var(--text5)"}},"SW")
             ),
             React.createElement("input",{type:"number",value:editForm.amount,onChange:e=>setEditForm(f=>({...f,amount:e.target.value})),style:{width:"100%",padding:"3px 5px",border:"1px solid var(--border)",borderRadius:5,fontSize:11,textAlign:"right",background:"var(--inp-bg)",color:"var(--text)",outline:"none"},min:"0",step:"0.01"}),
             React.createElement("input",{type:"number",value:editForm.nav,onChange:e=>setEditForm(f=>({...f,nav:e.target.value})),style:{width:"100%",padding:"3px 5px",border:"1px solid var(--border)",borderRadius:5,fontSize:11,textAlign:"right",background:"var(--inp-bg)",color:"var(--text)",outline:"none"},min:"0",step:"0.0001"}),
@@ -17206,13 +17243,15 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,scheduled,banks,
                 color:isBuy?"#16a34a":"#ef4444",
                 border:"1px solid "+(isBuy?"rgba(22,163,74,.25)":"rgba(239,68,68,.25)")
               }},isBuy?"BUY":"SELL"),
-              t.tag==="SWP"&&React.createElement("span",{style:{fontSize:8,fontWeight:700,padding:"1px 5px",borderRadius:4,background:"rgba(109,40,217,.12)",color:"#6d28d9",border:"1px solid rgba(109,40,217,.25)"}},"SWP")
+              t.tag==="SWP"&&React.createElement("span",{style:{fontSize:8,fontWeight:700,padding:"1px 5px",borderRadius:4,background:"rgba(109,40,217,.12)",color:"#6d28d9",border:"1px solid rgba(109,40,217,.25)"}},"SWP"),
+              t.isSwitch&&React.createElement("span",{style:{fontSize:8,fontWeight:700,padding:"1px 5px",borderRadius:4,background:"rgba(14,116,144,.12)",color:"#0e7490",border:"1px solid rgba(14,116,144,.25)"}},"SWITCH")
             ),
             React.createElement("div",{style:{textAlign:"right",color:isBuy?"#16a34a":"#ef4444",fontWeight:600,fontFamily:"'Sora',sans-serif"}},(isBuy?"+":"-")+(+t.units||0).toFixed(3)),
             React.createElement("div",{style:{textAlign:"right",color:"var(--text4)"}},t.nav?"₹"+Number(t.nav).toFixed(4):"--"),
             React.createElement("div",{style:{textAlign:"right",color:"var(--text3)",fontWeight:600}},INR(+t.amount||0)),
             React.createElement("div",{style:{textAlign:"right",color:"var(--text5)",fontSize:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.folio||"--"),
             React.createElement("div",{style:{display:"flex",gap:4,justifyContent:"center"}},
+              React.createElement("button",{onClick:()=>dispatch({type:"EDIT_MF_TXN",txn:{...t,isSwitch:!t.isSwitch}}),title:t.isSwitch?"Unmark as switch (reallocation, not new money)":"Mark as switch (reallocation — excluded from invested & peak)","style":{padding:"3px 5px",border:"none",borderRadius:4,background:t.isSwitch?"#0e7490":"var(--bg4)",color:t.isSwitch?"#fff":"var(--text4)",cursor:"pointer",fontSize:9,lineHeight:1,fontWeight:700,border:"1px solid "+(t.isSwitch?"#0e7490":"var(--border)")}},"SW"),
               React.createElement("button",{onClick:()=>startEdit(t),title:"Edit",style:{padding:"3px 5px",border:"none",borderRadius:4,background:"var(--accent)",color:"#fff",cursor:"pointer",fontSize:10,lineHeight:1}},"✎"),
               React.createElement("button",{onClick:()=>confirmDelete(t),title:"Delete",style:{padding:"3px 5px",border:"none",borderRadius:4,background:"#ef4444",color:"#fff",cursor:"pointer",fontSize:10,lineHeight:1}},"🗑")
             )
@@ -17245,6 +17284,12 @@ const MFTxnsPanel=React.memo(({fundName,mfTxns,dispatch,onClose,scheduled,banks,
           React.createElement("input",{type:"number",className:"inp",value:addForm.nav,onChange:e=>setAddForm(f=>({...f,nav:e.target.value})),placeholder:"e.g. 45.32",min:"0",step:"0.0001"})
         )
       ),
+      /* Switch flag: marks a reallocation (sell one fund to buy another) so the
+         amount is excluded from invested/cost and all external-cash calculations. */
+      React.createElement("label",{style:{display:"flex",alignItems:"center",gap:8,marginTop:10,fontSize:11,color:"var(--text3)",cursor:"pointer",fontWeight:600}},
+        React.createElement("input",{type:"checkbox",checked:!!addForm.isSwitch,onChange:e=>setAddForm(f=>({...f,isSwitch:e.target.checked})),style:{accentColor:"#0e7490"}}),
+        "Switch (reallocation, not new money — excluded from invested & drawdown peak)")
+      ,
       /* Preview: calculated units */
       addForm.amount&&addForm.nav&&parseFloat(addForm.amount)>0&&parseFloat(addForm.nav)>0?
         React.createElement("div",{style:{marginTop:8,fontSize:11,color:"var(--text5)",fontStyle:"italic"}},"Units: "+(parseFloat(addForm.amount)/parseFloat(addForm.nav)).toFixed(4)):null,
@@ -17381,7 +17426,7 @@ const ImportFDModal=({onImport,onClose})=>{
         const data=all.slice(hi+1).filter(r=>r.some(c=>c!==""));
         if(!hdrs.length||!data.length){setParseErr("No data found. Check the file has headers and data rows.");return;}
         const gi=k=>detectCol(hdrs,ALIASES[k]);
-        const get=(row,k)=>{const i=gi(k);return i>=0?(row[i]??"")+"":" ";};
+        const get=(row,k)=>{const i=gi(k);return i>=0?(row[i]??"")+"":"";};
         const items=[],skipped=[];
         data.forEach((row,i)=>{
           const bank=(get(row,"bank")).trim();
@@ -18555,11 +18600,9 @@ const ShareHistoryPanel=({sh,eodPrices,historyCache={},dispatch})=>{
   React.useEffect(()=>{
     if(!tkr||!sh.buyDate){setHistPts(null);setHistLoading(false);return;}
 
-    /* Check cache first — bypassed when refreshKey changes (forced refresh) */
     const cached=historyCache[tkr];
     const now=Date.now();
     const cacheAge=cached?.timestamp?(now-cached.timestamp):Infinity;
-    /* Cache is valid for 24 h; a forced refresh sets timestamp:0 to bust it */
     const isCacheValid=refreshKey===0&&cached&&cacheAge<(24*60*60*1000)&&cached.fromDate===sh.buyDate;
 
     if(isCacheValid&&cached.data&&cached.data.length>=2){
@@ -18568,7 +18611,6 @@ const ShareHistoryPanel=({sh,eodPrices,historyCache={},dispatch})=>{
       return;
     }
 
-    /* Fetch fresh data */
     let cancelled=false;
     setHistLoading(true);
     setHistPts(null);
@@ -18583,7 +18625,7 @@ const ShareHistoryPanel=({sh,eodPrices,historyCache={},dispatch})=>{
       })
       .catch(()=>{if(!cancelled){setHistPts([]);setHistLoading(false);}});
     return()=>{cancelled=true;};
-  },[tkr,sh.buyDate,historyCache,dispatch,refreshKey]);
+  },[tkr,sh.buyDate,dispatch,refreshKey]);
 
   /* ── 1. Loading ── */
   if(histLoading)return React.createElement("div",{style:{
@@ -18947,51 +18989,120 @@ const FDTimeline=({fd})=>{
    via the same CORS-proxy pattern used elsewhere. Falls back silently to null
    so the embedded history is used unchanged when offline / blocked.
    ══════════════════════════════════════════════════════════════════════════ */
-let _niftyLiveCache=null;   /* {value, date} */
+let _niftyLiveCache=null;   /* {nifty50:[{date,value}], nifty100:[...], nifty200:[...]} (+ legacy value/date hints) */
 let _niftyLivePromise=null;
+
+/* Persist the fetched Nifty index daily series to localStorage so gap days survive
+   reloads — no need to click Refresh every time the app is reopened. Legacy blobs
+   that stored only Nifty 50 under `series` keep working (treated as nifty50). */
+var LS_NIFTY_LIVE="mm_nifty_live";
+var _niftyPersistRead=()=>{
+  try{
+    const raw=localStorage.getItem(LS_NIFTY_LIVE);
+    if(!raw)return null;
+    const o=JSON.parse(raw);
+    if(!o)return null;
+    const sortSeries=a=>(a||[]).slice().sort((x,y)=>x.date<y.date?-1:1);
+    const n50=sortSeries(Array.isArray(o.nifty50)?o.nifty50:o.series);
+    const n100=sortSeries(Array.isArray(o.nifty100)?o.nifty100:null);
+    const n200=sortSeries(Array.isArray(o.nifty200)?o.nifty200:null);
+    if((!n50||!n50.length)&&(!n100||!n100.length)&&(!n200||!n200.length))return null;
+    const last=(n50&&n50.length)?n50[n50.length-1]:null;
+    return {nifty50:n50||[],nifty100:n100||[],nifty200:n200||[],value:last?last.value:null,date:last?last.date:null,savedAt:o.savedAt||0};
+  }catch(e){return null;}
+};
+var _niftyPersistWrite=(live,savedAt)=>{
+  try{
+    /* Merge with any previously persisted series so coverage grows backward */
+    const prev=_niftyPersistRead()||{nifty50:[],nifty100:[],nifty200:[]};
+    const merge=(cur,prevCur)=>{
+      const map={};(cur||[]).forEach(s=>{map[s.date]=s.value;});
+      (prevCur||[]).forEach(s=>{if(!(s.date in map))map[s.date]=s.value;});
+      return Object.keys(map).map(d=>({date:d,value:map[d]})).sort((a,b)=>a.date<b.date?-1:1);
+    };
+    const out={
+      nifty50:merge(live.nifty50,prev.nifty50),
+      nifty100:merge(live.nifty100,prev.nifty100),
+      nifty200:merge(live.nifty200,prev.nifty200),
+      savedAt:savedAt||Date.now()
+    };
+    localStorage.setItem(LS_NIFTY_LIVE,JSON.stringify(out));
+    return out;
+  }catch(e){return live;}
+};
+/* Seed the module cache from persisted data so the chart's first render already
+   has the gap-filled daily series (no network / no Refresh needed on reopen). */
+if(!_niftyLiveCache){const _p=_niftyPersistRead();if(_p&&(_p.nifty50&&_p.nifty50.length))_niftyLiveCache=_p;}
 const fetchNiftyLive=async()=>{
   if(_niftyLiveCache)return _niftyLiveCache;
   if(_niftyLivePromise)return _niftyLivePromise;
+  const TICKER_DEFS=[
+    {key:"nifty50",sym:"%5ENSEI"},
+    {key:"nifty100",sym:"%5ECNX100"},
+    {key:"nifty200",sym:"%5ECNX200"},
+  ];
   const run=async()=>{
     const period2=Math.floor(Date.now()/1000);
-    const period1=period2-60*60*24*7; /* last 7 days is enough for the latest close */
-    const yUrl="https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?period1="+period1+"&period2="+period2+"&interval=1d";
-    const proxies=[
-      "https://api.cors.lol/?url="+encodeURIComponent(yUrl),
-      "https://corsproxy.io/?"+encodeURIComponent(yUrl),
-      "https://cors.eu.org/"+yUrl,
-      "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(yUrl),
-    ];
-    for(const p of proxies){
-      try{
-        const r=await _fetchX(p,{},10000);if(!r.ok)continue;
-        const txt=await _readBody(r,8000);
-        let json;try{json=JSON.parse(_unwrap(txt));}catch{continue;}
-        const res=json&&json.chart&&json.chart.result&&json.chart.result[0];
-        if(!res)continue;
-        const ts=res.timestamp, q=res.indicators&&res.indicators.quote&&res.indicators.quote[0];
-        if(!ts||!q||!q.close)continue;
-        let idx=ts.length-1;
-        while(idx>0&&(q.close[idx]==null))idx--;
-        const close=q.close[idx];
-        const t=ts[idx];
-        if(close==null)continue;
-        const dt=new Date(t*1000);
-        const iso=dt.toISOString().slice(0,10);
-        _niftyLiveCache={value:Math.round(close*100)/100,date:iso};
-        return _niftyLiveCache;
-      }catch(e){}
+    const period1=period2-60*60*24*400; /* ~400 days of daily closes so snapshots ending weeks/months ago still connect to today */
+    const out={nifty50:[],nifty100:[],nifty200:[]};
+    for(const td of TICKER_DEFS){
+      const yUrl="https://query1.finance.yahoo.com/v8/finance/chart/"+td.sym+"?period1="+period1+"&period2="+period2+"&interval=1d";
+      const proxies=[
+        "https://api.cors.lol/?url="+encodeURIComponent(yUrl),
+        "https://corsproxy.io/?"+encodeURIComponent(yUrl),
+        "https://cors.eu.org/"+yUrl,
+        "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(yUrl),
+      ];
+      for(const p of proxies){
+        try{
+          const r=await _fetchX(p,{},10000);if(!r.ok)continue;
+          const txt=await _readBody(r,8000);
+          let json;try{json=JSON.parse(_unwrap(txt));}catch{continue;}
+          const res=json&&json.chart&&json.chart.result&&json.chart.result[0];
+          if(!res)continue;
+          const ts=res.timestamp, q=res.indicators&&res.indicators.quote&&res.indicators.quote[0];
+          if(!ts||!q||!q.close)continue;
+          const series=[];
+          for(let i=0;i<ts.length;i++){
+            const c=q.close[i];
+            if(c==null)continue;
+            series.push({date:new Date(ts[i]*1000).toISOString().slice(0,10),value:Math.round(c*100)/100});
+          }
+          series.sort((a,b)=>a.date<b.date?-1:1);
+          if(series.length)out[td.key]=series;
+          break;
+        }catch(e){}
+      }
     }
-    return null;
+    if(!out.nifty50.length)return null;
+    const lastPt=out.nifty50[out.nifty50.length-1];
+    const persisted=_niftyPersistWrite(out,Date.now());
+    _niftyLiveCache={nifty50:persisted.nifty50, nifty100:persisted.nifty100, nifty200:persisted.nifty200, value:lastPt.value,date:lastPt.date};
+    return _niftyLiveCache;
   };
   _niftyLivePromise=run().finally(()=>{_niftyLivePromise=null;});
   return _niftyLivePromise;
 };
 
-const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
+const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
   const svgRef=React.useRef(null);
   const[hoverIdx,setHoverIdx]=React.useState(null);
   const[niftyLive,setNiftyLive]=React.useState(_niftyLiveCache);
+  const[dateFrom,setDateFrom]=React.useState("");
+  const[dateTo,setDateTo]=React.useState("");
+  const[datePreset,setDatePreset]=React.useState("all");
+  const[indexed,setIndexed]=React.useState(false);
+  const[showBreakdown,setShowBreakdown]=React.useState(false);
+  const[niftyLoading,setNiftyLoading]=React.useState(false);
+  /* Index overlay toggles — Nifty 50 / 100 / 200 shown on demand. The right axis
+     rescales to the union of the toggled-on lines so each combination fits. */
+  const[indexLines,setIndexLines]=React.useState({nifty50:true,nifty100:true,nifty200:true});
+  const toggleIndexLine=k=>setIndexLines(s=>({...s,[k]:!s[k]}));
+  const IDX_DEFS=[
+    {key:"nifty50",label:"Nifty 50",color:"#2563eb",hist:NIFTY50_HISTORY},
+    {key:"nifty100",label:"Nifty 100",color:"#0ea5e9",hist:NIFTY100_HISTORY},
+    {key:"nifty200",label:"Nifty 200",color:"#8b5cf6",hist:NIFTY200_HISTORY},
+  ];
 
   React.useEffect(()=>{
     let alive=true;
@@ -18999,9 +19110,17 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     return()=>{alive=false;};
   },[]);
 
+  const refreshNifty=()=>{
+    setNiftyLoading(true);
+    _niftyLiveCache=null; _niftyLivePromise=null; /* bypass session cache to force a fresh fetch */
+    fetchNiftyLive().then(v=>{setNiftyLoading(false);if(v)setNiftyLive(v);}).catch(()=>setNiftyLoading(false));
+  };
+
   /* ── Build timeline data points ── */
   const dataPoints=React.useMemo(()=>{
-    const sorted=[...(mfTxns||[])].sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+    /* Trim whitespace from legacy txn dates (some imported dates carry leading spaces) */
+    const txns=(mfTxns||[]).map(t=>t.date&&typeof t.date==="string"?{...t,date:t.date.trim()}:t);
+    const sorted=[...txns].sort((a,b)=>(a.date||"").localeCompare(b.date||""));
     if(sorted.length<2)return[];
     const fundState={};
     const lastNav={};
@@ -19012,10 +19131,39 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     const uniqueDates=[...new Set(sorted.map(t=>t.date))].sort();
     const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     const toLabel=iso=>{const p=iso.split("-");return p.length===3?p[2]+"-"+MON[parseInt(p[1],10)-1]+"-"+p[0]:iso;};
+    /* ── NAV lookup infrastructure for gap-day interpolation ── */
+    const _normEodNavs=normalizeEodNavKeys(eodNavs||{});
+    const _fundSchemeMap={};
+    (mf||[]).forEach(m=>{if(m.name&&m.schemeCode)_fundSchemeMap[m.name]=m.schemeCode;});
+    const _histLookup={};
+    Object.entries(mfHistNavs||{}).forEach(([code,arr])=>{
+      if(code==="_v"||!Array.isArray(arr)||!arr.length)return;
+      _histLookup[code]=arr.slice().sort((a,b)=>a.date<b.date?-1:1);
+    });
+    const _isoMs=iso=>{const p=(iso||"").split("-");return p.length===3?Date.UTC(+p[0],+p[1]-1,+p[2]):0;};
+    const _getNav=(fn,iso)=>{
+      const sc=_fundSchemeMap[fn];if(!sc)return null;
+      const dayNavs=_normEodNavs[iso];
+      if(dayNavs&&dayNavs[sc]!=null)return dayNavs[sc];
+      const hist=_histLookup[sc];
+      if(hist&&hist.length){
+        for(let i=hist.length-1;i>=0;i--){
+          if(hist[i].date<=iso){
+            /* proximity guard: reject hist entries that predate the target by more
+               than 15 days — prevents using a much-newer NAV when the scheme's
+               history doesn't actually cover the requested date. */
+            if((_isoMs(iso)-_isoMs(hist[i].date))/86400000<=15)return hist[i].nav;
+            return null;
+          }
+        }
+      }
+      return null;
+    };
+    const _localIso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
     uniqueDates.forEach(date=>{
       (byDate[date]||[]).forEach(t=>{
         const fn=t.fundName;
-        if(!fundState[fn])fundState[fn]={units:0,totalCost:0,avgCostPerUnit:0};
+        if(!fundState[fn])fundState[fn]={units:0,totalCost:0,avgCostPerUnit:0,switchUnits:0};
         const fs=fundState[fn];
         if(+t.nav>0)lastNav[fn]=+t.nav;
         const nav=+t.nav||0;
@@ -19024,44 +19172,150 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         if(t.orderType==="buy"){
           fs.totalCost+=amount;fs.units+=units;
           fs.avgCostPerUnit=fs.units>0?fs.totalCost/fs.units:0;
+          if(t.isSwitch)fs.switchUnits+=units;
           runningCost+=amount;
         }else{
           const soldUnits=Math.min(units,fs.units);
           const costOfSold=fs.avgCostPerUnit*soldUnits;
           fs.totalCost=Math.max(0,fs.totalCost-costOfSold);
           fs.units=Math.max(0,fs.units-soldUnits);
+          fs.switchUnits=Math.max(0,Math.min(fs.switchUnits,fs.units));
           fs.avgCostPerUnit=fs.units>0?fs.totalCost/fs.units:0;
           runningCost=Math.max(0,runningCost-costOfSold);
         }
       });
       let holdingVal=0;
-      Object.entries(fundState).forEach(([fn,fs])=>{if(fs.units>0&&lastNav[fn])holdingVal+=fs.units*lastNav[fn];});
-      if(runningCost>0)pts.push({date:toLabel(date),rawDate:date,cost:runningCost,value:holdingVal});
+      const fundVals={};
+      /* Prefer the fund's real daily NAV for this exact date (same source the
+         gap-day fill uses) so the transaction point connects smoothly to the
+         interpolated days — falling back to the transaction NAV when no daily
+         data is available. Without this, funds not transacted on a given date
+         were valued at a stale transaction NAV, causing a price jump at the seam. */
+      Object.entries(fundState).forEach(([fn,fs])=>{
+        const valUnits=Math.max(0,(fs.units||0)-(fs.switchUnits||0));
+        if(valUnits<=0)return;
+        const dailyNav=_getNav(fn,date);
+        const nav=(dailyNav!=null&&dailyNav>0)?dailyNav:lastNav[fn];
+        if(nav>0){const fv=valUnits*nav;holdingVal+=fv;fundVals[fn]=fv;}
+      });
+      /* Save a snapshot of fund units at this date so gap-day fill can use the
+         correct unit counts for the period starting after this transaction. */
+      const stateSnap={};
+      Object.entries(fundState).forEach(([fn,fs])=>{stateSnap[fn]={units:fs.units,switchUnits:fs.switchUnits};});
+      if(runningCost>0)pts.push({
+        date:toLabel(date),rawDate:date,cost:runningCost,value:holdingVal,
+        fundVals:fundVals,stateSnap:stateSnap,
+        txns:byDate[date].map(t=>({type:t.orderType,fund:t.fundName,amount:+t.amount||0,nav:+t.nav||0,isSwitch:!!t.isSwitch}))
+      });
     });
+    /* ── Gap-day fill: from the last recorded transaction to today, insert
+       daily holding-value points using eodNavs / mfHistNavs NAV data.
+       Fund units are frozen at the post-transaction snapshot (stateSnap). */
+    if(pts.length>0){
+      const lastPt=pts[pts.length-1];
+      const snap=lastPt.stateSnap;
+      if(snap){
+        const _sp=lastPt.rawDate.split("-").map(Number);
+        const _gapStart=new Date(_sp[0],_sp[1]-1,_sp[2]+1);
+        const _gapEnd=new Date(); _gapEnd.setHours(0,0,0,0);
+        if(_gapStart<=_gapEnd){
+          const _gd=new Date(_gapStart);
+          while(_gd<=_gapEnd){
+            if(_gd.getDay()!==0&&_gd.getDay()!==6){
+              const _iso=_localIso(_gd);
+              let _dv=0;
+              Object.entries(snap).forEach(([fn,s])=>{
+                const _vu=Math.max(0,(s.units||0)-(s.switchUnits||0));
+                if(_vu<=0)return;
+                const _nav=_getNav(fn,_iso);
+                const nav=(_nav!=null&&_nav>0)?_nav:lastNav[fn];
+                if(nav>0)_dv+=_vu*nav;
+              });
+              if(_dv>0)pts.push({date:toLabel(_iso),rawDate:_iso,cost:lastPt.cost,value:_dv,fundVals:{},txns:[]});
+            }
+            _gd.setDate(_gd.getDate()+1);
+          }
+        }
+      }
+    }
     if(mf&&mf.length>0&&pts.length>0){
       const activeMf=(mf||[]).filter(m=>m.units>0);
       const curCost=activeMf.reduce((s,m)=>s+(m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested),0);
-      const curVal=activeMf.reduce((s,m)=>s+(m.currentValue&&m.currentValue>0?m.currentValue:m.invested),0);
       const now=new Date();
       const todayLabel=now.getDate()+"-"+MON[now.getMonth()]+"-"+now.getFullYear();
-      const todayRaw=now.toISOString().slice(0,10);
+      const todayRaw=_localIso(now);
+      /* Use latest eodNavs snapshot (same source as the hero card) to avoid stale
+         m.currentValue after gap days without opening the app. */
+      const _latestNavDate=Object.keys(_normEodNavs).sort().slice(-1)[0];
+      const curVal=_latestNavDate?activeMf.reduce((s,m)=>{
+        const nav=(_normEodNavs[_latestNavDate]||{})[m.schemeCode];
+        return s+(nav?nav*m.units:0);
+      },0):activeMf.reduce((s,m)=>s+(m.currentValue&&m.currentValue>0?m.currentValue:m.invested),0);
       const lastPt=pts[pts.length-1];
       if(curVal>0&&curCost>0){
-        if(lastPt.rawDate===todayRaw)pts[pts.length-1]={date:todayLabel,rawDate:todayRaw,cost:curCost,value:curVal};
-        else pts.push({date:todayLabel,rawDate:todayRaw,cost:curCost,value:curVal});
+        const fundVals={};
+        activeMf.forEach(m=>{
+          const nav=_latestNavDate?(_normEodNavs[_latestNavDate]||{})[m.schemeCode]:null;
+          const fv=(nav&&nav>0)?m.units*nav:(m.currentValue&&m.currentValue>0?m.currentValue:0);
+          if(fv>0)fundVals[m.name]=fv;
+        });
+        const todayTxn=byDate[todayRaw]||[];
+        const newPt={date:todayLabel,rawDate:todayRaw,cost:curCost,value:curVal,fundVals:fundVals,
+          txns:todayTxn.map(t=>({type:t.orderType,fund:t.fundName,amount:+t.amount||0,nav:+t.nav||0,isSwitch:!!t.isSwitch}))};
+        if(lastPt.rawDate===todayRaw)pts[pts.length-1]=newPt;
+        else pts.push(newPt);
       }
     }
     return pts;
-  },[mfTxns,mf]);
+  },[mfTxns,mf,eodNavs,mfHistNavs]);
 
-  if(dataPoints.length<2)return React.createElement("div",{style:{padding:"20px",textAlign:"center",fontSize:12,color:"var(--text6)"}},"Not enough transaction history to plot evolution.");
+  /* ── Date range presets & filtering ── */
+  const _t=iso=>{const p=(iso||"").split("-");return p.length===3?Date.UTC(+p[0],+p[1]-1,+p[2]):0;};
+  const allFrom=dataPoints.length>0?dataPoints[0].rawDate:"";
+  const allTo=dataPoints.length>0?dataPoints[dataPoints.length-1].rawDate:"";
+  const applyPreset=preset=>{
+    setDatePreset(preset);
+    if(preset==="all"){setDateFrom("");setDateTo("");return;}
+    /* Normalize legacy non-ISO rawDates so preset bounds are always valid ISO */
+    const _iso=ds=>mfNavDateToISO(ds)||ds;
+    const _allFrom=_iso(allFrom),_allTo=_iso(allTo);
+    const to=(_allTo||new Date().toISOString().slice(0,10));
+    let from=to;
+    const yrs=preset==="1y"?1:preset==="3y"?3:preset==="5y"?5:0;
+    const dt=new Date(_t(to));
+    if(yrs>0){dt.setUTCFullYear(dt.getUTCFullYear()-yrs);from=dt.toISOString().slice(0,10);}
+    if(_t(from)<_t(_allFrom))from=_allFrom;
+    setDateFrom(from);setDateTo(to||"");
+  };
+  const filteredPoints=React.useMemo(()=>{
+    if(!dateFrom&&!dateTo)return dataPoints;
+    /* Normalize both sides to ISO so legacy DD-MM-YYYY / DD-MMM-YYYY dates compare correctly */
+    const _iso=ds=>mfNavDateToISO(ds)||ds;
+    const f=_iso(dateFrom),t=_iso(dateTo);
+    let dpts=dataPoints;
+    if(f)dpts=dpts.filter(d=>_iso(d.rawDate)>=f);
+    if(t)dpts=dpts.filter(d=>_iso(d.rawDate)<=t);
+    return dpts;
+  },[dataPoints,dateFrom,dateTo]);
+
+  try{if(window.__DBG&&window.__DBG.ms&&!window.__DBG.done){window.__DBG.done=true;
+    console.log("[MFCHART-DATA] allFrom raw="+JSON.stringify(dataPoints[0]&&dataPoints[0].rawDate)+" norm="+JSON.stringify(mfNavDateToISO(dataPoints[0]&&dataPoints[0].rawDate))+
+      "  first8="+JSON.stringify(dataPoints.slice(0,8).map(d=>d.rawDate))+
+      "  norm8="+JSON.stringify(dataPoints.slice(0,8).map(d=>mfNavDateToISO(d.rawDate)))+
+      "  total="+dataPoints.length+" lastRaw="+JSON.stringify(dataPoints[dataPoints.length-1].rawDate));
+  }}catch(_e){}
 
   /* ── Chart geometry ── */
-  const W=960,padL=72,padR=28,padT=20,padB=32,svgH=220;
+  const W=960,padL=72,padR=28,padT=20,padB=32,svgH=260;
   const chartW=W-padL-padR,chartH=svgH-padT-padB;
 
-  const costs=dataPoints.map(d=>d.cost);
-  const vals=dataPoints.map(d=>d.value);
+  /* Indexed mode: normalize portfolio value + nifty to 100 at range start */
+  const first=filteredPoints[0]||{value:0,cost:0,rawDate:""};
+  const last=filteredPoints[filteredPoints.length-1]||{value:0,cost:0,rawDate:""};
+  const idxScale=v=>first.value>0?(v/first.value*100):v;
+  const costScale=v=>first.cost>0?(v/first.cost*100):v;
+  const costs=(indexed?filteredPoints.map(d=>costScale(d.cost)):filteredPoints.map(d=>d.cost));
+  const vals=(indexed?filteredPoints.map(d=>idxScale(d.value)):filteredPoints.map(d=>d.value));
   const allVals=[...costs,...vals];
   const rawMn=Math.min(...allVals);
   const rawMx=Math.max(...allVals,1);
@@ -19069,9 +19323,10 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
   const mn=Math.max(0,rawMn-padV);
   const mx=rawMx+padV;
   const range=mx-mn||1;
-  const xStep=chartW/(dataPoints.length-1);
+  const xStep=chartW/(filteredPoints.length-1);
   const yFn=v=>padT+chartH*(1-(v-mn)/range);
   const xFn=i=>padL+i*xStep;
+  const nTicks=4;
 
   /* ── Smooth cubic-bezier path builder ── */
   const smoothPath=pts=>{
@@ -19086,58 +19341,80 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     return d;
   };
 
-  const costXY=dataPoints.map((d,i)=>[xFn(i),yFn(d.cost)]);
-  const valXY=dataPoints.map((d,i)=>[xFn(i),yFn(d.value)]);
+  const costXY=filteredPoints.map((d,i)=>[xFn(i),yFn(costs[i])]);
+  const valXY=filteredPoints.map((d,i)=>[xFn(i),yFn(vals[i])]);
   const baseY=padT+chartH;
   const costPath=smoothPath(costXY);
   const valPath=smoothPath(valXY);
-  const costAreaPath=costPath+` L${xFn(dataPoints.length-1)},${baseY} L${xFn(0)},${baseY} Z`;
-  const valAreaPath=valPath+` L${xFn(dataPoints.length-1)},${baseY} L${xFn(0)},${baseY} Z`;
+  const costAreaPath=costPath+` L${xFn(filteredPoints.length-1)},${baseY} L${xFn(0)},${baseY} Z`;
+  const valAreaPath=valPath+` L${xFn(filteredPoints.length-1)},${baseY} L${xFn(0)},${baseY} Z`;
 
-  /* ── Nifty 50 overlay (secondary right axis, index points) ──
-     Build an independent time-series mapped onto the chart's full date domain
-     so the line always spans the entire portfolio period (Jan 2017 to now),
-     independent of how sparse/irregular the portfolio transaction dates are. ── */
+  /* ── Index overlays (Nifty 50 / 100 / 200) on a shared secondary right axis ──
+     Each index builds an independent time-series mapped onto the chart's full date
+     domain so lines always span the entire portfolio period (Jan 2017 to now).
+     The right axis scale is the union of the currently-toggled lines and rescales
+     dynamically when the user toggles indices on/off. ── */
   const _toTime=iso=>{const p=iso.split("-");return Date.UTC(+p[0],+p[1]-1,+p[2]);};
-  /* Merge live Nifty value into the embedded history so the line extends to the
-     most recent close (fetched at runtime). Replaces any same-date entry. */
-  const niftyHist={...NIFTY50_HISTORY};
-  if(niftyLive&&niftyLive.value){
-    const ld=niftyLive.date;
-    let _replaced=false;
-    for(const k of Object.keys(niftyHist)){if(k===ld){niftyHist[k]=niftyLive.value;_replaced=true;break;}}
-    if(!_replaced)niftyHist[ld]=niftyLive.value;
-  }
-  const domStart=_toTime(dataPoints[0].rawDate);
-  const domEnd=_toTime(dataPoints[dataPoints.length-1].rawDate);
+  const domStart=_toTime((filteredPoints[0]&&filteredPoints[0].rawDate)||"");
+  const domEnd=_toTime((filteredPoints[filteredPoints.length-1]&&filteredPoints[filteredPoints.length-1].rawDate)||"");
   const domSpan=(domEnd-domStart)||1;
   const _xTime=iso=>padL+(chartW*(_toTime(iso)-domStart)/domSpan);
-  const histEntries=Object.keys(niftyHist)
-    .filter(d=>_toTime(d)>=domStart&&_toTime(d)<=domEnd)
-    .sort()
-    .map(d=>[ _xTime(d), niftyHist[d] ]);
-  const niftyHasData=histEntries.length>=2;
-  const niftyRawMn=niftyHasData?Math.min(...histEntries.map(e=>e[1])):0;
-  const niftyRawMx=niftyHasData?Math.max(...histEntries.map(e=>e[1])):1;
-  const niftyPadV=(niftyRawMx-niftyRawMn)*0.10||1;
-  const niftyMn=Math.max(0,niftyRawMn-niftyPadV);
-  const niftyMx=niftyRawMx+niftyPadV;
-  const niftyRange=niftyMx-niftyMn||1;
-  const yFnN=v=>padT+chartH*(1-(v-niftyMn)/niftyRange);
-  const niftyXY=histEntries.map(([x,v])=>[x,yFnN(v)]);
-  const niftyPath=niftyXY.length>=2?smoothPath(niftyXY):"";
-  const niftyColor="#2563eb";
-  const niftyTicks=Array.from({length:nTicks},(_,i)=>niftyRawMn+(niftyRawMx-niftyRawMn)/(nTicks-1)*i);
-  if(niftyTicks.length)niftyTicks[nTicks-1]=niftyRawMx;
-  /* Per-portfolio-point Nifty value for hover tooltip (nearest history date <= point date) */
-  const _histSorted=Object.keys(niftyHist).sort();
-  const niftyValsAt=dataPoints.map(dp=>{
-    let best=null;
-    for(const hd of _histSorted){if(_toTime(hd)<=_toTime(dp.rawDate))best=niftyHist[hd];else break;}
-    return best;
+  /* Merge live daily closes into each index's embedded history so the line extends
+     to the most recent close (fetched at runtime). Replaces any same-date entry. */
+  const idxSeries=IDX_DEFS.map(def=>{
+    const hist={...def.hist};
+    const liveSeries=niftyLive?(niftyLive[def.key]||null):null;
+    if(liveSeries&&liveSeries.length){
+      /* Merge every live daily close so gap days between the bundled snapshot and today are filled */
+      liveSeries.forEach(s=>{hist[s.date]=s.value;});
+    }else if(def.key==="nifty50"&&niftyLive&&niftyLive.value&&niftyLive.date){
+      hist[niftyLive.date]=niftyLive.value;
+    }
+    const entries=Object.keys(hist)
+      .filter(d=>_toTime(d)>=domStart&&_toTime(d)<=domEnd)
+      .sort()
+      .map(d=>[ _xTime(d), hist[d] ]);
+    const hasData=entries.length>=2;
+    /* Find index baseline for indexed mode = first hist entry value */
+    const startVal=hasData?entries[0][1]:null;
+    /* Indexed: rescale to % where start = 100 */
+    const values=entries.map(e=>e[1]);
+    const dispValues=indexed&&startVal>0?values.map(v=>v/startVal*100):values;
+    return {def,hist,entries,hasData,startVal,values,dispValues,xy:[],path:"",valsAt:[]};
   });
+  /* Per-portfolio-point value for each index (nearest history date <= point date) */
+  idxSeries.forEach(s=>{
+    const _histSorted=Object.keys(s.hist).sort();
+    s.valsAt=filteredPoints.map(dp=>{
+      let best=null;
+      for(const hd of _histSorted){if(_toTime(hd)<=_toTime(dp.rawDate))best=s.hist[hd];else break;}
+      return best;
+    });
+  });
+  /* Right-axis scale covers the union of toggled-on index display values */
+  const visibleIdx=idxSeries.filter(s=>s.hasData&&indexLines[s.def.key]);
+  const _allIdxVals=[];
+  visibleIdx.forEach(s=>{if(s.dispValues&&s.dispValues.length)_allIdxVals.push(...s.dispValues);});
+  const idxRawMn=_allIdxVals.length?Math.min(..._allIdxVals):0;
+  const idxRawMx=_allIdxVals.length?Math.max(..._allIdxVals):1;
+  const idxPadV=(idxRawMx-idxRawMn)*0.10||1;
+  const idxMn=Math.max(0,idxRawMn-idxPadV);
+  const idxMx=idxRawMx+idxPadV;
+  const idxRange=idxMx-idxMn||1;
+  const yFnI=v=>padT+chartH*(1-(v-idxMn)/idxRange);
+  idxSeries.forEach(s=>{
+    s.xy=s.entries.map(([x,v],i)=>[x,yFnI(s.dispValues[i])]);
+    s.path=s.xy.length>=2?smoothPath(s.xy):"";
+  });
+  const idxTicks=Array.from({length:nTicks},(_,i)=>idxRawMn+(idxRawMx-idxRawMn)/(nTicks-1)*i);
+  if(idxTicks.length)idxTicks[idxTicks.length-1]=idxRawMx;
+  /* Keep Nifty 50 aliases for the alpha/metrics math below (always the 50 series). */
+  const nifty50S=idxSeries.find(s=>s.def.key==="nifty50")||{hist:NIFTY50_HISTORY,hasData:false,startVal:null,path:"",valsAt:[]};
+  const niftyStartVal=nifty50S.startVal;
+  const niftyValsAt=nifty50S.valsAt;
+  const idx100ValsAt=(idxSeries.find(s=>s.def.key==="nifty100")||{valsAt:[]}).valsAt;
+  const idx200ValsAt=(idxSeries.find(s=>s.def.key==="nifty200")||{valsAt:[]}).valsAt;
 
-  const last=dataPoints[dataPoints.length-1];
   const isGain=last.value>=last.cost;
   const totalGainPct=last.cost>0?((last.value-last.cost)/last.cost*100):0;
   const valColor=isGain?"#10b981":"#ef4444";
@@ -19151,29 +19428,59 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     return"₹"+Math.round(v);
   };
   const INRfmt=v=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(v);
+  const PCTfmt=v=>(v>=0?"+":"")+v.toFixed(2)+"%";
+
+  /* ── Daily net external cash flow from a point's transactions ──
+     Buys are inflows, sells outflows. Switch-flagged txns (isSwitch) are a
+     reallocation of already-invested money — no external cash moves — so they
+     contribute 0. This single helper keeps drawdown, hover, MD, Nifty-MW and
+     XIRR consistent. */
+  const fday=txns=>(txns||[]).reduce((s,t)=>t&&t.isSwitch?s:s+((t.type==="buy"?1:-1)*(+t.amount||0)),0);
 
   /* ── Nice Y-axis ticks (4 evenly spaced) ── */
-  const nTicks=4;
   const rawRange=rawMx-rawMn||1;
   const tickStep=rawRange/(nTicks-1);
   const yTicks=Array.from({length:nTicks},(_,i)=>rawMn+tickStep*i);
   yTicks[nTicks-1]=rawMx;
 
-  const stride=Math.max(1,Math.ceil(dataPoints.length/8));
+  const stride=Math.max(1,Math.ceil(filteredPoints.length/8));
+
+  /* ── Drawdown from peak (as % of peak value) ──
+     Built on a unitized time-weighted return index so external cash flows
+     (buys/sells) don't create phantom drawdowns or mask real ones. Over each
+     interval the factor = value_i / (value_{i-1} + flow_i), where flow_i is the
+     day's net txn amount; chaining these factors strips out the cash flows. */
+  const drawdowns=React.useMemo(()=>{
+    const res=[];let idx=0,peak=-Infinity,peakIdx=-1,troughIdx=-1,minDd=0;
+    filteredPoints.forEach((d,i)=>{
+      if(i===0){idx=100;}
+      else{
+        const prevVal=filteredPoints[i-1].value||0;
+        const flow=fday(d.txns);
+        const open=prevVal+flow;
+        if(open>0&&d.value>=0)idx=idx*(d.value/open);
+      }
+      if(idx>peak){peak=idx;peakIdx=i;}
+      const dd=peak>0?((idx-peak)/peak*100):0;
+      res[i]=dd;
+      if(dd<minDd){minDd=dd;troughIdx=i;}
+    });
+    return {series:res,peakIdx,troughIdx,minDd};
+  },[filteredPoints]);
 
   /* ── Peak / trough milestone markers ── */
   const milestones=React.useMemo(()=>{
-    if(dataPoints.length<5)return[];
+    if(filteredPoints.length<5)return[];
     let peakIdx=0,troughIdx=0;
-    dataPoints.forEach((d,i)=>{
-      if(d.value>dataPoints[peakIdx].value)peakIdx=i;
-      if(d.value<dataPoints[troughIdx].value)troughIdx=i;
+    filteredPoints.forEach((d,i)=>{
+      if(d.value>filteredPoints[peakIdx].value)peakIdx=i;
+      if(d.value<filteredPoints[troughIdx].value)troughIdx=i;
     });
     const res=[];
-    if(peakIdx!==dataPoints.length-1&&peakIdx!==0)res.push({idx:peakIdx,type:"peak"});
+    if(peakIdx!==filteredPoints.length-1&&peakIdx!==0)res.push({idx:peakIdx,type:"peak"});
     if(troughIdx!==0&&troughIdx!==peakIdx)res.push({idx:troughIdx,type:"trough"});
     return res;
-  },[dataPoints]);
+  },[filteredPoints]);
 
   /* ── Hover ── */
   const handleMouseMove=e=>{
@@ -19181,20 +19488,306 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
     const rect=svg.getBoundingClientRect();
     const svgX=(e.clientX-rect.left)*(W/rect.width)-padL;
     const idx=Math.round(svgX/xStep);
-    setHoverIdx(Math.max(0,Math.min(dataPoints.length-1,idx)));
+    setHoverIdx(Math.max(0,Math.min(filteredPoints.length-1,idx)));
   };
+  const _yV=i=>yFn(indexed?idxScale(filteredPoints[i].value):filteredPoints[i].value);
+  const _yC=i=>yFn(indexed?costScale(filteredPoints[i].cost):filteredPoints[i].cost);
 
-  const hp=hoverIdx!==null?dataPoints[hoverIdx]:null;
+  const hp=hoverIdx!==null?filteredPoints[hoverIdx]:null;
   const hx=hoverIdx!==null?xFn(hoverIdx):null;
-  const hyV=hoverIdx!==null?yFn(dataPoints[hoverIdx].value):null;
-  const hyC=hoverIdx!==null?yFn(dataPoints[hoverIdx].cost):null;
+  const hyV=hoverIdx!==null?_yV(hoverIdx):null;
+  const hyC=hoverIdx!==null?_yC(hoverIdx):null;
+  /* Hovered-point value + y for each VISIBLE index series (used for rings, dots and tooltip rows) */
+  const idxHover=visibleIdx.map(s=>{
+    const val=hoverIdx!==null&&s.valsAt[hoverIdx]!=null?s.valsAt[hoverIdx]:null;
+    const y=hoverIdx!==null&&val!=null?yFnI(indexed&&s.startVal>0?val/s.startVal*100:val):null;
+    return {def:s.def,s:s,val,y};
+  }).filter(r=>r.val!=null);
   const hN=hoverIdx!==null&&niftyValsAt[hoverIdx]!=null?niftyValsAt[hoverIdx]:null;
-  const hyN=hoverIdx!==null&&hN!=null?yFnN(hN):null;
-  const tipW=230,tipH=128;
+  const hyN=hN!=null?(function(){const s=nifty50S;return yFnI(indexed&&s.startVal>0?hN/s.startVal*100:hN);})():null;
+  /* Hovered point's money-weighted (Modified Dietz) return from range start, shared by
+     the tooltip's RETURN row and ALPHA row. Only prior points (j<hoverIdx) count as
+     cash flows so a same-day txn on the hovered date doesn't create an MD artifact. */
+  const hpPortPct=(()=>{
+    if(hoverIdx===null||!filteredPoints.length)return null;
+    const rs=filteredPoints[0];
+    if(!rs||!rs.value||rs.value<=0)return null;
+    const subDays=(_t(hp.rawDate)-_t(rs.rawDate))/86400000;
+    let sNet=0,sWeight=0;
+    for(let j=1;j<hoverIdx;j++){
+      const p=filteredPoints[j];
+      const dayFlow=fday(p.txns);
+      sNet+=dayFlow;
+      const el=(_t(p.rawDate)-_t(rs.rawDate))/86400000;
+      const w=subDays>0?Math.max(0,(subDays-el)/subDays):0;
+      sWeight+=dayFlow*w;
+    }
+    const den=rs.value+sWeight;
+    return den>0?((hp.value-rs.value-sNet)/den*100):null;
+  })();
+  const _hpHasTxns=hoverIdx!==null&&filteredPoints[hoverIdx]&&filteredPoints[hoverIdx].txns&&filteredPoints[hoverIdx].txns.length>0;
+  const _hpTxns=_hpHasTxns?filteredPoints[hoverIdx].txns:null;
+  const _txnRows=_hpTxns?_hpTxns.slice(0,5):null;
+  const _txnMore=_hpHasTxns&&_hpTxns.length>5?_hpTxns.length-5:0;
+  /* ── Tooltip: fresh table-style design. Every element's baseline comes from a
+     single running cursor (_lay), so rows can never overlap no matter how many
+     index series or transactions appear. tipH/tipX/tipY all derive from _lay. ── */
+  const _tipIdxN=idxHover.length;
+  const _lay=(()=>{
+    const B={};
+    B.date=22;                       /* header text                */
+    B.sep1=32;                       /* rule under header          */
+    B.m1=51;                         /* HOLDING VALUE row          */
+    B.m2=74;                         /* COST OF ACQUISITION row    */
+    B.m3=97;                         /* RETURN FROM RANGE START    */
+    const mEnd=hpPortPct!=null?B.m3:B.m2;
+    B.sep2=mEnd+13;                  /* rule above index rows      */
+    B.idx0=B.sep2+17;                /* first index row            */
+    B.alpha=B.idx0+_tipIdxN*25+2;    /* ALPHA row (below indices)  */
+    B.sep3=B.alpha+13;               /* rule above transactions    */
+    B.txHead=B.sep3+16;              /* TRANSACTIONS header        */
+    B.tx1=B.txHead+25;               /* first txn row (2 lines)    */
+    let bottom=B.alpha+18;
+    if(_hpHasTxns){bottom=B.tx1+(_txnRows?_txnRows.length*26:0)+(_txnMore?14:0)+10;}
+    B.bottom=Math.max(150,bottom);
+    return B;
+  })();
+  const tipW=306;
+  const tipH=_lay.bottom;
   const tipX=hx!==null?(hx+tipW+padR+4>W?hx-tipW-14:hx+14):0;
   const tipY=hyV!==null?Math.max(padT,Math.min(padT+chartH-tipH,hyV-tipH/2)):0;
 
+  /* ── Range comparison metrics (portfolio vs nifty) ── */
+  const rangeMetrics=React.useMemo(()=>{
+    if(filteredPoints.length<2)return null;
+    const start=filteredPoints[0],end=filteredPoints[filteredPoints.length-1];
+    const n=filteredPoints.length;
+    /* Effective terminal value & date.
+       Historical chart values are marked at the last-transaction NAV. For random
+       lump-sum portfolios that can be stale and dated well before "today". When a
+       date range ends in the no-transaction tail (its `to` falls after the last
+       transaction), the ONLY reliable terminal valuation is the CURRENT/live NAV.
+       Using it — dated at the range's `to` — keeps returns/CAGR stable whether the
+       user picks to=yesterday or to=today, instead of swinging on a stale point. */
+    const activeMf=(mf||[]).filter(m=>m.units>0);
+    const liveTotal=activeMf.reduce((s,m)=>s+(m.currentValue&&m.currentValue>0?m.currentValue:m.invested),0);
+    const _toISO=ds=>mfNavDateToISO(ds)||ds;
+    const toTs=dateTo?_t(_toISO(dateTo)):0;
+    const inTail=toTs>0&&toTs>_t(end.rawDate);
+    const endVal=(inTail&&liveTotal>0)?liveTotal:(end.value||0);
+    const endTs=inTail?toTs:_t(end.rawDate);
+    const startTs=_t(start.rawDate);
+    const days=(endTs-startTs)/86400000;
+    /* Money-weighted return (Modified Dietz) over the filtered period.
+       Daily net cash flows are taken from each point's actual txn amounts
+       (buys − sells), which are reliable — unlike cost deltas, the appended
+       today point recomputes cost from avgNav and would distort flows.
+       Each flow is weighted by the fraction of the period it stayed invested.
+       NOTE: the range-start (i=0) day's flow is EXCLUDED because start.value
+       already embeds it — the holding value at the period start is measured
+       after that day's transactions. Counting it again double-sums it into both
+       netFlow and weightedFlow, which understates the return (this mirrors the
+       i===0 skip already used in the niftyMW index comparison below). */
+    let netFlow=0,weightedFlow=0;
+    filteredPoints.forEach((p,i)=>{
+      if(i===0||_t(p.rawDate)>=endTs)return;
+      const dayFlow=fday(p.txns);
+      netFlow+=dayFlow;
+      const el=(_t(p.rawDate)-_t(start.rawDate))/86400000;
+      const w=days>0?Math.max(0,(days-el)/days):0;
+      weightedFlow+=dayFlow*w;
+    });
+    /* profit attributable to returns (end − start − net new money) */
+    const portAmt=endVal-start.value-netFlow;
+    const denom=(start.value||0)+weightedFlow;
+    /* Modified Dietz return = profit / (beginning value + weighted cash flows) */
+    const portPct=denom>0?(portAmt/denom*100):null;
+    const niftyStart=filteredPoints[0]?niftyValsAt[0]:null;
+    const niftyEnd=niftyValsAt[niftyValsAt.length-1]!=null?niftyValsAt[niftyValsAt.length-1]:null;
+    const niftyPct=(niftyStart&&niftyEnd&&niftyStart>0)?((niftyEnd-niftyStart)/niftyStart*100):null;
+    /* ── Per-index helper: simple return + money-weighted return + alpha ── */
+    const _calcIdx=(idxVals)=>{
+      const iS=filteredPoints[0]?idxVals[0]:null;
+      const iE=idxVals[idxVals.length-1]!=null?idxVals[idxVals.length-1]:null;
+      const iPct=(iS&&iE&&iS>0)?((iE-iS)/iS*100):null;
+      let iMW=null;
+      if(iS>0&&iE>0){
+        let idxF=start.value*(iE/iS),fS=0,fW=0;
+        filteredPoints.forEach((p,i)=>{
+          if(i===0||_t(p.rawDate)>=endTs)return;
+          const iv=idxVals[i];if(iv==null||iv<=0)return;
+          const f=fday(p.txns);if(!f)return;
+          const el=(_t(p.rawDate)-_t(start.rawDate))/86400000;
+          const w=days>0?Math.max(0,(days-el)/days):0;
+          idxF+=f*(iE/iv);fS+=f;fW+=f*w;
+        });
+        const den=(start.value||0)+fW;
+        if(den>0)iMW=((idxF-start.value-fS)/den*100);
+      }
+      const a=(portPct!=null&&iMW!=null)?portPct-iMW:((portPct!=null&&iPct!=null)?portPct-iPct:null);
+      return{iStart:iS,iEnd:iE,iPct,iMW,alpha:a};
+    };
+    const _n50=_calcIdx(niftyValsAt);
+    const _n100=_calcIdx(idx100ValsAt);
+    const _n200=_calcIdx(idx200ValsAt);
+    /* backward-compat aliases (Nifty 50) */
+    const niftyMW=_n50.iMW;
+    const alpha=_n50.alpha;
+    /* CAGR: annualised money-weighted return via XIRR (matches external tools).
+       Solves Σ CFᵢ/(1+r)^(tᵢ/365)=0. Would-be cash flows: the opening portfolio
+       value is the initial outflow; buys are outflows, sells inflows, during the
+       range; the final holding value is the closing inflow. The opening value
+       MUST be included — for sub-ranges (1Y/3Y/5Y) the opening value dominates and
+       omitting it produced a wildly wrong spurious root. */
+    let cagr=null;
+    if(filteredPoints.length>=2){
+      const xrDates=[],xrFlows=[];
+      xrDates.push(startTs); xrFlows.push(-(start.value||0));
+      for(let i=1;i<filteredPoints.length;i++){
+        const p=filteredPoints[i];
+        if(_t(p.rawDate)>=endTs)continue;
+        const df=fday(p.txns);
+        xrDates.push(_t(p.rawDate)); xrFlows.push(-df);
+      }
+      xrDates.push(endTs); xrFlows.push(endVal||0);
+      const yr=xrDates.map(d=>Math.max(0,Math.round((d-xrDates[0])/86400000))/365);
+      const npv=r=>{let s=0;for(let i=0;i<xrFlows.length;i++){const b=Math.pow(1+r,yr[i]);if(!isFinite(b))return s>=0?Infinity:-Infinity;s+=xrFlows[i]/b;}return s;};
+      let r=0.10,best=null,bestAbs=Infinity;
+      for(let it=0;it<200;it++){
+        const v=npv(r),ar=Math.abs(v);
+        if(ar<bestAbs){bestAbs=ar;best=r;}
+        if(ar<1e-6)break;
+        const eps=Math.max(1e-6,Math.abs(r)*1e-6);
+        const dv=(npv(r+eps)-npv(r-eps))/(2*eps);
+        if(!isFinite(dv)||Math.abs(dv)<1e-12)break;
+        let nr=r-v/dv;
+        if(!isFinite(nr)||nr<=-0.999999||nr>100){nr=(r+0.15)/2;}
+        if(Math.abs(nr-r)<1e-9){r=nr;break;}
+        r=nr;
+      }
+      if(best!=null&&isFinite(best)&&best>-0.9999&&best<100)cagr=best*100;
+    }
+    return{portPct,portAmt,
+      niftyStart:_n50.iStart,niftyEnd:_n50.iEnd,niftyPct:_n50.iPct,niftyMW,alpha,
+      nifty100Pct:_n100.iPct,nifty100MW:_n100.iMW,alpha100:_n100.alpha,
+      nifty200Pct:_n200.iPct,nifty200MW:_n200.iMW,alpha200:_n200.alpha,
+      cagr};
+  },[filteredPoints,niftyValsAt,idx100ValsAt,idx200ValsAt,mf,dateTo]);
+
+  /* ── Max drawdown from the drawdowns series ── */
+  const maxDrawdown=drawdowns.troughIdx>=0?drawdowns.minDd:0;
+  /* Metadata about the deepest drawdown for the chip (dates + invested/holding at the trough). */
+  const ddPeak=drawdowns.peakIdx>=0?filteredPoints[drawdowns.peakIdx]:null;
+  const ddTrough=drawdowns.troughIdx>=0?filteredPoints[drawdowns.troughIdx]:null;
+
+  /* ── Per-fund latest breakdown ── */
+  const fundBreakdown=React.useMemo(()=>{
+    if(!filteredPoints.length)return[];
+    const fv=filteredPoints[filteredPoints.length-1].fundVals||{};
+    return Object.entries(fv).map(([name,val])=>({name,val})).sort((a,b)=>b.val-a.val);
+  },[filteredPoints]);
+
+  if(dataPoints.length<2)return React.createElement("div",{style:{padding:"20px",textAlign:"center",fontSize:12,color:"var(--text6)"}},"Not enough transaction history to plot evolution.");
+  if(filteredPoints.length<2)return React.createElement("div",{style:{padding:"20px",textAlign:"center",fontSize:12,color:"var(--text6)"}},"Not enough data points in the selected date range.");
+
   return React.createElement("div",null,
+
+    /* ── Controls row: date range presets + indexed toggle ── */
+    React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,alignItems:"center",marginBottom:10}},
+      /* Preset buttons */
+      React.createElement("div",{style:{display:"flex",gap:5,overflowX:"auto",paddingBottom:2}},
+        [["all","All"],["1y","1Y"],["3y","3Y"],["5y","5Y"]].map(([k,l])=>{
+          const active=datePreset===k&&!dateFrom;
+          return React.createElement("button",{key:k,
+            onClick:()=>applyPreset(k),
+            style:{fontSize:10,fontWeight:active?700:400,color:active?"#6d28d9":"var(--text5)",
+              background:active?"rgba(109,40,217,.12)":"transparent",
+              border:"1px solid "+(active?"rgba(109,40,217,.4)":"var(--border)"),
+              borderRadius:16,padding:"4px 12px",cursor:"pointer",whiteSpace:"nowrap",fontFamily:"'DM Sans',sans-serif"}}
+          ,l);
+        })
+      ),
+      /* From / To date inputs */
+      React.createElement("div",{style:{display:"flex",gap:6,alignItems:"center",flex:1,minWidth:220,maxWidth:340}},
+        React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"From"),
+        React.createElement("input",{type:"date",value:dateFrom||"",onChange:e=>{setDateFrom(e.target.value);setDatePreset(e.target.value?"custom":"all");},
+          style:{flex:1,minWidth:0,background:"transparent",border:"1px solid "+(dateFrom?"#6d28d9":"var(--border)"),borderRadius:7,color:"var(--text)",fontFamily:"'DM Sans',sans-serif",fontSize:11,padding:"4px 8px",outline:"none"}}),
+        React.createElement("span",{style:{fontSize:10,color:"var(--text5)"}},"To"),
+        React.createElement("input",{type:"date",value:dateTo||"",onChange:e=>{setDateTo(e.target.value);setDatePreset(e.target.value?"custom":"all");},
+          style:{flex:1,minWidth:0,background:"transparent",border:"1px solid "+(dateTo?"#6d28d9":"var(--border)"),borderRadius:7,color:"var(--text)",fontFamily:"'DM Sans',sans-serif",fontSize:11,padding:"4px 8px",outline:"none"}}),
+        (dateFrom||dateTo)&&React.createElement("button",{onClick:()=>{setDateFrom("");setDateTo("");setDatePreset("all");},
+          style:{fontSize:10,color:"var(--text5)",background:"none",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",padding:0,textDecoration:"underline"}},"reset")
+      ),
+      /* Indexed toggle */
+      React.createElement("div",{style:{display:"flex",alignItems:"center",background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:18,padding:2,marginLeft:"auto"}},
+        [["0","₹ Values"],["1","% Returns"]].map(([v,l])=>{
+          const active=(indexed?"1":"0")===v;
+          return React.createElement("button",{key:v,onClick:()=>setIndexed(v==="1"),
+            style:{fontSize:10,fontWeight:active?700:400,color:active?"#fff":"var(--text5)",
+              background:active?"#6d28d9":"transparent",border:"none",borderRadius:16,
+              padding:"4px 10px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}}
+          ,l);
+        })
+      )
+    ),
+
+    /* ── Range comparison metrics strip (only when data spans a range) ── */
+    rangeMetrics&&React.createElement("div",{style:{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}},
+      /* Portfolio return */
+      React.createElement("div",{style:{flex:"1 1 130px",minWidth:110,padding:"8px 10px",borderRadius:10,background:"rgba(16,185,129,.06)",border:"1px solid rgba(16,185,129,.25)"}},
+        React.createElement("div",{style:{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:.6,color:"var(--text5)",marginBottom:2}},"Portfolio Return"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:13,color:rangeMetrics.portPct>=0?"#10b981":"#ef4444"}},
+          INRfmt(Math.round(rangeMetrics.portAmt))),
+        React.createElement("div",{style:{fontSize:9.5,fontWeight:600,color:rangeMetrics.portPct>=0?"#10b981":"#ef4444",marginTop:1}},
+          PCTfmt(rangeMetrics.portPct))
+      ),
+      /* Nifty 50 Return */
+      rangeMetrics.niftyPct!=null&&React.createElement("div",{style:{flex:"1 1 100px",minWidth:90,padding:"8px 10px",borderRadius:10,background:"rgba(37,99,235,.06)",border:"1px solid rgba(37,99,235,.25)"}},
+        React.createElement("div",{style:{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:.6,color:"var(--text5)",marginBottom:2}},"Nifty 50 Return"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:13,color:rangeMetrics.niftyPct>=0?"#2563eb":"#ef4444"}},
+          PCTfmt(rangeMetrics.niftyPct)),
+        rangeMetrics.niftyStart&&React.createElement("div",{style:{fontSize:8.5,color:"var(--text6)",marginTop:1}},
+          Math.round(rangeMetrics.niftyStart).toLocaleString("en-IN")+" → "+Math.round(rangeMetrics.niftyEnd).toLocaleString("en-IN"))
+      ),
+      /* Nifty 100 Return */
+      rangeMetrics.nifty100Pct!=null&&React.createElement("div",{style:{flex:"1 1 100px",minWidth:90,padding:"8px 10px",borderRadius:10,background:"rgba(14,165,233,.06)",border:"1px solid rgba(14,165,233,.25)"}},
+        React.createElement("div",{style:{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:.6,color:"var(--text5)",marginBottom:2}},"Nifty 100 Return"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:13,color:rangeMetrics.nifty100Pct>=0?"#0ea5e9":"#ef4444"}},
+          PCTfmt(rangeMetrics.nifty100Pct))
+      ),
+      /* Nifty 200 Return */
+      rangeMetrics.nifty200Pct!=null&&React.createElement("div",{style:{flex:"1 1 100px",minWidth:90,padding:"8px 10px",borderRadius:10,background:"rgba(139,92,246,.06)",border:"1px solid rgba(139,92,246,.25)"}},
+        React.createElement("div",{style:{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:.6,color:"var(--text5)",marginBottom:2}},"Nifty 200 Return"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:13,color:rangeMetrics.nifty200Pct>=0?"#8b5cf6":"#ef4444"}},
+          PCTfmt(rangeMetrics.nifty200Pct))
+      ),
+      /* Alpha vs Nifty 50 */
+      rangeMetrics.alpha!=null&&React.createElement("div",{style:{flex:"1 1 100px",minWidth:90,padding:"8px 10px",borderRadius:10,background:rangeMetrics.alpha>=0?"rgba(16,185,129,.06)":"rgba(239,68,68,.06)",border:"1px solid "+(rangeMetrics.alpha>=0?"rgba(16,185,129,.25)":"rgba(239,68,68,.25)")}},
+        React.createElement("div",{style:{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:.6,color:"var(--text5)",marginBottom:2}},"Alpha vs Nifty 50"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:13,color:rangeMetrics.alpha>=0?"#10b981":"#ef4444"}},
+          PCTfmt(rangeMetrics.alpha))
+      ),
+      /* Alpha vs Nifty 100 */
+      rangeMetrics.alpha100!=null&&React.createElement("div",{style:{flex:"1 1 100px",minWidth:90,padding:"8px 10px",borderRadius:10,background:rangeMetrics.alpha100>=0?"rgba(16,185,129,.06)":"rgba(239,68,68,.06)",border:"1px solid "+(rangeMetrics.alpha100>=0?"rgba(16,185,129,.25)":"rgba(239,68,68,.25)")}},
+        React.createElement("div",{style:{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:.6,color:"var(--text5)",marginBottom:2}},"Alpha vs Nifty 100"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:13,color:rangeMetrics.alpha100>=0?"#10b981":"#ef4444"}},
+          PCTfmt(rangeMetrics.alpha100))
+      ),
+      /* Alpha vs Nifty 200 */
+      rangeMetrics.alpha200!=null&&React.createElement("div",{style:{flex:"1 1 100px",minWidth:90,padding:"8px 10px",borderRadius:10,background:rangeMetrics.alpha200>=0?"rgba(16,185,129,.06)":"rgba(239,68,68,.06)",border:"1px solid "+(rangeMetrics.alpha200>=0?"rgba(16,185,129,.25)":"rgba(239,68,68,.25)")}},
+        React.createElement("div",{style:{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:.6,color:"var(--text5)",marginBottom:2}},"Alpha vs Nifty 200"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:13,color:rangeMetrics.alpha200>=0?"#10b981":"#ef4444"}},
+          PCTfmt(rangeMetrics.alpha200))
+      ),
+      /* CAGR */
+      rangeMetrics.cagr!=null&&React.createElement("div",{style:{flex:"1 1 100px",minWidth:90,padding:"8px 10px",borderRadius:10,background:"rgba(109,40,217,.06)",border:"1px solid rgba(109,40,217,.25)"}},
+        React.createElement("div",{style:{fontSize:8,fontWeight:700,textTransform:"uppercase",letterSpacing:.6,color:"var(--text5)",marginBottom:2}},"CAGR"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:13,color:rangeMetrics.cagr>=0?"#6d28d9":"#ef4444"}},
+          PCTfmt(rangeMetrics.cagr)),
+        React.createElement("div",{style:{fontSize:8.5,color:"var(--text6)",marginTop:1}},"annualised")
+      )
+    ),
+
     /* ── Stats strip ── */
     React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",marginBottom:14}},
       /* CoA card */
@@ -19234,37 +19827,82 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         React.createElement("div",{style:{fontSize:11,color:valColor,opacity:.85,marginTop:2,fontWeight:600}},
           (isGain?"▲ +":"▼ ")+totalGainPct.toFixed(2)+"% on CoA"
         )
+      ),
+      /* Max drawdown card */
+      React.createElement("div",{style:{flex:1,minWidth:150,padding:"12px 16px",borderRadius:12,
+        background:"linear-gradient(135deg,rgba(239,68,68,.10) 0%,rgba(239,68,68,.03) 100%)",
+        border:"1px solid rgba(239,68,68,.22)",position:"relative",overflow:"hidden"}},
+        React.createElement("div",{style:{position:"absolute",right:-12,top:-12,width:56,height:56,
+          borderRadius:"50%",background:"rgba(239,68,68,.06)"}}),
+        React.createElement("div",{style:{fontSize:9,fontWeight:700,textTransform:"uppercase",
+          letterSpacing:.9,color:"#b91c1c",marginBottom:4}},"Max Drawdown"),
+        React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:18,
+          color:"#ef4444",letterSpacing:-.3}},maxDrawdown.toFixed(1)+"%"),
+        ddPeak&&React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2,fontWeight:600}},
+          "from "+ddPeak.date+" peak"),
+        ddTrough&&React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{borderTop:"1px solid rgba(239,68,68,.18)",margin:"8px 0 6px"}}),
+          React.createElement("div",{style:{fontSize:9,fontWeight:700,textTransform:"uppercase",
+            letterSpacing:.8,color:"#9a3412",marginBottom:3}},"Deepest Trough "+ddTrough.date),
+          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",lineHeight:1.5}},
+            "Holding "+INRfmt(Math.round(ddTrough.value||0))),
+          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",lineHeight:1.5}},
+            "Invested "+INRfmt(Math.round(ddTrough.cost||0)))
+        )
       )
     ),
 
     /* ── Legend ── */
-    React.createElement("div",{style:{display:"flex",gap:20,marginBottom:8,fontSize:11,
+    React.createElement("div",{style:{display:"flex",gap:16,marginBottom:8,fontSize:11,
       color:"var(--text5)",flexWrap:"wrap",alignItems:"center"}},
-      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7}},
-        React.createElement("svg",{width:28,height:12,style:{overflow:"visible"}},
-          React.createElement("line",{x1:0,y1:6,x2:28,y2:6,stroke:"#f59e0b",strokeWidth:2,strokeDasharray:"6,4",strokeLinecap:"round"})
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+        React.createElement("svg",{width:26,height:12,style:{overflow:"visible"}},
+          React.createElement("line",{x1:0,y1:6,x2:26,y2:6,stroke:"#f59e0b",strokeWidth:2,strokeLinecap:"round"})
         ),
         React.createElement("span",null,"Cost of Acquisition")
       ),
-      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7}},
-        React.createElement("svg",{width:28,height:12,style:{overflow:"visible"}},
-          React.createElement("line",{x1:0,y1:6,x2:28,y2:6,stroke:valColor,strokeWidth:2.5,strokeLinecap:"round"}),
-          React.createElement("circle",{cx:14,cy:6,r:3.5,fill:valColor})
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+        React.createElement("svg",{width:26,height:12,style:{overflow:"visible"}},
+          React.createElement("line",{x1:0,y1:6,x2:26,y2:6,stroke:valColor,strokeWidth:2.5,strokeLinecap:"round"}),
+          React.createElement("circle",{cx:13,cy:6,r:3.5,fill:valColor})
         ),
-        React.createElement("span",null,"Holding Value ("+(isGain?"in profit":"in loss")+")")
+        React.createElement("span",null,"Holding Value")
       ),
-      niftyHasData&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7}},
-        React.createElement("svg",{width:28,height:12,style:{overflow:"visible"}},
-          React.createElement("line",{x1:0,y1:6,x2:28,y2:6,stroke:"#2563eb",strokeWidth:2,strokeDasharray:"5,3",strokeLinecap:"round"})
+      /* Index legend toggles — click a chip to show/hide that index line (right axis rescales) */
+      idxSeries.filter(s=>s.hasData).map(s=>{
+        const on=indexLines[s.def.key];
+        return React.createElement("div",{key:s.def.key,onClick:()=>toggleIndexLine(s.def.key),
+          style:{display:"flex",alignItems:"center",gap:6,cursor:"pointer",userSelect:"none",
+            padding:"2px 8px",borderRadius:12,
+            background:on?`${s.def.color}22`:"transparent",
+            border:"1px solid "+(on?s.def.color:"var(--border2)"),
+            opacity:on?1:.45}},
+          React.createElement("svg",{width:26,height:12,style:{overflow:"visible"}},
+            React.createElement("line",{x1:0,y1:6,x2:26,y2:6,stroke:s.def.color,strokeWidth:2,strokeLinecap:"round"}),
+            on&&React.createElement("circle",{cx:13,cy:6,r:3,fill:s.def.color})
+          ),
+          React.createElement("span",{style:{fontSize:10,fontWeight:on?700:500,color:on?s.def.color:"var(--text6)"}},
+            indexed?s.def.label+" (% returns)":s.def.label)
+        );
+      }),
+      /* LIVE/cached badge + refresh — acts on all three indices together */
+      React.createElement("span",{style:{fontSize:8,fontWeight:700,padding:"1px 6px",borderRadius:5,
+        background:niftyLive?"rgba(37,99,235,.12)":"rgba(120,120,120,.12)",
+        color:niftyLive?"#2563eb":"var(--text6)",border:"1px solid "+(niftyLive?"rgba(37,99,235,.3)":"var(--border2)")}},
+        niftyLive?"LIVE":"cached"),
+      React.createElement("button",{onClick:refreshNifty,disabled:niftyLoading,title:"Re-fetch Nifty 50/100/200 to fill missing gap days",
+        style:{fontSize:9,fontWeight:700,padding:"2px 8px",borderRadius:5,cursor:niftyLoading?"default":"pointer",
+        background:"transparent",color:"var(--text2)",border:"1px solid var(--border2)",opacity:niftyLoading?.5:1}},
+        niftyLoading?"Fetching…":"Refresh"),
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
+        React.createElement("svg",{width:26,height:12,style:{overflow:"visible"}},
+          React.createElement("path",{d:"M2,2 L24,2 L13,10 Z",fill:"#10b981"}),
+          React.createElement("line",{x1:2,y1:10,x2:24,y2:10,stroke:"#ef4444",strokeWidth:2})
         ),
-        React.createElement("span",null,"Nifty 50 (index points)"),
-        React.createElement("span",{style:{marginLeft:6,fontSize:8,fontWeight:700,padding:"1px 6px",borderRadius:5,
-          background:niftyLive?"rgba(37,99,235,.12)":"rgba(120,120,120,.12)",
-          color:niftyLive?"#2563eb":"var(--text6)",border:"1px solid "+(niftyLive?"rgba(37,99,235,.3)":"var(--border2)")}},
-          niftyLive?"LIVE":"cached")
+        React.createElement("span",null,"Buy · Sell")
       ),
-      React.createElement("div",{style:{marginLeft:"auto",fontSize:10,color:"var(--text6)",fontStyle:"italic"}},
-        dataPoints.length+" data points · "+mfTxns.length+" transactions"
+      React.createElement("div",{style:{marginLeft:"auto",fontSize:9,color:"var(--text6)",fontStyle:"italic",textAlign:"right",lineHeight:1.5}},
+        "pts "+filteredPoints.length+"/"+dataPoints.length+" · "+(dateFrom||dateTo?(dateFrom||"-")+" → "+(dateTo||"-"):"all")+(indexed?" · %":" · ₹")+" · "+mfTxns.length+" txns"
       )
     ),
 
@@ -19318,14 +19956,14 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
           stroke:"var(--border2)",strokeWidth:i===0?1:.7,
           strokeDasharray:i===0?"none":"3,8",opacity:.7}),
         React.createElement("text",{x:padL-8,y:yFn(v)+3.5,textAnchor:"end",
-          fill:"var(--text5)",fontSize:9.5,fontWeight:600},INRshort(v))
+          fill:"var(--text5)",fontSize:9.5,fontWeight:600},indexed?Math.round(v)+"%":INRshort(v))
       )),
 
-      /* Nifty 50 right-axis labels (index points) */
-      niftyHasData&&niftyTicks.map((v,i)=>React.createElement("g",{key:"pev_yn"+i},
-        React.createElement("text",{x:W-padR+6,y:yFnN(v)+3.5,textAnchor:"start",
+      /* Index right-axis labels (union scale of the toggled-on index lines) */
+      visibleIdx.length>0&&idxTicks.map((v,i)=>React.createElement("g",{key:"pev_yn"+i},
+        React.createElement("text",{x:W-padR+6,y:yFnI(v)+3.5,textAnchor:"start",
           fill:"#2563eb",fontSize:9.5,fontWeight:600,opacity:.85},
-          Math.round(v).toLocaleString("en-IN"))
+          indexed?Math.round(v)+"%":Math.round(v).toLocaleString("en-IN"))
       )),
 
       /* Area fills (clipped) */
@@ -19334,9 +19972,9 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         React.createElement("path",{d:valAreaPath,fill:`url(#${isGain?"pev_gain_g":"pev_loss_g"})`})
       ),
 
-      /* Cost line — amber dashed, smooth */
+      /* Cost line — amber, smooth */
       React.createElement("path",{d:costPath,fill:"none",stroke:"#f59e0b",strokeWidth:1.8,
-        strokeDasharray:"8,5",strokeLinejoin:"round",strokeLinecap:"round",opacity:.9,
+        strokeLinejoin:"round",strokeLinecap:"round",opacity:.9,
         clipPath:"url(#pev_clip)"}),
 
       /* Value line — glowing, smooth */
@@ -19345,14 +19983,14 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         style:{filter:`drop-shadow(0 0 4px ${valColor}80)`},
         clipPath:"url(#pev_clip)"}),
 
-      /* Nifty 50 overlay line — blue dashed, secondary axis */
-      niftyHasData&&React.createElement("path",{d:niftyPath,fill:"none",stroke:niftyColor,strokeWidth:1.8,
-        strokeDasharray:"7,4",strokeLinejoin:"round",strokeLinecap:"round",opacity:.85,
-        clipPath:"url(#pev_clip)"}),
+      /* Index overlay lines — continuous, secondary axis (only toggled-on indices) */
+      visibleIdx.map(s=>React.createElement("path",{key:"pev_idx_"+s.def.key,d:s.path,fill:"none",stroke:s.def.color,strokeWidth:1.8,
+        strokeLinejoin:"round",strokeLinecap:"round",opacity:.85,
+        clipPath:"url(#pev_clip)"})),
 
       /* Milestone markers (peak / trough) */
       milestones.map(({idx,type})=>{
-        const mx2=xFn(idx),my2=yFn(dataPoints[idx].value);
+        const mx2=xFn(idx),my2=_yV(idx);
         const isPeak=type==="peak";
         const col=isPeak?"#f59e0b":valColor;
         const lbl=isPeak?"Peak":"Low";
@@ -19365,13 +20003,44 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
           React.createElement("text",{x:mx2,y:my2-(isPeak?24:30),textAnchor:"middle",
             fill:col,fontSize:8.5,fontWeight:700,opacity:.9},lbl),
           React.createElement("text",{x:mx2,y:my2-(isPeak?13:19),textAnchor:"middle",
-            fill:col,fontSize:7.5,fontWeight:600,opacity:.8},INRshort(dataPoints[idx].value))
+            fill:col,fontSize:7.5,fontWeight:600,opacity:.8},INRshort(filteredPoints[idx].value))
+        );
+      }),
+
+      /* Drawdown area overlay — red ribbon between the value line and the
+         running-peak baseline, showing depth of drawdown from the peak. */
+      filteredPoints.length>2&&(()=>{
+        const _v=i=>indexed?idxScale(filteredPoints[i].value):filteredPoints[i].value;
+        const _peak=i=>{const dd=drawdowns.series[i],v=_v(i);return dd<0?v/(1+dd/100):v;};
+        const n=filteredPoints.length;
+        /* Build upper (peak) curve forward, lower (value) curve backward */
+        const wentry=i=>`${xFn(i)},${yFn(_peak(i))}`;
+        const valentry=i=>`${xFn(i)},${yFn(_v(i))}`;
+        let d=`M${wentry(0)}`;
+        for(let i=1;i<n;i++){const x0=xFn(i-1),y0=yFn(_peak(i-1)),x1=xFn(i),y1=yFn(_peak(i)),cx=(x0+x1)/2;d+=` C${cx},${y0} ${cx},${y1} ${x1},${y1}`;}
+        d+=` L${valentry(n-1)}`;
+        for(let i=n-2;i>=0;i--){const x0=xFn(i+1),y0=yFn(_v(i+1)),x1=xFn(i),y1=yFn(_v(i)),cx=(x0+x1)/2;d+=` C${cx},${y0} ${cx},${y1} ${x1},${y1}`;}
+        d+=" Z";
+        return React.createElement("path",{d,fill:"rgba(185,28,28,.30)",stroke:"none",pointerEvents:"none"});
+      })(),
+
+      /* Transaction markers (buy ▲ up, sell ▼ down) at value-line points */
+      filteredPoints.map((d,i)=>{
+        if(!d.txns||d.txns.length===0)return null;
+        const mx2=xFn(i),my2=_yV(i);
+        const buys=d.txns.filter(t=>t.type==="buy").length;
+        const sells=d.txns.filter(t=>t.type!=="buy").length;
+        return React.createElement("g",{key:"pev_tx"+i},
+          buys>0&&React.createElement("path",{d:`M${mx2},${my2-3} L${mx2-5},${my2-9} L${mx2+5},${my2-9} Z`,
+            fill:"#10b981",stroke:"var(--modal-bg)",strokeWidth:1.2}),
+          sells>0&&React.createElement("path",{d:`M${mx2},${my2+3} L${mx2-5},${my2+9} L${mx2+5},${my2+9} Z`,
+            fill:"#ef4444",stroke:"var(--modal-bg)",strokeWidth:1.2})
         );
       }),
 
       /* X-axis date labels */
-      dataPoints.map((d,i)=>{
-        const isLast=i===dataPoints.length-1;
+      filteredPoints.map((d,i)=>{
+        const isLast=i===filteredPoints.length-1;
         if(i%stride!==0&&!isLast)return null;
         const _dp=d.date.split("-");
         const shortDate=_dp.length===3?_dp[1]+"-"+_dp[2].slice(2):d.date;
@@ -19393,16 +20062,19 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
         /* Rings behind dots */
         React.createElement("circle",{cx:hx,cy:hyC,r:9,fill:"#f59e0b",opacity:.12}),
         React.createElement("circle",{cx:hx,cy:hyV,r:9,fill:valColor,opacity:.15}),
-        hyN!==null&&React.createElement("circle",{cx:hx,cy:hyN,r:9,fill:niftyColor,opacity:.13}),
+        hyN!==null&&React.createElement("circle",{cx:hx,cy:hyN,r:9,fill:"#2563eb",opacity:.13}),
+        idxHover.filter(r=>r.def.key!=="nifty50").map(r=>React.createElement("circle",{key:"pev_ihr_"+r.def.key,cx:hx,cy:r.y,r:9,fill:r.def.color,opacity:.13})),
         /* Cost dot */
         React.createElement("circle",{cx:hx,cy:hyC,r:5,fill:"#f59e0b",stroke:"var(--modal-bg)",strokeWidth:2.5}),
         /* Value dot */
         React.createElement("circle",{cx:hx,cy:hyV,r:5.5,
           fill:valColor,stroke:"var(--modal-bg)",strokeWidth:2.5}),
         hyN!==null&&React.createElement("circle",{cx:hx,cy:hyN,r:4.5,
-          fill:niftyColor,stroke:"var(--modal-bg)",strokeWidth:2.5}),
-        /* Tooltip */
-        React.createElement("g",null,
+          fill:"#2563eb",stroke:"var(--modal-bg)",strokeWidth:2.5}),
+        idxHover.filter(r=>r.def.key!=="nifty50").map(r=>React.createElement("circle",{key:"pev_ihd_"+r.def.key,cx:hx,cy:r.y,r:4.5,
+          fill:r.def.color,stroke:"var(--modal-bg)",strokeWidth:2.5})),
+        /* Tooltip — whole group scaled to 80% about its own center */
+        React.createElement("g",{transform:"translate("+(tipX+tipW/2)+", "+(tipY+tipH/2)+") scale(0.7) translate("+(-(tipX+tipW/2))+", "+(-(tipY+tipH/2))+")"},
           /* Drop shadow */
           React.createElement("rect",{x:tipX+4,y:tipY+5,width:tipW,height:tipH,
             rx:12,fill:"rgba(0,0,0,.18)",style:{filter:"blur(6px)"}}),
@@ -19413,44 +20085,136 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf})=>{
           React.createElement("rect",{x:tipX,y:tipY,width:tipW,height:6,rx:12,fill:valColor,opacity:.9}),
           React.createElement("rect",{x:tipX,y:tipY+3,width:tipW,height:6,fill:valColor,opacity:.9}),
           /* Date */
-          React.createElement("text",{x:tipX+14,y:tipY+24,fill:"var(--text3)",fontSize:11,fontWeight:700,letterSpacing:.2},hp.date),
+          React.createElement("text",{x:tipX+14,y:tipY+22,fill:"var(--text3)",fontSize:11,fontWeight:700,letterSpacing:.2},hp.date),
           /* Separator */
-          React.createElement("line",{x1:tipX+10,y1:tipY+30,x2:tipX+tipW-10,y2:tipY+30,
+          React.createElement("line",{x1:tipX+10,y1:tipY+_lay.sep1,x2:tipX+tipW-10,y2:tipY+_lay.sep1,
             stroke:"var(--border2)",strokeWidth:.8,opacity:.6}),
-          /* Val row */
+          /* ── Metrics (one row each: label | value | delta) ── */
           (()=>{
             const diff=hp.value-hp.cost;
-            const pct=hp.cost>0?((diff/hp.cost)*100).toFixed(2):"0.00";
-            const col=diff>=0?"#10b981":"#ef4444";
-            const sign=diff>=0?"▲ +":"▼ ";
-            return React.createElement("g",null,
-              React.createElement("text",{x:tipX+14,y:tipY+48,fill:"var(--text5)",fontSize:9.5,fontWeight:600,letterSpacing:.3},"HOLDING VALUE"),
-              React.createElement("text",{x:tipX+14,y:tipY+64,fill:col,fontSize:14,fontWeight:800},
+            const inc=diff>=0;
+            const col=inc?"#10b981":"#ef4444";
+            const pct=hp.cost>0?((Math.abs(diff)/hp.cost)*100).toFixed(2):"0.00";
+            const L=tipX+14,VM=tipX+tipW-92,VR=tipX+tipW-14;
+            return React.createElement(React.Fragment,null,
+              /* HOLDING VALUE */
+              React.createElement("text",{x:L,y:tipY+_lay.m1,fill:"var(--text5)",fontSize:8.5,fontWeight:700,letterSpacing:.4},"HOLDING VALUE"),
+              React.createElement("text",{x:VM,y:tipY+_lay.m1,textAnchor:"end",fill:"var(--text2)",fontSize:12.5,fontWeight:800},
                 INRfmt(Math.round(hp.value))),
-              React.createElement("text",{x:tipX+tipW-14,y:tipY+64,textAnchor:"end",fill:col,fontSize:10,fontWeight:700},
-                sign+pct+"%")
+              React.createElement("text",{x:VR,y:tipY+_lay.m1,textAnchor:"end",fill:col,fontSize:10,fontWeight:800},
+                (inc?"▲ +":"▼ ")+pct+"%"),
+              /* COST OF ACQUISITION */
+              React.createElement("text",{x:L,y:tipY+_lay.m2,fill:"var(--text5)",fontSize:8.5,fontWeight:700,letterSpacing:.4},"COST OF ACQUISITION"),
+              React.createElement("text",{x:VM,y:tipY+_lay.m2,textAnchor:"end",fill:"#d97706",fontSize:12,fontWeight:800},
+                INRfmt(Math.round(hp.cost))),
+              React.createElement("text",{x:VR,y:tipY+_lay.m2,textAnchor:"end",fill:col,fontSize:10,fontWeight:700},
+                (inc?"+":"−")+INRfmt(Math.round(Math.abs(diff)))),
+              /* RETURN FROM RANGE START */
+              hpPortPct!=null&&React.createElement(React.Fragment,null,
+                React.createElement("text",{x:L,y:tipY+_lay.m3,fill:"var(--text5)",fontSize:8.5,fontWeight:700,letterSpacing:.4},"RETURN FROM RANGE START"),
+                React.createElement("text",{x:VR,y:tipY+_lay.m3,textAnchor:"end",fill:col,fontSize:11,fontWeight:800},
+                  PCTfmt(hpPortPct))
+              )
             );
           })(),
-          /* CoA row */
-          React.createElement("text",{x:tipX+14,y:tipY+81,fill:"var(--text5)",fontSize:9.5,fontWeight:600,letterSpacing:.3},"COST OF ACQUISITION"),
-          React.createElement("text",{x:tipX+14,y:tipY+97,fill:"#d97706",fontSize:13,fontWeight:700},
-            INRfmt(Math.round(hp.cost))),
-          /* Nifty row */
-          hN!==null&&React.createElement(React.Fragment,null,
-            React.createElement("line",{x1:tipX+10,y1:tipY+105,x2:tipX+tipW-10,y2:tipY+105,
-              stroke:"var(--border2)",strokeWidth:.8,opacity:.6}),
-            React.createElement("text",{x:tipX+14,y:tipY+119,fill:"#2563eb",fontSize:9.5,fontWeight:600,letterSpacing:.3},"NIFTY 50"),
-            React.createElement("text",{x:tipX+14,y:tipY+124,fill:"#2563eb",fontSize:13,fontWeight:700},
-              Math.round(hN).toLocaleString("en-IN"))
-          ),
-          /* Net */
+          /* ── Index overlay rows + alpha (one line each) ── */
           (()=>{
-            const nd=hp.value-hp.cost;
-            const col=nd>=0?"#10b981":"#ef4444";
-            return React.createElement("text",{x:tipX+tipW-14,y:tipY+97,textAnchor:"end",fill:col,fontSize:11,fontWeight:700},
-              (nd>=0?"+":"")+INRfmt(Math.round(nd)));
+            /* Alpha = PF return − NIFTY 50 return at the hovered point (uses the 50 series) */
+            const n50row=idxHover.find(r=>r.def.key==="nifty50");
+            const niftyStartVal2=rangeMetrics&&rangeMetrics.niftyStart!=null?rangeMetrics.niftyStart:(niftyStartVal!=null?niftyStartVal:null);
+            const niftyPct=n50row&&niftyStartVal2&&niftyStartVal2>0?((n50row.val-niftyStartVal2)/niftyStartVal2*100):null;
+            const alpha=hpPortPct!=null&&niftyPct!=null?hpPortPct-niftyPct:null;
+            const L=tipX+14,VM=tipX+tipW-92,VR=tipX+tipW-14;
+            return React.createElement(React.Fragment,null,
+              React.createElement("line",{x1:tipX+10,y1:tipY+_lay.sep2,x2:tipX+tipW-10,y2:tipY+_lay.sep2,
+                stroke:"var(--border2)",strokeWidth:.8,opacity:.6}),
+              idxHover.map((r,i)=>{
+                const baseY=tipY+_lay.idx0+i*25;
+                const col=(r.def.key==="nifty50"&&niftyPct!=null)?(niftyPct>=0?"#2563eb":"#dc2626"):r.def.color;
+                const pctBase=(r.def.key==="nifty50"&&niftyStartVal2!=null&&niftyStartVal2>0)?niftyStartVal2:(r.s.startVal!=null?r.s.startVal:null);
+                const pct=pctBase&&pctBase>0?((r.val-pctBase)/pctBase*100):null;
+                return React.createElement(React.Fragment,{key:r.def.key},
+                  React.createElement("text",{x:L,y:baseY,fill:r.def.color,fontSize:9,fontWeight:700,letterSpacing:.4},
+                    r.def.label.toUpperCase()),
+                  React.createElement("text",{x:VM,y:baseY,textAnchor:"end",fill:"var(--text3)",fontSize:11.5,fontWeight:700},
+                    Math.round(r.val).toLocaleString("en-IN")),
+                  pct!=null&&React.createElement("text",{x:VR,y:baseY,textAnchor:"end",fill:col,fontSize:11,fontWeight:800},
+                    PCTfmt(pct))
+                );
+              }),
+              alpha!=null&&React.createElement(React.Fragment,null,
+                React.createElement("text",{x:L,y:tipY+_lay.alpha,fill:"var(--text5)",fontSize:8.5,fontWeight:700,letterSpacing:.4},"ALPHA VS NIFTY 50"),
+                React.createElement("text",{x:VR,y:tipY+_lay.alpha,textAnchor:"end",fill:alpha>=0?"#10b981":"#ef4444",fontSize:11,fontWeight:800},
+                  PCTfmt(alpha))
+              )
+            );
+          })(),
+          /* ── Transactions at this point ── */
+          _hpHasTxns&&_txnRows&&_txnRows.length>0&&(()=>{
+            const L=tipX+14,VR=tipX+tipW-14;
+            const head="TRANSACTIONS"+(hp.txns.length>1?" ("+hp.txns.length+")":"");
+            return React.createElement(React.Fragment,null,
+              React.createElement("line",{x1:tipX+10,y1:tipY+_lay.sep3,x2:tipX+tipW-10,y2:tipY+_lay.sep3,
+                stroke:"var(--border2)",strokeWidth:.8,opacity:.6}),
+              React.createElement("text",{x:L,y:tipY+_lay.txHead,fill:"var(--text5)",fontSize:8.5,fontWeight:700,letterSpacing:.4},head),
+              _txnRows.map((t,i)=>{
+                const buy=t.type==="buy";
+                const sw=!!t.isSwitch;
+                const units=t.nav>0?+(t.amount/t.nav).toFixed(2):0;
+                const col=sw?"#0e7490":(buy?"#10b981":"#ef4444");
+                const y1=tipY+_lay.tx1+i*26,y2=y1+14;
+                const fund=String(t.fund||"");
+                const fundClip=fund.length>24?fund.slice(0,23)+"…":fund;
+                return React.createElement(React.Fragment,{key:i},
+                  React.createElement("text",{x:L,y:y1,fill:col,fontSize:10,fontWeight:800},
+                    (buy?"▲ Buy":"▼ Sell")+(sw?" [SW]":"")+"  "+fundClip),
+                  React.createElement("text",{x:VR,y:y1,textAnchor:"end",fill:"var(--text3)",fontSize:10,fontWeight:800},
+                    sw?INRfmt(Math.round(t.amount))+" ↺":INRfmt(Math.round(t.amount))),
+                  React.createElement("text",{x:L,y:y2,fill:"var(--text5)",fontSize:9,fontWeight:600},
+                    units+"u"+(t.nav>0?" @ "+t.nav:"")+(sw?" (switch)":""))
+                );
+              }),
+              _txnMore>0&&React.createElement("text",{x:L,y:tipY+_lay.tx1+_txnRows.length*26,fill:"var(--text5)",
+                fontSize:9,fontWeight:600},"+"+_txnMore+" more")
+            );
           })()
         )
+      )
+    ),
+
+    /* ── Per-Fund Breakdown (collapsible) ── */
+    React.createElement("div",{style:{marginTop:10,border:"1px solid var(--border)",borderRadius:10,overflow:"hidden"}},
+      React.createElement("button",{onClick:()=>setShowBreakdown(!showBreakdown),
+        style:{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"9px 12px",
+          background:"var(--bg4)",border:"none",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",
+          fontSize:11,fontWeight:700,color:"var(--text4)",textAlign:"left"}},
+        React.createElement("span",{style:{display:"inline-block",transition:"transform .15s",transform:showBreakdown?"rotate(90deg)":"none",fontSize:10}},">"),
+        "Per-Fund Breakdown",
+        React.createElement("span",{style:{marginLeft:"auto",fontSize:9.5,fontWeight:600,color:"var(--text5)"}},
+          fundBreakdown.length+" fund"+(fundBreakdown.length!==1?"s":"")+" · "+INRfmt(Math.round(fundBreakdown.reduce((s,f)=>s+f.val,0)))
+        )
+      ),
+      showBreakdown&&React.createElement("div",{style:{borderTop:"1px solid var(--border)"}},
+        fundBreakdown.length===0?React.createElement("div",{style:{padding:"12px",fontSize:11,color:"var(--text6)",textAlign:"center"}},"No fund value data in selected range."):
+        fundBreakdown.map((f,i)=>{
+          const total=fundBreakdown.reduce((s,x)=>s+x.val,0);
+          const pct=total>0?(f.val/total*100):0;
+          const col=["#6d28d9","#0891b2","#d97706","#16a34a","#db2777","#4f46e5","#0ea5e9","#f97316"][i%8];
+          return React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderBottom:i<fundBreakdown.length-1?"1px solid var(--border)":"none"}},
+            React.createElement("div",{style:{width:8,height:8,borderRadius:2,background:col,flexShrink:0}}),
+            React.createElement("div",{style:{flex:1,minWidth:0}},
+              React.createElement("div",{style:{fontSize:11,fontWeight:600,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},f.name),
+              React.createElement("div",{style:{fontSize:9.5,color:"var(--text6)"}},"share of portfolio"),
+              React.createElement("div",{style:{height:4,borderRadius:2,background:"var(--border)",marginTop:3,overflow:"hidden"}},
+                React.createElement("div",{style:{width:pct+"%",height:"100%",background:col}})
+              )
+            ),
+            React.createElement("div",{style:{textAlign:"right",flexShrink:0}},
+              React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)"}},INRfmt(Math.round(f.val))),
+              React.createElement("div",{style:{fontSize:9.5,fontWeight:600,color:col}},pct.toFixed(1)+"%")
+            )
+          );
+        })
       )
     )
   );
@@ -19653,10 +20417,27 @@ const SnapshotChartPanel=({sn,dispatch})=>{
 const PreviousTrades=({soldShareSnapshots={},dispatch})=>{
   const fyKeys=Object.keys(soldShareSnapshots).sort().reverse(); /* Most recent FY first */
   const[collapsed,setCollapsed]=React.useState({});
+  const[monthCollapsed,setMonthCollapsed]=React.useState({});
   const[editSnap,setEditSnap]=React.useState(null);
+  const[snapDetailExpanded,setSnapDetailExpanded]=React.useState({});
+  const[snapTech,setSnapTech]=React.useState({});
   const toggleFY=(fy)=>setCollapsed(p=>({...p,[fy]:!p[fy]}));
-  const collapseAll=()=>setCollapsed(fyKeys.reduce((m,fy)=>(m[fy]=true,m),{}));
-  const expandAll=()=>setCollapsed({});
+  const toggleMonth=(mk)=>setMonthCollapsed(p=>({...p,[mk]:!p[mk]}));
+  const collapseAll=()=>{
+    const c={};
+    fyKeys.forEach(fy=>{
+      c[fy]=true;
+      const snaps=soldShareSnapshots[fy]||[];
+      snaps.forEach(sn=>{
+        const d=new Date(sn.savedAt+"T12:00:00");
+        const mk=fy+"-"+d.toLocaleString("en-IN",{month:"long"});
+        c[mk]=true;
+      });
+    });
+    setCollapsed(c);setMonthCollapsed(c);
+  };
+  const expandAll=()=>{setCollapsed({});setMonthCollapsed({});};
+  const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
   const saveEditedSnapshot=()=>{
     if(!editSnap)return;
     const{fyKey:_editFyKey,...snapData}=editSnap;
@@ -19731,9 +20512,44 @@ const PreviousTrades=({soldShareSnapshots={},dispatch})=>{
             "Net P&L: "+(totalPnl>=0?"+":"")+INR(totalPnl)
           )
         ),
-        /* Snapshot cards grid */
-        !isCollapsed&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(680px,1fr))",gap:20}},
-          snaps.map((sn,idx)=>{
+        /* Snapshot cards grid — grouped by month */
+        !isCollapsed&&(()=>{
+          const monthGroups={};
+          snaps.forEach(sn=>{
+            const d=new Date(sn.savedAt+"T12:00:00");
+            const mKey=fy+"-"+d.toLocaleString("en-IN",{month:"long"});
+            const mLabel=d.toLocaleString("en-IN",{month:"long",year:"numeric"});
+            if(!monthGroups[mKey])monthGroups[mKey]={label:mLabel,snaps:[]};
+            monthGroups[mKey].snaps.push(sn);
+          });
+          const mKeys=Object.keys(monthGroups).sort((a,b)=>{
+            const aSn=monthGroups[a].snaps[0];
+            const bSn=monthGroups[b].snaps[0];
+            const aD=new Date(aSn.savedAt+"T12:00:00");
+            const bD=new Date(bSn.savedAt+"T12:00:00");
+            return bD-aD;
+          });
+          return mKeys.map(mk=>{
+            const mg=monthGroups[mk];
+            const mIsCollapsed=!!monthCollapsed[mk];
+            const mPnl=mg.snaps.reduce((s,sn)=>s+sn.pnl,0);
+            return React.createElement("div",{key:mk,style:{marginBottom:12,marginLeft:12,borderLeft:"2px solid var(--border2)",paddingLeft:12}},
+              React.createElement("div",{onClick:()=>toggleMonth(mk),style:{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",borderRadius:8,marginBottom:mIsCollapsed?0:8,cursor:"pointer",background:"var(--bg5)",border:"1px solid var(--border)",transition:"all .15s"}},
+                React.createElement("span",{style:{fontSize:10,color:"var(--text6)",transition:"transform .2s",display:"inline-block",transform:mIsCollapsed?"rotate(-90deg)":"rotate(0deg)"}},"▼"),
+                React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"var(--text3)",flex:1}},mg.label),
+                React.createElement("span",{style:{fontSize:10,padding:"2px 7px",borderRadius:7,background:"rgba(109,40,217,.08)",color:"#6d28d9",border:"1px solid rgba(109,40,217,.15)",fontWeight:600}},
+                  mg.snaps.length+" trade"+(mg.snaps.length!==1?"s":"")
+                ),
+                React.createElement("span",{style:{fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:7,
+                  background:mPnl>=0?"rgba(22,163,74,.08)":"rgba(239,68,68,.08)",
+                  color:mPnl>=0?"#16a34a":"#ef4444",
+                  border:"1px solid "+(mPnl>=0?"rgba(22,163,74,.2)":"rgba(239,68,68,.2)"),
+                }},
+                  (mPnl>=0?"+":"")+INR(mPnl)
+                )
+              ),
+              !mIsCollapsed&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(680px,1fr))",gap:16}},
+          mg.snaps.map((sn,idx)=>{
             const isGain=sn.pnl>=0;
             const priceDiff=sn.sellPrice-sn.buyPrice;
             return React.createElement(Card,{key:sn.id||idx,sx:{
@@ -19871,6 +20687,192 @@ const PreviousTrades=({soldShareSnapshots={},dispatch})=>{
                   })
                 );
               })(),
+              /* ── Technical Indicators (if saved) ── */
+              sn.techData&&(()=>{
+                const td=sn.techData;
+                const tKey="sn_"+(sn.id||"x");
+                const ind=td.indicators||{};
+                const interp=td.interpretation||{};
+                const isExp=!!snapDetailExpanded[tKey];
+                const isTech=!!snapTech[tKey];
+                const snapFactorBar=(label,val,max,color)=>{
+                  if(val==null||max==null)return null;
+                  const pct=max>0?(Math.abs(val)/max*100):0;
+                  const barColor=val<0?"#ef4444":color;
+                  return React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},
+                    React.createElement("span",{style:{width:65,fontSize:8,fontWeight:600,color:"var(--text5)",textAlign:"right",flexShrink:0}},label),
+                    React.createElement("div",{style:{flex:1,height:4,borderRadius:2,background:"var(--bg5)",overflow:"hidden"}},
+                      React.createElement("div",{style:{width:pct+"%",height:"100%",borderRadius:2,background:barColor}})
+                    ),
+                    React.createElement("span",{style:{width:32,fontSize:8,fontWeight:700,color:val<0?"#ef4444":"var(--text5)",fontFamily:"'Sora',sans-serif",textAlign:"right"}},(val>=0?"+":"")+val+"/"+max)
+                  );
+                };
+                const SIG_COLORS={
+                  bullish:{bg:"rgba(22,163,74,.12)",border:"rgba(22,163,74,.3)",text:"#16a34a",label:"Bullish"},
+                  bearish:{bg:"rgba(239,68,68,.12)",border:"rgba(239,68,68,.3)",text:"#ef4444",label:"Bearish"},
+                  overbought:{bg:"rgba(234,88,12,.12)",border:"rgba(234,88,12,.3)",text:"#ea580c",label:"Overbought"},
+                  oversold:{bg:"rgba(37,99,235,.12)",border:"rgba(37,99,235,.3)",text:"#2563eb",label:"Oversold"},
+                  neutral:{bg:"var(--bg5)",border:"var(--border)",text:"var(--text5)",label:"Neutral"},
+                  trending:{bg:"rgba(168,85,247,.12)",border:"rgba(168,85,247,.3)",text:"#a855f7",label:"Trending"},
+                  ranging:{bg:"var(--bg5)",border:"var(--border)",text:"var(--text5)",label:"Ranging"},
+                };
+                const INDICATORS=[
+                  {name:"SMA (20)",key:"sma_20",cat:"Trend",type:"line"},
+                  {name:"SMA (50)",key:"sma_50",cat:"Trend",type:"line"},
+                  {name:"SMA (200)",key:"sma_200",cat:"Trend",type:"line"},
+                  {name:"EMA (9)",key:"ema_9",cat:"Trend",type:"line"},
+                  {name:"EMA (21)",key:"ema_21",cat:"Trend",type:"line"},
+                  {name:"EMA (50)",key:"ema_50",cat:"Trend",type:"line"},
+                  {name:"WMA (20)",key:"wma_20",cat:"Trend",type:"line"},
+                  {name:"VWAP",key:"vwap",cat:"Volume",type:"line"},
+                  {name:"RSI (14)",key:"rsi_14",cat:"Momentum",type:"oscillator",range:[0,100]},
+                  {name:"MACD",key:"macd",cat:"Momentum",type:"macd"},
+                  {name:"ATR (14)",key:"atr_14",cat:"Volatility",type:"line"},
+                  {name:"Bollinger Bands",key:"bollinger",cat:"Volatility",type:"bands"},
+                  {name:"ADX (14)",key:"adx",cat:"Trend",type:"oscillator",range:[0,100]},
+                  {name:"SuperTrend",key:"supertrend",cat:"Trend",type:"line"},
+                  {name:"Ichimoku Cloud",key:"ichimoku",cat:"Trend",type:"ichimoku"},
+                  {name:"Donchian Channels",key:"donchian",cat:"Volatility",type:"bands"},
+                  {name:"Keltner Channels",key:"keltner",cat:"Volatility",type:"bands"},
+                  {name:"OBV",key:"obv",cat:"Volume",type:"volume"},
+                  {name:"CMF (20)",key:"cmf_20",cat:"Volume",type:"oscillator",range:[-1,1]},
+                  {name:"Stochastic RSI",key:"stochRSI",cat:"Momentum",type:"stoch"},
+                  {name:"CCI (20)",key:"cci_20",cat:"Momentum",type:"oscillator",range:[-200,200]},
+                  {name:"ROC (12)",key:"roc_12",cat:"Momentum",type:"oscillator"},
+                  {name:"Momentum (10)",key:"momentum_10",cat:"Momentum",type:"oscillator"},
+                  {name:"Parabolic SAR",key:"psar",cat:"Trend",type:"line"},
+                  {name:"HMA (16)",key:"hma_20",cat:"Trend",type:"line"},
+                  {name:"KAMA (10)",key:"kama",cat:"Trend",type:"line"},
+                  {name:"TSI",key:"tsi",cat:"Momentum",type:"oscillator"},
+                  {name:"STC",key:"stc",cat:"Momentum",type:"oscillator",range:[0,100]},
+                  {name:"MFI (14)",key:"mfi_14",cat:"Volume",type:"oscillator",range:[0,100]},
+                  {name:"PVT",key:"pvt",cat:"Volume",type:"volume"},
+                  {name:"KVO",key:"kvo",cat:"Volume",type:"oscillator"},
+                  {name:"Anchored VWAP",key:"anchored_vwap",cat:"Volume",type:"line"},
+                  {name:"Volume Profile",key:"volumeProfile",cat:"Volume",type:"volumeProfile"},
+                  {name:"TTM Squeeze",key:"ttmSqueeze",cat:"Volatility",type:"squeeze"},
+                  {name:"Squeeze Momentum",key:"squeezeMomentum",cat:"Momentum",type:"oscillator"},
+                  {name:"Darvas Box",key:"darvasBox",cat:"Volatility",type:"darvas"},
+                  {name:"Smart Money",key:"smartMoney",cat:"Volume",type:"smartMoney"},
+                  {name:"MTF Alignment",key:"mtfAlignment",cat:"Trend",type:"oscillator",range:[0,100]},
+                ];
+                const fmtVal=(v,dec)=>{
+                  if(v===null||v===undefined||isNaN(v))return"—";
+                  dec=dec!==undefined?dec:2;
+                  if(Math.abs(v)>=1e9)return(v/1e9).toFixed(1)+"B";
+                  if(Math.abs(v)>=1e7)return(v/1e7).toFixed(1)+"Cr";
+                  if(Math.abs(v)>=1e5)return(v/1e3).toFixed(1)+"K";
+                  return Number(v).toFixed(dec);
+                };
+                const fmtVol_=(v)=>{
+                  if(v===null||v===undefined)return"—";
+                  if(v>=1e9)return(v/1e9).toFixed(2)+"B";
+                  if(v>=1e7)return(v/1e7).toFixed(2)+"Cr";
+                  if(v>=1e5)return(v/1e5).toFixed(2)+"L";
+                  if(v>=1000)return(v/1000).toFixed(1)+"K";
+                  return v.toString();
+                };
+                const fmtValInd=(ind,val)=>{
+                  if(val===null||val===undefined)return"—";
+                  if(typeof val==="object"){
+                    if(ind.type==="macd")return fmtVal(val.macd,4);
+                    if(ind.type==="stoch")return"%K: "+fmtVal(val.k)+" / %D: "+fmtVal(val.d);
+                    if(ind.type==="bands")return fmtVal(val.middle);
+                    if(ind.type==="ichimoku")return fmtVal(val.tenkan);
+                    if(ind.type==="darvas")return val.boxTop?fmtVal(val.boxTop)+" / "+fmtVal(val.boxBottom):"—";
+                    if(ind.type==="smartMoney")return val.bos?val.bos.replace("_"," ").toUpperCase():"—";
+                    if(ind.type==="volumeProfile")return val.poc?"POC: "+fmtVal(val.poc):"—";
+                    return"—";
+                  }
+                  if(ind.type==="volume")return fmtVol_(val);
+                  if(ind.type==="squeeze")return val?"Squeeze ON":"Squeeze OFF";
+                  return fmtVal(val);
+                };
+                const renderSnIndicators=(indData,interpData)=>{
+                  if(!indData)return React.createElement("div",{style:{fontSize:9,color:"var(--text6)",padding:"4px 0"}},"No data");
+                  return React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:"1px 6px"}},
+                    INDICATORS.map((ind)=>{
+                      const val=indData[ind.key];
+                      const sig=interpData?interpData[ind.key]:null;
+                      const sigC=sig&&sig!=="neutral"?SIG_COLORS[sig]||null:null;
+                      if(val===null||val===undefined)return null;
+                      const valStr=fmtValInd(ind,val);
+                      return React.createElement("div",{key:ind.key,style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"2px 4px",borderRadius:4,gap:4}},
+                        React.createElement("span",{style:{fontSize:9,color:"var(--text5)",flex:"0 0 auto",whiteSpace:"nowrap"}},ind.name),
+                        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:3,flex:1,justifyContent:"flex-end",minWidth:0}},
+                          React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"var(--text3)",fontFamily:"'Sora',sans-serif",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},valStr),
+                          sigC&&React.createElement("span",{style:{fontSize:7,fontWeight:700,padding:"1px 4px",borderRadius:4,background:sigC.bg,border:"1px solid "+sigC.border,color:sigC.text,whiteSpace:"nowrap",flexShrink:0}},sigC.label)
+                        )
+                      );
+                    })
+                  );
+                };
+                const exitLabel=td.exitScore?td.exitScore.decision.label+" ("+td.exitScore.total+")":null;
+                const exitCol=td.exitScore?td.exitScore.decision.color:null;
+                return React.createElement("div",{style:{marginBottom:8,borderRadius:8,background:"var(--bg4)",border:"1px solid var(--border)",overflow:"hidden"}},
+                  React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 10px",borderBottom:(isExp||isTech)?"1px solid var(--border)":"none"}},
+                    React.createElement("span",{style:{fontSize:10,fontWeight:700,color:"var(--text3)",display:"flex",alignItems:"center",gap:5}},
+                      React.createElement(Icon,{n:"bolt",size:11,color:"#ea580c"}),
+                      "Exit Score & Technical Indicators",
+                      td.source&&React.createElement("span",{style:{fontSize:8,fontWeight:600,padding:"1px 5px",borderRadius:4,background:"rgba(234,88,12,.1)",color:"#ea580c",border:"1px solid rgba(234,88,12,.2)"}},td.source)
+                    ),
+                    exitLabel&&React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:5,background:exitCol+"18",color:exitCol,border:"1px solid "+exitCol+"33"}},exitLabel)
+                  ),
+                  React.createElement("div",{style:{display:"flex",justifyContent:"center",gap:12,padding:"5px 10px"}},
+                    React.createElement("div",{onClick:()=>setSnapDetailExpanded(p=>({...p,[tKey]:!p[tKey]})),style:{fontSize:9,color:"var(--accent)",cursor:"pointer",fontWeight:600}},
+                      isExp?"\u25b2 Hide Details":"\u25bc Show Details"
+                    ),
+                    React.createElement("div",{onClick:()=>setSnapTech(p=>({...p,[tKey]:!p[tKey]})),style:{fontSize:9,color:isTech?"var(--text5)":"#f97316",cursor:"pointer",fontWeight:600}},
+                      "\u26a1 "+(isTech?"Hide Technicals":"Technicals")
+                    )
+                  ),
+                  isExp&&td.exitScore&&React.createElement("div",{style:{padding:"6px 10px 8px",borderTop:"1px solid var(--border)"}},
+                    (()=>{
+                      const es=td.exitScore;
+                      return React.createElement("div",{style:{padding:"6px 8px",borderRadius:6,background:"var(--bg5)",border:"1px solid var(--border)"}},
+                        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}},
+                          React.createElement("span",{style:{fontSize:9,fontWeight:700,color:"var(--text3)"}},"Exit Score Breakdown"),
+                          React.createElement("span",{style:{fontSize:10,fontWeight:800,color:es.decision.color,fontFamily:"'Sora',sans-serif"}},es.total+" · "+es.decision.label)
+                        ),
+                        React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:2}},
+                          snapFactorBar("Trend",es.trend,es.trendMax||10,"#3b82f6"),
+                          snapFactorBar("Momentum",es.momentum,es.momentumMax||10,"#a855f7"),
+                          snapFactorBar("Volume",es.volume,es.volumeMax||10,"#06b6d4"),
+                          snapFactorBar("Structure",es.structure,es.structureMax||10,"#ec4899")
+                        ),
+                        es.hardFilters&&es.hardFilters.length>0&&React.createElement("div",{style:{marginTop:6,padding:"6px 8px",borderRadius:6,background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.15)"}},
+                          React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text3)",marginBottom:3}},"Hard Filters"),
+                          es.hardFilters.map((f,i)=>{
+                            var isBonus=f.indexOf("(+")>=0;
+                            var valMatch=f.match(/\([+\-\u2212]?\d+\)$/);
+                            var valStr=valMatch?valMatch[0]:"";
+                            var label=valStr?f.replace(valStr,"").replace(/\s*—\s*/," — ").trim():f;
+                            return React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:4,fontSize:9,lineHeight:1.4}},
+                              React.createElement("span",{style:{color:"var(--text3)",flex:1,minWidth:0,overflow:"hidden",wordBreak:"break-word"}},isBonus?"✓ "+label:"⚠ "+label),
+                              valStr&&React.createElement("span",{style:{fontSize:9,fontWeight:800,color:"var(--text3)",background:"var(--bg4)",padding:"1px 5px",borderRadius:3,fontFamily:"'Sora',sans-serif",flexShrink:0}},valStr)
+                            );
+                          })
+                        )
+                      );
+                    })()
+                  ),
+                  isTech&&React.createElement("div",{style:{padding:"6px 10px",borderTop:"1px solid var(--border)"}},
+                    td.interpretationText&&React.createElement("div",{style:{fontSize:9,color:"var(--text5)",lineHeight:1.4,marginBottom:6}},td.interpretationText),
+                    ind.weekly&&React.createElement("div",{style:{marginBottom:6}},
+                      React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text4)",marginBottom:3,textTransform:"uppercase",letterSpacing:.5}},"Weekly"),
+                      renderSnIndicators(ind.weekly,interp)
+                    ),
+                    ind.daily&&React.createElement("div",{style:{marginBottom:6}},
+                      React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text4)",marginBottom:3,textTransform:"uppercase",letterSpacing:.5}},"Daily"),
+                      renderSnIndicators(ind.daily,interp)
+                    ),
+                    ind.hourly&&React.createElement("div",null,
+                      React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text4)",marginBottom:3,textTransform:"uppercase",letterSpacing:.5}},"Hourly"),
+                      renderSnIndicators(ind.hourly,interp)
+                    )
+                  )
+                );
+              })(),
               /* Notes */
               sn.notes&&React.createElement("div",{style:{fontSize:11,color:"var(--text4)",lineHeight:1.5,
                 padding:"6px 9px",borderRadius:7,background:"var(--accentbg2)",
@@ -19909,7 +20911,10 @@ const PreviousTrades=({soldShareSnapshots={},dispatch})=>{
           })
         )
       );
-    }),
+    });
+    })(),
+  );
+}),
     editSnap&&React.createElement(Modal,{title:"Edit Previous Trade Snapshot",onClose:()=>setEditSnap(null),w:520},
       React.createElement("div",{className:"grid-2col"},
         React.createElement(Field,{label:"Company"},React.createElement("input",{className:"inp",value:editSnap.company||"",onChange:e=>setEditSnap(p=>({...p,company:e.target.value}))})),
@@ -19939,4658 +20944,189 @@ const PreviousTrades=({soldShareSnapshots={},dispatch})=>{
     )
   );
 };
+const LS_ENTRY_SCORES="mm_entry_scores";
+const LS_ENTRY_SNAPSHOTS="mm_entry_score_snapshots";
+const _SCREENER_KEY="finsight-screener-data";
+const _SCREENER_SNAPS_KEY="finsight-screener-snapshots";
 
-/* ══════════════════════════════════════════════════════════════════════════
-   ProfitabilityMetrics — "Profitability & Return Metrics" sub-tab
-   Combines active holdings + sold snapshots into a unified analytics view.
-   Reports:
-     1. Absolute P&L per trade
-     2. Return % per trade
-     3. Annualised return (XIRR / CAGR per trade)
-     4. Brokerage-adjusted returns
-     5. Overall XIRR across all trades (money-weighted)
-     6. Rolling 12-month realised gains
-   ══════════════════════════════════════════════════════════════════════════ */
-const ProfitabilityMetrics=({shares,soldShareSnapshots={}})=>{
-  const[sortBy,setSortBy]=useState("pnl"); /* pnl | returnPct | xirr */
-  const[sortDir,setSortDir]=useState("desc");
-  const ret=(v)=>(v>=0?"+":"")+v.toFixed(2)+"%";
-  const INR=(v)=>"₹"+Number(Math.round(v)).toLocaleString("en-IN");
+/* ──────────────────────────────────────────────────────────────────────────
+   MF PERFORMANCE TABLES  (Last 30 Days / 90 Days / 6 Months / 1 Year)
+   Rows   = each held mutual fund
+   Columns= NAV % change buckets:
+     • Last 30 Days  → daily % change, one column per trading day
+     • Last 90 Days  → weekly % change (per ISO week), last 13 weeks
+     • Last 6 Months → month-on-month % change, last 6 months
+     • Last 1 Year   → month-on-month % change, last 12 months
+   Powered by the full daily NAV history fetched from mfapi.in and cached in
+   state.mfHistNavs (per schemeCode). Falls back gracefully when history is
+   not yet loaded by offering a "Fetch History" action.
+   ────────────────────────────────────────────────────────────────────────── */
+const MFPerformanceTables=React.memo(({mf,mfHistNavs={},dispatch})=>{
+  const active=(mf||[]).filter(m=>m.units>0&&m.schemeCode);
+  const [loading,setLoading]=useState({});
+  const [fired,setFired]=useState(false);
+  const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const parseISO=iso=>new Date(iso+"T12:00:00");
+  const fmtD=iso=>{if(!iso)return"--";const p=iso.split("-");return p[2]+" "+MON[parseInt(p[1],10)-1];};
+  const fmtM=iso=>{const p=iso.split("-");return MON[parseInt(p[1],10)-1]+" ’"+p[0].slice(2);};
+  const monKey=iso=>iso.slice(0,7);
+  const weekKeyMy=iso=>{const d=parseISO(iso);const day=d.getDay()||7;d.setDate(d.getDate()+4-day);const y=d.getFullYear();const m=Math.floor(((d-new Date(y,0,4))/864e5+(new Date(y,0,4).getDay()||7)-3)/7)+1;return y+"-W"+String(m).padStart(2,"0");};
+  const weekLabel=iso=>{const d=parseISO(iso);const day=d.getDay()||7;d.setDate(d.getDate()-(day-1));return d.getDate()+" "+MON[d.getMonth()];};
+  const sn=n=>{const r=(n||"").replace(/\s*-\s*(direct|regular)\s*(growth|idcw|dividend).*/i,"").replace(/\s*fund$/i,"").trim();return r.length>26?r.slice(0,24)+"…":r;};
 
-  /* ── Build unified trade list ── */
-  const trades=React.useMemo(()=>{
-    const list=[];
-    /* Active holdings — treat currentPrice as "sell" for metrics */
-    (shares||[]).forEach(sh=>{
-      if(!sh.qty||!sh.buyPrice||!sh.currentPrice||!sh.buyDate)return;
-      const buyDate=sh.buyDate;
-      const sellDate=TODAY(); /* active → mark-to-market as of today */
-      const buyAmt=sh.qty*sh.buyPrice;
-      const sellAmt=sh.qty*sh.currentPrice;
-      const brokerage=+sh.brokerage||0;
-      list.push({
-        id:sh.id,type:"active",
-        company:sh.company,ticker:sh.ticker,
-        qty:sh.qty,buyPrice:sh.buyPrice,sellPrice:sh.currentPrice,
-        buyDate,sellDate,
-        buyAmt,sellAmt,brokerage,
-        pnl:sellAmt-buyAmt,
-        returnPct:buyAmt>0?((sellAmt-buyAmt)/buyAmt*100):0,
-        pnlNet:sellAmt-buyAmt-brokerage,
-        returnNetPct:buyAmt>0?(((sellAmt-buyAmt-brokerage)/buyAmt)*100):0,
-      });
-    });
-    /* Sold snapshots */
-    Object.values(soldShareSnapshots||{}).forEach(fySnaps=>{
-      (fySnaps||[]).forEach(sn=>{
-        if(!sn.qty||!sn.buyPrice||!sn.sellPrice||!sn.buyDate)return;
-        const buyAmt=sn.qty*sn.buyPrice;
-        const sellAmt=sn.qty*sn.sellPrice;
-        const brokerage=+sn.brokerage||0;
-        list.push({
-          id:sn.id,type:"sold",
-          company:sn.company,ticker:sn.ticker,
-          qty:sn.qty,buyPrice:sn.buyPrice,sellPrice:sn.sellPrice,
-          buyDate:sn.buyDate,sellDate:sn.savedAt,
-          buyAmt,sellAmt,brokerage,
-          pnl:sellAmt-buyAmt,
-          returnPct:buyAmt>0?((sellAmt-buyAmt)/buyAmt*100):0,
-          pnlNet:sellAmt-buyAmt-brokerage,
-          returnNetPct:buyAmt>0?(((sellAmt-buyAmt-brokerage)/buyAmt)*100):0,
-        });
-      });
-    });
-    return list;
-  },[shares,soldShareSnapshots]);
+  const gridDates=(()=>{
+    const set={};
+    active.forEach(m=>{const s=mfHistNavs[m.schemeCode];if(Array.isArray(s))s.forEach(p=>{if(p&&p.date)set[p.date]=1;});});
+    return Object.keys(set).sort();
+  })();
+  const navMaps=(()=>{
+    const o={};
+    active.forEach(m=>{const s=mfHistNavs[m.schemeCode]||[];const mp={};s.forEach(p=>{mp[p.date]=p.nav;});o[m.schemeCode]=mp;});
+    return o;
+  })();
+  const hasHistory=m=>Array.isArray(mfHistNavs[m.schemeCode])&&mfHistNavs[m.schemeCode].length>1;
+  /* Stale = no usable history, OR cache built with an older layout (pre-10-year
+     version), OR latest cached NAV older than ~4 days — in all cases re-fetch
+     so the tables stay complete and current whenever the section is revisited. */
+  const isStale=m=>{
+    if((mfHistNavs._v||0)!==3)return true;
+    if(!hasHistory(m))return true;
+    const s=mfHistNavs[m.schemeCode];
+    const last=s[s.length-1]&&s[s.length-1].date;
+    if(!last)return true;
+    const cutoff=new Date(Date.now()-4*864e5).toISOString().slice(0,10);
+    return last<cutoff;
+  };
+  const missing=active.filter(m=>isStale(m));
 
-  /* ── Report 3: XIRR per trade ── */
-  const tradesWithXirr=React.useMemo(()=>{
-    return trades.map(t=>{
-      let xirr=null;
-      if(t.buyDate&&t.sellDate&&t.buyDate<t.sellDate){
-        xirr=computeXIRR([-t.buyAmt,t.sellAmt],[t.buyDate,t.sellDate]);
-      }
-      return{...t,xirr};
-    });
-  },[trades]);
+  const fetchOne=async m=>{
+    if(loading[m.schemeCode])return;
+    setLoading(p=>({...p,[m.schemeCode]:true}));
+    const series=await fetchNavHistory(m.schemeCode);
+    if(series.length)dispatch({type:"SET_MF_HIST",code:m.schemeCode,series});
+    setLoading(p=>({...p,[m.schemeCode]:false}));
+  };
+  const fetchAll=()=>Promise.all(active.filter(isStale).map(fetchOne));
 
-  /* ── Report 5: Overall XIRR across all trades ── */
-  const overallXirr=React.useMemo(()=>{
-    if(!trades.length)return null;
-    const cfs=[];const dts=[];
-    trades.forEach(t=>{
-      cfs.push(-t.buyAmt);dts.push(t.buyDate);
-      cfs.push(t.sellAmt);dts.push(t.sellDate);
-    });
-    return computeXIRR(cfs,dts);
-  },[trades]);
+  React.useEffect(()=>{
+    if(fired||!active.length)return;
+    setFired(true);
+    if(active.some(isStale)){const t=setTimeout(()=>{fetchAll();},550);return()=>clearTimeout(t);}
+  },[fired]);
 
-  /* ── Report 5b: Overall XIRR brokerage-adjusted ── */
-  const overallXirrNet=React.useMemo(()=>{
-    if(!trades.length)return null;
-    const hasBrokerage=trades.some(t=>t.brokerage>0);
-    if(!hasBrokerage)return null;
-    const cfs=[];const dts=[];
-    trades.forEach(t=>{
-      cfs.push(-(t.buyAmt+t.brokerage));dts.push(t.buyDate);
-      cfs.push(t.sellAmt);dts.push(t.sellDate);
-    });
-    return computeXIRR(cfs,dts);
-  },[trades]);
+  /* Column buckets built from the merged grid (all funds publish on the same trading days) */
+  const bucketize=(grid,count,keyFn,labelFn)=>{const by={};grid.forEach(d=>{const k=keyFn(d);(by[k]=by[k]||[]).push(d);});return Object.keys(by).sort().slice(-count).map(k=>({key:k,label:labelFn?labelFn(k,by[k][0]):fmtM(by[k][0]),dates:by[k]}));};
+  const quarterKey=iso=>{const p=iso.split("-");return p[0]+"-Q"+Math.ceil(parseInt(p[1],10)/3);};
+  const quarterLabel=k=>{const p=k.split("-Q");return"Q"+p[1]+" ’"+p[0].slice(2);};
+  const yearKey=iso=>iso.slice(0,4);
+  const yearLabel=k=>(k.slice(2)==="00"?"2000":"’"+k.slice(2));
 
-  /* ── Report 7: Time-Weighted vs Money-Weighted Return ── */
-  const twrData=React.useMemo(()=>{
-    if(trades.length<2)return null;
-    const sorted=[...trades].sort((a,b)=>(a.sellDate||"").localeCompare(b.sellDate||""));
-    const mwr=overallXirr;
-    let cumGrowth=1;
-    sorted.forEach(t=>{
-      const periodReturn=t.buyAmt>0?(t.pnl/t.buyAmt):0;
-      cumGrowth*=(1+periodReturn);
-    });
-    const twr=(cumGrowth-1)*100;
-    const firstBuy=sorted[0].buyDate;
-    const lastSell=sorted[sorted.length-1].sellDate;
-    const totalDays=firstBuy&&lastSell?Math.max(1,Math.floor((new Date(lastSell+"T12:00:00")-new Date(firstBuy+"T12:00:00"))/864e5)):365;
-    const years=totalDays/365.25;
-    const twrAnnualized=years>0?(Math.pow(cumGrowth,1/years)-1)*100:twr;
-    const mwrAnnualized=mwr;
-    const divergence=mwrAnnualized!==null?mwrAnnualized-twrAnnualized:null;
-    let interpretation="";
-    if(divergence!==null){
-      if(Math.abs(divergence)<1){interpretation="TWR and MWR are closely aligned — your timing of investments has minimal impact on returns.";}
-      else if(divergence>0){interpretation="MWR > TWR — you tend to invest more money before good periods. Your timing adds value.";}
-      else{interpretation="MWR < TWR — you tend to invest more money before bad periods. Consider smoothing entry timing (e.g., SIP).";}
-    }
-    return{twr,twrAnnualized,mwrAnnualized,divergence,totalDays,years,tradeCount:sorted.length,interpretation};
-  },[trades,overallXirr]);
+  const dailyCols=gridDates.slice(-30);
+  const weekBuckets=(()=>{const by={};gridDates.forEach(d=>{const k=weekKeyMy(d);(by[k]=by[k]||[]).push(d);});return Object.keys(by).sort().slice(-13).map(k=>({key:k,label:weekLabel(by[k][0]),dates:by[k]}));})();
+  const monthBuckets6=bucketize(gridDates,6,monKey);
+  const monthBuckets12=bucketize(gridDates,12,monKey);
+  const quarterBuckets8=bucketize(gridDates,8,quarterKey,quarterLabel);
+  const quarterBuckets12=bucketize(gridDates,12,quarterKey,quarterLabel);
+  const yearBuckets4=bucketize(gridDates,4,yearKey,yearLabel);
+  const yearBuckets5=bucketize(gridDates,5,yearKey,yearLabel);
+  const yearBuckets10=bucketize(gridDates,10,yearKey,yearLabel);
 
-  /* ── Report 6: Rolling 12-month realised gains ── */
-  const rollingGains=React.useMemo(()=>{
-    const soldTrades=trades.filter(t=>t.type==="sold"&&t.sellDate);
-    if(!soldTrades.length)return[];
-    const monthMap={};
-    soldTrades.forEach(t=>{
-      const sellMonth=t.sellDate.slice(0,7); /* YYYY-MM */
-      if(!monthMap[sellMonth])monthMap[sellMonth]={pnl:0,count:0,netPnl:0};
-      monthMap[sellMonth].pnl+=t.pnl;
-      monthMap[sellMonth].netPnl+=t.pnlNet;
-      monthMap[sellMonth].count++;
-    });
-    const months=Object.keys(monthMap).sort();
-    if(!months.length)return[];
-    /* Build rolling 12-month windows */
-    const result=[];
-    for(let i=0;i<months.length;i++){
-      const windowEnd=months[i];
-      const windowStart=new Date(new Date(windowEnd+"-01").getTime()-365*864e5).toISOString().slice(0,7);
-      let totalPnl=0,totalNet=0,totalCount=0;
-      months.forEach(m=>{
-        if(m>windowStart&&m<=windowEnd){
-          totalPnl+=monthMap[m].pnl;
-          totalNet+=monthMap[m].netPnl;
-          totalCount+=monthMap[m].count;
-        }
-      });
-      result.push({month:windowEnd,pnl:totalPnl,netPnl:totalNet,count:totalCount});
-    }
-    return result;
-  },[trades]);
-
-  /* ── Aggregate stats ── */
-  const totalPnl=trades.reduce((s,t)=>s+t.pnl,0);
-  const totalPnlNet=trades.reduce((s,t)=>s+t.pnlNet,0);
-  const totalBuy=trades.reduce((s,t)=>s+t.buyAmt,0);
-  const totalBrokerage=trades.reduce((s,t)=>s+t.brokerage,0);
-  const winners=trades.filter(t=>t.pnl>0).length;
-  const losers=trades.filter(t=>t.pnl<0).length;
-  const winRate=trades.length>0?((winners/trades.length)*100).toFixed(1):"0.0";
-  const avgReturn=trades.length>0?(trades.reduce((s,t)=>s+t.returnPct,0)/trades.length).toFixed(2):"0.00";
-
-  /* ── Sorting ── */
-  const sortedTrades=[...tradesWithXirr].sort((a,b)=>{
-    let va,vb;
-    if(sortBy==="pnl"){va=a.pnl;vb=b.pnl;}
-    else if(sortBy==="returnPct"){va=a.returnPct;vb=b.returnPct;}
-    else if(sortBy==="xirr"){va=a.xirr??-Infinity;vb=b.xirr??-Infinity;}
-    else{va=a.pnl;vb=b.pnl;}
-    return sortDir==="desc"?vb-va:va-vb;
+  const bucketVals=(mp,buckets)=>buckets.map(b=>{
+    let start=null,end=null;
+    for(const d of b.dates){if(mp[d]&&start===null)start=mp[d];if(mp[d])end=mp[d];}
+    if(start&&end&&start>0&&start!==end)return ((end-start)/start*100);
+    return null;
   });
 
-  /* ── Sortable column header helper ── */
-  const SortHdr=({label,field,align})=>React.createElement("div",{
-    onClick:()=>{if(sortBy===field)setSortDir(d=>d==="desc"?"asc":"desc");else{setSortBy(field);setSortDir("desc");}},
-    style:{
-      fontSize:9,fontWeight:700,color:sortBy===field?"var(--accent)":"var(--text6)",
-      textTransform:"uppercase",letterSpacing:.7,cursor:"pointer",
-      display:"flex",alignItems:"center",gap:3,justifyContent:align||"flex-start",
-      padding:"6px 8px",
-    }
-  },label,sortBy===field&&React.createElement("span",{style:{fontSize:8}},sortDir==="desc"?"▼":"▲"));
+  const rowsFor=buckets=>active.filter(hasHistory).map(m=>({name:sn(m.name),vals:bucketVals(navMaps[m.schemeCode],buckets)}));
 
-  if(!trades.length)return React.createElement("div",{style:{textAlign:"center",padding:"48px 20px"}},
-    React.createElement("div",{style:{fontSize:40,marginBottom:12,color:"var(--text6)"}},React.createElement(Icon,{n:"invest",size:40})),
-    React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text3)",marginBottom:4}},"No Trade Data"),
-    React.createElement("div",{style:{fontSize:13,color:"var(--text6)"}},"Add shares or save snapshots to Previous Trades to see profitability analytics.")
-  );
+  const dailyRows=active.filter(hasHistory).map(m=>{
+    const mp=navMaps[m.schemeCode];
+    return{name:sn(m.name),vals:dailyCols.map((d,i)=>{
+      if(i===0)return null;
+      const cur=mp[d],prev=mp[dailyCols[i-1]];
+      if(cur&&prev&&prev>0)return((cur-prev)/prev*100);
+      return null;
+    })};
+  });
+  const weeklyRows=rowsFor(weekBuckets);
+  const monthlyRows6=rowsFor(monthBuckets6);
+  const monthlyRows12=rowsFor(monthBuckets12);
+  const quarterlyRows8=rowsFor(quarterBuckets8);
+  const quarterlyRows12=rowsFor(quarterBuckets12);
+  const yearlyRows4=rowsFor(yearBuckets4);
+  const yearlyRows5=rowsFor(yearBuckets5);
+  const yearlyRows10=rowsFor(yearBuckets10);
+  const fmtCol=c=>React.createElement("div",{style:{padding:"7px 6px",textAlign:"right",whiteSpace:"nowrap"}},c);
 
-  return React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:20}},
-    /* ══ Summary Stat Cards ══ */
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(175px,1fr))",gap:12}},
-      /* Total P&L */
-      React.createElement("div",{style:{background:totalPnl>=0?"rgba(22,163,74,.07)":"rgba(239,68,68,.07)",border:"1px solid "+(totalPnl>=0?"rgba(22,163,74,.2)":"rgba(239,68,68,.2)"),borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Total P&L"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:totalPnl>=0?"#16a34a":"#ef4444"}},(totalPnl>=0?"+":"")+INR(totalPnl)),
-        totalBrokerage>0&&React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Net: "+(totalPnlNet>=0?"+":"")+INR(totalPnlNet))
+  const tableCard=(title,subtitle,cols,rows,minW,years)=>{
+    const gridCols="190px "+cols.map(()=>"minmax(62px,1fr)").join(" ")+" 92px"+(years?" 84px":"");
+    const pctCell=(v,pad,emph)=>{const col=v>=0?"#16a34a":"#ef4444";return React.createElement("div",{key:pad,style:{padding:"7px 6px",textAlign:"right",color:v===null||v===undefined?"var(--text5)":col,fontWeight:emph?800:undefined,background:v===null||v===undefined||!emph?"transparent":(v>=0?"rgba(22,163,74,.08)":"rgba(239,68,68,.08)")}},v===null||v===undefined?"—":(v>=0?"▲ +":"▼ ")+Math.abs(v).toFixed(2)+"%");};
+    const netOf=vals=>{let s=0,n=0;(vals||[]).forEach(v=>{if(v!==null&&v!==undefined){s+=v;n++;}});return n?s:null;};
+    return React.createElement(Card,{sx:{marginBottom:14,overflow:"hidden"}},
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7,padding:"14px 16px 8px",borderBottom:"1px solid var(--border2)"}},
+        React.createElement("div",{style:{width:3,height:14,borderRadius:2,background:"#6d28d9",flexShrink:0}}),
+        React.createElement("span",{style:{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:"var(--text5)"}},title),
+        React.createElement("span",{style:{fontSize:9,color:"var(--text6)",fontWeight:400,marginLeft:"auto",whiteSpace:"nowrap"}},subtitle)
       ),
-      /* Overall XIRR */
-      overallXirr!==null&&React.createElement("div",{style:{background:"rgba(109,40,217,.07)",border:"1px solid rgba(109,40,217,.2)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Overall XIRR"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:overallXirr>=0?"#6d28d9":"#ef4444"}},(overallXirr>=0?"+":"")+overallXirr.toFixed(2)+"%"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Money-weighted p.a.")
-      ),
-      /* Win Rate */
-      React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Win Rate"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text)"}},"%"+winRate),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},winners+"W / "+losers+"L of "+trades.length+" trades")
-      ),
-      /* Avg Return */
-      React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Avg Return / Trade"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:+avgReturn>=0?"#16a34a":"#ef4444"}},(+avgReturn>=0?"+":"")+avgReturn+"%"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Mean return across all trades")
-      ),
-      /* Brokerage Total */
-      totalBrokerage>0&&React.createElement("div",{style:{background:"rgba(245,158,11,.07)",border:"1px solid rgba(245,158,11,.2)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Total Brokerage"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#f59e0b"}},"-"+INR(totalBrokerage)),
-        overallXirrNet!==null&&React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Adj. XIRR: "+(overallXirrNet>=0?"+":"")+overallXirrNet.toFixed(2)+"% p.a.")
-      )
-    ),
-
-    /* ══ Report 1+2+3+4: Per-Trade Table ══ */
-    React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      /* Table header */
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"chart",size:15}),"Per-Trade Profitability"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},trades.length+" trades")
-      ),
-      /* Desktop table */
-      React.createElement("div",{className:"mobile-scroll-table",style:{overflowX:"auto"}},
-        React.createElement("div",{style:{minWidth:820}},
-          /* Column headers */
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 80px 90px 90px 100px 90px 90px 90px 80px",gap:0,borderBottom:"1px solid var(--border)",background:"var(--bg4)"}},
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px"}},"Trade"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"center"}},"Qty"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Buy ₹"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Sell ₹"),
-            React.createElement(SortHdr,{label:"Abs P&L",field:"pnl",align:"right"}),
-            React.createElement(SortHdr,{label:"Return %",field:"returnPct",align:"right"}),
-            React.createElement(SortHdr,{label:"XIRR p.a.",field:"xirr",align:"right"}),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Brokerage"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"center"}},"Status")
+      React.createElement("div",{style:{overflowX:"auto",WebkitOverflowScrolling:"touch"}},
+        React.createElement("div",{style:{minWidth:minW}},
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:gridCols,gap:0,background:"var(--bg5)",borderBottom:"2px solid var(--border)",fontSize:9,fontWeight:700,color:"var(--accent)",textTransform:"uppercase",letterSpacing:.5}},
+            React.createElement("div",{style:{padding:"7px 10px"}},"Fund"),
+            cols.map((c,i)=>fmtCol(c)),
+            React.createElement("div",{style:{padding:"7px 6px",textAlign:"right",whiteSpace:"nowrap",color:"#6d28d9"}},"Net % Change"),
+            years&&React.createElement("div",{style:{padding:"7px 6px",textAlign:"right",whiteSpace:"nowrap",color:"#0e7490"}},"XIRR %")
           ),
-          /* Rows */
-          sortedTrades.map((t,i)=>{
-            const isGain=t.pnl>=0;
-            return React.createElement("div",{key:t.id||i,style:{display:"grid",gridTemplateColumns:"2fr 80px 90px 90px 100px 90px 90px 90px 80px",gap:0,borderBottom:"1px solid var(--border2)",background:i%2===0?"transparent":"var(--bg4)",transition:"background .1s"},onMouseEnter:e=>e.currentTarget.style.background="var(--accentbg2)",onMouseLeave:e=>e.currentTarget.style.background=i%2===0?"transparent":"var(--bg4)"},
-              /* Trade name */
-              React.createElement("div",{style:{padding:"9px 8px",display:"flex",flexDirection:"column",gap:2,minWidth:0}},
-                React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},t.company),
-                React.createElement("div",{style:{display:"flex",gap:4,alignItems:"center"}},
-                  React.createElement("span",{style:{fontSize:9,padding:"1px 5px",borderRadius:4,background:"rgba(14,116,144,.1)",color:"#0e7490",fontWeight:600}},t.ticker||"—"),
-                  React.createElement("span",{style:{fontSize:9,color:"var(--text6)"}},t.buyDate)
-                )
-              ),
-              /* Qty */
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"center",color:"var(--text3)"}},t.qty),
-              /* Buy price */
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",color:"var(--text4)",fontFamily:"'DM Mono',monospace"}},"₹"+Number(t.buyPrice).toLocaleString("en-IN")),
-              /* Sell price */
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",color:isGain?"#16a34a":"#ef4444",fontFamily:"'DM Mono',monospace",fontWeight:600}},"₹"+Number(t.sellPrice).toLocaleString("en-IN")),
-              /* Absolute P&L (Report 1) */
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"right",fontWeight:700,fontFamily:"'Sora',sans-serif",color:isGain?"#16a34a":"#ef4444"}},(isGain?"+":"")+INR(t.pnl)),
-              /* Return % (Report 2) */
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",fontWeight:600,color:isGain?"#16a34a":"#ef4444"}},(t.returnPct>=0?"+":"")+t.returnPct.toFixed(2)+"%"),
-              /* XIRR (Report 3) */
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",fontWeight:600,color:t.xirr!==null?(t.xirr>=0?"#16a34a":"#ef4444"):"var(--text6)"}},t.xirr!==null?(t.xirr>=0?"+":"")+t.xirr.toFixed(2)+"%":"—"),
-              /* Brokerage (Report 4) */
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",color:t.brokerage>0?"#f59e0b":"var(--text6)"}},t.brokerage>0?"-"+INR(t.brokerage):"—"),
-              /* Status badge */
-              React.createElement("div",{style:{padding:"9px 8px",display:"flex",justifyContent:"center",alignItems:"center"}},
-                React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:6,
-                  background:t.type==="sold"?"rgba(109,40,217,.1)":"rgba(22,163,74,.1)",
-                  color:t.type==="sold"?"#6d28d9":"#16a34a",
-                  border:"1px solid "+(t.type==="sold"?"rgba(109,40,217,.25)":"rgba(22,163,74,.25)")
-                }},t.type==="sold"?"SOLD":"ACTIVE")
-              )
-            );
-          })
-        )
-      ),
-      /* Brokerage-adjusted row (Report 4) — shown below table when brokerage exists */
-      totalBrokerage>0&&React.createElement("div",{style:{padding:"10px 16px",borderTop:"1px solid var(--border)",background:"rgba(245,158,11,.04)",display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}},
-        React.createElement("span",{style:{fontSize:11,color:"#f59e0b",fontWeight:600,display:"flex",alignItems:"center",gap:4}},React.createElement(Icon,{n:"lightbulb",size:12,color:"#f59e0b"}),"Brokerage-Adjusted Returns:"),
-        React.createElement("span",{style:{fontSize:11,color:"var(--text4)"}},"Gross P&L: "+(totalPnl>=0?"+":"")+INR(totalPnl)),
-        React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}}," → "),
-        React.createElement("span",{style:{fontSize:11,color:"var(--text3)",fontWeight:600}},"Net P&L: "+(totalPnlNet>=0?"+":"")+INR(totalPnlNet)),
-        React.createElement("span",{style:{fontSize:10,color:"var(--text6)"}}," (after "+INR(totalBrokerage)+" brokerage)")
-      )
-    ),
-
-    /* ══ Report 5: Overall XIRR Detail ══ */
-    React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"money",size:15}),"Overall XIRR (Money-Weighted)"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"rgba(109,40,217,.1)",color:"#6d28d9",border:"1px solid rgba(109,40,217,.2)",fontWeight:600}},"All trades combined")
-      ),
-      React.createElement("div",{style:{padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:16}},
-        /* Gross XIRR */
-        overallXirr!==null?React.createElement("div",{style:{textAlign:"center",padding:16,background:overallXirr>=0?"rgba(22,163,74,.06)":"rgba(239,68,68,.06)",border:"1px solid "+(overallXirr>=0?"rgba(22,163,74,.18)":"rgba(239,68,68,.18)"),borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:1,marginBottom:6}},"Gross XIRR"),
-          React.createElement("div",{style:{fontSize:32,fontFamily:"'Sora',sans-serif",fontWeight:800,color:overallXirr>=0?"#16a34a":"#ef4444",lineHeight:1.1}},(overallXirr>=0?"+":"")+overallXirr.toFixed(2)+"%"),
-          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:4}},"p.a. money-weighted")
-        ):React.createElement("div",{style:{textAlign:"center",padding:16,color:"var(--text6)",fontSize:13}},"Insufficient data for XIRR"),
-        /* Net XIRR */
-        overallXirrNet!==null&&React.createElement("div",{style:{textAlign:"center",padding:16,background:overallXirrNet>=0?"rgba(245,158,11,.06)":"rgba(239,68,68,.06)",border:"1px solid "+(overallXirrNet>=0?"rgba(245,158,11,.18)":"rgba(239,68,68,.18)"),borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:1,marginBottom:6}},"Net XIRR (after brokerage)"),
-          React.createElement("div",{style:{fontSize:32,fontFamily:"'Sora',sans-serif",fontWeight:800,color:overallXirrNet>=0?"#f59e0b":"#ef4444",lineHeight:1.1}},(overallXirrNet>=0?"+":"")+overallXirrNet.toFixed(2)+"%"),
-          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:4}},"p.a. brokerage-adjusted")
-        ),
-        /* Trade count + total invested */
-        React.createElement("div",{style:{padding:16,background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12}},
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:8}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Total Trades"),
-            React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)"}},trades.length)
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:8}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Total Invested"),
-            React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)"}},"₹"+Number(totalBuy).toLocaleString("en-IN"))
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Date Range"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text3)"}},trades.length?trades.reduce((m,t)=>t.buyDate<m?t.buyDate:m,"9999")+" → "+trades.reduce((m,t)=>t.sellDate>m?t.sellDate:m,"0000"):"—")
-          )
+          rows.length?rows.map((r,ri)=>React.createElement("div",{key:ri,style:{display:"grid",gridTemplateColumns:gridCols,gap:0,borderBottom:"1px solid var(--border2)",fontSize:10,":last-child":{borderBottom:"none"}}},
+            React.createElement("div",{style:{padding:"7px 10px",color:"var(--text2)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},r.name),
+            (r.vals||[]).map((v,i)=>pctCell(v,i)),
+            pctCell(netOf(r.vals),"net",true),
+            years&&pctCell(netOf(r.vals)!==null?netOf(r.vals)/years:null,"xirr",true)
+          )):React.createElement("div",{style:{padding:"16px 10px",fontSize:10,color:"var(--text6)",textAlign:"center",fontStyle:"italic"}},"Loading NAV history…")
         )
       )
-    ),
-
-    /* ══ Report 6: Rolling 12-Month Realised Gains ══ */
-    rollingGains.length>0&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"calendar",size:15}),"Rolling 12-Month Realised Gains"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},rollingGains.length+" windows")
-      ),
-      React.createElement("div",{style:{padding:"12px 16px"}},
-        /* Bar chart — horizontal bars */
-        React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-          (()=>{
-            const maxAbs=Math.max(...rollingGains.map(g=>Math.abs(g.pnl)),1);
-            return rollingGains.map((g,i)=>{
-              const isGain=g.pnl>=0;
-              const barW=Math.min(100,(Math.abs(g.pnl)/maxAbs)*85);
-              return React.createElement("div",{key:g.month,style:{display:"flex",alignItems:"center",gap:10}},
-                React.createElement("div",{style:{width:70,fontSize:11,fontWeight:600,color:"var(--text4)",flexShrink:0,textAlign:"right"}},g.month),
-                React.createElement("div",{style:{flex:1,height:24,background:"var(--bg5)",borderRadius:6,overflow:"hidden",position:"relative"}},
-                  React.createElement("div",{style:{
-                    height:"100%",width:barW+"%",
-                    background:isGain?"linear-gradient(90deg,rgba(22,163,74,.25),rgba(22,163,74,.5))":"linear-gradient(90deg,rgba(239,68,68,.25),rgba(239,68,68,.5))",
-                    borderRadius:6,transition:"width .5s",
-                    display:"flex",alignItems:"center",paddingLeft:8,
-                  }},
-                    React.createElement("span",{style:{fontSize:10,fontWeight:700,color:isGain?"#16a34a":"#ef4444",whiteSpace:"nowrap"}},
-                      (isGain?"+":"")+INR(g.pnl)
-                    )
-                  )
-                ),
-                React.createElement("div",{style:{width:55,fontSize:10,color:"var(--text6)",textAlign:"right"}},g.count+" trade"+(g.count!==1?"s":""))
-              );
-            });
-          })()
-        ),
-        /* Net row */
-        totalBrokerage>0&&React.createElement("div",{style:{marginTop:12,padding:"8px 12px",background:"rgba(245,158,11,.05)",border:"1px solid rgba(245,158,11,.15)",borderRadius:8,fontSize:11,color:"var(--text4)",display:"flex",justifyContent:"space-between"}},
-          React.createElement("span",null,"Brokerage-adjusted net may differ from gross shown above"),
-          React.createElement("span",{style:{fontWeight:600,color:"#f59e0b"}},"Total brokerage: -"+INR(totalBrokerage))
-        )
-      )
-    ),
-
-
-    /* ══ Report 7: Time-Weighted vs Money-Weighted Returns ══ */
-    twrData&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},
-          React.createElement(Icon,{n:"clock",size:15}),"Time-Weighted vs Money-Weighted Returns"
-        ),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},
-          twrData.tradeCount+" trades · "+twrData.years.toFixed(1)+"y span"
-        )
-      ),
-      React.createElement("div",{style:{padding:"16px 20px"}},
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}},
-          React.createElement("div",{style:{background:"rgba(14,116,144,.07)",border:"1px solid rgba(14,116,144,.2)",borderRadius:12,padding:"14px 16px"}},
-            React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Time-Weighted Return (TWR)"),
-            React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#0e7490"}},ret(twrData.twrAnnualized)+" p.a."),
-            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Geometric chain of per-trade returns")
-          ),
-          React.createElement("div",{style:{background:"rgba(109,40,217,.07)",border:"1px solid rgba(109,40,217,.2)",borderRadius:12,padding:"14px 16px"}},
-            React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Money-Weighted Return (MWR)"),
-            React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#6d28d9"}},twrData.mwrAnnualized!==null?ret(twrData.mwrAnnualized)+" p.a.":"—"),
-            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"XIRR — larger trades have more weight")
-          )
-        ),
-        twrData.divergence!==null&&React.createElement("div",{style:{
-          display:"flex",alignItems:"center",gap:8,padding:"10px 14px",borderRadius:10,
-          background:Math.abs(twrData.divergence)<1?"rgba(22,163,74,.06)":twrData.divergence>0?"rgba(14,116,144,.06)":"rgba(239,68,68,.06)",
-          border:"1px solid "+(Math.abs(twrData.divergence)<1?"rgba(22,163,74,.15)":twrData.divergence>0?"rgba(14,116,144,.15)":"rgba(239,68,68,.15)"),
-          marginBottom:12
-        }},
-          React.createElement(Icon,{n:Math.abs(twrData.divergence)<1?"checkcircle":twrData.divergence>0?"invest":"warning",size:16,color:Math.abs(twrData.divergence)<1?"#16a34a":twrData.divergence>0?"#0e7490":"#ef4444"}),
-          React.createElement("div",null,
-            React.createElement("div",{style:{fontSize:12,fontWeight:700,color:Math.abs(twrData.divergence)<1?"#16a34a":twrData.divergence>0?"#0e7490":"#ef4444"}},"Divergence: "+(twrData.divergence>0?"+":"")+twrData.divergence.toFixed(2)+"% p.a."),
-            React.createElement("div",{style:{fontSize:11,color:"var(--text4)",marginTop:2}},twrData.interpretation)
-          )
-        ),
-        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",lineHeight:1.6,padding:"8px 12px",background:"var(--bg5)",borderRadius:8}},
-          React.createElement("strong",null,"Why do they differ? "),"TWR measures compound growth regardless of how much money was invested at each point — it answers 'how did my strategy perform?' MWR (XIRR) accounts for the timing and size of cash flows — it answers 'what return did my actual dollars earn?' If MWR > TWR, you invested larger amounts before winning trades. If MWR < TWR, larger investments preceded losing trades."
-        )
-      )
-    ),
-
-    /* ══ Methodology note ══ */
-    React.createElement("div",{style:{padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-      React.createElement("strong",{style:{color:"var(--accent)"}},"Methodology: "),
-      "XIRR (Extended Internal Rate of Return) accounts for the exact timing of cash flows, making it the gold standard for comparing trades with different holding periods. A 20% gain in 3 months shows a much higher XIRR than the same gain over 3 years. Overall XIRR is money-weighted — larger trades have more influence. Rolling 12-month windows show trailing realised gains ending each month. Time-Weighted Return (TWR) geometrically chains per-trade returns, eliminating the effect of cash flow timing. Money-Weighted Return (MWR/XIRR) weights returns by capital deployed. Divergence reveals whether investment timing helps or hurts."
-    )
-  );
-};
-
-/* ══════════════════════════════════════════════════════════════════════════
-   TimeHoldingAnalysis — "Time & Holding Pattern Analysis" sub-tab
-   Reports:
-     1. Holding duration distribution (histogram)
-     2. Average holding period per stock
-     3. Best/worst month to buy
-     4. Seasonality patterns (winners by quarter)
-     5. Average hold time per stock (conviction level)
-     6. Position sizing patterns (size vs outcome correlation)
-   ══════════════════════════════════════════════════════════════════════════ */
-const TimeHoldingAnalysis=({shares,soldShareSnapshots={}})=>{
-
-  /* ── Build unified trade list with computed fields ── */
-  const trades=React.useMemo(()=>{
-    const list=[];
-    (shares||[]).forEach(sh=>{
-      if(!sh.qty||!sh.buyPrice||!sh.currentPrice||!sh.buyDate)return;
-      const buyDate=new Date(sh.buyDate+"T12:00:00");
-      const sellDate=new Date(TODAY()+"T12:00:00");
-      const holdDays=Math.floor((sellDate-buyDate)/864e5);
-      if(holdDays<0)return;
-      const buyAmt=sh.qty*sh.buyPrice;
-      const sellAmt=sh.qty*sh.currentPrice;
-      list.push({
-        id:sh.id,type:"active",company:sh.company,ticker:sh.ticker,
-        qty:sh.qty,buyPrice:sh.buyPrice,sellPrice:sh.currentPrice,
-        buyDateStr:sh.buyDate,sellDateStr:TODAY(),
-        buyDate,sellDate,holdDays,
-        buyAmt,sellAmt,pnl:sellAmt-buyAmt,
-        returnPct:buyAmt>0?((sellAmt-buyAmt)/buyAmt*100):0,
-        buyMonth:buyDate.getMonth(), /* 0-11 */
-        buyQuarter:Math.floor(buyDate.getMonth()/3), /* 0-3 */
-      });
-    });
-    Object.values(soldShareSnapshots||{}).forEach(fySnaps=>{
-      (fySnaps||[]).forEach(sn=>{
-        if(!sn.qty||!sn.buyPrice||!sn.sellPrice||!sn.buyDate||!sn.savedAt)return;
-        const buyDate=new Date(sn.buyDate+"T12:00:00");
-        const sellDate=new Date(sn.savedAt+"T12:00:00");
-        const holdDays=Math.floor((sellDate-buyDate)/864e5);
-        if(holdDays<0)return;
-        const buyAmt=sn.qty*sn.buyPrice;
-        const sellAmt=sn.qty*sn.sellPrice;
-        list.push({
-          id:sn.id,type:"sold",company:sn.company,ticker:sn.ticker,
-          qty:sn.qty,buyPrice:sn.buyPrice,sellPrice:sn.sellPrice,
-          buyDateStr:sn.buyDate,sellDateStr:sn.savedAt,
-          buyDate,sellDate,holdDays,
-          buyAmt,sellAmt,pnl:sellAmt-buyAmt,
-          returnPct:buyAmt>0?((sellAmt-buyAmt)/buyAmt*100):0,
-          buyMonth:buyDate.getMonth(),
-          buyQuarter:Math.floor(buyDate.getMonth()/3),
-        });
-      });
-    });
-    return list;
-  },[shares,soldShareSnapshots]);
-
-  /* ── Report 1: Holding duration distribution (histogram) ── */
-  const durationHistogram=React.useMemo(()=>{
-    if(!trades.length)return[];
-    const buckets=[
-      {label:"< 1 week",min:0,max:7,count:0,pnl:0},
-      {label:"1–2 weeks",min:7,max:14,count:0,pnl:0},
-      {label:"2–4 weeks",min:14,max:30,count:0,pnl:0},
-      {label:"1–3 months",min:30,max:91,count:0,pnl:0},
-      {label:"3–6 months",min:91,max:183,count:0,pnl:0},
-      {label:"6–12 months",min:183,max:365,count:0,pnl:0},
-      {label:"1–2 years",min:365,max:730,count:0,pnl:0},
-      {label:"2+ years",min:730,max:Infinity,count:0,pnl:0},
-    ];
-    trades.forEach(t=>{
-      const b=buckets.find(b=>t.holdDays>=b.min&&t.holdDays<b.max);
-      if(b){b.count++;b.pnl+=t.pnl;}
-    });
-    return buckets;
-  },[trades]);
-
-  /* ── Report 2+5: Average holding period per stock ── */
-  const holdByStock=React.useMemo(()=>{
-    const map={};
-    trades.forEach(t=>{
-      const key=t.ticker||t.company;
-      if(!map[key])map[key]={ticker:t.ticker,company:t.company,totalDays:0,count:0,totalPnl:0,totalReturn:0,totalBuyAmt:0,minDays:Infinity,maxDays:0};
-      map[key].totalDays+=t.holdDays;
-      map[key].count++;
-      map[key].totalPnl+=t.pnl;
-      map[key].totalReturn+=t.returnPct;
-      map[key].totalBuyAmt+=t.buyAmt;
-      map[key].minDays=Math.min(map[key].minDays,t.holdDays);
-      map[key].maxDays=Math.max(map[key].maxDays,t.holdDays);
-    });
-    return Object.values(map).map(s=>({
-      ...s,
-      avgDays:Math.round(s.totalDays/s.count),
-      avgReturn:(s.totalReturn/s.count).toFixed(2),
-    })).sort((a,b)=>b.avgDays-a.avgDays);
-  },[trades]);
-
-  /* ── Report 3: Best/worst month to buy ── */
-  const monthAnalysis=React.useMemo(()=>{
-    const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    const data=months.map((name,i)=>{
-      const monthTrades=trades.filter(t=>t.buyMonth===i);
-      if(!monthTrades.length)return{name,month:i,count:0,avgReturn:0,totalPnl:0,winRate:0};
-      const avgReturn=monthTrades.reduce((s,t)=>s+t.returnPct,0)/monthTrades.length;
-      const totalPnl=monthTrades.reduce((s,t)=>s+t.pnl,0);
-      const wins=monthTrades.filter(t=>t.pnl>0).length;
-      return{name,month:i,count:monthTrades.length,avgReturn,totalPnl,winRate:(wins/monthTrades.length*100)};
-    });
-    return data;
-  },[trades]);
-
-  /* ── Report 4: Seasonality patterns (by quarter) ── */
-  const quarterAnalysis=React.useMemo(()=>{
-    const qLabels=["Q1 (Jan–Mar)","Q2 (Apr–Jun)","Q3 (Jul–Sep)","Q4 (Oct–Dec)"];
-    return qLabels.map((label,i)=>{
-      const qTrades=trades.filter(t=>t.buyQuarter===i);
-      if(!qTrades.length)return{label,q:i,count:0,avgReturn:0,totalPnl:0,winRate:0,avgHoldDays:0};
-      const avgReturn=qTrades.reduce((s,t)=>s+t.returnPct,0)/qTrades.length;
-      const totalPnl=qTrades.reduce((s,t)=>s+t.pnl,0);
-      const wins=qTrades.filter(t=>t.pnl>0).length;
-      const avgHoldDays=Math.round(qTrades.reduce((s,t)=>s+t.holdDays,0)/qTrades.length);
-      return{label,q:i,count:qTrades.length,avgReturn,totalPnl,winRate:(wins/qTrades.length*100),avgHoldDays};
-    });
-  },[trades]);
-
-  /* ── Report 6: Position sizing patterns ── */
-  const positionSizing=React.useMemo(()=>{
-    if(trades.length<2)return null;
-    /* Sort by buyAmt to find small vs large positions */
-    const sorted=[...trades].sort((a,b)=>a.buyAmt-b.buyAmt);
-    const median=sorted[Math.floor(sorted.length/2)].buyAmt;
-    const small=sorted.filter(t=>t.buyAmt<=median);
-    const large=sorted.filter(t=>t.buyAmt>median);
-    const calcStats=(arr)=>{
-      if(!arr.length)return{count:0,avgSize:0,avgReturn:0,winRate:0,totalPnl:0};
-      const avgSize=arr.reduce((s,t)=>s+t.buyAmt,0)/arr.length;
-      const avgReturn=arr.reduce((s,t)=>s+t.returnPct,0)/arr.length;
-      const wins=arr.filter(t=>t.pnl>0).length;
-      return{count:arr.length,avgSize,avgReturn,winRate:(wins/arr.length*100),totalPnl:arr.reduce((s,t)=>s+t.pnl,0)};
-    };
-    /* Correlation: does position size predict return? */
-    const n=trades.length;
-    const xs=trades.map(t=>t.buyAmt);
-    const ys=trades.map(t=>t.returnPct);
-    const mx=xs.reduce((a,b)=>a+b,0)/n;
-    const my=ys.reduce((a,b)=>a+b,0)/n;
-    let num=0,denX=0,denY=0;
-    for(let i=0;i<n;i++){num+=(xs[i]-mx)*(ys[i]-my);denX+=(xs[i]-mx)**2;denY+=(ys[i]-my)**2;}
-    const correlation=(denX>0&&denY>0)?num/Math.sqrt(denX*denY):0;
-    return{small:calcStats(small),large:calcStats(large),median,correlation};
-  },[trades]);
-
-  /* ── Overall stats ── */
-  const avgHoldAll=trades.length?Math.round(trades.reduce((s,t)=>s+t.holdDays,0)/trades.length):0;
-  const medianHold=trades.length?[...trades].sort((a,b)=>a.holdDays-b.holdDays)[Math.floor(trades.length/2)].holdDays:0;
-
-  if(!trades.length)return React.createElement("div",{style:{textAlign:"center",padding:"48px 20px"}},
-    React.createElement("div",{style:{fontSize:40,marginBottom:12,color:"var(--text6)"}},React.createElement(Icon,{n:"clock",size:40})),
-    React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text3)",marginBottom:4}},"No Trade Data"),
-    React.createElement("div",{style:{fontSize:13,color:"var(--text6)"}},"Add shares or save snapshots to see time & holding pattern analysis.")
-  );
-
-  /* ── Helpers ── */
-  const fmtDays=(d)=>{
-    if(d<7)return d+"d";
-    if(d<30)return Math.round(d/7)+"w";
-    if(d<365)return(Math.round(d/30.4))+"mo";
-    return(d/365.25).toFixed(1)+"y";
-  };
-  const MONTH_NAMES=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
-  return React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:20}},
-    /* ══ Top summary strip ══ */
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(155px,1fr))",gap:12}},
-      React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,padding:"13px 15px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Avg Hold Period"),
-        React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text)"}},fmtDays(avgHoldAll)),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},avgHoldAll+" days · "+trades.length+" trades")
-      ),
-      React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,padding:"13px 15px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Median Hold Period"),
-        React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text)"}},fmtDays(medianHold)),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},medianHold+" days")
-      ),
-      React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,padding:"13px 15px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Shortest Hold"),
-        React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text)"}},fmtDays(Math.min(...trades.map(t=>t.holdDays)))),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"fastest exit")
-      ),
-      React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,padding:"13px 15px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Longest Hold"),
-        React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text)"}},fmtDays(Math.max(...trades.map(t=>t.holdDays)))),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"longest conviction")
-      )
-    ),
-
-    /* ══ Report 1: Holding Duration Distribution (Histogram) ══ */
-    React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"chart",size:15}),"Holding Duration Distribution"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},"histogram")
-      ),
-      React.createElement("div",{style:{padding:"16px 20px"}},
-        (()=>{
-          const maxCount=Math.max(...durationHistogram.map(b=>b.count),1);
-          return React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-            durationHistogram.map((b,i)=>{
-              const barW=(b.count/maxCount)*100;
-              const avgPnl=b.count>0?(b.pnl/b.count):0;
-              const isGain=avgPnl>=0;
-              return React.createElement("div",{key:b.label,style:{display:"flex",alignItems:"center",gap:10}},
-                React.createElement("div",{style:{width:90,fontSize:11,fontWeight:600,color:"var(--text4)",flexShrink:0,textAlign:"right"}},b.label),
-                React.createElement("div",{style:{flex:1,height:28,background:"var(--bg5)",borderRadius:6,overflow:"hidden",position:"relative"}},
-                  b.count>0&&React.createElement("div",{style:{
-                    height:"100%",width:barW+"%",
-                    background:b.pnl>=0?"linear-gradient(90deg,rgba(22,163,74,.2),rgba(22,163,74,.45))":"linear-gradient(90deg,rgba(239,68,68,.2),rgba(239,68,68,.45))",
-                    borderRadius:6,transition:"width .5s",
-                    display:"flex",alignItems:"center",paddingLeft:8,
-                  }},
-                    React.createElement("span",{style:{fontSize:10,fontWeight:700,color:isGain?"#16a34a":"#ef4444",whiteSpace:"nowrap"}},b.count+" trade"+(b.count!==1?"s":""))
-                  )
-                ),
-                React.createElement("div",{style:{width:80,fontSize:10,color:"var(--text6)",textAlign:"right"}},b.count>0?"Avg: "+(isGain?"+":"")+INR(Math.round(avgPnl)):"—")
-              );
-            })
-          );
-        })()
-      )
-    ),
-
-    /* ══ Report 2+5: Average Holding Period Per Stock ══ */
-    React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"building",size:15}),"Avg Holding Period Per Stock"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"rgba(109,40,217,.1)",color:"#6d28d9",border:"1px solid rgba(109,40,217,.2)",fontWeight:600}},"conviction level")
-      ),
-      React.createElement("div",{className:"mobile-scroll-table",style:{overflowX:"auto"}},
-        React.createElement("div",{style:{minWidth:600}},
-          /* Header */
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 80px 80px 90px 80px 80px",gap:0,borderBottom:"1px solid var(--border)",background:"var(--bg4)"}},
-            ["Stock","Trades","Avg Days","Avg Return","Min","Max"].map(h=>
-              React.createElement("div",{key:h,style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:h==="Stock"?"left":"right"}},h)
-            )
-          ),
-          holdByStock.map((s,i)=>{
-            const avgRet=+s.avgReturn;
-            return React.createElement("div",{key:s.ticker||s.company,style:{display:"grid",gridTemplateColumns:"2fr 80px 80px 90px 80px 80px",gap:0,borderBottom:"1px solid var(--border2)",background:i%2===0?"transparent":"var(--bg4)",transition:"background .1s"},onMouseEnter:e=>e.currentTarget.style.background="var(--accentbg2)",onMouseLeave:e=>e.currentTarget.style.background=i%2===0?"transparent":"var(--bg4)"},
-              React.createElement("div",{style:{padding:"9px 8px",display:"flex",flexDirection:"column",gap:2}},
-                React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},s.company),
-                React.createElement("span",{style:{fontSize:9,padding:"1px 5px",borderRadius:4,background:"rgba(14,116,144,.1)",color:"#0e7490",fontWeight:600,width:"fit-content"}},s.ticker||"—")
-              ),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"right",color:"var(--text3)"}},s.count),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"right",fontWeight:600,color:"var(--text)"}},fmtDays(s.avgDays)),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",fontWeight:600,color:avgRet>=0?"#16a34a":"#ef4444"}},(avgRet>=0?"+":"")+avgRet+"%"),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:10,textAlign:"right",color:"var(--text6)"}},fmtDays(s.minDays)),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:10,textAlign:"right",color:"var(--text6)"}},fmtDays(s.maxDays))
-            );
-          })
-        )
-      )
-    ),
-
-    /* ══ Report 3: Best/Worst Month to Buy ══ */
-    React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"calendar",size:15}),"Best / Worst Month to Buy"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},"entry month analysis")
-      ),
-      React.createElement("div",{style:{padding:"16px 20px"}},
-        (()=>{
-          const activeMonths=monthAnalysis.filter(m=>m.count>0);
-          if(!activeMonths.length)return React.createElement("div",{style:{textAlign:"center",padding:20,color:"var(--text6)",fontSize:13}},"No data yet");
-          const bestMonth=activeMonths.reduce((a,b)=>a.avgReturn>b.avgReturn?a:b);
-          const worstMonth=activeMonths.reduce((a,b)=>a.avgReturn<b.avgReturn?a:b);
-          const maxAbs=Math.max(...activeMonths.map(m=>Math.abs(m.avgReturn)),1);
-          return React.createElement(React.Fragment,null,
-            /* Best/Worst callout */
-            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}},
-              React.createElement("div",{style:{padding:"12px 14px",borderRadius:10,background:"rgba(22,163,74,.06)",border:"1px solid rgba(22,163,74,.18)"}},
-                React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"#16a34a",textTransform:"uppercase",letterSpacing:1,marginBottom:4}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"target",size:13})," Best Month to Buy")),
-                React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#16a34a"}},bestMonth.name),
-                React.createElement("div",{style:{fontSize:11,color:"var(--text4)",marginTop:2}},"Avg return: "+(bestMonth.avgReturn>=0?"+":"")+bestMonth.avgReturn.toFixed(2)+"% · "+bestMonth.count+" trades")
-              ),
-              React.createElement("div",{style:{padding:"12px 14px",borderRadius:10,background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.18)"}},
-                React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"#ef4444",textTransform:"uppercase",letterSpacing:1,marginBottom:4}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"warning",size:13})," Worst Month to Buy")),
-                React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#ef4444"}},worstMonth.name),
-                React.createElement("div",{style:{fontSize:11,color:"var(--text4)",marginTop:2}},"Avg return: "+(worstMonth.avgReturn>=0?"+":"")+worstMonth.avgReturn.toFixed(2)+"% · "+worstMonth.count+" trades")
-              )
-            ),
-            /* Monthly bars */
-            React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
-              monthAnalysis.map((m,i)=>{
-                const barW=m.count>0?(Math.abs(m.avgReturn)/maxAbs)*85:0;
-                const isGain=m.avgReturn>=0;
-                return React.createElement("div",{key:m.name,style:{display:"flex",alignItems:"center",gap:8}},
-                  React.createElement("div",{style:{width:30,fontSize:11,fontWeight:600,color:"var(--text4)",flexShrink:0,textAlign:"right"}},m.name),
-                  React.createElement("div",{style:{flex:1,height:22,background:"var(--bg5)",borderRadius:5,overflow:"hidden",position:"relative",display:"flex",alignItems:"center"}},
-                    m.count>0&&React.createElement("div",{style:{
-                      height:"100%",width:barW+"%",
-                      background:isGain?"linear-gradient(90deg,rgba(22,163,74,.2),rgba(22,163,74,.4))":"linear-gradient(90deg,rgba(239,68,68,.2),rgba(239,68,68,.4))",
-                      borderRadius:5,transition:"width .5s",
-                      display:"flex",alignItems:"center",justifyContent:"flex-end",paddingRight:6,
-                    }},
-                      React.createElement("span",{style:{fontSize:9,fontWeight:700,color:isGain?"#16a34a":"#ef4444",whiteSpace:"nowrap"}},(isGain?"+":"")+m.avgReturn.toFixed(1)+"%")
-                    ),
-                    m.count===0&&React.createElement("span",{style:{fontSize:9,color:"var(--text6)",paddingLeft:8}},"no trades")
-                  ),
-                  React.createElement("div",{style:{width:45,fontSize:10,color:"var(--text6)",textAlign:"right"}},m.count>0?m.count+" trades":"—"),
-                  React.createElement("div",{style:{width:38,fontSize:9,textAlign:"right",fontWeight:600,color:m.winRate>=50?"#16a34a":"#ef4444"}},m.count>0?Math.round(m.winRate)+"%":"")
-                );
-              })
-            )
-          );
-        })()
-      )
-    ),
-
-    /* ══ Report 4: Seasonality Patterns (Quarterly) ══ */
-    React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"calendar",size:15}),"Seasonality Patterns — Winners by Quarter"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},"do winners cluster?")
-      ),
-      React.createElement("div",{style:{padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:14}},
-        quarterAnalysis.map(q=>{
-          const hasData=q.count>0;
-          const isGain=q.avgReturn>=0;
-          const qCol=["#3b82f6","#f59e0b","#10b981","#8b5cf6"][q.q];
-          return React.createElement("div",{key:q.q,style:{
-            padding:"14px 16px",borderRadius:12,
-            background:hasData?(isGain?"rgba(22,163,74,.04)":"rgba(239,68,68,.04)"):"var(--bg4)",
-            border:"1px solid "+(hasData?(isGain?"rgba(22,163,74,.15)":"rgba(239,68,68,.15)"):"var(--border)"),
-          }},
-            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:10}},
-              React.createElement("div",{style:{width:8,height:8,borderRadius:"50%",background:qCol}}),
-              React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"var(--text)"}},"Q"+(q.q+1))
-            ),
-            hasData?React.createElement(React.Fragment,null,
-              React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:isGain?"#16a34a":"#ef4444",marginBottom:4}},(isGain?"+":"")+q.avgReturn.toFixed(2)+"%"),
-              React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:8}},"avg return · "+q.count+" trades"),
-              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)"}},
-                React.createElement("span",null,"Win rate: "+Math.round(q.winRate)+"%"),
-                React.createElement("span",null,"Avg hold: "+fmtDays(q.avgHoldDays))
-              ),
-              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",marginTop:3}},
-                React.createElement("span",null,"Total P&L:"),
-                React.createElement("span",{style:{fontWeight:600,color:q.totalPnl>=0?"#16a34a":"#ef4444"}},(q.totalPnl>=0?"+":"")+INR(q.totalPnl))
-              )
-            ):React.createElement("div",{style:{fontSize:12,color:"var(--text6)",textAlign:"center",padding:"12px 0"}},"No trades in this quarter")
-          );
-        })
-      )
-    ),
-
-    /* ══ Report 6: Position Sizing Patterns ══ */
-    positionSizing&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"grid",size:15}),"Position Sizing Patterns"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},"size vs outcome")
-      ),
-      React.createElement("div",{style:{padding:"16px 20px"}},
-        /* Small vs Large comparison */
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}},
-          React.createElement("div",{style:{padding:"14px 16px",borderRadius:12,background:"var(--bg4)",border:"1px solid var(--border)"}},
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:1,marginBottom:8}},"Smaller Positions"),
-            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginBottom:8}},"≤ ₹"+Number(Math.round(positionSizing.median)).toLocaleString("en-IN")+" invested"),
-            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-              React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Trades"),
-              React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"var(--text)"}},positionSizing.small.count)
-            ),
-            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-              React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Size"),
-              React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"var(--text)"}},"₹"+Number(Math.round(positionSizing.small.avgSize)).toLocaleString("en-IN"))
-            ),
-            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-              React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Return"),
-              React.createElement("span",{style:{fontSize:12,fontWeight:700,color:positionSizing.small.avgReturn>=0?"#16a34a":"#ef4444"}},(positionSizing.small.avgReturn>=0?"+":"")+positionSizing.small.avgReturn.toFixed(2)+"%")
-            ),
-            React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
-              React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Win Rate"),
-              React.createElement("span",{style:{fontSize:12,fontWeight:700,color:positionSizing.small.winRate>=50?"#16a34a":"#ef4444"}},Math.round(positionSizing.small.winRate)+"%")
-            )
-          ),
-          React.createElement("div",{style:{padding:"14px 16px",borderRadius:12,background:"var(--bg4)",border:"1px solid var(--border)"}},
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:1,marginBottom:8}},"Larger Positions"),
-            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginBottom:8}}," > ₹"+Number(Math.round(positionSizing.median)).toLocaleString("en-IN")+" invested"),
-            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-              React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Trades"),
-              React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"var(--text)"}},positionSizing.large.count)
-            ),
-            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-              React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Size"),
-              React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"var(--text)"}},"₹"+Number(Math.round(positionSizing.large.avgSize)).toLocaleString("en-IN"))
-            ),
-            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-              React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Return"),
-              React.createElement("span",{style:{fontSize:12,fontWeight:700,color:positionSizing.large.avgReturn>=0?"#16a34a":"#ef4444"}},(positionSizing.large.avgReturn>=0?"+":"")+positionSizing.large.avgReturn.toFixed(2)+"%")
-            ),
-            React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
-              React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Win Rate"),
-              React.createElement("span",{style:{fontSize:12,fontWeight:700,color:positionSizing.large.winRate>=50?"#16a34a":"#ef4444"}},Math.round(positionSizing.large.winRate)+"%")
-            )
-          )
-        ),
-        /* Correlation insight */
-        React.createElement("div",{style:{padding:"12px 16px",borderRadius:10,background:Math.abs(positionSizing.correlation)>0.15?(positionSizing.correlation>0?"rgba(22,163,74,.06)":"rgba(239,68,68,.06)"):"var(--bg4)",border:"1px solid "+(Math.abs(positionSizing.correlation)>0.15?(positionSizing.correlation>0?"rgba(22,163,74,.18)":"rgba(239,68,68,.18)"):"var(--border)")}},
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,fontWeight:700,color:"var(--text3)"}},"Size–Return Correlation"),
-            React.createElement("span",{style:{fontSize:14,fontFamily:"'Sora',sans-serif",fontWeight:800,color:Math.abs(positionSizing.correlation)>0.15?(positionSizing.correlation>0?"#16a34a":"#ef4444"):"var(--text5)"}},positionSizing.correlation.toFixed(3))
-          ),
-          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",lineHeight:1.5}},
-            Math.abs(positionSizing.correlation)<0.1
-              ?"No meaningful correlation — position size doesn't predict returns."
-              :positionSizing.correlation>0
-                ?"Positive correlation — you tend to make higher returns on larger positions. Your conviction seems well-placed!"
-                :"Negative correlation — larger positions tend to underperform. Consider more uniform position sizing."
-          )
-        ),
-        /* Total P&L comparison */
-        React.createElement("div",{style:{marginTop:12,display:"flex",justifyContent:"space-between",padding:"8px 12px",background:"var(--bg5)",borderRadius:8,fontSize:11}},
-          React.createElement("span",{style:{color:"var(--text5)"}},"Small positions total P&L:"),
-          React.createElement("span",{style:{fontWeight:700,color:positionSizing.small.totalPnl>=0?"#16a34a":"#ef4444"}},(positionSizing.small.totalPnl>=0?"+":"")+INR(positionSizing.small.totalPnl))
-        ),
-        React.createElement("div",{style:{marginTop:6,display:"flex",justifyContent:"space-between",padding:"8px 12px",background:"var(--bg5)",borderRadius:8,fontSize:11}},
-          React.createElement("span",{style:{color:"var(--text5)"}},"Large positions total P&L:"),
-          React.createElement("span",{style:{fontWeight:700,color:positionSizing.large.totalPnl>=0?"#16a34a":"#ef4444"}},(positionSizing.large.totalPnl>=0?"+":"")+INR(positionSizing.large.totalPnl))
-        )
-      )
-    ),
-
-    /* ══ Methodology note ══ */
-    React.createElement("div",{style:{padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-      React.createElement("strong",{style:{color:"var(--accent)"}},"Methodology: "),
-      "Holding periods are measured in calendar days from buy date to sell date (or today for active holdings). Position sizing correlation uses Pearson's r — values above 0.15 or below -0.15 suggest a meaningful relationship between how much you invest and the outcome. Seasonality analysis groups trades by acquisition month/quarter to reveal timing patterns."
-    )
-  );
-};
-
-/* ═══════════════════════════════════════════════════════════════════
-   Win/Loss Patterns — streak analysis, profit factor, best/worst trades
-   ═══════════════════════════════════════════════════════════════════ */
-const WinLossPatterns=({shares,soldShareSnapshots={}})=>{
-  const[sortBy,setSortBy]=useState("pnl"); /* pnl | returnPct | annReturn */
-  const[sortDir,setSortDir]=useState("desc");
-
-  /* ── Build unified trade list ── */
-  const trades=React.useMemo(()=>{
-    const list=[];
-    (shares||[]).forEach(sh=>{
-      if(!sh.qty||!sh.buyPrice||!sh.currentPrice||!sh.buyDate)return;
-      const buyDate=new Date(sh.buyDate+"T12:00:00");
-      const sellDate=new Date(TODAY()+"T12:00:00");
-      const holdDays=Math.max(1,Math.floor((sellDate-buyDate)/864e5));
-      const buyAmt=sh.qty*sh.buyPrice;
-      const sellAmt=sh.qty*sh.currentPrice;
-      const brokerage=+sh.brokerage||0;
-      const pnl=sellAmt-buyAmt;
-      const returnPct=buyAmt>0?(pnl/buyAmt*100):0;
-      const annReturn=holdDays>0?(Math.pow(1+returnPct/100,365/holdDays)-1)*100:returnPct;
-      list.push({
-        id:sh.id,type:"active",company:sh.company,ticker:sh.ticker,
-        qty:sh.qty,buyPrice:sh.buyPrice,sellPrice:sh.currentPrice,
-        buyDateStr:sh.buyDate,sellDateStr:TODAY(),
-        buyDate,sellDate,holdDays,
-        buyAmt,sellAmt,brokerage,pnl,returnPct,annReturn,
-        pnlNet:pnl-brokerage,
-        returnNetPct:buyAmt>0?((pnl-brokerage)/buyAmt*100):0,
-      });
-    });
-    Object.values(soldShareSnapshots||{}).forEach(fySnaps=>{
-      (fySnaps||[]).forEach(sn=>{
-        if(!sn.qty||!sn.buyPrice||!sn.sellPrice||!sn.buyDate||!sn.savedAt)return;
-        const buyDate=new Date(sn.buyDate+"T12:00:00");
-        const sellDate=new Date(sn.savedAt+"T12:00:00");
-        const holdDays=Math.max(1,Math.floor((sellDate-buyDate)/864e5));
-        const buyAmt=sn.qty*sn.buyPrice;
-        const sellAmt=sn.qty*sn.sellPrice;
-        const brokerage=+sn.brokerage||0;
-        const pnl=sellAmt-buyAmt;
-        const returnPct=buyAmt>0?(pnl/buyAmt*100):0;
-        const annReturn=holdDays>0?(Math.pow(1+returnPct/100,365/holdDays)-1)*100:returnPct;
-        list.push({
-          id:sn.id,type:"sold",company:sn.company,ticker:sn.ticker,
-          qty:sn.qty,buyPrice:sn.buyPrice,sellPrice:sn.sellPrice,
-          buyDateStr:sn.buyDate,sellDateStr:sn.savedAt,
-          buyDate,sellDate,holdDays,
-          buyAmt,sellAmt,brokerage,pnl,returnPct,annReturn,
-          pnlNet:pnl-brokerage,
-          returnNetPct:buyAmt>0?((pnl-brokerage)/buyAmt*100):0,
-        });
-      });
-    });
-    return list;
-  },[shares,soldShareSnapshots]);
-
-  /* ── Core metrics ── */
-  const metrics=React.useMemo(()=>{
-    if(!trades.length)return null;
-    const winners=trades.filter(t=>t.pnl>0);
-    const losers=trades.filter(t=>t.pnl<0);
-    const breakeven=trades.filter(t=>t.pnl===0);
-    const winRate=(winners.length/trades.length)*100;
-    const totalProfit=winners.reduce((s,t)=>s+t.pnl,0);
-    const totalLoss=Math.abs(losers.reduce((s,t)=>s+t.pnl,0));
-    const profitFactor=totalLoss>0?totalProfit/totalLoss:totalProfit>0?Infinity:0;
-    const avgWin=winners.length>0?totalProfit/winners.length:0;
-    const avgLoss=losers.length>0?totalLoss/losers.length:0;
-    const avgWinReturn=winners.length>0?winners.reduce((s,t)=>s+t.returnPct,0)/winners.length:0;
-    const avgLossReturn=losers.length>0?losers.reduce((s,t)=>s+t.returnPct,0)/losers.length:0;
-    const winLossRatio=avgLoss>0?avgWin/avgLoss:avgWin>0?Infinity:0;
-    const largestWinner=[...winners].sort((a,b)=>b.pnl-a.pnl)[0]||null;
-    const largestLoser=[...losers].sort((a,b)=>a.pnl-b.pnl)[0]||null;
-    const largestWinnerPct=[...winners].sort((a,b)=>b.returnPct-a.returnPct)[0]||null;
-    const largestLoserPct=[...losers].sort((a,b)=>a.returnPct-b.returnPct)[0]||null;
-    /* Streak analysis — chronological order */
-    const chrono=[...trades].sort((a,b)=>{
-      const da=a.sellDateStr||a.buyDateStr||"";
-      const db=b.sellDateStr||b.buyDateStr||"";
-      if(da!==db)return da.localeCompare(db);
-      return a.buyDateStr.localeCompare(b.buyDateStr);
-    });
-    let maxWinStreak=0,maxLossStreak=0,curWin=0,curLoss=0;
-    let winStreakStart=null,winStreakEnd=null,lossStreakStart=null,lossStreakEnd=null;
-    let tmpWinStart=null,tmpLossStart=null;
-    chrono.forEach((t,i)=>{
-      if(t.pnl>0){
-        if(curWin===0)tmpWinStart=t;
-        curWin++;
-        if(curLoss>maxLossStreak){maxLossStreak=curLoss;lossStreakStart=tmpLossStart;lossStreakEnd=chrono[i-1];}
-        curLoss=0;
-      }else if(t.pnl<0){
-        if(curLoss===0)tmpLossStart=t;
-        curLoss++;
-        if(curWin>maxWinStreak){maxWinStreak=curWin;winStreakStart=tmpWinStart;winStreakEnd=chrono[i-1];}
-        curWin=0;
-      }else{
-        if(curWin>maxWinStreak){maxWinStreak=curWin;winStreakStart=tmpWinStart;winStreakEnd=chrono[i-1];}
-        if(curLoss>maxLossStreak){maxLossStreak=curLoss;lossStreakStart=tmpLossStart;lossStreakEnd=chrono[i-1];}
-        curWin=0;curLoss=0;
-      }
-    });
-    if(curWin>maxWinStreak){maxWinStreak=curWin;winStreakStart=tmpWinStart;winStreakEnd=chrono[chrono.length-1];}
-    if(curLoss>maxLossStreak){maxLossStreak=curLoss;lossStreakStart=tmpLossStart;lossStreakEnd=chrono[chrono.length-1];}
-    return{
-      total:trades.length,winners:winners.length,losers:losers.length,breakeven:breakeven.length,
-      winRate,totalProfit,totalLoss,profitFactor,
-      avgWin,avgLoss,avgWinReturn,avgLossReturn,winLossRatio,
-      largestWinner,largestLoser,largestWinnerPct,largestLoserPct,
-      maxWinStreak,maxLossStreak,
-      winStreakStart,winStreakEnd,lossStreakStart,lossStreakEnd,
-    };
-  },[trades]);
-
-  /* ── Per-stock aggregation ── */
-  const stockStats=React.useMemo(()=>{
-    const map={};
-    trades.forEach(t=>{
-      const key=t.ticker||t.company;
-      if(!map[key])map[key]={ticker:t.ticker,company:t.company,trades:0,totalPnl:0,totalBuyAmt:0,totalReturn:0,wins:0,losses:0,totalHoldDays:0,bestPnl:-Infinity,worstPnl:Infinity,bestReturn:-Infinity,worstReturn:Infinity};
-      const s=map[key];
-      s.trades++;
-      s.totalPnl+=t.pnl;
-      s.totalBuyAmt+=t.buyAmt;
-      s.totalReturn+=t.returnPct;
-      s.totalHoldDays+=t.holdDays;
-      if(t.pnl>0)s.wins++;
-      if(t.pnl<0)s.losses++;
-      s.bestPnl=Math.max(s.bestPnl,t.pnl);
-      s.worstPnl=Math.min(s.worstPnl,t.pnl);
-      s.bestReturn=Math.max(s.bestReturn,t.returnPct);
-      s.worstReturn=Math.min(s.worstReturn,t.returnPct);
-    });
-    return Object.values(map).map(s=>{
-      const avgReturn=s.trades>0?s.totalReturn/s.trades:0;
-      const avgHoldDays=s.trades>0?Math.round(s.totalHoldDays/s.trades):0;
-      const annReturn=avgHoldDays>0?(Math.pow(1+avgReturn/100,365/avgHoldDays)-1)*100:avgReturn;
-      return{...s,avgReturn,avgHoldDays,annReturn,winRate:s.trades>0?(s.wins/s.trades*100):0};
-    });
-  },[trades]);
-
-  /* Sortable column header helper */
-  const SortHdr=({label,field,align})=>React.createElement("div",{
-    onClick:()=>{if(sortBy===field)setSortDir(d=>d==="desc"?"asc":"desc");else{setSortBy(field);setSortDir("desc");}},
-    style:{
-      fontSize:9,fontWeight:700,color:sortBy===field?"var(--accent)":"var(--text6)",
-      textTransform:"uppercase",letterSpacing:.7,cursor:"pointer",
-      display:"flex",alignItems:"center",gap:3,justifyContent:align||"flex-start",
-      padding:"6px 8px",
-    }
-  },label,sortBy===field&&React.createElement("span",{style:{fontSize:8}},sortDir==="desc"?"▼":"▲"));
-
-  /* ── Empty state ── */
-  if(!trades.length)return React.createElement("div",{style:{textAlign:"center",padding:"48px 20px"}},
-    React.createElement("div",{style:{fontSize:40,marginBottom:12,color:"var(--text6)"}},React.createElement(Icon,{n:"target",size:40})),
-    React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text3)",marginBottom:4}},"No Trade Data"),
-    React.createElement("div",{style:{fontSize:13,color:"var(--text6)"}},"Add shares or save snapshots to Previous Trades to see win/loss pattern analytics.")
-  );
-
-  /* ── Best/worst stocks sorted views ── */
-  const bestByPnl=[...stockStats].sort((a,b)=>b.totalPnl-a.totalPnl);
-  const worstByPnl=[...stockStats].sort((a,b)=>a.totalPnl-b.totalPnl);
-  const bestByReturn=[...stockStats].sort((a,b)=>b.avgReturn-a.avgReturn);
-  const worstByReturn=[...stockStats].sort((a,b)=>a.avgReturn-b.avgReturn);
-  const bestByAnn=[...stockStats].sort((a,b)=>b.annReturn-a.annReturn);
-  const worstByAnn=[...stockStats].sort((a,b)=>a.annReturn-b.annReturn);
-
-  /* ── Sorted stock table ── */
-  let sortedStocks;
-  if(sortBy==="pnl")sortedStocks=[...stockStats].sort((a,b)=>sortDir==="desc"?b.totalPnl-a.totalPnl:a.totalPnl-b.totalPnl);
-  else if(sortBy==="returnPct")sortedStocks=[...stockStats].sort((a,b)=>sortDir==="desc"?b.avgReturn-a.avgReturn:a.avgReturn-b.avgReturn);
-  else if(sortBy==="annReturn")sortedStocks=[...stockStats].sort((a,b)=>sortDir==="desc"?b.annReturn-a.annReturn:a.annReturn-b.annReturn);
-  else sortedStocks=[...stockStats].sort((a,b)=>sortDir==="desc"?b.totalPnl-a.totalPnl:a.totalPnl-b.totalPnl);
-
-  const m=metrics;
-  const pfColor=m.profitFactor>=1.5?"#16a34a":m.profitFactor>=1?"#f59e0b":"#ef4444";
-  const pfLabel=m.profitFactor>=1.5?"Healthy":m.profitFactor>=1?"Marginal":"Losing";
-
-  return React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:20}},
-    /* ══ Summary Stat Cards ══ */
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:12}},
-      /* Win Rate */
-      React.createElement("div",{style:{background:m.winRate>=50?"rgba(22,163,74,.07)":"rgba(239,68,68,.07)",border:"1px solid "+(m.winRate>=50?"rgba(22,163,74,.2)":"rgba(239,68,68,.2)"),borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Win Rate"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:m.winRate>=50?"#16a34a":"#ef4444"}},m.winRate.toFixed(1)+"%"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},m.winners+"W / "+m.losers+"L / "+m.breakeven+" even")
-      ),
-      /* Profit Factor */
-      React.createElement("div",{style:{background:m.profitFactor>=1.5?"rgba(22,163,74,.07)":m.profitFactor>=1?"rgba(245,158,11,.07)":"rgba(239,68,68,.07)",border:"1px solid "+(m.profitFactor>=1.5?"rgba(22,163,74,.2)":m.profitFactor>=1?"rgba(245,158,11,.2)":"rgba(239,68,68,.2)"),borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Profit Factor"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:pfColor}},m.profitFactor===Infinity?"∞":m.profitFactor.toFixed(2)),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},pfLabel+" · gross ÷ gross loss")
-      ),
-      /* Win/Loss Ratio */
-      React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Avg Win / Avg Loss"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:m.winLossRatio>=1.5?"#16a34a":m.winLossRatio>=1?"#f59e0b":"#ef4444"}},m.winLossRatio===Infinity?"∞":m.winLossRatio.toFixed(2)+"×"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Win avg: "+INR(m.avgWin)+" · Loss avg: "+INR(m.avgLoss))
-      ),
-      /* Win Streak */
-      React.createElement("div",{style:{background:"rgba(22,163,74,.07)",border:"1px solid rgba(22,163,74,.2)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Best Win Streak"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#16a34a"}},m.maxWinStreak+" trades"),
-        m.winStreakStart&&React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},(m.winStreakStart.ticker||"")+" → "+(m.winStreakEnd?.ticker||""))
-      ),
-      /* Loss Streak */
-      React.createElement("div",{style:{background:"rgba(239,68,68,.07)",border:"1px solid rgba(239,68,68,.2)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Worst Loss Streak"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#ef4444"}},m.maxLossStreak+" trades"),
-        m.lossStreakStart&&React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},(m.lossStreakStart.ticker||"")+" → "+(m.lossStreakEnd?.ticker||""))
-      )
-    ),
-
-    /* ══ Report 1: Win/Loss Detail Cards ══ */
-    React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"chart",size:15}),"Win vs Loss Breakdown"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},m.total+" trades")
-      ),
-      React.createElement("div",{style:{padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:16}},
-        /* Winning trades */
-        React.createElement("div",{style:{padding:16,background:"rgba(22,163,74,.06)",border:"1px solid rgba(22,163,74,.18)",borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#16a34a",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"flex",alignItems:"center",gap:4}},React.createElement(Icon,{n:"checkcircle",size:12,color:"#16a34a"})," Winning Trades ("+m.winners+")"),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Total Profit"),
-            React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"#16a34a",fontFamily:"'Sora',sans-serif"}},"+"+INR(m.totalProfit))
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Win (₹)"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#16a34a"}},"+"+INR(m.avgWin))
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Win (%)"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#16a34a"}},"+"+m.avgWinReturn.toFixed(2)+"%")
-          ),
-          m.largestWinner&&React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginTop:8,paddingTop:8,borderTop:"1px solid rgba(22,163,74,.15)"}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Largest Win"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"#16a34a"}},"+"+INR(m.largestWinner.pnl))
-          ),
-          m.largestWinnerPct&&React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginTop:4}},
-            React.createElement("span",{style:{fontSize:10,color:"var(--text6)"}},"Highest Return %"),
-            React.createElement("span",{style:{fontSize:11,fontWeight:600,color:"#16a34a"}},"+"+m.largestWinnerPct.returnPct.toFixed(2)+"% ("+m.largestWinnerPct.company+")")
-          )
-        ),
-        /* Losing trades */
-        React.createElement("div",{style:{padding:16,background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.18)",borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#ef4444",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"flex",alignItems:"center",gap:4}},React.createElement(Icon,{n:"delete",size:12,color:"#ef4444"})," Losing Trades ("+m.losers+")"),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Total Loss"),
-            React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"#ef4444",fontFamily:"'Sora',sans-serif"}},"-"+INR(m.totalLoss))
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Loss (₹)"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#ef4444"}},"-"+INR(m.avgLoss))
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Loss (%)"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#ef4444"}},m.avgLossReturn.toFixed(2)+"%")
-          ),
-          m.largestLoser&&React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginTop:8,paddingTop:8,borderTop:"1px solid rgba(239,68,68,.15)"}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Largest Loss"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"#ef4444"}},"-"+INR(Math.abs(m.largestLoser.pnl)))
-          ),
-          m.largestLoserPct&&React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginTop:4}},
-            React.createElement("span",{style:{fontSize:10,color:"var(--text6)"}},"Worst Return %"),
-            React.createElement("span",{style:{fontSize:11,fontWeight:600,color:"#ef4444"}},m.largestLoserPct.returnPct.toFixed(2)+"% ("+m.largestLoserPct.company+")")
-          )
-        ),
-        /* Profit factor insight */
-        React.createElement("div",{style:{padding:16,background:m.profitFactor>=1.5?"rgba(22,163,74,.06)":"rgba(245,158,11,.06)",border:"1px solid "+(m.profitFactor>=1.5?"rgba(22,163,74,.18)":"rgba(245,158,11,.18)"),borderRadius:12,gridColumn:"1 / -1"}},
-          React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text3)",marginBottom:8,display:"flex",alignItems:"center",gap:5}},React.createElement(Icon,{n:"lightbulb",size:13}),"Profit Factor Insight"),
-          React.createElement("div",{style:{fontSize:12,color:"var(--text4)",lineHeight:1.6}},
-            "Your profit factor is ",React.createElement("strong",{style:{color:pfColor}},m.profitFactor===Infinity?"∞":m.profitFactor.toFixed(2)),
-            " — for every ₹1 lost, you make ₹"+(m.profitFactor===Infinity?"∞":m.profitFactor.toFixed(2))+". ",
-            m.profitFactor>=1.5
-              ?"This is healthy! A profit factor above 1.5 means your winners substantially outweigh your losers."
-              :m.profitFactor>=1
-                ?"This is marginal. Aim for a profit factor above 1.5 by either increasing win size or reducing loss size."
-                :"This is below breakeven. Your losses outweigh your wins — review your exit strategy and position sizing."
-          ),
-          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:8,lineHeight:1.5}},
-            "Even with a ",React.createElement("strong",null,m.winRate.toFixed(1)+"% win rate"),
-            ", your average win (₹"+Number(Math.round(m.avgWin)).toLocaleString("en-IN")+") vs average loss (₹"+Number(Math.round(m.avgLoss)).toLocaleString("en-IN")+") ratio is ",
-            React.createElement("strong",{style:{color:m.winLossRatio>=1.5?"#16a34a":"#ef4444"}},m.winLossRatio===Infinity?"∞":m.winLossRatio.toFixed(2)+"×"),
-            ". ",
-            m.winLossRatio>=3?"Outstanding risk-reward — you can be profitable even with a low win rate."
-              :m.winLossRatio>=1.5?"Good risk-reward balance."
-              :"Your wins are not large enough relative to losses. Let winners run longer or cut losses quicker."
-          )
-        )
-      )
-    ),
-
-    /* ══ Report 2: Streak Analysis ══ */
-    React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"fire",size:15}),"Consecutive Streaks"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},"emotional patterns")
-      ),
-      React.createElement("div",{style:{padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:16}},
-        /* Win streak card */
-        React.createElement("div",{style:{padding:16,background:"rgba(22,163,74,.06)",border:"1px solid rgba(22,163,74,.18)",borderRadius:12}},
-          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
-            React.createElement(Icon,{n:"target",size:20,color:"#16a34a"}),
-            React.createElement("div",null,
-              React.createElement("div",{style:{fontSize:14,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#16a34a"}},m.maxWinStreak+" consecutive wins"),
-              React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},"Best winning streak")
-            )
-          ),
-          m.winStreakStart&&React.createElement("div",{style:{fontSize:11,color:"var(--text4)",lineHeight:1.6}},
-            "From ",React.createElement("strong",null,m.winStreakStart.company||m.winStreakStart.ticker),
-            " to ",React.createElement("strong",null,m.winStreakEnd?.company||m.winStreakEnd?.ticker),
-            ". Consistent winners suggest a well-defined edge in this pattern."
-          )
-        ),
-        /* Loss streak card */
-        React.createElement("div",{style:{padding:16,background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.18)",borderRadius:12}},
-          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
-            React.createElement(Icon,{n:"warning",size:20,color:"#ef4444"}),
-            React.createElement("div",null,
-              React.createElement("div",{style:{fontSize:14,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#ef4444"}},m.maxLossStreak+" consecutive losses"),
-              React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},"Worst losing streak")
-            )
-          ),
-          m.lossStreakStart&&React.createElement("div",{style:{fontSize:11,color:"var(--text4)",lineHeight:1.6}},
-            "From ",React.createElement("strong",null,m.lossStreakStart.company||m.lossStreakStart.ticker),
-            " to ",React.createElement("strong",null,m.lossStreakEnd?.company||m.lossStreakEnd?.ticker),
-            ". Long loss streaks may signal emotional trading — consider pausing after 3+ consecutive losses."
-          )
-        ),
-        /* Streak insight */
-        React.createElement("div",{style:{padding:16,background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,gridColumn:"1 / -1"}},
-          React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text3)",marginBottom:6}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"lightbulb",size:13})," Streak Insight")),
-          React.createElement("div",{style:{fontSize:12,color:"var(--text4)",lineHeight:1.6}},
-            m.maxWinStreak>m.maxLossStreak
-              ?"Your best winning streak ("+m.maxWinStreak+") exceeds your worst losing streak ("+m.maxLossStreak+"). This asymmetry is positive — you ride winners longer than you hold losers."
-              :m.maxWinStreak===m.maxLossStreak
-                ?"Your winning and losing streaks are equal at "+m.maxWinStreak+" each. Consider if there's a pattern in when streaks start — are you revenge-trading after losses?"
-                :"Your worst losing streak ("+m.maxLossStreak+") exceeds your best winning streak ("+m.maxWinStreak+"). Watch for revenge trading patterns — consider a cooling-off rule after 3+ consecutive losses."
-          )
-        )
-      )
-    ),
-
-    /* ══ Report 3: Best & Worst Performing Stocks ══ */
-    React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"target",size:15}),"Best & Worst Stocks"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},stockStats.length+" stocks")
-      ),
-      React.createElement("div",{style:{padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:16}},
-        /* Best by absolute P&L */
-        React.createElement("div",{style:{padding:16,borderRadius:12,background:"rgba(22,163,74,.04)",border:"1px solid rgba(22,163,74,.15)"}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#16a34a",textTransform:"uppercase",letterSpacing:1,marginBottom:10}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"money",size:13})," Best by Absolute P&L")),
-          bestByPnl.slice(0,5).map((s,i)=>React.createElement("div",{key:s.ticker||i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:i<4?"1px solid var(--border2)":"none"}},
-            React.createElement("div",{style:{minWidth:0,flex:1}},
-              React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",display:"block"}},s.company),
-              React.createElement("span",{style:{fontSize:9,color:"var(--text6)"}},s.trades+" trades · "+s.winRate.toFixed(0)+"% win")
-            ),
-            React.createElement("span",{style:{fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#16a34a",marginLeft:8,flexShrink:0}},"+"+INR(s.totalPnl))
-          ))
-        ),
-        /* Worst by absolute P&L */
-        React.createElement("div",{style:{padding:16,borderRadius:12,background:"rgba(239,68,68,.04)",border:"1px solid rgba(239,68,68,.15)"}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#ef4444",textTransform:"uppercase",letterSpacing:1,marginBottom:10}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"expense",size:13})," Worst by Absolute P&L")),
-          worstByPnl.slice(0,5).map((s,i)=>React.createElement("div",{key:s.ticker||i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:i<4?"1px solid var(--border2)":"none"}},
-            React.createElement("div",{style:{minWidth:0,flex:1}},
-              React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",display:"block"}},s.company),
-              React.createElement("span",{style:{fontSize:9,color:"var(--text6)"}},s.trades+" trades · "+s.winRate.toFixed(0)+"% win")
-            ),
-            React.createElement("span",{style:{fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#ef4444",marginLeft:8,flexShrink:0}},"-"+INR(Math.abs(s.totalPnl)))
-          ))
-        ),
-        /* Best by return % */
-        React.createElement("div",{style:{padding:16,borderRadius:12,background:"rgba(109,40,217,.04)",border:"1px solid rgba(109,40,217,.15)"}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#6d28d9",textTransform:"uppercase",letterSpacing:1,marginBottom:10}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"invest",size:13})," Best by Avg Return %")),
-          bestByReturn.slice(0,5).map((s,i)=>React.createElement("div",{key:s.ticker||i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:i<4?"1px solid var(--border2)":"none"}},
-            React.createElement("div",{style:{minWidth:0,flex:1}},
-              React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",display:"block"}},s.company),
-              React.createElement("span",{style:{fontSize:9,color:"var(--text6)"}},s.trades+" trades · hold "+s.avgHoldDays+"d avg")
-            ),
-            React.createElement("span",{style:{fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#6d28d9",marginLeft:8,flexShrink:0}},"+"+s.avgReturn.toFixed(2)+"%")
-          ))
-        ),
-        /* Worst by return % */
-        React.createElement("div",{style:{padding:16,borderRadius:12,background:"rgba(245,158,11,.04)",border:"1px solid rgba(245,158,11,.15)"}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#f59e0b",textTransform:"uppercase",letterSpacing:1,marginBottom:10,display:"flex",alignItems:"center",gap:4}},React.createElement(Icon,{n:"trenddown",size:12,color:"#f59e0b"})," Worst by Avg Return %"),
-          worstByReturn.slice(0,5).map((s,i)=>React.createElement("div",{key:s.ticker||i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:i<4?"1px solid var(--border2)":"none"}},
-            React.createElement("div",{style:{minWidth:0,flex:1}},
-              React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",display:"block"}},s.company),
-              React.createElement("span",{style:{fontSize:9,color:"var(--text6)"}},s.trades+" trades · hold "+s.avgHoldDays+"d avg")
-            ),
-            React.createElement("span",{style:{fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#f59e0b",marginLeft:8,flexShrink:0}},s.avgReturn.toFixed(2)+"%")
-          ))
-        ),
-        /* Best by annualised return */
-        React.createElement("div",{style:{padding:16,borderRadius:12,background:"rgba(14,116,144,.04)",border:"1px solid rgba(14,116,144,.15)"}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#0e7490",textTransform:"uppercase",letterSpacing:1,marginBottom:10,display:"flex",alignItems:"center",gap:4}},React.createElement(Icon,{n:"invest",size:12,color:"#0e7490"})," Best by Annualised Return"),
-          bestByAnn.slice(0,5).map((s,i)=>React.createElement("div",{key:s.ticker||i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:i<4?"1px solid var(--border2)":"none"}},
-            React.createElement("div",{style:{minWidth:0,flex:1}},
-              React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",display:"block"}},s.company),
-              React.createElement("span",{style:{fontSize:9,color:"var(--text6)"}},s.trades+" trades · "+s.avgHoldDays+"d hold")
-            ),
-            React.createElement("span",{style:{fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#0e7490",marginLeft:8,flexShrink:0}},"+"+s.annReturn.toFixed(2)+"% p.a.")
-          ))
-        ),
-        /* Worst by annualised return */
-        React.createElement("div",{style:{padding:16,borderRadius:12,background:"rgba(225,29,72,.04)",border:"1px solid rgba(225,29,72,.15)"}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#e11d48",textTransform:"uppercase",letterSpacing:1,marginBottom:10,display:"flex",alignItems:"center",gap:4}},React.createElement(Icon,{n:"trenddown",size:12,color:"#e11d48"})," Worst by Annualised Return"),
-          worstByAnn.slice(0,5).map((s,i)=>React.createElement("div",{key:s.ticker||i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:i<4?"1px solid var(--border2)":"none"}},
-            React.createElement("div",{style:{minWidth:0,flex:1}},
-              React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",display:"block"}},s.company),
-              React.createElement("span",{style:{fontSize:9,color:"var(--text6)"}},s.trades+" trades · "+s.avgHoldDays+"d hold")
-            ),
-            React.createElement("span",{style:{fontSize:13,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#e11d48",marginLeft:8,flexShrink:0}},s.annReturn.toFixed(2)+"% p.a.")
-          ))
-        )
-      )
-    ),
-
-    /* ══ Report 4: Full Stock Performance Table ══ */
-    React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"list",size:15}),"Stock-by-Stock Performance"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},sortedStocks.length+" stocks")
-      ),
-      React.createElement("div",{className:"mobile-scroll-table",style:{overflowX:"auto"}},
-        React.createElement("div",{style:{minWidth:700}},
-          /* Column headers */
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 60px 70px 100px 90px 100px 80px",gap:0,borderBottom:"1px solid var(--border)",background:"var(--bg4)"}},
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px"}},"Stock"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"center"}},"Trades"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"center"}},"Win %"),
-            React.createElement(SortHdr,{label:"Total P&L",field:"pnl",align:"right"}),
-            React.createElement(SortHdr,{label:"Avg Return",field:"returnPct",align:"right"}),
-            React.createElement(SortHdr,{label:"Ann. Return",field:"annReturn",align:"right"}),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Avg Hold")
-          ),
-          /* Rows */
-          sortedStocks.map((s,i)=>{
-            const isGain=s.totalPnl>=0;
-            return React.createElement("div",{key:s.ticker||i,style:{display:"grid",gridTemplateColumns:"2fr 60px 70px 100px 90px 100px 80px",gap:0,borderBottom:"1px solid var(--border2)",background:i%2===0?"transparent":"var(--bg4)",transition:"background .1s"},onMouseEnter:e=>e.currentTarget.style.background="var(--accentbg2)",onMouseLeave:e=>e.currentTarget.style.background=i%2===0?"transparent":"var(--bg4)"},
-              React.createElement("div",{style:{padding:"9px 8px",display:"flex",flexDirection:"column",gap:2,minWidth:0}},
-                React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},s.company),
-                React.createElement("span",{style:{fontSize:9,padding:"1px 5px",borderRadius:4,background:"rgba(14,116,144,.1)",color:"#0e7490",fontWeight:600,width:"fit-content"}},s.ticker||"—")
-              ),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"center",color:"var(--text3)"}},s.trades),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"center",fontWeight:600,color:s.winRate>=50?"#16a34a":"#ef4444"}},s.winRate.toFixed(0)+"%"),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"right",fontWeight:700,fontFamily:"'Sora',sans-serif",color:isGain?"#16a34a":"#ef4444"}},(isGain?"+":"")+INR(s.totalPnl)),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",fontWeight:600,color:s.avgReturn>=0?"#16a34a":"#ef4444"}},(s.avgReturn>=0?"+":"")+s.avgReturn.toFixed(2)+"%"),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",fontWeight:600,color:s.annReturn>=0?"#0e7490":"#e11d48"}},(s.annReturn>=0?"+":"")+s.annReturn.toFixed(2)+"%"),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",color:"var(--text4)"}},s.avgHoldDays+"d")
-            );
-          })
-        )
-      )
-    ),
-
-    /* ══ Methodology note ══ */
-    React.createElement("div",{style:{padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-      React.createElement("strong",{style:{color:"var(--accent)"}},"Methodology: "),
-      "Win rate = profitable trades ÷ total trades. Profit factor = gross profit ÷ gross loss (≥ 1.5 is healthy). Avg win/loss ratio compares mean winning trade to mean losing trade — even a 40% win rate is profitable if avg win is 3× avg loss. Streak analysis sorts trades chronologically by sell date to find maximum consecutive wins and losses. Annualised return uses (1 + return%)^(365 / hold days) − 1, compounded. Active holdings use current price as the exit price. All amounts are gross of brokerage unless noted."
-    )
-  );
-};
-
-const CapitalEfficiency=({shares,soldShareSnapshots={}})=>{
-  const NIFTY_CAGR=0.12;
-  const SENSEX_CAGR=0.125;
-  const ret=(v)=>(v>=0?"+":"")+v.toFixed(2)+"%";
-  const INR=(v)=>"₹"+Number(Math.round(v)).toLocaleString("en-IN");
-
-  /* ── Build unified trade list ── */
-  const trades=React.useMemo(()=>{
-    const list=[];
-    (shares||[]).forEach(sh=>{
-      if(!sh.qty||!sh.buyPrice||!sh.currentPrice||!sh.buyDate)return;
-      const buyDate=new Date(sh.buyDate+"T12:00:00");
-      const sellDate=new Date(TODAY()+"T12:00:00");
-      const holdDays=Math.max(1,Math.floor((sellDate-buyDate)/864e5));
-      const buyAmt=sh.qty*sh.buyPrice;
-      const sellAmt=sh.qty*sh.currentPrice;
-      const brokerage=+sh.brokerage||0;
-      const pnl=sellAmt-buyAmt-brokerage;
-      const returnPct=buyAmt>0?(pnl/buyAmt*100):0;
-      const annReturn=holdDays>0?(Math.pow(1+returnPct/100,365/holdDays)-1)*100:returnPct;
-      const niftyReturn=buyAmt*(Math.pow(1+NIFTY_CAGR,holdDays/365)-1);
-      const sensexReturn=buyAmt*(Math.pow(1+SENSEX_CAGR,holdDays/365)-1);
-      const alphaVsNifty=pnl-niftyReturn;
-      const alphaVsSensex=pnl-sensexReturn;
-      let xirrVal=null;
-      try{xirrVal=computeXIRR([-buyAmt,sellAmt],[buyDate,sellDate]);}catch{}
-      list.push({
-        id:sh.id,type:"active",company:sh.company,ticker:sh.ticker,
-        qty:sh.qty,buyPrice:sh.buyPrice,sellPrice:sh.currentPrice,
-        buyDateStr:sh.buyDate,sellDateStr:TODAY(),
-        buyDate,sellDate,holdDays,
-        buyAmt,sellAmt,brokerage,pnl,returnPct,annReturn,xirrVal,
-        niftyReturn,sensexReturn,alphaVsNifty,alphaVsSensex,
-      });
-    });
-    Object.values(soldShareSnapshots||{}).forEach(fySnaps=>{
-      (fySnaps||[]).forEach(sn=>{
-        if(!sn.qty||!sn.buyPrice||!sn.sellPrice||!sn.buyDate||!sn.savedAt)return;
-        const buyDate=new Date(sn.buyDate+"T12:00:00");
-        const sellDate=new Date(sn.savedAt+"T12:00:00");
-        const holdDays=Math.max(1,Math.floor((sellDate-buyDate)/864e5));
-        const buyAmt=sn.qty*sn.buyPrice;
-        const sellAmt=sn.qty*sn.sellPrice;
-        const brokerage=+sn.brokerage||0;
-        const pnl=sellAmt-buyAmt-brokerage;
-        const returnPct=buyAmt>0?(pnl/buyAmt*100):0;
-        const annReturn=holdDays>0?(Math.pow(1+returnPct/100,365/holdDays)-1)*100:returnPct;
-        const niftyReturn=buyAmt*(Math.pow(1+NIFTY_CAGR,holdDays/365)-1);
-        const sensexReturn=buyAmt*(Math.pow(1+SENSEX_CAGR,holdDays/365)-1);
-        const alphaVsNifty=pnl-niftyReturn;
-        const alphaVsSensex=pnl-sensexReturn;
-        let xirrVal=null;
-        try{xirrVal=computeXIRR([-buyAmt,sellAmt],[buyDate,sellDate]);}catch{}
-        list.push({
-          id:sn.id,type:"sold",company:sn.company,ticker:sn.ticker,
-          qty:sn.qty,buyPrice:sn.buyPrice,sellPrice:sn.sellPrice,
-          buyDateStr:sn.buyDate,sellDateStr:sn.savedAt,
-          buyDate,sellDate,holdDays,
-          buyAmt,sellAmt,brokerage,pnl,returnPct,annReturn,xirrVal,
-          niftyReturn,sensexReturn,alphaVsNifty,alphaVsSensex,
-        });
-      });
-    });
-    return list;
-  },[shares,soldShareSnapshots]);
-
-  /* ── Capital utilisation by month ── */
-  const monthlyData=React.useMemo(()=>{
-    if(!trades.length)return[];
-    const sorted=[...trades].sort((a,b)=>a.buyDateStr.localeCompare(b.buyDateStr));
-    const monthMap={};
-    let cumulative=0;
-    sorted.forEach(t=>{
-      const ym=t.buyDateStr.slice(0,7);
-      if(!monthMap[ym])monthMap[ym]={month:ym,deployed:0,cumulative:0,count:0};
-      monthMap[ym].deployed+=t.buyAmt;
-      monthMap[ym].count++;
-      cumulative+=t.buyAmt;
-      monthMap[ym].cumulative=cumulative;
-    });
-    const months=Object.values(monthMap).sort((a,b)=>a.month.localeCompare(b.month));
-    const maxCum=months.length?months[months.length-1].cumulative:1;
-    months.forEach(m=>{m.utilPct=maxCum>0?(m.cumulative/maxCum*100):0;});
-    return months;
-  },[trades]);
-
-  /* ── Position sizing stats ── */
-  const sizingStats=React.useMemo(()=>{
-    if(!trades.length)return null;
-    const buyAmts=trades.map(t=>t.buyAmt).sort((a,b)=>a-b);
-    const total=buyAmts.reduce((s,v)=>s+v,0);
-    const avg=total/buyAmts.length;
-    const median=buyAmts.length%2===0?(buyAmts[buyAmts.length/2-1]+buyAmts[buyAmts.length/2])/2:buyAmts[Math.floor(buyAmts.length/2)];
-    const min=buyAmts[0];
-    const max=buyAmts[buyAmts.length-1];
-    /* Distribution buckets */
-    const bucketDefs=[
-      {label:"< ₹10K",min:0,max:10000},
-      {label:"₹10K–50K",min:10000,max:50000},
-      {label:"₹50K–1L",min:50000,max:100000},
-      {label:"₹1L–5L",min:100000,max:500000},
-      {label:"₹5L–10L",min:500000,max:1000000},
-      {label:"> ₹10L",min:1000000,max:Infinity},
-    ];
-    const buckets=bucketDefs.map(b=>({...b,count:buyAmts.filter(v=>v>=b.min&&v<b.max).length}));
-    const maxBucket=Math.max(...buckets.map(b=>b.count),1);
-    return{avg,median,min,max,total,count:buyAmts.length,buckets,maxBucket};
-  },[trades]);
-
-  /* ── Opportunity cost & alpha ── */
-  const oppCost=React.useMemo(()=>{
-    if(!trades.length)return null;
-    const withXirr=trades.filter(t=>t.xirrVal!==null&&!isNaN(t.xirrVal));
-    const avgXirr=withXirr.length>0?withXirr.reduce((s,t)=>s+t.xirrVal,0)/withXirr.length:0;
-    const totalNiftyReturn=trades.reduce((s,t)=>s+t.niftyReturn,0);
-    const totalSensexReturn=trades.reduce((s,t)=>s+t.sensexReturn,0);
-    const totalPnl=trades.reduce((s,t)=>s+t.pnl,0);
-    const totalAlphaVsNifty=trades.reduce((s,t)=>s+t.alphaVsNifty,0);
-    const totalAlphaVsSensex=trades.reduce((s,t)=>s+t.alphaVsSensex,0);
-    const totalBuyAmt=trades.reduce((s,t)=>s+t.buyAmt,0);
-    const avgHoldDays=trades.reduce((s,t)=>s+t.holdDays,0)/trades.length;
-    const avgAlphaNiftyPerTrade=trades.length>0?totalAlphaVsNifty/trades.length:0;
-    const avgAlphaSensexPerTrade=trades.length>0?totalAlphaVsSensex/trades.length:0;
-    return{
-      avgXirr,totalNiftyReturn,totalSensexReturn,totalPnl,
-      totalAlphaVsNifty,totalAlphaVsSensex,totalBuyAmt,avgHoldDays,
-      avgAlphaNiftyPerTrade,avgAlphaSensexPerTrade,withXirrCount:withXirr.length,
-    };
-  },[trades]);
-
-  /* ── Kelly criterion ── */
-  const kellyData=React.useMemo(()=>{
-    if(!trades.length)return null;
-    const winners=trades.filter(t=>t.pnl>0);
-    const losers=trades.filter(t=>t.pnl<0);
-    const total=trades.length;
-    if(!winners.length||!losers.length)return{winRate:winners.length/total,avgWin:0,avgLoss:0,winLossRatio:0,fullKelly:0,halfKelly:0,actualPct:0};
-    const winRate=winners.length/total;
-    const avgWin=winners.reduce((s,t)=>s+t.returnPct,0)/winners.length;
-    const avgLoss=losers.reduce((s,t)=>s+Math.abs(t.returnPct),0)/losers.length;
-    const winLossRatio=avgLoss>0?avgWin/avgLoss:avgWin>0?Infinity:0;
-    let fullKelly=0;
-    if(winLossRatio>0&&winLossRatio!==Infinity){
-      fullKelly=winRate-((1-winRate)/winLossRatio);
-    }else if(winLossRatio===Infinity){
-      fullKelly=winRate;
-    }
-    fullKelly=Math.max(0,Math.min(1,fullKelly));
-    const halfKelly=fullKelly/2;
-    /* Actual avg position as % of total capital deployed */
-    const totalBuy=trades.reduce((s,t)=>s+t.buyAmt,0);
-    const actualPct=trades.length>0?(totalBuy/trades.length)/totalBuy*100:0;
-    return{winRate,avgWin,avgLoss,winLossRatio,fullKelly,halfKelly,actualPct};
-  },[trades]);
-
-  /* ── Report 6: Stock-by-Stock Alpha vs Nifty ── */
-  const stockAlphaData=React.useMemo(()=>{
-    if(!trades.length)return[];
-    const NIFTY_CAGR=0.12;
-    const stockMap={};
-    trades.forEach(t=>{
-      const key=(t.ticker||t.company||"Unknown").toUpperCase();
-      if(!stockMap[key])stockMap[key]={ticker:t.ticker||t.company||"Unknown",trades:[],totalPnl:0,totalNiftyReturn:0,totalAlpha:0,totalBuyAmt:0};
-      const st=stockMap[key];
-      st.trades.push(t);
-      st.totalPnl+=t.pnl;
-      st.totalBuyAmt+=t.buyAmt;
-      const days=t.holdDays||Math.max(1,Math.floor((new Date(t.sellDate+"T12:00:00")-new Date(t.buyDate+"T12:00:00"))/864e5));
-      const niftyReturn=t.buyAmt*(Math.pow(1+NIFTY_CAGR,days/365)-1);
-      const alpha=t.pnl-niftyReturn;
-      st.totalNiftyReturn+=niftyReturn;
-      st.totalAlpha+=alpha;
-    });
-    return Object.values(stockMap).map(st=>({
-      ...st,
-      alphaPct:st.totalBuyAmt>0?(st.totalAlpha/st.totalBuyAmt*100):0,
-      returnPct:st.totalBuyAmt>0?(st.totalPnl/st.totalBuyAmt*100):0,
-      winRate:st.trades.length>0?(st.trades.filter(t=>t.pnl>=0).length/st.trades.length*100):0,
-    })).sort((a,b)=>b.totalAlpha-a.totalAlpha);
-  },[trades]);
-
-  /* ── Empty state ── */
-  if(!trades.length)return React.createElement("div",{style:{textAlign:"center",padding:"48px 20px"}},
-    React.createElement("div",{style:{fontSize:40,marginBottom:12,color:"var(--text6)"}},React.createElement(Icon,{n:"crystal",size:40})),
-    React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text3)",marginBottom:4}},"No Trade Data"),
-    React.createElement("div",{style:{fontSize:13,color:"var(--text6)"}},"Add shares or save snapshots to Previous Trades to see capital efficiency analytics.")
-  );
-
-  const alphaColor=v=>v>=0?"#16a34a":"#ef4444";
-  const alphaSign=v=>(v>=0?"+":"")+INR(v);
-  const alphaSignPct=v=>(v>=0?"+":"")+v.toFixed(2)+"%";
-
-  return React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:20}},
-    /* ══ Summary Stat Cards ══ */
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:12}},
-      /* Total Capital Deployed */
-      React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Capital Deployed"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text)"}},INR(sizingStats?sizingStats.total:0)),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},(sizingStats?sizingStats.count:0)+" trades")
-      ),
-      /* Avg Trade Size */
-      React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Avg Trade Size"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text)"}},INR(sizingStats?Math.round(sizingStats.avg):0)),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Median: "+INR(sizingStats?Math.round(sizingStats.median):0))
-      ),
-      /* Your XIRR */
-      React.createElement("div",{style:{background:oppCost&&oppCost.avgXirr>=NIFTY_CAGR*100?"rgba(22,163,74,.07)":"rgba(245,158,11,.07)",border:"1px solid "+(oppCost&&oppCost.avgXirr>=NIFTY_CAGR*100?"rgba(22,163,74,.2)":"rgba(245,158,11,.2)"),borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Your Avg XIRR"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:oppCost?alphaColor(oppCost.avgXirr-NIFTY_CAGR*100):"var(--text)"}},oppCost?oppCost.avgXirr.toFixed(2)+"%":"—"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},oppCost?oppCost.withXirrCount+" trades with XIRR":"")
-      ),
-      /* Alpha vs Nifty */
-      React.createElement("div",{style:{background:oppCost&&oppCost.totalAlphaVsNifty>=0?"rgba(22,163,74,.07)":"rgba(239,68,68,.07)",border:"1px solid "+(oppCost&&oppCost.totalAlphaVsNifty>=0?"rgba(22,163,74,.2)":"rgba(239,68,68,.2)"),borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Alpha vs Nifty 50"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:oppCost?alphaColor(oppCost.totalAlphaVsNifty):"var(--text)"}},oppCost?alphaSign(oppCost.totalAlphaVsNifty):"—"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"vs 12% CAGR benchmark")
-      ),
-      /* Kelly Full */
-      React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Kelly Criterion"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:kellyData&&kellyData.fullKelly>0?"#0e7490":"var(--text4)"}},kellyData?(kellyData.fullKelly*100).toFixed(1)+"%":"—"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},kellyData?"Half-Kelly: "+(kellyData.halfKelly*100).toFixed(1)+"%":"")
-      )
-    ),
-
-    /* ══ Report 1: Capital Utilisation Over Time ══ */
-    React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"invest",size:15}),"Capital Utilisation Over Time"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},monthlyData.length+" months")
-      ),
-      React.createElement("div",{style:{padding:"16px 20px",overflowX:"auto"}},
-        /* Month-by-month bars */
-        React.createElement("div",{style:{display:"flex",gap:6,alignItems:"flex-end",minHeight:120,paddingBottom:24,position:"relative"}},
-          monthlyData.map((md,i)=>{
-            const maxCum=monthlyData[monthlyData.length-1].cumulative;
-            const barH=maxCum>0?Math.max(4,(md.deployed/maxCum)*100):0;
-            const cumH=maxCum>0?Math.max(4,(md.cumulative/maxCum)*100):0;
-            return React.createElement("div",{key:md.month,style:{display:"flex",flexDirection:"column",alignItems:"center",gap:2,flex:1,minWidth:36}},
-              React.createElement("div",{style:{fontSize:9,color:alphaColor(md.deployed),fontWeight:600}},INR(md.deployed,1)),
-              React.createElement("div",{style:{display:"flex",gap:2,alignItems:"flex-end",height:80}},
-                React.createElement("div",{style:{width:14,height:barH+"%",background:"var(--accent)",borderRadius:"4px 4px 0 0",minHeight:3,title:"Deployed this month"}}),
-                React.createElement("div",{style:{width:14,height:cumH+"%",background:"rgba(14,116,144,.3)",borderRadius:"4px 4px 0 0",minHeight:3,title:"Cumulative capital"}})
-              ),
-              React.createElement("div",{style:{fontSize:8,color:"var(--text6)",writingMode:"vertical-rl",transform:"rotate(180deg)",maxHeight:40,overflow:"hidden",whiteSpace:"nowrap"}},md.month),
-              React.createElement("div",{style:{fontSize:8,color:"var(--text5)",marginTop:2}},md.utilPct.toFixed(0)+"%")
-            );
-          })
-        ),
-        /* Legend */
-        React.createElement("div",{style:{display:"flex",gap:16,justifyContent:"center",marginTop:8,fontSize:10,color:"var(--text5)"}},
-          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},React.createElement("div",{style:{width:10,height:10,background:"var(--accent)",borderRadius:3}}),"Deployed (month)"),
-          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4}},React.createElement("div",{style:{width:10,height:10,background:"rgba(14,116,144,.3)",borderRadius:3}}),"Cumulative Capital")
-        ),
-        /* Summary row */
-        monthlyData.length>1&&React.createElement("div",{style:{marginTop:12,paddingTop:10,borderTop:"1px solid var(--border)",display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--text4)"}},
-          React.createElement("span",null,"Peak monthly deployment: "+INR(Math.max(...monthlyData.map(m=>m.deployed)))),
-          React.createElement("span",null,"Avg utilisation: "+(monthlyData.reduce((s,m)=>s+m.utilPct,0)/monthlyData.length).toFixed(1)+"%")
-        )
-      )
-    ),
-
-    /* ══ Report 2: Position Sizing Distribution ══ */
-    React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"target",size:15}),"Position Sizing Distribution"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},sizingStats?sizingStats.count+" trades":"")
-      ),
-      React.createElement("div",{style:{padding:"16px 20px"}},
-        /* Stats row */
-        sizingStats&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:12,marginBottom:16}},
-          React.createElement("div",{style:{padding:"10px 12px",background:"var(--bg4)",borderRadius:10}},
-            React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},"Average"),
-            React.createElement("div",{style:{fontSize:15,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"var(--text)"}},INR(Math.round(sizingStats.avg)))
-          ),
-          React.createElement("div",{style:{padding:"10px 12px",background:"var(--bg4)",borderRadius:10}},
-            React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},"Median"),
-            React.createElement("div",{style:{fontSize:15,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"var(--text)"}},INR(Math.round(sizingStats.median)))
-          ),
-          React.createElement("div",{style:{padding:"10px 12px",background:"var(--bg4)",borderRadius:10}},
-            React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},"Smallest"),
-            React.createElement("div",{style:{fontSize:15,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"var(--text)"}},INR(Math.round(sizingStats.min)))
-          ),
-          React.createElement("div",{style:{padding:"10px 12px",background:"var(--bg4)",borderRadius:10}},
-            React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},"Largest"),
-            React.createElement("div",{style:{fontSize:15,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"var(--text)"}},INR(Math.round(sizingStats.max)))
-          )
-        ),
-        /* Distribution bars */
-        React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-          sizingStats&&sizingStats.buckets.map(b=>React.createElement("div",{key:b.label,style:{display:"flex",alignItems:"center",gap:10}},
-            React.createElement("div",{style:{width:90,fontSize:11,color:"var(--text5)",textAlign:"right",flexShrink:0}},b.label),
-            React.createElement("div",{style:{flex:1,height:20,background:"var(--bg4)",borderRadius:6,overflow:"hidden",position:"relative"}},
-              React.createElement("div",{style:{height:"100%",width:(sizingStats.maxBucket>0?b.count/sizingStats.maxBucket*100:0)+"%",background:"var(--accent)",borderRadius:6,transition:"width .3s",minWidth:b.count>0?4:0}})
-            ),
-            React.createElement("div",{style:{width:36,fontSize:11,fontWeight:600,color:"var(--text)",textAlign:"right"}},b.count)
-          ))
-        ),
-        /* Concentration insight */
-        sizingStats&&React.createElement("div",{style:{marginTop:14,padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-          React.createElement("strong",{style:{color:"var(--accent)"}},"Concentration: "),
-          sizingStats.max/sizingStats.avg>5
-            ?"Your largest trade is "+(sizingStats.max/sizingStats.avg).toFixed(1)+"× your average — very concentrated. Consider diversifying position sizes."
-            :sizingStats.median/sizingStats.avg<0.5
-              ?"Your median is much lower than the mean — a few large trades are pulling the average up. Most trades are small."
-              :"Your position sizes are relatively consistent. Good diversification across trade sizes."
-        )
-      )
-    ),
-
-    /* ══ Report 3: Opportunity Cost & Alpha ══ */
-    React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"compare",size:15}),"Opportunity Cost Analysis"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},"vs index benchmarks")
-      ),
-      React.createElement("div",{style:{padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:16}},
-        /* Your Returns vs Nifty */
-        oppCost&&React.createElement("div",{style:{padding:16,background:oppCost.totalAlphaVsNifty>=0?"rgba(22,163,74,.06)":"rgba(239,68,68,.06)",border:"1px solid "+(oppCost.totalAlphaVsNifty>=0?"rgba(22,163,74,.18)":"rgba(239,68,68,.18)"),borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text3)",textTransform:"uppercase",letterSpacing:1,marginBottom:10,display:"flex",alignItems:"center",gap:4}},React.createElement(Icon,{n:"chart",size:12})," vs Nifty 50 (12% CAGR)"),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Your Total P&L"),
-            React.createElement("span",{style:{fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:alphaColor(oppCost.totalPnl)}},alphaSign(oppCost.totalPnl))
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Index Would Have Earned"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#0e7490"}},"+"+INR(oppCost.totalNiftyReturn))
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6,paddingTop:6,borderTop:"1px solid var(--border2)"}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600}},"Total Alpha"),
-            React.createElement("span",{style:{fontSize:14,fontWeight:800,fontFamily:"'Sora',sans-serif",color:alphaColor(oppCost.totalAlphaVsNifty)}},alphaSign(oppCost.totalAlphaVsNifty))
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Alpha / Trade"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:alphaColor(oppCost.avgAlphaNiftyPerTrade)}},alphaSign(oppCost.avgAlphaNiftyPerTrade))
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Your Avg XIRR"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:alphaColor(oppCost.avgXirr-12)}},oppCost.avgXirr.toFixed(2)+"% (benchmark: 12%)")
-          )
-        ),
-        /* Your Returns vs Sensex */
-        oppCost&&React.createElement("div",{style:{padding:16,background:oppCost.totalAlphaVsSensex>=0?"rgba(22,163,74,.06)":"rgba(239,68,68,.06)",border:"1px solid "+(oppCost.totalAlphaVsSensex>=0?"rgba(22,163,74,.18)":"rgba(239,68,68,.18)"),borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text3)",textTransform:"uppercase",letterSpacing:1,marginBottom:10}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"chart",size:13})," vs Sensex (12.5% CAGR)")),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Your Total P&L"),
-            React.createElement("span",{style:{fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:alphaColor(oppCost.totalPnl)}},alphaSign(oppCost.totalPnl))
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Index Would Have Earned"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#0e7490"}},"+"+INR(oppCost.totalSensexReturn))
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6,paddingTop:6,borderTop:"1px solid var(--border2)"}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600}},"Total Alpha"),
-            React.createElement("span",{style:{fontSize:14,fontWeight:800,fontFamily:"'Sora',sans-serif",color:alphaColor(oppCost.totalAlphaVsSensex)}},alphaSign(oppCost.totalAlphaVsSensex))
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Alpha / Trade"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:alphaColor(oppCost.avgAlphaSensexPerTrade)}},alphaSign(oppCost.avgAlphaSensexPerTrade))
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Your Avg XIRR"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:alphaColor(oppCost.avgXirr-12.5)}},oppCost.avgXirr.toFixed(2)+"% (benchmark: 12.5%)")
-          )
-        ),
-        /* Insight */
-        oppCost&&React.createElement("div",{style:{padding:16,background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,gridColumn:"1 / -1"}},
-          React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text3)",marginBottom:6,display:"flex",alignItems:"center",gap:5}},React.createElement(Icon,{n:"lightbulb",size:13}),"Opportunity Cost Insight"),
-          React.createElement("div",{style:{fontSize:12,color:"var(--text4)",lineHeight:1.6}},
-            "Across ",React.createElement("strong",null,trades.length)," trades totalling ",React.createElement("strong",null,INR(oppCost.totalBuyAmt))," deployed, ",
-            oppCost.totalAlphaVsNifty>=0
-              ?React.createElement(React.Fragment,null,"you generated ",React.createElement("strong",{style:{color:"#16a34a"}},alphaSign(oppCost.totalAlphaVsNifty))," in alpha vs Nifty 50. Your stock-picking is adding value above passive index investing.")
-              :React.createElement(React.Fragment,null,"you underperformed Nifty 50 by ",React.createElement("strong",{style:{color:"#ef4444"}},INR(Math.abs(oppCost.totalAlphaVsNifty)))," on the same capital. A passive Nifty 50 index fund would have been more efficient."),
-            " Average holding period: ",React.createElement("strong",null,Math.round(oppCost.avgHoldDays))," days."
-          )
-        )
-      )
-    ),
-
-    /* ══ Report 4: Per-Trade Alpha Table ══ */
-    React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"search",size:15}),"Per-Trade Alpha Breakdown"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},trades.length+" trades")
-      ),
-      React.createElement("div",{style:{overflowX:"auto"}},
-        /* Header */
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 1fr",minWidth:560,borderBottom:"1px solid var(--border)",background:"var(--bg5)"}},
-          ["Stock","Capital","Hold Days","Your P&L","Nifty Return","Alpha"].map(h=>React.createElement("div",{key:h,style:{padding:"8px 10px",fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,textAlign:h==="Stock"?"left":"right"}},h))
-        ),
-        /* Rows */
-        trades.slice(0,30).map(t=>React.createElement("div",{key:t.id+t.type,style:{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 1fr",minWidth:560,borderBottom:"1px solid var(--border2)"}},
-          React.createElement("div",{style:{padding:"9px 10px",fontSize:11,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},
-            React.createElement("span",{style:{fontSize:9,padding:"1px 5px",borderRadius:4,background:t.type==="sold"?"var(--accentbg2)":"var(--bg4)",color:"var(--text5)",fontWeight:600}},t.type==="sold"?"S":"H"),
-            t.company||t.ticker
-          ),
-          React.createElement("div",{style:{padding:"9px 10px",fontSize:11,textAlign:"right",fontWeight:600,color:"var(--text)"}},INR(t.buyAmt)),
-          React.createElement("div",{style:{padding:"9px 10px",fontSize:11,textAlign:"right",color:"var(--text4)"}},t.holdDays+"d"),
-          React.createElement("div",{style:{padding:"9px 10px",fontSize:11,textAlign:"right",fontWeight:600,color:alphaColor(t.pnl)}},alphaSign(t.pnl)),
-          React.createElement("div",{style:{padding:"9px 10px",fontSize:11,textAlign:"right",color:"#0e7490"}},"+"+INR(t.niftyReturn)),
-          React.createElement("div",{style:{padding:"9px 10px",fontSize:12,textAlign:"right",fontWeight:700,color:alphaColor(t.alphaVsNifty)}},alphaSign(t.alphaVsNifty))
-        )),
-        trades.length>30&&React.createElement("div",{style:{padding:"10px",textAlign:"center",fontSize:11,color:"var(--text5)",background:"var(--bg4)"}},"Showing 30 of "+trades.length+" trades")
-      )
-    ),
-
-    /* ══ Report 5: Kelly Criterion Sizing ══ */
-    kellyData&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"percent",size:15}),"Kelly Criterion Position Sizing"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},"optimal bet sizing")
-      ),
-      React.createElement("div",{style:{padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:16}},
-        /* Kelly cards */
-        React.createElement("div",{style:{padding:16,background:"rgba(14,116,144,.06)",border:"1px solid rgba(14,116,144,.18)",borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#0e7490",textTransform:"uppercase",letterSpacing:1,marginBottom:10}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"chart",size:13})," Your Trading Edge")),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Win Rate"),
-            React.createElement("span",{style:{fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"var(--text)"}},(kellyData.winRate*100).toFixed(1)+"%")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Win Return"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#16a34a"}},"+"+kellyData.avgWin.toFixed(2)+"%")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Loss Return"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#ef4444"}},"−"+kellyData.avgLoss.toFixed(2)+"%")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",paddingTop:6,borderTop:"1px solid var(--border2)"}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600}},"Win/Loss Ratio"),
-            React.createElement("span",{style:{fontSize:14,fontWeight:800,fontFamily:"'Sora',sans-serif",color:kellyData.winLossRatio>=1.5?"#16a34a":kellyData.winLossRatio>=1?"#f59e0b":"#ef4444"}},kellyData.winLossRatio===Infinity?"∞":kellyData.winLossRatio.toFixed(2)+"×")
-          )
-        ),
-        React.createElement("div",{style:{padding:16,background:"rgba(14,116,144,.06)",border:"1px solid rgba(14,116,144,.18)",borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#0e7490",textTransform:"uppercase",letterSpacing:1,marginBottom:10}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"target",size:13})," Optimal Position Size")),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:8}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Full Kelly"),
-            React.createElement("span",{style:{fontSize:18,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#0e7490"}},(kellyData.fullKelly*100).toFixed(1)+"%")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:8}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Half Kelly (conservative)"),
-            React.createElement("span",{style:{fontSize:18,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#16a34a"}},(kellyData.halfKelly*100).toFixed(1)+"%")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",paddingTop:8,borderTop:"1px solid var(--border2)"}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Actual Avg Position"),
-            React.createElement("span",{style:{fontSize:14,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"var(--text)"}},kellyData.actualPct.toFixed(1)+"%")
-          )
-        ),
-        /* Kelly formula explanation */
-        React.createElement("div",{style:{padding:16,background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,gridColumn:"1 / -1"}},
-          React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text3)",marginBottom:6,display:"flex",alignItems:"center",gap:5}},React.createElement(Icon,{n:"lightbulb",size:13}),"Kelly Criterion Insight"),
-          React.createElement("div",{style:{fontSize:12,color:"var(--text4)",lineHeight:1.6}},
-            "The Kelly formula (",React.createElement("strong",null,"f* = W − (1−W)/R"),") suggests optimal bet sizing based on your edge. ",
-            "Your full Kelly is ",React.createElement("strong",{style:{color:"#0e7490"}},(kellyData.fullKelly*100).toFixed(1)+"%"),
-            " — meaning theoretically you should allocate ",(kellyData.fullKelly*100).toFixed(1)+"% of capital per trade. ",
-            "Half-Kelly at ",React.createElement("strong",{style:{color:"#16a34a"}},(kellyData.halfKelly*100).toFixed(1)+"%"),
-            " is recommended for real-world use (reduces variance by 50% while keeping 75% of growth). ",
-            kellyData.winLossRatio<1
-              ?"Your win/loss ratio is below 1 — Kelly suggests you should reduce position sizes or improve your edge before scaling up."
-              :kellyData.fullKelly>0.25
-                ?"Your edge is strong — you can afford larger position sizes. But never exceed half-Kelly in practice."
-                :"Your edge is moderate. Focus on consistency rather than sizing up."
-          )
-        )
-      )
-    ),
-
-
-    /* ══ Report 6: Stock-by-Stock Alpha vs Nifty ══ */
-    stockAlphaData.length>0&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},
-          React.createElement(Icon,{n:"chart",size:15}),"Stock-by-Stock Alpha vs Nifty"
-        ),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},
-          stockAlphaData.length+" stocks"
-        )
-      ),
-      React.createElement("div",{className:"mobile-scroll-table",style:{overflowX:"auto"}},
-        React.createElement("div",{style:{minWidth:700}},
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 60px 80px 80px 90px 70px 60px",gap:0,borderBottom:"1px solid var(--border)",background:"var(--bg4)"}},
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px"}},"Stock"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"center"}},"Trades"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Your Return"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Nifty Return"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Alpha (₹)"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Alpha (%)"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"center"}},"Win Rate")
-          ),
-          stockAlphaData.map((s,i)=>{
-            const isPositiveAlpha=s.totalAlpha>=0;
-            const niftyPct=s.totalBuyAmt>0?(s.totalNiftyReturn/s.totalBuyAmt*100):0;
-            return React.createElement("div",{key:s.ticker||i,style:{display:"grid",gridTemplateColumns:"2fr 60px 80px 80px 90px 70px 60px",gap:0,borderBottom:"1px solid var(--border2)",background:i%2===0?"transparent":"var(--bg4)",transition:"background .1s"},onMouseEnter:e=>e.currentTarget.style.background="var(--accentbg2)",onMouseLeave:e=>e.currentTarget.style.background=i%2===0?"transparent":"var(--bg4)"},
-              React.createElement("div",{style:{padding:"9px 8px",display:"flex",flexDirection:"column",gap:2,minWidth:0}},
-                React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},s.ticker)
-              ),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"center",color:"var(--text3)"}},s.trades.length),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",fontWeight:600,color:s.returnPct>=0?"#16a34a":"#ef4444"}},(s.returnPct>=0?"+":"")+s.returnPct.toFixed(2)+"%"),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",color:"var(--text4)"}},(niftyPct>=0?"+":"")+niftyPct.toFixed(2)+"%"),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"right",fontWeight:700,fontFamily:"'Sora',sans-serif",color:isPositiveAlpha?"#16a34a":"#ef4444"}},(isPositiveAlpha?"+":"")+INR(s.totalAlpha)),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",fontWeight:600,color:isPositiveAlpha?"#16a34a":"#ef4444"}},(s.alphaPct>=0?"+":"")+s.alphaPct.toFixed(2)+"%"),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"center",fontWeight:600,color:s.winRate>=50?"#16a34a":"#ef4444"}},s.winRate.toFixed(0)+"%")
-            );
-          })
-        )
-      ),
-      React.createElement("div",{style:{padding:"10px 16px",background:"var(--bg5)",borderTop:"1px solid var(--border)",fontSize:11,color:"var(--text5)",lineHeight:1.5}},
-        "Alpha = Your P&L − Nifty return for same capital & holding period (12% CAGR benchmark). Positive alpha means you outperformed the index."
-      )
-    ),
-
-    /* ══ Methodology note ══ */
-    React.createElement("div",{style:{padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-      React.createElement("strong",{style:{color:"var(--accent)"}},"Methodology: "),
-      "Capital deployed = sum of buy amounts (qty × buy price). Cumulative capital tracks total investment over time. Utilisation % = cumulative capital at month end ÷ total capital ever deployed. Position sizing uses gross buy amounts. Opportunity cost compares your net P&L against what the same capital would have earned in Nifty 50 (12% CAGR) or Sensex (12.5% CAGR) over identical holding periods: indexReturn = capital × ((1 + CAGR)^(days/365) − 1). Alpha = your P&L − index return. XIRR computed where both buy and sell dates are available. Kelly Criterion: f* = WinRate − (1−WinRate)/(AvgWin/AvgLoss), using return percentages. Half-Kelly is recommended for practical use. Active holdings use current price as exit. All amounts are gross of brokerage unless noted."
-    )
-  );
-};
-
-const BehaviouralPatterns=({shares,soldShareSnapshots={}})=>{
-
-  /* ── Build unified trade list ── */
-  const trades=React.useMemo(()=>{
-    const list=[];
-    (shares||[]).forEach(sh=>{
-      if(!sh.qty||!sh.buyPrice||!sh.currentPrice||!sh.buyDate)return;
-      const buyDate=new Date(sh.buyDate+"T12:00:00");
-      const sellDate=new Date(TODAY()+"T12:00:00");
-      const holdDays=Math.max(1,Math.floor((sellDate-buyDate)/864e5));
-      const buyAmt=sh.qty*sh.buyPrice;
-      const sellAmt=sh.qty*sh.currentPrice;
-      const brokerage=+sh.brokerage||0;
-      const pnl=sellAmt-buyAmt-brokerage;
-      const returnPct=buyAmt>0?(pnl/buyAmt*100):0;
-      list.push({
-        id:sh.id,type:"active",company:sh.company,ticker:sh.ticker,
-        qty:sh.qty,buyPrice:sh.buyPrice,sellPrice:sh.currentPrice,
-        buyDateStr:sh.buyDate,sellDateStr:TODAY(),
-        buyDate,sellDate,holdDays,
-        buyAmt,sellAmt,brokerage,pnl,returnPct,
-      });
-    });
-    Object.values(soldShareSnapshots||{}).forEach(fySnaps=>{
-      (fySnaps||[]).forEach(sn=>{
-        if(!sn.qty||!sn.buyPrice||!sn.sellPrice||!sn.buyDate||!sn.savedAt)return;
-        const buyDate=new Date(sn.buyDate+"T12:00:00");
-        const sellDate=new Date(sn.savedAt+"T12:00:00");
-        const holdDays=Math.max(1,Math.floor((sellDate-buyDate)/864e5));
-        const buyAmt=sn.qty*sn.buyPrice;
-        const sellAmt=sn.qty*sn.sellPrice;
-        const brokerage=+sn.brokerage||0;
-        const pnl=sellAmt-buyAmt-brokerage;
-        const returnPct=buyAmt>0?(pnl/buyAmt*100):0;
-        list.push({
-          id:sn.id,type:"sold",company:sn.company,ticker:sn.ticker,
-          qty:sn.qty,buyPrice:sn.buyPrice,sellPrice:sn.sellPrice,
-          buyDateStr:sn.buyDate,sellDateStr:sn.savedAt,
-          buyDate,sellDate,holdDays,
-          buyAmt,sellAmt,brokerage,pnl,returnPct,
-        });
-      });
-    });
-    list.sort((a,b)=>a.buyDateStr.localeCompare(b.buyDateStr)||a.buyDate-b.buyDate);
-    return list;
-  },[shares,soldShareSnapshots]);
-
-  /* ── Per-stock buy price series for dip detection ── */
-  const stockBuySeries=React.useMemo(()=>{
-    const map={};
-    trades.forEach(t=>{
-      const key=t.ticker||t.company;
-      if(!map[key])map[key]=[];
-      map[key].push({buyPrice:t.buyPrice,buyDate:t.buyDate,buyDateStr:t.buyDateStr,idx:map[key].length});
-    });
-    Object.values(map).forEach(arr=>{
-      arr.forEach((entry,i)=>{
-        if(i===0){entry.dipPct=0;entry.isDip=false;return;}
-        const prevPrices=arr.slice(0,i).map(e=>e.buyPrice);
-        const maxPrev=Math.max(...prevPrices);
-        const avgPrev=prevPrices.reduce((s,v)=>s+v,0)/prevPrices.length;
-        entry.dipPct=maxPrev>0?((maxPrev-entry.buyPrice)/maxPrev*100):0;
-        entry.belowAvgPct=avgPrev>0?((avgPrev-entry.buyPrice)/avgPrev*100):0;
-        entry.isDip=entry.dipPct>=5;
-        entry.isMomentum=entry.buyPrice>=maxPrev;
-      });
-    });
-    return map;
-  },[trades]);
-
-  /* ── Buy-the-dip vs momentum analysis ── */
-  const dipVsMomentum=React.useMemo(()=>{
-    if(trades.length<2)return null;
-    const dipTrades=[];
-    const momentumTrades=[];
-    const neutralTrades=[];
-    trades.forEach(t=>{
-      const key=t.ticker||t.company;
-      const series=stockBuySeries[key];
-      if(!series)return;
-      const entry=series.find(e=>e.buyDateStr===t.buyDateStr&&e.buyPrice===t.buyPrice);
-      if(!entry||entry.idx===0){neutralTrades.push(t);return;}
-      if(entry.isDip)dipTrades.push(t);
-      else if(entry.isMomentum)momentumTrades.push(t);
-      else neutralTrades.push(t);
-    });
-    const avgReturn=arr=>arr.length>0?arr.reduce((s,t)=>s+t.returnPct,0)/arr.length:0;
-    const avgHold=arr=>arr.length>0?arr.reduce((s,t)=>s+t.holdDays,0)/arr.length:0;
-    const winRate=arr=>arr.length>0?arr.filter(t=>t.pnl>0).length/arr.length*100:0;
-    const totalPnl=arr=>arr.reduce((s,t)=>s+t.pnl,0);
-    return{
-      dip:{count:dipTrades.length,avgReturn:avgReturn(dipTrades),avgHold:avgHold(dipTrades),winRate:winRate(dipTrades),totalPnl:totalPnl(dipTrades)},
-      momentum:{count:momentumTrades.length,avgReturn:avgReturn(momentumTrades),avgHold:avgHold(momentumTrades),winRate:winRate(momentumTrades),totalPnl:totalPnl(momentumTrades)},
-      neutral:{count:neutralTrades.length,avgReturn:avgReturn(neutralTrades),avgHold:avgHold(neutralTrades),winRate:winRate(neutralTrades),totalPnl:totalPnl(neutralTrades)},
-    };
-  },[trades,stockBuySeries]);
-
-  /* ── Premature exit bias ── */
-  const prematureExits=React.useMemo(()=>{
-    const soldTrades=trades.filter(t=>t.type==="sold");
-    if(!soldTrades.length)return null;
-    const currentPriceMap={};
-    (shares||[]).forEach(sh=>{
-      if(sh.ticker)currentPriceMap[sh.ticker]=sh.currentPrice;
-      if(sh.company)currentPriceMap[sh.company]=sh.currentPrice;
-    });
-    const premature=[];
-    const wellTimed=[];
-    soldTrades.forEach(t=>{
-      const currentPrice=currentPriceMap[t.ticker]||currentPriceMap[t.company];
-      if(!currentPrice||!t.sellPrice)return;
-      const continuedRise=((currentPrice-t.sellPrice)/t.sellPrice)*100;
-      const entry={...t,continuedRise,currentPrice};
-      if(continuedRise>10)premature.push(entry);
-      else if(continuedRise<-5)wellTimed.push(entry);
-    });
-    const avgPrematureRise=premature.length>0?premature.reduce((s,t)=>s+t.continuedRise,0)/premature.length:0;
-    const potentialMissed=premature.reduce((s,t)=>s+(t.qty*(t.currentPrice-t.sellPrice)),0);
-    return{
-      totalSold:soldTrades.length,
-      premature:premature.sort((a,b)=>b.continuedRise-a.continuedRise),
-      wellTimed,
-      prematureCount:premature.length,
-      wellTimedCount:wellTimed.length,
-      avgPrematureRise,
-      potentialMissed,
-      prematurePct:soldTrades.length>0?(premature.length/soldTrades.length*100):0,
-    };
-  },[trades,shares]);
-
-  /* ── Loss aversion indicator ── */
-  const lossAversion=React.useMemo(()=>{
-    if(!trades.length)return null;
-    const winners=trades.filter(t=>t.pnl>0);
-    const losers=trades.filter(t=>t.pnl<0);
-    const avgWinHold=winners.length>0?winners.reduce((s,t)=>s+t.holdDays,0)/winners.length:0;
-    const avgLossHold=losers.length>0?losers.reduce((s,t)=>s+t.holdDays,0)/losers.length:0;
-    const holdRatio=avgWinHold>0?avgLossHold/avgWinHold:0;
-    let severity="none";let severityColor="#16a34a";let severityLabel="Healthy";
-    if(holdRatio>=1.5){severity="strong";severityColor="#ef4444";severityLabel="Strong Loss Aversion";}
-    else if(holdRatio>=1.2){severity="moderate";severityColor="#f59e0b";severityLabel="Moderate Loss Aversion";}
-    else if(holdRatio>=1){severity="mild";severityColor="#f59e0b";severityLabel="Mild Loss Aversion";}
-    else if(holdRatio>=0.8){severity="balanced";severityColor="#16a34a";severityLabel="Balanced";}
-    else{severity="fast-cut";severityColor="#0e7490";severityLabel="Quick Loss Cutter";}
-    return{avgWinHold,avgLossHold,holdRatio,severity,severityColor,severityLabel,
-      winnerCount:winners.length,loserCount:losers.length};
-  },[trades]);
-
-  /* ── Recency bias ── */
-  const recencyBias=React.useMemo(()=>{
-    if(trades.length<3)return null;
-    const sorted=[...trades].sort((a,b)=>b.returnPct-a.returnPct);
-    const bigWinThreshold=sorted[Math.floor(sorted.length*0.2)]?.returnPct||0;
-    const bigWins=trades.filter(t=>t.returnPct>=bigWinThreshold&&t.pnl>0);
-    if(!bigWins.length)return null;
-    const POST_WINDOW=30;
-    let postBigWinTrades=0;
-    let postBigWinTotalAmt=0;
-    let normalTradeCount=0;
-    let normalTotalAmt=0;
-    const bigWinDates=bigWins.map(b=>b.sellDateStr||b.buyDateStr);
-    trades.forEach(t=>{
-      const tDate=t.buyDateStr;
-      const isAfter=bigWinDates.some(bd=>{
-        const diff=(new Date(tDate+"T12:00:00")-new Date(bd+"T12:00:00"))/864e5;
-        return diff>0&&diff<=POST_WINDOW;
-      });
-      if(isAfter){postBigWinTrades++;postBigWinTotalAmt+=t.buyAmt;}
-      else{normalTradeCount++;normalTotalAmt+=t.buyAmt;}
-    });
-    const bigWinCount=bigWins.length;
-    const avgPostTradesPerWin=bigWinCount>0?postBigWinTrades/bigWinCount:0;
-    const totalDays=trades.length>1?Math.max(1,Math.floor((trades[trades.length-1].buyDate-trades[0].buyDate)/864e5)):1;
-    const baselineTradesPer30=totalDays>0?(trades.length/totalDays*POST_WINDOW):0;
-    const frequencyMultiplier=baselineTradesPer30>0?avgPostTradesPerWin/baselineTradesPer30:0;
-    const avgPostAmt=postBigWinTrades>0?postBigWinTotalAmt/postBigWinTrades:0;
-    const avgNormalAmt=normalTradeCount>0?normalTotalAmt/normalTradeCount:0;
-    const sizeMultiplier=avgNormalAmt>0?avgPostAmt/avgNormalAmt:0;
-    return{
-      bigWinCount,bigWinThreshold:bigWinThreshold.toFixed(1),
-      avgPostTradesPerWin:avgPostTradesPerWin.toFixed(1),
-      baselineTradesPer30:baselineTradesPer30.toFixed(1),
-      frequencyMultiplier:frequencyMultiplier.toFixed(2),
-      avgPostAmt,avgNormalAmt,
-      sizeMultiplier:sizeMultiplier.toFixed(2),
-      isFreqBias:frequencyMultiplier>1.3,
-      isSizeBias:sizeMultiplier>1.3,
-    };
-  },[trades]);
-
-  /* ── Disposition effect score ── */
-  const dispositionEffect=React.useMemo(()=>{
-    if(!trades.length)return null;
-    const holdDays=trades.map(t=>t.holdDays).sort((a,b)=>a-b);
-    const medianHold=holdDays.length%2===0?(holdDays[holdDays.length/2-1]+holdDays[holdDays.length/2])/2:holdDays[Math.floor(holdDays.length/2)];
-    const QUICK_THRESHOLD=Math.max(30,medianHold*0.5);
-    const quickWins=trades.filter(t=>t.pnl>0&&t.holdDays<=QUICK_THRESHOLD);
-    const quickLosses=trades.filter(t=>t.pnl<0&&t.holdDays<=QUICK_THRESHOLD);
-    const slowWins=trades.filter(t=>t.pnl>0&&t.holdDays>QUICK_THRESHOLD);
-    const slowLosses=trades.filter(t=>t.pnl<0&&t.holdDays>QUICK_THRESHOLD);
-    const winners=trades.filter(t=>t.pnl>0);
-    const losers=trades.filter(t=>t.pnl<0);
-    const quickWinRate=winners.length>0?quickWins.length/winners.length:0;
-    const quickLossRate=losers.length>0?quickLosses.length/losers.length:0;
-    const dispositionScore=quickLossRate>0?quickWinRate/quickLossRate:quickWinRate>0?Infinity:0;
-    let severity="none";let severityColor="#16a34a";let severityLabel="Balanced";
-    if(dispositionScore>=2){severity="strong";severityColor="#ef4444";severityLabel="Strong Disposition Effect";}
-    else if(dispositionScore>=1.5){severity="moderate";severityColor="#f59e0b";severityLabel="Moderate Disposition Effect";}
-    else if(dispositionScore>=1.1){severity="mild";severityColor="#f59e0b";severityLabel="Mild Disposition Effect";}
-    else if(dispositionScore>=0.7){severity="balanced";severityColor="#16a34a";severityLabel="Balanced";}
-    else{severity="reverse";severityColor="#0e7490";severityLabel="Reverse Disposition (Good!)";}
-    return{
-      quickWins:quickWins.length,quickLosses:quickLosses.length,
-      slowWins:slowWins.length,slowLosses:slowLosses.length,
-      totalWins:winners.length,totalLosses:losers.length,
-      quickWinRate:(quickWinRate*100).toFixed(1),
-      quickLossRate:(quickLossRate*100).toFixed(1),
-      dispositionScore:dispositionScore===Infinity?"∞":dispositionScore.toFixed(2),
-      dispositionScoreNum:dispositionScore,
-      severity,severityColor,severityLabel,
-      quickThreshold:Math.round(QUICK_THRESHOLD),
-      medianHold:Math.round(medianHold),
-    };
-  },[trades]);
-
-  /* ── Empty state ── */
-  if(!trades.length)return React.createElement("div",{style:{textAlign:"center",padding:"48px 20px"}},
-    React.createElement("div",{style:{fontSize:40,marginBottom:12,color:"var(--text6)"}},React.createElement(Icon,{n:"lightbulb",size:40})),
-    React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text3)",marginBottom:4}},"No Trade Data"),
-    React.createElement("div",{style:{fontSize:13,color:"var(--text6)"}},"Add shares or save snapshots to Previous Trades to see behavioural pattern analytics.")
-  );
-
-  const pnlColor=v=>v>=0?"#16a34a":"#ef4444";
-  const pnlSign=v=>(v>=0?"+":"")+INR(v);
-  const sevBg=sevColor=>sevColor==="#ef4444"?"rgba(239,68,68,.07)":sevColor==="#f59e0b"?"rgba(245,158,11,.07)":sevColor==="#0e7490"?"rgba(14,116,144,.07)":"rgba(22,163,74,.07)";
-  const sevBorder=sevColor=>sevColor==="#ef4444"?"rgba(239,68,68,.2)":sevColor==="#f59e0b"?"rgba(245,158,11,.2)":sevColor==="#0e7490"?"rgba(14,116,144,.2)":"rgba(22,163,74,.2)";
-
-  return React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:20}},
-    /* ══ Summary Stat Cards ══ */
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:12}},
-      dispositionEffect&&React.createElement("div",{style:{background:sevBg(dispositionEffect.severityColor),border:"1px solid "+sevBorder(dispositionEffect.severityColor),borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Disposition Score"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:dispositionEffect.severityColor}},dispositionEffect.dispositionScore),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},dispositionEffect.severityLabel)
-      ),
-      lossAversion&&React.createElement("div",{style:{background:sevBg(lossAversion.severityColor),border:"1px solid "+sevBorder(lossAversion.severityColor),borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Loss Aversion Ratio"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:lossAversion.severityColor}},lossAversion.holdRatio.toFixed(2)+"×"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},lossAversion.severityLabel)
-      ),
-      dipVsMomentum&&React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Buy-the-Dip Rate"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text)"}},dipVsMomentum.dip.count+" / "+(dipVsMomentum.dip.count+dipVsMomentum.momentum.count+dipVsMomentum.neutral.count)),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},dipVsMomentum.dip.count+" dip buys found")
-      ),
-      prematureExits&&React.createElement("div",{style:{background:prematureExits.prematureCount>0?"rgba(239,68,68,.07)":"var(--bg4)",border:"1px solid "+(prematureExits.prematureCount>0?"rgba(239,68,68,.2)":"var(--border)"),borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Premature Exits"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:prematureExits.prematureCount>0?"#ef4444":"var(--text)"}},prematureExits.prematureCount),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"of "+prematureExits.totalSold+" sold trades")
-      ),
-      recencyBias&&React.createElement("div",{style:{background:recencyBias.isFreqBias||recencyBias.isSizeBias?"rgba(245,158,11,.07)":"var(--bg4)",border:"1px solid "+(recencyBias.isFreqBias||recencyBias.isSizeBias?"rgba(245,158,11,.2)":"var(--border)"),borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Recency Bias"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:recencyBias.isFreqBias||recencyBias.isSizeBias?"#f59e0b":"#16a34a"}},recencyBias.frequencyMultiplier+"×"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"freq after big wins")
-      )
-    ),
-
-    /* ══ Report 1: Buy-the-Dip vs Momentum ══ */
-    dipVsMomentum&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"trenddown",size:15}),"Buy-the-Dip vs ",React.createElement(Icon,{n:"invest",size:15})," Momentum"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},"entry timing analysis")
-      ),
-      React.createElement("div",{style:{padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16}},
-        React.createElement("div",{style:{padding:16,background:"rgba(22,163,74,.06)",border:"1px solid rgba(22,163,74,.18)",borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#16a34a",textTransform:"uppercase",letterSpacing:1,marginBottom:8}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"trenddown",size:13})," Buy-the-Dip ("+dipVsMomentum.dip.count+")")),
-          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:10}},"Entered ≥5% below previous buy price"),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Return"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:pnlColor(dipVsMomentum.dip.avgReturn)}},(dipVsMomentum.dip.avgReturn>=0?"+":"")+dipVsMomentum.dip.avgReturn.toFixed(2)+"%")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Win Rate"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text)"}},dipVsMomentum.dip.winRate.toFixed(1)+"%")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Hold"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text)"}},Math.round(dipVsMomentum.dip.avgHold)+" days")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",paddingTop:6,borderTop:"1px solid rgba(22,163,74,.15)"}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600}},"Total P&L"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:700,color:pnlColor(dipVsMomentum.dip.totalPnl)}},pnlSign(dipVsMomentum.dip.totalPnl))
-          )
-        ),
-        React.createElement("div",{style:{padding:16,background:"rgba(14,116,144,.06)",border:"1px solid rgba(14,116,144,.18)",borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#0e7490",textTransform:"uppercase",letterSpacing:1,marginBottom:8}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"invest",size:13})," Momentum ("+dipVsMomentum.momentum.count+")")),
-          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:10}},"Entered at or above previous buy price"),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Return"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:pnlColor(dipVsMomentum.momentum.avgReturn)}},(dipVsMomentum.momentum.avgReturn>=0?"+":"")+dipVsMomentum.momentum.avgReturn.toFixed(2)+"%")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Win Rate"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text)"}},dipVsMomentum.momentum.winRate.toFixed(1)+"%")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Hold"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text)"}},Math.round(dipVsMomentum.momentum.avgHold)+" days")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",paddingTop:6,borderTop:"1px solid rgba(14,116,144,.15)"}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600}},"Total P&L"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:700,color:pnlColor(dipVsMomentum.momentum.totalPnl)}},pnlSign(dipVsMomentum.momentum.totalPnl))
-          )
-        ),
-        dipVsMomentum.neutral.count>0&&React.createElement("div",{style:{padding:16,background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"flex",alignItems:"center",gap:4}},React.createElement(Icon,{n:"balance",size:12})," Neutral / First Buys ("+dipVsMomentum.neutral.count+")"),
-          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:10}},"First buy per stock (no prior reference)"),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Return"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:pnlColor(dipVsMomentum.neutral.avgReturn)}},(dipVsMomentum.neutral.avgReturn>=0?"+":"")+dipVsMomentum.neutral.avgReturn.toFixed(2)+"%")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Win Rate"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text)"}},dipVsMomentum.neutral.winRate.toFixed(1)+"%")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Total P&L"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:700,color:pnlColor(dipVsMomentum.neutral.totalPnl)}},pnlSign(dipVsMomentum.neutral.totalPnl))
-          )
-        ),
-        React.createElement("div",{style:{padding:16,background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,gridColumn:"1 / -1"}},
-          React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text3)",marginBottom:6,display:"flex",alignItems:"center",gap:5}},React.createElement(Icon,{n:"lightbulb",size:13}),"Entry Timing Insight"),
-          React.createElement("div",{style:{fontSize:12,color:"var(--text4)",lineHeight:1.6}},
-            dipVsMomentum.dip.count===0
-              ?"No clear dip-buying pattern detected. You tend to buy at or above previous prices — this could be momentum chasing or averaging up intentionally."
-              :dipVsMomentum.dip.avgReturn>dipVsMomentum.momentum.avgReturn
-                ?React.createElement(React.Fragment,null,"Your dip buys average ",React.createElement("strong",{style:{color:"#16a34a"}},dipVsMomentum.dip.avgReturn.toFixed(1)+"%")," vs ",React.createElement("strong",null,dipVsMomentum.momentum.avgReturn.toFixed(1)+"%")," for momentum buys. Buying the dip is working — continue this discipline.")
-                :dipVsMomentum.momentum.avgReturn>dipVsMomentum.dip.avgReturn
-                  ?React.createElement(React.Fragment,null,"Your momentum buys (",React.createElement("strong",{style:{color:"#0e7490"}},dipVsMomentum.momentum.avgReturn.toFixed(1)+"%"),") outperform dip buys (",React.createElement("strong",null,dipVsMomentum.dip.avgReturn.toFixed(1)+"%"),"). You may be catching falling knives on dips — consider waiting for trend confirmation.")
-                  :"Both strategies show similar returns. Your edge may come from stock selection rather than timing."
-          )
-        )
-      )
-    ),
-
-    /* ══ Report 2: Premature Exit Bias ══ */
-    prematureExits&&prematureExits.totalSold>0&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"bolt",size:15}),"Premature Exit Bias"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},prematureExits.prematureCount+" premature of "+prematureExits.totalSold)
-      ),
-      React.createElement("div",{style:{padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16}},
-        React.createElement("div",{style:{padding:16,background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.18)",borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#ef4444",textTransform:"uppercase",letterSpacing:1,marginBottom:8}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"warning",size:13})," Premature Exits")),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Count"),
-            React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"#ef4444"}},prematureExits.prematureCount+" trades")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"% of Sold Trades"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#ef4444"}},prematureExits.prematurePct.toFixed(1)+"%")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Rise After Sell"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#ef4444"}},"+"+prematureExits.avgPrematureRise.toFixed(1)+"%")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",paddingTop:6,borderTop:"1px solid rgba(239,68,68,.15)"}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600}},"Potential ₹ Missed"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"#ef4444"}},"+"+INR(prematureExits.potentialMissed))
-          )
-        ),
-        React.createElement("div",{style:{padding:16,background:"rgba(22,163,74,.06)",border:"1px solid rgba(22,163,74,.18)",borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#16a34a",textTransform:"uppercase",letterSpacing:1,marginBottom:8,display:"flex",alignItems:"center",gap:4}},React.createElement(Icon,{n:"checkcircle",size:12,color:"#16a34a"})," Well-Timed Exits"),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Count"),
-            React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"#16a34a"}},prematureExits.wellTimedCount+" trades")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"% of Sold Trades"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#16a34a"}},prematureExits.totalSold>0?(prematureExits.wellTimedCount/prematureExits.totalSold*100).toFixed(1)+"%":"0%")
-          ),
-          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:6}},"Price dropped >5% after selling — good exits")
-        ),
-        prematureExits.premature.length>0&&React.createElement("div",{style:{padding:16,background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,gridColumn:"1 / -1"}},
-          React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text3)",marginBottom:8,display:"flex",alignItems:"center",gap:5}},React.createElement(Icon,{n:"search",size:13}),"Worst Premature Exits"),
-          React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
-            prematureExits.premature.slice(0,5).map((t,i)=>React.createElement("div",{key:t.id+t.type,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 10px",background:i===0?"rgba(239,68,68,.08)":"transparent",borderRadius:6,fontSize:11}},
-              React.createElement("span",{style:{color:"var(--text)",fontWeight:i===0?600:400}},(i+1)+". "+t.company),
-              React.createElement("span",{style:{color:"#ef4444",fontWeight:600}},"+"+t.continuedRise.toFixed(1)+"% after sell (sold at "+INR(t.sellPrice)+", now "+INR(t.currentPrice)+")")
-            ))
-          ),
-          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginTop:8,lineHeight:1.5}},
-            React.createElement("strong",{style:{color:"var(--accent)"}},"Pattern: "),
-            prematureExits.prematurePct>30
-              ?"You prematurely exit "+prematureExits.prematurePct.toFixed(0)+"% of sold trades. Consider using trailing stop-losses instead of fixed targets to let winners run."
-              :prematureExits.prematurePct>15
-                ?"Some premature exits detected. Review your exit criteria — are you selling based on fear or fundamentals?"
-                :"Your exits are generally well-timed. Few trades show significant post-sale price increases."
-          )
-        )
-      )
-    ),
-
-    /* ══ Report 3: Loss Aversion Indicator ══ */
-    lossAversion&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"warning",size:15}),"Loss Aversion Indicator"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:sevBg(lossAversion.severityColor),color:lossAversion.severityColor,border:"1px solid "+sevBorder(lossAversion.severityColor),fontWeight:600}},lossAversion.severityLabel)
-      ),
-      React.createElement("div",{style:{padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16}},
-        React.createElement("div",{style:{padding:16,background:"rgba(14,116,144,.06)",border:"1px solid rgba(14,116,144,.18)",borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#0e7490",textTransform:"uppercase",letterSpacing:1,marginBottom:10}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"chart",size:13})," Hold Time Comparison")),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:8}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Winner Hold"),
-            React.createElement("span",{style:{fontSize:14,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"#16a34a"}},Math.round(lossAversion.avgWinHold)+" days")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:8}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Loser Hold"),
-            React.createElement("span",{style:{fontSize:14,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"#ef4444"}},Math.round(lossAversion.avgLossHold)+" days")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",paddingTop:8,borderTop:"1px solid var(--border2)"}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600}},"Ratio (Loss ÷ Win)"),
-            React.createElement("span",{style:{fontSize:16,fontWeight:800,fontFamily:"'Sora',sans-serif",color:lossAversion.severityColor}},lossAversion.holdRatio.toFixed(2)+"×")
-          ),
-          React.createElement("div",{style:{display:"flex",gap:12,marginTop:10,fontSize:10,color:"var(--text5)"}},
-            React.createElement("span",null,lossAversion.winnerCount+" winners"),
-            React.createElement("span",null,lossAversion.loserCount+" losers")
-          )
-        ),
-        React.createElement("div",{style:{padding:16,background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text3)",textTransform:"uppercase",letterSpacing:1,marginBottom:12,display:"flex",alignItems:"center",gap:4}},React.createElement(Icon,{n:"compare",size:12})," Visual Hold Time"),
-          React.createElement("div",{style:{marginBottom:10}},
-            React.createElement("div",{style:{fontSize:10,color:"#16a34a",marginBottom:4}},"Winners: "+Math.round(lossAversion.avgWinHold)+" days"),
-            React.createElement("div",{style:{height:18,background:"var(--bg5)",borderRadius:6,overflow:"hidden"}},
-              React.createElement("div",{style:{height:"100%",width:Math.min(100,lossAversion.avgWinHold/Math.max(lossAversion.avgWinHold,lossAversion.avgLossHold)*100)+"%",background:"#16a34a",borderRadius:6}})
-            )
-          ),
-          React.createElement("div",null,
-            React.createElement("div",{style:{fontSize:10,color:"#ef4444",marginBottom:4}},"Losers: "+Math.round(lossAversion.avgLossHold)+" days"),
-            React.createElement("div",{style:{height:18,background:"var(--bg5)",borderRadius:6,overflow:"hidden"}},
-              React.createElement("div",{style:{height:"100%",width:Math.min(100,lossAversion.avgLossHold/Math.max(lossAversion.avgWinHold,lossAversion.avgLossHold)*100)+"%",background:"#ef4444",borderRadius:6}})
-            )
-          )
-        ),
-        React.createElement("div",{style:{padding:16,background:sevBg(lossAversion.severityColor),border:"1px solid "+sevBorder(lossAversion.severityColor),borderRadius:12,gridColumn:"1 / -1"}},
-          React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text3)",marginBottom:6,display:"flex",alignItems:"center",gap:5}},React.createElement(Icon,{n:"lightbulb",size:13}),"Loss Aversion Insight"),
-          React.createElement("div",{style:{fontSize:12,color:"var(--text4)",lineHeight:1.6}},
-            lossAversion.holdRatio>=1.5
-              ?React.createElement(React.Fragment,null,"You hold losers ",React.createElement("strong",{style:{color:"#ef4444"}},lossAversion.holdRatio.toFixed(1)+"×")," longer than winners on average. This is a classic loss aversion bias — you're hoping losers will recover while cutting winners short. Consider setting strict stop-losses and letting winners run.")
-              :lossAversion.holdRatio>=1.2
-                ?React.createElement(React.Fragment,null,"Mild loss aversion detected — losers are held ",React.createElement("strong",{style:{color:"#f59e0b"}},lossAversion.holdRatio.toFixed(1)+"×")," longer. You're partially aware of this tendency. Enforce stop-losses to bring the ratio below 1.")
-                :lossAversion.holdRatio>=0.8
-                  ?React.createElement(React.Fragment,null,"Your hold times are balanced — ratio of ",React.createElement("strong",{style:{color:"#16a34a"}},lossAversion.holdRatio.toFixed(2)+"×"),". You're not showing strong loss aversion. Good discipline!")
-                  :React.createElement(React.Fragment,null,"You cut losers faster than you hold winners — ratio of ",React.createElement("strong",{style:{color:"#0e7490"}},lossAversion.holdRatio.toFixed(2)+"×"),". This is the opposite of loss aversion and a strong trait. Keep it up!")
-          )
-        )
-      )
-    ),
-
-    /* ══ Report 4: Recency Bias ══ */
-    recencyBias&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"refresh",size:15}),"Recency Bias Analysis"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},recencyBias.bigWinCount+" big wins analysed")
-      ),
-      React.createElement("div",{style:{padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16}},
-        React.createElement("div",{style:{padding:16,background:recencyBias.isFreqBias?"rgba(245,158,11,.06)":"rgba(22,163,74,.06)",border:"1px solid "+(recencyBias.isFreqBias?"rgba(245,158,11,.18)":"rgba(22,163,74,.18)"),borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:recencyBias.isFreqBias?"#f59e0b":"#16a34a",textTransform:"uppercase",letterSpacing:1,marginBottom:10}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"chart",size:13})," Trade Frequency After Big Wins")),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Trades (30d after win)"),
-            React.createElement("span",{style:{fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"var(--text)"}},recencyBias.avgPostTradesPerWin)
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Baseline (30d avg)"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text4)"}},recencyBias.baselineTradesPer30)
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",paddingTop:6,borderTop:"1px solid var(--border2)"}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600}},"Multiplier"),
-            React.createElement("span",{style:{fontSize:14,fontWeight:800,fontFamily:"'Sora',sans-serif",color:recencyBias.isFreqBias?"#f59e0b":"#16a34a"}},recencyBias.frequencyMultiplier+"×")
-          ),
-          React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:6}},recencyBias.isFreqBias?"You trade "+recencyBias.frequencyMultiplier+"× more frequently after big wins":"Trade frequency is stable after wins")
-        ),
-        React.createElement("div",{style:{padding:16,background:recencyBias.isSizeBias?"rgba(245,158,11,.06)":"rgba(22,163,74,.06)",border:"1px solid "+(recencyBias.isSizeBias?"rgba(245,158,11,.18)":"rgba(22,163,74,.18)"),borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:recencyBias.isSizeBias?"#f59e0b":"#16a34a",textTransform:"uppercase",letterSpacing:1,marginBottom:10,display:"flex",alignItems:"center",gap:4}},React.createElement(Icon,{n:"money",size:12})," Trade Size After Big Wins"),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Avg Size After Win"),
-            React.createElement("span",{style:{fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"var(--text)"}},"₹"+Number(Math.round(recencyBias.avgPostAmt)).toLocaleString("en-IN"))
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Normal Avg Size"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text4)"}},"₹"+Number(Math.round(recencyBias.avgNormalAmt)).toLocaleString("en-IN"))
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",paddingTop:6,borderTop:"1px solid var(--border2)"}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600}},"Size Multiplier"),
-            React.createElement("span",{style:{fontSize:14,fontWeight:800,fontFamily:"'Sora',sans-serif",color:recencyBias.isSizeBias?"#f59e0b":"#16a34a"}},recencyBias.sizeMultiplier+"×")
-          ),
-          React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:6}},recencyBias.isSizeBias?"You bet "+recencyBias.sizeMultiplier+"× bigger after big wins — overconfidence":"Position sizing stays consistent after wins")
-        ),
-        React.createElement("div",{style:{padding:16,background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,gridColumn:"1 / -1"}},
-          React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text3)",marginBottom:6,display:"flex",alignItems:"center",gap:5}},React.createElement(Icon,{n:"lightbulb",size:13}),"Recency Bias Insight"),
-          React.createElement("div",{style:{fontSize:12,color:"var(--text4)",lineHeight:1.6}},
-            recencyBias.isFreqBias&&recencyBias.isSizeBias
-              ?React.createElement(React.Fragment,null,"Strong recency bias detected. After big wins (top 20%, ≥",recencyBias.bigWinThreshold,"% return), you trade ",React.createElement("strong",{style:{color:"#f59e0b"}},recencyBias.frequencyMultiplier+"×")," more often and bet ",React.createElement("strong",{style:{color:"#f59e0b"}},recencyBias.sizeMultiplier+"×")," bigger. This overconfidence often leads to giving back gains. Consider a cooling-off rule after big wins.")
-              :recencyBias.isFreqBias
-                ?React.createElement(React.Fragment,null,"You increase trade frequency (",React.createElement("strong",{style:{color:"#f59e0b"}},recencyBias.frequencyMultiplier+"×"),") after big wins but keep sizes steady. The increased activity may lead to lower-quality trades. Quality over quantity.")
-                :recencyBias.isSizeBias
-                  ?React.createElement(React.Fragment,null,"You increase position size (",React.createElement("strong",{style:{color:"#f59e0b"}},recencyBias.sizeMultiplier+"×"),") after big wins. This 'house money' effect can be dangerous — a single large loss can wipe out multiple small wins. Keep sizing consistent.")
-                  :React.createElement(React.Fragment,null,"No significant recency bias detected. Your trade frequency and sizing remain consistent regardless of recent results. This is disciplined behaviour.")
-          )
-        )
-      )
-    ),
-
-    /* ══ Report 5: Disposition Effect Score ══ */
-    dispositionEffect&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"target",size:15}),"Disposition Effect Score"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:sevBg(dispositionEffect.severityColor),color:dispositionEffect.severityColor,border:"1px solid "+sevBorder(dispositionEffect.severityColor),fontWeight:600}},dispositionEffect.severityLabel)
-      ),
-      React.createElement("div",{style:{padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16}},
-        React.createElement("div",{style:{padding:16,background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text3)",textTransform:"uppercase",letterSpacing:1,marginBottom:10}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"chart",size:13})," Trade Exit Speed (threshold: "+dispositionEffect.quickThreshold+" days)")),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6,padding:"6px 8px",background:"rgba(22,163,74,.06)",borderRadius:6}},
-            React.createElement("span",{style:{fontSize:11,color:"#16a34a"}},"Quick Wins (≤"+dispositionEffect.quickThreshold+"d)"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"#16a34a"}},dispositionEffect.quickWins+" / "+dispositionEffect.totalWins)
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6,padding:"6px 8px",background:"rgba(22,163,74,.03)",borderRadius:6}},
-            React.createElement("span",{style:{fontSize:11,color:"#16a34a"}},"Slow Wins (>"+dispositionEffect.quickThreshold+"d)"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#16a34a"}},dispositionEffect.slowWins+" / "+dispositionEffect.totalWins)
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6,padding:"6px 8px",background:"rgba(239,68,68,.06)",borderRadius:6}},
-            React.createElement("span",{style:{fontSize:11,color:"#ef4444"}},"Quick Losses (≤"+dispositionEffect.quickThreshold+"d)"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"#ef4444"}},dispositionEffect.quickLosses+" / "+dispositionEffect.totalLosses)
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",padding:"6px 8px",background:"rgba(239,68,68,.03)",borderRadius:6}},
-            React.createElement("span",{style:{fontSize:11,color:"#ef4444"}},"Slow Losses (>"+dispositionEffect.quickThreshold+"d)"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#ef4444"}},dispositionEffect.slowLosses+" / "+dispositionEffect.totalLosses)
-          )
-        ),
-        React.createElement("div",{style:{padding:16,background:sevBg(dispositionEffect.severityColor),border:"1px solid "+sevBorder(dispositionEffect.severityColor),borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text3)",textTransform:"uppercase",letterSpacing:1,marginBottom:10}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"target",size:13})," Disposition Score Breakdown")),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Quick Win Rate"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#16a34a"}},dispositionEffect.quickWinRate+"%")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Quick Loss Rate"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"#ef4444"}},dispositionEffect.quickLossRate+"%")
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",paddingTop:8,borderTop:"1px solid var(--border2)",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600}},"Score (WinRate ÷ LossRate)"),
-            React.createElement("span",{style:{fontSize:16,fontWeight:800,fontFamily:"'Sora',sans-serif",color:dispositionEffect.severityColor}},dispositionEffect.dispositionScore)
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between"}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Median Hold Period"),
-            React.createElement("span",{style:{fontSize:12,fontWeight:600,color:"var(--text)"}},dispositionEffect.medianHold+" days")
-          )
-        ),
-        React.createElement("div",{style:{padding:16,background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,gridColumn:"1 / -1"}},
-          React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text3)",marginBottom:6,display:"flex",alignItems:"center",gap:5}},React.createElement(Icon,{n:"lightbulb",size:13}),"Disposition Effect Insight"),
-          React.createElement("div",{style:{fontSize:12,color:"var(--text4)",lineHeight:1.6}},
-            "The disposition effect is the tendency to sell winners quickly (to lock in gains) while holding losers (hoping for recovery). ",
-            "Your score of ",React.createElement("strong",{style:{color:dispositionEffect.severityColor}},dispositionEffect.dispositionScore),
-            " means: ",dispositionEffect.quickWinRate,"% of wins are realised within "+dispositionEffect.quickThreshold+" days vs ",
-            dispositionEffect.quickLossRate,"% of losses. ",
-            dispositionEffect.dispositionScoreNum>=2
-              ?React.createElement(React.Fragment,null,"Strong disposition effect — you're locking in gains too early while letting losses run. Try the opposite: set profit targets that are 2-3× your stop-loss distance, and enforce stop-losses mechanically.")
-              :dispositionEffect.dispositionScoreNum>=1.5
-                ?React.createElement(React.Fragment,null,"Moderate disposition effect. You tend to sell winners faster than losers. Consider using trailing stops instead of fixed targets, and pre-define your exit criteria before entering.")
-                :dispositionEffect.dispositionScoreNum>=0.7
-                  ?React.createElement(React.Fragment,null,"Balanced exit behaviour — you're not showing a strong disposition effect. Your exit timing is relatively consistent across winners and losers.")
-                  :React.createElement(React.Fragment,null,"Reverse disposition — you actually hold winners longer and cut losers quickly. This is the ideal pattern for long-term returns. Well done!")
-          )
-        )
-      )
-    ),
-
-    /* ══ Methodology note ══ */
-    React.createElement("div",{style:{padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-      React.createElement("strong",{style:{color:"var(--accent)"}},"Methodology: "),
-      "Buy-the-dip detection: for each stock, a buy is classified as 'dip' if the buy price is ≥5% below the highest previous buy price for that stock, and 'momentum' if at or above. Premature exits: sold trades where the stock's current price is >10% above the sell price. Well-timed exits: price dropped >5% after selling. Loss aversion ratio = average loser hold days ÷ average winner hold days; >1.2 indicates loss aversion. Recency bias: compares trade frequency and size in the 30 days after a 'big win' (top 20% by return) to the overall baseline. Disposition score = (quick win rate) ÷ (quick loss rate), where 'quick' = held ≤30 days or half the median hold period (whichever is greater). Active holdings use current price as exit. All amounts are gross of brokerage."
-    )
-  );
-};
-
-const TradeTimingCorrelation=({shares,soldShareSnapshots={}})=>{
-
-  /* ── Build unified trade list ── */
-  const trades=React.useMemo(()=>{
-    const list=[];
-    (shares||[]).forEach(sh=>{
-      if(!sh.qty||!sh.buyPrice||!sh.currentPrice||!sh.buyDate)return;
-      const buyDate=new Date(sh.buyDate+"T12:00:00");
-      const sellDate=new Date(TODAY()+"T12:00:00");
-      const holdDays=Math.max(1,Math.floor((sellDate-buyDate)/864e5));
-      const buyAmt=sh.qty*sh.buyPrice;
-      const sellAmt=sh.qty*sh.currentPrice;
-      const brokerage=+sh.brokerage||0;
-      const pnl=sellAmt-buyAmt-brokerage;
-      const returnPct=buyAmt>0?(pnl/buyAmt*100):0;
-      const buyDay=buyDate.getDay();
-      const buyMonth=buyDate.getMonth();
-      list.push({
-        id:sh.id,type:"active",company:sh.company,ticker:sh.ticker,
-        qty:sh.qty,buyPrice:sh.buyPrice,sellPrice:sh.currentPrice,
-        buyDateStr:sh.buyDate,sellDateStr:TODAY(),
-        buyDate,sellDate,holdDays,
-        buyAmt,sellAmt,brokerage,pnl,returnPct,
-        buyDay,buyMonth,sellDay:null,sellMonth:null,
-      });
-    });
-    Object.values(soldShareSnapshots||{}).forEach(fySnaps=>{
-      (fySnaps||[]).forEach(sn=>{
-        if(!sn.qty||!sn.buyPrice||!sn.sellPrice||!sn.buyDate||!sn.savedAt)return;
-        const buyDate=new Date(sn.buyDate+"T12:00:00");
-        const sellDate=new Date(sn.savedAt+"T12:00:00");
-        const holdDays=Math.max(1,Math.floor((sellDate-buyDate)/864e5));
-        const buyAmt=sn.qty*sn.buyPrice;
-        const sellAmt=sn.qty*sn.sellPrice;
-        const brokerage=+sn.brokerage||0;
-        const pnl=sellAmt-buyAmt-brokerage;
-        const returnPct=buyAmt>0?(pnl/buyAmt*100):0;
-        const buyDay=buyDate.getDay();
-        const buyMonth=buyDate.getMonth();
-        const sellDay=sellDate.getDay();
-        const sellMonth=sellDate.getMonth();
-        list.push({
-          id:sn.id,type:"sold",company:sn.company,ticker:sn.ticker,
-          qty:sn.qty,buyPrice:sn.buyPrice,sellPrice:sn.sellPrice,
-          buyDateStr:sn.buyDate,sellDateStr:sn.savedAt,
-          buyDate,sellDate,holdDays,
-          buyAmt,sellAmt,brokerage,pnl,returnPct,
-          buyDay,buyMonth,sellDay,sellMonth,
-        });
-      });
-    });
-    list.sort((a,b)=>a.buyDateStr.localeCompare(b.buyDateStr));
-    return list;
-  },[shares,soldShareSnapshots]);
-
-  const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
-  /* ── Buy day-of-week effect ── */
-  const buyDayStats=React.useMemo(()=>{
-    if(!trades.length)return null;
-    const byDay=Array.from({length:7},()=>({count:0,totalPnl:0,totalReturn:0,totalBuyAmt:0,wins:0,holdDays:0}));
-    trades.forEach(t=>{
-      const d=t.buyDay;
-      byDay[d].count++;
-      byDay[d].totalPnl+=t.pnl;
-      byDay[d].totalReturn+=t.returnPct;
-      byDay[d].totalBuyAmt+=t.buyAmt;
-      byDay[d].holdDays+=t.holdDays;
-      if(t.pnl>0)byDay[d].wins++;
-    });
-    const stats=byDay.map((s,i)=>({
-      day:i,label:DAYS[i],count:s.count,
-      avgReturn:s.count>0?s.totalReturn/s.count:0,
-      avgPnl:s.count>0?s.totalPnl/s.count:0,
-      totalPnl:s.totalPnl,
-      winRate:s.count>0?(s.wins/s.count*100):0,
-      totalBuyAmt:s.totalBuyAmt,
-      avgHold:s.count>0?Math.round(s.holdDays/s.count):0,
-    }));
-    const withTrades=stats.filter(s=>s.count>0);
-    const best=withTrades.length?withTrades.reduce((a,b)=>b.avgReturn>a.avgReturn?b:a):null;
-    const worst=withTrades.length?withTrades.reduce((a,b)=>b.avgReturn<a.avgReturn?b:a):null;
-    return{stats,best,worst};
-  },[trades]);
-
-  /* ── Sell day-of-week effect ── */
-  const sellDayStats=React.useMemo(()=>{
-    const soldTrades=trades.filter(t=>t.type==="sold"&&t.sellDay!==null);
-    if(!soldTrades.length)return null;
-    const byDay=Array.from({length:7},()=>({count:0,totalPnl:0,totalReturn:0,wins:0}));
-    soldTrades.forEach(t=>{
-      const d=t.sellDay;
-      byDay[d].count++;
-      byDay[d].totalPnl+=t.pnl;
-      byDay[d].totalReturn+=t.returnPct;
-      if(t.pnl>0)byDay[d].wins++;
-    });
-    const stats=byDay.map((s,i)=>({
-      day:i,label:DAYS[i],count:s.count,
-      avgReturn:s.count>0?s.totalReturn/s.count:0,
-      avgPnl:s.count>0?s.totalPnl/s.count:0,
-      totalPnl:s.totalPnl,
-      winRate:s.count>0?(s.wins/s.count*100):0,
-    }));
-    const withTrades=stats.filter(s=>s.count>0);
-    const best=withTrades.length?withTrades.reduce((a,b)=>b.avgReturn>a.avgReturn?b:a):null;
-    const worst=withTrades.length?withTrades.reduce((a,b)=>b.avgReturn<a.avgReturn?b:a):null;
-    return{stats,best,worst,totalSold:soldTrades.length};
-  },[trades]);
-
-  /* ── Month-of-year entry performance ── */
-  const monthStats=React.useMemo(()=>{
-    if(!trades.length)return null;
-    const byMonth=Array.from({length:12},()=>({count:0,totalPnl:0,totalReturn:0,wins:0,totalBuyAmt:0}));
-    trades.forEach(t=>{
-      const m=t.buyMonth;
-      byMonth[m].count++;
-      byMonth[m].totalPnl+=t.pnl;
-      byMonth[m].totalReturn+=t.returnPct;
-      byMonth[m].totalBuyAmt+=t.buyAmt;
-      if(t.pnl>0)byMonth[m].wins++;
-    });
-    const stats=byMonth.map((s,i)=>({
-      month:i,label:MONTHS[i],count:s.count,
-      avgReturn:s.count>0?s.totalReturn/s.count:0,
-      totalPnl:s.totalPnl,
-      winRate:s.count>0?(s.wins/s.count*100):0,
-      totalBuyAmt:s.totalBuyAmt,
-    }));
-    const withTrades=stats.filter(s=>s.count>0);
-    const best=withTrades.length?withTrades.reduce((a,b)=>b.avgReturn>a.avgReturn?b:a):null;
-    const worst=withTrades.length?withTrades.reduce((a,b)=>b.avgReturn<a.avgReturn?b:a):null;
-    /* Sell-in-May analysis */
-    const summerMonths=[4,5,6,7]; /* May-Aug */
-    const winterMonths=[0,1,2,3,8,9,10,11]; /* rest */
-    const summerTrades=trades.filter(t=>summerMonths.includes(t.buyMonth));
-    const winterTrades=trades.filter(t=>winterMonths.includes(t.buyMonth));
-    const avgReturn=arr=>arr.length>0?arr.reduce((s,t)=>s+t.returnPct,0)/arr.length:0;
-    const winRate=arr=>arr.length>0?arr.filter(t=>t.pnl>0).length/arr.length*100:0;
-    return{stats,best,worst,
-      summer:{count:summerTrades.length,avgReturn:avgReturn(summerTrades),winRate:winRate(summerTrades)},
-      winter:{count:winterTrades.length,avgReturn:avgReturn(winterTrades),winRate:winRate(winterTrades)},
-    };
-  },[trades]);
-
-  /* ── Time-in-market distribution ── */
-  const timeInMarket=React.useMemo(()=>{
-    if(!trades.length)return null;
-    /* Build day-by-day occupancy map */
-    const allDates=trades.map(t=>({start:t.buyDate,end:t.sellDate}));
-    const earliest=new Date(Math.min(...allDates.map(d=>d.start)));
-    const latest=new Date(Math.max(...allDates.map(d=>d.end)));
-    const totalCalendarDays=Math.max(1,Math.floor((latest-earliest)/864e5));
-    /* For each calendar day, check if any trade was active */
-    const MS_PER_DAY=864e5;
-    let daysWithCapital=0;
-    let daysWithMultiple=0;
-    /* Use monthly buckets for distribution */
-    const monthlyOccupancy={};
-    for(let d=new Date(earliest);d<=latest;d=new Date(d.getTime()+MS_PER_DAY)){
-      const ym=d.toISOString().slice(0,7);
-      if(!monthlyOccupancy[ym])monthlyOccupancy[ym]={days:0,occupied:0};
-      monthlyOccupancy[ym].days++;
-      let activeCount=0;
-      for(const t of allDates){
-        if(d>=t.start&&d<=t.end){activeCount++;break;}
-      }
-      if(activeCount>0){daysWithCapital++;monthlyOccupancy[ym].occupied++;}
-      if(activeCount>1)daysWithMultiple++;
-    }
-    const pct=totalCalendarDays>0?(daysWithCapital/totalCalendarDays*100):0;
-    const months=Object.entries(monthlyOccupancy).map(([ym,v])=>({
-      month:ym,occupied:v.occupied,total:v.days,
-      pct:v.days>0?(v.occupied/v.days*100):0,
-    })).sort((a,b)=>a.month.localeCompare(b.month));
-    return{
-      totalCalendarDays,daysWithCapital,daysWithMultiple,
-      pct,daysIdle:totalCalendarDays-daysWithCapital,
-      months,
-    };
-  },[trades]);
-
-  /* ── Empty state ── */
-  if(!trades.length)return React.createElement("div",{style:{textAlign:"center",padding:"48px 20px"}},
-    React.createElement("div",{style:{fontSize:40,marginBottom:12,color:"var(--text6)"}},React.createElement(Icon,{n:"alarmclock",size:40})),
-    React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text3)",marginBottom:4}},"No Trade Data"),
-    React.createElement("div",{style:{fontSize:13,color:"var(--text6)"}},"Add shares or save snapshots to Previous Trades to see timing correlation analytics.")
-  );
-
-  const retColor=v=>v>=0?"#16a34a":"#ef4444";
-  const retSign=v=>(v>=0?"+":"")+v.toFixed(2)+"%";
-
-  /* Bar helper */
-  const BarPct=({pct,color,maxPct=100})=>React.createElement("div",{style:{height:8,background:"var(--bg5)",borderRadius:4,overflow:"hidden",flex:1}},
-    React.createElement("div",{style:{height:"100%",width:Math.min(100,pct/maxPct*100)+"%",background:color||"var(--accent)",borderRadius:4,transition:"width .3s"}})
-  );
-
-  return React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:20}},
-    /* ══ Summary Stat Cards ══ */
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:12}},
-      buyDayStats&&buyDayStats.best&&React.createElement("div",{style:{background:"rgba(22,163,74,.07)",border:"1px solid rgba(22,163,74,.2)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Best Buy Day"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#16a34a"}},buyDayStats.best.label),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},retSign(buyDayStats.best.avgReturn)+" avg ("+buyDayStats.best.count+" trades)")
-      ),
-      monthStats&&monthStats.best&&React.createElement("div",{style:{background:"rgba(22,163,74,.07)",border:"1px solid rgba(22,163,74,.2)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Best Entry Month"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#16a34a"}},monthStats.best.label),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},retSign(monthStats.best.avgReturn)+" avg ("+monthStats.best.count+" trades)")
-      ),
-      timeInMarket&&React.createElement("div",{style:{background:"rgba(14,116,144,.07)",border:"1px solid rgba(14,116,144,.2)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Time in Market"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#0e7490"}},timeInMarket.pct.toFixed(1)+"%"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},timeInMarket.daysWithCapital+" of "+timeInMarket.totalCalendarDays+" days")
-      ),
-      monthStats&&(()=>{
-              const sellInMay=monthStats.summer.avgReturn<monthStats.winter.avgReturn;
-              return React.createElement("div",{style:{background:sellInMay?"rgba(245,158,11,.07)":"rgba(22,163,74,.07)",border:"1px solid "+(sellInMay?"rgba(245,158,11,.2)":"rgba(22,163,74,.2)"),borderRadius:12,padding:"14px 16px"}},
-                React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Sell in May?"),
-                React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:sellInMay?"#f59e0b":"#16a34a"}},sellInMay?"Yes":"No"),
-                React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Summer: "+retSign(monthStats.summer.avgReturn)+" vs Winter: "+retSign(monthStats.winter.avgReturn))
-              );
-            })()
-    ),
-
-    /* ══ Report 1: Buy Day-of-Week Effect ══ */
-    buyDayStats&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"calendar",size:15}),"Buy Day-of-Week Effect"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},trades.length+" trades")
-      ),
-      React.createElement("div",{style:{padding:"16px 20px"}},
-        /* Header */
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"70px 1fr 60px 70px 70px 60px",gap:8,marginBottom:8,padding:"0 4px",fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},
-          React.createElement("div",null,"Day"),
-          React.createElement("div",null,"Avg Return"),
-          React.createElement("div",{textAlign:"right"},"Count"),
-          React.createElement("div",{textAlign:"right"},"Win %"),
-          React.createElement("div",{textAlign:"right"},"Avg P&L"),
-          React.createElement("div",{textAlign:"right"},"Avg Hold")
-        ),
-        /* Rows */
-        buyDayStats.stats.filter(s=>s.count>0).sort((a,b)=>b.avgReturn-a.avgReturn).map(s=>{
-          const isBest=buyDayStats.best&&s.day===buyDayStats.best.day;
-          const isWorst=buyDayStats.worst&&s.day===buyDayStats.worst.day;
-          const maxRet=Math.max(...buyDayStats.stats.filter(x=>x.count>0).map(x=>Math.abs(x.avgReturn)),1);
-          return React.createElement("div",{key:s.day,style:{display:"grid",gridTemplateColumns:"70px 1fr 60px 70px 70px 60px",gap:8,padding:"8px 4px",borderBottom:"1px solid var(--border2)",background:isBest?"rgba(22,163,74,.04)":isWorst?"rgba(239,68,68,.04)":"transparent",borderRadius:isBest||isWorst?6:0}},
-            React.createElement("div",{style:{fontSize:12,fontWeight:600,color:isBest?"#16a34a":isWorst?"#ef4444":"var(--text)"}},s.label,React.createElement("span",{style:{fontSize:9,color:"var(--text5)",marginLeft:4}},s.day===buyDayStats.best?.day?"★":s.day===buyDayStats.worst?.day?"▼":"")),
-            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
-              React.createElement(BarPct,{pct:Math.abs(s.avgReturn),maxPct:maxRet,color:retColor(s.avgReturn)}),
-              React.createElement("span",{style:{fontSize:11,fontWeight:600,color:retColor(s.avgReturn),minWidth:52,textAlign:"right"}},retSign(s.avgReturn))
-            ),
-            React.createElement("div",{style:{fontSize:11,textAlign:"right",color:"var(--text4)"}},s.count),
-            React.createElement("div",{style:{fontSize:11,textAlign:"right",fontWeight:600,color:s.winRate>=50?"#16a34a":"#ef4444"}},s.winRate.toFixed(0)+"%"),
-            React.createElement("div",{style:{fontSize:11,textAlign:"right",fontWeight:600,color:retColor(s.avgPnl)}},(s.avgPnl>=0?"+":"")+INR(s.avgPnl)),
-            React.createElement("div",{style:{fontSize:10,textAlign:"right",color:"var(--text5)"}},s.avgHold+"d")
-          );
-        }),
-        /* Insight */
-        buyDayStats.best&&buyDayStats.worst&&React.createElement("div",{style:{marginTop:12,padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-          React.createElement("strong",{style:{color:"var(--accent)"}},"Insight: "),
-          buyDayStats.best.day===1
-            ?React.createElement(React.Fragment,null,"Monday buys perform best (avg ",retSign(buyDayStats.best.avgReturn),"). This aligns with the documented 'Monday effect' — markets tend to dip on Mondays, offering better entry prices. ",buyDayStats.worst.day===5?"Friday buys perform worst — consider avoiding end-of-week entries.":"")
-            :buyDayStats.best.day===5
-              ?React.createElement(React.Fragment,null,"Friday buys perform best (avg ",retSign(buyDayStats.best.avgReturn),"). You may be capitalising on pre-weekend momentum or picking up stocks before positive Monday gaps.")
-              :React.createElement(React.Fragment,null,"Your best entry day is ",buyDayStats.best.label," (avg ",retSign(buyDayStats.best.avgReturn),") and worst is ",buyDayStats.worst.label," (avg ",retSign(buyDayStats.worst.avgReturn),"). The spread of ",retSign(buyDayStats.best.avgReturn-buyDayStats.worst.avgReturn)," suggests a real day-of-week edge.")
-        )
-      )
-    ),
-
-    /* ══ Report 2: Sell Day-of-Week Effect ══ */
-    sellDayStats&&sellDayStats.totalSold>0&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"calendar",size:15}),"Sell Day-of-Week Effect"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},sellDayStats.totalSold+" sold trades")
-      ),
-      React.createElement("div",{style:{padding:"16px 20px"}},
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"70px 1fr 60px 70px 70px",gap:8,marginBottom:8,padding:"0 4px",fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},
-          React.createElement("div",null,"Day"),
-          React.createElement("div",null,"Avg Return"),
-          React.createElement("div",{textAlign:"right"},"Count"),
-          React.createElement("div",{textAlign:"right"},"Win %"),
-          React.createElement("div",{textAlign:"right"},"Avg P&L")
-        ),
-        sellDayStats.stats.filter(s=>s.count>0).sort((a,b)=>b.avgReturn-a.avgReturn).map(s=>{
-          const isBest=sellDayStats.best&&s.day===sellDayStats.best.day;
-          const isWorst=sellDayStats.worst&&s.day===sellDayStats.worst.day;
-          const maxRet=Math.max(...sellDayStats.stats.filter(x=>x.count>0).map(x=>Math.abs(x.avgReturn)),1);
-          return React.createElement("div",{key:s.day,style:{display:"grid",gridTemplateColumns:"70px 1fr 60px 70px 70px",gap:8,padding:"8px 4px",borderBottom:"1px solid var(--border2)",background:isBest?"rgba(22,163,74,.04)":isWorst?"rgba(239,68,68,.04)":"transparent",borderRadius:isBest||isWorst?6:0}},
-            React.createElement("div",{style:{fontSize:12,fontWeight:600,color:isBest?"#16a34a":isWorst?"#ef4444":"var(--text)"}},s.label,React.createElement("span",{style:{fontSize:9,color:"var(--text5)",marginLeft:4}},s.day===sellDayStats.best?.day?"★":s.day===sellDayStats.worst?.day?"▼":"")),
-            React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
-              React.createElement(BarPct,{pct:Math.abs(s.avgReturn),maxPct:maxRet,color:retColor(s.avgReturn)}),
-              React.createElement("span",{style:{fontSize:11,fontWeight:600,color:retColor(s.avgReturn),minWidth:52,textAlign:"right"}},retSign(s.avgReturn))
-            ),
-            React.createElement("div",{style:{fontSize:11,textAlign:"right",color:"var(--text4)"}},s.count),
-            React.createElement("div",{style:{fontSize:11,textAlign:"right",fontWeight:600,color:s.winRate>=50?"#16a34a":"#ef4444"}},s.winRate.toFixed(0)+"%"),
-            React.createElement("div",{style:{fontSize:11,textAlign:"right",fontWeight:600,color:retColor(s.avgPnl)}},(s.avgPnl>=0?"+":"")+INR(s.avgPnl))
-          );
-        }),
-        sellDayStats.best&&sellDayStats.worst&&React.createElement("div",{style:{marginTop:12,padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-          React.createElement("strong",{style:{color:"var(--accent)"}},"Insight: "),
-          "Your best exit day is ",sellDayStats.best.label," (avg ",retSign(sellDayStats.best.avgReturn),") and worst is ",sellDayStats.worst.label," (avg ",retSign(sellDayStats.worst.avgReturn),"). ",
-          sellDayStats.best.day===5
-            ?"Friday exits outperform — traders may bid up prices before weekends, or you're capturing Friday profit-taking reversals."
-            :sellDayStats.best.day===1
-              ?"Monday exits are best — markets often gap up on Mondays from positive weekend news flow."
-              :"Consider timing your exits towards "+sellDayStats.best.label+"s if the pattern holds across enough trades."
-        )
-      )
-    ),
-
-    /* ══ Report 3: Month-of-Year Entry Performance ══ */
-    monthStats&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"calendar",size:15}),"Month-of-Year Entry Performance"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},"seasonality analysis")
-      ),
-      React.createElement("div",{style:{padding:"16px 20px"}},
-        /* Monthly grid */
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:8,marginBottom:16}},
-          monthStats.stats.map(s=>{
-            const isBest=monthStats.best&&s.month===monthStats.best.month;
-            const isWorst=monthStats.worst&&s.month===monthStats.worst.month;
-            return React.createElement("div",{key:s.month,style:{padding:"10px 12px",borderRadius:10,border:"1px solid "+(isBest?"rgba(22,163,74,.3)":isWorst?"rgba(239,68,68,.3)":"var(--border)"),background:isBest?"rgba(22,163,74,.06)":isWorst?"rgba(239,68,68,.06)":"var(--bg4)"}},
-              React.createElement("div",{style:{fontSize:11,fontWeight:700,color:isBest?"#16a34a":isWorst?"#ef4444":"var(--text)",marginBottom:4}},s.label,isBest?" ★":"",isWorst?" ▼":""),
-              s.count>0?React.createElement(React.Fragment,null,
-                React.createElement("div",{style:{fontSize:15,fontFamily:"'Sora',sans-serif",fontWeight:700,color:retColor(s.avgReturn)}},retSign(s.avgReturn)),
-                React.createElement("div",{style:{fontSize:9,color:"var(--text5)",marginTop:2}},s.count+" trades · "+s.winRate.toFixed(0)+"% win")
-              ):React.createElement("div",{style:{fontSize:11,color:"var(--text5)",fontStyle:"italic"}},"No trades")
-            );
-          })
-        ),
-        /* Sell-in-May analysis */
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}},
-          React.createElement("div",{style:{padding:12,background:"rgba(245,158,11,.06)",border:"1px solid rgba(245,158,11,.18)",borderRadius:10}},
-            React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#f59e0b",textTransform:"uppercase",letterSpacing:1,marginBottom:6,display:"flex",alignItems:"center",gap:4}},React.createElement(Icon,{n:"sun",size:12,color:"#f59e0b"})," Summer (May–Aug)"),
-            React.createElement("div",{style:{fontSize:14,fontFamily:"'Sora',sans-serif",fontWeight:700,color:retColor(monthStats.summer.avgReturn)}},retSign(monthStats.summer.avgReturn)),
-            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},monthStats.summer.count+" trades · "+monthStats.summer.winRate.toFixed(0)+"% win")
-          ),
-          React.createElement("div",{style:{padding:12,background:"rgba(14,116,144,.06)",border:"1px solid rgba(14,116,144,.18)",borderRadius:10}},
-            React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#0e7490",textTransform:"uppercase",letterSpacing:1,marginBottom:6,display:"flex",alignItems:"center",gap:4}},React.createElement(Icon,{n:"cloud",size:12,color:"#0e7490"})," Winter (Sep–Apr)"),
-            React.createElement("div",{style:{fontSize:14,fontFamily:"'Sora',sans-serif",fontWeight:700,color:retColor(monthStats.winter.avgReturn)}},retSign(monthStats.winter.avgReturn)),
-            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},monthStats.winter.count+" trades · "+monthStats.winter.winRate.toFixed(0)+"% win")
-          )
-        ),
-        /* Insight */
-        React.createElement("div",{style:{padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-          React.createElement("strong",{style:{color:"var(--accent)"}},"Insight: "),
-          monthStats.best&&monthStats.worst
-            ?React.createElement(React.Fragment,null,"Best entry month: ",React.createElement("strong",{style:{color:"#16a34a"}},monthStats.best.label)," (avg ",retSign(monthStats.best.avgReturn),"). Worst: ",React.createElement("strong",{style:{color:"#ef4444"}},monthStats.worst.label)," (avg ",retSign(monthStats.worst.avgReturn),"). ",
-              monthStats.summer.avgReturn<monthStats.winter.avgReturn
-                ?React.createElement(React.Fragment,null,"Your data supports 'Sell in May' — summer entries (",retSign(monthStats.summer.avgReturn),") underperform winter (",retSign(monthStats.winter.avgReturn),") by ",retSign(monthStats.winter.avgReturn-monthStats.summer.avgReturn),". Consider reducing summer exposure.")
-                :React.createElement(React.Fragment,null,"Your data contradicts 'Sell in May' — summer entries (",retSign(monthStats.summer.avgReturn),") actually outperform winter (",retSign(monthStats.winter.avgReturn),"). Your edge may be in summer-specific sectors or patterns.")
-            )
-            :"Not enough data across months for seasonal analysis."
-        )
-      )
-    ),
-
-    /* ══ Report 4: Time-in-Market Distribution ══ */
-    timeInMarket&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"clock",size:15}),"Time-in-Market Distribution"),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},timeInMarket.totalCalendarDays+" calendar days")
-      ),
-      React.createElement("div",{style:{padding:"16px 20px",display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:16}},
-        /* Stats */
-        React.createElement("div",{style:{padding:16,background:"rgba(14,116,144,.06)",border:"1px solid rgba(14,116,144,.18)",borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#0e7490",textTransform:"uppercase",letterSpacing:1,marginBottom:10}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"chart",size:13})," Capital Deployment Summary")),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Total Calendar Days"),
-            React.createElement("span",{style:{fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"var(--text)"}},timeInMarket.totalCalendarDays.toLocaleString("en-IN"))
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Days with Capital Deployed"),
-            React.createElement("span",{style:{fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"#0e7490"}},timeInMarket.daysWithCapital.toLocaleString("en-IN"))
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)"}},"Days Idle (no positions)"),
-            React.createElement("span",{style:{fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"var(--text4)"}},timeInMarket.daysIdle.toLocaleString("en-IN"))
-          ),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",paddingTop:6,borderTop:"1px solid var(--border2)"}},
-            React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600}},"Time in Market"),
-            React.createElement("span",{style:{fontSize:16,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#0e7490"}},timeInMarket.pct.toFixed(1)+"%")
-          )
-        ),
-        /* Visual occupancy bar */
-        React.createElement("div",{style:{padding:16,background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12}},
-          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"var(--text3)",textTransform:"uppercase",letterSpacing:1,marginBottom:10,display:"flex",alignItems:"center",gap:4}},React.createElement(Icon,{n:"calendar",size:12})," Monthly Occupancy"),
-          React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:4,maxHeight:200,overflowY:"auto"}},
-            timeInMarket.months.map(m=>React.createElement("div",{key:m.month,style:{display:"flex",alignItems:"center",gap:8,fontSize:10}},
-              React.createElement("div",{style:{width:50,color:"var(--text5)",flexShrink:0}},m.month),
-              React.createElement("div",{style:{flex:1,height:12,background:"var(--bg5)",borderRadius:3,overflow:"hidden"}},
-                React.createElement("div",{style:{height:"100%",width:m.pct+"%",background:m.pct>80?"#0e7490":m.pct>50?"#16a34a":m.pct>0?"#f59e0b":"var(--bg5)",borderRadius:3}})
-              ),
-              React.createElement("div",{style:{width:36,textAlign:"right",color:"var(--text4)",fontWeight:600}},m.pct.toFixed(0)+"%")
-            ))
-          )
-        ),
-        /* Insight */
-        React.createElement("div",{style:{padding:16,background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:12,gridColumn:"1 / -1"}},
-          React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text3)",marginBottom:6,display:"flex",alignItems:"center",gap:5}},React.createElement(Icon,{n:"lightbulb",size:13}),"Time-in-Market Insight"),
-          React.createElement("div",{style:{fontSize:12,color:"var(--text4)",lineHeight:1.6}},
-            "Over ",React.createElement("strong",null,timeInMarket.totalCalendarDays.toLocaleString("en-IN"))," calendar days from your first buy to today, you had capital deployed for ",
-            React.createElement("strong",{style:{color:"#0e7490"}},timeInMarket.daysWithCapital.toLocaleString("en-IN"))," days (",React.createElement("strong",null,timeInMarket.pct.toFixed(1)+"%"),"). ",
-            timeInMarket.pct>80
-              ?"You're almost always in the market — this is aggressive. Make sure idle periods aren't just 'dead money' in positions you've stopped tracking."
-              :timeInMarket.pct>50
-                ?React.createElement(React.Fragment,null,"You're in the market about half the time. The other ",timeInMarket.daysIdle.toLocaleString("en-IN")," days represent potential cash drag — or deliberate risk-off periods. ",
-                  timeInMarket.daysWithMultiple>0?"On "+timeInMarket.daysWithMultiple+" days you had multiple concurrent positions — good diversification.":"")
-                :React.createElement(React.Fragment,null,"You're frequently out of the market (",timeInMarket.pct.toFixed(1)+"%). This could mean: you're a short-term trader, you take long breaks between trades, or your positions are short-lived. ",
-                  "The 'time in the market beats timing the market' principle suggests increasing deployment — but only if your entries are well-timed.")
-          )
-        )
-      )
-    ),
-
-    /* ══ Methodology note ══ */
-    React.createElement("div",{style:{padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-      React.createElement("strong",{style:{color:"var(--accent)"}},"Methodology: "),
-      "Day-of-week and month-of-year effects are computed by grouping trades by their buy (or sell) date and comparing average returns across groups. The documented 'Monday effect' refers to the tendency of stock markets to deliver lower returns on Mondays. 'Sell in May and go away' is the hypothesis that summer months (May–Aug) underperform winter months (Sep–Apr). Time-in-market counts each calendar day from your first buy date to today where at least one position was open. Occupancy is the ratio of days with active positions to total calendar days. Active holdings are treated as open until today. All amounts are gross of brokerage."
-    )
-  );
-};
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   RiskMetrics — "Risk Metrics" sub-tab
-   Combines active holdings + sold snapshots into risk analytics.
-   Reports:
-     1. Volatility of returns — standard deviation of per-trade returns
-     2. Sharpe-like ratio — average return ÷ std deviation (risk-adjusted performance)
-     3. Max drawdown equivalent — worst sequence of consecutive losses as % of capital
-     4. Concentration risk — what % of P&L came from top 3 stocks
-   ══════════════════════════════════════════════════════════════════════════ */
-const RiskMetrics=({shares,soldShareSnapshots={}})=>{
-
-  /* ── Build unified trade list ── */
-  const trades=React.useMemo(()=>{
-    const list=[];
-    (shares||[]).forEach(sh=>{
-      if(!sh.qty||!sh.buyPrice||!sh.currentPrice||!sh.buyDate)return;
-      const buyAmt=sh.qty*sh.buyPrice;
-      const sellAmt=sh.qty*sh.currentPrice;
-      const brokerage=+sh.brokerage||0;
-      const pnl=sellAmt-buyAmt-brokerage;
-      const returnPct=buyAmt>0?(pnl/buyAmt*100):0;
-      list.push({
-        id:sh.id,type:"active",company:sh.company,ticker:sh.ticker,
-        qty:sh.qty,buyPrice:sh.buyPrice,sellPrice:sh.currentPrice,
-        buyDate:sh.buyDate,sellDate:TODAY(),
-        buyAmt,sellAmt,brokerage,pnl,returnPct,
-      });
-    });
-    Object.values(soldShareSnapshots||{}).forEach(fySnaps=>{
-      (fySnaps||[]).forEach(sn=>{
-        if(!sn.qty||!sn.buyPrice||!sn.sellPrice||!sn.buyDate)return;
-        const buyAmt=sn.qty*sn.buyPrice;
-        const sellAmt=sn.qty*sn.sellPrice;
-        const brokerage=+sn.brokerage||0;
-        const pnl=sellAmt-buyAmt-brokerage;
-        const returnPct=buyAmt>0?(pnl/buyAmt*100):0;
-        list.push({
-          id:sn.id,type:"sold",company:sn.company,ticker:sn.ticker,
-          qty:sn.qty,buyPrice:sn.buyPrice,sellPrice:sn.sellPrice,
-          buyDate:sn.buyDate,sellDate:sn.savedAt,
-          buyAmt,sellAmt,brokerage,pnl,returnPct,
-        });
-      });
-    });
-    return list;
-  },[shares,soldShareSnapshots]);
-
-  /* ── 1. Volatility of returns (std dev of per-trade return %) ── */
-  const volatilityData=React.useMemo(()=>{
-    if(trades.length<2)return{stdDev:0,returns:[]};
-    const returns=trades.map(t=>t.returnPct);
-    const mean=returns.reduce((s,r)=>s+r,0)/returns.length;
-    const variance=returns.reduce((s,r)=>s+Math.pow(r-mean,2),0)/(returns.length-1);
-    const stdDev=Math.sqrt(variance);
-    return{stdDev,mean,returns};
-  },[trades]);
-
-  /* ── 2. Sharpe-like ratio (avg return / std deviation) ── */
-  const sharpeData=React.useMemo(()=>{
-    if(trades.length<2||volatilityData.stdDev===0)return null;
-    return volatilityData.mean/volatilityData.stdDev;
-  },[trades,volatilityData]);
-
-  /* ── 3. Max drawdown equivalent — worst consecutive loss sequence as % of capital ── */
-  const drawdownData=React.useMemo(()=>{
-    if(!trades.length)return{maxDrawdown:0,streaks:[]};
-    /* Sort trades by sell date (chronological) */
-    const sorted=[...trades].sort((a,b)=>(a.sellDate||"").localeCompare(b.sellDate||""));
-    /* Calculate cumulative P&L and track peak → trough */
-    let cumPnl=0,cumInvested=0,peak=0,maxDD=0,maxDDPct=0;
-    let ddStart="",ddEnd="",ddStreak=0;
-    let curStreakLosses=0,curStreakPnl=0,curStreakStart="",curStreakEnd="";
-    const streaks=[];
-    sorted.forEach(t=>{
-      cumPnl+=t.pnl;
-      cumInvested+=t.buyAmt;
-      /* Track current losing streak */
-      if(t.pnl<0){
-        if(curStreakLosses===0)curStreakStart=t.sellDate||t.buyDate;
-        curStreakLosses++;
-        curStreakPnl+=t.pnl;
-        curStreakEnd=t.sellDate||t.buyDate;
-      }else{
-        if(curStreakLosses>=2){
-          streaks.push({losses:curStreakLosses,pnl:curStreakPnl,start:curStreakStart,end:curStreakEnd});
-        }
-        curStreakLosses=0;curStreakPnl=0;curStreakStart="";curStreakEnd="";
-      }
-      /* Track drawdown from peak cumulative P&L */
-      if(cumPnl>peak)peak=cumPnl;
-      const dd=peak-cumPnl;
-      const ddPct=cumInvested>0?(dd/cumInvested*100):0;
-      if(ddPct>maxDDPct){
-        maxDDPct=ddPct;maxDD=dd;
-        ddEnd=t.sellDate||t.buyDate;
-      }
-    });
-    /* Close any trailing streak */
-    if(curStreakLosses>=2){
-      streaks.push({losses:curStreakLosses,pnl:curStreakPnl,start:curStreakStart,end:curStreakEnd});
-    }
-    /* Sort streaks by total loss (worst first) */
-    streaks.sort((a,b)=>a.pnl-b.pnl);
-    return{maxDrawdown:maxDD,maxDrawdownPct:maxDDPct,streaks,cumInvested};
-  },[trades]);
-
-  /* ── 4. Concentration risk — % of P&L from top 3 stocks ── */
-  const concentrationData=React.useMemo(()=>{
-    if(!trades.length)return{top3Pct:0,byStock:[]};
-    /* Aggregate P&L by ticker */
-    const stockMap={};
-    trades.forEach(t=>{
-      const key=(t.ticker||t.company||"Unknown").toUpperCase();
-      if(!stockMap[key])stockMap[key]={ticker:t.ticker||t.company||"Unknown",pnl:0,buyAmt:0,tradeCount:0};
-      stockMap[key].pnl+=t.pnl;
-      stockMap[key].buyAmt+=t.buyAmt;
-      stockMap[key].tradeCount++;
-    });
-    const byStock=Object.values(stockMap).sort((a,b)=>Math.abs(b.pnl)-Math.abs(a.pnl));
-    const totalAbsPnl=byStock.reduce((s,st)=>s+Math.abs(st.pnl),0);
-    const top3=byStock.slice(0,3);
-    const top3AbsPnl=top3.reduce((s,st)=>s+Math.abs(st.pnl),0);
-    const top3Pct=totalAbsPnl>0?(top3AbsPnl/totalAbsPnl*100):0;
-    return{top3Pct,byStock,totalPnl:byStock.reduce((s,st)=>s+st.pnl,0)};
-  },[trades]);
-
-  /* ── Helper functions ── */
-  const ret=(v)=>(v>=0?"+":"")+v.toFixed(2)+"%";
-  const INR=(v)=>"₹"+Number(Math.round(v)).toLocaleString("en-IN");
-
-  /* ── Risk rating helper ── */
-  const riskRating=(label,value,thresholds)=>{
-    /* thresholds: [green_max, yellow_max] — below green=low, between=medium, above=high */
-    if(value<=thresholds[0])return{level:"Low",color:"#16a34a",bg:"rgba(22,163,74,.08)",border:"rgba(22,163,74,.2)"};
-    if(value<=thresholds[1])return{level:"Medium",color:"#eab308",bg:"rgba(234,179,8,.08)",border:"rgba(234,179,8,.2)"};
-    return{level:"High",color:"#ef4444",bg:"rgba(239,68,68,.08)",border:"rgba(239,68,68,.2)"};
+    );
   };
 
-  /* ── Return distribution for histogram ── */
-  const returnDistribution=React.useMemo(()=>{
-    if(!volatilityData.returns.length)return[];
-    const rets=volatilityData.returns;
-    const min=Math.min(...rets),max=Math.max(...rets);
-    if(min===max)return[{label:ret(min),count:rets.length,min,max}];
-    const binCount=Math.min(Math.max(Math.ceil(Math.sqrt(rets.length)),5),15);
-    const range=max-min;
-    const binWidth=range/binCount;
-    const bins=[];
-    for(let i=0;i<binCount;i++){
-      const bMin=min+i*binWidth;
-      const bMax=bMin+binWidth;
-      const count=rets.filter(r=>i===binCount-1?r>=bMin&&r<=max:r>=bMin&&r<bMax).length;
-      bins.push({label:ret(bMin)+" to "+ret(bMax),count,bMin,bMax});
-    }
-    return bins;
-  },[volatilityData]);
+  if(!active.length)return null;
 
-  /* ── Risk score (composite) ── */
-  const compositeRisk=React.useMemo(()=>{
-    if(trades.length<2)return null;
-    let score=0;
-    /* Volatility: 0-100 mapped to 0-30 points */
-    score+=Math.min(volatilityData.stdDev/5*30,30);
-    /* Sharpe: negative or <0.5 = high risk, 0.5-1 = medium, >1 = low */
-    if(sharpeData!==null){
-      if(sharpeData<0.3)score+=25;
-      else if(sharpeData<0.7)score+=15;
-      else if(sharpeData<1)score+=8;
-      else score+=0;
-    }else score+=20;
-    /* Drawdown: >20% = high, 10-20% = medium, <10% = low */
-    score+=Math.min(drawdownData.maxDrawdownPct/20*25,25);
-    /* Concentration: >70% = high, 40-70% = medium, <40% = low */
-    score+=Math.min(concentrationData.top3Pct/70*20,20);
-    return Math.min(Math.round(score),100);
-  },[trades,volatilityData,sharpeData,drawdownData,concentrationData]);
-
-  /* ── 5. Value at Risk (VaR) ── */
-  const varData=React.useMemo(()=>{
-    if(volatilityData.returns.length<5)return null;
-    const sorted=[...volatilityData.returns].sort((a,b)=>a-b);
-    const n=sorted.length;
-    const var95Idx=Math.floor(n*0.05);
-    const var99Idx=Math.floor(n*0.01);
-    const var95=sorted[var95Idx];
-    const var99=sorted[Math.max(var99Idx,0)];
-    const tailReturns=sorted.slice(0,var95Idx+1);
-    const expectedShortfall=tailReturns.length>0?tailReturns.reduce((s,r)=>s+r,0)/tailReturns.length:var95;
-    const z95=1.645;
-    const z99=2.326;
-    const parametricVar95=volatilityData.mean-z95*volatilityData.stdDev;
-    const parametricVar99=volatilityData.mean-z99*volatilityData.stdDev;
-    return{var95,var99,expectedShortfall,parametricVar95,parametricVar99,mean:volatilityData.mean,stdDev:volatilityData.stdDev,sampleSize:n,worstReturn:sorted[0],bestReturn:sorted[n-1]};
-  },[volatilityData]);
-
-  /* ── 6. Max Drawdown per Stock ── */
-  const stockDrawdowns=React.useMemo(()=>{
-    if(!trades.length)return[];
-    const stockMap={};
-    trades.forEach(t=>{
-      const key=(t.ticker||t.company||"Unknown").toUpperCase();
-      if(!stockMap[key])stockMap[key]={ticker:t.ticker||t.company||"Unknown",trades:[]};
-      stockMap[key].trades.push(t);
-    });
-    return Object.values(stockMap).map(st=>{
-      const sorted=[...st.trades].sort((a,b)=>(a.sellDate||"").localeCompare(b.sellDate||""));
-      let cumPnl=0,peak=0,maxDD=0,maxDDPct=0;
-      sorted.forEach(t=>{
-        cumPnl+=t.pnl;
-        if(cumPnl>peak)peak=cumPnl;
-        const dd=peak-cumPnl;
-        const ddPct=t.buyAmt>0?(dd/t.buyAmt*100):0;
-        if(dd>maxDD){maxDD=dd;maxDDPct=ddPct;}
-      });
-      return{ticker:st.ticker,tradeCount:sorted.length,totalPnl:sorted.reduce((s,t)=>s+t.pnl,0),maxDrawdown:maxDD,maxDrawdownPct:maxDDPct,};
-    }).sort((a,b)=>b.maxDrawdown-a.maxDrawdown);
-  },[trades]);
-
-  /* ── 7. Risk-Adjusted Rankings ── */
-  const riskAdjustedRankings=React.useMemo(()=>{
-    if(!trades.length)return[];
-    const stockMap={};
-    trades.forEach(t=>{
-      const key=(t.ticker||t.company||"Unknown").toUpperCase();
-      if(!stockMap[key])stockMap[key]={ticker:t.ticker||t.company||"Unknown",returns:[],pnl:0,buyAmt:0,tradeCount:0};
-      const st=stockMap[key];
-      st.returns.push(t.returnPct);
-      st.pnl+=t.pnl;
-      st.buyAmt+=t.buyAmt;
-      st.tradeCount++;
-    });
-    return Object.values(stockMap).map(st=>{
-      const mean=st.returns.reduce((s,r)=>s+r,0)/st.returns.length;
-      const variance=st.returns.length>1?st.returns.reduce((s,r)=>s+Math.pow(r-mean,2),0)/(st.returns.length-1):0;
-      const stdDev=Math.sqrt(variance);
-      const sharpe=stdDev>0?mean/stdDev:(mean>0?Infinity:0);
-      const winRate=st.returns.filter(r=>r>0).length/st.returns.length*100;
-      return{...st,mean,stdDev,sharpe,winRate,avgReturn:mean};
-    }).sort((a,b)=>b.sharpe-a.sharpe);
-  },[trades]);
-
-  /* ── 8. Tail Risk Analysis ── */
-  const tailRiskData=React.useMemo(()=>{
-    if(volatilityData.returns.length<5)return null;
-    const sorted=[...volatilityData.returns].sort((a,b)=>a-b);
-    const n=sorted.length;
-    const mean=volatilityData.mean;
-    const stdDev=volatilityData.stdDev;
-    const p5=sorted[Math.floor(n*0.05)];
-    const p10=sorted[Math.floor(n*0.10)];
-    const p25=sorted[Math.floor(n*0.25)];
-    const p50=sorted[Math.floor(n*0.50)];
-    const p75=sorted[Math.floor(n*0.75)];
-    const p90=sorted[Math.floor(n*0.90)];
-    const p95=sorted[Math.floor(n*0.95)];
-    const skewness=n>2?(sorted.reduce((s,r)=>s+Math.pow((r-mean)/stdDev,3),0)*n)/((n-1)*(n-2)):0;
-    const kurtosis=n>3?((sorted.reduce((s,r)=>s+Math.pow((r-mean)/stdDev,4),0)*n*(n+1))/((n-1)*(n-2)*(n-3))-(3*(n-1)*(n-1))/((n-2)*(n-3))):0;
-    const worst5=sorted.slice(0,5);
-    const best5=sorted.slice(-5).reverse();
-    const tail5Pct=Math.max(1,Math.floor(n*0.05));
-    const avgWorst=sorted.slice(0,tail5Pct).reduce((s,r)=>s+r,0)/tail5Pct;
-    const avgBest=sorted.slice(-tail5Pct).reduce((s,r)=>s+r,0)/tail5Pct;
-    const tailRatio=avgWorst!==0?Math.abs(avgBest/avgWorst):Infinity;
-    return{p5,p10,p25,p50,p75,p90,p95,skewness,kurtosis,worst5,best5,tailRatio,avgWorst,avgBest,sampleSize:n};
-  },[volatilityData]);
-
-  if(!trades.length)return React.createElement("div",{style:{textAlign:"center",padding:"48px 20px"}},
-    React.createElement("div",{style:{fontSize:40,marginBottom:12,color:"var(--text6)"}},React.createElement(Icon,{n:"warning",size:40})),
-    React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text3)",marginBottom:4}},"No Trade Data"),
-    React.createElement("div",{style:{fontSize:13,color:"var(--text6)"}},"Add shares or save snapshots to Previous Trades to see risk metrics.")
+  return React.createElement("div",null,
+    /* ── Section header + Fetch History action ── */
+    React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7,margin:"18px 0 12px"}},
+      React.createElement("div",{style:{width:4,height:18,borderRadius:3,background:"#6d28d9",flexShrink:0}}),
+      React.createElement("div",{style:{flex:1}},
+        React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},"Mutual Fund Performance"),
+        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:1}},"Daily · Weekly · Monthly · Quarterly · Yearly NAV movement across your holdings")
+      ),
+      React.createElement(Btn,{v:"secondary",sz:"sm",onClick:fetchAll,disabled:!missing.length||Object.values(loading).some(Boolean),sx:{fontSize:12}},
+        Object.values(loading).some(Boolean)?React.createElement(React.Fragment,null,React.createElement("span",{className:"spinr"},"⟳")," Loading…"):(missing.length?"⭳ Fetch NAV History":"⭳ History Up-to-date")
+      )
+    ),
+    missing.length>0&&React.createElement("div",{style:{marginBottom:12,padding:"8px 14px",borderRadius:9,fontSize:12,display:"flex",alignItems:"center",gap:8,background:"rgba(109,40,217,.07)",border:"1px solid rgba(109,40,217,.2)",color:"#6d28d9"}},
+      React.createElement("span",null,"Fetching NAV history for "+missing.length+" fund"+((missing.length===1)?"":"s")+" to build these tables.")
+    ),
+    tableCard("Last 30 Days","Daily NAV % change",dailyCols.map(d=>fmtD(d)),dailyRows,740),
+    tableCard("Last 90 Days","Weekly NAV % change · last 13 weeks",weekBuckets.map(w=>w.label),weeklyRows,1030),
+    tableCard("Last 6 Months","Month-on-month NAV % change",monthBuckets6.map(b=>b.label),monthlyRows6,690),
+    tableCard("Last 1 Year","Month-on-month NAV % change",monthBuckets12.map(b=>b.label),monthlyRows12,1090),
+    tableCard("Last 2 Years","Quarterly NAV % change · last 8 quarters",quarterBuckets8.map(b=>b.label),quarterlyRows8,890,2),
+    tableCard("Last 3 Years","Quarterly NAV % change · last 12 quarters",quarterBuckets12.map(b=>b.label),quarterlyRows12,1150,3),
+    tableCard("Last 4 Years","Yearly NAV % change",yearBuckets4.map(b=>b.label),yearlyRows4,650,4),
+    tableCard("Last 5 Years","Yearly NAV % change",yearBuckets5.map(b=>b.label),yearlyRows5,710,5),
+    tableCard("Last 10 Years","Yearly NAV % change",yearBuckets10.map(b=>b.label),yearlyRows10,1010,10)
   );
+});
 
-  const volRating=riskRating("Volatility",volatilityData.stdDev,[15,30]);
-  const ddRating=riskRating("Drawdown",drawdownData.maxDrawdownPct,[10,20]);
-  const concRating=riskRating("Concentration",100-concentrationData.top3Pct,[40,70]); /* inverted: high diversity = low risk */
-  const concRiskActual=riskRating("Concentration",concentrationData.top3Pct,[40,70]);
-
-  return React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:20}},
-
-    /* ══ Composite Risk Score ══ */
-    compositeRisk!==null&&React.createElement("div",{style:{
-      background:compositeRisk<30?"rgba(22,163,74,.07)":compositeRisk<60?"rgba(234,179,8,.07)":"rgba(239,68,68,.07)",
-      border:"1px solid "+(compositeRisk<30?"rgba(22,163,74,.2)":compositeRisk<60?"rgba(234,179,8,.2)":"rgba(239,68,68,.2)"),
-      borderRadius:14,padding:"20px 24px",textAlign:"center"
-    }},
-      React.createElement("div",{style:{fontSize:11,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.8,marginBottom:6}},"Composite Risk Score"),
-      React.createElement("div",{style:{fontSize:42,fontFamily:"'Sora',sans-serif",fontWeight:800,color:compositeRisk<30?"#16a34a":compositeRisk<60?"#eab308":"#ef4444"}},compositeRisk+"/100"),
-      React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginTop:4}},
-        compositeRisk<30?"Low overall risk — your portfolio is well-diversified and stable."
-        :compositeRisk<60?"Moderate risk — some areas need attention."
-        :"High risk — consider reducing volatility, improving diversification, or cutting losing streaks."
-      ),
-      /* Progress bar */
-      React.createElement("div",{style:{marginTop:12,height:6,borderRadius:3,background:"var(--bg5)",overflow:"hidden",maxWidth:300,margin:"12px auto 0"}},
-        React.createElement("div",{style:{height:"100%",width:compositeRisk+"%",borderRadius:3,background:compositeRisk<30?"#16a34a":compositeRisk<60?"#eab308":"#ef4444",transition:"width .5s ease"}})
-      )
-    ),
-
-    /* ══ Metric Cards ══ */
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:12}},
-      /* Volatility */
-      React.createElement("div",{style:{background:volRating.bg,border:"1px solid "+volRating.border,borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}},
-          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},"Volatility (σ)"),
-          React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:10,background:volRating.bg,color:volRating.color,border:"1px solid "+volRating.border}},volRating.level)
-        ),
-        React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:volRating.color}},volatilityData.stdDev.toFixed(2)+"%"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:3}},"Std deviation of per-trade returns"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},"Mean return: "+ret(volatilityData.mean))
-      ),
-      /* Sharpe-like ratio */
-      React.createElement("div",{style:{background:sharpeData!==null?(sharpeData>=0.7?"rgba(22,163,74,.08)":sharpeData>=0?"rgba(234,179,8,.08)":"rgba(239,68,68,.08)"):"var(--accentbg2)",border:"1px solid "+(sharpeData!==null?(sharpeData>=0.7?"rgba(22,163,74,.2)":sharpeData>=0?"rgba(234,179,8,.2)":"rgba(239,68,68,.2)"):"var(--border2)"),borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:6}},"Sharpe-like Ratio"),
-        React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:sharpeData!==null?(sharpeData>=0.7?"#16a34a":sharpeData>=0?"#eab308":"#ef4444"):"var(--text5)"}},sharpeData!==null?sharpeData.toFixed(3):"—"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:3}},"Avg return ÷ σ (risk-adjusted)"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},sharpeData!==null?(sharpeData>=1?"Excellent — returns well exceed risk":sharpeData>=0.5?"Decent — reasonable risk-adjusted return":sharpeData>=0?"Weak — returns barely justify the risk":"Negative — risk not rewarded"):"Need ≥2 trades")
-      ),
-      /* Max Drawdown */
-      React.createElement("div",{style:{background:ddRating.bg,border:"1px solid "+ddRating.border,borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}},
-          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},"Max Drawdown"),
-          React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:10,background:ddRating.bg,color:ddRating.color,border:"1px solid "+ddRating.border}},ddRating.level)
-        ),
-        React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:ddRating.color}},drawdownData.maxDrawdownPct.toFixed(2)+"%"),
-        drawdownData.maxDrawdown>0&&React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},INR(drawdownData.maxDrawdown)+" peak-to-trough"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:3}},"Worst consecutive loss sequence")
-      ),
-      /* Concentration Risk */
-      React.createElement("div",{style:{background:concRiskActual.bg,border:"1px solid "+concRiskActual.border,borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}},
-          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},"Concentration Risk"),
-          React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:10,background:concRiskActual.bg,color:concRiskActual.color,border:"1px solid "+concRiskActual.border}},concRiskActual.level)
-        ),
-        React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:concRiskActual.color}},concentrationData.top3Pct.toFixed(1)+"%"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:3}},"P&L from top 3 stocks"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},concentrationData.top3Pct>70?"Highly concentrated — luck may dominate skill":concentrationData.top3Pct>40?"Moderately concentrated — some diversification":"Well diversified across positions")
-      )
-    ),
-
-    /* ══ Return Distribution Histogram ══ */
-    returnDistribution.length>1&&React.createElement(Card,null,
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:14}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"chart",size:13})," Return Distribution")),
-      React.createElement("div",{style:{display:"flex",alignItems:"flex-end",gap:4,height:120,padding:"0 4px"}},
-        returnDistribution.map((bin,i)=>{
-          const maxCount=Math.max(...returnDistribution.map(b=>b.count));
-          const h=maxCount>0?(bin.count/maxCount*100):0;
-          const midPct=(bin.bMin+bin.bMax)/2;
-          const col=midPct>=0?"#16a34a":"#ef4444";
-          return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-end",height:"100%"}},
-            React.createElement("span",{style:{fontSize:9,fontWeight:600,color:"var(--text5)",marginBottom:3}},bin.count),
-            React.createElement("div",{style:{width:"100%",height:Math.max(h,4)+"%",background:col,borderRadius:"4px 4px 0 0",opacity:.7,transition:"height .3s ease"}})
-          );
-        })
-      ),
-      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginTop:6,padding:"0 4px"}},
-        React.createElement("span",{style:{fontSize:9,color:"var(--text6)"}},"← Losses"),
-        React.createElement("span",{style:{fontSize:9,color:"var(--text6)"}},"Gains →")
-      )
-    ),
-
-    /* ══ Losing Streaks Detail ══ */
-    drawdownData.streaks.length>0&&React.createElement(Card,null,
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:14,display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"fire",size:15}),"Consecutive Loss Streaks"),
-      React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-        drawdownData.streaks.slice(0,5).map((streak,i)=>React.createElement("div",{key:i,style:{
-          display:"grid",gridTemplateColumns:"auto 1fr auto auto",gap:12,alignItems:"center",
-          padding:"10px 14px",background:i%2?"var(--bg5)":"transparent",borderRadius:8,
-          border:"1px solid var(--border)"
-        }},
-          React.createElement("div",{style:{fontSize:18,fontWeight:800,fontFamily:"'Sora',sans-serif",color:"#ef4444",minWidth:28,textAlign:"center"}},streak.losses),
-          React.createElement("div",null,
-            React.createElement("div",{style:{fontSize:11,fontWeight:600,color:"var(--text3)"}},streak.losses+" consecutive losing trades"),
-            React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},streak.start&&streak.end?streak.start+" → "+streak.end:"")
-          ),
-          React.createElement("div",{style:{fontSize:13,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"#ef4444"}},INR(streak.pnl)),
-          React.createElement("div",{style:{fontSize:10,color:"var(--text5)"}},drawdownData.cumInvested>0?(streak.pnl/drawdownData.cumInvested*100).toFixed(2)+"% of capital":"")
-        ))
-      )
-    ),
-
-    /* ══ Concentration: Per-Stock P&L Breakdown ══ */
-    concentrationData.byStock.length>1&&React.createElement(Card,null,
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:14}},React.createElement(React.Fragment,null,React.createElement(Icon,{n:"target",size:13})," P&L by Stock (Concentration View)")),
-      React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
-        concentrationData.byStock.slice(0,8).map((st,i)=>{
-          const totalAbsPnl=concentrationData.byStock.reduce((s,x)=>s+Math.abs(x.pnl),0);
-          const pctOfTotal=totalAbsPnl>0?(Math.abs(st.pnl)/totalAbsPnl*100):0;
-          const isGain=st.pnl>=0;
-          return React.createElement("div",{key:i,style:{display:"grid",gridTemplateColumns:"minmax(80px,1fr) 1fr 60px 70px",gap:10,alignItems:"center",padding:"8px 10px",background:i%2?"var(--bg5)":"transparent",borderRadius:6}},
-            React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text3)"}},st.ticker),
-            React.createElement("div",{style:{position:"relative",height:8,borderRadius:4,background:"var(--bg5)",overflow:"hidden"}},
-              React.createElement("div",{style:{position:"absolute",left:0,top:0,height:"100%",width:pctOfTotal+"%",borderRadius:4,background:isGain?"#16a34a":"#ef4444",opacity:.7}})
-            ),
-            React.createElement("div",{style:{fontSize:12,fontWeight:700,fontFamily:"'Sora',sans-serif",color:isGain?"#16a34a":"#ef4444",textAlign:"right"}},(isGain?"+":"")+INR(st.pnl)),
-            React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textAlign:"right"}},pctOfTotal.toFixed(1)+"%")
-          );
-        }),
-        concentrationData.byStock.length>8&&React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textAlign:"center",paddingTop:4}},"+"+((concentrationData.byStock.length-8))+" more stocks")
-      ),
-      /* Top 3 summary */
-      React.createElement("div",{style:{marginTop:14,padding:"10px 14px",background:concentrationData.top3Pct>70?"rgba(239,68,68,.06)":concentrationData.top3Pct>40?"rgba(234,179,8,.06)":"rgba(22,163,74,.06)",border:"1px solid "+(concentrationData.top3Pct>70?"rgba(239,68,68,.15)":concentrationData.top3Pct>40?"rgba(234,179,8,.15)":"rgba(22,163,74,.15)"),borderRadius:8}},
-        React.createElement("div",{style:{fontSize:11,fontWeight:600,color:"var(--text3)"}},"Top 3 stocks account for "+concentrationData.top3Pct.toFixed(1)+"% of absolute P&L"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:3}},
-          concentrationData.top3Pct>70?"Your performance is heavily driven by a few positions. Luck plays a larger role — a single bad pick could dominate."
-          :concentrationData.top3Pct>40?"Moderate concentration. Your top picks contribute meaningfully but you're not entirely dependent on them."
-          :"Well diversified. No single stock dominates your P&L — skill over luck."
-        )
-      )
-    ),
-
-
-    /* ══ Report: Value at Risk (VaR) ══ */
-    varData&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},
-          React.createElement(Icon,{n:"shield",size:15}),"Value at Risk (VaR)"
-        ),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},
-          varData.sampleSize+" trades"
-        )
-      ),
-      React.createElement("div",{style:{padding:"16px 20px"}},
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:16}},
-          React.createElement("div",{style:{background:"rgba(239,68,68,.07)",border:"1px solid rgba(239,68,68,.2)",borderRadius:12,padding:"14px 16px"}},
-            React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"95% VaR"),
-            React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#ef4444"}},ret(varData.var95)),
-            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Worst 5% threshold (historical)")
-          ),
-          React.createElement("div",{style:{background:"rgba(220,38,38,.07)",border:"1px solid rgba(220,38,38,.2)",borderRadius:12,padding:"14px 16px"}},
-            React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"99% VaR"),
-            React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#dc2626"}},ret(varData.var99)),
-            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Worst 1% threshold")
-          ),
-          React.createElement("div",{style:{background:"rgba(245,158,11,.07)",border:"1px solid rgba(245,158,11,.2)",borderRadius:12,padding:"14px 16px"}},
-            React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Expected Shortfall (CVaR)"),
-            React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#f59e0b"}},ret(varData.expectedShortfall)),
-            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Average loss when beyond 95% VaR")
-          )
-        ),
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}},
-          React.createElement("div",{style:{padding:"10px 14px",background:"var(--bg5)",borderRadius:8,fontSize:11,color:"var(--text5)"}},
-            React.createElement("div",{style:{fontWeight:600,color:"var(--text3)",marginBottom:4}},"Parametric VaR (Normal)"),
-            React.createElement("div",null,"95%: ",React.createElement("strong",{style:{color:"#ef4444"}},ret(varData.parametricVar95))),
-            React.createElement("div",null,"99%: ",React.createElement("strong",{style:{color:"#dc2626"}},ret(varData.parametricVar99)))
-          ),
-          React.createElement("div",{style:{padding:"10px 14px",background:"var(--bg5)",borderRadius:8,fontSize:11,color:"var(--text5)"}},
-            React.createElement("div",{style:{fontWeight:600,color:"var(--text3)",marginBottom:4}},"Return Distribution"),
-            React.createElement("div",null,"Mean: ",React.createElement("strong",null,ret(varData.mean))),
-            React.createElement("div",null,"Std Dev: ",React.createElement("strong",null,ret(varData.stdDev))),
-            React.createElement("div",null,"Worst: ",React.createElement("strong",{style:{color:"#ef4444"}},ret(varData.worstReturn))," | Best: ",React.createElement("strong",{style:{color:"#16a34a"}},ret(varData.bestReturn)))
-          )
-        ),
-        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",lineHeight:1.6,padding:"8px 12px",background:"var(--bg5)",borderRadius:8}},
-          React.createElement("strong",null,"Interpretation: "),"95% VaR of "+ret(varData.var95)+" means that on 95% of trades, your return was better than this. The remaining 5% of trades had losses at or below this level. Expected Shortfall (CVaR) tells you the average loss when you do breach the 95% threshold — it captures tail severity. Parametric VaR assumes normal distribution; compare with historical VaR to check for fat tails."
-        )
-      )
-    ),
-
-    /* ══ Report: Max Drawdown per Stock ══ */
-    stockDrawdowns.length>0&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},
-          React.createElement(Icon,{n:"trenddown",size:15}),"Max Drawdown per Stock"
-        ),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},
-          stockDrawdowns.length+" stocks"
-        )
-      ),
-      React.createElement("div",{className:"mobile-scroll-table",style:{overflowX:"auto"}},
-        React.createElement("div",{style:{minWidth:550}},
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 60px 90px 100px 80px",gap:0,borderBottom:"1px solid var(--border)",background:"var(--bg4)"}},
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px"}},"Stock"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"center"}},"Trades"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Total P&L"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Max Drawdown (₹)"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Max DD (%)")
-          ),
-          stockDrawdowns.map((s,i)=>{
-            const isGain=s.totalPnl>=0;
-            const ddColor=s.maxDrawdownPct<5?"#16a34a":s.maxDrawdownPct<15?"#f59e0b":"#ef4444";
-            return React.createElement("div",{key:s.ticker||i,style:{display:"grid",gridTemplateColumns:"2fr 60px 90px 100px 80px",gap:0,borderBottom:"1px solid var(--border2)",background:i%2===0?"transparent":"var(--bg4)",transition:"background .1s"},onMouseEnter:e=>e.currentTarget.style.background="var(--accentbg2)",onMouseLeave:e=>e.currentTarget.style.background=i%2===0?"transparent":"var(--bg4)"},
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,fontWeight:600,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},s.ticker),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"center",color:"var(--text3)"}},s.tradeCount),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"right",fontWeight:700,fontFamily:"'Sora',sans-serif",color:isGain?"#16a34a":"#ef4444"}},(isGain?"+":"")+INR(s.totalPnl)),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"right",fontWeight:700,fontFamily:"'Sora',sans-serif",color:"#ef4444"}},"−"+INR(s.maxDrawdown)),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",fontWeight:700,color:ddColor}},s.maxDrawdownPct.toFixed(1)+"%")
-            );
-          })
-        )
-      )
-    ),
-
-    /* ══ Report: Risk-Adjusted Rankings ══ */
-    riskAdjustedRankings.length>0&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},
-          React.createElement(Icon,{n:"target",size:15}),"Risk-Adjusted Rankings"
-        ),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},
-          riskAdjustedRankings.length+" stocks"
-        )
-      ),
-      React.createElement("div",{className:"mobile-scroll-table",style:{overflowX:"auto"}},
-        React.createElement("div",{style:{minWidth:600}},
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"40px 2fr 60px 80px 80px 80px 60px",gap:0,borderBottom:"1px solid var(--border)",background:"var(--bg4)"}},
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"center"}},"#"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px"}},"Stock"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"center"}},"Trades"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Avg Return"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Volatility (σ)"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"right"}},"Sharpe"),
-            React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.7,padding:"8px",textAlign:"center"}},"Win %")
-          ),
-          riskAdjustedRankings.map((s,i)=>{
-            const medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":"";
-            const sharpeColor=s.sharpe>1?"#16a34a":s.sharpe>0.5?"#f59e0b":"#ef4444";
-            return React.createElement("div",{key:s.ticker||i,style:{display:"grid",gridTemplateColumns:"40px 2fr 60px 80px 80px 80px 60px",gap:0,borderBottom:"1px solid var(--border2)",background:i%2===0?"transparent":"var(--bg4)",transition:"background .1s"},onMouseEnter:e=>e.currentTarget.style.background="var(--accentbg2)",onMouseLeave:e=>e.currentTarget.style.background=i%2===0?"transparent":"var(--bg4)"},
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:13,textAlign:"center",color:medal?"var(--text3)":"var(--text6)"}},medal||(i+1)),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,fontWeight:600,color:"var(--text)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},s.ticker),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"center",color:"var(--text3)"}},s.tradeCount),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",fontWeight:600,color:s.avgReturn>=0?"#16a34a":"#ef4444"}},(s.avgReturn>=0?"+":"")+s.avgReturn.toFixed(2)+"%"),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"right",color:"var(--text4)"}},s.stdDev.toFixed(2)+"%"),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:12,textAlign:"right",fontWeight:700,fontFamily:"'Sora',sans-serif",color:sharpeColor}},s.sharpe===Infinity?"∞":s.sharpe.toFixed(2)),
-              React.createElement("div",{style:{padding:"9px 8px",fontSize:11,textAlign:"center",fontWeight:600,color:s.winRate>=50?"#16a34a":"#ef4444"}},s.winRate.toFixed(0)+"%")
-            );
-          })
-        )
-      )
-    ),
-
-    /* ══ Report: Tail Risk Analysis ══ */
-    tailRiskData&&React.createElement("div",{style:{background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,overflow:"hidden"}},
-      React.createElement("div",{style:{padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--bg5)",display:"flex",alignItems:"center",gap:8}},
-        React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)",display:"flex",alignItems:"center",gap:6}},
-          React.createElement(Icon,{n:"warning",size:15}),"Tail Risk Analysis"
-        ),
-        React.createElement("span",{style:{fontSize:10,padding:"2px 8px",borderRadius:10,background:"var(--accentbg2)",color:"var(--text5)",border:"1px solid var(--border2)",fontWeight:600}},
-          tailRiskData.sampleSize+" trades"
-        )
-      ),
-      React.createElement("div",{style:{padding:"16px 20px"}},
-        /* Percentile strip */
-        React.createElement("div",{style:{marginBottom:16}},
-          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:8}},"Return Distribution Percentiles"),
-          React.createElement("div",{style:{position:"relative",height:32,borderRadius:8,background:"linear-gradient(90deg,#ef4444 0%,#f59e0b 30%,#16a34a 70%,#0e7490 100%)",opacity:.15}}),
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",marginTop:4,fontSize:9,color:"var(--text6)"}},
-            React.createElement("div",{style:{textAlign:"center"}},
-              React.createElement("div",{style:{fontWeight:700,color:"#ef4444"}},ret(tailRiskData.p5)),
-              React.createElement("div",null,"P5")
-            ),
-            React.createElement("div",{style:{textAlign:"center"}},
-              React.createElement("div",{style:{fontWeight:600}},ret(tailRiskData.p25)),
-              React.createElement("div",null,"P25")
-            ),
-            React.createElement("div",{style:{textAlign:"center"}},
-              React.createElement("div",{style:{fontWeight:700,color:"var(--text3)"}},ret(tailRiskData.p50)),
-              React.createElement("div",null,"Median")
-            ),
-            React.createElement("div",{style:{textAlign:"center"}},
-              React.createElement("div",{style:{fontWeight:600}},ret(tailRiskData.p75)),
-              React.createElement("div",null,"P75")
-            ),
-            React.createElement("div",{style:{textAlign:"center"}},
-              React.createElement("div",{style:{fontWeight:700,color:"#16a34a"}},ret(tailRiskData.p95)),
-              React.createElement("div",null,"P95")
-            )
-          )
-        ),
-        /* Skewness & Kurtosis */
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:16}},
-          React.createElement("div",{style:{padding:"12px 14px",background:tailRiskData.skewness<0?"rgba(239,68,68,.06)":"rgba(22,163,74,.06)",border:"1px solid "+(tailRiskData.skewness<0?"rgba(239,68,68,.15)":"rgba(22,163,74,.15)"),borderRadius:10}},
-            React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Skewness"),
-            React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:tailRiskData.skewness<0?"#ef4444":"#16a34a"}},tailRiskData.skewness.toFixed(3)),
-            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},tailRiskData.skewness<0?"Left tail heavier — more crash risk":"Right tail heavier — more upside outliers")
-          ),
-          React.createElement("div",{style:{padding:"12px 14px",background:tailRiskData.kurtosis>0?"rgba(245,158,11,.06)":"rgba(22,163,74,.06)",border:"1px solid "+(tailRiskData.kurtosis>0?"rgba(245,158,11,.15)":"rgba(22,163,74,.15)"),borderRadius:10}},
-            React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Excess Kurtosis"),
-            React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:tailRiskData.kurtosis>0?"#f59e0b":"#16a34a"}},tailRiskData.kurtosis.toFixed(3)),
-            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},tailRiskData.kurtosis>0?"Fat tails — more extreme events than normal":"Thinner tails — more predictable returns")
-          ),
-          React.createElement("div",{style:{padding:"12px 14px",background:"rgba(14,116,144,.06)",border:"1px solid rgba(14,116,144,.15)",borderRadius:10}},
-            React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Tail Ratio"),
-            React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#0e7490"}},tailRiskData.tailRatio===Infinity?"∞":tailRiskData.tailRatio.toFixed(2)+"×"),
-            React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Avg best 5% ÷ avg worst 5%")
-          )
-        ),
-        /* Worst 5 & Best 5 */
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}},
-          React.createElement("div",{style:{padding:"10px 14px",background:"rgba(239,68,68,.04)",border:"1px solid rgba(239,68,68,.12)",borderRadius:8}},
-            React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#ef4444",marginBottom:6}},"Worst 5 Returns"),
-            tailRiskData.worst5.map((r,i)=>React.createElement("div",{key:i,style:{fontSize:11,color:"var(--text4)",padding:"2px 0"}},ret(r)))
-          ),
-          React.createElement("div",{style:{padding:"10px 14px",background:"rgba(22,163,74,.04)",border:"1px solid rgba(22,163,74,.12)",borderRadius:8}},
-            React.createElement("div",{style:{fontSize:10,fontWeight:700,color:"#16a34a",marginBottom:6}},"Best 5 Returns"),
-            tailRiskData.best5.map((r,i)=>React.createElement("div",{key:i,style:{fontSize:11,color:"var(--text4)",padding:"2px 0"}},ret(r)))
-          )
-        ),
-        React.createElement("div",{style:{fontSize:11,color:"var(--text5)",lineHeight:1.6,padding:"8px 12px",background:"var(--bg5)",borderRadius:8}},
-          React.createElement("strong",null,"What to watch: "),"Negative skewness means more extreme losses than gains — asymmetric risk. High kurtosis (>1) means more outlier events than a normal distribution would predict. A tail ratio >1 means your best trades outpace your worst, which is healthy."
-        )
-      )
-    ),
-
-    /* ══ Methodology note ══ */
-    React.createElement("div",{style:{padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-      React.createElement("strong",{style:{color:"var(--accent)"}},"Methodology: "),
-      "Volatility (σ) = population standard deviation of per-trade return percentages (sample std dev with n-1 denominator). Sharpe-like ratio = mean return ÷ σ; this is not the traditional Sharpe ratio (which uses excess return over risk-free rate) but serves as a relative risk-adjusted performance indicator. Max drawdown is computed as the largest peak-to-trough decline in cumulative P&L expressed as a percentage of total capital deployed. Losing streaks count consecutive trades with negative P&L. Concentration risk = (sum of |P&L| for top 3 stocks) ÷ (sum of |P&L| for all stocks) × 100; higher values indicate fewer stocks drive performance, increasing the role of luck. Composite risk score is a weighted aggregate: 30% volatility + 25% Sharpe weakness + 25% drawdown + 20% concentration. Active holdings use current price as exit. All amounts include brokerage. Value at Risk (VaR) shows the worst return at 95% and 99% confidence levels (historical and parametric). Expected Shortfall (CVaR) averages losses beyond VaR. Max Drawdown per Stock tracks the worst peak-to-trough decline for each position. Risk-Adjusted Rankings use Sharpe-like ratio (mean return ÷ σ) to rank stocks by risk-normalised performance. Tail Risk Analysis examines skewness, kurtosis, and extreme return percentiles."
-    )
-  );
-};
-
-const PatternMining=({shares,soldShareSnapshots={}})=>{
-
-  const ret=(v)=>(v>=0?"+":"")+v.toFixed(2)+"%";
-  const INR=(v)=>"₹"+Number(Math.round(v)).toLocaleString("en-IN");
-
-  /* ── Build unified trade list with holdDays ── */
-  const trades=React.useMemo(()=>{
-    const list=[];
-    (shares||[]).forEach(sh=>{
-      if(!sh.qty||!sh.buyPrice||!sh.currentPrice||!sh.buyDate)return;
-      const buyDate=new Date(sh.buyDate+"T12:00:00");
-      const sellDate=new Date(TODAY()+"T12:00:00");
-      const holdDays=Math.max(0,Math.floor((sellDate-buyDate)/864e5));
-      const buyAmt=sh.qty*sh.buyPrice;
-      const sellAmt=sh.qty*sh.currentPrice;
-      const brokerage=+sh.brokerage||0;
-      const pnl=sellAmt-buyAmt-brokerage;
-      const returnPct=buyAmt>0?(pnl/buyAmt*100):0;
-      list.push({
-        id:sh.id,type:"active",company:sh.company,ticker:(sh.ticker||sh.company||"").toUpperCase(),
-        qty:sh.qty,buyPrice:sh.buyPrice,sellPrice:sh.currentPrice,
-        buyDate:sh.buyDate,sellDate:TODAY(),holdDays,
-        buyAmt,sellAmt,brokerage,pnl,returnPct,
-      });
-    });
-    Object.values(soldShareSnapshots||{}).forEach(fySnaps=>{
-      (fySnaps||[]).forEach(sn=>{
-        if(!sn.qty||!sn.buyPrice||!sn.sellPrice||!sn.buyDate)return;
-        const buyDate=new Date(sn.buyDate+"T12:00:00");
-        const sellDate=new Date((sn.savedAt||sn.sellDate)+"T12:00:00");
-        const holdDays=Math.max(0,Math.floor((sellDate-buyDate)/864e5));
-        const buyAmt=sn.qty*sn.buyPrice;
-        const sellAmt=sn.qty*sn.sellPrice;
-        const brokerage=+sn.brokerage||0;
-        const pnl=sellAmt-buyAmt-brokerage;
-        const returnPct=buyAmt>0?(pnl/buyAmt*100):0;
-        list.push({
-          id:sn.id,type:"sold",company:sn.company,ticker:(sn.ticker||sn.company||"").toUpperCase(),
-          qty:sn.qty,buyPrice:sn.buyPrice,sellPrice:sn.sellPrice,
-          buyDate:sn.buyDate,sellDate:sn.savedAt||sn.sellDate,holdDays,
-          buyAmt,sellAmt,brokerage,pnl,returnPct,
-        });
-      });
-    });
-    /* Sort by buyDate for revisit analysis */
-    list.sort((a,b)=>(a.buyDate||"").localeCompare(b.buyDate||""));
-    return list;
-  },[shares,soldShareSnapshots]);
-
-  /* ═══════════════════════════════════════════════════════════════
-     1. Sweet-spot holding period — duration band with best avg return
-     ═══════════════════════════════════════════════════════════════ */
-  const sweetSpot=React.useMemo(()=>{
-    if(!trades.length)return null;
-    const bands=[
-      {key:"1w",label:"< 1 week",min:0,max:7},
-      {key:"2w",label:"1–2 weeks",min:7,max:14},
-      {key:"1m",label:"2–4 weeks",min:14,max:30},
-      {key:"3m",label:"1–3 months",min:30,max:91},
-      {key:"6m",label:"3–6 months",min:91,max:183},
-      {key:"1y",label:"6–12 months",min:183,max:365},
-      {key:"2y",label:"1–2 years",min:365,max:730},
-      {key:"2y+",label:"2+ years",min:730,max:Infinity},
-    ];
-    const bucketed=bands.map(b=>{
-      const bt=trades.filter(t=>t.holdDays>=b.min&&t.holdDays<b.max);
-      const avgReturn=bt.length>0?bt.reduce((s,t)=>s+t.returnPct,0)/bt.length:0;
-      const avgPnl=bt.length>0?bt.reduce((s,t)=>s+t.pnl,0)/bt.length:0;
-      const winRate=bt.length>0?(bt.filter(t=>t.pnl>0).length/bt.length*100):0;
-      const totalPnl=bt.reduce((s,t)=>s+t.pnl,0);
-      return{...b,trades:bt,count:bt.length,avgReturn,avgPnl,winRate,totalPnl};
-    }).filter(b=>b.count>0);
-    if(!bucketed.length)return null;
-    const best=bucketed.reduce((a,b)=>b.avgReturn>a.avgReturn?b:a);
-    const worst=bucketed.reduce((a,b)=>b.avgReturn<a.avgReturn?b:a);
-    const mostTrades=bucketed.reduce((a,b)=>b.count>a.count?b:a);
-    return{bands:bucketed,best,worst,mostTrades};
-  },[trades]);
-
-  /* ═══════════════════════════════════════════════════════════════
-     2. Return decay curve — do returns improve or decay with hold time?
-     ═══════════════════════════════════════════════════════════════ */
-  const decayCurve=React.useMemo(()=>{
-    if(!trades.length)return null;
-    /* Bucket by hold days in finer granularity */
-    const bands=[
-      {label:"0–3d",min:0,max:4},{label:"4–7d",min:4,max:8},{label:"1–2w",min:7,max:15},
-      {label:"2–3w",min:15,max:22},{label:"3–4w",min:22,max:31},{label:"1–2m",min:31,max:61},
-      {label:"2–3m",min:61,max:92},{label:"3–6m",min:92,max:183},{label:"6–12m",min:183,max:366},
-      {label:"1–2y",min:366,max:731},{label:"2y+",min:731,max:Infinity},
-    ];
-    const points=bands.map(b=>{
-      const bt=trades.filter(t=>t.holdDays>=b.min&&t.holdDays<b.max);
-      const avgReturn=bt.length>0?bt.reduce((s,t)=>s+t.returnPct,0)/bt.length:0;
-      const medianReturn=bt.length>0?bt.map(t=>t.returnPct).sort((a,b)=>a-b)[Math.floor(bt.length/2)]:0;
-      const winRate=bt.length>0?(bt.filter(t=>t.pnl>0).length/bt.length*100):0;
-      return{label:b.label,count:bt.length,avgReturn,medianReturn,winRate};
-    }).filter(p=>p.count>0);
-    if(points.length<2)return null;
-    /* Trend: positive slope = improving with time, negative = decay */
-    const n=points.length;
-    const xMean=(n-1)/2;
-    const yMean=points.reduce((s,p)=>s+p.avgReturn,0)/n;
-    let num=0,den=0;
-    points.forEach((p,i)=>{
-      num+=(i-xMean)*(p.avgReturn-yMean);
-      den+=(i-xMean)*(i-xMean); /* sum of (xi - xMean)^2 */
-    });
-    const slope=den!==0?num/den:0;
-    /* R² for fit quality */
-    const yPred=points.map((_,i)=>yMean+slope*(i-xMean));
-    const ssRes=points.reduce((s,p,i)=>s+Math.pow(p.avgReturn-yPred[i],2),0);
-    const ssTot=points.reduce((s,p)=>s+Math.pow(p.avgReturn-yMean,2),0);
-    const r2=ssTot>0?1-ssRes/ssTot:0;
-    const trend=slope>0.5?"improving":slope<-0.5?"decaying":"flat";
-    return{points,slope,r2,trend};
-  },[trades]);
-
-  /* ═══════════════════════════════════════════════════════════════
-     3. Stock revisit success rate — 1st vs 2nd+ trades on same stock
-     ═══════════════════════════════════════════════════════════════ */
-  const revisitData=React.useMemo(()=>{
-    if(!trades.length)return null;
-    /* Group trades by ticker */
-    const byTicker={};
-    trades.forEach(t=>{
-      if(!byTicker[t.ticker])byTicker[t.ticker]=[];
-      byTicker[t.ticker].push(t);
-    });
-    /* Only stocks with 2+ trades */
-    const multiTradeStocks=Object.entries(byTicker).filter(([,txs])=>txs.length>=2);
-    if(!multiTradeStocks.length)return{stocks:[],summary:null};
-    const stocks=multiTradeStocks.map(([ticker,txs])=>{
-      /* Sort by buyDate */
-      txs.sort((a,b)=>(a.buyDate||"").localeCompare(b.buyDate||""));
-      const first=txs[0];
-      const subsequent=txs.slice(1);
-      const firstReturn=first.returnPct;
-      const firstWin=first.pnl>0;
-      const subAvgReturn=subsequent.length>0?subsequent.reduce((s,t)=>s+t.returnPct,0)/subsequent.length:0;
-      const subWinRate=subsequent.length>0?(subsequent.filter(t=>t.pnl>0).length/subsequent.length*100):0;
-      const subTotalPnl=subsequent.reduce((s,t)=>s+t.pnl,0);
-      const improved=subAvgReturn>firstReturn;
-      return{
-        ticker,company:first.company||ticker,
-        tradeCount:txs.length,
-        firstReturn,firstWin,firstPnl:first.pnl,
-        subAvgReturn,subWinRate,subTotalPnl,
-        subCount:subsequent.length,
-        improved,
-        deltaReturn:subAvgReturn-firstReturn,
-      };
-    });
-    /* Overall summary */
-    const totalFirstReturn=stocks.reduce((s,st)=>s+st.firstReturn,0)/stocks.length;
-    const totalSubReturn=stocks.reduce((s,st)=>s+st.subAvgReturn,0)/stocks.length;
-    const firstWinRate=stocks.filter(st=>st.firstWin).length/stocks.length*100;
-    const subWinRate=stocks.reduce((s,st)=>s+st.subWinRate,0)/stocks.length;
-    const improvedCount=stocks.filter(st=>st.improved).length;
-    const summary={
-      stockCount:stocks.length,
-      totalTrades:stocks.reduce((s,st)=>s+st.tradeCount,0),
-      avgFirstReturn:totalFirstReturn,
-      avgSubReturn:totalSubReturn,
-      firstWinRate,subWinRate,
-      improvedCount,improvedPct:stocks.length>0?(improvedCount/stocks.length*100):0,
-    };
-    return{stocks:stocks.sort((a,b)=>Math.abs(b.deltaReturn)-Math.abs(a.deltaReturn)),summary};
-  },[trades]);
-
-  if(!trades.length)return React.createElement("div",{style:{textAlign:"center",padding:"48px 20px"}},
-    React.createElement("div",{style:{fontSize:40,marginBottom:12,color:"var(--text6)"}},React.createElement(Icon,{n:"bolt",size:40})),
-    React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text3)",marginBottom:4}},"No Trade Data"),
-    React.createElement("div",{style:{fontSize:13,color:"var(--text6)"}},"Add shares or save snapshots to Previous Trades to see pattern mining.")
-  );
-
-  return React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:20}},
-
-    /* ══ 1. SWEET SPOT HOLDING PERIOD ══ */
-    sweetSpot&&React.createElement(Card,null,
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:16,display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"target",size:15}),"Your Sweet-Spot Holding Period"),
-      /* Best band highlight */
-      React.createElement("div",{style:{
-        background:sweetSpot.best.avgReturn>=0?"rgba(22,163,74,.07)":"rgba(239,68,68,.07)",
-        border:"1px solid "+(sweetSpot.best.avgReturn>=0?"rgba(22,163,74,.2)":"rgba(239,68,68,.2)"),
-        borderRadius:12,padding:"16px 20px",marginBottom:16,
-      }},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Best Performing Duration"),
-        React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:800,color:sweetSpot.best.avgReturn>=0?"#16a34a":"#ef4444"}},sweetSpot.best.label),
-        React.createElement("div",{style:{display:"flex",gap:20,marginTop:8,flexWrap:"wrap"}},
-          React.createElement("div",null,
-            React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.4}},"Avg Return"),
-            React.createElement("div",{style:{fontSize:15,fontWeight:700,fontFamily:"'Sora',sans-serif",color:sweetSpot.best.avgReturn>=0?"#16a34a":"#ef4444"}},ret(sweetSpot.best.avgReturn))
-          ),
-          React.createElement("div",null,
-            React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.4}},"Win Rate"),
-            React.createElement("div",{style:{fontSize:15,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"var(--text3)"}},sweetSpot.best.winRate.toFixed(1)+"%")
-          ),
-          React.createElement("div",null,
-            React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.4}},"Trades"),
-            React.createElement("div",{style:{fontSize:15,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"var(--text3)"}},sweetSpot.best.count)
-          ),
-          React.createElement("div",null,
-            React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.4}},"Total P&L"),
-            React.createElement("div",{style:{fontSize:15,fontWeight:700,fontFamily:"'Sora',sans-serif",color:sweetSpot.best.totalPnl>=0?"#16a34a":"#ef4444"}},(sweetSpot.best.totalPnl>=0?"+":"")+INR(sweetSpot.best.totalPnl))
-          )
-        )
-      ),
-      /* All bands table */
-      React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:0,borderRadius:10,overflow:"hidden",border:"1px solid var(--border)"}},
-        /* Header */
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"minmax(100px,1fr) 50px 75px 60px 80px",gap:8,padding:"8px 12px",background:"var(--bg5)",fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},
-          React.createElement("div",null,"Duration"),
-          React.createElement("div",{style:{textAlign:"center"}},"Trades"),
-          React.createElement("div",{style:{textAlign:"right"}},"Avg Return"),
-          React.createElement("div",{style:{textAlign:"right"}},"Win %"),
-          React.createElement("div",{style:{textAlign:"right"}},"Total P&L")
-        ),
-        sweetSpot.bands.map((b,i)=>{
-          const isBest=b.key===sweetSpot.best.key;
-          const isWorst=b.key===sweetSpot.worst.key;
-          return React.createElement("div",{key:b.key,style:{
-            display:"grid",gridTemplateColumns:"minmax(100px,1fr) 50px 75px 60px 80px",gap:8,
-            padding:"9px 12px",background:isBest?"rgba(22,163,74,.06)":isWorst?"rgba(239,68,68,.04)":(i%2?"var(--bg5)":"transparent"),
-            borderBottom:i<sweetSpot.bands.length-1?"1px solid var(--border)":"none",
-            alignItems:"center",
-          }},
-            React.createElement("div",{style:{fontSize:12,fontWeight:isBest?700:500,color:isBest?"#16a34a":"var(--text3)",display:"flex",alignItems:"center",gap:6}},
-              b.label,
-              isBest&&React.createElement("span",{style:{fontSize:8,fontWeight:700,padding:"2px 6px",borderRadius:8,background:"rgba(22,163,74,.12)",color:"#16a34a"}},"★ BEST")
-            ),
-            React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text4)",textAlign:"center"}},b.count),
-            React.createElement("div",{style:{fontSize:12,fontWeight:700,fontFamily:"'Sora',sans-serif",color:b.avgReturn>=0?"#16a34a":"#ef4444",textAlign:"right"}},ret(b.avgReturn)),
-            React.createElement("div",{style:{fontSize:11,fontWeight:600,color:"var(--text4)",textAlign:"right"}},b.winRate.toFixed(0)+"%"),
-            React.createElement("div",{style:{fontSize:11,fontWeight:600,color:b.totalPnl>=0?"#16a34a":"#ef4444",textAlign:"right"}},(b.totalPnl>=0?"+":"")+INR(b.totalPnl))
-          );
-        })
-      ),
-      /* Insight */
-      React.createElement("div",{style:{marginTop:14,padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:8,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-        sweetSpot.best.key===sweetSpot.mostTrades.key
-          ?React.createElement(React.Fragment,null,"Your best returns come from your most-traded duration band (",React.createElement("strong",{style:{color:"var(--accent)"}},sweetSpot.best.label),"). You're naturally gravitating toward what works.")
-          :React.createElement(React.Fragment,null,"Your sweet spot is ",React.createElement("strong",{style:{color:"var(--accent)"}},sweetSpot.best.label)," but you trade most in ",React.createElement("strong",null,sweetSpot.mostTrades.label),". Consider aligning your holding period with your best-performing band.")
-      )
-    ),
-
-    /* ══ 2. RETURN DECAY CURVE ══ */
-    decayCurve&&React.createElement(Card,null,
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:4,display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"invest",size:15}),"Return Decay Curve"),
-      React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginBottom:16}},"Do your returns improve with longer holds, or peak at a certain duration?"),
-      /* Trend indicator */
-      React.createElement("div",{style:{
-        display:"inline-flex",alignItems:"center",gap:6,padding:"6px 12px",borderRadius:8,
-        marginBottom:16,
-        background:decayCurve.trend==="improving"?"rgba(22,163,74,.08)":decayCurve.trend==="decaying"?"rgba(239,68,68,.08)":"rgba(234,179,8,.08)",
-        border:"1px solid "+(decayCurve.trend==="improving"?"rgba(22,163,74,.2)":decayCurve.trend==="decaying"?"rgba(239,68,68,.2)":"rgba(234,179,8,.2)")
-      }},
-        React.createElement("span",{style:{fontSize:16}},decayCurve.trend==="improving"?React.createElement(Icon,{n:"invest",size:16,color:"#16a34a"}):decayCurve.trend==="decaying"?React.createElement(Icon,{n:"trenddown",size:16,color:"#ef4444"}):"→"),
-        React.createElement("span",{style:{fontSize:12,fontWeight:700,color:decayCurve.trend==="improving"?"#16a34a":decayCurve.trend==="decaying"?"#ef4444":"#eab308"}},
-          decayCurve.trend==="improving"?"Returns improve with holding time"
-          :decayCurve.trend==="decaying"?"Returns decay with longer holds"
-          :"Returns are flat across holding periods"
-        ),
-        React.createElement("span",{style:{fontSize:10,color:"var(--text6)"}},"(R²="+decayCurve.r2.toFixed(2)+")")
-      ),
-      /* Chart bars */
-      React.createElement("div",{style:{display:"flex",alignItems:"flex-end",gap:6,height:140,padding:"0 4px",marginBottom:4}},
-        decayCurve.points.map((p,i)=>{
-          const maxAbs=Math.max(...decayCurve.points.map(x=>Math.abs(x.avgReturn)),1);
-          const barH=Math.min(Math.abs(p.avgReturn)/maxAbs*100,100);
-          const col=p.avgReturn>=0?"#16a34a":"#ef4444";
-          return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-end",height:"100%"}},
-            React.createElement("span",{style:{fontSize:9,fontWeight:600,color:col,marginBottom:3}},ret(p.avgReturn)),
-            React.createElement("div",{style:{width:"100%",height:Math.max(barH,3)+"%",background:col,borderRadius:"3px 3px 0 0",opacity:.7}}),
-            React.createElement("span",{style:{fontSize:8,color:"var(--text6)",marginTop:3}},p.count)
-          );
-        })
-      ),
-      /* X-axis labels */
-      React.createElement("div",{style:{display:"flex",gap:6,padding:"0 4px"}},
-        decayCurve.points.map((p,i)=>React.createElement("div",{key:i,style:{flex:1,textAlign:"center"}},
-          React.createElement("span",{style:{fontSize:8,color:"var(--text6)",writingMode:"vertical-lr",transform:"rotate(180deg)",maxHeight:60,display:"block",overflow:"hidden",textOverflow:"ellipsis"}},p.label)
-        ))
-      ),
-      /* Win rate line */
-      React.createElement("div",{style:{marginTop:16,display:"flex",gap:6,padding:"0 4px"}},
-        decayCurve.points.map((p,i)=>React.createElement("div",{key:i,style:{flex:1,textAlign:"center"}},
-          React.createElement("div",{style:{fontSize:8,color:"var(--text5)",fontWeight:600}},p.winRate.toFixed(0)+"% w/r")
-        ))
-      ),
-      /* Interpretation */
-      React.createElement("div",{style:{marginTop:14,padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:8,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-        decayCurve.trend==="improving"
-          ?React.createElement(React.Fragment,null,"Your returns ",React.createElement("strong",{style:{color:"#16a34a"}},"improve")," the longer you hold. Patience is rewarded — your longer-held trades outperform quick flips. Consider extending your typical hold period.")
-          :decayCurve.trend==="decaying"
-            ?React.createElement(React.Fragment,null,"Your returns ",React.createElement("strong",{style:{color:"#ef4444"}},"decay")," with longer holds. Your best trades are shorter-duration — longer holds tend to mean-revert. Consider taking profits earlier or setting tighter stop-losses.")
-            :React.createElement(React.Fragment,null,"Your returns are ",React.createElement("strong",{style:{color:"#eab308"}},"flat")," across holding periods — duration doesn't strongly predict your returns. Focus on entry quality and stock selection rather than timing exits.")
-      )
-    ),
-
-    /* ══ 3. STOCK REVISIT SUCCESS RATE ══ */
-    revisitData&&revisitData.summary&&React.createElement(Card,null,
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:4,display:"flex",alignItems:"center",gap:6}},React.createElement(Icon,{n:"refresh",size:15}),"Stock Revisit Success Rate"),
-      React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginBottom:16}},"When you trade the same stock again, are the subsequent trades better or worse than your first?"),
-      /* Summary cards */
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:12,marginBottom:16}},
-        React.createElement("div",{style:{background:"rgba(109,40,217,.07)",border:"1px solid rgba(109,40,217,.2)",borderRadius:10,padding:"12px 14px"}},
-          React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.4,marginBottom:4}},"Stocks Revisited"),
-          React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#7c3aed"}},revisitData.summary.stockCount),
-          React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},revisitData.summary.totalTrades+" total trades")
-        ),
-        React.createElement("div",{style:{background:revisitData.summary.avgFirstReturn>=0?"rgba(22,163,74,.07)":"rgba(239,68,68,.07)",border:"1px solid "+(revisitData.summary.avgFirstReturn>=0?"rgba(22,163,74,.2)":"rgba(239,68,68,.2)"),borderRadius:10,padding:"12px 14px"}},
-          React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.4,marginBottom:4}},"1st Trade Avg Return"),
-          React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:revisitData.summary.avgFirstReturn>=0?"#16a34a":"#ef4444"}},ret(revisitData.summary.avgFirstReturn)),
-          React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},revisitData.summary.firstWinRate.toFixed(0)+"% win rate")
-        ),
-        React.createElement("div",{style:{background:revisitData.summary.avgSubReturn>=0?"rgba(22,163,74,.07)":"rgba(239,68,68,.07)",border:"1px solid "+(revisitData.summary.avgSubReturn>=0?"rgba(22,163,74,.2)":"rgba(239,68,68,.2)"),borderRadius:10,padding:"12px 14px"}},
-          React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.4,marginBottom:4}},"2nd+ Trade Avg Return"),
-          React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:revisitData.summary.avgSubReturn>=0?"#16a34a":"#ef4444"}},ret(revisitData.summary.avgSubReturn)),
-          React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},revisitData.summary.subWinRate.toFixed(0)+"% win rate")
-        ),
-        React.createElement("div",{style:{background:revisitData.summary.improvedPct>=50?"rgba(22,163,74,.07)":"rgba(239,68,68,.07)",border:"1px solid "+(revisitData.summary.improvedPct>=50?"rgba(22,163,74,.2)":"rgba(239,68,68,.2)"),borderRadius:10,padding:"12px 14px"}},
-          React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.4,marginBottom:4}},"Improved on Revisit"),
-          React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:revisitData.summary.improvedPct>=50?"#16a34a":"#ef4444"}},revisitData.summary.improvedPct.toFixed(0)+"%"),
-          React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},revisitData.summary.improvedCount+" of "+revisitData.summary.stockCount+" stocks")
-        )
-      ),
-      /* Per-stock detail */
-      revisitData.stocks.length>0&&React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:0,borderRadius:10,overflow:"hidden",border:"1px solid var(--border)"}},
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"minmax(80px,1fr) 46px 65px 65px 65px 56px",gap:6,padding:"8px 12px",background:"var(--bg5)",fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},
-          React.createElement("div",null,"Stock"),
-          React.createElement("div",{style:{textAlign:"center"}},"#"),
-          React.createElement("div",{style:{textAlign:"right"}},"1st Return"),
-          React.createElement("div",{style:{textAlign:"right"}},"2nd+ Avg"),
-          React.createElement("div",{style:{textAlign:"right"}},"Delta"),
-          React.createElement("div",{style:{textAlign:"center"}},"Verdict")
-        ),
-        revisitData.stocks.slice(0,10).map((st,i)=>React.createElement("div",{key:st.ticker,style:{
-          display:"grid",gridTemplateColumns:"minmax(80px,1fr) 46px 65px 65px 65px 56px",gap:6,
-          padding:"9px 12px",background:i%2?"var(--bg5)":"transparent",
-          borderBottom:i<Math.min(revisitData.stocks.length,10)-1?"1px solid var(--border)":"none",
-          alignItems:"center",
-        }},
-          React.createElement("div",{style:{fontSize:11,fontWeight:600,color:"var(--text3)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},st.company),
-          React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",textAlign:"center"}},st.tradeCount),
-          React.createElement("div",{style:{fontSize:11,fontWeight:700,fontFamily:"'Sora',sans-serif",color:st.firstReturn>=0?"#16a34a":"#ef4444",textAlign:"right"}},ret(st.firstReturn)),
-          React.createElement("div",{style:{fontSize:11,fontWeight:700,fontFamily:"'Sora',sans-serif",color:st.subAvgReturn>=0?"#16a34a":"#ef4444",textAlign:"right"}},ret(st.subAvgReturn)),
-          React.createElement("div",{style:{fontSize:11,fontWeight:700,fontFamily:"'Sora',sans-serif",color:st.deltaReturn>=0?"#16a34a":"#ef4444",textAlign:"right"}},(st.deltaReturn>=0?"+":"")+st.deltaReturn.toFixed(1)+"%"),
-          React.createElement("div",{style:{textAlign:"center"}},
-            React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:8,background:st.improved?"rgba(22,163,74,.1)":"rgba(239,68,68,.1)",color:st.improved?"#16a34a":"#ef4444"}},st.improved?"✓ Better":"✗ Worse")
-          )
-        )),
-        revisitData.stocks.length>10&&React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textAlign:"center",padding:"8px 0"}},"+"+(revisitData.stocks.length-10)+" more stocks")
-      ),
-      /* Overall insight */
-      React.createElement("div",{style:{marginTop:14,padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:8,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-        revisitData.summary.improvedPct>=60
-          ?React.createElement(React.Fragment,null,"You're a ",React.createElement("strong",{style:{color:"#16a34a"}},"learning trader")," — revisit trades outperform first trades ",React.createElement("strong",null,revisitData.summary.improvedPct.toFixed(0)+"%")," of the time. Your experience with a stock improves your timing. Keep revisiting winners.")
-          :revisitData.summary.improvedPct>=40
-            ?React.createElement(React.Fragment,null,"Your revisit results are ",React.createElement("strong",{style:{color:"#eab308"}},"mixed")," — ",revisitData.summary.improvedPct.toFixed(0)+"% of stocks show improvement on repeat trades. Some stocks you've learned from, others you haven't. Analyze the winners vs losers for patterns.")
-            :React.createElement(React.Fragment,null,"Repeat trades tend to ",React.createElement("strong",{style:{color:"#ef4444"}},"underperform")," your first trades. This could indicate: anchoring bias (holding onto losing theses), averaging down into losers, or chasing stocks you're emotionally attached to. Consider a rule: if a stock disappointed once, skip the revisit.")
-      )
-    ),
-
-    /* ══ Methodology note ══ */
-    React.createElement("div",{style:{padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-      React.createElement("strong",{style:{color:"var(--accent)"}},"Methodology: "),
-      "Sweet-spot holding period groups trades into standard duration bands (< 1 week, 1-2 weeks, 2-4 weeks, 1-3 months, 3-6 months, 6-12 months, 1-2 years, 2+ years) and computes average return, win rate, and total P&L per band. The band with the highest average return is flagged as your sweet spot. Return decay curve uses finer-grained buckets and fits a linear regression (least squares) to detect whether returns improve (positive slope) or decay (negative slope) with holding duration; R² measures fit quality. Stock revisit analysis groups trades by ticker, identifies stocks with 2+ trades, and compares the first trade's return against the average of subsequent trades. 'Improved' means the 2nd+ average return exceeds the first trade's return. Active holdings use current price as exit. All amounts include brokerage."
-    )
-  );
-};
-
-/* ══════════════════════════════════════════════════════════════════
-   1. DRAWDOWN & RECOVERY TRACKER
-   ══════════════════════════════════════════════════════════════════ */
-const DrawdownRecoveryTracker=({shares,soldShareSnapshots={}})=>{
-  const ret=(v)=>(v>=0?"+":"")+v.toFixed(2)+"%";
-  const INR=(v)=>"₹"+Number(Math.round(v)).toLocaleString("en-IN");
-
-  const trades=React.useMemo(()=>{
-    const list=[];
-    (shares||[]).forEach(sh=>{
-      if(!sh.qty||!sh.buyPrice||!sh.currentPrice||!sh.buyDate)return;
-      const buyAmt=sh.qty*sh.buyPrice;
-      const sellAmt=sh.qty*sh.currentPrice;
-      const brokerage=+sh.brokerage||0;
-      list.push({id:sh.id,type:"active",company:sh.company,ticker:sh.ticker,buyDate:sh.buyDate,sellDate:TODAY(),buyAmt,sellAmt,pnl:sellAmt-buyAmt-brokerage,returnPct:buyAmt>0?((sellAmt-buyAmt-brokerage)/buyAmt*100):0});
-    });
-    Object.values(soldShareSnapshots||{}).forEach(fySnaps=>{
-      (fySnaps||[]).forEach(sn=>{
-        if(!sn.qty||!sn.buyPrice||!sn.sellPrice||!sn.buyDate)return;
-        const buyAmt=sn.qty*sn.buyPrice;
-        const sellAmt=sn.qty*sn.sellPrice;
-        const brokerage=+sn.brokerage||0;
-        list.push({id:sn.id,type:"sold",company:sn.company,ticker:sn.ticker,buyDate:sn.buyDate,sellDate:sn.savedAt,buyAmt,sellAmt,pnl:sellAmt-buyAmt-brokerage,returnPct:buyAmt>0?((sellAmt-buyAmt-brokerage)/buyAmt*100):0});
-      });
-    });
-    return list.sort((a,b)=>(a.sellDate||"").localeCompare(b.sellDate||""));
-  },[shares,soldShareSnapshots]);
-
-  /* ── Equity curve with drawdown tracking ── */
-  const equityData=React.useMemo(()=>{
-    if(!trades.length)return{points:[],maxDrawdown:0,maxDrawdownPct:0,recoveryFactor:0,currentDD:0,currentDDPct:0,peakValue:0,drawdownPeriods:[]};
-    let cumPnl=0,peak=0;
-    const points=[];
-    const drawdownPeriods=[];
-    let inDrawdown=false,ddStartIdx=0,ddPeakVal=0;
-    trades.forEach((t,i)=>{
-      cumPnl+=t.pnl;
-      if(cumPnl>peak){
-        if(inDrawdown&&ddPeakVal>0){
-          const recoveryDays=Math.max(1,Math.floor((new Date((t.sellDate||t.buyDate)+"T12:00:00")-new Date((trades[ddStartIdx].sellDate||trades[ddStartIdx].buyDate)+"T12:00:00"))/864e5));
-          drawdownPeriods.push({startIdx:ddStartIdx,endIdx:i,depth:ddPeakVal,recoveryDays});
-        }
-        inDrawdown=false;peak=cumPnl;
-      }
-      const dd=peak-cumPnl;
-      if(dd>0&&!inDrawdown){inDrawdown=true;ddStartIdx=i;ddPeakVal=dd;}
-      if(dd>0&&dd>ddPeakVal)ddPeakVal=dd;
-      points.push({date:t.sellDate||t.buyDate,cumPnl,drawdown:dd,peak});
-    });
-    if(inDrawdown)drawdownPeriods.push({startIdx:ddStartIdx,endIdx:trades.length-1,depth:ddPeakVal,recoveryDays:null});
-    const maxDD=Math.max(...points.map(p=>p.drawdown),0);
-    const totalInvested=trades.reduce((s,t)=>s+t.buyAmt,0);
-    const maxDDPct=totalInvested>0?(maxDD/totalInvested*100):0;
-    const totalPnl=trades.reduce((s,t)=>s+t.pnl,0);
-    const recoveryFactor=maxDD>0?(totalPnl/maxDD):0;
-    const currentPeak=points.length?points[points.length-1].peak:0;
-    const currentDD=currentPeak-cumPnl;
-    const currentDDPct=currentPeak>0?(currentDD/currentPeak*100):0;
-    return{points,maxDrawdown:maxDD,maxDrawdownPct:maxDDPct,recoveryFactor,currentDD,currentDDPct,peakValue:currentPeak,drawdownPeriods,totalPnl,totalInvested};
-  },[trades]);
-
-  if(!trades.length)return React.createElement("div",{style:{textAlign:"center",padding:"48px 20px"}},
-    React.createElement("div",{style:{fontSize:40,marginBottom:12,color:"var(--text6)"}},React.createElement(Icon,{n:"invest",size:40})),
-    React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text3)",marginBottom:4}},"No Trade Data"),
-    React.createElement("div",{style:{fontSize:13,color:"var(--text6)"}},"Add shares or save snapshots to Previous Trades to see drawdown analytics.")
-  );
-
-  const eq=equityData;
-  const chartW=700,chartH=220;
-  const maxPnl=Math.max(...eq.points.map(p=>p.cumPnl),0);
-  const minPnl=Math.min(...eq.points.map(p=>p.cumPnl),0);
-  const range=maxPnl-minPnl||1;
-  const toY=(v)=>chartH-((v-minPnl)/range)*(chartH-40)-20;
-  const toX=(i)=>(i/Math.max(eq.points.length-1,1))*(chartW-40)+20;
-  const eqLine=eq.points.map((p,i)=>(i===0?"M":"L")+toX(i).toFixed(1)+","+toY(p.cumPnl).toFixed(1)).join(" ");
-  const ddArea=eq.points.length>1
-    ?"M"+toX(0).toFixed(1)+","+toY(eq.points[0].peak).toFixed(1)+" "+eq.points.map((p,i)=>"L"+toX(i).toFixed(1)+","+toY(Math.min(p.cumPnl,p.peak)).toFixed(1)).join(" ")+" L"+toX(eq.points.length-1).toFixed(1)+","+toY(eq.points[eq.points.length-1].peak).toFixed(1)+" Z"
-    :"";
-
-  return React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:20}},
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(175px,1fr))",gap:12}},
-      React.createElement("div",{style:{background:eq.currentDDPct>0?"rgba(239,68,68,.07)":"rgba(22,163,74,.07)",border:"1px solid "+(eq.currentDDPct>0?"rgba(239,68,68,.2)":"rgba(22,163,74,.2)"),borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Current Drawdown"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:eq.currentDDPct>0?"#ef4444":"#16a34a"}},eq.currentDDPct>0?"-"+eq.currentDDPct.toFixed(2)+"%":"None"),
-        eq.currentDDPct>0&&React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},INR(eq.currentDD)+" below peak")
-      ),
-      React.createElement("div",{style:{background:"rgba(239,68,68,.07)",border:"1px solid rgba(239,68,68,.2)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Max Drawdown"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#ef4444"}},"-"+eq.maxDrawdownPct.toFixed(2)+"%"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},INR(eq.maxDrawdown)+" capital lost")
-      ),
-      React.createElement("div",{style:{background:eq.recoveryFactor>=2?"rgba(22,163,74,.07)":eq.recoveryFactor>=1?"rgba(234,179,8,.07)":"rgba(239,68,68,.07)",border:"1px solid "+(eq.recoveryFactor>=2?"rgba(22,163,74,.2)":eq.recoveryFactor>=1?"rgba(234,179,8,.2)":"rgba(239,68,68,.2)"),borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Recovery Factor"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:eq.recoveryFactor>=2?"#16a34a":eq.recoveryFactor>=1?"#eab308":"#ef4444"}},eq.recoveryFactor.toFixed(2)+"×"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},eq.recoveryFactor>=2?"✓ Healthy (>2×)":eq.recoveryFactor>=1?"Marginal (<2×)":"⚠ Weak (<1×)")
-      ),
-      React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Peak Portfolio Value"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text)"}},INR(eq.peakValue)),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Cumulative P&L peak")
-      )
-    ),
-    React.createElement(Card,null,
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:14,display:"flex",alignItems:"center",gap:8}},
-        React.createElement(Icon,{n:"chart",size:16,color:"var(--accent)"}),"Equity Curve with Drawdown Shading"
-      ),
-      eq.points.length<2
-        ?React.createElement("div",{style:{textAlign:"center",padding:"40px",fontSize:12,color:"var(--text6)"}},"Need at least 2 trades to plot equity curve")
-        :React.createElement("div",{style:{overflowX:"auto"}},React.createElement("svg",{width:chartW,height:chartH,style:{display:"block"}},
-          [0,0.25,0.5,0.75,1].map(pct=>{
-            const y=toY(minPnl+pct*range);
-            return React.createElement(React.Fragment,{key:pct},
-              React.createElement("line",{x1:20,y1:y,x2:chartW-20,y2:y,stroke:"var(--border)",strokeWidth:0.5,strokeDasharray:"4,4"}),
-              React.createElement("text",{x:18,y:y+3,fill:"var(--text6)",fontSize:8,textAnchor:"end",fontFamily:"'DM Sans'"},INR(minPnl+pct*range))
-            );
-          }),
-          minPnl<0&&maxPnl>0&&React.createElement("line",{x1:20,y1:toY(0),x2:chartW-20,y2:toY(0),stroke:"var(--text6)",strokeWidth:0.5}),
-          ddArea&&React.createElement("path",{d:ddArea,fill:"rgba(239,68,68,.12)",stroke:"none"}),
-          React.createElement("path",{d:eqLine,fill:"none",stroke:eq.totalPnl>=0?"#16a34a":"#ef4444",strokeWidth:2.5,strokeLinejoin:"round",strokeLinecap:"round"}),
-          eq.points.map((p,i)=>React.createElement("circle",{key:i,cx:toX(i),cy:toY(p.cumPnl),r:3,fill:p.cumPnl>=0?"#16a34a":"#ef4444",stroke:"var(--bg)",strokeWidth:1.5})),
-          React.createElement("text",{x:chartW/2,y:chartH-2,fill:"var(--text6)",fontSize:9,textAnchor:"middle",fontFamily:"'DM Sans'"},"← Trade sequence →")
-        ))
-    ),
-    eq.drawdownPeriods.length>0&&React.createElement(Card,null,
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:14,display:"flex",alignItems:"center",gap:8}},
-        React.createElement(Icon,{n:"warning",size:16,color:"#ef4444"}),"Drawdown Periods"
-      ),
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"minmax(70px,1fr) minmax(70px,1fr) 80px 90px",gap:6,padding:"8px 12px",background:"var(--bg5)",fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},
-        React.createElement("div",null,"Start"),React.createElement("div",null,"End"),React.createElement("div",{style:{textAlign:"right"}},"Depth"),React.createElement("div",{style:{textAlign:"right"}},"Recovery")
-      ),
-      eq.drawdownPeriods.slice(0,8).map((dp,i)=>{
-        const startTrade=trades[dp.startIdx];const endTrade=trades[dp.endIdx];
-        return React.createElement("div",{key:i,style:{display:"grid",gridTemplateColumns:"minmax(70px,1fr) minmax(70px,1fr) 80px 90px",gap:6,padding:"9px 12px",background:i%2?"var(--bg5)":"transparent",borderBottom:i<Math.min(eq.drawdownPeriods.length,8)-1?"1px solid var(--border)":"none",alignItems:"center"}},
-          React.createElement("div",{style:{fontSize:11,color:"var(--text4)"}},startTrade.sellDate||startTrade.buyDate),
-          React.createElement("div",{style:{fontSize:11,color:"var(--text4)"}},dp.recoveryDays?endTrade.sellDate||endTrade.buyDate:"Ongoing"),
-          React.createElement("div",{style:{fontSize:11,fontWeight:700,fontFamily:"'Sora',sans-serif",color:"#ef4444",textAlign:"right"}},INR(dp.depth)),
-          React.createElement("div",{style:{fontSize:11,fontWeight:700,fontFamily:"'Sora',sans-serif",color:dp.recoveryDays?"var(--text4)":"#eab308",textAlign:"right"}},dp.recoveryDays?dp.recoveryDays+" days":"Ongoing")
-        );
-      })
-    ),
-    React.createElement("div",{style:{padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-      React.createElement("strong",{style:{color:"var(--accent)"}},"Methodology: "),
-      "Equity curve plots cumulative P&L (₹) per trade in chronological order. Drawdown shading shows the gap between the running peak and actual equity. Max drawdown is the deepest peak-to-trough decline as a % of total capital deployed. Recovery Factor = total net profit ÷ max drawdown (target >2×). Current drawdown shows how far below your all-time P&L peak you are right now. Active holdings use current price as exit. All amounts net of brokerage."
-    )
-  );
-};
-
-/* ══════════════════════════════════════════════════════════════════
-   2. MULTI-TIMEFRAME PERFORMANCE
-   ══════════════════════════════════════════════════════════════════ */
-const MultiTimeframePerformance=({shares,soldShareSnapshots={}})=>{
-  const ret=(v)=>(v>=0?"+":"")+v.toFixed(2)+"%";
-  const INR=(v)=>"₹"+Number(Math.round(v)).toLocaleString("en-IN");
-
-  const trades=React.useMemo(()=>{
-    const list=[];
-    (shares||[]).forEach(sh=>{
-      if(!sh.qty||!sh.buyPrice||!sh.currentPrice||!sh.buyDate)return;
-      const buyAmt=sh.qty*sh.buyPrice;const sellAmt=sh.qty*sh.currentPrice;const brokerage=+sh.brokerage||0;
-      list.push({id:sh.id,type:"active",company:sh.company,ticker:sh.ticker,buyDate:sh.buyDate,sellDate:TODAY(),buyAmt,sellAmt,pnl:sellAmt-buyAmt-brokerage,returnPct:buyAmt>0?((sellAmt-buyAmt-brokerage)/buyAmt*100):0});
-    });
-    Object.values(soldShareSnapshots||{}).forEach(fySnaps=>{
-      (fySnaps||[]).forEach(sn=>{
-        if(!sn.qty||!sn.buyPrice||!sn.sellPrice||!sn.buyDate)return;
-        const buyAmt=sn.qty*sn.buyPrice;const sellAmt=sn.qty*sn.sellPrice;const brokerage=+sn.brokerage||0;
-        list.push({id:sn.id,type:"sold",company:sn.company,ticker:sn.ticker,buyDate:sn.buyDate,sellDate:sn.savedAt,buyAmt,sellAmt,pnl:sellAmt-buyAmt-brokerage,returnPct:buyAmt>0?((sellAmt-buyAmt-brokerage)/buyAmt*100):0});
-      });
-    });
-    return list.sort((a,b)=>(a.sellDate||"").localeCompare(b.sellDate||""));
-  },[shares,soldShareSnapshots]);
-
-  const closedTrades=React.useMemo(()=>trades.filter(t=>t.type==="sold"),[trades]);
-
-  const monthlyData=React.useMemo(()=>{
-    const map={};
-    closedTrades.forEach(t=>{
-      const month=(t.sellDate||t.buyDate||"").slice(0,7);if(!month)return;
-      if(!map[month])map[month]={month,pnl:0,count:0,winners:0,losers:0};
-      map[month].pnl+=t.pnl;map[month].count++;if(t.pnl>0)map[month].winners++;if(t.pnl<0)map[month].losers++;
-    });
-    return Object.values(map).sort((a,b)=>a.month.localeCompare(b.month));
-  },[closedTrades]);
-
-  const streaks=React.useMemo(()=>{
-    if(!monthlyData.length)return{maxWin:0,maxLoss:0,curStreak:0,curType:"none",consecMonths:[]};
-    let maxWin=0,maxLoss=0,curStreak=0,curType=monthlyData[0].pnl>=0?"win":"loss",bestWinStart="",bestWinEnd="",bestLossStart="",bestLossEnd="";
-    let winStart=monthlyData[0].month,lossStart=monthlyData[0].month;
-    const consecMonths=[];
-    monthlyData.forEach((m,i)=>{
-      const type=m.pnl>=0?"win":"loss";
-      if(type===curType){curStreak++;}
-      else{
-        consecMonths.push({type:curType,length:curStreak,start:i===0?m.month:monthlyData[i-curStreak].month,end:monthlyData[i-1].month});
-        if(curType==="win"&&curStreak>maxWin){maxWin=curStreak;bestWinStart=winStart;bestWinEnd=monthlyData[i-1].month;}
-        if(curType==="loss"&&curStreak>maxLoss){maxLoss=curStreak;bestLossStart=lossStart;bestLossEnd=monthlyData[i-1].month;}
-        curType=type;curStreak=1;if(type==="win")winStart=m.month;else lossStart=m.month;
-      }
-    });
-    consecMonths.push({type:curType,length:curStreak,start:monthlyData[monthlyData.length-curStreak].month,end:monthlyData[monthlyData.length-1].month});
-    if(curType==="win"&&curStreak>maxWin){maxWin=curStreak;bestWinStart=winStart;bestWinEnd=monthlyData[monthlyData.length-1].month;}
-    if(curType==="loss"&&curStreak>maxLoss){maxLoss=curStreak;bestLossStart=lossStart;bestLossEnd=monthlyData[monthlyData.length-1].month;}
-    return{maxWin,maxLoss,curStreak,curType,bestWinStart,bestWinEnd,bestLossStart,bestLossEnd,consecMonths};
-  },[monthlyData]);
-
-  const weeklyData=React.useMemo(()=>{
-    const map={};
-    closedTrades.forEach(t=>{
-      const d=new Date((t.sellDate||t.buyDate)+"T12:00:00");const ws=new Date(d);ws.setDate(d.getDate()-d.getDay());const wk=ws.toISOString().slice(0,10);
-      if(!map[wk])map[wk]={week:wk,pnl:0,count:0,trades:[]};
-      map[wk].pnl+=t.pnl;map[wk].count++;map[wk].trades.push(t);
-    });
-    return Object.values(map).sort((a,b)=>a.week.localeCompare(b.week));
-  },[closedTrades]);
-
-  const bestWeek=weeklyData.reduce((best,w)=>!best||w.pnl>best.pnl?w:best,null);
-  const worstWeek=weeklyData.reduce((worst,w)=>!worst||w.pnl<worst.pnl?w:worst,null);
-
-  const heatmapData=React.useMemo(()=>{
-    if(!monthlyData.length)return{rows:[],maxAbs:1};
-    const maxAbs=Math.max(...monthlyData.map(m=>Math.abs(m.pnl)),1);
-    const byYear={};monthlyData.forEach(m=>{const y=m.month.slice(0,4);if(!byYear[y])byYear[y]={};byYear[y][m.month.slice(5,7)]=m;});
-    const years=Object.keys(byYear).sort();const months=["01","02","03","04","05","06","07","08","09","10","11","12"];
-    return{rows:years.map(y=>({year:y,months:months.map(m=>byYear[y]?.[m]||null)})),maxAbs};
-  },[monthlyData]);
-
-  const [selectedMonth,setSelectedMonth]=useState(null);
-  const tradesByMonth=React.useMemo(()=>{
-    const map={};
-    closedTrades.forEach(t=>{
-      const mk=(t.sellDate||t.buyDate||"").slice(0,7);if(!mk)return;
-      if(!map[mk])map[mk]=[];map[mk].push(t);
-    });
-    return map;
-  },[closedTrades]);
-
-  if(!closedTrades.length)return React.createElement("div",{style:{textAlign:"center",padding:"48px 20px"}},
-    React.createElement("div",{style:{fontSize:40,marginBottom:12,color:"var(--text6)"}},React.createElement(Icon,{n:"invest",size:40})),
-    React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text3)",marginBottom:4}},"No Closed Trades Yet"),
-    React.createElement("div",{style:{fontSize:13,color:"var(--text6)"}},"Sell shares or save snapshots to see multi-timeframe P&L analysis.")
-  );
-
-  return React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:20}},
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(175px,1fr))",gap:12}},
-      React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Profitable Months"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#16a34a"}},monthlyData.filter(m=>m.pnl>0).length+"/"+monthlyData.length),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"of all months are green")
-      ),
-      React.createElement("div",{style:{background:streaks.maxWin>=3?"rgba(22,163,74,.07)":"var(--bg4)",border:"1px solid "+(streaks.maxWin>=3?"rgba(22,163,74,.2)":"var(--border)"),borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Best Win Streak"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#16a34a"}},streaks.maxWin+" months"),
-        streaks.bestWinStart&&React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},streaks.bestWinStart+" → "+streaks.bestWinEnd)
-      ),
-      React.createElement("div",{style:{background:streaks.maxLoss>=3?"rgba(239,68,68,.07)":"var(--bg4)",border:"1px solid "+(streaks.maxLoss>=3?"rgba(239,68,68,.2)":"var(--border)"),borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Worst Loss Streak"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#ef4444"}},streaks.maxLoss+" months"),
-        streaks.bestLossStart&&React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},streaks.bestLossStart+" → "+streaks.bestLossEnd)
-      ),
-      React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Current Streak"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:streaks.curType==="win"?"#16a34a":"#ef4444"}},streaks.curStreak+" "+streaks.curType+(streaks.curStreak!==1?"s":"")),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},streaks.curType==="win"?"Keep it going!":"Due for a turnaround")
-      )
-    ),
-    React.createElement(Card,null,
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:14,display:"flex",alignItems:"center",gap:8}},
-        React.createElement(Icon,{n:"chart",size:16,color:"var(--accent)"}),"Monthly P&L Heatmap"
-      ),
-      heatmapData.rows.length===0
-        ?React.createElement("div",{style:{textAlign:"center",padding:"40px",fontSize:12,color:"var(--text6)"}},"No monthly data")
-        :React.createElement("div",null,
-          React.createElement("div",{style:{overflowX:"auto"}},
-            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"50px repeat(12,1fr)",gap:3,minWidth:500}},
-              React.createElement("div",{style:{fontSize:9,color:"var(--text6)",fontWeight:700}},""),
-              ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map(m=>React.createElement("div",{key:m,style:{fontSize:9,color:"var(--text6)",fontWeight:700,textAlign:"center",padding:"4px 0"}},m)),
-              heatmapData.rows.map(r=>React.createElement(React.Fragment,{key:r.year},
-                React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"var(--text4)",display:"flex",alignItems:"center"}},r.year),
-                r.months.map((m,i)=>{
-                  if(!m)return React.createElement("div",{key:i,style:{background:"var(--bg5)",borderRadius:4,minHeight:32}});
-                  const intensity=Math.min(Math.abs(m.pnl)/heatmapData.maxAbs,1);
-                  const bg=m.pnl>=0?`rgba(22,163,74,${(0.08+intensity*0.35).toFixed(2)})`:`rgba(239,68,68,${(0.08+intensity*0.35).toFixed(2)})`;
-                  const _pnlAbs=Math.abs(m.pnl);const _pnlStr=(m.pnl>=0?"+":"")+(_pnlAbs>=100000?(m.pnl/100000).toFixed(1)+"L":_pnlAbs>=1000?(m.pnl/1000).toFixed(0)+"K":m.pnl.toFixed(0));
-                  const isSelected=selectedMonth===m.month;
-                  return React.createElement("div",{key:i,onClick:()=>setSelectedMonth(isSelected?null:m.month),title:m.month+": "+INR(m.pnl)+" ("+m.count+" trades) — click to inspect",style:{background:bg,borderRadius:4,minHeight:32,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:"pointer",outline:isSelected?"2px solid var(--accent)":"none",outlineOffset:isSelected?1:"none",transition:"outline .12s,transform .1s",transform:isSelected?"scale(1.06)":"scale(1)"}},
-                    React.createElement("div",{style:{fontSize:10,fontWeight:700,fontFamily:"'Sora',sans-serif",color:m.pnl>=0?"#16a34a":"#ef4444"}},_pnlStr),
-                    React.createElement("div",{style:{fontSize:8,color:"var(--text6)"}},m.count)
-                  );
-                })
-              ))
-            )
-          ),
-          selectedMonth&&tradesByMonth[selectedMonth]&&React.createElement("div",{style:{marginTop:14,borderTop:"1px solid var(--border)",paddingTop:14}},
-            React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}},
-              React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",display:"flex",alignItems:"center",gap:6}},
-                React.createElement(Icon,{n:"list",size:14,color:"var(--accent)"}),
-                (()=>{const d=new Date(selectedMonth+"-01T12:00:00");return d.toLocaleString("en-IN",{month:"long",year:"numeric"});})(),
-                React.createElement("span",{style:{fontSize:11,fontWeight:500,color:"var(--text5)",marginLeft:4}},tradesByMonth[selectedMonth].length+" trade"+(tradesByMonth[selectedMonth].length!==1?"s":""))
-              ),
-              React.createElement("div",{onClick:()=>setSelectedMonth(null),style:{fontSize:10,color:"var(--text6)",cursor:"pointer",padding:"3px 8px",borderRadius:6,background:"var(--bg4)"},"aria-label":"Close"},"✕")
-            ),
-            React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
-              React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1.1fr 1.1fr 1fr 1fr 0.9fr 1fr",gap:6,padding:"6px 10px",borderRadius:"8px 8px 0 0",background:"var(--bg4)",fontSize:9,fontWeight:700,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.4}},
-                React.createElement("div",null,"Ticker / Company"),
-                React.createElement("div",null,"Buy Date"),
-                React.createElement("div",null,"Sell Date"),
-                React.createElement("div",{style:{textAlign:"right"}},"Buy Value"),
-                React.createElement("div",{style:{textAlign:"right"}},"Sell Value"),
-                React.createElement("div",{style:{textAlign:"right"}},"Return %"),
-                React.createElement("div",{style:{textAlign:"right"}},"P&L")
-              ),
-              tradesByMonth[selectedMonth].map((t,idx)=>{
-                const isGain=t.pnl>=0;
-                const _abs=Math.abs(t.pnl);const _pStr=(_abs>=100000?(t.pnl/100000).toFixed(2)+"L":_abs>=1000?(t.pnl/1000).toFixed(1)+"K":t.pnl.toFixed(0));
-                return React.createElement("div",{key:t.id||idx,style:{display:"grid",gridTemplateColumns:"2fr 1.1fr 1.1fr 1fr 1fr 0.9fr 1fr",gap:6,padding:"8px 10px",borderRadius:idx===tradesByMonth[selectedMonth].length-1?"0 0 8px 8px":0,background:idx%2===0?"var(--bg3)":"var(--bg4)",fontSize:11,alignItems:"center",borderTop:"1px solid var(--border)"}},
-                  React.createElement("div",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},
-                    React.createElement("div",{style:{fontWeight:600,color:"var(--text3)",fontSize:11}},t.ticker||"—"),
-                    React.createElement("div",{style:{fontSize:9,color:"var(--text6)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.company||"")
-                  ),
-                  React.createElement("div",{style:{fontSize:10,color:"var(--text5)",fontFamily:"'DM Mono',monospace"}},t.buyDate||"—"),
-                  React.createElement("div",{style:{fontSize:10,color:"var(--text5)",fontFamily:"'DM Mono',monospace"}},t.sellDate||"—"),
-                  React.createElement("div",{style:{textAlign:"right",fontSize:10,color:"var(--text4)",fontFamily:"'DM Mono',monospace"}},INR(t.buyAmt)),
-                  React.createElement("div",{style:{textAlign:"right",fontSize:10,color:"var(--text4)",fontFamily:"'DM Mono',monospace"}},INR(t.sellAmt)),
-                  React.createElement("div",{style:{textAlign:"right",fontWeight:600,fontFamily:"'Sora',sans-serif",fontSize:10,color:isGain?"#16a34a":"#ef4444"}},ret(t.returnPct)),
-                  React.createElement("div",{style:{textAlign:"right",fontWeight:700,fontFamily:"'Sora',sans-serif",fontSize:11,color:isGain?"#16a34a":"#ef4444"}},(isGain?"+":"-")+"₹"+_pStr)
-                );
-              })
-            ),
-            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1.1fr 1.1fr 1fr 1fr 0.9fr 1fr",gap:6,marginTop:8,padding:"8px 10px",background:"var(--bg4)",borderRadius:8,fontSize:10,alignItems:"center"}},
-              React.createElement("span",{style:{color:"var(--text5)",fontWeight:700,gridColumn:"1 / 4"}},"Month Total"),
-              React.createElement("span",{style:{textAlign:"right",fontFamily:"'DM Mono',monospace",fontSize:10,color:"var(--text4)"}},INR(tradesByMonth[selectedMonth].reduce((s,t)=>s+t.buyAmt,0))),
-              React.createElement("span",{style:{textAlign:"right",fontFamily:"'DM Mono',monospace",fontSize:10,color:"var(--text4)"}},INR(tradesByMonth[selectedMonth].reduce((s,t)=>s+t.sellAmt,0))),
-              React.createElement("span",{style:{textAlign:"right"}},""),
-              React.createElement("span",{style:{textAlign:"right",fontWeight:800,fontFamily:"'Sora',sans-serif",fontSize:12,color:(tradesByMonth[selectedMonth].reduce((s,t)=>s+t.pnl,0)>=0)?"#16a34a":"#ef4444"}},
-                (tradesByMonth[selectedMonth].reduce((s,t)=>s+t.pnl,0)>=0?"+":"")+INR(tradesByMonth[selectedMonth].reduce((s,t)=>s+t.pnl,0))
-              )
-            )
-          )
-        )
-    ),
-    (bestWeek||worstWeek)&&React.createElement(Card,null,
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:14,display:"flex",alignItems:"center",gap:8}},
-        React.createElement(Icon,{n:"bolt",size:16,color:"var(--accent)"}),"Best & Worst Weeks"
-      ),
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
-        bestWeek&&React.createElement("div",{style:{background:"rgba(22,163,74,.05)",border:"1px solid rgba(22,163,74,.2)",borderRadius:10,padding:"14px"}},
-          React.createElement("div",{style:{fontSize:10,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:6}},"▲ Best Week"),
-          React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#16a34a",marginBottom:4}},(bestWeek.pnl>=0?"+":"")+INR(bestWeek.pnl)),
-          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:8}},"Week of "+bestWeek.week+" · "+bestWeek.count+" trade"+(bestWeek.count!==1?"s":"")),
-          React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:3}},
-            bestWeek.trades.slice(0,3).map((t,i)=>React.createElement("div",{key:i,style:{fontSize:10,color:"var(--text4)",display:"flex",justifyContent:"space-between"}},
-              React.createElement("span",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:120}},t.company||t.ticker),
-              React.createElement("span",{style:{fontWeight:700,color:t.pnl>=0?"#16a34a":"#ef4444",fontFamily:"'Sora'"}},(t.pnl>=0?"+":"")+INR(t.pnl))
-            ))
-          )
-        ),
-        worstWeek&&React.createElement("div",{style:{background:"rgba(239,68,68,.05)",border:"1px solid rgba(239,68,68,.2)",borderRadius:10,padding:"14px"}},
-          React.createElement("div",{style:{fontSize:10,color:"#ef4444",fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:6}},"▼ Worst Week"),
-          React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#ef4444",marginBottom:4}},(worstWeek.pnl>=0?"+":"")+INR(worstWeek.pnl)),
-          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:8}},"Week of "+worstWeek.week+" · "+worstWeek.count+" trade"+(worstWeek.count!==1?"s":"")),
-          React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:3}},
-            worstWeek.trades.slice(0,3).map((t,i)=>React.createElement("div",{key:i,style:{fontSize:10,color:"var(--text4)",display:"flex",justifyContent:"space-between"}},
-              React.createElement("span",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:120}},t.company||t.ticker),
-              React.createElement("span",{style:{fontWeight:700,color:t.pnl>=0?"#16a34a":"#ef4444",fontFamily:"'Sora'"}},(t.pnl>=0?"+":"")+INR(t.pnl))
-            ))
-          )
-        )
-      )
-    ),
-    streaks.consecMonths.length>0&&React.createElement(Card,null,
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:14,display:"flex",alignItems:"center",gap:8}},
-        React.createElement(Icon,{n:"list",size:16,color:"var(--accent)"}),"Monthly Streaks"
-      ),
-      React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:6}},
-        streaks.consecMonths.map((s,i)=>React.createElement("div",{key:i,style:{display:"flex",alignItems:"center",gap:4,padding:"6px 10px",borderRadius:8,background:s.type==="win"?"rgba(22,163,74,.08)":"rgba(239,68,68,.08)",border:"1px solid "+(s.type==="win"?"rgba(22,163,74,.2)":"rgba(239,68,68,.2)")}},
-          React.createElement("span",{style:{fontSize:11,fontWeight:700,color:s.type==="win"?"#16a34a":"#ef4444",fontFamily:"'Sora'"}},s.length),
-          React.createElement("span",{style:{fontSize:9,color:"var(--text5)"}},s.type==="win"?"✓":"✗"),
-          React.createElement("span",{style:{fontSize:9,color:"var(--text6)"}},s.start)
-        ))
-      )
-    ),
-    React.createElement("div",{style:{padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-      React.createElement("strong",{style:{color:"var(--accent)"}},"Methodology: "),
-      "Monthly P&L heatmap aggregates closed (sold) trades by sell-date month. Active holdings are excluded — only realised P&L is shown. Colour intensity scales from light (small P&L) to deep (large P&L). Streaks count consecutive profitable or unprofitable months. Best/worst weeks aggregate by week starting Sunday. All amounts net of brokerage."
-    )
-  );
-};
-
-/* ══════════════════════════════════════════════════════════════════
-   3. TRADE FREQUENCY & ACTIVITY ANALYTICS
-   ══════════════════════════════════════════════════════════════════ */
-const TradeFrequencyAnalytics=({shares,soldShareSnapshots={}})=>{
-  const ret=(v)=>(v>=0?"+":"")+v.toFixed(2)+"%";
-  const INR=(v)=>"₹"+Number(Math.round(v)).toLocaleString("en-IN");
-  const trades=React.useMemo(function(){
-    var list=[];
-    (shares||[]).forEach(function(sh){
-      if(!sh.qty||!sh.buyPrice||!sh.currentPrice||!sh.buyDate)return;
-      var buyAmt=sh.qty*sh.buyPrice;var sellAmt=sh.qty*sh.currentPrice;var brokerage=+sh.brokerage||0;
-      list.push({id:sh.id,type:"active",company:sh.company,ticker:sh.ticker,buyDate:sh.buyDate,sellDate:TODAY(),buyAmt:buyAmt,sellAmt:sellAmt,pnl:sellAmt-buyAmt-brokerage,returnPct:buyAmt>0?((sellAmt-buyAmt-brokerage)/buyAmt*100):0});
-    });
-    Object.values(soldShareSnapshots||{}).forEach(function(fySnaps){
-      (fySnaps||[]).forEach(function(sn){
-        if(!sn.qty||!sn.buyPrice||!sn.sellPrice||!sn.buyDate)return;
-        var buyAmt=sn.qty*sn.buyPrice;var sellAmt=sn.qty*sn.sellPrice;var brokerage=+sn.brokerage||0;
-        list.push({id:sn.id,type:"sold",company:sn.company,ticker:sn.ticker,buyDate:sn.buyDate,sellDate:sn.savedAt,buyAmt:buyAmt,sellAmt:sellAmt,pnl:sellAmt-buyAmt-brokerage,returnPct:buyAmt>0?((sellAmt-buyAmt-brokerage)/buyAmt*100):0});
-      });
-    });
-    return list.sort(function(a,b){return (a.buyDate||"").localeCompare(b.buyDate||"");});
-  },[shares,soldShareSnapshots]);
-  var monthlyStats=React.useMemo(function(){
-    var map={};
-    trades.forEach(function(t){var m=(t.buyDate||"").slice(0,7);if(!m)return;if(!map[m])map[m]={month:m,count:0,pnl:0,buyAmt:0};map[m].count++;map[m].pnl+=t.pnl;map[m].buyAmt+=t.buyAmt;});
-    return Object.values(map).sort(function(a,b){return a.month.localeCompare(b.month);});
-  },[trades]);
-  var weeklyStats=React.useMemo(function(){
-    var map={};
-    trades.forEach(function(t){var d=new Date(t.buyDate+"T12:00:00");var ws=new Date(d);ws.setDate(d.getDate()-d.getDay());var wk=ws.toISOString().slice(0,10);if(!map[wk])map[wk]={week:wk,count:0,pnl:0};map[wk].count++;map[wk].pnl+=t.pnl;});
-    return Object.values(map).sort(function(a,b){return a.week.localeCompare(b.week);});
-  },[trades]);
-  var activityCorrelation=React.useMemo(function(){
-    if(monthlyStats.length<3)return null;
-    var avgCount=monthlyStats.reduce(function(s,m){return s+m.count;},0)/monthlyStats.length;
-    var low=monthlyStats.filter(function(m){return m.count<avgCount;});
-    var high=monthlyStats.filter(function(m){return m.count>=avgCount;});
-    var lowAvgPnl=low.length?low.reduce(function(s,m){return s+m.pnl;},0)/low.length:0;
-    var highAvgPnl=high.length?high.reduce(function(s,m){return s+m.pnl;},0)/high.length:0;
-    var lowAvgReturn=low.length?low.reduce(function(s,m){return s+(m.buyAmt>0?m.pnl/m.buyAmt*100:0);},0)/low.length:0;
-    var highAvgReturn=high.length?high.reduce(function(s,m){return s+(m.buyAmt>0?m.pnl/m.buyAmt*100:0);},0)/high.length:0;
-    return{avgCount:avgCount,lowCount:low.length,highCount:high.length,lowAvgPnl:lowAvgPnl,highAvgPnl:highAvgPnl,lowAvgReturn:lowAvgReturn,highAvgReturn:highAvgReturn};
-  },[monthlyStats]);
-  var cooldownAnalysis=React.useMemo(function(){
-    if(trades.length<3)return null;
-    var afterLoss24h={count:0,pnl:0,returns:[]};var after3dayBreak={count:0,pnl:0,returns:[]};
-    for(var i=1;i<trades.length;i++){
-      var prev=trades[i-1];var cur=trades[i];
-      var prevDate=new Date((prev.sellDate||prev.buyDate)+"T12:00:00");var curDate=new Date(cur.buyDate+"T12:00:00");
-      var gapDays=Math.floor((curDate-prevDate)/864e5);
-      if(prev.pnl<0&&gapDays<=1){afterLoss24h.count++;afterLoss24h.pnl+=cur.pnl;afterLoss24h.returns.push(cur.returnPct);}
-      if(gapDays>=3){after3dayBreak.count++;after3dayBreak.pnl+=cur.pnl;after3dayBreak.returns.push(cur.returnPct);}
-    }
-    var avgAfterLoss=afterLoss24h.returns.length?afterLoss24h.returns.reduce(function(s,r){return s+r;},0)/afterLoss24h.returns.length:0;
-    var avgAfterBreak=after3dayBreak.returns.length?after3dayBreak.returns.reduce(function(s,r){return s+r;},0)/after3dayBreak.returns.length:0;
-    return{afterLoss24h:afterLoss24h,after3dayBreak:after3dayBreak,avgAfterLoss:avgAfterLoss,avgAfterBreak:avgAfterBreak};
-  },[trades]);
-  var idleAnalysis=React.useMemo(function(){
-    if(trades.length<2)return null;
-    var sorted=trades.slice().sort(function(a,b){return (a.buyDate||"").localeCompare(b.buyDate||"");});
-    var totalIdleDays=0;var gaps=0;
-    for(var i=1;i<sorted.length;i++){
-      var prevEnd=new Date((sorted[i-1].sellDate||sorted[i-1].buyDate)+"T12:00:00");var curStart=new Date(sorted[i].buyDate+"T12:00:00");
-      var gap=Math.floor((curStart-prevEnd)/864e5);if(gap>0){totalIdleDays+=gap;gaps++;}
-    }
-    var firstDate=new Date(sorted[0].buyDate+"T12:00:00");var lastDate=new Date((sorted[sorted.length-1].sellDate||sorted[sorted.length-1].buyDate)+"T12:00:00");
-    var totalDays=Math.max(1,Math.floor((lastDate-firstDate)/864e5));
-    var idlePct=totalDays>0?(totalIdleDays/totalDays*100):0;
-    var avgGap=gaps>0?(totalIdleDays/gaps):0;
-    return{totalIdleDays:totalIdleDays,totalDays:totalDays,idlePct:idlePct,avgGap:avgGap,gaps:gaps};
-  },[trades]);
-  if(!trades.length)return React.createElement("div",{style:{textAlign:"center",padding:"48px 20px"}},
-    React.createElement("div",{style:{fontSize:40,marginBottom:12,color:"var(--text6)"}},React.createElement(Icon,{n:"invest",size:40})),
-    React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text3)",marginBottom:4}},"No Trade Data"),
-    React.createElement("div",{style:{fontSize:13,color:"var(--text6)"}},"Add shares or save snapshots to see trade frequency analytics.")
-  );
-  var _overtradeColor = activityCorrelation && activityCorrelation.lowAvgPnl > activityCorrelation.highAvgPnl ? "#eab308" : "#374151";
-  var _overtradeText = activityCorrelation && activityCorrelation.lowAvgPnl > activityCorrelation.highAvgPnl ? "\u26a0 Likely" : "\u2713 None";
-  var _overtradeBg = activityCorrelation && activityCorrelation.lowAvgPnl > activityCorrelation.highAvgPnl ? "rgba(22,163,74,.07)" : "var(--bg4)";
-  var _overtradeBorder = activityCorrelation && activityCorrelation.lowAvgPnl > activityCorrelation.highAvgPnl ? "rgba(22,163,74,.2)" : "var(--border)";
-  var _lossColor = cooldownAnalysis.avgAfterLoss < 0 ? "rgba(239,68,68,.05)" : "rgba(22,163,74,.05)";
-  var _lossBorder = cooldownAnalysis.avgAfterLoss < 0 ? "rgba(239,68,68,.2)" : "rgba(22,163,74,.2)";
-  var _lossTextColor = cooldownAnalysis.avgAfterLoss < 0 ? "#ef4444" : "#16a34a";
-  var _idleBg = idleAnalysis.idlePct > 60 ? "rgba(234,179,8,.07)" : "rgba(22,163,74,.07)";
-  var _idleBorder = idleAnalysis.idlePct > 60 ? "rgba(234,179,8,.2)" : "rgba(22,163,74,.2)";
-  var _idleColor = idleAnalysis.idlePct > 60 ? "#eab308" : "#16a34a";
-  return React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:20}},
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(175px,1fr))",gap:12}},
-      React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Total Trades"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text)"}},trades.length),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},weeklyStats.length>0?(trades.length/Math.max(weeklyStats.length,1)).toFixed(1)+" per week avg":"")
-      ),
-      React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Active Months"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text)"}},monthlyStats.length),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},monthlyStats.length>0?(trades.length/monthlyStats.length).toFixed(1)+" trades/month":"")
-      ),
-      idleAnalysis?React.createElement("div",{style:{background:_idleBg,border:"1px solid "+(_idleBorder),borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Idle Capital Time"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:_idleColor}},""+idleAnalysis.idlePct.toFixed(0)+"%"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"avg "+idleAnalysis.avgGap.toFixed(0)+" days between trades")
-      ):null,
-      activityCorrelation?React.createElement("div",{style:{background:_overtradeBg,border:"1px solid "+(_overtradeBorder),borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Overtrading Signal"),
-        React.createElement("div",{style:{fontSize:14,fontFamily:"'Sora',sans-serif",fontWeight:800,color:_overtradeColor}},_overtradeText),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Less-active months perform better")
-      ):null
-    ),
-    React.createElement(Card,null,
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:14,display:"flex",alignItems:"center",gap:8}},
-        React.createElement(Icon,{n:"chart",size:16,color:"var(--accent)"}),"Trade Frequency by Month"
-      ),
-      monthlyStats.length<2
-        ?React.createElement("div",{style:{textAlign:"center",padding:"40px",fontSize:12,color:"var(--text6)"}},"Need at least 2 months of data")
-        :React.createElement("div",{style:{overflowX:"auto"}},React.createElement("svg",{width:Math.max(660,monthlyStats.length*40+40),height:180,style:{display:"block"}},
-          monthlyStats.map(function(m,i){
-            var barW=24;var maxCount=0;monthlyStats.forEach(function(x){if(x.count>maxCount)maxCount=x.count;});
-            var x=20+i*(barW+12);var barH=(m.count/maxCount)*130;var y=180-30-barH;
-            return React.createElement(React.Fragment,{key:m.month},
-              React.createElement("rect",{x:x,y:y,width:barW,height:barH,rx:3,fill:m.pnl>=0?"rgba(22,163,74,.6)":"rgba(239,68,68,.6)"}),
-              React.createElement("text",{x:x+barW/2,y:y-4,fill:"var(--text6)",fontSize:9,textAnchor:"middle",fontWeight:700},m.count),
-              React.createElement("text",{x:x+barW/2,y:180-12,fill:"var(--text6)",fontSize:7,textAnchor:"middle",transform:"rotate(-45,"+x+","+(180-12)+")"},m.month.slice(2))
-            );
-          })
-        ))
-    ),
-    activityCorrelation&&React.createElement(Card,null,
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:14,display:"flex",alignItems:"center",gap:8}},
-        React.createElement(Icon,{n:"target",size:16,color:"var(--accent)"}),"Activity vs P&L"
-      ),
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
-        React.createElement("div",{style:{background:"rgba(109,40,217,.05)",border:"1px solid rgba(109,40,217,.2)",borderRadius:10,padding:"14px"}},
-          React.createElement("div",{style:{fontSize:10,color:"#6d28d9",fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:6}},"Low-Activity Months"),
-          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:4}},"< "+activityCorrelation.avgCount.toFixed(1)+" trades/mo \u00b7 "+activityCorrelation.lowCount+" months"),
-          React.createElement("div",{style:{fontSize:16,fontFamily:"'Sora',sans-serif",fontWeight:800,color:activityCorrelation.lowAvgPnl>=0?"#16a34a":"#ef4444"}},(activityCorrelation.lowAvgPnl>=0?"+":"")+INR(activityCorrelation.lowAvgPnl)+"/mo"),
-          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},ret(activityCorrelation.lowAvgReturn)+" avg return")
-        ),
-        React.createElement("div",{style:{background:"rgba(234,179,8,.05)",border:"1px solid rgba(234,179,8,.2)",borderRadius:10,padding:"14px"}},
-          React.createElement("div",{style:{fontSize:10,color:"#ca8a04",fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:6}},"High-Activity Months"),
-          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:4}},"\u2265 "+activityCorrelation.avgCount.toFixed(1)+" trades/mo \u00b7 "+activityCorrelation.highCount+" months"),
-          React.createElement("div",{style:{fontSize:16,fontFamily:"'Sora',sans-serif",fontWeight:800,color:activityCorrelation.highAvgPnl>=0?"#16a34a":"#ef4444"}},(activityCorrelation.highAvgPnl>=0?"+":"")+INR(activityCorrelation.highAvgPnl)+"/mo"),
-          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},ret(activityCorrelation.highAvgReturn)+" avg return")
-        )
-      ),
-      activityCorrelation.lowAvgPnl>activityCorrelation.highAvgPnl&&React.createElement("div",{style:{marginTop:12,padding:"10px 14px",background:"rgba(234,179,8,.08)",border:"1px solid rgba(234,179,8,.25)",borderRadius:8,fontSize:11,color:"#92400e",lineHeight:1.5}},"\u26a0 Less-active months outperform by ",INR(activityCorrelation.lowAvgPnl-activityCorrelation.highAvgPnl),"/mo. Consider reducing trade frequency.")
-    ),
-    cooldownAnalysis&&React.createElement(Card,null,
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:14,display:"flex",alignItems:"center",gap:8}},
-        React.createElement(Icon,{n:"alarmclock",size:16,color:"var(--accent)"}),"Cooldown Analysis"
-      ),
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
-        React.createElement("div",{style:{background:_lossColor,border:"1px solid "+(_lossBorder),borderRadius:10,padding:"14px"}},
-          React.createElement("div",{style:{fontSize:10,color:_lossTextColor,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:6}},"Within 24h of a Loss"),
-          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:4}},cooldownAnalysis.afterLoss24h.count+" trades"),
-          cooldownAnalysis.afterLoss24h.count>0?React.createElement(React.Fragment,null,React.createElement("div",{style:{fontSize:16,fontFamily:"'Sora',sans-serif",fontWeight:800,color:cooldownAnalysis.avgAfterLoss>=0?"#16a34a":"#ef4444"}},ret(cooldownAnalysis.avgAfterLoss)),React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},"avg return")):React.createElement("div",{style:{fontSize:11,color:"var(--text6)"}},"No trades found")
-        ),
-        React.createElement("div",{style:{background:"rgba(22,163,74,.05)",border:"1px solid rgba(22,163,74,.2)",borderRadius:10,padding:"14px"}},
-          React.createElement("div",{style:{fontSize:10,color:"#16a34a",fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginBottom:6}},"After 3+ Day Break"),
-          React.createElement("div",{style:{fontSize:11,color:"var(--text5)",marginBottom:4}},cooldownAnalysis.after3dayBreak.count+" trades"),
-          cooldownAnalysis.after3dayBreak.count>0?React.createElement(React.Fragment,null,React.createElement("div",{style:{fontSize:16,fontFamily:"'Sora',sans-serif",fontWeight:800,color:cooldownAnalysis.avgAfterBreak>=0?"#16a34a":"#ef4444"}},ret(cooldownAnalysis.avgAfterBreak)),React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:2}},"avg return")):React.createElement("div",{style:{fontSize:11,color:"var(--text6)"}},"No trades found")
-        )
-      ),
-      cooldownAnalysis.afterLoss24h.count>0&&cooldownAnalysis.after3dayBreak.count>0&&cooldownAnalysis.avgAfterLoss<cooldownAnalysis.avgAfterBreak&&React.createElement("div",{style:{marginTop:12,padding:"10px 14px",background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.25)",borderRadius:8,fontSize:11,color:"#991b1b",lineHeight:1.5}},"\u26a0 Revenge trading detected. Post-loss avg ",ret(cooldownAnalysis.avgAfterLoss)," vs ",ret(cooldownAnalysis.avgAfterBreak)," after breaks. Consider a 48h pause."),
-      cooldownAnalysis.afterLoss24h.count>0&&cooldownAnalysis.after3dayBreak.count>0&&cooldownAnalysis.avgAfterLoss>=cooldownAnalysis.avgAfterBreak&&React.createElement("div",{style:{marginTop:12,padding:"10px 14px",background:"rgba(22,163,74,.08)",border:"1px solid rgba(22,163,74,.25)",borderRadius:8,fontSize:11,color:"#166534",lineHeight:1.5}},"\u2713 No revenge trading pattern detected.")
-    ),
-    React.createElement("div",{style:{padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-      React.createElement("strong",{style:{color:"var(--accent)"}},"Methodology: "),
-      "Trade frequency counted per calendar month by buy-date. Activity vs P&L splits months by above/below-average frequency. Cooldown compares trades within 24h of a loss vs after 3+ day gaps. Idle capital % = days with no position / total span."
-    )
-  );
-};
-
-const SwingHoldOptimizer=({shares,soldShareSnapshots={}})=>{
-  var ret=function(v){return (v>=0?"+":"")+v.toFixed(2)+"%";};
-  var INR=function(v){return "\u20b9"+Number(Math.round(v)).toLocaleString("en-IN");};
-  var trades=React.useMemo(function(){
-    var list=[];
-    (shares||[]).forEach(function(sh){
-      if(!sh.qty||!sh.buyPrice||!sh.currentPrice||!sh.buyDate)return;
-      var buyDate=new Date(sh.buyDate+"T12:00:00");var sellDate=new Date(TODAY()+"T12:00:00");
-      var holdDays=Math.max(1,Math.floor((sellDate-buyDate)/864e5));
-      var buyAmt=sh.qty*sh.buyPrice;var sellAmt=sh.qty*sh.currentPrice;var brokerage=+sh.brokerage||0;
-      list.push({id:sh.id,type:"active",company:sh.company,ticker:sh.ticker,buyDate:sh.buyDate,sellDate:TODAY(),holdDays:holdDays,buyAmt:buyAmt,sellAmt:sellAmt,buyPrice:sh.buyPrice,sellPrice:sh.currentPrice,pnl:sellAmt-buyAmt-brokerage,returnPct:buyAmt>0?((sellAmt-buyAmt-brokerage)/buyAmt*100):0,buyDay:buyDate.getDay(),sellDay:sellDate.getDay()});
-    });
-    Object.values(soldShareSnapshots||{}).forEach(function(fySnaps){
-      (fySnaps||[]).forEach(function(sn){
-        if(!sn.qty||!sn.buyPrice||!sn.sellPrice||!sn.buyDate||!sn.savedAt)return;
-        var buyDate=new Date(sn.buyDate+"T12:00:00");var sellDate=new Date(sn.savedAt+"T12:00:00");
-        var holdDays=Math.max(1,Math.floor((sellDate-buyDate)/864e5));
-        var buyAmt=sn.qty*sn.buyPrice;var sellAmt=sn.qty*sn.sellPrice;var brokerage=+sn.brokerage||0;
-        list.push({id:sn.id,type:"sold",company:sn.company,ticker:sn.ticker,buyDate:sn.buyDate,sellDate:sn.savedAt,holdDays:holdDays,buyAmt:buyAmt,sellAmt:sellAmt,buyPrice:sn.buyPrice,sellPrice:sn.sellPrice,pnl:sellAmt-buyAmt-brokerage,returnPct:buyAmt>0?((sellAmt-buyAmt-brokerage)/buyAmt*100):0,buyDay:buyDate.getDay(),sellDay:sellDate.getDay()});
-      });
-    });
-    return list.sort(function(a,b){return (a.buyDate||"").localeCompare(b.buyDate||"");});
-  },[shares,soldShareSnapshots]);
-  var holdBands=[
-    {key:"1d",label:"1 day",min:1,max:2},{key:"2d",label:"2-3 days",min:2,max:4},{key:"1w",label:"4-7 days",min:4,max:8},
-    {key:"2w",label:"1-2 weeks",min:7,max:15},{key:"3w",label:"2-3 weeks",min:14,max:22},{key:"1m",label:"3-4 weeks",min:21,max:32},
-    {key:"6w",label:"1-1.5 months",min:30,max:46},{key:"2m",label:"1.5-2 months",min:45,max:65},{key:"3m",label:"2-3 months",min:60,max:95},
-    {key:"6m",label:"3-6 months",min:90,max:185},{key:"1y",label:"6-12 months",min:180,max:370},{key:"long",label:"1 year+",min:365,max:Infinity}
-  ];
-  var bandStats=React.useMemo(function(){
-    return holdBands.map(function(b){
-      var bandTrades=trades.filter(function(t){return t.holdDays>=b.min&&t.holdDays<b.max;});
-      if(!bandTrades.length)return Object.assign({},b,{count:0,avgReturn:0,winRate:0,expectancy:0,totalPnl:0});
-      var avgReturn=bandTrades.reduce(function(s,t){return s+t.returnPct;},0)/bandTrades.length;
-      var wins=bandTrades.filter(function(t){return t.pnl>0;}).length;var winRate=(wins/bandTrades.length*100);
-      var avgWin=bandTrades.filter(function(t){return t.pnl>0;}).reduce(function(s,t){return s+t.returnPct;},0)/(wins||1);
-      var losses=bandTrades.filter(function(t){return t.pnl<=0;}).length;
-      var avgLoss=bandTrades.filter(function(t){return t.pnl<=0;}).reduce(function(s,t){return s+t.returnPct;},0)/(losses||1);
-      var expectancy=(winRate/100)*avgWin+((100-winRate)/100)*avgLoss;
-      var totalPnl=bandTrades.reduce(function(s,t){return s+t.pnl;},0);
-      return Object.assign({},b,{count:bandTrades.length,avgReturn:avgReturn,winRate:winRate,expectancy:expectancy,totalPnl:totalPnl,avgWin:avgWin,avgLoss:avgLoss,wins:wins,losses:losses});
-    }).filter(function(b){return b.count>0;});
-  },[trades]);
-  var bestExpectancy=bandStats.reduce(function(best,b){return !best||b.expectancy>best.expectancy?b:best;},null);
-  var timeStopData=React.useMemo(function(){
-    if(trades.length<5)return null;
-    var maxDays=Math.max.apply(null,trades.map(function(t){return t.holdDays;}));
-    if(maxDays<30)maxDays=30;
-    var bucketSize=Math.max(3,Math.ceil(maxDays/20));
-    var buckets=[];
-    for(var d=0;d<maxDays+bucketSize;d+=bucketSize){
-      var band=trades.filter(function(t){return t.holdDays>=d&&t.holdDays<d+bucketSize;});
-      if(band.length<2)continue;
-      var avgReturn=band.reduce(function(s,t){return s+t.returnPct;},0)/band.length;
-      var winRate=band.filter(function(t){return t.pnl>0;}).length/band.length*100;
-      buckets.push({dayStart:d,dayEnd:d+bucketSize,count:band.length,avgReturn:avgReturn,winRate:winRate});
-    }
-    if(buckets.length<3)return null;
-    var negativeIdx=-1;
-    for(var bi=0;bi<buckets.length;bi++){if(buckets[bi].avgReturn<0){negativeIdx=bi;break;}}
-    var n=buckets.length;var xMean=0;var yMean=0;
-    for(var bi2=0;bi2<n;bi2++){xMean+=(buckets[bi2].dayStart+buckets[bi2].dayEnd)/2;yMean+=buckets[bi2].avgReturn;}
-    xMean/=n;yMean/=n;
-    var num=0;var den=0;
-    for(var bi3=0;bi3<n;bi3++){var x=(buckets[bi3].dayStart+buckets[bi3].dayEnd)/2;num+=(x-xMean)*(buckets[bi3].avgReturn-yMean);den+=(x-xMean)*(x-xMean);}
-    var slope=den>0?num/den:0;
-    return{buckets:buckets,negativeIdx:negativeIdx,slope:slope,decayRate:slope<0?"negative":"positive"};
-  },[trades]);
-  var weekendData=React.useMemo(function(){
-    if(trades.length<3)return null;
-    var heldOverWeekend={count:0,pnl:0,returns:[]};var noWeekend={count:0,pnl:0,returns:[]};var closedFriday={count:0,pnl:0,returns:[]};
-    trades.forEach(function(t){
-      var buyD=new Date(t.buyDate+"T12:00:00");var sellD=new Date(t.sellDate+"T12:00:00");
-      var hasWeekend=false;for(var d=new Date(buyD);d<=sellD;d.setDate(d.getDate()+1)){if(d.getDay()===6){hasWeekend=true;break;}}
-      if(hasWeekend){heldOverWeekend.count++;heldOverWeekend.pnl+=t.pnl;heldOverWeekend.returns.push(t.returnPct);}
-      else{noWeekend.count++;noWeekend.pnl+=t.pnl;noWeekend.returns.push(t.returnPct);}
-      if(t.sellDay===5){closedFriday.count++;closedFriday.pnl+=t.pnl;closedFriday.returns.push(t.returnPct);}
-    });
-    var avgWeekend=heldOverWeekend.returns.length?heldOverWeekend.returns.reduce(function(s,r){return s+r;},0)/heldOverWeekend.returns.length:0;
-    var avgNoWeekend=noWeekend.returns.length?noWeekend.returns.reduce(function(s,r){return s+r;},0)/noWeekend.returns.length:0;
-    var avgFriday=closedFriday.returns.length?closedFriday.returns.reduce(function(s,r){return s+r;},0)/closedFriday.returns.length:0;
-    return{heldOverWeekend:heldOverWeekend,closedFriday:closedFriday,noWeekend:noWeekend,avgWeekend:avgWeekend,avgNoWeekend:avgNoWeekend,avgFriday:avgFriday};
-  },[trades]);
-  var daysToTarget=React.useMemo(function(){
-    var winners=trades.filter(function(t){return t.pnl>0;});if(!winners.length)return null;
-    var days=winners.map(function(t){return t.holdDays;}).sort(function(a,b){return a-b;});
-    var median=days.length%2===0?(days[days.length/2-1]+days[days.length/2])/2:days[Math.floor(days.length/2)];
-    var p25=days[Math.floor(days.length*0.25)]||median;var p75=days[Math.floor(days.length*0.75)]||median;
-    var avg=days.reduce(function(s,d){return s+d;},0)/days.length;
-    return{median:median,p25:p25,p75:p75,avg:avg,min:days[0],max:days[days.length-1],count:winners.length};
-  },[trades]);
-  if(!trades.length)return React.createElement("div",{style:{textAlign:"center",padding:"48px 20px"}},
-    React.createElement("div",{style:{fontSize:40,marginBottom:12,color:"var(--text6)"}},React.createElement(Icon,{n:"invest",size:40})),
-    React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text3)",marginBottom:4}},"No Trade Data"),
-    React.createElement("div",{style:{fontSize:13,color:"var(--text6)"}},"Add shares or save snapshots to see holding period optimisation.")
-  );
-  var maxExpectancy=Math.max.apply(null,bandStats.map(function(b){return Math.abs(b.expectancy);}).concat([1]));
-  var _sweetSpotColor = bestExpectancy ? "#16a34a" : "var(--text)";
-  var _tsColor = timeStopData && timeStopData.negativeIdx >= 0 ? "#ef4444" : "#16a34a";
-  var _tsBg = timeStopData && timeStopData.negativeIdx >= 0 ? "rgba(239,68,68,.07)" : "rgba(22,163,74,.07)";
-  var _tsBorder = timeStopData && timeStopData.negativeIdx >= 0 ? "rgba(239,68,68,.2)" : "rgba(22,163,74,.2)";
-  var _tsText = timeStopData && timeStopData.negativeIdx >= 0 ? "Day " + timeStopData.buckets[timeStopData.negativeIdx].dayStart + "+" : "Never goes -ve";
-  var _tsSubText = timeStopData && timeStopData.negativeIdx >= 0 ? "Returns turn negative here" : "Avg return stays positive";
-  var _weColor = weekendData && weekendData.avgWeekend < weekendData.avgNoWeekend ? "#eab308" : "#374151";
-  var _weText = weekendData && weekendData.avgWeekend < weekendData.avgNoWeekend ? "\u26a0 Detected" : "\u2713 Low";
-  var _weBg = weekendData && weekendData.avgWeekend < weekendData.avgNoWeekend ? "rgba(234,179,8,.07)" : "var(--bg4)";
-  var _weBorder = weekendData && weekendData.avgWeekend < weekendData.avgNoWeekend ? "rgba(234,179,8,.2)" : "var(--border)";
-  return React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:20}},
-    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(175px,1fr))",gap:12}},
-      bestExpectancy?React.createElement("div",{style:{background:"rgba(22,163,74,.07)",border:"1px solid rgba(22,163,74,.2)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Sweet Spot"),
-        React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#16a34a"}},bestExpectancy.label),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Expectancy: "+ret(bestExpectancy.expectancy)+" per trade")
-      ):null,
-      daysToTarget?React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Median Days to Win"),
-        React.createElement("div",{style:{fontSize:20,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text)"}},daysToTarget.median+" days"),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"P25: "+daysToTarget.p25+" \u00b7 P75: "+daysToTarget.p75)
-      ):null,
-      timeStopData?React.createElement("div",{style:{background:_tsBg,border:"1px solid "+(_tsBorder),borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Time-Stop Zone"),
-        React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:800,color:_tsColor}},_tsText),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},_tsSubText)
-      ):null,
-      weekendData?React.createElement("div",{style:{background:_weBg,border:"1px solid "+(_weBorder),borderRadius:12,padding:"14px 16px"}},
-        React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Weekend Risk"),
-        React.createElement("div",{style:{fontSize:14,fontFamily:"'Sora',sans-serif",fontWeight:800,color:_weColor}},_weText),
-        React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},"Weekend: "+ret(weekendData.avgWeekend)+" vs no-weekend: "+ret(weekendData.avgNoWeekend))
-      ):null
-    ),
-    React.createElement(Card,null,
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:14,display:"flex",alignItems:"center",gap:8}},
-        React.createElement(Icon,{n:"target",size:16,color:"var(--accent)"}),"Expectancy by Holding Period"
-      ),
-      bandStats.length<2
-        ?React.createElement("div",{style:{textAlign:"center",padding:"40px",fontSize:12,color:"var(--text6)"}},"Need at least 2 different holding periods")
-        :React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
-          bandStats.map(function(b,i){
-            var barW=Math.max(4,Math.abs(b.expectancy)/maxExpectancy*100);
-            var isBest=bestExpectancy&&b.key===bestExpectancy.key;
-            return React.createElement("div",{key:b.key,style:{display:"grid",gridTemplateColumns:"110px 1fr 80px 70px 65px",gap:8,alignItems:"center",padding:"8px 10px",borderRadius:8,background:isBest?"rgba(22,163,74,.08)":"transparent",border:isBest?"1px solid rgba(22,163,74,.2)":"1px solid transparent"}},
-              React.createElement("div",{style:{fontSize:11,fontWeight:isBest?700:500,color:isBest?"#16a34a":"var(--text4)"}},b.label+(isBest?" \u2605":"")),
-              React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},
-                React.createElement("div",{style:{flex:1,height:18,background:"var(--bg5)",borderRadius:4,overflow:"hidden",position:"relative"}},
-                  React.createElement("div",{style:{position:"absolute",left:b.expectancy>=0?"50%":"auto",right:b.expectancy<0?"50%":"auto",top:0,height:"100%",width:barW+"%",background:b.expectancy>=0?"rgba(22,163,74,.4)":"rgba(239,68,68,.4)",borderRadius:4}})
-                )
-              ),
-              React.createElement("div",{style:{fontSize:11,fontWeight:700,fontFamily:"'Sora',sans-serif",color:b.expectancy>=0?"#16a34a":"#ef4444",textAlign:"right"}},ret(b.expectancy)),
-              React.createElement("div",{style:{fontSize:10,color:"var(--text5)",textAlign:"right"}},b.count+" trades"),
-              React.createElement("div",{style:{fontSize:10,color:b.winRate>=50?"#16a34a":"#ef4444",textAlign:"right",fontWeight:600}},b.winRate.toFixed(0)+"% WR")
-            );
-          }),
-          bestExpectancy?React.createElement("div",{style:{marginTop:14,padding:"10px 14px",background:"rgba(22,163,74,.08)",border:"1px solid rgba(22,163,74,.25)",borderRadius:8,fontSize:11,color:"#166534",lineHeight:1.5}},"Your sweet spot is ",React.createElement("strong",null,bestExpectancy.label)," with ",ret(bestExpectancy.expectancy)," expectancy and ",bestExpectancy.winRate.toFixed(0)+"% win rate across ",bestExpectancy.count," trades."):null
-        )
-    ),
-    timeStopData?React.createElement(Card,null,
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:14,display:"flex",alignItems:"center",gap:8}},
-        React.createElement(Icon,{n:"clock",size:16,color:"var(--accent)"}),"Return Decay Over Time"
-      ),
-      React.createElement("div",{style:{overflowX:"auto"}},
-        React.createElement("svg",{width:Math.max(500,timeStopData.buckets.length*50+60),height:200,style:{display:"block"}},
-          React.createElement("line",{x1:40,y1:100,x2:timeStopData.buckets.length*50+40,y2:100,stroke:"var(--border)",strokeWidth:1,strokeDasharray:"4,4"}),
-          timeStopData.buckets.map(function(b,i){
-            var x=40+i*50;var barH=Math.abs(b.avgReturn)*3;var y=b.avgReturn>=0?100-barH:100;
-            return React.createElement(React.Fragment,{key:i},
-              React.createElement("rect",{x:x+5,y:y,width:30,height:Math.max(barH,2),rx:3,fill:b.avgReturn>=0?"rgba(22,163,74,.5)":"rgba(239,68,68,.5)"}),
-              React.createElement("text",{x:x+20,y:b.avgReturn>=0?y-5:y+barH+12,fill:b.avgReturn>=0?"#16a34a":"#ef4444",fontSize:9,fontWeight:700,textAnchor:"middle",fontFamily:"'Sora'"},ret(b.avgReturn)),
-              React.createElement("text",{x:x+20,y:190,fill:"var(--text6)",fontSize:8,textAnchor:"middle"},"D"+b.dayStart+"-"+b.dayEnd)
-            );
-          }).concat(timeStopData.negativeIdx>=0?[React.createElement("rect",{key:"dd",x:40+timeStopData.negativeIdx*50,y:10,width:30,height:180,fill:"rgba(239,68,68,.05)",stroke:"rgba(239,68,68,.2)",strokeDasharray:"3,3"})]:[])
-        )
-      ),
-      timeStopData.negativeIdx>=0?React.createElement("div",{style:{marginTop:10,padding:"10px 14px",background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.25)",borderRadius:8,fontSize:11,color:"#991b1b",lineHeight:1.5}},"\u26a0 Returns turn negative after day ",timeStopData.buckets[timeStopData.negativeIdx].dayStart,". Set a time-stop at ",React.createElement("strong",null,timeStopData.buckets[timeStopData.negativeIdx].dayStart+" days"),". Decay: ",ret(timeStopData.slope)," per day."):null
-    ):null,
-    weekendData?React.createElement(Card,null,
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:14,display:"flex",alignItems:"center",gap:8}},
-        React.createElement(Icon,{n:"warning",size:16,color:"var(--accent)"}),"Weekend & Overnight Risk"
-      ),
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}},
-        React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:10,padding:"14px",textAlign:"center"}},
-          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:6}},"Held Over Weekend"),
-          React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:800,color:weekendData.avgWeekend>=0?"#16a34a":"#ef4444"}},ret(weekendData.avgWeekend)),
-          React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},weekendData.heldOverWeekend.count+" trades")
-        ),
-        React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:10,padding:"14px",textAlign:"center"}},
-          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:6}},"No Weekend Hold"),
-          React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:800,color:weekendData.avgNoWeekend>=0?"#16a34a":"#ef4444"}},ret(weekendData.avgNoWeekend)),
-          React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},weekendData.noWeekend.count+" trades")
-        ),
-        React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:10,padding:"14px",textAlign:"center"}},
-          React.createElement("div",{style:{fontSize:10,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:6}},"Closed on Friday"),
-          React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:800,color:weekendData.avgFriday>=0?"#16a34a":"#ef4444"}},ret(weekendData.avgFriday)),
-          React.createElement("div",{style:{fontSize:10,color:"var(--text5)",marginTop:2}},weekendData.closedFriday.count+" trades")
-        )
-      ),
-      weekendData.avgWeekend < weekendData.avgNoWeekend - 0.5?React.createElement("div",{style:{marginTop:12,padding:"10px 14px",background:"rgba(234,179,8,.08)",border:"1px solid rgba(234,179,8,.25)",borderRadius:8,fontSize:11,color:"#92400e",lineHeight:1.5}},"Positions held over weekends underperform by ",ret(weekendData.avgNoWeekend-weekendData.avgWeekend),". Consider closing on Friday."):null
-    ):null,
-    daysToTarget?React.createElement(Card,null,
-      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text3)",marginBottom:14,display:"flex",alignItems:"center",gap:8}},
-        React.createElement(Icon,{n:"clock",size:16,color:"var(--accent)"}),"Days to Target (Winning Trades)"
-      ),
-      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:12}},
-        React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:10,padding:"12px",textAlign:"center"}},
-          React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Fastest"),
-          React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#16a34a"}},daysToTarget.min+"d")
-        ),
-        React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:10,padding:"12px",textAlign:"center"}},
-          React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"P25"),
-          React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text)"}},daysToTarget.p25+"d")
-        ),
-        React.createElement("div",{style:{background:"rgba(109,40,217,.07)",border:"1px solid rgba(109,40,217,.2)",borderRadius:10,padding:"12px",textAlign:"center"}},
-          React.createElement("div",{style:{fontSize:9,color:"#6d28d9",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Median \u2605"),
-          React.createElement("div",{style:{fontSize:22,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#6d28d9"}},daysToTarget.median+"d")
-        ),
-        React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:10,padding:"12px",textAlign:"center"}},
-          React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"P75"),
-          React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"var(--text)"}},daysToTarget.p75+"d")
-        ),
-        React.createElement("div",{style:{background:"var(--bg4)",border:"1px solid var(--border)",borderRadius:10,padding:"12px",textAlign:"center"}},
-          React.createElement("div",{style:{fontSize:9,color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}},"Slowest"),
-          React.createElement("div",{style:{fontSize:18,fontFamily:"'Sora',sans-serif",fontWeight:800,color:"#ef4444"}},daysToTarget.max+"d")
-        )
-      ),
-      React.createElement("div",{style:{marginTop:12,padding:"10px 14px",background:"rgba(109,40,217,.06)",border:"1px solid rgba(109,40,217,.18)",borderRadius:8,fontSize:11,color:"var(--text5)",lineHeight:1.5}},"Winning trades reach target in median ",React.createElement("strong",null,daysToTarget.median+" days"),". 50% complete between ",daysToTarget.p25," and ",daysToTarget.p75," days.")
-    ):null,
-    React.createElement("div",{style:{padding:"10px 14px",background:"var(--accentbg2)",border:"1px solid var(--border2)",borderRadius:10,fontSize:11,color:"var(--text5)",lineHeight:1.6}},
-      React.createElement("strong",{style:{color:"var(--accent)"}},"Methodology: "),
-      "Expectancy = (Win% \u00d7 Avg Win) + (Loss% \u00d7 Avg Loss). Sweet spot = highest expectancy band. Time-stop = day returns turn negative. Weekend risk compares held-over-weekend vs not. Days-to-target uses win-trade percentiles."
-    )
-  );
-};
-
-const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},eodIndices={},historyCache={},soldShareSnapshots={},brokerCashBalance=0,banks=[],scheduled=[],isMobile})=>{
+const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},eodIndices={},historyCache={},soldShareSnapshots={},mfHistNavs={},brokerCashBalance=0,banks=[],scheduled=[],isMobile})=>{
   const[ready,setReady]=useState(false);
   React.useEffect(()=>{const t=setTimeout(()=>setReady(true),120);return()=>clearTimeout(t);},[]);
   const[tab,setTab]=useState(defaultTab);const[open,setOpen]=useState(false);const[navLoad,setNavLoad]=useState(false);
-  const[sharesSubTab,setSharesSubTab]=useState("holdings"); /* "holdings" | "profitability" | "timeholding" | "winloss" | "capitaleff" | "behavioural" | "timing" | "risk" | "pattern" | "drawdown" | "multitime" | "frequency" | "swing" */
+  const[sharesSubTab,setSharesSubTab]=useState("holdings");
   React.useEffect(()=>{setTab(defaultTab);},[defaultTab]);
   React.useEffect(()=>{if(tab!=="shares")setSharesSubTab("holdings");},[tab]);
   const[srch,setSrch]=useState("");const[results,setResults]=useState([]);const[searching,setSearching]=useState(false);
   const[mfF,setMfF]=useState({name:"",schemeCode:"",units:"",avgNav:"",invested:"",notes:""});
-  const[shF,setShF]=useState({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:""});
+  const[shF,setShF]=useState({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:"",entryScore:""});
   const[shAddingTrade,setShAddingTrade]=useState(false); /* true while fetching chart for past trade */
   const[editShare,setEditShare]=useState(null);
   const[fdF,setFdF]=useState({bank:"",amount:"",rate:"",startDate:TODAY(),maturityDate:"",maturityAmount:"",compoundFreq:"quarterly",notes:""});
@@ -24609,6 +21145,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
   const[priceStatus,setPriceStatus]=useState(null); /* {ok:bool, msg:string, ts:Date} */
   const[brokerCashEdit,setBrokerCashEdit]=useState(false);
   const[brokerCashInput,setBrokerCashInput]=useState("");
+  const[expandedTech,setExpandedTech]=useState({}); /* {shareId: true} for expanded technicals */
 
   const fetchNAV=async()=>{
     setNavLoad(true);
@@ -25136,12 +21673,12 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                   React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,background:"rgba(109,40,217,.04)",borderBottom:"1px solid var(--border2)",fontSize:10,fontWeight:600}},
                     React.createElement("div",{style:{padding:"7px 10px",color:"var(--text5)",fontStyle:"italic"}},"Benchmark"),
                     React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:"var(--text6)"}},"—"),
-                    _idxChgs.map(idx=>React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct),fontWeight:700}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
+                    _idxChgs.map((idx,i)=>React.createElement("div",{key:i,style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct),fontWeight:700}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
                   ),
-                  _fundChgs.length>0?_fundChgs.map(f=>React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,borderBottom:"1px solid var(--border2)",fontSize:10,":last-child":{borderBottom:"none"}}},
+                  _fundChgs.length>0?_fundChgs.map((f,fi)=>React.createElement("div",{key:fi,style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,borderBottom:"1px solid var(--border2)",fontSize:10,":last-child":{borderBottom:"none"}}},
                     React.createElement("div",{style:{padding:"7px 10px",color:"var(--text2)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},_sn(f.name)),
                     React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(f.chgPct),fontWeight:600}},(f.chgPct>=0?"▲ +":"▼ ")+Math.abs(f.chgPct).toFixed(2)+"%"),
-                    _idxChgs.map(idx=>React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
+                    _idxChgs.map((idx,ii)=>React.createElement("div",{key:ii,style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
                   )):_hasNavPair||!_fundCount?null:React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr",gap:0,padding:"16px 10px",fontSize:10,color:"var(--text6)",textAlign:"center",fontStyle:"italic"}},
                     "Refresh NAV again tomorrow to see per-fund day-over-day changes.")
                   ),
@@ -25152,17 +21689,18 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                       React.createElement("span",null,_netChgPct!==null?_pct(_netChgPct):"—"),
                       React.createElement("span",{style:{fontSize:9,fontWeight:600,opacity:.85}},_netChgAbs!==0?INR(_netChgAbs):"")
                     ),
-                    _idxChgs.map(()=>React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:"var(--text6)"}},"—"))
+                    _idxChgs.map((_,i)=>React.createElement("div",{key:i,style:{padding:"8px 10px",textAlign:"right",color:"var(--text6)"}},"—"))
                   ),
                   /* ── Summary: Net Indices Change (same period) ── */
                   React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,background:"rgba(37,99,235,.06)",borderBottom:"1px solid var(--border2)",fontSize:10,fontWeight:700}},
                     React.createElement("div",{style:{padding:"8px 10px",color:"#2563eb"}},"Net Indices"),
                     React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:"var(--text6)"}},"—"),
-                    _idxChgs.map(idx=>React.createElement("div",{style:{padding:"8px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
+                    _idxChgs.map((idx,i)=>React.createElement("div",{key:i,style:{padding:"8px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
                   )
               )
             );
           })(),
+      React.createElement(MFPerformanceTables,{mf,mfHistNavs:mfHistNavs||{},dispatch}),
       /* ── Portfolio Evolution Chart — always visible when txns are imported ── */
       (mfTxns||[]).length>=2&&React.createElement(Card,{sx:{marginBottom:14}},
         React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:8}},
@@ -25174,7 +21712,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
             (mfTxns||[]).length+" txns · "+(new Set((mfTxns||[]).map(t=>t.fundName))).size+" fund"+((new Set((mfTxns||[]).map(t=>t.fundName))).size!==1?"s":"")
           )
         ),
-        React.createElement(MFPortfolioEvolutionChart,{mfTxns:mfTxns,mf:mf.filter(m=>m.units>0)})
+        React.createElement(MFPortfolioEvolutionChart,{mfTxns:mfTxns,mf:mf.filter(m=>m.units>0),eodNavs:eodNavs,mfHistNavs:mfHistNavs})
       ),
 
       /* Filter out zero-unit (fully sold) holdings */
@@ -25354,7 +21892,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
     tab==="shares"&&React.createElement(MarketTicker),
     /* ── Shares sub-tab bar ── */
     tab==="shares"&&React.createElement("div",{style:{display:"flex",gap:2,marginBottom:20,flexWrap:"wrap"}},
-      [{key:"holdings",label:"Holdings",svg:"chart"},{key:"profitability",label:"Returns",svg:"invest"},{key:"timeholding",label:"Holding",svg:"clock"},{key:"winloss",label:"Win/Loss",svg:"target"},{key:"capitaleff",label:"Capital",svg:"crystal"},{key:"behavioural",label:"Behaviour",svg:"lightbulb"},{key:"timing",label:"Timing",svg:"alarmclock"},{key:"risk",label:"Risk",svg:"warning"},{key:"pattern",label:"Pattern",svg:"bolt"},{key:"drawdown",label:"Drawdown",svg:"warning"},{key:"multitime",label:"Multi-TF",svg:"chart"},{key:"frequency",label:"Frequency",svg:"alarmclock"},{key:"swing",label:"Swing",svg:"target"}].map(st=>
+      [{key:"holdings",label:"Holdings",svg:"chart"}].map(st=>
         React.createElement("button",{
           key:st.key,
           onClick:()=>setSharesSubTab(st.key),
@@ -25390,7 +21928,8 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
           const prevClose=prevEODDate?(eodPrices[prevEODDate][(sh.ticker||"").trim().toUpperCase()]||null):null;
           const dayChgPct=prevClose&&sh.currentPrice>0?((sh.currentPrice-prevClose)/prevClose*100):null;
           const dayChgAbs=prevClose?sh.currentPrice-prevClose:null;
-          return React.createElement(Card,{key:sh.id},
+          return React.createElement(React.Fragment,{key:sh.id},
+            React.createElement(Card,null,
             /* ── Header: company + ticker + market value */
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}},
               React.createElement("div",null,
@@ -25516,7 +22055,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                 "Edit"
               ),
               React.createElement("button",{
-                onClick:()=>{
+                onClick:async()=>{
                   const snapId=uid();
                   const now=TODAY();
                   const currentVal_=sh.qty*sh.currentPrice;
@@ -25539,6 +22078,66 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                       .slice(-30)
                       .map(d=>({date:d,value:sh.qty*eodPrices[d][tkr_]}));
                   }
+                  /* ── Fetch technical indicators (multi-TF) ── */
+                  let techData=null;
+                  try{
+                    const TI_=window.TechIndicators;
+                    const DF_=window.OHLCVFetcher;
+                    if(TI_&&DF_&&tkr_){
+                      const[resW,resD,resH]=await Promise.all([
+                        DF_.fetchOHLCVCached(tkr_,"weekly"),
+                        DF_.fetchOHLCVCached(tkr_,"daily"),
+                        DF_.fetchOHLCVCached(tkr_,"1h"),
+                      ]);
+                      if(resD&&resD.data&&resD.data.length>=12){
+                        const indD=TI_.computeAll(resD.data);
+                        const indW=resW&&resW.data&&resW.data.length>=12?TI_.computeAll(resW.data):null;
+                        const indH=resH&&resH.data&&resH.data.length>=12?TI_.computeAll(resH.data):null;
+                        const exitScore=TI_.computeExitScore(resD.data,indD,{entryPrice:sh.buyPrice,buyDate:sh.buyDate,currentPrice:sh.currentPrice});
+                        const stripInd=(ind)=>ind?{
+                          ema_9:ind.ema_9,ema_21:ind.ema_21,ema_50:ind.ema_50,
+                          sma_20:ind.sma_20,sma_50:ind.sma_50,sma_200:ind.sma_200,
+                          rsi_14:ind.rsi_14,macd:ind.macd,
+                          supertrend:ind.supertrend,supertrendDir:ind.supertrendDir,
+                          bollinger:ind.bb,adx:ind.adx,atr_14:ind.atr_14,
+                          obv:ind.obv,cmf_20:ind.cmf_20,stochRSI:ind.stochRSI,
+                          cci_20:ind.cci_20,roc_12:ind.roc_12,momentum_10:ind.momentum_10,
+                          vwap:ind.vwap,psar:ind.psar,ichimoku:ind.ichimoku,
+                          donchian:ind.donchian,keltner:ind.keltner,
+                          hma_20:ind.hma_20,kama:ind.kama,
+                          tsi:ind.tsi,stc:ind.stc,mfi_14:ind.mfi_14,
+                          pvt:ind.pvt,kvo:ind.kvo,anchored_vwap:ind.anchored_vwap,
+                          volumeProfile:ind.volumeProfile,ttmSqueeze:ind.ttmSqueeze,
+                          squeezeMomentum:ind.squeezeMomentum,darvasBox:ind.darvasBox,
+                          smartMoney:ind.smartMoney,lastClose:ind.lastClose,
+                        }:null;
+                        techData={
+                          source:resD.source||null,
+                          lastClose:indD.lastClose,
+                          indicators:{weekly:stripInd(indW),daily:stripInd(indD),hourly:stripInd(indH)},
+                          exitScore:exitScore?{
+                            total:exitScore.total,trend:exitScore.trend,momentum:exitScore.momentum,
+                            volume:exitScore.volume,structure:exitScore.structure,
+                            trendMax:exitScore.trendMax,momentumMax:exitScore.momentumMax,
+                            volumeMax:exitScore.volumeMax,structureMax:exitScore.structureMax,
+                            hardFilters:exitScore.hardFilters||[],
+                            decision:exitScore.decision,
+                          }:null,
+                          interpretation:TI_.interpret(indD),
+                          interpretationText:(() => {
+                            try{
+                              const s=TI_.interpret(indD);
+                              const bullish=Object.values(s).filter(v=>v==="bullish").length;
+                              const bearish=Object.values(s).filter(v=>v==="bearish").length;
+                              const ob=Object.values(s).filter(v=>v==="overbought").length;
+                              const os=Object.values(s).filter(v=>v==="oversold").length;
+                              return bullish+" bullish · "+bearish+" bearish"+(ob?" · "+ob+" overbought":"")+(os?" · "+os+" oversold":"");
+                            }catch{return null;}
+                          })(),
+                        };
+                      }
+                    }
+                  }catch(e){/* Tech fetch failed — save snapshot without tech data */}
                   const snapshot={
                     id:snapId,
                     savedAt:now,
@@ -25550,6 +22149,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                     brokerage:sh.brokerage||0,
                     priceTs:sh.priceTs||null,
                     chartPts:chartPts_,
+                    techData:techData,
                   };
                   dispatch({type:"SAVE_SHARE_SNAPSHOT",savedAt:now,snapshot});
                 },
@@ -25566,6 +22166,24 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
               },
                 React.createElement(Icon,{n:"image",size:13,color:"var(--text5)"}),
                 "Save Snapshot"
+              ),
+              React.createElement("button",{
+                onClick:()=>setExpandedTech(p=>({...p,[sh.id]:!p[sh.id]})),
+                style:{
+                  display:"inline-flex",alignItems:"center",gap:5,
+                  padding:"5px 13px",borderRadius:7,cursor:"pointer",fontSize:11,fontWeight:600,
+                  fontFamily:"'DM Sans',sans-serif",
+                  border:"1px solid "+(expandedTech[sh.id]?"rgba(234,88,12,.5)":"rgba(234,88,12,.35)"),
+                  background:expandedTech[sh.id]?"rgba(234,88,12,.16)":"rgba(234,88,12,.08)",
+                  color:"#ea580c",
+                  transition:"all .15s",
+                },
+                onMouseEnter:e=>{e.currentTarget.style.background="rgba(234,88,12,.16)";e.currentTarget.style.borderColor="rgba(234,88,12,.6)";},
+                onMouseLeave:e=>{e.currentTarget.style.background=expandedTech[sh.id]?"rgba(234,88,12,.16)":"rgba(234,88,12,.08)";e.currentTarget.style.borderColor=expandedTech[sh.id]?"rgba(234,88,12,.5)":"rgba(234,88,12,.35)";},
+                title:"Show technical indicators for "+sh.ticker
+              },
+                React.createElement(Icon,{n:"bolt",size:13,color:"var(--text5)"}),
+                expandedTech[sh.id]?"Hide Technicals":"Technicals"
               ),
               React.createElement("span",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic"}},"Saves current values to Previous Trades before selling")
             ),
@@ -25592,36 +22210,18 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                       )
                     : React.createElement("div",{style:{fontSize:10,color:"var(--text6)",fontStyle:"italic"}},"Click to add a note…")
                 )
+          ),
+          /* ── Expanded Technical Indicators panel ── */
+          expandedTech[sh.id]&&window.TechnicalIndicatorsInline&&React.createElement("div",{style:{marginTop:-4,marginBottom:12,padding:"16px",borderRadius:"0 0 14px 14px",background:"var(--bg3)",border:"1px solid var(--border)",borderTop:"none"}},
+            React.createElement(window.TechnicalIndicatorsInline,{ticker:sh.ticker,company:sh.company,buyPrice:sh.buyPrice,buyDate:sh.buyDate,currentPrice:sh.currentPrice,entryScore:sh.entryScore})
+          )
           );
         })
       )
     ),
     /* ── Previous Trades (Shares — Holdings sub-tab only) ── */
     tab==="shares"&&sharesSubTab==="holdings"&&React.createElement(PreviousTrades,{soldShareSnapshots,dispatch}),
-    /* ── Profitability & Return Metrics sub-tab ── */
-    tab==="shares"&&sharesSubTab==="profitability"&&React.createElement(ProfitabilityMetrics,{shares,soldShareSnapshots}),
-    /* ── Time & Holding Pattern Analysis sub-tab ── */
-    tab==="shares"&&sharesSubTab==="timeholding"&&React.createElement(TimeHoldingAnalysis,{shares,soldShareSnapshots}),
-    /* ── Win/Loss Patterns sub-tab ── */
-    tab==="shares"&&sharesSubTab==="winloss"&&React.createElement(WinLossPatterns,{shares,soldShareSnapshots}),
-    /* ── Capital Efficiency sub-tab ── */
-    tab==="shares"&&sharesSubTab==="capitaleff"&&React.createElement(CapitalEfficiency,{shares,soldShareSnapshots}),
-    /* ── Behavioural & Psychological Patterns sub-tab ── */
-    tab==="shares"&&sharesSubTab==="behavioural"&&React.createElement(BehaviouralPatterns,{shares,soldShareSnapshots}),
-    /* ── Trade Pair & Timing Correlation sub-tab ── */
-    tab==="shares"&&sharesSubTab==="timing"&&React.createElement(TradeTimingCorrelation,{shares,soldShareSnapshots}),
-    /* ── Risk Metrics sub-tab ── */
-    tab==="shares"&&sharesSubTab==="risk"&&React.createElement(RiskMetrics,{shares,soldShareSnapshots}),
-    /* ── Pattern Mining sub-tab ── */
-    tab==="shares"&&sharesSubTab==="pattern"&&React.createElement(PatternMining,{shares,soldShareSnapshots}),
-    /* ── Drawdown & Recovery Tracker sub-tab ── */
-    tab==="shares"&&sharesSubTab==="drawdown"&&React.createElement(DrawdownRecoveryTracker,{shares,soldShareSnapshots}),
-    /* ── Multi-Timeframe Performance sub-tab ── */
-    tab==="shares"&&sharesSubTab==="multitime"&&React.createElement(MultiTimeframePerformance,{shares,soldShareSnapshots}),
-    /* ── Trade Frequency & Activity Analytics sub-tab ── */
-    tab==="shares"&&sharesSubTab==="frequency"&&React.createElement(TradeFrequencyAnalytics,{shares,soldShareSnapshots}),
-    /* ── Swing-Specific Holding Period Optimiser sub-tab ── */
-    tab==="shares"&&sharesSubTab==="swing"&&React.createElement(SwingHoldOptimizer,{shares,soldShareSnapshots}),
+
     /* ── FD content */
     tab==="fd"&&(!fd.length?React.createElement(Empty,{icon:React.createElement(Icon,{n:"bank",size:18}),text:"No FDs added yet"}):
       React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(275px,1fr))",gap:14}},
@@ -25980,6 +22580,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         React.createElement(Field,{label:"Buy Price (₹)"},React.createElement("input",{className:"inp",type:"number",value:editShare.buyPrice,onChange:e=>setEditShare(p=>({...p,buyPrice:e.target.value}))})),
         React.createElement(Field,{label:"Date of Acquisition"},React.createElement("input",{className:"inp",type:"date",value:editShare.buyDate||"",onChange:e=>setEditShare(p=>({...p,buyDate:e.target.value}))})),
         React.createElement(Field,{label:"Current Price (₹)"},React.createElement("input",{className:"inp",type:"number",value:editShare.currentPrice,onChange:e=>setEditShare(p=>({...p,currentPrice:e.target.value}))})),
+        React.createElement(Field,{label:"Entry Score (0–100)"},React.createElement("input",{className:"inp",type:"number",min:"0",max:"100",placeholder:"0",value:editShare.entryScore||"",onChange:e=>setEditShare(p=>({...p,entryScore:e.target.value}))})),
         React.createElement(Field,{label:"Brokerage / Fees (₹)"},React.createElement("input",{className:"inp",type:"number",value:editShare.brokerage||"",onChange:e=>setEditShare(p=>({...p,brokerage:e.target.value}))}))
       ),
       React.createElement(Field,{label:"Notes"},React.createElement("textarea",{className:"inp",value:editShare.notes||"",onChange:e=>setEditShare(p=>({...p,notes:e.target.value})),placeholder:"Broker, target price, holding notes…",style:{resize:"vertical",minHeight:60,lineHeight:1.6,fontSize:12}})),
@@ -26005,13 +22606,14 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
             buyDate:editShare.buyDate||TODAY(),
             brokerage:+editShare.brokerage||0,
             notes:editShare.notes||"",
+            entryScore:editShare.entryScore?+editShare.entryScore:null,
           }});
           setEditShare(null);
         },sx:{flex:"1 1 120px",justifyContent:"center"}},"Save Changes"),
         React.createElement(Btn,{v:"secondary",onClick:()=>setEditShare(null),sx:{justifyContent:"center",minWidth:70}},"Cancel")
       )
     ),
-    open&&tab==="shares"&&React.createElement(Modal,{title:"Add Share",onClose:()=>{setOpen(false);setShF({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:""});},w:520},
+    open&&tab==="shares"&&React.createElement(Modal,{title:"Add Share",onClose:()=>{setOpen(false);setShF({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:"",entryScore:""});},w:520},
       /* ── Mode toggle: Active holding vs Past trade ── */
       React.createElement("div",{style:{display:"flex",borderRadius:9,overflow:"hidden",border:"1px solid var(--border2)",marginBottom:16}},
         React.createElement("button",{
@@ -26087,14 +22689,18 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         React.createElement(Field,{label:"Brokerage / Fees (₹)"},React.createElement("input",{className:"inp",type:"number",placeholder:"0 (optional)",value:shF.brokerage,onChange:e=>setShF(p=>({...p,brokerage:e.target.value}))})),
         React.createElement(Field,{label:"Notes (optional)"},React.createElement("textarea",{className:"inp",placeholder:"Broker, exchange, strategy notes…",value:shF.notes,onChange:e=>setShF(p=>({...p,notes:e.target.value})),style:{resize:"vertical",minHeight:52,lineHeight:1.6,fontSize:12}}))
       ),
+      React.createElement("div",{className:"grid-2col"},
+        React.createElement(Field,{label:"Entry Score (0–100, optional)"},React.createElement("input",{className:"inp",type:"number",min:"0",max:"100",placeholder:"0 (optional)",value:shF.entryScore,onChange:e=>setShF(p=>({...p,entryScore:e.target.value}))})),
+        React.createElement("div",null)
+      ),
       /* ── Action buttons ── */
       React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,marginTop:4}},
         /* Active holding submit */
         !shF.sellDate&&React.createElement(Btn,{
           onClick:()=>{
             if(!shF.company||!shF.qty)return;
-            dispatch({type:"ADD_SHARE",p:{id:uid(),...shF,qty:+shF.qty,buyPrice:+shF.buyPrice,currentPrice:+shF.currentPrice,buyDate:shF.buyDate||TODAY(),brokerage:+shF.brokerage||0}});
-            setShF({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:""});
+            dispatch({type:"ADD_SHARE",p:{id:uid(),...shF,qty:+shF.qty,buyPrice:+shF.buyPrice,currentPrice:+shF.currentPrice,buyDate:shF.buyDate||TODAY(),brokerage:+shF.brokerage||0,entryScore:shF.entryScore?+shF.entryScore:null}});
+            setShF({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:"",entryScore:""});
             setOpen(false);
           },
           sx:{flex:"1 1 auto",justifyContent:"center"}
@@ -26142,7 +22748,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
             };
             dispatch({type:"SAVE_SHARE_SNAPSHOT",savedAt:sellD,snapshot});
             setShAddingTrade(false);
-            setShF({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:""});
+            setShF({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:"",entryScore:""});
             setOpen(false);
           },
           sx:{flex:"1 1 auto",justifyContent:"center",background:"#6d28d9",borderColor:"#6d28d9"},
@@ -26151,7 +22757,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
             ?React.createElement(React.Fragment,null,React.createElement("span",{className:"spinr"},"⟳")," Fetching chart…")
             :React.createElement(React.Fragment,null,React.createElement(Icon,{n:"save",size:12,style:{marginRight:4}}),"Save to Previous Trades")
         ),
-        React.createElement(Btn,{v:"secondary",onClick:()=>{setOpen(false);setShF({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:""});}},shAddingTrade?"":"Cancel")
+        React.createElement(Btn,{v:"secondary",onClick:()=>{setOpen(false);setShF({company:"",ticker:"",qty:"",buyPrice:"",currentPrice:"",buyDate:TODAY(),sellDate:"",sellPrice:"",brokerage:"",notes:"",entryScore:""});}},shAddingTrade?"":"Cancel")
       )
     ),
     open&&tab==="fd"&&React.createElement(Modal,{title:"Add Fixed Deposit",onClose:()=>setOpen(false),w:480},
@@ -26286,7 +22892,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
               currentValue:parseFloat(editMf.currentValue)||null,
               startDate:editMf.startDate||null,
               notes:editMf.notes||"",
-              manualXirr:editMf.manualXirr!==""&&editMf.manualXirr!=null?parseFloat(editMf.manualXirr):null,
+              manualXirr:editMf.manualXirr!==""&&editMf.manualXirr!=null?(()=>{const v=parseFloat(editMf.manualXirr);return v!==null&&isFinite(v)?v:null;})():null,
             }});
             setEditMf(null);
           },
@@ -27162,22 +23768,46 @@ const CategoriesPanel=({state,dispatch,askDelete})=>{
   const COLORS=["#16a34a","#0e7490","#b45309","#c2410c","#dc2626","#6d28d9","#be185d","#1d4ed8","#059669","#475569","#92400e","#374151"];
   const payees=state.payees||[];
 
+  /* ── Export all categories to Excel */
+  const exportCategories=()=>{
+    window.__loadExportLibs().then(()=>{
+      const XL=window.XLSX;
+      const rows=[["Category Name","Classification","Color (hex)","Default Payee","Sub-category","Sub Default Payee"]];
+      (state.categories||[]).forEach(c=>{
+        if(c.subs&&c.subs.length>0){
+          c.subs.forEach((s,i)=>{
+            rows.push([i===0?c.name:"",i===0?(c.classType||""):"",i===0?(c.color||""):"",i===0?(c.defaultPayee||""):"",s.name||"",s.defaultPayee||""]);
+          });
+        }else{
+          rows.push([c.name,c.classType||"",c.color||"",c.defaultPayee||"","",""]);
+        }
+      });
+      const ws=XL.utils.aoa_to_sheet(rows);
+      ws["!cols"]=[{wch:24},{wch:16},{wch:14},{wch:20},{wch:24},{wch:20}];
+      const wb=XL.utils.book_new();
+      XL.utils.book_append_sheet(wb,ws,"Categories");
+      XL.writeFile(wb,"categories-export.xlsx");
+    }).catch(()=>alert("Failed to load Excel library. Check your internet connection."));
+  };
+
   /* ── Download sample template */
   const downloadTemplate=()=>{
-    const XL=window.XLSX;
-    const rows=[
-      ["Category Name","Classification","Color (hex)","Sub-categories (comma separated)"],
-      ["Healthcare","Expense","#ef4444","Doctor,Medicine,Hospital"],
-      ["Dining Out","Expense","#c2410c","Lunch,Dinner,Cafe"],
-      ["Freelance Income","Income","#16a34a","Consulting,Projects"],
-      ["Crypto","Investment","#6d28d9","Bitcoin,Altcoins"],
-      ["Gifts","Others","#8ba0c0","Birthday,Wedding"],
-    ];
-    const ws=XL.utils.aoa_to_sheet(rows);
-    ws["!cols"]=[{wch:22},{wch:18},{wch:14},{wch:38}];
-    const wb=XL.utils.book_new();
-    XL.utils.book_append_sheet(wb,ws,"Categories");
-    XL.writeFile(wb,"category-import-template.xlsx");
+    window.__loadExportLibs().then(()=>{
+      const XL=window.XLSX;
+      const rows=[
+        ["Category Name","Classification","Color (hex)","Sub-categories (comma separated)"],
+        ["Healthcare","Expense","#ef4444","Doctor,Medicine,Hospital"],
+        ["Dining Out","Expense","#c2410c","Lunch,Dinner,Cafe"],
+        ["Freelance Income","Income","#16a34a","Consulting,Projects"],
+        ["Crypto","Investment","#6d28d9","Bitcoin,Altcoins"],
+        ["Gifts","Others","#8ba0c0","Birthday,Wedding"],
+      ];
+      const ws=XL.utils.aoa_to_sheet(rows);
+      ws["!cols"]=[{wch:22},{wch:18},{wch:14},{wch:38}];
+      const wb=XL.utils.book_new();
+      XL.utils.book_append_sheet(wb,ws,"Categories");
+      XL.writeFile(wb,"category-import-template.xlsx");
+    }).catch(()=>alert("Failed to load Excel library. Check your internet connection."));
   };
 
   /* ── Parse uploaded file */
@@ -27228,6 +23858,7 @@ const CategoriesPanel=({state,dispatch,askDelete})=>{
       ),
       React.createElement("div",{style:{display:"flex",gap:8,flexShrink:0}},
         React.createElement(Btn,{v:"secondary",sz:"sm",onClick:downloadTemplate,sx:{fontSize:12}},"⬇ Template"),
+        React.createElement(Btn,{v:"secondary",sz:"sm",onClick:exportCategories,sx:{fontSize:12}},"⬆ Export"),
         React.createElement(Btn,{v:"secondary",sz:"sm",onClick:()=>{setImportResult(null);setImportOpen(true);},sx:{fontSize:12}},"⬆ Import Excel")
       )
     ),
@@ -30112,6 +26743,41 @@ const ExportReportModal=({data,onClose})=>{
     }));
   };
 
+  /* ── compute account balances as of a given date (reverses post-date txns) ── */
+  const getBalancesAsOf=(toDate)=>{
+    const after=t=>t.date>toDate;
+    const bankBal=data.banks.reduce((s,b)=>{
+      let bal=b.balance;
+      (b.transactions||[]).filter(after).forEach(t=>{
+        bal+=(t.type==="credit")?-t.amount:t.amount;
+      });
+      return s+bal;
+    },0);
+    let cashBal=data.cash.balance;
+    (data.cash.transactions||[]).filter(after).forEach(t=>{
+      cashBal+=(t.type==="credit")?-t.amount:t.amount;
+    });
+    const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
+    const mfVal=data.mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
+    const fdVal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
+    const reVal=data.re.reduce((s,r)=>s+(r.currentValue||r.acquisitionCost),0);
+    const cDebt=data.cards.reduce((s,c)=>{
+      let out=c.outstanding;
+      (c.transactions||[]).filter(after).forEach(t=>{
+        out+=(t.type==="debit")?-t.amount:t.amount;
+      });
+      return s+out;
+    },0);
+    const lDebt=data.loans.reduce((s,l)=>{
+      let out=l.outstanding;
+      (l.transactions||[]).filter(after).forEach(t=>{
+        out+=(t.type==="debit")?-t.amount:t.amount;
+      });
+      return s+out;
+    },0);
+    return{bankBal,cashBal,shVal,mfVal,fdVal,reVal,cDebt,lDebt,totalAssets:bankBal+cashBal+shVal+mfVal+fdVal+reVal};
+  };
+
   /* ══════════════════════════════════════════════════
      EXCEL EXPORT — multi-sheet workbook via SheetJS
   ══════════════════════════════════════════════════ */
@@ -30129,15 +26795,8 @@ const ExportReportModal=({data,onClose})=>{
       const hStyle={font:{bold:true}};
 
       /* ── Sheet 1: Cover & Net Worth Snapshot ── */
-      const bankBal=data.banks.reduce((s,b)=>s+b.balance,0);
-      const cashBal=data.cash.balance;
-      const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
-      const mfVal=data.mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
-      const fdVal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
-      const reVal=data.re.reduce((s,r)=>s+(r.currentValue||r.acquisitionCost),0);
-      const cDebt=data.cards.reduce((s,c)=>s+c.outstanding,0);
-      const lDebt=data.loans.reduce((s,l)=>s+l.outstanding,0);
-      const totalAssets=bankBal+cashBal+shVal+mfVal+fdVal+reVal;
+      const bal=getBalancesAsOf(to);
+      const{bankBal,cashBal,shVal,mfVal,fdVal,reVal,cDebt,lDebt,totalAssets}=bal;
       const netWorth=totalAssets-cDebt-lDebt;
       const totIncome=all.filter(t=>catClassType(data.categories,t.cat||"Others")==="Income").reduce((s,t)=>s+t.amount,0);
       const totExpense=all.filter(t=>["Expense","Others"].includes(catClassType(data.categories,t.cat||"Others"))).reduce((s,t)=>s+t.amount,0);
@@ -30189,13 +26848,25 @@ const ExportReportModal=({data,onClose})=>{
           cfRows.reduce((s,r)=>s+r.net,0),""],
       ]);
 
-      /* ── Sheet 3: Category Breakdown ── */
-      addSheet("Category Breakdown",[
-        ["Category","Sub-Category","Class","Debit (₹)","Credit (₹)","Transactions"],
-        ...catRows.map(r=>[r.category,r.subCategory,r.classType,fmt(r.debit),fmt(r.credit),r.count]),
+      /* ── Sheet 3: Income by Category ── */
+      const incomeCatRows=catRows.filter(r=>r.classType==="Income").sort((a,b)=>b.credit-a.credit);
+      const expenseCatRows=catRows.filter(r=>r.classType!=="Income").sort((a,b)=>b.debit-a.debit);
+      addSheet("Income by Category",[
+        ["Category","Sub-Category","Credit (₹)","Debit (₹)","Transactions"],
+        ...incomeCatRows.map(r=>[r.category,r.subCategory,fmt(r.credit),fmt(r.debit),r.count]),
+        ["","","","",""],
+        ["TOTALS","",fmt(incomeCatRows.reduce((s,r)=>s+r.credit,0)),"",incomeCatRows.reduce((s,r)=>s+r.count,0)],
       ]);
 
-      /* ── Sheet 4: Mutual Funds ── */
+      /* ── Sheet 4: Spending by Category ── */
+      addSheet("Spending by Category",[
+        ["Category","Sub-Category","Class","Debit (₹)","Credit (₹)","Transactions"],
+        ...expenseCatRows.map(r=>[r.category,r.subCategory,r.classType,fmt(r.debit),fmt(r.credit),r.count]),
+        ["","","","","",""],
+        ["TOTALS","","",fmt(expenseCatRows.reduce((s,r)=>s+r.debit,0)),"",expenseCatRows.reduce((s,r)=>s+r.count,0)],
+      ]);
+
+      /* ── Sheet 5: Mutual Funds ── */
       addSheet("Mutual Funds",[
         ["Fund Name","Scheme Code","Units","Avg NAV (₹)","Amount Invested (₹)","Current NAV (₹)","Current Value (₹)","P&L (₹)","Return (%)","Last Updated"],
         ...data.mf.map(m=>{
@@ -30211,7 +26882,7 @@ const ExportReportModal=({data,onClose})=>{
           data.mf.reduce((s,m)=>{const coa=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;return s+(m.currentValue||m.invested)-coa;},0),"",""],
       ]);
 
-      /* ── Sheet 5: Shares ── */
+      /* ── Sheet 6: Shares ── */
       addSheet("Shares",[
         ["Company","Ticker","Qty","Buy Price (₹)","Current Price (₹)","Cost Basis (₹)","Market Value (₹)","P&L (₹)","Return (%)","Last Updated"],
         ...data.shares.map(sh=>{
@@ -30226,7 +26897,7 @@ const ExportReportModal=({data,onClose})=>{
           data.shares.reduce((s,sh)=>s+sh.qty*(sh.currentPrice-sh.buyPrice),0),"",""],
       ]);
 
-      /* ── Sheet 6: Fixed Deposits ── */
+      /* ── Sheet 7: Fixed Deposits ── */
       addSheet("Fixed Deposits",[
         ["Bank / Institution","Principal (₹)","Rate (% p.a.)","Start Date","Maturity Date","Value Today (₹)","Maturity Amount (₹)","Interest Earned (₹)","Days to Maturity"],
         ...data.fd.map(f=>{
@@ -30240,7 +26911,7 @@ const ExportReportModal=({data,onClose})=>{
           data.fd.reduce((s,f)=>{const m=f.maturityAmount&&f.maturityAmount>f.amount?f.maturityAmount:calcFDMaturity(f.amount,f.rate,f.startDate,f.maturityDate);return s+m-f.amount;},0),""],
       ]);
 
-      /* ── Sheet 7: Real Estate ── */
+      /* ── Sheet 8: Real Estate ── */
       addSheet("Real Estate",[
         ["Property","Acquisition Date","Cost of Acquisition (₹)","Current Value (₹)","Unrealised Gain/Loss (₹)","Return (%)","Notes"],
         ...data.re.map(r=>{
@@ -30250,7 +26921,7 @@ const ExportReportModal=({data,onClose})=>{
         }),
       ]);
 
-      /* ── Sheet 8: Loans ── */
+      /* ── Sheet 9: Loans ── */
       addSheet("Loans",[
         ["Loan Name","Bank / Lender","Type","Principal (₹)","Outstanding (₹)","EMI/Month (₹)","Rate (% p.a.)","% Repaid","Start Date","End Date"],
         ...data.loans.map(l=>[
@@ -30265,7 +26936,7 @@ const ExportReportModal=({data,onClose})=>{
           data.loans.reduce((s,l)=>s+l.emi,0),"","","",""],
       ]);
 
-      /* ── Sheet 9: Account Balances ── */
+      /* ── Sheet 10: Account Balances ── */
       addSheet("Account Balances",[
         ["Account","Type","Bank / Institution","Current Balance / Outstanding (₹)"],
         ...data.banks.map(b=>[b.name,"Bank",b.bank,b.balance]),
@@ -30285,24 +26956,17 @@ const ExportReportModal=({data,onClose})=>{
   };
 
   /* ══════════════════════════════════════════════════
-     PDF EXPORT — styled print HTML in new window
+     PDF EXPORT — capture styled HTML → jsPDF download
   ══════════════════════════════════════════════════ */
-  const exportPDF=()=>{
+  const exportPDF=async()=>{
     setExporting(true);setStatus(null);
     try{
       const{from,to,label}=getRange();
       const{banks,cards,cash,all}=getTx(from,to);
       const catRows=getCatSummary(all);
       const cfRows=getMonthlyCF(all,from,to);
-      const bankBal=data.banks.reduce((s,b)=>s+b.balance,0);
-      const cashBal=data.cash.balance;
-      const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
-      const mfVal=data.mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
-      const fdVal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
-      const reVal=data.re.reduce((s,r)=>s+(r.currentValue||r.acquisitionCost),0);
-      const cDebt=data.cards.reduce((s,c)=>s+c.outstanding,0);
-      const lDebt=data.loans.reduce((s,l)=>s+l.outstanding,0);
-      const totalAssets=bankBal+cashBal+shVal+mfVal+fdVal+reVal;
+      const bal=getBalancesAsOf(to);
+      const{bankBal,cashBal,shVal,mfVal,fdVal,reVal,cDebt,lDebt,totalAssets}=bal;
       const netWorth=totalAssets-cDebt-lDebt;
       const totIncome=all.filter(t=>catClassType(data.categories,t.cat||"Others")==="Income").reduce((s,t)=>s+t.amount,0);
       const totExpense=all.filter(t=>["Expense","Others"].includes(catClassType(data.categories,t.cat||"Others"))).reduce((s,t)=>s+t.amount,0);
@@ -30310,33 +26974,109 @@ const ExportReportModal=({data,onClose})=>{
       const netFlow=totIncome-totExpense-totInvest;
       const savRate=totIncome>0?((netFlow/totIncome)*100).toFixed(1):"0.0";
 
-      const f2=(n)=>_numFmt0.format(n||0); // reuse cached plain-number formatter
-      const col=(n)=>n>=0?"#16a34a":"#dc2626";
-
-      /* ── HTML escape — prevents XSS via user-supplied text in PDF HTML ── */
+      const f2=(n)=>_numFmt0.format(n||0);
       const esc=(s)=>String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-
-      /* ── HTML builder helpers ── */
       const th=(txt,align="left",w="")=>`<th style="background:#1e3a5f;color:#fff;padding:7px 10px;font-size:11px;text-align:${align};white-space:nowrap;${w?"width:"+w+";":""}">${esc(txt)}</th>`;
       const td=(txt,align="left",bold=false,color="")=>`<td style="padding:6px 10px;font-size:11px;text-align:${align};${bold?"font-weight:700;":""}${color?"color:"+color+";":""}">${esc(txt)}</td>`;
-      const section=(title,icon,body)=>`
-        <div style="margin-bottom:28px;page-break-inside:avoid;">
-          <h3 style="font-size:14px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:6px;margin-bottom:12px;">${icon} ${esc(title)}</h3>
-          ${body}
-        </div>`;
-      const table=(header,rows)=>`
-        <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:4px;">
-          <thead><tr>${header}</tr></thead>
-          <tbody>${rows.map((r,i)=>`<tr style="background:${i%2===0?"#f8fafc":"#fff"};border-bottom:1px solid #e2e8f0;">${r}</tr>`).join("")}</tbody>
-        </table>`;
       const kv=(label,val,color="")=>`<tr><td style="padding:5px 8px;font-size:12px;color:#374151;">${label}</td><td style="padding:5px 8px;font-size:12px;font-weight:700;text-align:right;${color?"color:"+color+";":" "}">₹${f2(val)}</td></tr>`;
+      const table=(header,rows)=>`<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:4px;"><thead><tr>${header}</tr></thead><tbody>${rows.map((r,i)=>"<tr style=\"background:"+(i%2===0?"#f8fafc":"#fff")+";border-bottom:1px solid #e2e8f0;\">"+r+"</tr>").join("")}</tbody></table>`;
 
-      /* ── Build HTML ── */
-      const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
-<title>finsight Report — ${esc(label)}</title>
-<style>
+      await window.__loadExportLibs();
+      const h2c=window.html2canvas||window.Html2Canvas;
+
+      var cfSection="";
+      if(cfRows.length>0){
+        cfSection="<p class=\"section-title\">Cash Flow by Month</p>"+table(th("Month")+th("Income (₹)","right")+th("Expenses (₹)","right")+th("Investments (₹)","right")+th("Net Savings (₹)","right")+th("Rate","right"),cfRows.map(function(r){return[td(r.label),td("₹"+f2(r.income),"right",false,"#16a34a"),td("₹"+f2(r.expense),"right",false,"#dc2626"),td("₹"+f2(r.investment),"right",false,"#7c3aed"),td("₹"+f2(r.net),"right",true,r.net>=0?"#16a34a":"#dc2626"),td(r.income>0?((r.net/r.income)*100).toFixed(1)+"%":"--","right")].join("")}));
+      }
+      var catSection="";
+      var incCatSection="";
+      if(catRows.length>0){
+        var expCatRows=catRows.filter(function(r){return r.classType!=="Income";}).sort(function(a,b){return b.debit-a.debit;});
+        var incCatRows=catRows.filter(function(r){return r.classType==="Income";}).sort(function(a,b){return b.credit-a.credit;});
+        if(expCatRows.length>0){
+          catSection="<p class=\"section-title\">Spending by Category</p>"+table(th("Category")+th("Sub-Category")+th("Class")+th("Debit (₹)","right")+th("Credit (₹)","right")+th("Txns","right"),expCatRows.slice(0,30).map(function(r){return[td(r.category,"left",true),td(r.subCategory||"—"),td(r.classType),td(r.debit>0?"₹"+f2(r.debit):"—","right",false,r.debit>0?"#dc2626":"#9ca3af"),td(r.credit>0?"₹"+f2(r.credit):"—","right",false,r.credit>0?"#16a34a":"#9ca3af"),td(String(r.count),"right")].join("")}));
+        }
+        if(incCatRows.length>0){
+          incCatSection="<p class=\"section-title\">Income by Category</p>"+table(th("Category")+th("Sub-Category")+th("Credit (₹)","right")+th("Txns","right"),incCatRows.map(function(r){return[td(r.category,"left",true),td(r.subCategory||"—"),td("₹"+f2(r.credit),"right",false,"#16a34a"),td(String(r.count),"right")].join("")}));
+        }
+      }
+
+      /* ── Mutual Fund Holdings ── */
+      var mfSection="";
+      var mfActive=(data.mf||[]).filter(function(m){return m.units&&m.units>0;});
+      if(mfActive.length>0){
+        var mfInvTot=mfActive.reduce(function(s,m){return s+m.invested;},0);
+        var mfCurTot=mfActive.reduce(function(s,m){return s+(m.currentValue||m.invested);},0);
+        var mfPLTot=mfActive.reduce(function(s,m){var coa=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;return s+(m.currentValue||m.invested)-coa;},0);
+        mfSection="<p class=\"section-title\">Mutual Fund Portfolio</p>"+
+          "<div style=\"display:flex;gap:12px;margin-bottom:12px;\">"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Invested</div><div class=\"card-val\" style=\"color:#7c3aed;\">₹"+f2(mfInvTot)+"</div></div>"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Current Value</div><div class=\"card-val\" style=\"color:#16a34a;\">₹"+f2(mfCurTot)+"</div></div>"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">P&L</div><div class=\"card-val\" style=\"color:"+(mfPLTot>=0?"#16a34a":"#dc2626")+";\">₹"+f2(mfPLTot)+"</div></div>"+
+          "</div>"+
+          table(th("Fund Name")+th("Units","right")+th("Invested (₹)","right")+th("Current Value (₹)","right")+th("P&L (₹)","right")+th("Return %","right"),
+            mfActive.map(function(m){var coa=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;var cur=m.currentValue||m.invested;var pl=cur-coa;var ret=coa>0?((pl/coa)*100).toFixed(1)+"%":"--";
+              return[td(m.name,"left",true),td(f2(m.units),"right"),td("₹"+f2(m.invested),"right"),td("₹"+f2(cur),"right"),td("₹"+f2(pl),"right",false,pl>=0?"#16a34a":"#dc2626"),td(ret,"right",false,pl>=0?"#16a34a":"#dc2626")].join("");}));
+      }
+
+      /* ── Shares & Equities Holdings ── */
+      var sharesSection="";
+      if(data.shares&&data.shares.length>0){
+        var shCostTot=data.shares.reduce(function(s,sh){return s+sh.qty*sh.buyPrice;},0);
+        var shValTot=data.shares.reduce(function(s,sh){return s+sh.qty*sh.currentPrice;},0)+(data.brokerCashBalance||0);
+        var shPLTot=data.shares.reduce(function(s,sh){return s+sh.qty*(sh.currentPrice-sh.buyPrice);},0);
+        sharesSection="<p class=\"section-title\">Shares & Equities Portfolio</p>"+
+          "<div style=\"display:flex;gap:12px;margin-bottom:12px;\">"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Invested</div><div class=\"card-val\" style=\"color:#16a34a;\">₹"+f2(shCostTot)+"</div></div>"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Market Value</div><div class=\"card-val\" style=\"color:#16a34a;\">₹"+f2(shValTot)+"</div></div>"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">P&L</div><div class=\"card-val\" style=\"color:"+(shPLTot>=0?"#16a34a":"#dc2626")+";\">₹"+f2(shPLTot)+"</div></div>"+
+          "</div>"+
+          table(th("Company")+th("Ticker")+th("Qty","right")+th("Buy ₹","right")+th("CMP ₹","right")+th("Value (₹)","right")+th("P&L (₹)","right")+th("Return %","right"),
+            data.shares.map(function(sh){var cost=sh.qty*sh.buyPrice;var val=sh.qty*sh.currentPrice;var pl=val-cost;var ret=cost>0?((pl/cost)*100).toFixed(1)+"%":"--";
+              return[td(sh.company,"left",true),td(sh.ticker),td(String(sh.qty),"right"),td("₹"+f2(sh.buyPrice),"right"),td("₹"+f2(sh.currentPrice),"right"),td("₹"+f2(val),"right"),td("₹"+f2(pl),"right",false,pl>=0?"#16a34a":"#dc2626"),td(ret,"right",false,pl>=0?"#16a34a":"#dc2626")].join("");}));
+      }
+
+      /* ── Fixed Deposits Holdings ── */
+      var fdSection="";
+      if(data.fd&&data.fd.length>0){
+        var fdPrinTot=data.fd.reduce(function(s,f){return s+f.amount;},0);
+        var fdValTot=data.fd.reduce(function(s,f){return s+calcFDValueToday(f);},0);
+        var fdMatTot=data.fd.reduce(function(s,f){var m=f.maturityAmount&&f.maturityAmount>f.amount?f.maturityAmount:calcFDMaturity(f.amount,f.rate,f.startDate,f.maturityDate);return s+m;},0);
+        fdSection="<p class=\"section-title\">Fixed Deposits</p>"+
+          "<div style=\"display:flex;gap:12px;margin-bottom:12px;\">"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Principal</div><div class=\"card-val\" style=\"color:#d97706;\">₹"+f2(fdPrinTot)+"</div></div>"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Current Value</div><div class=\"card-val\" style=\"color:#d97706;\">₹"+f2(fdValTot)+"</div></div>"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Maturity Value</div><div class=\"card-val\" style=\"color:#16a34a;\">₹"+f2(fdMatTot)+"</div></div>"+
+          "</div>"+
+          table(th("Bank / Institution")+th("Principal (₹)","right")+th("Rate %")+th("Maturity Date")+th("Value Today (₹)","right")+th("Maturity Amt (₹)","right")+th("Days Left","right"),
+            data.fd.map(function(f){var mat=f.maturityAmount&&f.maturityAmount>f.amount?f.maturityAmount:calcFDMaturity(f.amount,f.rate,f.startDate,f.maturityDate);
+              return[td(f.bank,"left",true),td("₹"+f2(f.amount),"right"),td(String(f.rate)+"%"),td(f.maturityDate),td("₹"+f2(calcFDValueToday(f)),"right"),td("₹"+f2(mat),"right"),td(String(daysLeft(f.maturityDate)),"right")].join("");}));
+      }
+
+      /* ── Real Estate Holdings ── */
+      var reSection="";
+      if(data.re&&data.re.length>0){
+        var reCostTot=data.re.reduce(function(s,r){return s+r.acquisitionCost;},0);
+        var reValTot=data.re.reduce(function(s,r){return s+(r.currentValue||r.acquisitionCost);},0);
+        var reGainTot=reValTot-reCostTot;
+        reSection="<p class=\"section-title\">Real Estate Holdings</p>"+
+          "<div style=\"display:flex;gap:12px;margin-bottom:12px;\">"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Acquisition Cost</div><div class=\"card-val\" style=\"color:#ea580c;\">₹"+f2(reCostTot)+"</div></div>"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Current Value</div><div class=\"card-val\" style=\"color:#ea580c;\">₹"+f2(reValTot)+"</div></div>"+
+            "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Unrealised Gain</div><div class=\"card-val\" style=\"color:"+(reGainTot>=0?"#16a34a":"#dc2626")+";\">₹"+f2(reGainTot)+"</div></div>"+
+          "</div>"+
+          table(th("Property")+th("Acquired")+th("Cost (₹)","right")+th("Current Value (₹)","right")+th("Gain/Loss (₹)","right")+th("Return %","right"),
+            data.re.map(function(r){var gain=(r.currentValue||r.acquisitionCost)-r.acquisitionCost;var ret=r.acquisitionCost>0?((gain/r.acquisitionCost)*100).toFixed(1)+"%":"--";
+              return[td(r.title,"left",true),td(r.acquisitionDate||"—"),td("₹"+f2(r.acquisitionCost),"right"),td("₹"+f2(r.currentValue||r.acquisitionCost),"right"),td("₹"+f2(gain),"right",false,gain>=0?"#16a34a":"#dc2626"),td(ret,"right",false,gain>=0?"#16a34a":"#dc2626")].join("");}));
+      }
+
+      var A4W=210,A4H=297,MG=10;
+      var cWmm=A4W-MG*2;
+      var capPx=960;
+
+      const html=`<style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Segoe UI',Arial,sans-serif;color:#1a1a2e;background:#fff;padding:28px;font-size:12px;}
+  .rpt-wrap{font-family:'Segoe UI',Arial,sans-serif;color:#1a1a2e;background:#fff;padding:16px 24px;font-size:12px;width:${capPx}px;}
   h1{font-size:22px;color:#1e3a5f;margin-bottom:4px;}
   h2{font-size:16px;color:#374151;margin-bottom:16px;}
   .badge{display:inline-block;background:#e0f2fe;color:#0369a1;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;margin-right:6px;}
@@ -30348,232 +27088,175 @@ const ExportReportModal=({data,onClose})=>{
   table{width:100%;border-collapse:collapse;}
   th{background:#1e3a5f;color:#fff;padding:7px 10px;font-size:11px;text-align:left;white-space:nowrap;}
   td{padding:6px 10px;font-size:11px;border-bottom:1px solid #e2e8f0;}
-  tr:nth-child(even) td{background:#f8fafc;}
-  .green{color:#16a34a;} .red{color:#dc2626;}
+  tr:nth-child(even) td{background:#f8faffc;}
   .section-title{font-size:14px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:6px;margin:20px 0 12px;}
-  @media print{
-    body{padding:14px;font-size:11px;}
-    .no-break{page-break-inside:avoid;}
-  }
-</style></head><body>
-
-<!-- COVER -->
-<div style="border-bottom:3px solid #1e3a5f;margin-bottom:20px;padding-bottom:14px;">
-  <div style="display:flex;justify-content:space-between;align-items:flex-end;">
-    <div>
-      <h1>finsight</h1>
-      <h2>${periodType==="monthly"?"Monthly":"Yearly"} Summary Report &mdash; ${esc(label)}</h2>
-      <span class="badge">${from} to ${to}</span>
-      <span class="badge">Generated ${new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})}</span>
-    </div>
-    <div style="text-align:right;color:#6b7280;font-size:11px;">
-      <div style="font-size:20px;font-weight:800;color:${netWorth>=0?"#16a34a":"#dc2626"}">₹${f2(netWorth)}</div>
-      <div>Net Worth</div>
-    </div>
-  </div>
+</style>
+<div class="rpt-wrap">
+<div style="border-bottom:3px solid #1e3a5f;margin-bottom:20px;padding-bottom:14px;display:flex;justify-content:space-between;align-items:flex-end;">
+  <div><h1>finsight</h1><h2>${periodType==="monthly"?"Monthly":"Yearly"} Summary Report — ${esc(label)}</h2>
+    <span class="badge">${from} to ${to}</span>
+    <span class="badge">Generated ${new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})}</span></div>
+  <div style="text-align:right;color:#6b7280;font-size:11px;"><div style="font-size:20px;font-weight:800;color:${netWorth>=0?"#16a34a":"#dc2626"}">₹${f2(netWorth)}</div><div>Net Worth</div></div>
 </div>
-
-<!-- PERIOD SNAPSHOT KPIs -->
-<div class="grid-4">
-  <div class="card"><div class="card-label">Total Income</div><div class="card-val" style="color:#16a34a;">₹${f2(totIncome)}</div></div>
+<div class="grid-4"><div class="card"><div class="card-label">Total Income</div><div class="card-val" style="color:#16a34a;">₹${f2(totIncome)}</div></div>
   <div class="card"><div class="card-label">Total Expenses</div><div class="card-val" style="color:#dc2626;">₹${f2(totExpense)}</div></div>
   <div class="card"><div class="card-label">Net Savings</div><div class="card-val" style="color:${netFlow>=0?"#16a34a":"#dc2626"};">₹${f2(netFlow)}</div></div>
-  <div class="card"><div class="card-label">Savings Rate</div><div class="card-val" style="color:#0369a1;">${savRate}%</div></div>
-</div>
-<div class="grid-4" style="margin-bottom:24px;">
-  <div class="card"><div class="card-label">Investments Made</div><div class="card-val" style="color:#7c3aed;">₹${f2(totInvest)}</div></div>
+  <div class="card"><div class="card-label">Savings Rate</div><div class="card-val" style="color:#0369a1;">${savRate}%</div></div></div>
+<div class="grid-4" style="margin-bottom:24px;"><div class="card"><div class="card-label">Investments Made</div><div class="card-val" style="color:#7c3aed;">₹${f2(totInvest)}</div></div>
   <div class="card"><div class="card-label">Total Transactions</div><div class="card-val">${all.length}</div></div>
   <div class="card"><div class="card-label">Total Assets</div><div class="card-val" style="color:#0369a1;">₹${f2(totalAssets)}</div></div>
-  <div class="card"><div class="card-label">Total Liabilities</div><div class="card-val" style="color:#dc2626;">₹${f2(cDebt+lDebt)}</div></div>
-</div>
-
-<!-- NET WORTH BREAKDOWN -->
-<div class="no-break">
-<p class="section-title">Net Worth Breakdown</p>
-<div class="grid-2">
-  <table>
-    <thead><tr><th>Asset</th><th style="text-align:right;">Value (₹)</th></tr></thead>
-    <tbody>
-      ${kv("Bank Accounts",bankBal,"#1e3a5f")}
-      ${kv("Cash Wallet",cashBal,"#1e3a5f")}
-      ${kv("Mutual Funds",mfVal,"#7c3aed")}
-      ${kv("Shares / Equities",shVal,"#16a34a")}
-      ${kv("Fixed Deposits",fdVal,"#d97706")}
-      ${kv("Real Estate",reVal,"#ea580c")}
-      <tr style="background:#e0f2fe;"><td style="padding:5px 8px;font-weight:700;font-size:12px;">Total Assets</td><td style="padding:5px 8px;font-weight:700;font-size:13px;text-align:right;color:#1e3a5f;">₹${f2(totalAssets)}</td></tr>
-    </tbody>
-  </table>
-  <table>
-    <thead><tr><th>Liability</th><th style="text-align:right;">Amount (₹)</th></tr></thead>
-    <tbody>
-      ${kv("Credit Card Outstanding",cDebt,"#dc2626")}
-      ${kv("Loan Balances",lDebt,"#dc2626")}
-      <tr style="background:#fee2e2;"><td style="padding:5px 8px;font-weight:700;font-size:12px;">Total Liabilities</td><td style="padding:5px 8px;font-weight:700;font-size:13px;text-align:right;color:#dc2626;">₹${f2(cDebt+lDebt)}</td></tr>
-      <tr><td colspan="2" style="padding:8px;"></td></tr>
-      <tr style="background:${netWorth>=0?"#dcfce7":"#fee2e2"};"><td style="padding:7px 8px;font-weight:800;font-size:13px;">NET WORTH</td><td style="padding:7px 8px;font-weight:800;font-size:16px;text-align:right;color:${netWorth>=0?"#16a34a":"#dc2626"};">₹${f2(netWorth)}</td></tr>
-    </tbody>
-  </table>
-</div></div>
-
-<!-- CASH FLOW BY MONTH -->
-${cfRows.length>0?`
-<p class="section-title">Cash Flow by Month</p>
-<div class="no-break">
-${table(
-  th("Month")+th("Income (₹)","right")+th("Expenses (₹)","right")+th("Investments (₹)","right")+th("Net Savings (₹)","right")+th("Rate","right"),
-  cfRows.map(r=>[
-    td(r.label),
-    td("₹"+f2(r.income),"right",false,"#16a34a"),
-    td("₹"+f2(r.expense),"right",false,"#dc2626"),
-    td("₹"+f2(r.investment),"right",false,"#7c3aed"),
-    td("₹"+f2(r.net),"right",true,r.net>=0?"#16a34a":"#dc2626"),
-    td(r.income>0?((r.net/r.income)*100).toFixed(1)+"%" :"--","right"),
-  ].join(""))
-)}
-</div>`:""}
-
-<!-- CATEGORY BREAKDOWN -->
-${catRows.length>0?`
-<p class="section-title">Spending by Category</p>
-<div class="no-break">
-${table(
-  th("Category")+th("Sub-Category")+th("Class")+th("Debit (₹)","right")+th("Credit (₹)","right")+th("Txns","right"),
-  catRows.slice(0,30).map(r=>[
-    td(r.category,"left",true),
-    td(r.subCategory||"—"),
-    td(r.classType),
-    td(r.debit>0?"₹"+f2(r.debit):"—","right",false,r.debit>0?"#dc2626":"#9ca3af"),
-    td(r.credit>0?"₹"+f2(r.credit):"—","right",false,r.credit>0?"#16a34a":"#9ca3af"),
-    td(String(r.count),"right"),
-  ].join(""))
-)}
-</div>`:""}
-
-<!-- ACCOUNT BALANCES SUMMARY -->
-<p class="section-title">Account Balances</p>
-<div class="no-break">
-${table(
-  th("Account")+th("Type")+th("Bank / Institution")+th("Balance / Outstanding","right","160px"),
-  [
-    ...data.banks.map(b=>[td(b.name,"left",true),td("Bank"),td(b.bank),td("₹"+f2(b.balance),"right",false,"#16a34a")].join("")),
-    [td("Cash Wallet","left",true),td("Cash"),td("—"),td("₹"+f2(data.cash.balance),"right",false,"#16a34a")].join(""),
-    ...data.cards.map(c=>[td(c.name,"left",true),td("Credit Card"),td(c.bank),td("₹"+f2(c.outstanding),"right",false,"#dc2626")].join("")),
-  ]
-)}
-</div>
-
-<!-- INVESTMENTS -->
-${data.mf.length>0?`
-<p class="section-title">Mutual Funds</p>
-<div class="no-break">
-${table(
-  th("Fund Name")+th("Units","right","60px")+th("Avg NAV","right","75px")+th("Invested","right","90px")+th("Current Value","right","90px")+th("P&L","right","90px")+th("Return","right","65px"),
-  data.mf.map(m=>{
-    const coa=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;
-    const cur=m.currentValue||m.invested;
-    const pnl=cur-coa;
-    const ret=coa>0?((pnl/coa)*100).toFixed(1):"0.0";
-    return[
-      td(m.name,"left",true),td(m.units.toFixed(3),"right"),td("₹"+f2(m.avgNav||0),"right"),
-      td("₹"+f2(m.invested),"right"),td("₹"+f2(cur),"right",true,"#7c3aed"),
-      td((pnl>=0?"+":"")+"₹"+f2(Math.abs(pnl)),"right",true,pnl>=0?"#16a34a":"#dc2626"),
-      td((+ret>=0?"+":"")+ret+"%","right",false,+ret>=0?"#16a34a":"#dc2626"),
-    ].join("");
-  })
-)}
-</div>`:""}
-
-${data.shares.length>0?`
-<p class="section-title">Shares / Equities</p>
-<div class="no-break">
-${table(
-  th("Company")+th("Ticker","left","80px")+th("Qty","right","50px")+th("Buy Price","right","80px")+th("Current Price","right","90px")+th("P&L","right","90px")+th("Return","right","65px"),
-  data.shares.map(sh=>{
-    const cost=sh.qty*sh.buyPrice,val=sh.qty*sh.currentPrice,pnl=val-cost;
-    const ret=cost>0?((pnl/cost)*100).toFixed(1):"0.0";
-    return[
-      td(sh.company,"left",true),td(sh.ticker),td(String(sh.qty),"right"),
-      td("₹"+f2(sh.buyPrice),"right"),td("₹"+f2(sh.currentPrice),"right",false,pnl>=0?"#16a34a":"#dc2626"),
-      td((pnl>=0?"+":"")+"₹"+f2(Math.abs(pnl)),"right",true,pnl>=0?"#16a34a":"#dc2626"),
-      td((+ret>=0?"+":"")+ret+"%","right",false,+ret>=0?"#16a34a":"#dc2626"),
-    ].join("");
-  })
-)}
-</div>`:""}
-
-${data.fd.length>0?`
-<p class="section-title">Fixed Deposits</p>
-<div class="no-break">
-${table(
-  th("Bank")+th("Principal","right","90px")+th("Rate","right","60px")+th("Start Date","left","85px")+th("Maturity Date","left","85px")+th("At Maturity","right","90px")+th("Interest","right","80px")+th("Days Left","right","70px"),
-  data.fd.map(f=>{
-    const mat=f.maturityAmount&&f.maturityAmount>f.amount?f.maturityAmount:calcFDMaturity(f.amount,f.rate,f.startDate,f.maturityDate);
-    const days=daysLeft(f.maturityDate);
-    return[
-      td(f.bank,"left",true),td("₹"+f2(f.amount),"right"),td(f.rate+"%","right"),
-      td(f.startDate),td(f.maturityDate),
-      td("₹"+f2(mat),"right",true,"#16a34a"),
-      td("+₹"+f2(mat-f.amount),"right",false,"#16a34a"),
-      td(days===0?"Matured!":String(days),"right",false,days<=30?"#dc2626":"#374151"),
-    ].join("");
-  })
-)}
-</div>`:""}
-
-${data.re.length>0?`
-<p class="section-title">Real Estate</p>
-<div class="no-break">
-${table(
-  th("Property")+th("Acquired","left","85px")+th("Cost","right","100px")+th("Current Value","right","100px")+th("Unrealised Gain","right","110px")+th("Return","right","65px"),
-  data.re.map(r=>{
-    const gain=(r.currentValue||r.acquisitionCost)-r.acquisitionCost;
-    const ret=r.acquisitionCost>0?((gain/r.acquisitionCost)*100).toFixed(1):"0.0";
-    return[
-      td(r.title,"left",true),td(r.acquisitionDate||"—"),
-      td("₹"+f2(r.acquisitionCost),"right"),
-      td("₹"+f2(r.currentValue||r.acquisitionCost),"right",true,"#ea580c"),
-      td((gain>=0?"+":"")+"₹"+f2(Math.abs(gain)),"right",true,gain>=0?"#16a34a":"#dc2626"),
-      td((+ret>=0?"+":"")+ret+"%","right",false,+ret>=0?"#16a34a":"#dc2626"),
-    ].join("");
-  })
-)}
-</div>`:""}
-
-${data.loans.length>0?`
-<p class="section-title">Loans & EMIs</p>
-<div class="no-break">
-${table(
-  th("Loan")+th("Bank")+th("Type","left","70px")+th("Principal","right","90px")+th("Outstanding","right","90px")+th("EMI/Month","right","85px")+th("Rate","right","55px")+th("% Paid","right","60px")+th("End Date","left","82px"),
-  data.loans.map(l=>{
-    const pp=l.principal>0?(((l.principal-l.outstanding)/l.principal)*100).toFixed(1):"0";
-    return[
-      td(l.name,"left",true),td(l.bank),td(l.type),
-      td("₹"+f2(l.principal),"right"),
-      td("₹"+f2(l.outstanding),"right",true,"#dc2626"),
-      td("₹"+f2(l.emi),"right",false,"#ea580c"),
-      td(l.rate+"%","right"),td(pp+"%","right"),td(l.endDate),
-    ].join("");
-  })
-)}
-</div>`:""}
-
-<!-- FOOTER -->
+  <div class="card"><div class="card-label">Total Liabilities</div><div class="card-val" style="color:#dc2626;">₹${f2(cDebt+lDebt)}</div></div></div>
+<p class="section-title">Net Worth Breakdown</p><div class="grid-2"><table><thead><tr><th>Asset</th><th style="text-align:right;">Value (₹)</th></tr></thead><tbody>
+  ${kv("Bank Accounts",bankBal,"#1e3a5f")}${kv("Cash Wallet",cashBal,"#1e3a5f")}${kv("Mutual Funds",mfVal,"#7c3aed")}${kv("Shares / Equities",shVal,"#16a34a")}${kv("Fixed Deposits",fdVal,"#d97706")}${kv("Real Estate",reVal,"#ea580c")}
+  <tr style="background:#e0f2fe;"><td style="padding:5px 8px;font-weight:700;font-size:12px;">Total Assets</td><td style="padding:5px 8px;font-weight:700;font-size:13px;text-align:right;color:#1e3a5f;">₹${f2(totalAssets)}</td></tr></tbody></table>
+  <table><thead><tr><th>Liability</th><th style="text-align:right;">Amount (₹)</th></tr></thead><tbody>
+  ${kv("Credit Card Outstanding",cDebt,"#dc2626")}${kv("Loan Balances",lDebt,"#dc2626")}
+  <tr style="background:#fee2e2;"><td style="padding:5px 8px;font-weight:700;font-size:12px;">Total Liabilities</td><td style="padding:5px 8px;font-weight:700;font-size:13px;text-align:right;color:#dc2626;">₹${f2(cDebt+lDebt)}</td></tr>
+  <tr style="background:${netWorth>=0?"#dcfce7":"#fee2e2"};"><td style="padding:7px 8px;font-weight:800;font-size:13px;">NET WORTH</td><td style="padding:7px 8px;font-weight:800;font-size:16px;text-align:right;color:${netWorth>=0?"#16a34a":"#dc2626"};">₹${f2(netWorth)}</td></tr></tbody></table></div>
+${cfSection}${catSection}${incCatSection}${mfSection}${sharesSection}${fdSection}${reSection}
 <div style="margin-top:32px;padding-top:12px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:10px;color:#9ca3af;">
   <span>finsight v${APP_VERSION} · Exported ${new Date().toLocaleString("en-IN")}</span>
-  <span>${esc(label)} · Personal Finance Report</span>
-</div>
-</body></html>`;
+  <span>${esc(label)} · Personal Finance Report</span></div>
+</div>`;
 
-      const win=window.open("","_blank","width=1100,height=800");
-      if(!win){setStatus({ok:false,msg:"Popup blocked — please allow popups for this page."});setExporting(false);return;}
-      win.document.write(html);
-      win.document.close();
-      win.focus();
-      /* slight delay to let styles render before print dialog */
-      setTimeout(()=>{win.print();},600);
-      setStatus({ok:true,msg:"PDF opened in new window. Use browser Print → Save as PDF."});
+      const container=document.createElement("div");
+      container.style.cssText="position:fixed;left:-9999px;top:0;background:#fff;z-index:-1;overflow:visible;";
+      container.innerHTML=html;
+      document.body.appendChild(container);
+      await new Promise(r=>setTimeout(r,350));
+      const captured=await h2c(container,{scale:3,useCORS:true,backgroundColor:"#ffffff",logging:false,windowWidth:capPx});
+      document.body.removeChild(container);
+      var natW=captured.width;
+      var natH=captured.height;
+      var tgtW=Math.round(cWmm*3.7795*3);
+      var tgtH=Math.round(natH*tgtW/natW);
+      var sc2=document.createElement("canvas");
+      sc2.width=tgtW;sc2.height=tgtH;
+      var s2x=sc2.getContext("2d");
+      s2x.drawImage(captured,0,0,tgtW,tgtH);
+      var pxPerMmX=tgtW/cWmm;
+      var pageHPx=Math.round((A4H-MG*2)*pxPerMmX);
+      const{jsPDF}=window.jspdf;
+      const doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+      var srcY=0;var pg=0;
+      var pageMmH=pageHPx/pxPerMmX;
+      while(srcY<tgtH){
+        if(pg>0)doc.addPage();
+        var sliceH=Math.min(pageHPx,tgtH-srcY);
+        var sc=document.createElement("canvas");
+        sc.width=tgtW;sc.height=pageHPx;
+        var sx=sc.getContext("2d");
+        sx.fillStyle="#ffffff";
+        sx.fillRect(0,0,tgtW,pageHPx);
+        sx.drawImage(sc2,0,srcY,tgtW,sliceH,0,0,tgtW,sliceH);
+        var sData=sc.toDataURL("image/jpeg",0.92);
+        doc.addImage(sData,"JPEG",MG,MG,cWmm,pageMmH);
+        srcY+=pageHPx;pg++;
+      }
+      const safeLabel=label.replace(/[^a-zA-Z0-9]/g,"_");
+      doc.save("finsight_Summary_"+safeLabel+".pdf");
+      setStatus({ok:true,msg:"PDF downloaded successfully!"});
     }catch(e){setStatus({ok:false,msg:"PDF export failed: "+e.message});}
     setExporting(false);
+  };
+
+  /* ══════════════════════════════════════════════════
+     EMAIL EXPORT — send summary report via EmailJS
+  ══════════════════════════════════════════════════ */
+  const emailCfg=data?.insightPrefs||{};
+  const hasEmailJS=!!(emailCfg.emailjsServiceId&&emailCfg.emailjsTemplateId&&emailCfg.emailjsPublicKey&&emailCfg.emailRecipient);
+  const [emailSending,setEmailSending]=useState(false);
+  const sendEmail=async()=>{
+    if(!hasEmailJS){setStatus({ok:false,msg:"Please configure EmailJS in Settings \u2192 Email Config."});return;}
+    setEmailSending(true);setStatus(null);
+    try{
+      await window.__loadExportLibs();
+      const{from,to,label}=getRange();
+      const{all}=getTx(from,to);
+      const bal=getBalancesAsOf(to);
+      const{bankBal,cashBal,shVal,mfVal,fdVal,reVal,cDebt,lDebt,totalAssets}=bal;
+      const netWorth=totalAssets-cDebt-lDebt;
+      const totIncome=all.filter(t=>catClassType(data.categories,t.cat||"Others")==="Income").reduce((s,t)=>s+t.amount,0);
+      const totExpense=all.filter(t=>["Expense","Others"].includes(catClassType(data.categories,t.cat||"Others"))).reduce((s,t)=>s+t.amount,0);
+      const totInvest=all.filter(t=>catClassType(data.categories,t.cat||"Others")==="Investment").reduce((s,t)=>s+t.amount,0);
+      const netFlow=totIncome-totExpense-totInvest;
+      const savRate=totIncome>0?((netFlow/totIncome)*100).toFixed(1):"0.0";
+      const f2=(n)=>_numFmt0.format(n||0);
+      const esc=(s)=>String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      const cfRows=getMonthlyCF(all,from,to);
+      const catRows=getCatSummary(all);
+
+      var _escH=function(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");};
+      var _eMailCf="";
+      if(cfRows.length>0){
+        var _eRows=cfRows.map(function(r,i){
+          return "<tr style=\"background:"+(i%2===0?"#f8fafc":"#fff")+"\"><td style=\"padding:5px 10px;border-bottom:1px solid #e2e8f0;\">"+_escH(r.label)+"</td><td style=\"padding:5px 10px;text-align:right;border-bottom:1px solid #e2e8f0;color:#16a34a;\">₹"+f2(r.income)+"</td><td style=\"padding:5px 10px;text-align:right;border-bottom:1px solid #e2e8f0;color:#dc2626;\">₹"+f2(r.expense)+"</td><td style=\"padding:5px 10px;text-align:right;border-bottom:1px solid #e2e8f0;color:#7c3aed;\">₹"+f2(r.investment)+"</td><td style=\"padding:5px 10px;text-align:right;border-bottom:1px solid #e2e8f0;font-weight:700;color:"+(r.net>=0?"#16a34a":"#dc2626")+";\">₹"+f2(r.net)+"</td></tr>";
+        }).join("");
+        _eMailCf="<p style=\"font-size:13px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:6px;margin:20px 0 10px;\">Cash Flow by Month</p><table style=\"width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px;\"><thead><tr><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:left;\">Month</th><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:right;\">Income</th><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:right;\">Expenses</th><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:right;\">Invested</th><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:right;\">Net</th></tr></thead><tbody>"+_eRows+"</tbody></table>";
+      }
+      var _eMailCat="";
+      var _eMailIncCat="";
+      if(catRows.length>0){
+        var _expCats=catRows.filter(function(r){return r.classType!=="Income";}).sort(function(a,b){return b.debit-a.debit;}).slice(0,15);
+        var _incCats=catRows.filter(function(r){return r.classType==="Income";}).sort(function(a,b){return b.credit-a.credit;});
+        if(_expCats.length>0){
+          var _cRows=_expCats.map(function(r,i){
+            return "<tr style=\"background:"+(i%2===0?"#f8fafc":"#fff")+"\"><td style=\"padding:5px 10px;border-bottom:1px solid #e2e8f0;font-weight:600;\">"+_escH(r.category)+"</td><td style=\"padding:5px 10px;text-align:right;border-bottom:1px solid #e2e8f0;color:#dc2626;\">₹"+f2(r.debit)+"</td><td style=\"padding:5px 10px;text-align:right;border-bottom:1px solid #e2e8f0;\">"+r.count+"</td></tr>";
+          }).join("");
+          _eMailCat="<p style=\"font-size:13px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:6px;margin:20px 0 10px;\">Top Spending Categories</p><table style=\"width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px;\"><thead><tr><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:left;\">Category</th><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:right;\">Spent</th><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:right;\">Txns</th></tr></thead><tbody>"+_cRows+"</tbody></table>";
+        }
+        if(_incCats.length>0){
+          var _iRows=_incCats.map(function(r,i){
+            return "<tr style=\"background:"+(i%2===0?"#f8fafc":"#fff")+"\"><td style=\"padding:5px 10px;border-bottom:1px solid #e2e8f0;font-weight:600;\">"+_escH(r.category)+"</td><td style=\"padding:5px 10px;text-align:right;border-bottom:1px solid #e2e8f0;color:#16a34a;\">₹"+f2(r.credit)+"</td><td style=\"padding:5px 10px;text-align:right;border-bottom:1px solid #e2e8f0;\">"+r.count+"</td></tr>";
+          }).join("");
+          _eMailIncCat="<p style=\"font-size:13px;font-weight:700;color:#1e3a5f;border-bottom:2px solid #1e3a5f;padding-bottom:6px;margin:20px 0 10px;\">Income by Category</p><table style=\"width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px;\"><thead><tr><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:left;\">Category</th><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:right;\">Received</th><th style=\"background:#1e3a5f;color:#fff;padding:7px 10px;text-align:right;\">Txns</th></tr></thead><tbody>"+_iRows+"</tbody></table>";
+        }
+      }
+
+      const html=`
+<div style="font-family:'Segoe UI',Arial,sans-serif;color:#1a1a2e;max-width:680px;margin:0 auto;padding:20px;">
+<div style="border-bottom:3px solid #1e3a5f;margin-bottom:20px;padding-bottom:14px;">
+  <h1 style="font-size:22px;color:#1e3a5f;margin:0 0 4px;">finsight</h1>
+  <h2 style="font-size:15px;color:#374151;margin:0 0 10px;font-weight:500;">${periodType==="monthly"?"Monthly":"Yearly"} Summary \u2014 ${esc(label)}</h2>
+  <span style="display:inline-block;background:#e0f2fe;color:#0369a1;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;margin-right:6px;">${from} to ${to}</span>
+  <span style="display:inline-block;background:#f0fdf4;color:#16a34a;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;">Net Worth: \u20b9${f2(netWorth)}</span>
+</div>
+
+<table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+<tr>
+  <td style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;text-align:center;width:25%;">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;">Income</div>
+    <div style="font-size:18px;font-weight:800;color:#16a34a;">\u20b9${f2(totIncome)}</div></td>
+  <td style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;text-align:center;width:25%;">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;">Expenses</div>
+    <div style="font-size:18px;font-weight:800;color:#dc2626;">\u20b9${f2(totExpense)}</div></td>
+  <td style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:12px 16px;text-align:center;width:25%;">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;">Invested</div>
+    <div style="font-size:18px;font-weight:800;color:#7c3aed;">\u20b9${f2(totInvest)}</div></td>
+  <td style="background:${netFlow>=0?"#f0fdf4":"#fef2f2"};border:1px solid ${netFlow>=0?"#bbf7d0":"#fecaca"};border-radius:8px;padding:12px 16px;text-align:center;width:25%;">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;">Savings (${savRate}%)</div>
+    <div style="font-size:18px;font-weight:800;color:${netFlow>=0?"#16a34a":"#dc2626"};">\u20b9${f2(netFlow)}</div></td>
+</tr></table>
+
+${_eMailCf}${_eMailCat}${_eMailIncCat}
+
+<div style="margin-top:24px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:10px;color:#9ca3af;text-align:center;">
+  finsight v${APP_VERSION} \u00b7 Generated ${new Date().toLocaleString("en-IN")} \u00b7 ${esc(label)}</div>
+</div>`;
+
+      const emailjs=window.emailjs;
+      if(!emailjs){throw new Error("EmailJS library not loaded");}
+      emailjs.init({publicKey:emailCfg.emailjsPublicKey});
+      await emailjs.send(emailCfg.emailjsServiceId,emailCfg.emailjsTemplateId,{
+        to_email:emailCfg.emailRecipient,
+        subject:"finsight \u2014 "+(periodType==="monthly"?"Monthly":"Yearly")+" Report \u2014 "+label,
+        message:html,
+      });
+      setStatus({ok:true,msg:"Report emailed to "+emailCfg.emailRecipient+"!"});
+    }catch(e){
+      setStatus({ok:false,msg:"Email failed: "+(e.text||e.message||e)});
+    }
+    setEmailSending(false);
   };
 
   /* ── Year options: earliest transaction FY year → current FY year ── */
@@ -30648,7 +27331,25 @@ ${table(
         React.createElement("span",{style:{fontSize:20}},React.createElement(Icon,{n:"report",size:16})),
         React.createElement("div",{style:{textAlign:"left"}},
           React.createElement("div",null,"Export as PDF"),
-          React.createElement("div",{style:{fontSize:10,fontWeight:400,opacity:.8}},"Print-ready · Save as PDF")
+          React.createElement("div",{style:{fontSize:10,fontWeight:400,opacity:.8}},".pdf — Direct download")
+        )
+      )
+    ),
+    /* ── Email button ── */
+    React.createElement("div",{style:{display:"flex",gap:10,marginTop:12,flexWrap:"wrap"}},
+      React.createElement("button",{
+        onClick:sendEmail,disabled:emailSending||!hasEmailJS,
+        style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+          padding:"13px 16px",borderRadius:10,border:"1px solid rgba(99,102,241,.4)",
+          background:"rgba(99,102,241,.1)",color:"#6366f1",cursor:(emailSending||!hasEmailJS)?"not-allowed":"pointer",
+          fontFamily:"'DM Sans',sans-serif",fontSize:14,fontWeight:700,transition:"all .2s",
+          opacity:(emailSending||!hasEmailJS)?.5:1}
+      },
+        React.createElement("span",{style:{fontSize:20}},"\u2709\uFE0F"),
+        React.createElement("div",{style:{textAlign:"left"}},
+          React.createElement("div",null,emailSending?"Sending\u2026":"Send Report by Email"),
+          React.createElement("div",{style:{fontSize:10,fontWeight:400,opacity:.8}},
+            hasEmailJS?"To: "+emailCfg.emailRecipient:"Configure in Settings \u2192 Insights Config")
         )
       )
     ),
@@ -31864,6 +28565,119 @@ const RptCategoryTrends=({data,from,to,onExportPDF})=>{
   );
 };
 
+/* ══ CATEGORY DEEP-DIVE DRILL-DOWN ═══════════════════════════════════════ */
+const RptCategoryDrillDown=({data,from,to})=>{
+  const[selCat,setSelCat]=useState("");
+  const allTx=collectTx(data,from,to,"all",true);
+  const catNames=[...new Set(allTx.map(t=>catMainName(t.cat||"Others")))].sort();
+  const selected=selCat||catNames[0]||"";
+  const catTx=allTx.filter(t=>catMainName(t.cat||"Others")===selected);
+  const catClass=catClassType(data.categories,selected);
+  const isDebit=catClass!=="Income"&&catClass!=="Transfer";
+  const monthly={};const subCats={};const payees={};
+  catTx.forEach(t=>{
+    const k=t.date.substr(0,7);
+    if(!monthly[k])monthly[k]={inc:0,exp:0};
+    const ct=catClassType(data.categories,t.cat||"Others");
+    if(ct==="Income")monthly[k].inc+=t.amount;else monthly[k].exp+=t.amount;
+    if(t.cat&&t.cat.includes("::")){const s=t.cat.split("::")[1];subCats[s]=(subCats[s]||0)+t.amount;}
+    if(t.payee)payees[t.payee]=(payees[t.payee]||0)+t.amount;
+  });
+  const months=Object.keys(monthly).sort();
+  const maxAmt=Math.max(...months.map(m=>isDebit?monthly[m].exp:monthly[m].inc),1);
+  const totalTx=catTx.length;
+  const totalAmt=catTx.reduce((s,t)=>s+t.amount,0);
+  const avgTx=totalTx>0?(totalAmt/totalTx):0;
+  const topPayees=Object.entries(payees).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const subList=Object.entries(subCats).sort((a,b)=>b[1]-a[1]);
+  const anomalies=catTx.filter(t=>{
+    const subAvg=catTx.filter(x=>x.cat===t.cat).reduce((s,x)=>s+x.amount,0)/Math.max(catTx.filter(x=>x.cat===t.cat).length,1);
+    return t.amount>subAvg*2&&t.amount>500;
+  }).slice(0,5);
+  return React.createElement("div",{style:{paddingBottom:20}},
+    React.createElement("div",{style:{marginBottom:14,display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}},
+      React.createElement("span",{style:{fontSize:12,color:"var(--text5)",fontWeight:600}},"Select Category:"),
+      React.createElement("select",{value:selected,onChange:e=>setSelCat(e.target.value),style:{padding:"6px 10px",borderRadius:8,border:"1px solid var(--border)",background:"var(--card)",color:"var(--text)",fontSize:12,minWidth:200,cursor:"pointer"}},
+        catNames.map(c=>React.createElement("option",{key:c,value:c},c))
+      )
+    ),
+    !selected?React.createElement("p",{style:{color:"var(--text5)",fontSize:13}},"Select a category to drill down.")
+    :React.createElement(React.Fragment,null,
+      React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+        React.createElement(StatCard,{label:"Total Transactions",val:totalTx.toLocaleString(),sub:totalTx+" txns in period",col:"var(--accent)",icon:React.createElement(Icon,{n:"list",size:18})}),
+        React.createElement(StatCard,{label:"Total Amount",val:INR(Math.round(totalAmt)),sub:isDebit?"Total spend":"Total income",col:isDebit?"#ef4444":"#16a34a",icon:React.createElement(Icon,{n:isDebit?"expense":"income",size:18})}),
+        React.createElement(StatCard,{label:"Avg/Transaction",val:INR(Math.round(avgTx)),sub:"Mean transaction amount",col:"#0e7490",icon:React.createElement(Icon,{n:"target",size:18})})
+      ),
+      React.createElement(Card,{sx:{marginBottom:16}},
+        React.createElement("div",{style:{marginBottom:12}},React.createElement("div",{style:{fontWeight:600,fontSize:14,color:"var(--text3)"}},"Monthly Trend — "+selected),React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginTop:2}},months.length+" months of data in selected range")),
+        React.createElement("div",{style:{display:"flex",gap:4,alignItems:"flex-end",height:110,marginBottom:6}},
+          months.map((m,i)=>{
+            const amt=isDebit?monthly[m].exp:monthly[m].inc;
+            const h=amt>0?Math.max(3,Math.round(amt/maxAmt*100)):2;
+            return React.createElement("div",{key:m,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+              React.createElement("div",{style:{fontSize:8,color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},amt>0?INR(amt):""),
+              React.createElement("div",{style:{width:"100%",height:h,borderRadius:"2px 2px 0 0",background:isDebit?"#ef4444":"#16a34a",opacity:.6+i*.06}})
+            );
+          })
+        ),
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:9,color:"var(--text6)"}},
+          React.createElement("span",null,months[0]),React.createElement("span",null,months[months.length-1])
+        )
+      ),
+      subList.length>0&&React.createElement(Card,{sx:{marginBottom:16}},
+        React.createElement("div",{style:{marginBottom:12}},React.createElement("div",{style:{fontWeight:600,fontSize:14,color:"var(--text3)"}},"Sub-Category Breakdown"),React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginTop:2}},"How spending splits across sub-categories")),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+          subList.map(([sub,amt])=>{
+            const pct=totalAmt>0?(amt/totalAmt*100):0;
+            return React.createElement("div",{key:sub},
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:2}},
+                React.createElement("span",{style:{color:"var(--text3)"}},sub),
+                React.createElement("span",{style:{fontWeight:600}},INR(Math.round(amt))+" ("+pct.toFixed(0)+"%)")
+              ),
+              React.createElement("div",{style:{height:6,background:"var(--bg5)",borderRadius:3,overflow:"hidden"}},
+                React.createElement("div",{style:{height:"100%",width:pct+"%",background:"var(--accent)",borderRadius:3}})
+              )
+            );
+          })
+        )
+      ),
+      topPayees.length>0&&React.createElement(Card,{sx:{marginBottom:16}},
+        React.createElement("div",{style:{marginBottom:12}},React.createElement("div",{style:{fontWeight:600,fontSize:14,color:"var(--text3)"}},"Top Payees"),React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginTop:2}},"Merchants/payees where this category money goes")),
+        React.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:12}},
+          React.createElement("thead",null,React.createElement("tr",null,
+            ["#","Payee","Amount","%"].map(h=>React.createElement("th",{key:h,style:{textAlign:h==="#"?"left":"right",padding:"6px 8px",color:"var(--text5)",fontWeight:600,borderBottom:"1px solid var(--border)"}},h))
+          )),
+          React.createElement("tbody",null,
+            topPayees.map(([name,amt],i)=>{
+              const pct=totalAmt>0?(amt/totalAmt*100):0;
+              return React.createElement("tr",{key:i,style:{background:i%2===0?"transparent":"var(--bg4)"}},
+                React.createElement("td",{style:{padding:"6px 8px",color:"var(--text5)"}},i+1),
+                React.createElement("td",{style:{padding:"6px 8px",fontWeight:600,color:"var(--text3)"}},name),
+                React.createElement("td",{style:{textAlign:"right",padding:"6px 8px",fontWeight:600}},INR(Math.round(amt))),
+                React.createElement("td",{style:{textAlign:"right",padding:"6px 8px",color:"var(--text5)"}},pct.toFixed(1)+"%")
+              );
+            })
+          )
+        )
+      ),
+      anomalies.length>0&&React.createElement(Card,null,
+        React.createElement("div",{style:{marginBottom:12}},React.createElement("div",{style:{fontWeight:600,fontSize:14,color:"var(--text3)"}},"Potential Anomalies"),React.createElement("div",{style:{fontSize:12,color:"var(--text5)",marginTop:2}},"Transactions significantly above average in this category")),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+          anomalies.map((t,i)=>
+            React.createElement("div",{key:i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<anomalies.length-1?"1px solid var(--border)":"none"}},
+              React.createElement("div",null,
+                React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text3)"}},t.payee||t.desc||"(no desc)"),
+                React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},t.date+(t.cat&&t.cat.includes("::")?" · "+t.cat.split("::")[1]:""))
+              ),
+              React.createElement("span",{style:{fontSize:13,fontWeight:700,color:"#ef4444"}},INR(Math.round(t.amount)))
+            )
+          )
+        )
+      )
+    )
+  );
+};
+
 const REPORT_TREE=[
   {id:"cashflow",      label:"Cash Flow",                icon:React.createElement(Icon,{n:"classIncome",size:16})},
   {id:"classification",label:"Classification Breakdown", icon:React.createElement(Icon,{n:"tag",size:18})},
@@ -31888,6 +28702,7 @@ const REPORT_TREE=[
   {id:"anomalies",     label:"Spending Anomalies",         icon:React.createElement(Icon,{n:"detective",size:18})},
   {id:"yoy",           label:"Year-over-Year",             icon:React.createElement(Icon,{n:"compare",size:18})},
   {id:"cattrends",     label:"Category Trends",            icon:React.createElement(Icon,{n:"trenddown",size:18})},
+  {id:"catdrilldown",  label:"Category Deep-Dive",         icon:React.createElement(Icon,{n:"search",size:18})},
 ];
 
 const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
@@ -31953,30 +28768,82 @@ const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
     );
   };
 
+  const [pdfViewLoading, setPdfViewLoading]=useState(false);
   const handleExportView=()=>{
     const rptLabel=REPORT_TREE.flatMap(r=>r.children||[r]).find(r=>r.id===activeRpt)?.label||activeRpt;
     const noD=["forecast","summary","investments"];
     const dateLabel=noD.includes(activeRpt)?"":from+" → "+to;
-    /* Inject a temporary print-only header above the report */
-    const hdr=document.createElement("div");
-    hdr.id="mm-print-hdr";
-    hdr.style.cssText="font-family:\'Sora\',sans-serif;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #1d4ed8;page-break-after:avoid";
-    const genDate=new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
-    hdr.innerHTML="<div style=\"font-size:19px;font-weight:800;color:#0f172a;margin-bottom:3px\">finsight — "+rptLabel+"</div>"
-      +"<div style=\"font-size:11px;color:#64748b;font-family:\'DM Sans\',sans-serif\">"+(dateLabel?"Period: "+dateLabel+" &nbsp;·&nbsp; ":"")+"Generated: "+genDate+"</div>";
-    const area=document.getElementById("rpt-print-area");
-    if(area)area.insertBefore(hdr,area.firstChild);
-    window.__mmPrintOK=true;
-    document.documentElement.setAttribute("data-mm-printing","1");
-    const cleanup=()=>{
-      window.__mmPrintOK=false;
-      document.documentElement.removeAttribute("data-mm-printing");
-      const h=document.getElementById("mm-print-hdr");
-      if(h)h.remove();
-      window.removeEventListener("afterprint",cleanup);
-    };
-    window.addEventListener("afterprint",cleanup);
-    setTimeout(()=>window.print(),80);
+    setPdfViewLoading(true);
+    window.__loadExportLibs().then(()=>{
+      try{
+        const area=document.getElementById("rpt-print-area");
+        if(!area){setPdfViewLoading(false);return;}
+        var A4W=210,A4H=297,MG=10;
+        var cWmm=A4W-MG*2;
+        var capPx=960;
+        var wrap=document.createElement("div");
+        wrap.style.cssText="position:fixed;left:-9999px;top:0;width:"+capPx+"px;background:#fff;z-index:-1;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif;color:#1a1a2e;font-size:12px;line-height:1.5;overflow:visible;";
+        var genDate=new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+        var hdr=document.createElement("div");
+        hdr.style.cssText="margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #1d4ed8;";
+        hdr.innerHTML="<div style=\"font-size:18px;font-weight:800;color:#0f172a;margin-bottom:2px;font-family:Sora,sans-serif\">finsight — "+rptLabel.replace(/</g,"&lt;")+"</div><div style=\"font-size:10px;color:#64748b;font-family:DM Sans,sans-serif\">"+(dateLabel?"Period: "+dateLabel.replace(/</g,"&lt;")+" · ":"")+"Generated: "+genDate+"</div>";
+        wrap.appendChild(hdr);
+        var clone=area.cloneNode(true);
+        clone.removeAttribute("id");
+        clone.style.overflow="visible";
+        clone.style.height="auto";
+        clone.style.flex="none";
+        clone.style.width="100%";
+        wrap.appendChild(clone);
+        document.body.appendChild(wrap);
+        setTimeout(()=>{
+          var h2c=window.html2canvas||window.Html2Canvas;
+          h2c(wrap,{scale:3,useCORS:true,backgroundColor:"#ffffff",logging:false,windowWidth:capPx}).then(function(canvas){
+            if(wrap.parentNode)wrap.parentNode.removeChild(wrap);
+            var natW=canvas.width;
+            var natH=canvas.height;
+            var tgtW=Math.round(cWmm*3.7795*3);
+            var tgtH=Math.round(natH*tgtW/natW);
+            var sc2=document.createElement("canvas");
+            sc2.width=tgtW;sc2.height=tgtH;
+            var s2x=sc2.getContext("2d");
+            s2x.drawImage(canvas,0,0,tgtW,tgtH);
+            var pxPerMmX=tgtW/cWmm;
+            var pageHPx=Math.round((A4H-MG*2)*pxPerMmX);
+            var{jsPDF}=window.jspdf;
+            var doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+            var srcY=0;var pg=0;
+            var pageMmH=pageHPx/pxPerMmX;
+            while(srcY<tgtH){
+              if(pg>0)doc.addPage();
+              var sliceH=Math.min(pageHPx,tgtH-srcY);
+              var sc=document.createElement("canvas");
+              sc.width=tgtW;sc.height=pageHPx;
+              var sx=sc.getContext("2d");
+              sx.fillStyle="#ffffff";
+              sx.fillRect(0,0,tgtW,pageHPx);
+              sx.drawImage(sc2,0,srcY,tgtW,sliceH,0,0,tgtW,sliceH);
+              var sData=sc.toDataURL("image/jpeg",0.92);
+              doc.addImage(sData,"JPEG",MG,MG,cWmm,pageMmH);
+              srcY+=pageHPx;pg++;
+            }
+            var safeName=rptLabel.replace(/[^a-zA-Z0-9]/g,"_");
+            doc.save("finsight_"+safeName+"_"+(from||"all")+".pdf");
+            setPdfViewLoading(false);
+          }).catch(function(){
+            if(wrap.parentNode)wrap.parentNode.removeChild(wrap);
+            setPdfViewLoading(false);
+            alert("PDF generation failed. Try again.");
+          });
+        },350);
+      }catch(e){
+        setPdfViewLoading(false);
+        alert("PDF export error: "+e.message);
+      }
+    }).catch(()=>{
+      setPdfViewLoading(false);
+      alert("Could not load PDF library — check your internet connection.");
+    });
   };
 
   const renderReport=()=>{
@@ -32003,6 +28870,7 @@ const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
       case"anomalies":       return React.createElement(RptSpendingAnomalies,props);
       case"yoy":             return React.createElement(RptYoYComparison,props);
       case"cattrends":       return React.createElement(RptCategoryTrends,props);
+      case"catdrilldown":    return React.createElement(RptCategoryDrillDown,props);
       default:               return React.createElement(RptCashFlow,props);
     }
   };
@@ -32165,7 +29033,7 @@ const InsightPrefsPanel=({state,dispatch})=>{
       React.createElement(SecHdr,{icon:React.createElement(Icon,{n:"chart",size:18}),title:"Savings & Spending Targets",sub:"These appear as reference lines and budget markers across the Savings Trend, Food, and Leaks tabs."}),
       React.createElement("div",{className:"grid-2col"},
         React.createElement(Slider,{label:"Savings Rate Target",value:P.savingsRateTarget||30,min:5,max:70,step:5,suffix:"%",onChange:v=>{set("savingsRateTarget",v);flash();},marks:["5%","20%","30%","50%","70%"],hint:"Drawn as a reference line on the 12-month savings rate chart"}),
-        React.createElement(Slider,{label:"Discretionary Spend Target",value:P.discSpendTarget||15,min:5,max:40,step:5,suffix:"%",onChange:v=>{set("discSpendTarget",v);flash();},marks:["5%","15%","25%","40%"],hint:"% of income cap for Shopping + Entertainment + Dining + Travel"}),
+        React.createElement(Slider,{label:"Discretionary Spend Target",value:P.discSpendTarget||15,min:5,max:40,step:5,suffix:"%",onChange:v=>{set("discSpendTarget",v);flash();},marks:["5%","15%","25%","40%"],hint:"% of income cap for Shopping, Leisure, Travel, Vacations & Lifestyle spend"}),
         React.createElement(NumInp,{label:"Monthly Food Budget",value:P.foodBudget,onChange:v=>{numSet("foodBudget",v);flash();},prefix:"₹",placeholder:"e.g. 12000",hint:"Shows as budget vs actual banner in Food Intelligence tab"}),
         React.createElement(NumInp,{label:"Micro-Spend Leak Threshold",value:P.leakThreshold||500,onChange:v=>{numSet("leakThreshold",v);flash();},prefix:"₹",placeholder:"e.g. 500",hint:"Transactions below this amount appear in the Leak Detector tab"})
       )
@@ -32280,7 +29148,82 @@ const InsightPrefsPanel=({state,dispatch})=>{
           React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text3)",marginBottom:3}},"Reset Insights Config"),
           React.createElement("div",{style:{fontSize:12,color:"var(--text5)"}},"Restore all Insights settings to recommended defaults.")
         ),
-        React.createElement(Btn,{v:"secondary",onClick:()=>{dispatch({type:"SET_INSIGHT_PREFS",p:{currentAge:"",retirementAge:45,fireMode:"auto",manualFireNumber:"",annualReturnPct:10,withdrawalRatePct:4,expenseMode:"auto",manualMonthlyExpense:"",manualMonthlyIncome:"",incomeMode:"auto",emergencyTargetMonths:6,emergencyExpenseOverride:"",savingsRateTarget:30,discSpendTarget:15,benchmarkReturnPct:12,equityTarget:70,debtTarget:15,reTarget:15,foodBudget:"",leakThreshold:500,pyfDayTarget:10,expRatioDanger:80,budgetPlans:{},yearlyBudgetPlans:{}}});flash();}},"↺ Reset to Defaults")
+        React.createElement(Btn,{v:"secondary",onClick:()=>{dispatch({type:"SET_INSIGHT_PREFS",p:{currentAge:"",retirementAge:45,fireMode:"auto",manualFireNumber:"",annualReturnPct:10,withdrawalRatePct:4,expenseMode:"auto",manualMonthlyExpense:"",manualMonthlyIncome:"",incomeMode:"auto",emergencyTargetMonths:6,emergencyExpenseOverride:"",savingsRateTarget:30,discSpendTarget:15,benchmarkReturnPct:12,equityTarget:70,debtTarget:15,reTarget:15,foodBudget:"",leakThreshold:500,pyfDayTarget:10,expRatioDanger:80,budgetPlans:{},yearlyBudgetPlans:{},emailjsServiceId:"",emailjsTemplateId:"",emailjsPublicKey:"",emailRecipient:""}});flash();}},"↺ Reset to Defaults")
+      )
+    )
+  );
+};
+
+/* ── EMAIL CONFIG PANEL — standalone Settings tab ──────────────────────────── */
+const EmailConfigPanel=({state,dispatch})=>{
+  const P=state.insightPrefs||{};
+  const set=(k,v)=>dispatch({type:"SET_INSIGHT_PREFS",p:{[k]:v}});
+  const [testStatus,setTestStatus]=useState(null);
+  const [testing,setTesting]=useState(false);
+  const hasEmailJS=!!(P.emailjsServiceId&&P.emailjsTemplateId&&P.emailjsPublicKey&&P.emailRecipient);
+
+  const sendTest=async()=>{
+    if(!hasEmailJS){setTestStatus({ok:false,msg:"Please fill in all 4 fields first."});return;}
+    setTesting(true);setTestStatus(null);
+    try{
+      await window.__loadExportLibs();
+      const emailjs=window.emailjs;
+      if(!emailjs)throw new Error("EmailJS library failed to load");
+      emailjs.init({publicKey:P.emailjsPublicKey});
+      await emailjs.send(P.emailjsServiceId,P.emailjsTemplateId,{
+        to_email:P.emailRecipient,
+        subject:"finsight \u2014 Test Email",
+        message:"<div style=\"font-family:Arial,sans-serif;padding:20px;\"><h2 style=\"color:#1e3a5f;\">finsight EmailJS Setup Successful</h2><p style=\"font-size:14px;color:#374151;\">This is a test email from finsight. If you received this, your EmailJS configuration is working correctly.</p><p style=\"font-size:12px;color:#6b7280;margin-top:16px;\">You can now send summary reports from the Export modal in the Reports section.</p></div>",
+      });
+      setTestStatus({ok:true,msg:"Test email sent to "+P.emailRecipient+"! Check your inbox."});
+    }catch(e){setTestStatus({ok:false,msg:"Failed: "+(e.text||e.message||e)});}
+    setTesting(false);
+  };
+
+  const labelStyle={display:"block",fontSize:11,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:5};
+
+  return React.createElement("div",null,
+    React.createElement(Card,{sx:{marginBottom:16}},
+      React.createElement("div",{style:{marginBottom:16}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:3}},
+          React.createElement("div",{style:{fontSize:20}},"\u2709\uFE0F"),
+          React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},"Email Report Configuration")
+        ),
+        React.createElement("div",{style:{fontSize:12,color:"var(--text5)",lineHeight:1.6}},"Send summary reports directly to your inbox via EmailJS. Configure the service, template, and recipient below.")
+      ),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}},
+        React.createElement("div",null,
+          React.createElement("label",{style:labelStyle},"EmailJS Public Key"),
+          React.createElement("input",{className:"inp",type:"text",value:P.emailjsPublicKey||"",onChange:e=>set("emailjsPublicKey",e.target.value),placeholder:"your_public_key from EmailJS",style:{fontFamily:"monospace",fontSize:12,width:"100%"}})
+        ),
+        React.createElement("div",null,
+          React.createElement("label",{style:labelStyle},"EmailJS Service ID"),
+          React.createElement("input",{className:"inp",type:"text",value:P.emailjsServiceId||"",onChange:e=>set("emailjsServiceId",e.target.value),placeholder:"service_xxxxxxx",style:{fontFamily:"monospace",fontSize:12,width:"100%"}})
+        ),
+        React.createElement("div",null,
+          React.createElement("label",{style:labelStyle},"EmailJS Template ID"),
+          React.createElement("input",{className:"inp",type:"text",value:P.emailjsTemplateId||"",onChange:e=>set("emailjsTemplateId",e.target.value),placeholder:"template_xxxxxxx",style:{fontFamily:"monospace",fontSize:12,width:"100%"}})
+        ),
+        React.createElement("div",null,
+          React.createElement("label",{style:labelStyle},"Recipient Email"),
+          React.createElement("input",{className:"inp",type:"email",value:P.emailRecipient||"",onChange:e=>set("emailRecipient",e.target.value),placeholder:"you@gmail.com",style:{fontSize:12,width:"100%"}})
+        )
+      ),
+      React.createElement("button",{
+        onClick:sendTest,disabled:testing||!hasEmailJS,
+        style:{padding:"10px 22px",borderRadius:10,border:"1px solid rgba(99,102,241,.4)",background:hasEmailJS?"rgba(99,102,241,.1)":"rgba(100,116,139,.08)",color:hasEmailJS?"#6366f1":"var(--text5)",cursor:(testing||!hasEmailJS)?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:13,fontWeight:700,transition:"all .2s",opacity:(testing||!hasEmailJS)?.6:1}
+      },"\u2709 "+(testing?"Sending\u2026":"Send Test Email"))
+    ),
+    testStatus&&React.createElement("div",{style:{marginBottom:16,padding:"10px 14px",borderRadius:8,fontSize:12,fontWeight:500,background:testStatus.ok?"rgba(22,163,74,.08)":"rgba(239,68,68,.08)",border:"1px solid "+(testStatus.ok?"rgba(22,163,74,.3)":"rgba(239,68,68,.3)"),color:testStatus.ok?"#16a34a":"#ef4444"}},testStatus.ok?"✓ "+testStatus.msg:"⚠ "+testStatus.msg),
+    React.createElement(Card,null,
+      React.createElement("div",{style:{fontWeight:600,color:"var(--text3)",marginBottom:8,fontSize:13}},"Setup Guide"),
+      React.createElement("ol",{style:{margin:0,paddingLeft:18,fontSize:12,color:"var(--text5)",lineHeight:2}},
+        React.createElement("li",null,"Create a free account at ",React.createElement("a",{href:"https://www.emailjs.com",target:"_blank",style:{color:"var(--accent)",fontWeight:600}},"emailjs.com")," (200 emails/month free)"),
+        React.createElement("li",null,"Create an Email Service (Gmail, Outlook, etc.) and copy the Service ID"),
+        React.createElement("li",null,"Create an Email Template with these variables: ",React.createElement("code",{style:{background:"var(--bg5)",padding:"1px 5px",borderRadius:3,fontSize:11}},"{{subject}}"),", ",React.createElement("code",{style:{background:"var(--bg5)",padding:"1px 5px",borderRadius:3,fontSize:11}},"{{message}}"),", ",React.createElement("code",{style:{background:"var(--bg5)",padding:"1px 5px",borderRadius:3,fontSize:11}},"{{to_email}}")),
+        React.createElement("li",null,"Copy your Public Key from Account \u2192 API Keys"),
+        React.createElement("li",null,"Paste all 4 values above, then click ",React.createElement("code",{style:{background:"var(--bg5)",padding:"1px 5px",borderRadius:3,fontSize:11}},"\u2709 Send Test")," to verify"),
+        React.createElement("li",null,"Once verified, use ",React.createElement("code",{style:{background:"var(--bg5)",padding:"1px 5px",borderRadius:3,fontSize:11}},"\u2709 Send Report by Email")," in Reports \u2192 Export Summary modal")
       )
     )
   );
@@ -32573,7 +29516,7 @@ const FSAStoragePanel=({state,dispatch})=>{
         reminders:data.reminders||[],
         insightPrefs:{...EMPTY_STATE().insightPrefs,...(data.insightPrefs||{})},
       };
-      saveState({...EMPTY_STATE(),..._restoreData});
+      saveState({...EMPTY_STATE(),..._mergeRemovedMf(_restoreData,_localRemovedMf())});
       try{
         if(_restoreData.eodPrices&&Object.keys(_restoreData.eodPrices).length>0)
           localStorage.setItem(LS_EOD_PRICES,JSON.stringify(_restoreData.eodPrices));
@@ -32581,6 +29524,18 @@ const FSAStoragePanel=({state,dispatch})=>{
           localStorage.setItem(LS_EOD_NAVS,JSON.stringify(_restoreData.eodNavs));
         if(data.chatbotTraining)
           localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(data.chatbotTraining));
+        if(data.avApiKey)
+          localStorage.setItem("mm_av_api_key",data.avApiKey);
+        if(data.entryScores)
+          localStorage.setItem(LS_ENTRY_SCORES,data.entryScores);
+        if(data.entrySnapshots)
+          localStorage.setItem(LS_ENTRY_SNAPSHOTS,data.entrySnapshots);
+        if(data.screenerData)
+          localStorage.setItem(_SCREENER_KEY,data.screenerData);
+        if(data.screenerSnapshots)
+          localStorage.setItem(_SCREENER_SNAPS_KEY,data.screenerSnapshots);
+        if(data.niftyLive)
+          {localStorage.setItem(LS_NIFTY_LIVE,data.niftyLive);_niftyLiveCache=_niftyPersistRead();}
       }catch{}
       /* ── Overwrite IDB transactions so next-boot hydration loads
          the restored data instead of the pre-restore snapshot.
@@ -32870,6 +29825,10 @@ const StorageGauge=({dispatch,state})=>{
     if(type==="hist") dispatch({type:"PRUNE_HISTORY_CACHE"});
     else if(type==="eod") dispatch({type:"PRUNE_EOD_PRICES",days:7});
     else if(type==="nav") dispatch({type:"PRUNE_EOD_NAVS",days:14});
+    else if(type==="screener"){
+      try{localStorage.removeItem(_SCREENER_KEY);}catch{}
+      try{localStorage.removeItem(_SCREENER_SNAPS_KEY);}catch{}
+    }
     /* Wait for state to settle then re-measure */
     await new Promise(r=>setTimeout(r,600));
     const s=await getStorageStatsAsync();
@@ -32881,7 +29840,10 @@ const StorageGauge=({dispatch,state})=>{
   const histBytes=(cacheBreakdown.find(c=>c.key==="_histcache")||{}).bytes||0;
   const eodBytes=(cacheBreakdown.find(c=>c.key==="_eodprices")||{}).bytes||0;
   const navBytes=(cacheBreakdown.find(c=>c.key==="_eodnavs")||{}).bytes||0;
-  const anyCacheToFree=histBytes>0||eodBytes>0||navBytes>0;
+  const screenerBytes=(stats.keys.find(k=>k.key===_SCREENER_KEY)||{}).bytes||0;
+  const screenerSnapsBytes=(stats.keys.find(k=>k.key===_SCREENER_SNAPS_KEY)||{}).bytes||0;
+  const totalScreenerBytes=screenerBytes+screenerSnapsBytes;
+  const anyCacheToFree=histBytes>0||eodBytes>0||navBytes>0||totalScreenerBytes>0;
 
   return React.createElement("div",{style:{marginBottom:16}},
 
@@ -33032,6 +29994,23 @@ const StorageGauge=({dispatch,state})=>{
             disabled:pruning==="nav",
             style:{padding:"6px 14px",borderRadius:8,border:"1px solid rgba(79,70,229,.3)",background:"rgba(79,70,229,.08)",color:"#4f46e5",fontSize:11,fontWeight:700,cursor:pruning?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap",opacity:pruning?"0.6":"1"}
           },pruning==="nav"?"Pruning…":"Prune to 14d")
+        ),
+
+        /* Prune Screener Data */
+        totalScreenerBytes>0&&React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"var(--bg3)",border:"1px solid var(--border2)",borderRadius:10}},
+          React.createElement("div",{style:{flex:1}},
+            React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)"}},"Nifty 100 Screener Data & Snapshots"),
+            React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},
+              fmtBytes(totalScreenerBytes)+
+              (screenerBytes>0&&screenerSnapsBytes>0?" · "+fmtBytes(screenerBytes)+" live + "+fmtBytes(screenerSnapsBytes)+" snapshots":"")+
+              " · Re-scanned on next open"
+            )
+          ),
+          React.createElement("button",{
+            onClick:()=>doCompact("screener"),
+            disabled:pruning==="screener",
+            style:{padding:"6px 14px",borderRadius:8,border:"1px solid rgba(239,68,68,.3)",background:"rgba(239,68,68,.08)",color:"#ef4444",fontSize:11,fontWeight:700,cursor:pruning?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",whiteSpace:"nowrap",opacity:pruning?"0.6":"1"}
+          },pruning==="screener"?"Clearing…":"Clear")
         )
       )
     ),
@@ -35601,16 +32580,16 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     const pyfPassed=dayOfMonth>pyfTarget;
     const pyfSaved=pyfPassed&&savingsThisMonth>0;
     const foodBudget=P.foodBudget?Number(P.foodBudget):0;
-    const foodSpend=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");const main=catMainName(t.cat||"Others");return ct!=="Income"&&ct!=="Transfer"&&t.type==="debit"&&(main.toLowerCase().includes("food")||main.toLowerCase().includes("grocer"))&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+t.amount,0);
-    const liquidAssets=(banks||[]).reduce((s,b)=>s+(b.balance||0),0)+(cash?.balance||0);
+    const foodSpend=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");const main=catMainName(t.cat||"Others");return ct!=="Income"&&ct!=="Transfer"&&t.type==="debit"&&(main.toLowerCase()==="groceries food & essentials")&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+t.amount,0);
+    const liquidAssets=(banks||[]).reduce((s,b)=>s+(b.balance||0),0)+(cash?.balance||0)+(fd||[]).reduce((s,f)=>s+calcFDValueToday(f),0);
     const monthlyExpenses=allTxns.filter(t=>t.type==="debit"&&t.date>=thisStart&&t.date<=thisEnd).reduce((s,t)=>s+t.amount,0);
     const emergencyTarget=P.emergencyTargetMonths||6;
     const emergencyActualMonths=monthlyExpenses>0?liquidAssets/monthlyExpenses:0;
     const discSpendTarget=P.discSpendTarget?Number(P.discSpendTarget):15;
-    const discCategories=["Shopping","Entertainment","Travel","Dining"];
-    const discSpend=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");const main=catMainName(t.cat||"Others");return ct!=="Income"&&ct!=="Transfer"&&t.type==="debit"&&(discCategories.some(c=>main.toLowerCase().includes(c.toLowerCase())))&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+t.amount,0);
+    const discCatNames=["Personal Items","Leisure","Travel","Vacation","Beauty and Personal Care","Events and Functions","Donations","Jewellery and Precious Metals","Office & Business Expenses"];
+    const discSpend=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");const main=catMainName(t.cat||"Others");return ct!=="Income"&&ct!=="Transfer"&&t.type==="debit"&&(discCatNames.some(c=>main.toLowerCase()===c.toLowerCase()))&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+t.amount,0);
     return {todaySpend,thisMonthSpend,lastMonthSpend,dailyAvg,projected,last7,heatmap,maxDay,dayOfMonth,daysInMonth,thisMonthIncome,lastMonthIncome,expenseRatio,savingsThisMonth,savingsRate,pyfTarget,pyfPassed,pyfSaved,foodBudget,foodSpend,liquidAssets,emergencyTarget,emergencyActualMonths,discSpendTarget,discSpend};
-  },[allTxns,thisStart,thisEnd,lastStart,lastEnd,categories,P,banks,cash]);
+  },[allTxns,thisStart,thisEnd,lastStart,lastEnd,categories,P,banks,cash,fd]);
 
 
 
@@ -35696,16 +32675,18 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     return {top,totalThisMonth,top3Pct,firstTime:firstTime.slice(0,10),lostPayees,returnedPayees,momComparison,recurring};
   },[allTxns,thisStart,thisEnd,lastStart,lastEnd]);
 
+  /* ── EXPENSE CLASSIFICATION GROUPS ── */
+  const FIXED=["Homeneeds","Insurance Premiums","Utilities and Bills","Subscriptions"];
+  const VARIABLE=["Groceries Food & Essentials","Automobile"];
+  const DISC=["Personal Items","Leisure","Travel","Vacation","Beauty and Personal Care","Events and Functions","Donations","Jewellery and Precious Metals","Office & Business Expenses"];
+
   /* ── BUDGET WATERFALL ── */
   const waterfallData=React.useMemo(()=>{
     const income=allTxns.filter(t=>t.type==="credit"&&t.date>=thisStart&&t.date<=thisEnd).reduce((s,t)=>s+t.amount,0);
     const debits=allTxns.filter(t=>t.type==="debit"&&t.date>=thisStart&&t.date<=thisEnd);
-    const FIXED=["Housing","Insurance"];
-    const VARIABLE=["Food","Groceries","Transport","Utilities"];
-    const DISC=["Shopping","Entertainment","Travel","Dining"];
-    const fixed=debits.filter(t=>FIXED.some(c=>(catMainName(t.cat||"")).toLowerCase().includes(c.toLowerCase()))).reduce((s,t)=>s+t.amount,0);
-    const variable=debits.filter(t=>VARIABLE.some(c=>(catMainName(t.cat||"")).toLowerCase().includes(c.toLowerCase()))).reduce((s,t)=>s+t.amount,0);
-    const disc=debits.filter(t=>DISC.some(c=>(catMainName(t.cat||"")).toLowerCase().includes(c.toLowerCase()))).reduce((s,t)=>s+t.amount,0);
+    const fixed=debits.filter(t=>FIXED.some(c=>(catMainName(t.cat||"")).toLowerCase()===c.toLowerCase())).reduce((s,t)=>s+t.amount,0);
+    const variable=debits.filter(t=>VARIABLE.some(c=>(catMainName(t.cat||"")).toLowerCase()===c.toLowerCase())).reduce((s,t)=>s+t.amount,0);
+    const disc=debits.filter(t=>DISC.some(c=>(catMainName(t.cat||"")).toLowerCase()===c.toLowerCase())).reduce((s,t)=>s+t.amount,0);
     const total=debits.reduce((s,t)=>s+t.amount,0);
     const other=Math.max(total-fixed-variable-disc,0);
     const savings=income-total;
@@ -35904,6 +32885,26 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     }).sort((a,b)=>b.amount-a.amount);
   },[allTxns]);
   const totalSubBurn=subscriptionData.reduce((s,sub)=>s+sub.amount,0);
+
+  /* ── MONTHLY SUBSCRIPTION TRANSACTIONS (last 12 months) ── */
+  const monthlySubData=React.useMemo(()=>{
+    const months=[];
+    for(let i=11;i>=0;i--){
+      const ms=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
+      const me=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
+      const mIdx=(now.getMonth()-i+12)%12;
+      const yr=new Date(now.getFullYear(),now.getMonth()-i,1).getFullYear();
+      const label=MONTH_NAMES[mIdx]+" '"+String(yr).slice(2);
+      const txns=allTxns.filter(t=>{
+        if(t.type!=="debit")return false;
+        const main=catMainName(t.cat||"");
+        return t.date>=ms&&t.date<=me&&(main.toLowerCase()==="subscriptions");
+      }).map(t=>({date:t.date,amount:t.amount,desc:t.desc||t.payee||"",cat:t.cat||""}));
+      const total=txns.reduce((s,t)=>s+t.amount,0);
+      months.push({ms,me,label,yr,mIdx,txns,total});
+    }
+    return months;
+  },[allTxns]);
 
   /* ── UI HELPERS ── */
   const tabBtn=id=>({padding:"7px 14px",borderRadius:8,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:stab===id?700:400,border:"none",borderBottom:stab===id?"3px solid var(--accent)":"3px solid transparent",background:stab===id?"linear-gradient(180deg,var(--accentbg),var(--accentbg2))":"transparent",color:stab===id?"var(--accent)":"var(--text5)",boxShadow:stab===id?"0 3px 16px var(--accentbg5)":"none",transition:"all .15s",whiteSpace:"nowrap"});
@@ -37016,9 +34017,9 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       })(),
       React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginTop:8,justifyContent:"center"}},
         [
-          {l:"Fixed (Housing, Insurance)",v:waterfallData.fixed,c:"#ef4444"},
-          {l:"Variable (Food, Transport)",v:waterfallData.variable,c:"#f97316"},
-          {l:"Discretionary (Shopping, Travel)",v:waterfallData.disc,c:"#b45309"},
+          {l:"Fixed (Homeneeds, Insurance, Utilities, Subs)",v:waterfallData.fixed,c:"#ef4444"},
+          {l:"Variable (Groceries, Auto)",v:waterfallData.variable,c:"#f97316"},
+          {l:"Discretionary (Personal, Leisure, Travel)",v:waterfallData.disc,c:"#b45309"},
           {l:"Savings",v:waterfallData.savings,c:waterfallData.savings>=0?"#16a34a":"#ef4444"}
         ].map(x=>React.createElement("div",{key:x.l,style:{fontSize:11,color:"var(--text5)",display:"flex",alignItems:"center",gap:4}},
           React.createElement("span",{style:{width:8,height:8,borderRadius:2,background:x.c,display:"inline-block"}}),
@@ -37122,9 +34123,9 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
           )
   );
 
-  /* ══ 9. SUBSCRIPTIONS TAB (original) ══ */
+  /* ══ 9. SUBSCRIPTIONS TAB (original + monthly view) ══ */
   const SubsTab=React.createElement("div",{style:{paddingBottom:20}},
-    subscriptionData.length===0
+    subscriptionData.length===0&&monthlySubData.every(m=>m.txns.length===0)
       ?React.createElement(Empty,{icon:React.createElement(Icon,{n:"phone",size:18}),text:"No subscription patterns detected. Transactions with streaming/OTT keywords will appear here."})
       :React.createElement(React.Fragment,null,
         React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
@@ -37132,7 +34133,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
           React.createElement(KpiCard,{label:"Annual Estimate",value:INR(subscriptionData.reduce((s,sub)=>s+Math.round(sub.annualEstimate),0)),sub:"projected yearly cost",col:"#b45309",icon:React.createElement(Icon,{n:"chart",size:18})}),
           React.createElement(KpiCard,{label:"Highest Cost",value:subscriptionData.length>0?subscriptionData[0].name:"—",sub:subscriptionData.length>0?INR(subscriptionData[0].amount)+"/mo":"",col:"var(--accent)",icon:React.createElement(Icon,{n:"star",size:18})})
         ),
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(auto-fill,minmax(300px,1fr))",gap:12}},
+        subscriptionData.length>0&&React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1":"repeat(auto-fill,minmax(300px,1fr))",gap:12,marginBottom:20}},
           subscriptionData.map(sub=>{
             const daysAgo=Math.floor((new Date()-new Date(sub.lastDate))/86400000);
             const active=daysAgo<=45;
@@ -37170,19 +34171,480 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
               )
             );
           })
+        ),
+        /* ── Month-wise Subscription Transactions ── */
+        monthlySubData.some(m=>m.txns.length>0)&&React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{marginBottom:12}},
+            React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text2)",fontFamily:"'Sora',sans-serif",marginBottom:3}},"Monthly Subscription Spends"),
+            React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},"Last 12 months of subscription transactions")
+          ),
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:isMobile?"1fr":"repeat(auto-fill,minmax(260px,1fr))",gap:12}},
+            monthlySubData.map((m,mIdx)=>{
+              const hasTxns=m.txns.length>0;
+              const isCurrent=m.mIdx===now.getMonth()&&m.yr===now.getFullYear();
+              const hasData=m.txns.length>0;
+              /* compute a subtle bar width based on max month total */
+              const maxMonthTotal=Math.max(...monthlySubData.map(x=>x.total),1);
+              const barW=hasData?Math.max(4,Math.round(m.total/maxMonthTotal*100)):0;
+              return React.createElement("div",{key:mIdx,style:{background:"var(--card)",border:isCurrent?"2px solid var(--accent)":"1px solid var(--border)",borderRadius:12,padding:"14px 16px",opacity:hasData?1:.55}},
+                React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:hasData?10:0}},
+                  React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+                    React.createElement("div",{style:{fontSize:13,fontWeight:700,color:isCurrent?"var(--accent)":"var(--text2)"}},m.label),
+                    isCurrent&&React.createElement("span",{style:{fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:6,background:"var(--accentbg)",color:"var(--accent)"}},"NOW")
+                  ),
+                  React.createElement("div",{style:{fontSize:14,fontWeight:800,fontFamily:"'Sora',sans-serif",color:hasData?"var(--text)":"var(--text6)"}},hasData?INR(m.total):"\u2014")
+                ),
+                hasData&&React.createElement("div",{style:{height:4,borderRadius:2,background:"var(--bg5)",marginBottom:10,overflow:"hidden"}},
+                  React.createElement("div",{style:{height:"100%",width:barW+"%",background:"var(--accent)",borderRadius:2,transition:"width .3s"}})
+                ),
+                hasData&&m.txns.map((t,ti)=>React.createElement("div",{key:ti,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:ti<m.txns.length-1?"1px solid var(--border2)":"none"}},
+                  React.createElement("div",{style:{flex:1,minWidth:0}},
+                    React.createElement("div",{style:{fontSize:11,color:"var(--text3)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.desc||"Subscription"),
+                    React.createElement("div",{style:{fontSize:9,color:"var(--text6)"}},t.date.slice(8,10)+" "+MONTH_NAMES[parseInt(t.date.slice(5,7),10)-1])
+                  ),
+                  React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"#ef4444",fontFamily:"'Sora',sans-serif",flexShrink:0,marginLeft:8}},"-"+INR(t.amount))
+                )),
+                !hasData&&React.createElement("div",{style:{fontSize:11,color:"var(--text6)",textAlign:"center",padding:"8px 0"}},"No subscription transactions")
+              );
+            })
+          )
         )
       )
+  );
+
+  /* ══ COMMITMENTS FLOOR DATA ══ */
+  const COMMIT_CATS=["Utilities and Bills","Insurance Premiums","Subscriptions"];
+  const commitmentsData=React.useMemo(()=>{
+    const months=[];
+    for(let i=5;i>=0;i--){
+      const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
+      const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
+      const byCat={};let total=0;
+      allTxns.filter(t=>t.type==="debit"&&t.date>=mS&&t.date<=mE).forEach(t=>{
+        const main=catMainName(t.cat||"");
+        if(COMMIT_CATS.includes(main)){byCat[main]=(byCat[main]||0)+t.amount;total+=t.amount;}
+        if(t.cat==="Utilities and Bills::Housing & Rent"){byCat["Rent"]=(byCat["Rent"]||0)+t.amount;total+=t.amount;}
+      });
+      months.push({mS,mE,name:MONTH_NAMES[(now.getMonth()-i+12)%12],byCat,total});
+    }
+    const income=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Income"&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+t.amount,0);
+    const cur=months[5],prev=months[4];
+    const floorPct=income>0?(cur.total/income*100):0;
+    const growth=prev.total>0?((cur.total-prev.total)/prev.total*100):0;
+    const avg6=months.reduce((s,m)=>s+m.total,0)/6;
+    const breakdown=Object.entries(cur.byCat).sort((a,b)=>b[1]-a[1]);
+    return {months,cur,prev,income,floorPct,growth,avg6,breakdown};
+  },[allTxns,categories,thisStart,thisEnd,now]);
+
+  const CommitmentsTab=React.createElement("div",{style:{paddingBottom:20}},
+    commitmentsData.income===0
+      ?React.createElement(Empty,{icon:React.createElement(Icon,{n:"lock",size:18}),text:"No income data this month. Add income transactions to see your commitments floor."})
+      :React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+            React.createElement(KpiCard,{label:"This Month Floor",value:INR(Math.round(commitmentsData.cur.total)),sub:commitmentsData.floorPct.toFixed(1)+"% of income",col:"var(--accent)",icon:React.createElement(Icon,{n:"lock",size:18})}),
+            React.createElement(KpiCard,{label:"6-Month Average",value:INR(Math.round(commitmentsData.avg6)),sub:"avg monthly commitments",col:"#0e7490",icon:React.createElement(Icon,{n:"chart",size:18})}),
+            React.createElement(KpiCard,{label:"Month-on-Month",value:(commitmentsData.growth>=0?"+":"")+commitmentsData.growth.toFixed(1)+"%",sub:commitmentsData.growth>0?"Rising commitments":"Falling commitments",col:commitmentsData.growth>5?"#ef4444":commitmentsData.growth>0?"#f97316":"#16a34a",icon:React.createElement(Icon,{n:commitmentsData.growth>0?"trendup":"trenddown",size:18})})
+          ),
+          React.createElement(Card2,{sx:{marginBottom:16}},
+            React.createElement(SHead,{t:"Commitment Breakdown (This Month)",s:"Fixed expenses you can't avoid — rent, insurance, utilities, subscriptions"}),
+            React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
+              commitmentsData.breakdown.map(([cat,amt])=>{
+                const pct=commitmentsData.cur.total>0?(amt/commitmentsData.cur.total*100):0;
+                const col=cat==="Rent"?"#ef4444":cat==="Insurance Premiums"?"#8b5cf6":cat==="Utilities and Bills"?"#0e7490":"#f59e0b";
+                return React.createElement("div",{key:cat},
+                  React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:3}},
+                    React.createElement("span",{style:{fontWeight:600,color:"var(--text3)"}},cat),
+                    React.createElement("span",{style:{fontWeight:700,color:col}},INR(Math.round(amt))+" ("+pct.toFixed(0)+"%)")
+                  ),
+                  React.createElement("div",{style:{height:8,background:"var(--bg5)",borderRadius:4,overflow:"hidden"}},
+                    React.createElement("div",{style:{height:"100%",width:pct+"%",background:col,borderRadius:4,transition:"width .6s"}})
+                  )
+                );
+              })
+            )
+          ),
+          React.createElement(Card2,{sx:{marginBottom:16}},
+            React.createElement(SHead,{t:"Monthly Floor Trend (6 Months)",s:"Is your mandatory spend growing?"}),
+            React.createElement("div",{style:{display:"flex",gap:6,alignItems:"flex-end",height:120}},
+              commitmentsData.months.map((m,i)=>{
+                const maxAmt=Math.max(...commitmentsData.months.map(x=>x.total),1);
+                const h=Math.max(4,Math.round(m.total/maxAmt*110));
+                const isCur=i===5;
+                return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+                  React.createElement("div",{style:{fontSize:9,color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},INR(Math.round(m.total))),
+                  React.createElement("div",{style:{width:"100%",height:h,borderRadius:"3px 3px 0 0",background:isCur?"var(--accent)":"var(--accent)",opacity:isCur?1:.5}})
+                );
+              })
+            ),
+            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",marginTop:6}},
+              React.createElement("span",null,commitmentsData.months[0].name),
+              React.createElement("span",null,commitmentsData.months[5].name)
+            )
+          ),
+          React.createElement(Card2,null,
+            React.createElement(SHead,{t:"Insight",s:"What this means"}),
+            React.createElement("p",{style:{fontSize:13,color:"var(--text4)",lineHeight:1.6}},
+              "Your monthly commitments floor is ",React.createElement("strong",{style:{color:"var(--accent)"}},INR(Math.round(commitmentsData.cur.total)))," which is ",React.createElement("strong",null,commitmentsData.floorPct.toFixed(1)+"%")," of this month's income.",
+              commitmentsData.growth>5?" ⚠️ Commitments grew "+commitmentsData.growth.toFixed(1)+"% last month — review if any can be reduced.":
+              commitmentsData.growth<-5?" ✅ Commitments dropped "+Math.abs(commitmentsData.growth).toFixed(1)+"% — nice reduction.":
+              " This is within normal range."
+            )
+          )
+        )
+  );
+
+  /* ══ HEALTHCARE INTELLIGENCE DATA ══ */
+  const healthIntelData=React.useMemo(()=>{
+    const PREVENTIVE=["Vaccination","Lab Test & Diagnostics","Eyecare","Fitness Equipments and Accessories","Nutraceuticals And Suppliments"];
+    const REACTIVE=["Prescriptions and Drugs","Surgeries and Procedures","Treatments","Doctor Consultation Fees","Prescriptions and Medicines","Dental"];
+    const CHILDREN=["Children Doctor Consultation Fees","Children Prescriptions and Medicines"];
+    const monthly=[];let totalAll=0;let preventiveTotal=0;let reactiveTotal=0;let childrenTotal=0;
+    const subTotals={};
+    const byPayee={};
+    const episodes=[];
+    for(let i=5;i>=0;i--){
+      const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
+      const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
+      let mTotal=0;const mSubs={};
+      allTxns.filter(t=>t.type==="debit"&&catMainName(t.cat||"")==="Healthcare"&&t.date>=mS&&t.date<=mE).forEach(t=>{
+        mTotal+=t.amount;totalAll+=t.amount;
+        const sub=t.cat&&t.cat.includes("::")?t.cat.split("::")[1]:"Uncategorised";
+        mSubs[sub]=(mSubs[sub]||0)+t.amount;
+        subTotals[sub]=(subTotals[sub]||0)+t.amount;
+        if(PREVENTIVE.includes(sub))preventiveTotal+=t.amount;
+        if(REACTIVE.includes(sub)||CHILDREN.includes(sub))reactiveTotal+=t.amount;
+        if(CHILDREN.includes(sub))childrenTotal+=t.amount;
+        if(t.payee){byPayee[t.payee]=(byPayee[t.payee]||0)+t.amount;}
+        if(sub==="Surgeries and Procedures"||sub==="Treatments")episodes.push({date:t.date,sub,amount:t.amount,payee:t.payee||"",desc:t.desc||""});
+      });
+      monthly.push({name:MONTH_NAMES[(now.getMonth()-i+12)%12],total:mTotal,subs:mSubs});
+    }
+    const topPayees=Object.entries(byPayee).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const maxMonth=Math.max(...monthly.map(m=>m.total),1);
+    return {monthly,totalAll,preventiveTotal,reactiveTotal,childrenTotal,subTotals,topPayees,episodes,maxMonth};
+  },[allTxns,now]);
+
+  const HealthIntelTab=React.createElement("div",{style:{paddingBottom:20}},
+    healthIntelData.totalAll===0
+      ?React.createElement(Empty,{icon:React.createElement(Icon,{n:"health",size:18}),text:"No healthcare transactions found. Tag expenses with the Healthcare category to see insights."})
+      :React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+            React.createElement(KpiCard,{label:"Total Healthcare (6mo)",value:INR(Math.round(healthIntelData.totalAll)),sub:"Last 6 months",col:"#ef4444",icon:React.createElement(Icon,{n:"health",size:18})}),
+            React.createElement(KpiCard,{label:"Preventive Care",value:INR(Math.round(healthIntelData.preventiveTotal)),sub:(healthIntelData.totalAll>0?(healthIntelData.preventiveTotal/healthIntelData.totalAll*100).toFixed(0):0)+"% of total",col:"#16a34a",icon:React.createElement(Icon,{n:"shield",size:18})}),
+            React.createElement(KpiCard,{label:"Reactive Care",value:INR(Math.round(healthIntelData.reactiveTotal)),sub:(healthIntelData.totalAll>0?(healthIntelData.reactiveTotal/healthIntelData.totalAll*100).toFixed(0):0)+"% of total",col:"#f97316",icon:React.createElement(Icon,{n:"warning",size:18})})
+          ),
+          React.createElement(Card2,{sx:{marginBottom:16}},
+            React.createElement(SHead,{t:"Preventive vs Reactive Split",s:"Investing in preventive care reduces costly reactive expenses over time"}),
+            React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12}},
+              React.createElement("div",{style:{flex:healthIntelData.preventiveTotal,maxHeight:24,minWidth:40,background:"#16a34a",borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff"}},
+                healthIntelData.totalAll>0?((healthIntelData.preventiveTotal/healthIntelData.totalAll*100).toFixed(0)+"%"):""),
+              React.createElement("div",{style:{flex:healthIntelData.reactiveTotal,maxHeight:24,minWidth:40,background:"#f97316",borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff"}},
+                healthIntelData.totalAll>0?((healthIntelData.reactiveTotal/healthIntelData.totalAll*100).toFixed(0)+"%"):"")
+            ),
+            React.createElement("div",{style:{display:"flex",gap:16,fontSize:11,color:"var(--text5)"}},
+              React.createElement("span",null,"🟢 Preventive: Vaccinations, Lab Tests, Eyecare, Fitness, Supplements"),
+              React.createElement("span",null,"🟠 Reactive: Prescriptions, Surgeries, Treatments, Consultations")
+            )
+          ),
+          React.createElement(Card2,{sx:{marginBottom:16}},
+            React.createElement(SHead,{t:"Monthly Trend",s:"Healthcare spending over the last 6 months"}),
+            React.createElement("div",{style:{display:"flex",gap:6,alignItems:"flex-end",height:100}},
+              healthIntelData.monthly.map((m,i)=>{
+                const h=m.total>0?Math.max(4,Math.round(m.total/healthIntelData.maxMonth*90)):2;
+                return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+                  React.createElement("div",{style:{fontSize:9,color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},m.total>0?INR(m.total):""),
+                  React.createElement("div",{style:{width:"100%",height:h,borderRadius:"3px 3px 0 0",background:i===5?"#ef4444":"#ef4444",opacity:i===5?1:.5}})
+                );
+              })
+            ),
+            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",marginTop:6}},
+              React.createElement("span",null,healthIntelData.monthly[0].name),React.createElement("span",null,healthIntelData.monthly[5].name)
+            )
+          ),
+          healthIntelData.childrenTotal>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+            React.createElement(SHead,{t:"Children's Healthcare",s:"Doctor consultations and medicines for children"}),
+            React.createElement(KpiCard,{label:"Children's Healthcare (6mo)",value:INR(Math.round(healthIntelData.childrenTotal)),sub:(healthIntelData.totalAll>0?(healthIntelData.childrenTotal/healthIntelData.totalAll*100).toFixed(0):0)+"% of total healthcare",col:"#8b5cf6",icon:React.createElement(Icon,{n:"user",size:18})})
+          ),
+          Object.keys(healthIntelData.subTotals).length>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+            React.createElement(SHead,{t:"Sub-Category Breakdown",s:"Where healthcare money goes"}),
+            React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+              Object.entries(healthIntelData.subTotals).sort((a,b)=>b[1]-a[1]).map(([sub,amt])=>{
+                const pct=healthIntelData.totalAll>0?(amt/healthIntelData.totalAll*100):0;
+                return React.createElement("div",{key:sub},
+                  React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:2}},
+                    React.createElement("span",{style:{color:"var(--text3)"}},sub),React.createElement("span",{style:{fontWeight:600}},INR(Math.round(amt))+" ("+pct.toFixed(0)+"%)")
+                  ),
+                  React.createElement("div",{style:{height:6,background:"var(--bg5)",borderRadius:3,overflow:"hidden"}},
+                    React.createElement("div",{style:{height:"100%",width:pct+"%",background:"var(--accent)",borderRadius:3}})
+                  )
+                );
+              })
+            )
+          ),
+          healthIntelData.topPayees.length>0&&React.createElement(Card2,{sx:{marginBottom:16}},
+            React.createElement(SHead,{t:"Top Healthcare Providers",s:"Where you spend the most on healthcare"}),
+            React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+              healthIntelData.topPayees.map(([name,amt],i)=>
+                React.createElement("div",{key:i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<healthIntelData.topPayees.length-1?"1px solid var(--border)":"none"}},
+                  React.createElement("span",{style:{fontSize:13,color:"var(--text3)"}},name),
+                  React.createElement("span",{style:{fontSize:13,fontWeight:700}},INR(Math.round(amt)))
+                )
+              )
+            )
+          )
+        )
+  );
+
+  /* ══ INSURANCE PORTFOLIO DATA ══ */
+  const insuranceData=React.useMemo(()=>{
+    const monthly=[];let totalAll=0;const subTotals={};const byPayee={};
+    for(let i=5;i>=0;i--){
+      const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
+      const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
+      let mTotal=0;
+      allTxns.filter(t=>t.type==="debit"&&catMainName(t.cat||"")==="Insurance Premiums"&&t.date>=mS&&t.date<=mE).forEach(t=>{
+        mTotal+=t.amount;totalAll+=t.amount;
+        const sub=t.cat&&t.cat.includes("::")?t.cat.split("::")[1]:"Other";
+        subTotals[sub]=(subTotals[sub]||0)+t.amount;
+        if(t.payee)byPayee[t.payee]=(byPayee[t.payee]||0)+t.amount;
+      });
+      monthly.push({name:MONTH_NAMES[(now.getMonth()-i+12)%12],total:mTotal});
+    }
+    const annualized=monthly.reduce((s,m)=>s+m.total,0);
+    const topPayees=Object.entries(byPayee).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const breakdown=Object.entries(subTotals).sort((a,b)=>b[1]-a[1]);
+    const maxMonth=Math.max(...monthly.map(m=>m.total),1);
+    const income=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Income"&&t.date>=thisStart&&t.date<=thisEnd;}).reduce((s,t)=>s+t.amount,0);
+    const premiumPct=income>0?(annualized/income*100):0;
+    return {monthly,totalAll,annualized,subTotals,breakdown,topPayees,maxMonth,income,premiumPct};
+  },[allTxns,categories,thisStart,thisEnd,now]);
+
+  const InsuranceTab=React.createElement("div",{style:{paddingBottom:20}},
+    insuranceData.totalAll===0
+      ?React.createElement(Empty,{icon:React.createElement(Icon,{n:"shield",size:18}),text:"No insurance premium transactions found. Tag premiums with the Insurance Premiums category."})
+      :React.createElement(React.Fragment,null,
+          React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+            React.createElement(KpiCard,{label:"Total Premiums (6mo)",value:INR(Math.round(insuranceData.totalAll)),sub:insuranceData.breakdown.length+" policies tracked",col:"#8b5cf6",icon:React.createElement(Icon,{n:"shield",size:18})}),
+            React.createElement(KpiCard,{label:"Avg Monthly Premium",value:INR(Math.round(insuranceData.totalAll/6)),sub:"Monthly commitment",col:"#0e7490",icon:React.createElement(Icon,{n:"chart",size:18})}),
+            React.createElement(KpiCard,{label:"Premium-to-Income",value:insuranceData.premiumPct.toFixed(1)+"%",sub:insuranceData.premiumPct>15?"High — review coverage":"Within healthy range",col:insuranceData.premiumPct>15?"#ef4444":"#16a34a",icon:React.createElement(Icon,{n:"percent",size:18})})
+          ),
+          React.createElement(Card2,{sx:{marginBottom:16}},
+            React.createElement(SHead,{t:"Policy Breakdown",s:"Premium distribution across insurance types"}),
+            React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
+              insuranceData.breakdown.map(([sub,amt])=>{
+                const pct=insuranceData.totalAll>0?(amt/insuranceData.totalAll*100):0;
+                const colors=["#ef4444","#8b5cf6","#0e7490","#f59e0b","#16a34a","#ec4899"];
+                const col=colors[insuranceData.breakdown.indexOf([sub,amt])%colors.length];
+                return React.createElement("div",{key:sub},
+                  React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:3}},
+                    React.createElement("span",{style:{fontWeight:600,color:"var(--text3)"}},sub),
+                    React.createElement("span",{style:{fontWeight:700,color:col}},INR(Math.round(amt))+" ("+pct.toFixed(0)+"%)")
+                  ),
+                  React.createElement("div",{style:{height:8,background:"var(--bg5)",borderRadius:4,overflow:"hidden"}},
+                    React.createElement("div",{style:{height:"100%",width:pct+"%",background:col,borderRadius:4}})
+                  )
+                );
+              })
+            )
+          ),
+          React.createElement(Card2,{sx:{marginBottom:16}},
+            React.createElement(SHead,{t:"Monthly Premium Trend",s:"Insurance premium payments over the last 6 months"}),
+            React.createElement("div",{style:{display:"flex",gap:6,alignItems:"flex-end",height:100}},
+              insuranceData.monthly.map((m,i)=>{
+                const h=m.total>0?Math.max(4,Math.round(m.total/insuranceData.maxMonth*90)):2;
+                return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+                  React.createElement("div",{style:{fontSize:9,color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},m.total>0?INR(m.total):""),
+                  React.createElement("div",{style:{width:"100%",height:h,borderRadius:"3px 3px 0 0",background:"#8b5cf6",opacity:i===5?1:.5}})
+                );
+              })
+            ),
+            React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",marginTop:6}},
+              React.createElement("span",null,insuranceData.monthly[0].name),React.createElement("span",null,insuranceData.monthly[5].name)
+            )
+          ),
+          insuranceData.topPayees.length>0&&React.createElement(Card2,null,
+            React.createElement(SHead,{t:"Insurance Providers",s:"Where premiums are paid"}),
+            React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+              insuranceData.topPayees.map(([name,amt],i)=>
+                React.createElement("div",{key:i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<insuranceData.topPayees.length-1?"1px solid var(--border)":"none"}},
+                  React.createElement("span",{style:{fontSize:13,color:"var(--text3)"}},name),
+                  React.createElement("span",{style:{fontSize:13,fontWeight:700}},INR(Math.round(amt)))
+                )
+              )
+            )
+          )
+        )
+  );
+
+  /* ══ NET CASHFLOW WATERFALL TREND DATA ══ */
+  const waterfallTrendData=React.useMemo(()=>{
+    const months=[];
+    for(let i=5;i>=0;i--){
+      const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
+      const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
+      const debits=allTxns.filter(t=>t.type==="debit"&&t.date>=mS&&t.date<=mE);
+      const income=allTxns.filter(t=>t.type==="credit"&&t.date>=mS&&t.date<=mE).reduce((s,t)=>s+t.amount,0);
+      const fixed=debits.filter(t=>FIXED.some(c=>(catMainName(t.cat||"")).toLowerCase()===c.toLowerCase())).reduce((s,t)=>s+t.amount,0);
+      const variable=debits.filter(t=>VARIABLE.some(c=>(catMainName(t.cat||"")).toLowerCase()===c.toLowerCase())).reduce((s,t)=>s+t.amount,0);
+      const disc=debits.filter(t=>DISC.some(c=>(catMainName(t.cat||"")).toLowerCase()===c.toLowerCase())).reduce((s,t)=>s+t.amount,0);
+      const investCat=debits.filter(t=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Investment";}).reduce((s,t)=>s+t.amount,0);
+      const total=debits.reduce((s,t)=>s+t.amount,0);
+      const other=Math.max(total-fixed-variable-disc-investCat,0);
+      const savings=Math.max(income-total,0);
+      months.push({name:MONTH_NAMES[(now.getMonth()-i+12)%12],income,fixed,variable,disc,invest:investCat,other,savings});
+    }
+    const maxIncome=Math.max(...months.map(m=>m.income),1);
+    return {months,maxIncome};
+  },[allTxns,categories,now]);
+
+  const WaterfallTrendTab=React.createElement("div",{style:{paddingBottom:20}},
+    React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement(SHead,{t:"Cashflow Composition Trend (6 Months)",s:"How your income splits into commitments, lifestyle, investments and savings"}),
+      React.createElement("div",{style:{display:"flex",gap:4,alignItems:"flex-end",height:160,marginBottom:8}},
+        waterfallTrendData.months.map((m,i)=>{
+          const scale=waterfallTrendData.maxIncome>0?(140/waterfallTrendData.maxIncome):1;
+          const parts=[
+            {label:"Fixed",amt:m.fixed,col:"#ef4444"},
+            {label:"Variable",amt:m.variable,col:"#f97316"},
+            {label:"Discretionary",amt:m.disc,col:"#b45309"},
+            {label:"Other",amt:m.other,col:"#64748b"},
+            {label:"Invest",amt:m.invest,col:"#16a34a"},
+          ];
+          let cumH=0;
+          return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+            React.createElement("div",{style:{fontSize:9,color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},INR(m.income)),
+            React.createElement("div",{style:{width:"100%",display:"flex",flexDirection:"column",borderRadius:"3px 3px 0 0",overflow:"hidden",background:"var(--bg5)"}},
+              parts.map((p,pi)=>{
+                const h=Math.max(1,Math.round(p.amt*scale));
+                return React.createElement("div",{key:pi,style:{height:h,background:p.col,opacity:i===5?1:.6}});
+              }),
+              m.savings>0&&React.createElement("div",{style:{height:Math.max(1,Math.round(m.savings*scale)),background:"#059669",opacity:i===5?1:.6}})
+            )
+          );
+        })
+      ),
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",marginBottom:10}},
+        React.createElement("span",null,waterfallTrendData.months[0].name),React.createElement("span",null,waterfallTrendData.months[5].name)
+      ),
+      React.createElement("div",{style:{display:"flex",gap:10,flexWrap:"wrap",fontSize:11}},
+        [{l:"Fixed",c:"#ef4444"},{l:"Variable",c:"#f97316"},{l:"Discretionary",c:"#b45309"},{l:"Other",c:"#64748b"},{l:"Invest",c:"#16a34a"},{l:"Savings",c:"#059669"}].map(x=>
+          React.createElement("span",{key:x.l,style:{display:"flex",alignItems:"center",gap:4}},
+            React.createElement("span",{style:{width:10,height:10,borderRadius:2,background:x.c,display:"inline-block"}}),x.l
+          )
+        )
+      )
+    ),
+    React.createElement(Card2,null,
+      React.createElement(SHead,{t:"Monthly Breakdown",s:"Exact amounts per category per month"}),
+      React.createElement("div",{style:{overflowX:"auto"}},
+        React.createElement("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:12}},
+          React.createElement("thead",null,
+            React.createElement("tr",null,
+              ["Month","Income","Fixed","Variable","Disc.","Other","Invest","Savings"].map(h=>
+                React.createElement("th",{key:h,style:{textAlign:h==="Month"?"left":"right",padding:"6px 8px",color:"var(--text5)",fontWeight:600,borderBottom:"1px solid var(--border)"}},h)
+              )
+            )
+          ),
+          React.createElement("tbody",null,
+            waterfallTrendData.months.map((m,i)=>
+              React.createElement("tr",{key:i,style:{background:i===5?"var(--accentbg)":"transparent"}},
+                React.createElement("td",{style:{padding:"6px 8px",fontWeight:600,color:"var(--text3)"}},m.name),
+                React.createElement("td",{style:{textAlign:"right",padding:"6px 8px"}},INR(m.income)),
+                React.createElement("td",{style:{textAlign:"right",padding:"6px 8px",color:"#ef4444"}},INR(m.fixed)),
+                React.createElement("td",{style:{textAlign:"right",padding:"6px 8px",color:"#f97316"}},INR(m.variable)),
+                React.createElement("td",{style:{textAlign:"right",padding:"6px 8px",color:"#b45309"}},INR(m.disc)),
+                React.createElement("td",{style:{textAlign:"right",padding:"6px 8px",color:"#64748b"}},INR(m.other)),
+                React.createElement("td",{style:{textAlign:"right",padding:"6px 8px",color:"#16a34a"}},INR(m.invest)),
+                React.createElement("td",{style:{textAlign:"right",padding:"6px 8px",fontWeight:700,color:m.savings>0?"#16a34a":"#ef4444"}},INR(m.savings))
+              )
+            )
+          )
+        )
+      )
+    )
+  );
+
+  /* ══ COMMITMENT GROWTH TRACKER DATA ══ */
+  const commitGrowthData=React.useMemo(()=>{
+    const months=[];
+    for(let i=11;i>=0;i--){
+      const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
+      const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
+      const byCat={};let total=0;
+      allTxns.filter(t=>t.type==="debit"&&t.date>=mS&&t.date<=mE).forEach(t=>{
+        const main=catMainName(t.cat||"");
+        if(COMMIT_CATS.includes(main)){byCat[main]=(byCat[main]||0)+t.amount;total+=t.amount;}
+        if(t.cat==="Utilities and Bills::Housing & Rent"){byCat["Rent"]=(byCat["Rent"]||0)+t.amount;total+=t.amount;}
+      });
+      const inc=allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Income"&&t.date>=mS&&t.date<=mE;}).reduce((s,t)=>s+t.amount,0);
+      months.push({name:MONTH_NAMES[(now.getMonth()-i+12)%12],total,byCat,income:inc,ratio:inc>0?(total/inc*100):0});
+    }
+    const first=months[0],last=months[11];
+    const totalGrowth=first.total>0?((last.total-first.total)/first.total*100):0;
+    const avgRatio=months.filter(m=>m.ratio>0).reduce((s,m)=>s+m.ratio,0)/(months.filter(m=>m.ratio>0).length||1);
+    const maxTotal=Math.max(...months.map(m=>m.total),1);
+    return {months,totalGrowth,avgRatio,maxTotal};
+  },[allTxns,categories,now]);
+
+  const CommitGrowthTab=React.createElement("div",{style:{paddingBottom:20}},
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement(KpiCard,{label:"12-Month Growth",value:(commitGrowthData.totalGrowth>=0?"+":"")+commitGrowthData.totalGrowth.toFixed(1)+"%",sub:"Commitment floor change",col:commitGrowthData.totalGrowth>10?"#ef4444":commitGrowthData.totalGrowth>0?"#f97316":"#16a34a",icon:React.createElement(Icon,{n:"chart",size:18})}),
+      React.createElement(KpiCard,{label:"Avg Commitment Ratio",value:commitGrowthData.avgRatio.toFixed(1)+"%",sub:"Of income going to commitments",col:commitGrowthData.avgRatio>50?"#ef4444":commitGrowthData.avgRatio>30?"#f97316":"#16a34a",icon:React.createElement(Icon,{n:"percent",size:18})}),
+      React.createElement(KpiCard,{label:"Current Floor",value:INR(Math.round(commitGrowthData.months[11].total)),sub:MONTH_NAMES[(now.getMonth()+12)%12]+" commitments",col:"var(--accent)",icon:React.createElement(Icon,{n:"lock",size:18})})
+    ),
+    React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement(SHead,{t:"Commitment Floor Trend (12 Months)",s:"Track how your mandatory expenses evolve over time"}),
+      React.createElement("div",{style:{display:"flex",gap:4,alignItems:"flex-end",height:120}},
+        commitGrowthData.months.map((m,i)=>{
+          const h=m.total>0?Math.max(3,Math.round(m.total/commitGrowthData.maxTotal*110)):2;
+          return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+            React.createElement("div",{style:{fontSize:8,color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},m.total>0?INR(m.total):""),
+            React.createElement("div",{style:{width:"100%",height:h,borderRadius:"2px 2px 0 0",background:"var(--accent)",opacity:i===11?1:.45}})
+          );
+        })
+      ),
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",marginTop:6}},
+        React.createElement("span",null,commitGrowthData.months[0].name),React.createElement("span",null,commitGrowthData.months[11].name)
+      )
+    ),
+    React.createElement(Card2,{sx:{marginBottom:16}},
+      React.createElement(SHead,{t:"Commitment-to-Income Ratio",s:"What percentage of your income is pre-committed each month"}),
+      React.createElement("div",{style:{display:"flex",gap:4,alignItems:"flex-end",height:100}},
+        commitGrowthData.months.map((m,i)=>{
+          const h=m.ratio>0?Math.max(3,Math.round(m.ratio)):2;
+          return React.createElement("div",{key:i,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+            React.createElement("div",{style:{fontSize:8,color:"var(--text6)",fontFamily:"'Sora',sans-serif"}},m.ratio>0?m.ratio.toFixed(0)+"%":""),
+            React.createElement("div",{style:{width:"100%",height:h,borderRadius:"2px 2px 0 0",background:m.ratio>50?"#ef4444":m.ratio>30?"#f97316":"#16a34a",opacity:i===11?1:.45}})
+          );
+        })
+      ),
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--text6)",marginTop:6}},
+        React.createElement("span",null,commitGrowthData.months[0].name),React.createElement("span",null,commitGrowthData.months[11].name)
+      )
+    ),
+    React.createElement(Card2,null,
+      React.createElement(SHead,{t:"Growth Insight",s:"What this trend means for your finances"}),
+      React.createElement("p",{style:{fontSize:13,color:"var(--text4)",lineHeight:1.6}},
+        "Over the last 12 months, your commitment floor ",React.createElement("strong",{style:{color:commitGrowthData.totalGrowth>0?"#ef4444":"#16a34a"}},
+          commitGrowthData.totalGrowth>0?"grew "+commitGrowthData.totalGrowth.toFixed(1)+"%":"decreased "+Math.abs(commitGrowthData.totalGrowth).toFixed(1)+"%"
+        ),
+        ". On average, ",React.createElement("strong",null,commitGrowthData.avgRatio.toFixed(1)+"%")," of your monthly income goes to fixed commitments.",
+        commitGrowthData.avgRatio>50?" ⚠️ Over half your income is pre-committed — consider reducing where possible.":
+        commitGrowthData.avgRatio>30?" This is within a healthy range but monitor for growth.":
+        " Your commitment ratio is healthy — you have good flexibility."
+      )
+    )
   );
 
   /* ══ FIRE DATA ══ */
   const fireData=React.useMemo(()=>{
     // Monthly expense average (last 6 months debits excluding investment/transfer)
-    const INVEST_CATS=["Investment","Transfer"];
+    const INVEST_TYPES=["Investment","Transfer"];
     const months6=[];
     for(let i=5;i>=0;i--){
       const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
       const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
-      const exp=allTxns.filter(t=>t.date>=mS&&t.date<=mE&&!INVEST_CATS.includes(catMainName(t.cat||""))).reduce((s,t)=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Expense"||ct==="Others"?s+txCatDelta(t,ct):s;},0);
+      const exp=allTxns.filter(t=>t.date>=mS&&t.date<=mE&&!INVEST_TYPES.includes(catClassType(categories,t.cat||"Others"))).reduce((s,t)=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Expense"||ct==="Others"?s+txCatDelta(t,ct):s;},0);
       const inc=allTxns.filter(t=>t.date>=mS&&t.date<=mE).reduce((s,t)=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Income"?s+txCatDelta(t,ct):s;},0);
       months6.push({exp,inc,savings:inc-exp,mName:MONTH_NAMES[(now.getMonth()-i+12)%12]});
     }
@@ -37238,7 +34700,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       const mS=fmtD(new Date(now.getFullYear(),now.getMonth()-i,1));
       const mE=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
       const inc=allTxns.filter(t=>t.date>=mS&&t.date<=mE).reduce((s,t)=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Income"?s+txCatDelta(t,ct):s;},0);
-      const exp=allTxns.filter(t=>t.date>=mS&&t.date<=mE&&!INVEST_CATS.includes(catMainName(t.cat||""))).reduce((s,t)=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Expense"||ct==="Others"?s+txCatDelta(t,ct):s;},0);
+      const exp=allTxns.filter(t=>t.date>=mS&&t.date<=mE&&!INVEST_TYPES.includes(catMainName(t.cat||""))).reduce((s,t)=>{const ct=catClassType(categories,t.cat||"Others");return ct==="Expense"||ct==="Others"?s+txCatDelta(t,ct):s;},0);
       const rate=inc>0?Math.max((inc-exp)/inc*100,0):0;
       savingsRate12.push({mName:MONTH_NAMES[(now.getMonth()-i+12)%12],rate,inc,exp,savings:inc-exp});
     }
@@ -37251,8 +34713,8 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     const realEstatePct=reVal/totalInvest*100;
 
     // Lifestyle inflation
-    const recent3Exp=allTxns.filter(t=>{const m=new Date(t.date).getMonth(),y=new Date(t.date).getFullYear();const cur=now.getMonth(),cy=now.getFullYear();const diff=(cy-y)*12+(cur-m);return t.type==="debit"&&diff>=0&&diff<3&&!INVEST_CATS.includes(catMainName(t.cat||""));}).reduce((s,t)=>s+t.amount,0)/3;
-    const prev3Exp=allTxns.filter(t=>{const m=new Date(t.date).getMonth(),y=new Date(t.date).getFullYear();const cur=now.getMonth(),cy=now.getFullYear();const diff=(cy-y)*12+(cur-m);return t.type==="debit"&&diff>=3&&diff<6&&!INVEST_CATS.includes(catMainName(t.cat||""));}).reduce((s,t)=>s+t.amount,0)/3;
+    const recent3Exp=allTxns.filter(t=>{const m=new Date(t.date).getMonth(),y=new Date(t.date).getFullYear();const cur=now.getMonth(),cy=now.getFullYear();const diff=(cy-y)*12+(cur-m);return t.type==="debit"&&diff>=0&&diff<3&&!INVEST_TYPES.includes(catMainName(t.cat||""));}).reduce((s,t)=>s+t.amount,0)/3;
+    const prev3Exp=allTxns.filter(t=>{const m=new Date(t.date).getMonth(),y=new Date(t.date).getFullYear();const cur=now.getMonth(),cy=now.getFullYear();const diff=(cy-y)*12+(cur-m);return t.type==="debit"&&diff>=3&&diff<6&&!INVEST_TYPES.includes(catMainName(t.cat||""));}).reduce((s,t)=>s+t.amount,0)/3;
     const lifestyleInflation=prev3Exp>0?(recent3Exp-prev3Exp)/prev3Exp*100:0;
     const expInflationAmt=Math.max(recent3Exp-prev3Exp,0);
     const delayMonths=avgMonthlySavings>0?Math.round(expInflationAmt/avgMonthlySavings*12*25/12):0;
@@ -37426,18 +34888,17 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     scores.push({name:"Emergency Fund",score:Math.min(20,Math.round(efPct*20)),max:20,detail:ef.toFixed(1)+" months",col:ef>=efTarget?"#16a34a":ef>=efTarget*0.6?"#b45309":"#ef4444",
       tip:ef>=efTarget?"Fully funded":ef>=efTarget*0.6?"Building up — "+(efTarget-ef).toFixed(1)+" months to go":"Critical — build to "+efTarget+" months"});
     /* Budget Adherence (0-20) */
-    const bu=_biScore||50;
+    const bu=_biScore!=null?_biScore:50;
     scores.push({name:"Budget Discipline",score:Math.min(20,Math.round(bu/100*20)),max:20,detail:"Score "+bu,col:bu>=70?"#16a34a":bu>=50?"#b45309":"#ef4444",
       tip:bu>=70?"Strong budget adherence":bu>=50?"Moderate — some categories overspending":"Needs improvement"});
     /* Expense Ratio (0-15) */
     const er=pulseData.expenseRatio;
-    scores.push({name:"Expense Ratio",score:Math.min(15,er<=60?15:er<=75?12:er<=90?8:3),max:15,detail:er.toFixed(0)+"%",col:er<=70?"#16a34a":er<=90?"#b45309":"#ef4444",
-      tip:er<=70?"Expenses well below income":er<=90?"Manageable but tight":"Expenses nearly matching income"});
+    scores.push({name:"Expense Ratio",score:Math.min(15,er<=60?15:er<=75?12:er<=90?8:3),max:15,detail:er.toFixed(0)+"%",col:er<=60?"#16a34a":er<=75?"#b45309":"#ef4444",
+      tip:er<=60?"Expenses well below income":er<=75?"Manageable but tight":"Expenses nearly matching income"});
     /* Debt Health (0-10) */
-    const totalDebt=(pulseData.liquidAssets||0)>0?0:0;
     const cardD=(cards||[]).reduce((s,c)=>s+(c.outstanding||0),0);
     const loanD=(loans||[]).reduce((s,l)=>s+(l.outstanding||0),0);
-    const debtScore=cardD===0&&loanD===0?10:cardD===0?7:loanD<cardD*12?5:2;
+    const debtScore=cardD===0&&loanD===0?10:cardD===0?8:loanD===0?7:loanD<cardD*12?5:2;
     scores.push({name:"Debt Health",score:debtScore,max:10,detail:cardD+loanD>0?INR(cardD+loanD)+" outstanding":"No high-interest debt",col:debtScore>=7?"#16a34a":debtScore>=4?"#b45309":"#ef4444",
       tip:debtScore>=7?"Healthy — no high-interest debt":debtScore>=4?"Manageable debt load":"High debt burden"});
     /* Investment Momentum (0-10) */
@@ -37447,7 +34908,6 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       const me=fmtD(new Date(now.getFullYear(),now.getMonth()-i+1,0));
       invMonths.push(allTxns.filter(t=>{const ct=catClassType(categories,t.cat||"");return ct==="Investment"&&t.date>=ms&&t.date<=me;}).reduce((s,t)=>s+t.amount,0));
     }
-    const avgInv=invMonths.reduce((s,v)=>s+v,0)/6;
     const invConsistent=invMonths.filter(v=>v>0).length;
     const invScore=Math.min(10,Math.round(invConsistent/6*10));
     scores.push({name:"Investment Consistency",score:invScore,max:10,detail:invConsistent+"/6 months",col:invScore>=7?"#16a34a":invScore>=4?"#b45309":"#ef4444",
@@ -37495,9 +34955,9 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
   /* ══ GOALS DATA ══ */
   const goalData=React.useMemo(()=>{
     const g=Array.isArray(goals)?goals:[];
-    const liquidAssets=(banks||[]).reduce((s,b)=>s+(b.balance||0),0)+(cash?.balance||0);
+    const liquidAssets=(banks||[]).reduce((s,b)=>s+(b.balance||0),0)+(cash?.balance||0)+(fd||[]).reduce((s,f)=>s+calcFDValueToday(f),0);
     return{goals:g,liquidAssets,hasGoals:g.length>0};
-  },[goals,banks,cash]);
+  },[goals,banks,cash,fd]);
 
 
   /* ══ HEALTH SCORE TAB ══ */
@@ -37670,7 +35130,12 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     {id:"fire",          label:"FIRE"},
     {id:"networth",      label:"Net Worth"},
     {id:"capgains",      label:"Cap Gains"},
+    {id:"commitments",   label:"Commitments"},
     {id:"health",        label:"Health"},
+    {id:"healthintel",   label:"Healthcare"},
+    {id:"insurance",     label:"Insurance"},
+    {id:"cashflowtrend", label:"Cashflow"},
+    {id:"commgrowth",    label:"Commit Growth"},
     {id:"patterns",      label:"Patterns"},
     {id:"goals",         label:"Goals"},
     {id:"calculators",   label:"Calculators"},
@@ -37695,7 +35160,12 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     stab==="fire"          &&FireTab,
     stab==="networth"      &&React.createElement(NetWorthInsightTab,{banks,cards,cash,mf,shares,fd,re:re||[],loans,categories,prefs:P,isMobile,dispatch,nwSnapshots:nwSnapshots||{},brokerCashBalance}),
     stab==="capgains"      &&React.createElement(CapGainsTab,{shares,mf,mfTxns:mfTxns||[],isMobile}),
+    stab==="commitments"   &&CommitmentsTab,
     stab==="health"        &&HealthScoreTab,
+    stab==="healthintel"   &&HealthIntelTab,
+    stab==="insurance"     &&InsuranceTab,
+    stab==="cashflowtrend" &&WaterfallTrendTab,
+    stab==="commgrowth"    &&CommitGrowthTab,
     stab==="patterns"      &&SpendingPatternsTab,
     stab==="goals"         &&GoalTrackerTab,
     stab==="calculators"   &&React.createElement(InsightCalculators,{isMobile}),
@@ -39269,7 +36739,8 @@ const hexAlpha=(hex,a)=>{
 const useIsMobile=()=>{
   const[mobile,setMobile]=React.useState(()=>window.innerWidth<=768);
   React.useEffect(()=>{
-    const handler=()=>setMobile(window.innerWidth<=768);
+    let ticking=false;
+    const handler=()=>{if(!ticking){ticking=true;requestAnimationFrame(()=>{setMobile(window.innerWidth<=768);ticking=false;});}};
     window.addEventListener("resize",handler,{passive:true});
     return()=>window.removeEventListener("resize",handler);
   },[]);
@@ -39649,7 +37120,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
   const specialInc = stcgNet + ltcgTaxable + buybackAmt;
   const grossTotal = netNorm + specialInc;
 
-  const computeTax = (reg, overrideNetNorm, overrideGrossTotal) => {
+    const computeTax = (reg, overrideNetNorm, overrideGrossTotal) => {
     /* When called for the alt-regime comparison, callers pass the correct net normal income
        and gross total recomputed under the alt regime's deduction set.  The current-regime
        call passes nothing and uses the module-level values. */
@@ -39664,7 +37135,9 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
         rebate = Math.min(normTax, REBATE_NEW_MAX);
       } else {
         const excess = _grossTotal - REBATE_NEW_THRESHOLD;
-        if (normTax > excess) marginalRelief = normTax - excess;
+        const totalTaxBeforeRelief = normTax + specialInc > 0 ? (stcgTax + ltcgTax + buybackTax) : 0;
+        const totalTaxEstimate = normTax + totalTaxBeforeRelief;
+        if (totalTaxEstimate > excess) marginalRelief = totalTaxEstimate - excess;
       }
     } else {
       if (_grossTotal <= REBATE_OLD_THRESHOLD) rebate = Math.min(normTax, REBATE_OLD_MAX);
@@ -39675,10 +37148,10 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
        • Sec 112A(9): surcharge on LTCG u/s 112A is capped at 15%.
        • Sec 111A(2): surcharge on STCG u/s 111A is capped at 15%.
        • Under New Regime (Budget 2023): overall surcharge cap is 25% (37% slab removed).
-       Compute surcharge separately for normal income and special-rate income. */
+       Surcharge is computed on tax BEFORE rebate u/s 87A (per IT Act). */
     const fullSCRate    = scRate(_grossTotal, reg);
     const cappedSCRate  = Math.min(fullSCRate, 0.15); // LTCG/STCG cap
-    const sc_normal     = normTaxAfterRebate * fullSCRate;
+    const sc_normal     = normTax * fullSCRate;
     const sc_special    = (stcgTax + ltcgTax + buybackTax) * cappedSCRate;
     const sc            = sc_normal + sc_special;
     const specialTax    = stcgTax + ltcgTax + buybackTax;
@@ -40959,13 +38432,6 @@ function App(){
   const dismissToast=React.useCallback(id=>setToasts(ts=>ts.filter(x=>x.id!==id)),[]);
   /* pushUndo already surfaces via the undo toast block below (ToastHost) */
   /* ── "What's New" — show once per version ── */
-  const[whatsNew,setWhatsNew]=useState(false);
-  React.useEffect(()=>{
-    try{
-      const seen=localStorage.getItem("mm_seen_version");
-      if(seen!==APP_VERSION){setWhatsNew(true);localStorage.setItem("mm_seen_version",APP_VERSION);}
-    }catch{}
-  },[]);
   /* ── Global search ── */
   const[searchOpen,setSearchOpen]=useState(false);
   /* ── Quick-add FAB ── */
@@ -40973,10 +38439,10 @@ function App(){
   const[chatBotOpen,setChatBotOpen]=useState(false);
   const[themeId,setThemeId]=useState(loadTheme);
   const setTheme=id=>{setThemeId(id);applyTheme(id);saveTheme(id);};
-  React.useEffect(()=>{applyTheme(themeId);},[]);
+  React.useEffect(()=>{applyTheme(themeId);},[themeId]);
   const[fontId,setFontId]=useState(loadFont);
   const setFont=id=>{setFontId(id);applyFont(id);saveFont(id);};
-  React.useEffect(()=>{applyFont(fontId);},[]);
+  React.useEffect(()=>{applyFont(fontId);},[fontId]);
   /* ── Backup age monitor ── */
   const[backupBanner,setBackupBanner]=useState(null); /* {ageDays,lastDate} or null */
   /* ── Keyboard shortcuts: Ctrl/Cmd+K = global search, Ctrl/Cmd+Z = undo ── */
@@ -42005,7 +39471,7 @@ function App(){
       /* InvestSection: five sub-tabs reuse the same component with different
          defaultTab — keep the && pattern so each sub-tab mounts independently */
       tab==="inv_mf"&&React.createElement(ErrorBoundary,{name:"Mutual Funds"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0,banks:state.banks,scheduled:state.scheduled||[]})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,mfHistNavs:state.mfHistNavs||_EO,brokerCashBalance:state.brokerCashBalance||0,banks:state.banks,scheduled:state.scheduled||[]})),
       tab==="inv_shares"&&React.createElement(ErrorBoundary,{name:"Shares"},
         React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"shares",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       tab==="inv_fd"&&React.createElement(ErrorBoundary,{name:"Fixed Deposits"},
@@ -42043,7 +39509,7 @@ function App(){
           React.createElement(ReportsSection,{data:state,isMobile,onJumpToLedger}))),
       React.createElement("div",{style:{display:tab==="settings"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Settings"},
-          React.createElement(SettingsSection,{state,dispatch,themeId,setTheme,fontId,setFont,isMobile,onResetAll:async()=>{_mmResetting=true;dispatch({type:"RESET_ALL"});try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_EOD_PRICES);localStorage.removeItem(LS_EOD_NAVS);localStorage.removeItem(LS_THEME);localStorage.removeItem(TAX_LS_KEY);localStorage.removeItem(CALC_LS_KEY);localStorage.removeItem("mm_v7_chatbot_training");/* Stamp reset time so Drive boot pull cannot undo the reset */localStorage.setItem(LS_LAST_LOCAL_EDIT,new Date().toISOString());localStorage.removeItem(LS_GDRIVE_LAST_SYNC);}catch{}/* Clear transactions from IndexedDB so no stale data survives reload */try{await clearTxIDB();}catch{}setTimeout(()=>window.location.reload(),100);}}))),
+          React.createElement(SettingsSection,{state,dispatch,themeId,setTheme,fontId,setFont,isMobile,onResetAll:async()=>{_mmResetting=true;dispatch({type:"RESET_ALL"});try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_EOD_PRICES);localStorage.removeItem(LS_EOD_NAVS);localStorage.removeItem(LS_THEME);localStorage.removeItem(TAX_LS_KEY);localStorage.removeItem(CALC_LS_KEY);localStorage.removeItem("mm_v7_chatbot_training");localStorage.removeItem(LS_ENTRY_SCORES);localStorage.removeItem(LS_ENTRY_SNAPSHOTS);/* Stamp reset time so Drive boot pull cannot undo the reset */localStorage.setItem(LS_LAST_LOCAL_EDIT,new Date().toISOString());localStorage.removeItem(LS_GDRIVE_LAST_SYNC);}catch{}/* Clear transactions from IndexedDB so no stale data survives reload */try{await clearTxIDB();}catch{}setTimeout(()=>window.location.reload(),100);}}))),
       React.createElement("div",{style:{display:tab==="info"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"About"},
           React.createElement(InfoSection,{isMobile}))),
@@ -42071,14 +39537,14 @@ function App(){
       onClose:id=>{ if(id==="_undo"){setUndoSnap(null);} else {dismissToast(id);} }
     }),
     /* ── "What's New" modal (once per version) ── */
-    whatsNew&&React.createElement(WhatsNewModal,{onClose:()=>setWhatsNew(false)}),
+    
     /* ── Global Search Modal (⌘K command palette) ── */
     searchOpen&&React.createElement(GlobalSearchModal,{
       state,
       onClose:()=>setSearchOpen(false),
       onJumpToTx:(accType,accId,txId)=>{onJumpToTx(accType,accId,txId);},
       setTab,setTheme,setQuickAddOpen,
-      onWhatsNew:()=>{setWhatsNew(true);}
+
     }),
     /* ── Quick-Add FAB ── */
     !["settings","info"].includes(tab)&&React.createElement(React.Fragment,null,
@@ -42226,42 +39692,42 @@ const _cbMatchAccountMulti=(text,accounts,customAliases)=>{
 
 /* ── 2. CATEGORY KEYWORD DICTIONARY ───────────────────────────────────── */
 const _cbCatRules=[
-  {k:['petrol','diesel','fuel','gas station','petrol pump','hpcl','bpcl','iocl','refuel'],c:'Transport',s:'Fuel'},
-  {k:['uber','ola','rapido','auto','rickshaw','taxi','cab'],c:'Transport',s:'Cab / Auto'},
-  {k:['metro','bus','train','irctc','local train','bus pass','railway'],c:'Transport',s:'Public Transit'},
-  {k:['bigbasket','grofers','blinkit','zepto','dmart','reliance fresh','grocery','groceries','vegetable','fruit','ration','kirana','milk'],c:'Food',s:'Groceries'},
-  {k:['restaurant','cafe','dine out','dinner','lunch','breakfast','pizza','burger','biryani','mcdonald','kfc','domino','subway','starbucks','bar','pub'],c:'Food',s:'Restaurants'},
-  {k:['swiggy','zomato','food delivery','food order'],c:'Food',s:'Delivery'},
-  {k:['myntra','ajio','meesho','clothing','clothes','shirt','jeans','dress','shoes','fashion','apparel'],c:'Shopping',s:'Clothing'},
-  {k:['amazon','flipkart','croma','reliance digital','vijay sales','electronics','mobile','laptop','headphone','charger','gadget','phone','tablet','tv'],c:'Shopping',s:'Electronics'},
-  {k:['ikea','pepperfry','urban ladder','home decor','furniture','curtain','bedsheet','kitchen','utensil'],c:'Shopping',s:'Home & Decor'},
-  {k:['netflix','amazon prime','hotstar','disney','jiocinema','sonyliv','zee5','youtube premium','spotify','apple music','gaana','jiosaavn','streaming','ott'],c:'Entertainment',s:'OTT / Streaming'},
-  {k:['steam','playstation','xbox','gaming','pubg','free fire','valorant','game'],c:'Entertainment',s:'Gaming'},
-  {k:['bookmyshow','insider','event','concert','movie','cinema','pvr','inox','theatre','show','standup','comedy'],c:'Entertainment',s:'Events'},
-  {k:['electricity','bescom','mseb','tangedco','bses','torrent power','power bill','light bill','electric bill'],c:'Utilities',s:'Electricity'},
-  {k:['water bill','water tax','municipal water','bwssb'],c:'Utilities',s:'Water'},
-  {k:['broadband','wifi','internet','act fibernet','jio fiber','airtel xstream','bsnl fiber','tikona','hathway'],c:'Utilities',s:'Internet'},
-  {k:['mobile bill','phone recharge','airtel','jio','vi recharge','bsnl recharge','mobile recharge','prepaid','postpaid'],c:'Utilities',s:'Mobile'},
-  {k:['rent','house rent','flat rent','room rent'],c:'Housing',s:'Rent'},
-  {k:['maintenance','society maintenance','repair','plumber','electrician','carpenter','painting','renovation','ac service'],c:'Housing',s:'Maintenance'},
-  {k:['lic','life insurance','term insurance','hdfc life','sbi life','icici prudential','max life'],c:'Insurance',s:'Life'},
-  {k:['health insurance','medical insurance','star health','care health','niva bupa','hdfc ergo'],c:'Insurance',s:'Health'},
-  {k:['car insurance','bike insurance','vehicle insurance','motor insurance'],c:'Insurance',s:'Vehicle'},
-  {k:['sip','mutual fund','mf','groww','zerodha','kuvera','paytm money','et money','axis mf','sbi mf','hdfc mf','mirae','ppfas','parag parikh'],c:'Investment',s:'Mutual Fund SIP'},
-  {k:['stock','share','equity','upstox','angel one','icici direct','hdfc securities','intraday','ipo'],c:'Investment',s:'Stocks'},
-  {k:['ppf','nps','public provident fund','national pension','epf','provident fund'],c:'Investment',s:'PPF / NPS'},
-  {k:['flight','airline','air india','indigo','spicejet','vistara','go first','akasa','makemytrip flight','cleartrip','ease my trip'],c:'Travel',s:'Flights'},
-  {k:['hotel','resort','hostel','oyo','treebo','fabhotel','goibibo','booking.com','airbnb','stay','accommodation'],c:'Travel',s:'Hotels'},
-  {k:['local travel','sightseeing','tour','guide','car rental','zoomcar','revv','rental car'],c:'Travel',s:'Local Travel'},
-  {k:['card bill','credit card bill','card payment','cc payment','card due','minimum due','outstanding payment'],c:'Payment',s:'Card Bill'},
-  {k:['emi','loan','loan emi','home loan','car loan','personal loan','education loan','gold loan','emi payment'],c:'Payment',s:'Loan EMI'},
-  {k:['atm','cash withdrawal','atm withdrawal','withdraw cash'],c:'Transfer',s:'ATM Withdrawal'},
-  {k:['transfer','neft','rtgs','imps','upi transfer','fund transfer','bank transfer','sent to','transferred to'],c:'Transfer',s:'Inter-Bank'},
-  {k:['salary','wages','pay','stipend','monthly pay','payroll'],c:'Income',s:'Salary'},
-  {k:['freelance','freelancing','consulting','contract','gig','project payment','client payment'],c:'Income',s:'Freelance'},
-  {k:['interest','fd interest','rd interest','savings interest','deposit interest','bank interest'],c:'Income',s:'Interest'},
-  {k:['dividend','dividends','stock dividend','mf dividend','equity dividend'],c:'Income',s:'Dividends'},
-  {k:['commission','bonus','incentive','gratuity','performance bonus'],c:'Income',s:'Bonus & Commission'},
+  {k:['petrol','diesel','fuel','gas station','petrol pump','hpcl','bpcl','iocl','refuel'],c:'Automobile',s:'Petrol Fuels'},
+  {k:['uber','ola','rapido','auto','rickshaw','taxi','cab'],c:'Automobile',s:'Maintenance'},
+  {k:['metro','bus','train','irctc','local train','bus pass','railway'],c:'Travel',s:'Bus Tickets'},
+  {k:['bigbasket','grofers','blinkit','zepto','dmart','reliance fresh','grocery','groceries','vegetable','fruit','ration','kirana','milk'],c:'Groceries Food & Essentials',s:'Groceries and Essentials'},
+  {k:['restaurant','cafe','dine out','dinner','lunch','breakfast','pizza','burger','biryani','mcdonald','kfc','domino','subway','starbucks','bar','pub'],c:'Groceries Food & Essentials',s:'Dining Out'},
+  {k:['swiggy','zomato','food delivery','food order'],c:'Groceries Food & Essentials',s:'Dining Out'},
+  {k:['myntra','ajio','meesho','clothing','clothes','shirt','jeans','dress','shoes','fashion','apparel'],c:'Personal Items',s:'Shopping'},
+  {k:['amazon','flipkart','croma','reliance digital','vijay sales','electronics','mobile','laptop','headphone','charger','gadget','phone','tablet','tv'],c:'Personal Items',s:'Electronics Items'},
+  {k:['ikea','pepperfry','urban ladder','home decor','furniture','curtain','bedsheet','kitchen','utensil'],c:'Homeneeds',s:'Furnishing'},
+  {k:['netflix','amazon prime','hotstar','disney','jiocinema','sonyliv','zee5','youtube premium','spotify','apple music','gaana','jiosaavn','streaming','ott'],c:'Subscriptions',s:'OTT Subscriptions'},
+  {k:['steam','playstation','xbox','gaming','pubg','free fire','valorant','game'],c:'Leisure',s:'Misc.'},
+  {k:['bookmyshow','insider','event','concert','movie','cinema','pvr','inox','theatre','show','standup','comedy'],c:'Leisure',s:'Movies'},
+  {k:['electricity','bescom','mseb','tangedco','bses','torrent power','power bill','light bill','electric bill'],c:'Utilities and Bills',s:'Electricity'},
+  {k:['water bill','water tax','municipal water','bwssb'],c:'Utilities and Bills',s:'Water'},
+  {k:['broadband','wifi','internet','act fibernet','jio fiber','airtel xstream','bsnl fiber','tikona','hathway'],c:'Utilities and Bills',s:'Internet'},
+  {k:['mobile bill','phone recharge','airtel','jio','vi recharge','bsnl recharge','mobile recharge','prepaid','postpaid'],c:'Utilities and Bills',s:'Mobile Recharge'},
+  {k:['rent','house rent','flat rent','room rent'],c:'Utilities and Bills',s:'Housing & Rent'},
+  {k:['maintenance','society maintenance','repair','plumber','electrician','carpenter','painting','renovation','ac service'],c:'Homeneeds',s:'Home Improvements'},
+  {k:['lic','life insurance','term insurance','hdfc life','sbi life','icici prudential','max life'],c:'Insurance Premiums',s:'Life  Insurance Premium'},
+  {k:['health insurance','medical insurance','star health','care health','niva bupa','hdfc ergo'],c:'Insurance Premiums',s:'Health  Insurance Premium'},
+  {k:['car insurance','bike insurance','vehicle insurance','motor insurance'],c:'Insurance Premiums',s:'Auto (Car)  Insurance Premium'},
+  {k:['sip','mutual fund','mf','groww','zerodha','kuvera','paytm money','et money','axis mf','sbi mf','hdfc mf','mirae','ppfas','parag parikh'],c:'Investments',s:'Investment - Mutual Funds'},
+  {k:['stock','share','equity','upstox','angel one','icici direct','hdfc securities','intraday','ipo'],c:'Investments',s:'Investment - Shares'},
+  {k:['ppf','nps','public provident fund','national pension','epf','provident fund'],c:'Investments',s:'Investment - Fixed Deposits'},
+  {k:['flight','airline','air india','indigo','spicejet','vistara','go first','akasa','makemytrip flight','cleartrip','ease my trip'],c:'Travel',s:'Flight Tickets'},
+  {k:['hotel','resort','hostel','oyo','treebo','fabhotel','goibibo','booking.com','airbnb','stay','accommodation'],c:'Vacation',s:'Lodging'},
+  {k:['local travel','sightseeing','tour','guide','car rental','zoomcar','revv','rental car'],c:'Travel',s:'Train Tickets'},
+  {k:['card bill','credit card bill','card payment','cc payment','card due','minimum due','outstanding payment'],c:'Credit Card Bill Payment',s:''},
+  {k:['emi','loan','loan emi','home loan','car loan','personal loan','education loan','gold loan','emi payment'],c:'Homeneeds',s:'Home Improvements'},
+  {k:['atm','cash withdrawal','atm withdrawal','withdraw cash'],c:'Bank Balance Reconciliation',s:'ATM Withdrawl'},
+  {k:['transfer','neft','rtgs','imps','upi transfer','fund transfer','bank transfer','sent to','transferred to'],c:'Fund Transfer b/w Bank Accounts',s:'Inter Bank Transfer'},
+  {k:['salary','wages','pay','stipend','monthly pay','payroll'],c:'Income',s:'Freelancing Income'},
+  {k:['freelance','freelancing','consulting','contract','gig','project payment','client payment'],c:'Income',s:'Freelancing Income'},
+  {k:['interest','fd interest','rd interest','savings interest','deposit interest','bank interest'],c:'Income',s:'Interest Income'},
+  {k:['dividend','dividends','stock dividend','mf dividend','equity dividend'],c:'Income',s:'Dividend'},
+  {k:['commission','bonus','incentive','gratuity','performance bonus'],c:'Income',s:'Other Income'},
 ];
 /* ── Levenshtein distance between two strings (dynamic programming). ──────
    Used for fuzzy keyword matching: tolerates typos in user input.          */
@@ -42386,7 +39852,7 @@ const _cbDetectType=(text,cat)=>{
     if(new RegExp('\\b'+kw+'\\b','i').test(lo))return'credit';
   if(cat){
     if(cat.cat==='Income')return'credit';
-    if(['Housing','Food','Transport','Shopping','Entertainment','Utilities','Insurance','Investment','Travel','Payment'].includes(cat.cat))return'debit';
+    if(['Automobile','Beauty and Personal Care','Childcare','Farming','Groceries Food & Essentials','Healthcare','Homeneeds','Insurance Premiums','Investments','Leisure','Donations','Jewellery and Precious Metals','Office & Business Expenses','Personal Items','Subscriptions','Taxes','Travel','Utilities and Bills','Vacation','Credit Card Bill Payment','Unclassified Expenses','Events and Functions'].includes(cat.cat))return'debit';
   }
   for(const kw of['spent','spend','paid','purchase','bought','debit','bill','charge','subscription','emi','withdrawal','withdraw','donated','tip','fine'])
     if(new RegExp('\\b'+kw+'\\b','i').test(lo))return'debit';
@@ -42442,11 +39908,11 @@ const _cbParseTransaction=(text,state)=>{
   else if(allAcc.length===1){srcId=allAcc[0].id;srcType=allAcc[0].accType;accConf=1;}
   else{srcId=allAcc[0]?.id;srcType=allAcc[0]?.accType;ambiguities.push({type:'account',options:allAcc.map(a=>({id:a.id,name:a.name,type:a.accType}))});}
   // Check for card bill payment — also validate Payment::Card Bill exists in state.categories
-  const _cardBillCatOk=_appCats.some(c=>c.name==='Payment'&&(c.subs||[]).some(s=>s.name==='Card Bill'));
+  const _cardBillCatOk=_appCats.some(c=>c.name==='Credit Card Bill Payment');
   if(_cardBillCatOk&&srcType==='card'&&type==='debit'&&/\b(card\s*bill|card\s*payment|cc\s*payment|bill\s*payment|due|outstanding)\b/i.test(trimmed)){
-    const _cbPayee=_cbExtractPayee(trimmed)||getDefaultPayee(_appCats,'Payment::Card Bill')||'';
-    const tx={amount,date,type:'credit',cat:'Payment',subcat:'Card Bill',payee:_cbPayee,desc:_cbGenDesc(trimmed,catResult,_cbPayee,accMatch?.match?.account,(_training.accountAliases||[]).filter(a=>a.accountId===accMatch?.match?.account?.id).map(a=>a.alias)),status:'Reconciled',srcId,srcType};
-    return{success:true,confidence:0.9,transaction:tx,ambiguities,catMatch:{cat:'Payment',subcat:'Card Bill'},accountMatch:accMatch?{name:accMatch.match.account.name,confidence:accMatch.match.confidence}:null,raw:{text:trimmed}};
+    const _cbPayee=_cbExtractPayee(trimmed)||getDefaultPayee(_appCats,'Credit Card Bill Payment')||'';
+    const tx={amount,date,type:'credit',cat:'Credit Card Bill Payment',subcat:'',payee:_cbPayee,desc:_cbGenDesc(trimmed,catResult,_cbPayee,accMatch?.match?.account,(_training.accountAliases||[]).filter(a=>a.accountId===accMatch?.match?.account?.id).map(a=>a.alias)),status:'Reconciled',srcId,srcType};
+    return{success:true,confidence:0.9,transaction:tx,ambiguities,catMatch:{cat:'Credit Card Bill Payment',subcat:''},accountMatch:accMatch?{name:accMatch.match.account.name,confidence:accMatch.match.confidence}:null,raw:{text:trimmed}};
   }
   // Build canonical category key (e.g. "Food::Groceries") for getDefaultPayee lookup.
   // If the user typed an explicit payee ("at Reliance Fresh"), use it.
