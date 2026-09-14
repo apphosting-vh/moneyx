@@ -938,7 +938,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.19.25";
+ const APP_VERSION="7.19.26";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -11800,58 +11800,72 @@ var usePersistentReducer=(reducer,init)=>{
   const _ric=typeof requestIdleCallback==="function"?requestIdleCallback:(cb)=>setTimeout(cb,1);
   const timerRef=React.useRef(null);
   const ricRef=React.useRef(null);
+  const _doSaveRef=React.useRef(null);
   React.useEffect(()=>{
     stateRef.current=state; // keep ref in sync on every render
+    /* Full save pipeline — shared by the debounced effect below and the publicly
+       exposed window.__saveNow so local-state-only changes (e.g. chart Nifty
+       refresh, which writes localStorage but not the reducer) still reach
+       FSA + Google Drive backups. */
+    const _doSave=()=>{
+      /* ── 1. Save metadata to localStorage (transactions stripped) ── */
+      const _compacted=saveState(stateRef.current);
+      /* ── 2. Save transactions to IndexedDB (async, non-blocking) ── */
+      saveTxToIDB(stateRef.current).catch(e=>console.warn("[MM] IDB periodic save error:",e));
+      /* ── 3. Selective eodPrices/eodNavs save: only when content actually changed ── */
+      try{
+        const _ePJson=JSON.stringify(stateRef.current.eodPrices||{});
+        const _eNJson=JSON.stringify(stateRef.current.eodNavs||{});
+        if(_ePJson!==_prevEodPricesJson.current){_prevEodPricesJson.current=_ePJson;localStorage.setItem(LS_EOD_PRICES,_ePJson);}
+        if(_eNJson!==_prevEodNavsJson.current){_prevEodNavsJson.current=_eNJson;localStorage.setItem(LS_EOD_NAVS,_eNJson);}
+      }catch{}
+      /* ── 4. If emergency compaction pruned caches to fit in localStorage,
+            dispatch the matching PRUNE action(s) so in-memory state stays in sync.
+            Without this the next save re-includes the full caches and triggers
+            another QuotaExceededError on every subsequent state change. ── */
+      if(_compacted){
+        if(_compacted==="historyCache"||_compacted==="eodPrices"||_compacted==="eodNavs"){
+          dispatch({type:"PRUNE_HISTORY_CACHE"});
+        }
+        if(_compacted==="eodPrices"||_compacted==="eodNavs"){
+          dispatch({type:"PRUNE_EOD_PRICES",days:7});
+        }
+        if(_compacted==="eodNavs"){
+          dispatch({type:"PRUNE_EOD_NAVS",days:14});
+        }
+      }
+      /* ── 5. Write to FSA file if connected and has permission ── */
+      if(window.__fsa&&window.__fsa.handle&&window.__fsa.ready){
+        /* FSA file always receives the complete state (full transactions included)
+           since it doubles as the backup file and must be self-contained. */
+        fsaWriteFile(window.__fsa.handle,stateRef.current).then(ok=>{
+          if(ok){window.__fsa.lastSaved=new Date();window.dispatchEvent(new CustomEvent("fsa:saved"));}
+          else{window.dispatchEvent(new CustomEvent("fsa:write-failed"));}
+        });
+      }
+      /* ── 6. Cloud sync: write to Google Drive if supported ──
+         On Android, writes are throttled to max 1 per 10 s (_gdriveCanWrite gate).
+         On desktop/Windows, writes happen at the normal debounce cadence.
+         Bug 2 fix: do not write until boot pull has completed. */
+      if(cloudSyncSupported()&&_bootPullCompletedRef.current){
+        gdriveUpsertSyncFile(stateRef.current).then(ok=>{
+          if(ok){window.dispatchEvent(new CustomEvent("gdrive:synced"));}
+        });
+      }
+    };
+    _doSaveRef.current=_doSave;
+    /* Public trigger so any flow that wrote localStorage (e.g. Nifty refresh)
+       can flush the full state to FSA + Google Drive without a reducer change.
+       Deferred to the next tick so it never blocks a user gesture. */
+    window.__saveNow=()=>{
+      if(timerRef.current)clearTimeout(timerRef.current);
+      setTimeout(()=>{_doSaveRef.current&&_doSaveRef.current();},0);
+    };
     if(timerRef.current)clearTimeout(timerRef.current);
     timerRef.current=setTimeout(()=>{
       // Defer the expensive JSON.stringify to idle time so it never blocks a user gesture
       if(ricRef.current)cancelIdleCallback?.(ricRef.current);
-      ricRef.current=_ric(()=>{
-        /* ── 1. Save metadata to localStorage (transactions stripped) ── */
-        const _compacted=saveState(state);
-        /* ── 2. Save transactions to IndexedDB (async, non-blocking) ── */
-        saveTxToIDB(state).catch(e=>console.warn("[MM] IDB periodic save error:",e));
-        /* ── 3. Selective eodPrices/eodNavs save: only when content actually changed ── */
-        try{
-          const _ePJson=JSON.stringify(state.eodPrices||{});
-          const _eNJson=JSON.stringify(state.eodNavs||{});
-          if(_ePJson!==_prevEodPricesJson.current){_prevEodPricesJson.current=_ePJson;localStorage.setItem(LS_EOD_PRICES,_ePJson);}
-          if(_eNJson!==_prevEodNavsJson.current){_prevEodNavsJson.current=_eNJson;localStorage.setItem(LS_EOD_NAVS,_eNJson);}
-        }catch{}
-        /* ── 4. If emergency compaction pruned caches to fit in localStorage,
-              dispatch the matching PRUNE action(s) so in-memory state stays in sync.
-              Without this the next save re-includes the full caches and triggers
-              another QuotaExceededError on every subsequent state change. ── */
-        if(_compacted){
-          if(_compacted==="historyCache"||_compacted==="eodPrices"||_compacted==="eodNavs"){
-            dispatch({type:"PRUNE_HISTORY_CACHE"});
-          }
-          if(_compacted==="eodPrices"||_compacted==="eodNavs"){
-            dispatch({type:"PRUNE_EOD_PRICES",days:7});
-          }
-          if(_compacted==="eodNavs"){
-            dispatch({type:"PRUNE_EOD_NAVS",days:14});
-          }
-        }
-        /* ── 5. Write to FSA file if connected and has permission ── */
-        if(window.__fsa&&window.__fsa.handle&&window.__fsa.ready){
-          /* FSA file always receives the complete state (full transactions included)
-             since it doubles as the backup file and must be self-contained. */
-          fsaWriteFile(window.__fsa.handle,state).then(ok=>{
-            if(ok){window.__fsa.lastSaved=new Date();window.dispatchEvent(new CustomEvent("fsa:saved"));}
-            else{window.dispatchEvent(new CustomEvent("fsa:write-failed"));}
-          });
-        }
-        /* ── 6. Cloud sync: write to Google Drive if supported ──
-           On Android, writes are throttled to max 1 per 10 s (_gdriveCanWrite gate).
-           On desktop/Windows, writes happen at the normal debounce cadence.
-           Bug 2 fix: do not write until boot pull has completed. */
-        if(cloudSyncSupported()&&_bootPullCompletedRef.current){
-          gdriveUpsertSyncFile(state).then(ok=>{
-            if(ok){window.dispatchEvent(new CustomEvent("gdrive:synced"));}
-          });
-        }
-      },{timeout:2000}); // 2 s hard deadline — don't wait forever on a busy tab
+      ricRef.current=_ric(()=>{_doSaveRef.current&&_doSaveRef.current();},{timeout:2000}); // 2 s hard deadline — don't wait forever on a busy tab
     },400);
     return()=>{if(timerRef.current)clearTimeout(timerRef.current);};
   },[state]);
@@ -19113,7 +19127,14 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
   const refreshNifty=()=>{
     setNiftyLoading(true);
     _niftyLiveCache=null; _niftyLivePromise=null; /* bypass session cache to force a fresh fetch */
-    fetchNiftyLive().then(v=>{setNiftyLoading(false);if(v)setNiftyLive(v);}).catch(()=>setNiftyLoading(false));
+    fetchNiftyLive().then(v=>{
+      setNiftyLoading(false);
+      if(v)setNiftyLive(v);
+      /* The fetched series is persisted to localStorage inside fetchNiftyLive, but
+         that change lives outside the reducer — flush it to FSA + Google Drive so
+         closing the app right after Refresh still leaves backups with fresh data. */
+      if(window.__saveNow)window.__saveNow();
+    }).catch(()=>setNiftyLoading(false));
   };
 
   /* ── Build timeline data points ── */
