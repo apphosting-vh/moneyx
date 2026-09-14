@@ -19241,14 +19241,24 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
     if(mf&&mf.length>0&&pts.length>0){
       const activeMf=(mf||[]).filter(m=>m.units>0);
       const curCost=activeMf.reduce((s,m)=>s+(m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested),0);
-      const curVal=activeMf.reduce((s,m)=>s+(m.currentValue&&m.currentValue>0?m.currentValue:m.invested),0);
       const now=new Date();
       const todayLabel=now.getDate()+"-"+MON[now.getMonth()]+"-"+now.getFullYear();
       const todayRaw=_localIso(now);
+      /* Use latest eodNavs snapshot (same source as the hero card) to avoid stale
+         m.currentValue after gap days without opening the app. */
+      const _latestNavDate=Object.keys(_normEodNavs).sort().slice(-1)[0];
+      const curVal=_latestNavDate?activeMf.reduce((s,m)=>{
+        const nav=(_normEodNavs[_latestNavDate]||{})[m.schemeCode];
+        return s+(nav?nav*m.units:0);
+      },0):activeMf.reduce((s,m)=>s+(m.currentValue&&m.currentValue>0?m.currentValue:m.invested),0);
       const lastPt=pts[pts.length-1];
       if(curVal>0&&curCost>0){
         const fundVals={};
-        activeMf.forEach(m=>{const fv=(m.currentValue&&m.currentValue>0?m.currentValue:0);if(fv>0)fundVals[m.name]=fv;});
+        activeMf.forEach(m=>{
+          const nav=_latestNavDate?(_normEodNavs[_latestNavDate]||{})[m.schemeCode]:null;
+          const fv=(nav&&nav>0)?m.units*nav:(m.currentValue&&m.currentValue>0?m.currentValue:0);
+          if(fv>0)fundVals[m.name]=fv;
+        });
         const todayTxn=byDate[todayRaw]||[];
         const newPt={date:todayLabel,rawDate:todayRaw,cost:curCost,value:curVal,fundVals:fundVals,
           txns:todayTxn.map(t=>({type:t.orderType,fund:t.fundName,amount:+t.amount||0,nav:+t.nav||0,isSwitch:!!t.isSwitch}))};
@@ -20102,7 +20112,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
               /* RETURN FROM RANGE START */
               hpPortPct!=null&&React.createElement(React.Fragment,null,
                 React.createElement("text",{x:L,y:tipY+_lay.m3,fill:"var(--text5)",fontSize:8.5,fontWeight:700,letterSpacing:.4},"RETURN FROM RANGE START"),
-                React.createElement("text",{x:VR,y:tipY+_lay.m3,textAnchor:"end",fill:col,fontSize:12,fontWeight:800},
+                React.createElement("text",{x:VR,y:tipY+_lay.m3,textAnchor:"end",fill:col,fontSize:11,fontWeight:800},
                   PCTfmt(hpPortPct))
               )
             );
