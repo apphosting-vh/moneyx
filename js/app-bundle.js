@@ -938,7 +938,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.19.26";
+ const APP_VERSION="7.19.27";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -2663,8 +2663,9 @@ const parseAmt=(raw)=>{
    Exports the given transactions array to .xlsx using SheetJS.
    Includes MM_ID column so the file can be re-imported as an upsert.
    ══════════════════════════════════════════════════════════════════════════ */
-const exportLedgerXlsx=(transactions,accountName,snMap)=>{
+const exportLedgerXlsx=async(transactions,accountName,snMap)=>{
   try{
+    if(!window.XLSX)await window.__loadExportLibs(); /* lazy-load xlsx on first export click */
     const XL=window.XLSX;
     if(!XL){alert("XLSX library not available.");return;}
     const rows=transactions.map((tx,i)=>{
@@ -12687,6 +12688,7 @@ const AccAttachPanel=({accId,attachments=[],onSave})=>{
 const TxEditModal=({tx,categories,payees,txTypes,onSave,onClose,allAccounts=[],currentAccountId=""})=>{
   const[f,setF]=useState({...tx,amount:String(tx.amount),_receipts:tx._receipts||[],srcId:tx.srcId||currentAccountId||""});
   const[showTax,setShowTax]=useState(!!(tx.gstRate&&+tx.gstRate>0)||!!(tx.tdsRate&&+tx.tdsRate>0));
+  const[showMileage,setShowMileage]=useState(!!(tx.odo||tx.liters||tx.bunk||tx.fuelPrice||tx.kmpl));
   const[activeTxTypes,setActiveTxTypes]=useState(txTypes); // tracks correct type list for selected account
   const isTransfer=f.txType==="Transfer";
   const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
@@ -12767,6 +12769,36 @@ const TxEditModal=({tx,categories,payees,txTypes,onSave,onClose,allAccounts=[],c
         React.createElement("div",null,
           React.createElement("label",{style:lbl},"TDS Section"),
           React.createElement("input",{className:"inp",placeholder:"e.g. 194J, 194C",value:f.tdsSec||"",onChange:set("tdsSec"),style:{fontSize:13}})
+        )
+      )
+    ),
+    React.createElement("div",{style:{marginBottom:12,padding:"10px 13px",borderRadius:10,border:"1px solid "+(showMileage?"var(--accent)":"var(--border2)"),background:showMileage?"var(--accentbg2)":"var(--bg4)",transition:"all .2s"}},
+      React.createElement("label",{style:{display:"flex",alignItems:"center",gap:8,cursor:"pointer",marginBottom:showMileage?12:0}},
+        React.createElement("input",{type:"checkbox",checked:showMileage,onChange:e=>setShowMileage(e.target.checked),style:{width:14,height:14,accentColor:"var(--accent)",cursor:"pointer",flexShrink:0}}),
+        React.createElement("span",{style:{fontSize:13,fontWeight:500,color:showMileage?"var(--accent)":"var(--text4)"}},"Mileage"),
+        !showMileage&&React.createElement("span",{style:{fontSize:11,color:"var(--text6)"}},"(car fuel / mileage tracking)")
+      ),
+      showMileage&&React.createElement("div",{className:"tx-grid-2col"},
+        React.createElement("div",null,
+          React.createElement("label",{style:lbl},"Current ODO (km)"),
+          React.createElement("input",{className:"inp",type:"number",placeholder:"e.g. 45230",value:f.odo||"",onChange:set("odo"),style:{fontSize:13}})
+        ),
+        React.createElement("div",null,
+          React.createElement("label",{style:lbl},"Liter Consumed"),
+          React.createElement("input",{className:"inp",type:"number",placeholder:"e.g. 22",value:f.liters||"",onChange:set("liters"),style:{fontSize:13}})
+        ),
+        React.createElement("div",null,
+          React.createElement("label",{style:lbl},"Fuel Bunk"),
+          React.createElement("input",{className:"inp",placeholder:"Station name",value:f.bunk||"",onChange:set("bunk"),style:{fontSize:13}})
+        ),
+        React.createElement("div",null,
+          React.createElement("label",{style:lbl},"Fuel Price (₹/L)"),
+          React.createElement("input",{className:"inp",type:"number",placeholder:"0.00",value:f.fuelPrice||"",onChange:set("fuelPrice"),style:{fontSize:13}})
+        ),
+        React.createElement("div",{style:{gridColumn:"1/-1"}},
+          React.createElement("label",{style:lbl},"Mileage (km/L)"),
+          React.createElement("input",{className:"inp",type:"number",placeholder:"e.g. 16.5",value:f.kmpl||"",onChange:set("kmpl"),style:{fontSize:13}}),
+          React.createElement("div",{style:{fontSize:11,color:"var(--text6)",marginTop:5,lineHeight:1.5}},"Optional — enter if you know it. Empty fields on fuel transactions can be back-filled later.")
         )
       )
     ),
@@ -13054,6 +13086,7 @@ const TxModal=({onAdd,onClose,categories,payees,txTypes,allAccounts,currentAccou
   const EMPTY={date:TODAY(),txType:txTypes[0],amount:"",payee:"",desc:"",cat:flatC[0]||"Income",tags:"",status:"Reconciled",txNum:"",notes:"",srcId:currentAccountId||"",tgtId:"",isScheduled:false,schedFreq:"monthly",schedEnd:"",gstRate:"0",gstType:"inclusive",tdsRate:"",tdsSec:""};
   const[f,setF]=useState(EMPTY);
   const[showTax,setShowTax]=useState(false);
+  const[showMileage,setShowMileage]=useState(false);
   /* activeTxTypes tracks the currently-correct type list for whichever account is selected.
      Initialised from the prop; updated when the user switches account in the picker.
      Without this, the Type dropdown always showed the FAB's initial account type options
@@ -13244,6 +13277,36 @@ const TxModal=({onAdd,onClose,categories,payees,txTypes,allAccounts,currentAccou
         React.createElement("div",null,
           React.createElement("label",{style:lbl},"TDS Section"),
           React.createElement("input",{className:"inp",placeholder:"e.g. 194J, 194C",value:f.tdsSec,onChange:set("tdsSec"),style:{fontSize:13}})
+        )
+      )
+    ),
+    React.createElement("div",{style:{marginBottom:12,padding:"10px 13px",borderRadius:10,border:"1px solid "+(showMileage?"var(--accent)":"var(--border2)"),background:showMileage?"var(--accentbg2)":"var(--bg4)",transition:"all .2s"}},
+      React.createElement("label",{style:{display:"flex",alignItems:"center",gap:8,cursor:"pointer",marginBottom:showMileage?12:0}},
+        React.createElement("input",{type:"checkbox",checked:showMileage,onChange:e=>setShowMileage(e.target.checked),style:{width:14,height:14,accentColor:"var(--accent)",cursor:"pointer",flexShrink:0}}),
+        React.createElement("span",{style:{fontSize:13,fontWeight:500,color:showMileage?"var(--accent)":"var(--text4)"}},"Mileage"),
+        !showMileage&&React.createElement("span",{style:{fontSize:11,color:"var(--text6)"}},"(car fuel / mileage tracking)")
+      ),
+      showMileage&&React.createElement("div",{className:"tx-grid-2col"},
+        React.createElement("div",null,
+          React.createElement("label",{style:lbl},"Current ODO (km)"),
+          React.createElement("input",{className:"inp",type:"number",placeholder:"e.g. 45230",value:f.odo||"",onChange:set("odo"),style:{fontSize:13}})
+        ),
+        React.createElement("div",null,
+          React.createElement("label",{style:lbl},"Liter Consumed"),
+          React.createElement("input",{className:"inp",type:"number",placeholder:"e.g. 22",value:f.liters||"",onChange:set("liters"),style:{fontSize:13}})
+        ),
+        React.createElement("div",null,
+          React.createElement("label",{style:lbl},"Fuel Bunk"),
+          React.createElement("input",{className:"inp",placeholder:"Station name",value:f.bunk||"",onChange:set("bunk"),style:{fontSize:13}})
+        ),
+        React.createElement("div",null,
+          React.createElement("label",{style:lbl},"Fuel Price (₹/L)"),
+          React.createElement("input",{className:"inp",type:"number",placeholder:"0.00",value:f.fuelPrice||"",onChange:set("fuelPrice"),style:{fontSize:13}})
+        ),
+        React.createElement("div",{style:{gridColumn:"1/-1"}},
+          React.createElement("label",{style:lbl},"Mileage (km/L)"),
+          React.createElement("input",{className:"inp",type:"number",placeholder:"e.g. 16.5",value:f.kmpl||"",onChange:set("kmpl"),style:{fontSize:13}}),
+          React.createElement("div",{style:{fontSize:11,color:"var(--text6)",marginTop:5,lineHeight:1.5}},"Optional — enter if you know it. Empty fields on fuel transactions can be back-filled later.")
         )
       )
     ),
@@ -27823,6 +27886,170 @@ const RptGstTds=({data,from,to,onExportPDF})=>{
   );
 };
 
+/* ══ REPORT: CAR MILEAGE ════════════════════════════════════════════════════ */
+const RptCarMileage=({data,from,to,onExportPDF})=>{
+  const[view,setView]=useState("snapshot");
+
+  /* ODO bookkeeping spans the full transaction history so the first fill inside
+     the selected window can still be measured against the fill before it */
+  const allMileage=[
+    ...data.banks.flatMap(b=>(b.transactions||[]).map(t=>({...t,accName:b.name}))),
+    ...data.cards.flatMap(c=>(c.transactions||[]).map(t=>({...t,accName:c.name}))),
+    ...data.cash.transactions.map(t=>({...t,accName:"Cash"})),
+  ]
+    .filter(t=>t.odo!=null&&isFinite(+t.odo)&&+t.odo>0)
+    .sort((a,b)=>a.date===b.date?(String(a._addedAt||"").localeCompare(String(b._addedAt||""))):(a.date<b.date?-1:1));
+  let _last=null;
+  allMileage.forEach(t=>{t._prevOdo=_last;_last=+t.odo;});
+
+  const inRange=t=>(!from||t.date>=from)&&(!to||t.date<=to);
+  const fills=allMileage.filter(inRange).map(t=>{
+    const odo=+t.odo,liters=+t.liters||0,fuelPrice=+t.fuelPrice||0;
+    let kmpl=+t.kmpl>0?+t.kmpl:(t._prevOdo!=null&&liters>0&&odo>t._prevOdo?(odo-t._prevOdo)/liters:0);
+    return{...t,_odo:odo,_liters:liters,_fuelPrice:fuelPrice,_cost:liters>0&&fuelPrice>0?liters*fuelPrice:0,_amount:+t.amount||0,_kmpl:kmpl,_manual:!!(+t.kmpl>0)};
+  });
+
+  const totalFills=fills.length;
+  const totalLiters=fills.reduce((s,f)=>s+f._liters,0);
+  const totalAmount=fills.reduce((s,f)=>s+f._amount,0);
+  const estCost=fills.reduce((s,f)=>s+f._cost,0);
+  const measured=fills.filter(f=>f._kmpl>0);
+  const avgKmpl=measured.length?measured.reduce((s,f)=>s+f._kmpl,0)/measured.length:0;
+  const lastOdoTx=allMileage[allMileage.length-1];
+  const lastOdoVal=lastOdoTx?Number(lastOdoTx.odo).toLocaleString("en-IN"):"—";
+
+  /* Monthly aggregation of per-fill mileage (averaged over measured fills) */
+  const byMonth={};
+  fills.forEach(f=>{
+    const k=f.date.substr(0,7);
+    if(!byMonth[k])byMonth[k]={kmpls:[],fills:0,liters:0,amount:0};
+    byMonth[k].fills++;byMonth[k].liters+=f._liters;byMonth[k].amount+=f._amount;
+    if(f._kmpl>0)byMonth[k].kmpls.push(f._kmpl);
+  });
+  const months=Object.keys(byMonth).sort().map(m=>({
+    month:m,
+    label:MONTH_NAMES[parseInt(m.slice(5),10)-1],
+    kmpl:byMonth[m].kmpls.length?byMonth[m].kmpls.reduce((s,k)=>s+k,0)/byMonth[m].kmpls.length:0,
+    fills:byMonth[m].fills,liters:byMonth[m].liters,amount:byMonth[m].amount
+  }));
+  const best=months.reduce((a,b)=>!a||b.kmpl>a.kmpl?b:a,null);
+
+  const shortDate=iso=>{if(!iso)return"—";const p=iso.split("-");return parseInt(p[2],10)+" "+MONTH_NAMES[parseInt(p[1],10)-1];};
+  const kmLabel=f=>f._manual?f._kmpl.toFixed(1):(f._kmpl>0?f._kmpl.toFixed(1)+" *":"—");
+
+  const MileBar=({mData,h=200})=>{
+    if(!mData.length)return null;
+    const max=Math.max(...mData.map(d=>d.kmpl),10);
+    const W=760,padL=40,padR=10,padT=26,padB=40,inner=W-padL-padR;
+    const gap=inner/mData.length,bW=Math.min(46,gap*0.58);
+    return React.createElement("svg",{width:"100%",viewBox:"0 0 "+W+" "+h,style:{display:"block"}},
+      Array.from({length:5},(_,i)=>{
+        const ly=padT+(h-padT-padB)*i/4;
+        return React.createElement("g",{key:"gl"+i},
+          React.createElement("line",{x1:padL,y1:ly,x2:W-padR,y2:ly,stroke:"var(--border2)",strokeWidth:1}),
+          React.createElement("text",{x:padL-7,y:ly+3,textAnchor:"end",fill:"var(--text6)",fontSize:9},(max*(1-i/4)).toFixed(0))
+        );
+      }),
+      mData.map((d,i)=>{
+        const x=padL+i*gap+gap/2;
+        const bh=Math.max((d.kmpl/max)*(h-padT-padB),2);
+        const y=padT+(h-padT-padB)-bh;
+        const col=d.kmpl>=16?"#16a34a":d.kmpl>=12?"#6d28d9":"#f59e0b";
+        return React.createElement("g",{key:d.month},
+          React.createElement("rect",{x:x-bW/2,y,width:bW,height:bh,rx:4,fill:col,opacity:.88}),
+          React.createElement("text",{x,y:y-5,textAnchor:"middle",fill:"var(--text3)",fontSize:9,fontWeight:700},d.kmpl>0?d.kmpl.toFixed(1)+" km/L":"—"),
+          React.createElement("text",{x,y:h-25,textAnchor:"middle",fill:"var(--text4)",fontSize:10},d.label),
+          d.fills>1&&React.createElement("text",{x,y:h-9,textAnchor:"middle",fill:"var(--text6)",fontSize:8},d.fills+" fills")
+        );
+      })
+    );
+  };
+
+  if(fills.length===0)return React.createElement("div",{className:"fu"},
+    React.createElement(RptHeader,{title:"Car Mileage",desc:"Fuel efficiency tracking from mileage-tagged fuel transactions",icon:React.createElement(Icon,{n:"vehicle",size:18})}),
+    React.createElement(Empty,{icon:React.createElement(Icon,{n:"vehicle",size:18}),text:"No fuel transactions with an ODO reading in the selected period. Enable the Mileage option on a fuel expense to start tracking."})
+  );
+
+  const gc="80px 1.2fr 1fr 95px 75px 1.1fr 85px 90px 95px";
+  const tbH={padding:"9px 12px",fontSize:10,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,background:"var(--bg4)",borderBottom:"1px solid var(--border)"};
+  const tbD=(col="var(--text2)",al="left",extra={})=>({padding:"9px 12px",fontSize:12,color:col,borderBottom:"1px solid var(--border2)",verticalAlign:"middle",textAlign:al,...extra});
+
+  return React.createElement("div",{className:"fu"},
+    React.createElement(RptHeader,{title:"Car Mileage",desc:"Fuel efficiency (km/L) from mileage-tagged fuel transactions — ODO, liters, bunk and pump price",icon:React.createElement(Icon,{n:"vehicle",size:18})}),
+    React.createElement(RptCtrlBar,{onExportPDF},
+      React.createElement("span",{style:{fontSize:11,color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Fuel Fills:"),
+      React.createElement("span",{style:{fontSize:12,color:"var(--text3)",fontWeight:700}},totalFills+" in period"),
+      React.createElement("div",{style:{display:"flex",gap:5,marginLeft:"auto"}},
+        [{id:"snapshot",label:"Chart",icon:React.createElement(Icon,{n:"chart",size:18})},{id:"detailed",label:"Details",icon:React.createElement(Icon,{n:"receipt",size:18})}].map(v=>
+          React.createElement("button",{key:v.id,onClick:()=>setView(v.id),style:{
+            padding:"6px 14px",borderRadius:20,
+            border:"1.5px solid "+(view===v.id?"var(--accent)":"var(--border)"),
+            background:view===v.id?"linear-gradient(135deg,var(--accentbg),var(--accentbg2))":"transparent",
+            color:view===v.id?"var(--accent)":"var(--text4)",
+            boxShadow:view===v.id?"0 0 0 3px var(--accentbg5)":"none",
+            cursor:"pointer",fontSize:12,fontFamily:"'DM Sans',sans-serif",fontWeight:view===v.id?700:400,
+            display:"flex",alignItems:"center",gap:5,transition:"all .15s"
+          }},v.icon," ",v.label)
+        )
+      )
+    ),
+    React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
+      React.createElement(StatCard,{label:"Average Mileage",val:avgKmpl>0?avgKmpl.toFixed(1)+" km/L":"—",col:avgKmpl>=16?"#16a34a":avgKmpl>0?"#6d28d9":"var(--text5)",sub:"across "+measured.length+" measured fill"+(measured.length===1?"":"s"),icon:React.createElement(Icon,{n:"vehicle",size:18})}),
+      React.createElement(StatCard,{label:"Total Fills",val:totalFills,col:"var(--accent)",sub:totalLiters.toFixed(1)+" litres consumed",icon:React.createElement(Icon,{n:"water",size:18})}),
+      React.createElement(StatCard,{label:"Total Spend",val:INR(totalAmount),col:"#ef4444",sub:estCost>0?"fuel-only est. "+INR(estCost):"across "+totalFills+" transaction"+(totalFills===1?"":"s"),icon:React.createElement(Icon,{n:"coin",size:18})}),
+      React.createElement(StatCard,{label:"Last ODO",val:lastOdoVal,col:"#0e7490",sub:best?("best "+best.label+" · "+best.kmpl.toFixed(1)+" km/L"):"no measurable month",icon:React.createElement(Icon,{n:"target",size:18})})
+    ),
+    view==="snapshot"&&React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:14}},
+      React.createElement(Card,{sx:{position:"relative",minHeight:210}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:14}},
+          React.createElement("span",{style:{display:"flex",color:"#6d28d9"}},React.createElement(Icon,{n:"activity",size:18})),
+          React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:12.5,fontWeight:700,color:"var(--text3)"}},"Monthly Average Mileage"),
+            React.createElement("div",{style:{fontSize:10.5,color:"var(--text6)"}},"km/L averaged per measured fill-up · "+months.length+" month"+(months.length===1?"":"s"))
+          )
+        ),
+        React.createElement(MileBar,{mData:months}),
+        React.createElement("div",{style:{fontSize:10.5,color:"var(--text6)",marginTop:10,paddingTop:8,borderTop:"1px dashed var(--border2)",lineHeight:1.5}},
+          "Mileage = tank distance ÷ liters consumed — entered directly, or derived from the ODO difference to the previous fill-up (marked *). Green ≥16, purple 12–16, amber <12 km/L."
+        )
+      ),
+      React.createElement(Card,null,
+        React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--text3)",marginBottom:12,textTransform:"uppercase",letterSpacing:.5}},"Recent Fills"),
+        fills.slice(-5).reverse().map(f=>React.createElement("div",{key:f.id,style:{display:"flex",gap:10,alignItems:"center",padding:"8px 4px",borderBottom:"1px solid var(--border2)"}},
+          React.createElement("div",{style:{minWidth:66,fontSize:11,color:"var(--text5)",fontWeight:600}},shortDate(f.date)),
+          React.createElement("div",{style:{flex:1,minWidth:0,fontSize:12.5,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},f.desc||f.payee||"Fuel"),
+          React.createElement("div",{style:{fontSize:11,color:"var(--text6)"}},f.accName||""),
+          React.createElement("div",{style:{fontSize:12,fontWeight:600,color:"var(--text2)"}},f._liters>0?f._liters.toFixed(1)+" L":"—"),
+          React.createElement("div",{style:{textAlign:"right",fontSize:12,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#6d28d9",minWidth:54}},kmLabel(f))
+        ))
+      )
+    ),
+    view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflowX:"auto"}},
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:gc,minWidth:940,background:"var(--bg4)",borderBottom:"1px solid var(--border)"}},
+        ["Date","Description / Payee","Account","ODO (km)","Liters","Fuel Bunk","Mileage","Price (₹/L)","Spent (₹)"].map(h=>React.createElement("div",{key:h,style:tbH},h))
+      ),
+      fills.slice().reverse().map(f=>React.createElement("div",{key:f.id,style:{display:"grid",gridTemplateColumns:gc,minWidth:940}},
+        React.createElement("div",{style:tbD()},shortDate(f.date)),
+        React.createElement("div",{style:tbD("var(--text2)","left",{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"})},f.desc||f.payee||"—"),
+        React.createElement("div",{style:tbD("var(--text5)")},f.accName||""),
+        React.createElement("div",{style:tbD("var(--text2)","right")},f._odo.toLocaleString("en-IN")),
+        React.createElement("div",{style:tbD("var(--text2)","right")},f._liters>0?f._liters.toFixed(1):"—"),
+        React.createElement("div",{style:tbD("var(--text5)")},f.bunk||"—"),
+        React.createElement("div",{style:tbD(f._kmpl>=16?"#16a34a":f._kmpl>0?"#6d28d9":"var(--text5)","right",{fontWeight:f._kmpl>0?700:400,fontFamily:"'Sora',sans-serif"})},kmLabel(f)),
+        React.createElement("div",{style:tbD("var(--text5)","right")},f._fuelPrice>0?"₹"+f._fuelPrice.toFixed(2):"—"),
+        React.createElement("div",{style:tbD("var(--text3)","right",{fontFamily:"'Sora',sans-serif",fontWeight:700})},INR(f._amount))
+      )),
+      React.createElement("div",{style:{display:"flex",gap:18,flexWrap:"wrap",padding:"11px 14px",borderTop:"2px solid var(--border)",fontSize:12,alignItems:"center"}},
+        React.createElement("span",{style:{fontWeight:800,color:"var(--text3)",fontFamily:"'Sora',sans-serif"}},"Totals"),
+        React.createElement("span",null,fills.length+" fill"+(fills.length===1?"":"s")+" · "+totalLiters.toFixed(1)+" L"),
+        React.createElement("span",{style:{color:"var(--text4)"}},estCost>0?"est. fuel "+INR(estCost):null),
+        React.createElement("span",{style:{marginLeft:"auto",fontWeight:700}},"Spent: "+INR(totalAmount)),
+        React.createElement("span",{style:{color:"var(--text6)",fontSize:10.5}},"* derived from ODO difference ÷ liters")
+      )
+    )
+  );
+};
+
 /* ══ NEW REPORT: BUDGET VS ACTUALS ═════════════════════════════════════════ */
 const RptBudgetVsActual=({data,from,to,onExportPDF})=>{
   const[accFilter,setAccFilter]=useState("all");
@@ -28724,6 +28951,7 @@ const REPORT_TREE=[
   {id:"yoy",           label:"Year-over-Year",             icon:React.createElement(Icon,{n:"compare",size:18})},
   {id:"cattrends",     label:"Category Trends",            icon:React.createElement(Icon,{n:"trenddown",size:18})},
   {id:"catdrilldown",  label:"Category Deep-Dive",         icon:React.createElement(Icon,{n:"search",size:18})},
+  {id:"mileage",       label:"Car Mileage",                icon:React.createElement(Icon,{n:"vehicle",size:18})},
 ];
 
 const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
@@ -28892,6 +29120,7 @@ const ReportsSection=React.memo(({data,isMobile,onJumpToLedger})=>{
       case"yoy":             return React.createElement(RptYoYComparison,props);
       case"cattrends":       return React.createElement(RptCategoryTrends,props);
       case"catdrilldown":    return React.createElement(RptCategoryDrillDown,props);
+      case"mileage":         return React.createElement(RptCarMileage,props);
       default:               return React.createElement(RptCashFlow,props);
     }
   };
