@@ -766,6 +766,7 @@ const INIT=()=>({
   historyCache:{},
   mfHistNavs:{},
   hiddenTabs:[],
+  taxHiddenTabs:[],
   taxData:null,
   taxData2627:null,
   insightPrefs:{
@@ -831,6 +832,7 @@ const EMPTY_STATE=()=>({
   historyCache:{},
   mfHistNavs:{},
   hiddenTabs:[],
+  taxHiddenTabs:[],
   taxData:null,
   taxData2627:null,
   catRules:[],
@@ -938,7 +940,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.19.27";
+ const APP_VERSION="7.19.28";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -2241,6 +2243,7 @@ const reducer=(s,a)=>{
     case"POSTPONE_REMINDER":return{...s,reminders:(s.reminders||[]).map(r=>r.id===a.id?{...r,nextDate:a.date,postponedDate:a.date,lastTriggeredDate:TODAY()}:r)};
     case"SET_NW_SNAPSHOT":return{...s,nwSnapshots:{...(s.nwSnapshots||{}),[a.month]:a.nw}};
     case"SET_HIDDEN_TABS":return{...s,hiddenTabs:a.hiddenTabs||[]};
+    case"SET_TAX_HIDDEN_TABS":return{...s,taxHiddenTabs:a.hidden||[]};
     case"DEL_NW_SNAPSHOT":{const snaps={...(s.nwSnapshots||{})};delete snaps[a.month];return{...s,nwSnapshots:snaps};}
     /* ── EOD price snapshots ── */
     case"SET_EOD_PRICES":{
@@ -5879,6 +5882,7 @@ var gdriveReadSyncFile = async (silent = true) => {
       pf:           d.pf           || [],
       goals:        d.goals        || [],
       hiddenTabs:   d.hiddenTabs   || [],
+      taxHiddenTabs:d.taxHiddenTabs|| [],
       catRules:     d.catRules     || [],
       reminders:    d.reminders    || [],
       insightPrefs: { ..._def.insightPrefs, ...(d.insightPrefs || {}) },
@@ -5984,6 +5988,7 @@ var gdriveUpsertSyncFile = async (state, manual) => {
         pf:           state.pf           || [],
         goals:        state.goals        || [],
         hiddenTabs:   state.hiddenTabs   || [],
+        taxHiddenTabs: state.taxHiddenTabs || [],
         catRules:     state.catRules     || [],
         reminders:    state.reminders    || [],
         insightPrefs: { ...EMPTY_STATE().insightPrefs, ...(state.insightPrefs || {}) },
@@ -6256,6 +6261,7 @@ var gdriveAutoBackup = async (state) => {
         pf:                   state.pf                   || [],
         goals:                state.goals                || [],
         hiddenTabs:           state.hiddenTabs           || [],
+        taxHiddenTabs:          state.taxHiddenTabs          || [],
         catRules:             state.catRules             || [],
         reminders:            state.reminders            || [],
         insightPrefs:         { ...EMPTY_STATE().insightPrefs, ...(state.insightPrefs || {}) },
@@ -6548,6 +6554,7 @@ var CloudBackupPanel = ({ state, dispatch }) => {
         pf:           remote.state.pf           || [],
         goals:        remote.state.goals        || [],
         hiddenTabs:   remote.state.hiddenTabs   || [],
+        taxHiddenTabs:remote.state.taxHiddenTabs||[],
         catRules:     remote.state.catRules     || [],
         reminders:    remote.state.reminders    || [],
         insightPrefs: { ...EMPTY_STATE().insightPrefs, ...(remote.state.insightPrefs || {}) },
@@ -8372,7 +8379,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                   const _cbTr=(()=>{try{return JSON.parse(localStorage.getItem("mm_v7_chatbot_training")||"{}");} catch{return{};}})();
                   const payload={version:8,exportedAt:new Date().toISOString(),
                     summary:{bankAccounts:state.banks.length,bankTxns:state.banks.reduce((s,b)=>s+(b.transactions||[]).length,0),cardAccounts:state.cards.length,cardTxns:state.cards.reduce((s,c)=>s+(c.transactions||[]).length,0),cashTxns:state.cash.transactions.length,loans:state.loans.length,mf:state.mf.length,shares:state.shares.length,fd:state.fd.length,categories:state.categories.length,payees:state.payees.length,scheduled:(state.scheduled||[]).length,notes:(state.notes||[]).length,reminders:(state.reminders||[]).length,nwSnapshots:Object.keys(state.nwSnapshots||{}).length,shareSnapshots:Object.values(state.soldShareSnapshots||{}).reduce((s,a)=>s+a.length,0),eodDays:Object.keys(state.eodPrices||{}).length,eodNavDays:Object.keys(state.eodNavs||{}).length,hasTaxData:!!(state.taxData),hasTaxData2627:!!(state.taxData2627),hasYearlyBudget:Object.values((state.insightPrefs||{}).yearlyBudgetPlans||{}).some(v=>v>0),brokerCashBalance:state.brokerCashBalance||0,chatbotCatRules:(_cbTr.customCatRules||[]).length,chatbotAliases:(_cbTr.accountAliases||[]).length},
-                    data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},soldShareSnapshots:state.soldShareSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,taxData2627:state.taxData2627||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],catRules:state.catRules||[],reminders:state.reminders||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})},chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},                    avApiKey:localStorage.getItem("mm_av_api_key")||"",entryScores:localStorage.getItem(LS_ENTRY_SCORES)||"[]",entrySnapshots:localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",screenerData:localStorage.getItem(_SCREENER_KEY)||null,screenerSnapshots:localStorage.getItem(_SCREENER_SNAPS_KEY)||null}
+                    data:{...state,notes:state.notes||[],scheduled:state.scheduled||[],nwSnapshots:state.nwSnapshots||{},soldShareSnapshots:state.soldShareSnapshots||{},eodPrices:state.eodPrices||{},eodNavs:state.eodNavs||{},historyCache:state.historyCache||{},taxData:state.taxData||null,taxData2627:state.taxData2627||null,re:state.re||[],pf:state.pf||[],goals:state.goals||[],hiddenTabs:state.hiddenTabs||[],taxHiddenTabs:state.taxHiddenTabs||[],catRules:state.catRules||[],reminders:state.reminders||[],insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})},chatbotTraining:{customCatRules:_cbTr.customCatRules||[],accountAliases:_cbTr.accountAliases||[]},                    avApiKey:localStorage.getItem("mm_av_api_key")||"",entryScores:localStorage.getItem(LS_ENTRY_SCORES)||"[]",entrySnapshots:localStorage.getItem(LS_ENTRY_SNAPSHOTS)||"[]",screenerData:localStorage.getItem(_SCREENER_KEY)||null,screenerSnapshots:localStorage.getItem(_SCREENER_SNAPS_KEY)||null}
                   };
                   const enc=await encryptBackup(payload,pw);
                   const blob=new Blob([JSON.stringify(enc)],{type:"application/json"});
@@ -8433,6 +8440,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                     pf:state.pf||[],
                     goals:state.goals||[],
                     hiddenTabs:state.hiddenTabs||[],
+                    taxHiddenTabs:state.taxHiddenTabs||[],
                     catRules:state.catRules||[],
                     reminders:state.reminders||[],
                     insightPrefs:{...EMPTY_STATE().insightPrefs,...(state.insightPrefs||{})},
@@ -8513,6 +8521,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                         pf:d.pf||[],
                         goals:d.goals||[],
                         hiddenTabs:d.hiddenTabs||[],
+                        taxHiddenTabs:d.taxHiddenTabs||[],
                         catRules:d.catRules||[],
                         reminders:d.reminders||[],
                         insightPrefs:{...EMPTY_STATE().insightPrefs,...(d.insightPrefs||{})},
@@ -8599,7 +8608,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                       localStorage.removeItem(LS_LAST_IDB_SAVE);
                       localStorage.removeItem(TAX_LS_KEY);
                       localStorage.removeItem(CALC_LS_KEY);
-                      localStorage.removeItem("mm_v7_chatbot_training");
+localStorage.removeItem("mm_v7_chatbot_training");localStorage.removeItem("itr_fy_hidden");localStorage.removeItem("itr_fy_tab");
                       localStorage.removeItem(LS_ENTRY_SCORES);
                       localStorage.removeItem(LS_ENTRY_SNAPSHOTS);
                       /* Stamp reset time as the new local-edit anchor.
@@ -10139,7 +10148,7 @@ var buildBackupPayload=async(st)=>{
       soldShareSnapshots:st.soldShareSnapshots||{},
       eodPrices:st.eodPrices||{},eodNavs:st.eodNavs||{},historyCache:st.historyCache||{},
       taxData:st.taxData||null,taxData2627:st.taxData2627||null,re:st.re||[],pf:st.pf||[],goals:st.goals||[],
-      hiddenTabs:st.hiddenTabs||[],catRules:st.catRules||[],
+      hiddenTabs:st.hiddenTabs||[],taxHiddenTabs:st.taxHiddenTabs||[],catRules:st.catRules||[],
       reminders:st.reminders||[],
       insightPrefs:{...EMPTY_STATE().insightPrefs,...(st.insightPrefs||{})},
       chatbotTraining:{customCatRules:_cbTraining.customCatRules||[],accountAliases:_cbTraining.accountAliases||[]},
@@ -10204,6 +10213,7 @@ var loadState=()=>{
       historyCache:(parsed.historyCache||{}),
       mfHistNavs:(parsed.mfHistNavs||{}),
       hiddenTabs:(parsed.hiddenTabs||[]),
+      taxHiddenTabs:(parsed.taxHiddenTabs||[]),
       taxData:(parsed.taxData||null),
       taxData2627:(parsed.taxData2627||null),
       catRules:(parsed.catRules||[]),
@@ -10859,6 +10869,7 @@ var _gdriveUpsertSyncFileV1 = async (state) => {
         pf: state.pf || [],
         goals: state.goals || [],
         hiddenTabs: state.hiddenTabs || [],
+        taxHiddenTabs: state.taxHiddenTabs || [],
         catRules: state.catRules || [],
         reminders: state.reminders || [],
         insightPrefs: { ...EMPTY_STATE().insightPrefs, ...(state.insightPrefs || {}) },
@@ -10928,6 +10939,7 @@ var _gdriveReadSyncFileV1 = async () => {
       pf: d.pf || [],
       goals: d.goals || [],
       hiddenTabs: d.hiddenTabs || [],
+      taxHiddenTabs: d.taxHiddenTabs || [],
       catRules: d.catRules || [],
       reminders: d.reminders || [],
       insightPrefs: { ..._def.insightPrefs, ...(d.insightPrefs || {}) },
@@ -11184,6 +11196,7 @@ var fsaWriteFile=async(handle,data)=>{
         pf:data.pf||[],
         goals:data.goals||[],
         hiddenTabs:data.hiddenTabs||[],
+        taxHiddenTabs:data.taxHiddenTabs||[],
         catRules:data.catRules||[],
         reminders:data.reminders||[],
         insightPrefs:{...EMPTY_STATE().insightPrefs,...(data.insightPrefs||{})},
@@ -11208,7 +11221,7 @@ var fsaReadFile=async(handle)=>{
     const text=await file.text();
     const parsed=JSON.parse(text);
     const _def=EMPTY_STATE();
-    const _safe=(d)=>({...d,brokerCashBalance:d.brokerCashBalance||0,nwSnapshots:d.nwSnapshots||{},soldShareSnapshots:d.soldShareSnapshots||{},eodPrices:d.eodPrices||{},eodNavs:d.eodNavs||{},historyCache:d.historyCache||{},taxData:d.taxData||null,taxData2627:d.taxData2627||null,re:d.re||[],pf:d.pf||[],goals:d.goals||[],hiddenTabs:d.hiddenTabs||[],catRules:d.catRules||[],reminders:d.reminders||[],insightPrefs:{..._def.insightPrefs,...(d.insightPrefs||{})}});
+    const _safe=(d)=>({...d,brokerCashBalance:d.brokerCashBalance||0,nwSnapshots:d.nwSnapshots||{},soldShareSnapshots:d.soldShareSnapshots||{},eodPrices:d.eodPrices||{},eodNavs:d.eodNavs||{},historyCache:d.historyCache||{},taxData:d.taxData||null,taxData2627:d.taxData2627||null,re:d.re||[],pf:d.pf||[],goals:d.goals||[],hiddenTabs:d.hiddenTabs||[],taxHiddenTabs:d.taxHiddenTabs||[],catRules:d.catRules||[],reminders:d.reminders||[],insightPrefs:{..._def.insightPrefs,...(d.insightPrefs||{})}});
     let d=null;
     /* Support both the new envelope format { data:{…} } and the legacy
        raw-state format written by v3.17.0–3.17.2 */
@@ -29762,6 +29775,7 @@ const FSAStoragePanel=({state,dispatch})=>{
         pf:data.pf||[],
         goals:data.goals||[],
         hiddenTabs:data.hiddenTabs||[],
+        taxHiddenTabs:data.taxHiddenTabs||[],
         catRules:data.catRules||[],
         reminders:data.reminders||[],
         insightPrefs:{...EMPTY_STATE().insightPrefs,...(data.insightPrefs||{})},
@@ -38437,7 +38451,7 @@ function TaxEstimatorSection({ taxData, dispatch, fyKey }) {
 TaxEstimatorSection = React.memo(TaxEstimatorSection);
 
 /* ── Tax Estimator Wrapper — FY tab switcher with hide/show ── */
-const TaxEstimatorWrapper = ({ taxData, taxData2627, dispatch }) => {
+const TaxEstimatorWrapper = ({ taxData, taxData2627, hiddenTabIds=[], dispatch }) => {
   const tabs = [
     { id:"fy2526", label:"FY 2025-26", sub:"AY 2026-27 · Current Filing", badge:"Current", badgeColor:"var(--accent)", badgeBg:"var(--accentbg)", badgeBd:"var(--accent)44" },
     { id:"fy2627", label:"FY 2026-27", sub:"TY 2027-28 · Plan Ahead",    badge:"New",     badgeColor:"#6d28d9",       badgeBg:"rgba(109,40,217,.12)", badgeBd:"rgba(109,40,217,.28)" },
@@ -38446,33 +38460,42 @@ const TaxEstimatorWrapper = ({ taxData, taxData2627, dispatch }) => {
   const [fyTab, setFyTab] = useState(() => {
     try { return localStorage.getItem("itr_fy_tab") || "fy2526"; } catch { return "fy2526"; }
   });
-  const [hiddenFyTabs, setHiddenFyTabs] = useState(() => {
-    try { return new Set(JSON.parse(localStorage.getItem("itr_fy_hidden") || "[]")); } catch { return new Set(); }
+  const [legacyHidden, setLegacyHidden] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("itr_fy_hidden") || "[]"); } catch { return []; }
   });
   const [managing, setManaging] = useState(false);
+
+  /* Adopt any legacy localStorage preference into global state once so it syncs
+     to FSA / Google Drive on the next save. */
+  useEffect(() => {
+    if (legacyHidden.length && !(hiddenTabIds||[]).length) {
+      dispatch({ type:"SET_TAX_HIDDEN_TABS", hidden: legacyHidden });
+    }
+  }, [legacyHidden]);
+
+  const hiddenFyTabs = new Set((hiddenTabIds && hiddenTabIds.length ? hiddenTabIds : legacyHidden));
 
   const switchTab = (t) => { setFyTab(t); try { localStorage.setItem("itr_fy_tab", t); } catch {} };
 
   const toggleHide = (tabId) => {
-    setHiddenFyTabs(prev => {
-      const next = new Set(prev);
-      if (next.has(tabId)) {
-        /* Unhide */
-        next.delete(tabId);
-      } else {
-        /* Hide — ensure at least one tab stays visible */
-        const willRemain = tabs.filter(t => !next.has(t.id) && t.id !== tabId).length;
-        if (willRemain < 1) return prev;
-        next.add(tabId);
-        /* If hiding the active tab, switch to first still-visible tab */
-        if (fyTab === tabId) {
-          const first = tabs.find(t => !next.has(t.id));
-          if (first) switchTab(first.id);
-        }
+    const next = new Set(hiddenFyTabs);
+    if (next.has(tabId)) {
+      /* Unhide */
+      next.delete(tabId);
+    } else {
+      /* Hide — ensure at least one tab stays visible */
+      const willRemain = tabs.filter(t => !next.has(t.id) && t.id !== tabId).length;
+      if (willRemain < 1) return;
+      next.add(tabId);
+      /* If hiding the active tab, switch to first still-visible tab */
+      if (fyTab === tabId) {
+        const first = tabs.find(t => !next.has(t.id));
+        if (first) switchTab(first.id);
       }
-      try { localStorage.setItem("itr_fy_hidden", JSON.stringify([...next])); } catch {}
-      return next;
-    });
+    }
+    const arr=[...next];
+    dispatch({ type:"SET_TAX_HIDDEN_TABS", hidden: arr }); /* → FSA + Google Drive sync */
+    try { localStorage.setItem("itr_fy_hidden", JSON.stringify(arr)); } catch {}
   };
 
   const visibleTabs  = tabs.filter(t => !hiddenFyTabs.has(t.id));
@@ -39765,7 +39788,7 @@ function App(){
           React.createElement(InfoSection,{isMobile}))),
       React.createElement("div",{style:{display:tab==="tax_est"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Tax Estimator"},
-          React.createElement(TaxEstimatorWrapper,{taxData:state.taxData||null,taxData2627:state.taxData2627||null,dispatch})))
+          React.createElement(TaxEstimatorWrapper,{taxData:state.taxData||null,taxData2627:state.taxData2627||null,hiddenTabIds:state.taxHiddenTabs||[],dispatch})))
     )
   ),
     FsaPermCard,
