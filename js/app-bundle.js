@@ -458,11 +458,38 @@ const latestNavSnap=(eodNavs)=>{
   const d=Object.keys(norm).sort();
   return d.length?norm[d[d.length-1]]:null;
 };
+/* Per-fund latest NAV: the highest-dated snapshot bucket that contains this
+   scheme. Funds publish on different days — each entry lives under its OWN
+   published date, so lookups must not assume a single bucket holds every fund. */
+const latestNavByCode=(eodNavs,code)=>{
+  const norm=normalizeEodNavKeys(eodNavs||{});
+  const dates=Object.keys(norm).sort();
+  for(let i=dates.length-1;i>=0;i--){
+    const v=norm[dates[i]]&&norm[dates[i]][code];
+    if(v&&+v>0)return v;
+  }
+  return null;
+};
+/* Per-fund NAV as of a given date: the newest snapshot bucket ≤ date that
+   contains this scheme. Powers day-change and chart history when funds file
+   under different published dates. */
+const navAsOf=(eodNavs,code,date)=>{
+  const norm=normalizeEodNavKeys(eodNavs||{});
+  const dates=Object.keys(norm).filter(d=>d<=date).sort();
+  for(let i=dates.length-1;i>=0;i--){
+    const v=norm[dates[i]]&&norm[dates[i]][code];
+    if(v&&+v>0)return v;
+  }
+  return null;
+};
 const mfLiveVal=(m,navSnap)=>{
   if(!m||!(+m.units>0))return 0;
   /* Source of truth = the latest NAV shown on the Mutual Funds tab (m.nav) —
-     that is the number users compare against. Fall back to the latest eodNavs
-     snapshot, then the stored currentValue, then invested (cost). */
+     that is the number users compare against. m.nav is kept in lockstep with
+     the eodNavs day buckets because the auto EOD task and every manual NAV
+     refresh write BOTH stores (UPD_MF_NAV + SET_EOD_NAVS) from the same fetch.
+     Fall back to the latest eodNavs snapshot, then the stored currentValue,
+     then invested (cost). */
   if(m.nav&&+m.nav>0)return parseFloat(((+m.nav)*(+m.units)).toFixed(2));
   const nav=navSnap&&+navSnap[m.schemeCode];
   if(nav&&nav>0)return parseFloat((nav*(+m.units)).toFixed(2));
@@ -967,7 +994,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.19.34";
+ const APP_VERSION="7.19.37";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1614,20 +1641,20 @@ const reducer=(s,a)=>{
     case"SET_EOD_NAVS":{
       /* Normalize key to ISO YYYY-MM-DD (guard against legacy DD-MMM-YYYY keys) */
       const _isoDate=mfNavDateToISO(a.date)||a.date;
-      const updated={...normalizeEodNavKeys(s.eodNavs||{}),[_isoDate]:a.navs};
+      /* MERGE into any existing bucket for this date (never replace it) so a
+         partial fetch can top up funds that had already been filed here. */
+      const _norm=normalizeEodNavKeys(s.eodNavs||{});
+      const updated={..._norm,[_isoDate]:{...(_norm[_isoDate]||{}),...a.navs}};
       /* Prune to last 90 days */
       const keys=Object.keys(updated).sort();
       const pruned={};
       keys.slice(-90).forEach(k=>{pruned[k]=updated[k];});
-      /* Sync currentValue for each fund from the latest EOD snapshot so that
-         per-fund cards and dashboard totals stay consistent with eodNavs data.
-         NOTE: Only update currentValue when it is missing or zero — never
-         overwrite a fresh live value that was just set by UPD_MF_NAV. */
-      const _latestNavDate=Object.keys(pruned).sort().slice(-1)[0];
-      const _latestNavSnap=_latestNavDate?pruned[_latestNavDate]:{};
+      /* Sync currentValue for each fund using its OWN most-recent snapshot
+         (funds publish on different days). NOTE: Only update currentValue when
+         it is missing or zero — never overwrite a fresh live value. */
       const _syncedMf=s.mf.map(m=>{
         if(m.currentValue&&m.currentValue>0)return m; /* already has a live value — don't overwrite */
-        const _navFromSnap=_latestNavSnap[m.schemeCode];
+        const _navFromSnap=latestNavByCode(pruned,m.schemeCode);
         if(_navFromSnap&&m.units>0){
           return{...m,currentValue:parseFloat((_navFromSnap*m.units).toFixed(2))};
         }
@@ -17943,14 +17970,23 @@ const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobil
         }catch{return m;}
       }));
       dispatch({type:"UPD_MF_NAV",p:upd});
-      /* Save EOD NAV snapshot keyed by ISO navDate — identical to InvestSection */
-      const navsByCode={};
-      upd.forEach(m=>{if(m.nav>0&&m.navDate)navsByCode[m.schemeCode]=m.nav;});
-      if(Object.keys(navsByCode).length>0){
-        const navDateISO=upd.find(m=>m.navDateISO)?.navDateISO||mfNavDateToISO(upd.find(m=>m.navDate)?.navDate||"");
-        if(navDateISO)dispatch({type:"SET_EOD_NAVS",date:navDateISO,navs:navsByCode});
-      }
+      /* Save EOD NAV snapshots keyed by each fund's OWN published NAV date —
+         identical to InvestSection and the auto EOD task. */
+      const byDate={};
+      upd.forEach(m=>{
+        if(m.nav>0&&m.navDate){
+          const iso=m.navDateISO||mfNavDateToISO(m.navDate);
+          if(iso){
+            byDate[iso]=byDate[iso]||{};
+            byDate[iso][m.schemeCode]=m.nav;
+          }
+        }
+      });
+      Object.keys(byDate).sort().forEach(iso=>dispatch({type:"SET_EOD_NAVS",date:iso,navs:byDate[iso]}));
       const updatedCount=upd.filter(m=>m.nav>0&&m.navDate).length;
+      /* Stamp local-edit time so a stale Drive copy is never treated as newer
+         than these freshly fetched NAVs (protects boot-pull on fresh installs). */
+      if(updatedCount>0)_syncSaveLocalEdit(new Date().toISOString());
       return{ok:updatedCount>0,updated:updatedCount,failed:upd.length-updatedCount};
     }catch{return{ok:false,updated:0,failed:mf.length};}
   };
@@ -18111,14 +18147,14 @@ const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobil
       const _prevNavDate=_eodAllDates.slice(-2,-1)[0];
       let mfDayChgPct=null;
       if(_latestNavDate&&_prevNavDate){
-        const latestTotal=mf.reduce((s,m)=>{const n=(_normDashNavs[_latestNavDate]||{})[m.schemeCode];return s+(n?n*m.units:0);},0);
-        const prevTotal=mf.reduce((s,m)=>{const n=(_normDashNavs[_prevNavDate]||{})[m.schemeCode];return s+(n?n*m.units:0);},0);
+        const latestTotal=mf.reduce((s,m)=>{const n=m.units>0?navAsOf(_normDashNavs,m.schemeCode,_latestNavDate):0;return s+(n?n*(+m.units):0);},0);
+        const prevTotal=mf.reduce((s,m)=>{const n=m.units>0?navAsOf(_normDashNavs,m.schemeCode,_prevNavDate):0;return s+(n?n*(+m.units):0);},0);
         if(prevTotal>0&&latestTotal>0)mfDayChgPct=((latestTotal-prevTotal)/prevTotal*100);
       }
       return React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
         React.createElement(StatCard,{label:"Mutual Funds",val:INR(mfVal),
           sub:mfDayChgPct!==null
-            ?(mfDayChgPct>=0?"▲ +":"▼ ")+Math.abs(mfDayChgPct).toFixed(2)+"% prev day chg"
+            ?(mfDayChgPct>=0?"▲ +":"▼ ")+Math.abs(mfDayChgPct).toFixed(2)+"% vs prev NAV"
             :(mfVal-mfCost>=0?"▲ ":"▼ ")+INR(Math.abs(mfVal-mfCost))+" P&L",
           col:"#6d28d9",icon:React.createElement(Icon,{n:"chart",size:22})}),
         React.createElement(StatCard,{label:"Shares",val:INR(shVal),sub:(shVal-shCost>=0?"▲ ":"▼ ")+pct(shVal,shCost)+"% return",col:"#16a34a",icon:React.createElement(Icon,{n:"invest",size:18})}),
@@ -19393,14 +19429,14 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
          m.currentValue after gap days without opening the app. */
       const _latestNavDate=Object.keys(_normEodNavs).sort().slice(-1)[0];
       const curVal=_latestNavDate?activeMf.reduce((s,m)=>{
-        const nav=(_normEodNavs[_latestNavDate]||{})[m.schemeCode];
+        const nav=m.units>0?navAsOf(_normEodNavs,m.schemeCode,_latestNavDate):0;
         return s+(nav?nav*m.units:0);
       },0):activeMf.reduce((s,m)=>s+mfLiveVal(m,latestNavSnap(eodNavs)),0);
       const lastPt=pts[pts.length-1];
       if(curVal>0&&curCost>0){
         const fundVals={};
         activeMf.forEach(m=>{
-          const nav=_latestNavDate?(_normEodNavs[_latestNavDate]||{})[m.schemeCode]:null;
+          const nav=_latestNavDate?navAsOf(_normEodNavs,m.schemeCode,_latestNavDate):null;
           const fv=(nav&&nav>0)?m.units*nav:(m.nav&&m.nav>0?m.nav*m.units:(m.currentValue&&m.currentValue>0?m.currentValue:0));
           if(fv>0)fundVals[m.name]=fv;
         });
@@ -21302,16 +21338,26 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
       }catch{return m;}
     }));
     dispatch({type:"UPD_MF_NAV",p:upd});
-    /* Save EOD NAV snapshot keyed by ISO navDate (YYYY-MM-DD) */
-    const navsByCode={};
-    upd.forEach(m=>{if(m.nav>0&&m.navDate)navsByCode[m.schemeCode]=m.nav;});
-    /* Index snapshot is keyed to the same NAV date so the "NAV Change vs Nifty
-       Benchmarks" card can anchor benchmarks to the fund NAV dates. */
+    /* Save EOD NAV snapshots keyed by each fund's OWN published NAV date
+       (YYYY-MM-DD) — funds that publish on different days are never mis-filed
+       under a single date. */
     let navDateISO_FK="";
-    if(Object.keys(navsByCode).length>0){
-      const navDateISO=upd.find(m=>m.navDateISO)?.navDateISO||mfNavDateToISO(upd.find(m=>m.navDate)?.navDate||"");
-      navDateISO_FK=navDateISO||"";
-      if(navDateISO)dispatch({type:"SET_EOD_NAVS",date:navDateISO,navs:navsByCode});
+    const byDate={};
+    upd.forEach(m=>{
+      if(m.nav>0&&m.navDate){
+        const iso=m.navDateISO||mfNavDateToISO(m.navDate);
+        if(iso){
+          byDate[iso]=byDate[iso]||{};
+          byDate[iso][m.schemeCode]=m.nav;
+        }
+      }
+    });
+    const datesFK=Object.keys(byDate).sort();
+    if(datesFK.length>0){
+      /* Index snapshot is keyed to the NEWEST fund NAV date so the "NAV Change
+         vs Nifty Benchmarks" card can anchor benchmarks to the fund NAV dates. */
+      navDateISO_FK=datesFK[datesFK.length-1];
+      datesFK.forEach(iso=>dispatch({type:"SET_EOD_NAVS",date:iso,navs:byDate[iso]}));
     }
     setNavLoad(false);
     /* ── Fetch market indices EOD snapshot (runs after spinner clears) ── */
@@ -21624,8 +21670,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         const _heroYesterdayISO=(new Date(Date.now()-864e5)).toISOString().slice(0,10);
         /* Compute total portfolio value for each recorded date (chart) */
         const chartPts=allDates.map(date=>{
-          const navSnap=_normHeroNavs[date]||{};
-          const val=mf.reduce((s,m)=>{const n=navSnap[m.schemeCode];return s+(n?n*m.units:0);},0);
+          const val=mf.reduce((s,m)=>{const n=m.units>0?navAsOf(_normHeroNavs,m.schemeCode,date):0;return s+(n?n*(+m.units):0);},0);
           /* date is ISO YYYY-MM-DD — convert to short DD-MMM label */
           const parts=date.split("-"); // [YYYY, MM, DD]
           const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -21635,13 +21680,15 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
           return{value:val,label,fullDate};
         }).filter(p=>p.value>0);
         /* Day change: latest snapshot vs the one before it */
-        const latestTotal=latestDate?mf.reduce((s,m)=>{const n=(_normHeroNavs[latestDate]||{})[m.schemeCode];return s+(n?n*m.units:0);},0):null;
-        const prevTotal=prevDate?mf.reduce((s,m)=>{const n=(_normHeroNavs[prevDate]||{})[m.schemeCode];return s+(n?n*m.units:0);},0):null;
+        /* Day change: each fund's newest snapshot ≤ the date (navAsOf), so funds
+           that publish on different days are never wrongly counted as 0. */
+        const latestTotal=latestDate?mf.reduce((s,m)=>{const n=m.units>0?navAsOf(_normHeroNavs,m.schemeCode,latestDate):0;return s+(n?n*(+m.units):0);},0):null;
+        const prevTotal=prevDate?mf.reduce((s,m)=>{const n=m.units>0?navAsOf(_normHeroNavs,m.schemeCode,prevDate):0;return s+(n?n*(+m.units):0);},0):null;
         const dayChgAbs=latestTotal&&prevTotal&&prevTotal>0?latestTotal-prevTotal:null;
         const dayChgPct=latestTotal&&prevTotal&&prevTotal>0?((latestTotal-prevTotal)/prevTotal*100):null;
         /* Hero value driven by eodNavs latest snapshot for consistency with badge */
         const mfActive=mf.filter(m=>m.units>0);
-        const mfTotalNow=latestTotal||mfActive.reduce((s,m)=>s+mfLiveVal(m,latestNavSnap(eodNavs)),0);
+        const mfTotalNow=latestTotal!==null?latestTotal:mfActive.reduce((s,m)=>s+mfLiveVal(m,latestNavSnap(eodNavs)),0);
         const mfCoANow=mfActive.reduce((s,m)=>s+(m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested),0);
         const overallGain=mfTotalNow-mfCoANow;
         const showHero=chartPts.length>=1||latestDate;
@@ -38903,29 +38950,59 @@ function App(){
           }
         }
 
-        /* ── MF NAV EOD snapshot ── */
+        /* ── MF NAV EOD snapshot ──
+           Writes BOTH stores from the same fetch so they cannot drift apart:
+           • UPD_MF_NAV keeps m.nav (Store A — chips/cards) fresh.
+           • SET_EOD_NAVS files each fund under ITS OWN published NAV date
+             (Store B — hero/history), merged into any existing bucket so
+             partial days get topped up. */
         const mf=_mfRef.current;
         if(mf&&mf.length){
           /* Fetch all NAVs in parallel — was sequential (one await per scheme) */
           const navResults=await Promise.all(
             mf.filter(m=>m.schemeCode).map(async m=>{
               const res=await fetchOneNav(m.schemeCode);
-              return(res&&res.nav>0)?{code:m.schemeCode,nav:res.nav,navDate:res.navDate}:null;
+              return(res&&res.nav>0)?{fund:m,nav:res.nav,navDate:res.navDate,navDateISO:res.navDateISO||mfNavDateToISO(res.navDate)}:null;
             })
           );
-          const navsByCode={};
-          let navDate="";let navDateISO="";
-          navResults.forEach(r=>{
-            if(!r)return;
-            navsByCode[r.code]=r.nav;
-            if(!navDate){navDate=r.navDate;navDateISO=r.navDateISO||mfNavDateToISO(r.navDate);}
+          /* Store A: keep m.nav/navDate/currentValue in lockstep (change-gated
+             so identical 5-min re-fetches do not churn state or storage). */
+          const mfUpd=navResults.filter(r=>r).map(r=>{
+            const m=r.fund;
+            return{...m,nav:r.nav,navDate:r.navDate,navDateISO:r.navDateISO,currentValue:parseFloat((r.nav*(m.units||0)).toFixed(2))};
           });
-          if(navDateISO&&Object.keys(navsByCode).length>0){
-            _snapIdxDate=navDateISO;
-            /* Only store if we don't already have this ISO navDate */
-            if(!(_eodNavsRef.current&&_eodNavsRef.current[navDateISO])){
-              dispatch({type:"SET_EOD_NAVS",date:navDateISO,navs:navsByCode});
-            }
+          if(mfUpd.length){
+            const curByCode={};
+            (_mfRef.current||[]).forEach(m=>{curByCode[m.schemeCode]=m;});
+            const changed=mfUpd.filter(m=>{
+              const p=curByCode[m.schemeCode];
+              if(!p)return true;
+              /* Value compares only (temp fetch objects are rebuilt every run):
+                 numeric NAV, plus navDate/navDateISO string equality. */
+              const pNav=+p.nav||0;
+              return pNav!==+m.nav||(p.navDateISO||"")!==(m.navDateISO||"")||(p.navDate||"")!==(m.navDate||"");
+            });
+            if(changed.length)dispatch({type:"UPD_MF_NAV",p:changed});
+          }
+          /* Store B: group by each fund's own published date, then merge buckets */
+          const byDate={};
+          navResults.forEach(r=>{
+            if(!r||!r.navDateISO)return;
+            byDate[r.navDateISO]=byDate[r.navDateISO]||{};
+            byDate[r.navDateISO][r.fund.schemeCode]=r.nav;
+          });
+          const navDates=Object.keys(byDate).sort();
+          if(navDates.length>0){
+            _snapIdxDate=navDates[navDates.length-1]; /* newest fund NAV date anchors the index snapshot */
+            navDates.forEach(iso=>{
+              const existing=(_eodNavsRef.current&&normalizeEodNavKeys(_eodNavsRef.current)[iso])||{};
+              const merged={...existing,...byDate[iso]};
+              const keys=Object.keys(merged);
+              const same=keys.length===Object.keys(existing).length&&keys.every(c=>(existing[c]===merged[c]));
+              if(!same){
+                dispatch({type:"SET_EOD_NAVS",date:iso,navs:byDate[iso]});
+              }
+            });
           }
         }
         /* ── Market index EOD snapshot ── */
@@ -39118,22 +39195,45 @@ function App(){
     }
     setFsaGranting(false);
   },[fsaGranting]);
-  React.useEffect(()=>{
-    const handler=()=>setUpdateReady(true);
-    window.addEventListener('mm:update-ready',handler);
-    return()=>window.removeEventListener('mm:update-ready',handler);
-  },[]);
-  const doUpdate=()=>{
+  const applyUpdate=React.useCallback(()=>{
+    /* AUTO-APPLY: install a ready update immediately instead of waiting for the
+       user to tap the banner — a dismissed banner would otherwise keep an old
+       bundle running indefinitely. One-shot guard prevents a reload loop;
+       data is already saved synchronously before any reload. */
+    if(window.__mmUpdating)return;
+    window.__mmUpdating=true;
     const reg=window.__swReg;
-    if(reg&&reg.waiting){
-      /* Tell the waiting SW to skip its waiting phase and activate.
-         'controllerchange' will then fire → page reloads automatically. */
-      reg.waiting.postMessage({type:'SKIP_WAITING'});
-    } else {
+    if(!reg||!navigator.serviceWorker||!navigator.serviceWorker.controller){
       /* Fallback: hard reload (bypasses cache to fetch new HTML) */
       window.location.reload(true);
+      return;
     }
-  };
+    const finish=()=>{
+      if(reg.waiting){
+        /* Tell the waiting SW to skip its waiting phase and activate.
+           'controllerchange' will then fire → page reloads automatically. */
+        reg.waiting.postMessage({type:'SKIP_WAITING'});
+      }else{
+        window.location.reload(true);
+      }
+    };
+    if(reg.waiting){finish();return;}
+    if(reg.installing){
+      const w=reg.installing;
+      if(w){
+        const onSt=()=>{w.removeEventListener('statechange',onSt);if(w.state==='installed'){w.postMessage({type:'SKIP_WAITING'});}};
+        w.addEventListener('statechange',onSt);
+      }
+      return;
+    }
+    reg.update().then(finish).catch(()=>window.location.reload(true));
+  },[]);
+  React.useEffect(()=>{
+    const handler=()=>{setUpdateReady(true);applyUpdate();};
+    window.addEventListener('mm:update-ready',handler);
+    return()=>window.removeEventListener('mm:update-ready',handler);
+  },[applyUpdate]);
+  const doUpdate=()=>applyUpdate();
   /* ── FSA Launch Warning Modal ───────────────────────────────────────────────
      Shown on desktop when FSA is supported but not configured (no IDB handle),
      or when a handle exists but browser permission has lapsed and not yet re-
