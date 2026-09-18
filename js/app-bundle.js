@@ -965,7 +965,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.19.31";
+ const APP_VERSION="7.19.32";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -34983,7 +34983,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     // Current investable net worth
     const bankBal=(banks||[]).reduce((s,b)=>s+(b.balance||0),0);
     const cashBal=(cash.balance)||0;
-    const mfVal=(mf||[]).reduce((s,m)=>s+(m.currentValue||m.invested||0),0);
+    const mfVal=(mf||[]).reduce((s,m)=>s+mfLiveVal(m,latestNavSnap(eodNavs||{})),0);
     const sharesVal=(shares||[]).reduce((s,s2)=>s+(s2.qty||0)*(s2.currentPrice||s2.buyPrice||0),0);
     const fdVal=(fd||[]).reduce((s,f)=>s+calcFDValueToday(f),0);
     const reVal=(re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
