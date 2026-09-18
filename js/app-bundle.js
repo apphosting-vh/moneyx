@@ -460,6 +460,10 @@ const latestNavSnap=(eodNavs)=>{
 };
 const mfLiveVal=(m,navSnap)=>{
   if(!m||!(+m.units>0))return 0;
+  /* Source of truth = the latest NAV shown on the Mutual Funds tab (m.nav) —
+     that is the number users compare against. Fall back to the latest eodNavs
+     snapshot, then the stored currentValue, then invested (cost). */
+  if(m.nav&&+m.nav>0)return parseFloat(((+m.nav)*(+m.units)).toFixed(2));
   const nav=navSnap&&+navSnap[m.schemeCode];
   if(nav&&nav>0)return parseFloat((nav*(+m.units)).toFixed(2));
   return(m.currentValue&&+m.currentValue>0)?+m.currentValue:(+m.invested||0);
@@ -961,7 +965,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.19.29";
+ const APP_VERSION="7.19.31";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -15669,7 +15673,7 @@ const Dashboard=React.memo(({data,isMobile,onJumpToTx})=>{
       const snaps=data.nwSnapshots||{};
       const bTotal=data.banks.reduce((s,b)=>s+b.balance,0);
       const cashBal=data.cash.balance;
-      const mfVal=data.mf.filter(m=>m.units>0).reduce((s,m)=>s+(m.currentValue||m.invested),0);
+      const mfVal=data.mf.reduce((s,m)=>s+mfLiveVal(m,latestNavSnap(data.eodNavs)),0);
       const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
       const fdVal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
       const reVal=(data.re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
@@ -16098,7 +16102,7 @@ const Dashboard=React.memo(({data,isMobile,onJumpToTx})=>{
     W("nwdonut")&&(()=>{
       const bV=data.banks.reduce((s,b)=>s+b.balance,0);
       const cV=data.cash.balance;
-      const mfV=data.mf.filter(m=>m.units>0).reduce((s,m)=>s+(m.currentValue||m.invested),0);
+      const mfV=data.mf.reduce((s,m)=>s+mfLiveVal(m,latestNavSnap(data.eodNavs)),0);
       const shV=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
       const fdV=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
       const reV=(data.re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
@@ -21280,8 +21284,12 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
     /* Save EOD NAV snapshot keyed by ISO navDate (YYYY-MM-DD) */
     const navsByCode={};
     upd.forEach(m=>{if(m.nav>0&&m.navDate)navsByCode[m.schemeCode]=m.nav;});
+    /* Index snapshot is keyed to the same NAV date so the "NAV Change vs Nifty
+       Benchmarks" card can anchor benchmarks to the fund NAV dates. */
+    let navDateISO_FK="";
     if(Object.keys(navsByCode).length>0){
       const navDateISO=upd.find(m=>m.navDateISO)?.navDateISO||mfNavDateToISO(upd.find(m=>m.navDate)?.navDate||"");
+      navDateISO_FK=navDateISO||"";
       if(navDateISO)dispatch({type:"SET_EOD_NAVS",date:navDateISO,navs:navsByCode});
     }
     setNavLoad(false);
@@ -21299,7 +21307,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
             }
           });
           if(Object.keys(indexSnap).length>0){
-            dispatch({type:"SET_EOD_INDICES",date:getISTDateStr(),indices:indexSnap});
+            dispatch({type:"SET_EOD_INDICES",date:(navDateISO_FK||getISTDateStr()),indices:indexSnap});
             return true;
           }
           return false;
@@ -21720,12 +21728,35 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
               for(const d of _idxDates){if(d<=iso){const v=(_normIdx[d]||{})[k];if(v&&v>0)best=v;}else break;}
               return best;
             };
+            const _latestIdxDate=_idxDates.length?_idxDates[_idxDates.length-1]:null;
+            const _latestIdxSnap=_latestIdxDate?_normIdx[_latestIdxDate]:null;
+            /* next-most-recent snapshot's close for a given key (fallback base) */
+            const _prevIdxVal=(k)=>{
+              for(let i=_idxDates.length-2;i>=0;i--){
+                const v=(_normIdx[_idxDates[i]]||{})[k];
+                if(v&&v>0)return v;
+              }
+              return null;
+            };
+            let _idxUsedFallback=false;
             const _idxChgs=_idxKeys.map((k,i)=>{
               let chgPct=null;
               if(_navD1&&_navD2){
                 const c1=_idxValOnOrBefore(_navD1,k);
                 const c2=_idxValOnOrBefore(_navD2,k);
                 if(c1&&c2&&c2>0)chgPct=((c1-c2)/c2*100);
+              }
+              /* Fallback: the date-pair anchoring needs index history on BOTH NAV
+                 dates. When that is missing (sparse capture, or NAVs published on
+                 later days than the index buckets), value each benchmark from the
+                 latest snapshot's own close vs prevClose (_pc), else vs the
+                 previous snapshot's close — so benchmarks always render once any
+                 index data exists (the documented single-snapshot design). */
+              if(chgPct===null&&_latestIdxSnap){
+                const c=+_latestIdxSnap[k];
+                const pc=+_latestIdxSnap[k+"_pc"]||0;
+                const base=pc>0?pc:_prevIdxVal(k);
+                if(c>0&&base>0){chgPct=((c-base)/base*100);_idxUsedFallback=true;}
               }
               return{label:_idxLabels[i],chgPct:chgPct!==null?Math.round(chgPct*100)/100:null};
             });
@@ -21765,6 +21796,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
             const _idxHasData=_idxChgs.some(c=>c.chgPct!==null);
             /* ── Determine subtitle ── */
             let _subtitle="NAV & Nifty: "+(_navD2?(_fmtD(_navD2)+" → "):"")+_fmtD(_navD1);
+            if(_idxUsedFallback&&_idxHasData)_subtitle=_subtitle+" · Nifty = latest session vs prev close";
             if(!_idxHasData&&!_hasNavPair)_subtitle="Refresh NAV to see comparison";
             else if(_hasNavPair&&!_idxHasData)_subtitle=_subtitle+" · Nifty history not yet captured for these dates";
             else if(!_hasNavPair&&_fundCount>0)_subtitle=_subtitle+" · Fund rows appear after 2nd NAV refresh";
@@ -21843,7 +21875,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         return React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}},
         activeMf.map(m=>{
           const trueCoA=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;
-          const currentVal=m.currentValue&&m.currentValue>0?m.currentValue:m.invested;
+          const currentVal=m.nav&&m.nav>0?parseFloat((m.nav*m.units).toFixed(2)):(m.currentValue&&m.currentValue>0?m.currentValue:m.invested);
           const gain=currentVal-trueCoA;
           const hasTxns=(mfTxns||[]).some(t=>t.fundName===m.name);
           const gp=trueCoA>0?(((currentVal-trueCoA)/trueCoA)*100).toFixed(1):"0.0";
@@ -38822,6 +38854,12 @@ function App(){
       try{
         if(!navigator.onLine)return;
         const today=getISTDateStr();
+        /* Index snapshots should be keyed to the SAME date as the NAV snapshot so
+           the "NAV Change vs Nifty Benchmarks" card can always anchor benchmarks to
+           the fund NAV dates. Without this, a weekend/early-morning run stored the
+           index bucket under today while NAVs stay on their published date, and the
+           card's ≤ navDate lookups found nothing → all benchmark cells "—". */
+        let _snapIdxDate="";
 
         /* ── Share price EOD snapshot ── */
         const shares=_sharesRef.current;
@@ -38862,6 +38900,7 @@ function App(){
             if(!navDate){navDate=r.navDate;navDateISO=r.navDateISO||mfNavDateToISO(r.navDate);}
           });
           if(navDateISO&&Object.keys(navsByCode).length>0){
+            _snapIdxDate=navDateISO;
             /* Only store if we don't already have this ISO navDate */
             if(!(_eodNavsRef.current&&_eodNavsRef.current[navDateISO])){
               dispatch({type:"SET_EOD_NAVS",date:navDateISO,navs:navsByCode});
@@ -38870,7 +38909,8 @@ function App(){
         }
         /* ── Market index EOD snapshot ── */
         try{
-          if(_eodIdxRef.current&&_eodIdxRef.current[today])return;
+          const _idxDate=_snapIdxDate||today;
+          if(_eodIdxRef.current&&_eodIdxRef.current[_idxDate])return;
           const KEY_INDICES=["NIFTY 50","NIFTY 100","NIFTY MIDCAP 50","NIFTY MIDCAP 100","NIFTY MIDCAP 150","NIFTY SMLCAP 100","NIFTY BANK","NIFTY AUTO","NIFTY IT","NIFTY PHARMA"];
           const _storeIdx=d=>{
             const idxSnap={};
@@ -38880,7 +38920,7 @@ function App(){
                 if(idx.prevClose>0)idxSnap[idx.symbol+"_pc"]=idx.prevClose;
               }
             });
-            if(Object.keys(idxSnap).length>0){dispatch({type:"SET_EOD_INDICES",date:today,indices:idxSnap});return true;}
+            if(Object.keys(idxSnap).length>0){dispatch({type:"SET_EOD_INDICES",date:_idxDate,indices:idxSnap});return true;}
             return false;
           };
           let idxRes=await fetchMarketIndices();
