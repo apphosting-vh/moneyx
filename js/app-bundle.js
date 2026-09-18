@@ -444,6 +444,27 @@ const normalizeEodNavKeys=(navs)=>{
   return out;
 };
 
+/* ── Live MF valuation helpers ─────────────────────────────────────────────
+   latestNavSnap → newest published-NAV snapshot ({"YYYY-MM-DD":{schemeCode:nav}})
+   mfLiveVal     → per-fund market value = units × latest published NAV, falling
+                   back to stored currentValue, then invested (cost). Fully
+                   redeemed funds (units<=0) value at 0. This avoids the stale
+                   m.currentValue trap (currentValue is only written on the first
+                   NAV refresh / EOD snapshot and never re-synced) so dashboards,
+                   heroes and the Net Worth breakdown all agree with the latest
+                   eodNavs snapshot — the same source the MF performance charts use. */
+const latestNavSnap=(eodNavs)=>{
+  const norm=normalizeEodNavKeys(eodNavs||{});
+  const d=Object.keys(norm).sort();
+  return d.length?norm[d[d.length-1]]:null;
+};
+const mfLiveVal=(m,navSnap)=>{
+  if(!m||!(+m.units>0))return 0;
+  const nav=navSnap&&+navSnap[m.schemeCode];
+  if(nav&&nav>0)return parseFloat((nav*(+m.units)).toFixed(2));
+  return(m.currentValue&&+m.currentValue>0)?+m.currentValue:(+m.invested||0);
+};
+
 /* ══════════════════════════════════════════════════════════════════════════
    SHARED MF NAV FETCHER
    Single source of truth for mfapi.in NAV fetch — used by:
@@ -940,7 +961,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.19.28";
+ const APP_VERSION="7.19.29";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -16355,7 +16376,8 @@ const Dashboard=React.memo(({data,isMobile,onJumpToTx})=>{
 
     /* ══ M2: INVESTMENT PULSE ═══════════════════════════════════ */
     W("invpulse")&&(()=>{
-      const mfV=data.mf.filter(m=>m.units>0).reduce((s,m)=>s+(m.currentValue||m.invested),0);
+      const _ipNavSnap=latestNavSnap(data.eodNavs);
+      const mfV=data.mf.reduce((s,m)=>s+mfLiveVal(m,_ipNavSnap),0);
       const mfCost=data.mf.filter(m=>m.units>0).reduce((s,m)=>s+(m.invested||0),0);
       const shV=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
       const shCost=data.shares.reduce((s,sh)=>s+sh.qty*sh.buyPrice,0);
@@ -17739,7 +17761,8 @@ const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobil
 
   /* ── Totals — derived live from props so re-renders automatically after dispatch ── */
   const mfActive=mf.filter(m=>m.units>0); /* hide fully sold funds */
-  const mfVal   = mfActive.reduce((s,m)=>s+(m.currentValue||m.invested),0);
+  const _idNavSnap=latestNavSnap(eodNavs);
+  const mfVal   = mfActive.reduce((s,m)=>s+mfLiveVal(m,_idNavSnap),0);
   const mfCost  = mfActive.reduce((s,m)=>s+(m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested),0);
   const mfInv   = mfActive.reduce((s,m)=>s+m.invested,0);
   const shVal   = shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+brokerCashBalance;
@@ -32251,7 +32274,7 @@ const SUBSCRIPTION_KEYWORDS=["netflix","spotify","prime","hotstar","youtube","ap
 /* ══════════════════════════════════════════════════════════════════════════
    NET WORTH INSIGHT TAB v2 — Snapshot-based history + fixed x-axis labels
    ══════════════════════════════════════════════════════════════════════════ */
-const NetWorthInsightTab=({banks,cards,cash,mf,shares,fd,re,loans,categories,prefs,isMobile,dispatch,nwSnapshots,brokerCashBalance=0})=>{
+const NetWorthInsightTab=({banks,cards,cash,mf,shares,fd,re,loans,categories,prefs,isMobile,dispatch,nwSnapshots,eodNavs={},brokerCashBalance=0})=>{
   const[view,setView]=React.useState("monthly");
   const[showSnapshotModal,setShowSnapshotModal]=React.useState(false);
   const MONTH_NAMES=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -32261,7 +32284,8 @@ const NetWorthInsightTab=({banks,cards,cash,mf,shares,fd,re,loans,categories,pre
   /* ── Current snapshot ── */
   const bankBal=banks.reduce((s,b)=>s+b.balance,0);
   const cashBal=cash.balance;
-  const mfVal=mf.reduce((s,m)=>s+(m.currentValue||m.invested),0);
+  const _nwNavSnap=latestNavSnap(eodNavs);
+  const mfVal=mf.reduce((s,m)=>s+mfLiveVal(m,_nwNavSnap),0);
   const sharesVal=shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(brokerCashBalance||0);
   const fdVal=fd.reduce((s,f)=>s+calcFDValueToday(f),0);
   const reVal=(re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
@@ -32784,7 +32808,7 @@ const NetWorthInsightTab=({banks,cards,cash,mf,shares,fd,re,loans,categories,pre
 
 
 
-const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile,goals,mf,mfTxns,shares,fd,re,loans,prefs,onJumpToLedger,nwSnapshots,brokerCashBalance=0})=>{
+const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile,goals,mf,mfTxns,shares,fd,re,loans,prefs,onJumpToLedger,nwSnapshots,eodNavs={},brokerCashBalance=0})=>{
   const P=prefs||{};
   const[stab,setStab]=useState("pulse");
   const[schedConfirm,setSchedConfirm]=useState(null);
@@ -35422,7 +35446,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     stab==="waterfall"     &&WaterfallTab,
     stab==="subscriptions" &&SubsTab,
     stab==="fire"          &&FireTab,
-    stab==="networth"      &&React.createElement(NetWorthInsightTab,{banks,cards,cash,mf,shares,fd,re:re||[],loans,categories,prefs:P,isMobile,dispatch,nwSnapshots:nwSnapshots||{},brokerCashBalance}),
+    stab==="networth"      &&React.createElement(NetWorthInsightTab,{banks,cards,cash,mf,shares,fd,re:re||[],loans,categories,prefs:P,isMobile,dispatch,nwSnapshots:nwSnapshots||{},eodNavs:eodNavs||{},brokerCashBalance}),
     stab==="capgains"      &&React.createElement(CapGainsTab,{shares,mf,mfTxns:mfTxns||[],isMobile}),
     stab==="commitments"   &&CommitmentsTab,
     stab==="health"        &&HealthScoreTab,
@@ -39761,7 +39785,7 @@ function App(){
           React.createElement(GoalsSection,{goals:state.goals||_EA,dispatch,isMobile,scheduled:state.scheduled||_EA,banks:state.banks,cards:state.cards,cash:state.cash,mf:state.mf||_EA,shares:state.shares||_EA,fd:state.fd||_EA,re:state.re||_EA,brokerCashBalance:state.brokerCashBalance||0}))),
       React.createElement("div",{style:{display:tab==="insights"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Insights"},
-          React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,mfTxns:state.mfTxns||[],shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs,onJumpToLedger,nwSnapshots:state.nwSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0}))),
+          React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,mfTxns:state.mfTxns||[],shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs,onJumpToLedger,nwSnapshots:state.nwSnapshots||_EO,eodNavs:state.eodNavs||_EO,brokerCashBalance:state.brokerCashBalance||0}))),
       React.createElement("div",{style:{display:tab==="notes"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Notes"},
           React.createElement(NotesSection,{notes:state.notes||_EA,dispatch}))),
