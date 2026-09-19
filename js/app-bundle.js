@@ -470,6 +470,17 @@ const latestNavByCode=(eodNavs,code)=>{
   }
   return null;
 };
+/* Per-fund latest NAV + its bucket date — lets callers pick the NEWEST-dated
+   NAV between m.nav and the eodNavs stores instead of trusting m.nav blindly. */
+const latestNavByCodeAndDate=(eodNavs,code)=>{
+  const norm=normalizeEodNavKeys(eodNavs||{});
+  const dates=Object.keys(norm).sort();
+  for(let i=dates.length-1;i>=0;i--){
+    const v=norm[dates[i]]&&norm[dates[i]][code];
+    if(v&&+v>0)return{nav:+v,date:dates[i]};
+  }
+  return null;
+};
 /* Per-fund NAV as of a given date: the newest snapshot bucket ≤ date that
    contains this scheme. Powers day-change and chart history when funds file
    under different published dates. */
@@ -482,21 +493,177 @@ const navAsOf=(eodNavs,code,date)=>{
   }
   return null;
 };
-const mfLiveVal=(m,navSnap)=>{
-  if(!m||!(+m.units>0))return 0;
-  /* Source of truth = the latest NAV shown on the Mutual Funds tab (m.nav) —
-     that is the number users compare against. m.nav is kept in lockstep with
-     the eodNavs day buckets because the auto EOD task and every manual NAV
-     refresh write BOTH stores (UPD_MF_NAV + SET_EOD_NAVS) from the same fetch.
-     Fall back to the latest eodNavs snapshot, then the stored currentValue,
-     then invested (cost). */
-  if(m.nav&&+m.nav>0)return parseFloat(((+m.nav)*(+m.units)).toFixed(2));
-  const nav=navSnap&&+navSnap[m.schemeCode];
-  if(nav&&nav>0)return parseFloat((nav*(+m.units)).toFixed(2));
-  return(m.currentValue&&+m.currentValue>0)?+m.currentValue:(+m.invested||0);
+/* ── mfValUnits: units that count toward MARKET VALUE ─────────────────────
+   Switch-in buys (isSwitch) are a reallocation, not new money: they still feed
+   invested / avgNav / total units, but must NOT be valued again (that money is
+   already represented in the source fund). _deriveMfHoldings stores holdUnits =
+   units − switchUnits on the fund; funds without switch units (or manual funds
+   / legacy data with no holdUnits) fall back to total units → no behaviour change. */
+const mfValUnits=(m)=>{
+  const u=+(m&&m.units)||0;
+  if(!m||m.holdUnits==null)return u;
+  const h=+m.holdUnits;
+  return isFinite(h)?Math.max(0,Math.min(h,u)):u;
 };
-/* Aggregate mutual-fund portfolio value (m.nav-first), for reports/exports/etc. */
-const mfPortVal=(mf,eodNavs)=>(mf||[]).reduce((s,m)=>s+mfLiveVal(m,latestNavSnap(eodNavs)),0);
+/* ── Gain / return / XIRR basis ────────────────────────────────────────────
+   mfLiveVal only values the units that are actually held (mfValUnits), so any
+   gain, return % or XIRR must be measured against the cost of THOSE units too —
+   otherwise the cost of switch-in units (reallocated money that is not valued)
+   shows up as a phantom loss.
+     mfValCost      → cost of valued units, avgNav-based   (was units×avgNav | invested)
+     mfValInvested  → cost of valued units, invested-based (was m.invested)
+   Per-fund "Invested" / "Cost of Acquisition" / avg NAV DISPLAYS keep the full
+   figure (switch-in included). Both helpers return the original expression
+   untouched for funds without switch units. */
+const mfValRatio=(m)=>{const u=+(m&&m.units)||0;return u>0?mfValUnits(m)/u:1;};
+const mfValCost=(m)=>{
+  const r=mfValRatio(m);
+  const c=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;
+  return r===1?c:parseFloat(((+c||0)*r).toFixed(2));
+};
+const mfValInvested=(m)=>{
+  const r=mfValRatio(m);
+  return r===1?m.invested:parseFloat(((+m.invested||0)*r).toFixed(2));
+};
+/* Fresh-money cash flows for XIRR, from a list of MF txns (any funds).
+   Switch-in buys are reallocations: their units are not valued, so they are NOT
+   cash outflows. Sells consume fresh units first (same rule as _mfSwitchUnits);
+   the part of a sell that consumed switch units is dropped from the inflow.
+   Returns [{date,cf}] in the ORIGINAL txn order. Funds without switches yield
+   exactly the flows the old inline code produced. */
+const _mfFreshFlows=(txns)=>{
+  const st={},out=[];
+  (txns||[]).map((t,i)=>({t,i})).filter(({t})=>t&&t.date)
+    .sort((a,b)=>(String(a.t.date).trim().localeCompare(String(b.t.date).trim()))||(a.i-b.i))
+    .forEach(({t,i})=>{
+      const s=st[t.fundName||""]||(st[t.fundName||""]={run:0,sw:0});
+      const nav=+t.nav||0;
+      const units=+t.units>0?+t.units:(nav>0&&+t.amount>0?+t.amount/nav:0);
+      const amount=+t.amount>0?+t.amount:units*nav;
+      if(t.orderType==="buy"){
+        s.run+=units;
+        if(t.isSwitch){s.sw+=units;return;}
+        if(amount)out.push({i,date:t.date,cf:-amount});
+      }else{
+        const fresh=Math.max(0,s.run-s.sw);
+        const swPart=Math.min(s.sw,Math.max(0,units-fresh));
+        s.run=Math.max(0,s.run-units);
+        s.sw=Math.max(0,Math.min(s.sw,s.run));
+        const keep=units>0?1-swPart/units:1;
+        if(amount&&keep>0)out.push({i,date:t.date,cf:amount*keep});
+      }
+    });
+  return out.sort((a,b)=>a.i-b.i);
+};
+/* ── mfResolve: the single source of truth for a fund's current NAV ──────
+   Returns {nav, dateISO, value, source} where:
+   • nav     = the raw NAV number (for display: fund card, Excel)
+   • dateISO = the published date of that NAV
+   • value   = nav × units (for chips, charts, reports)
+   • source  = "bucket" | "m.nav" | "currentValue" | "invested" (for debugging)
+
+   Priority:
+   1. Bucket (eodNavs) — newest date wins over m.nav when both exist.
+   2. m.nav — only when no bucket or when m.nav is newer (manual entry).
+   3. currentValue — legacy fallback, never written by new code.
+   4. invested (cost) — last resort.
+   ────────────────────────────────────────────────────────────────────────── */
+const mfResolve=(m,eodNavs,navLatest)=>{
+  if(!m||!(+m.units>0))return{nav:0,dateISO:"",value:0,source:"none",unitPrice:0};
+  const mNav=+m.nav||0;
+  const mDate=(m.navDateISO||"").slice(0,10);
+  const _nl=navLatest&&m.schemeCode?(navLatest[m.schemeCode]||null):null;
+  const nlNav=_nl?+_nl.nav:0;
+  const nlDate=(_nl&&_nl.dateISO||"").slice(0,10);
+  const bucket=latestNavByCodeAndDate(eodNavs,m.schemeCode);
+  const bNav=bucket?bucket.nav:0;
+  const bDate=(bucket&&bucket.date||"").slice(0,10);
+  /* Collect all candidates with their dates */
+  const cands=[];
+  if(nlNav>0)cands.push({nav:nlNav,date:nlDate,src:"navLatest"});
+  if(mNav>0)cands.push({nav:mNav,date:mDate,src:"m.nav"});
+  if(bNav>0)cands.push({nav:bNav,date:bDate,src:"bucket"});
+  let nav=0,dateISO="",source="none";
+  if(cands.length>0){
+    /* Pick the newest-dated candidate. If m.nav has no date (manual entry)
+       and is the only candidate alongside a bucket, respect the manual value. */
+    cands.sort((a,b)=>b.date.localeCompare(a.date));
+    const best=cands[0];
+    if(best.src==="m.nav"&&!best.date&&cands.length>1){
+      /* manual entry with no date — use it only if no newer bucket exists */
+      const newerBucket=cands.find(c=>c.src!=="m.nav"&&c.date>best.date);
+      if(!newerBucket){nav=best.nav;dateISO="";source="m.nav";}
+      else{nav=newerBucket.nav;dateISO=newerBucket.date;source=newerBucket.src;}
+    }else{
+      nav=best.nav;dateISO=best.date;source=best.src;
+    }
+  }
+  /* Value only the units that are truly held (excludes switch-in units).
+     _r===1 for every fund without switch units → identical to the old maths.
+     unitPrice = per-unit price on the FULL unit count (callers such as the
+     capital-gains lots need it; value/units would be diluted by switch units). */
+  const _tu=+m.units,_vu=mfValUnits(m),_r=_vu/_tu;
+  const _sc=x=>_r===1?x:parseFloat((x*_r).toFixed(2));
+  if(nav>0)return{nav,dateISO,value:parseFloat((nav*_vu).toFixed(2)),source,unitPrice:nav};
+  /* Legacy fallback: currentValue then invested (cost) — both are full-unit
+     figures, so scale them down to the valued units */
+  if(m.currentValue&&+m.currentValue>0)return{nav:0,dateISO:"",value:_sc(+m.currentValue),source:"currentValue",unitPrice:+m.currentValue/_tu};
+  return{nav:0,dateISO:"",value:_sc(+m.invested||0),source:"invested",unitPrice:(+m.invested||0)/_tu};
+};
+const mfLiveVal=(m,eodNavs,navLatest)=>mfResolve(m,eodNavs,navLatest).value;
+/* Aggregate mutual-fund portfolio value, for reports/exports/etc. */
+const mfPortVal=(mf,eodNavs,navLatest)=>(mf||[]).reduce((s,m)=>s+mfLiveVal(m,eodNavs,navLatest),0);
+
+/* ── useMfValuation: memoized per-fund NAV/value/cost/pnl + totals ──
+   Usage: const {funds, totalValue, totalCost, totalPnl} = useMfValuation(mf, eodNavs, navLatest);
+   Each entry in `funds` is keyed by m.id and contains:
+     { nav, dateISO, value, cost, pnl }
+   ─────────────────────────────────────────────────────────────────── */
+const useMfValuation=(mf,eodNavs,navLatest)=>{
+  const active=React.useMemo(()=>(mf||[]).filter(m=>m.units>0),[mf]);
+  const result=React.useMemo(()=>{
+    const funds={};
+    let totalValue=0,totalCost=0,totalPnl=0;
+    active.forEach(m=>{
+      const resolved=mfResolve(m,eodNavs,navLatest);
+      const cost=mfValCost(m);
+      const pnl=resolved.value-cost;
+      funds[m.id]={nav:resolved.nav,dateISO:resolved.dateISO,value:resolved.value,cost,pnl,source:resolved.source};
+      totalValue+=resolved.value;
+      totalCost+=cost;
+      totalPnl+=pnl;
+    });
+    return {funds,totalValue,totalCost,totalPnl};
+  },[active,eodNavs,navLatest]);
+  return result;
+};
+
+/* Stale-safe NAV application rule (shared by the auto EOD task, Refresh NAV
+   Everywhere and InvestSection's Refresh All): a freshly fetched NAV may only
+   move a fund FORWARD (newer published date) or fill a gap. It must never
+   regress a stored value, and any DIFFERENT value for the SAME published date
+   is proxy staleness — a scheme's NAV for a given date is immutable, and
+   several fallback proxies (corsproxy.io, allorigins.win, …) cache
+   aggressively, so a re-fetch can return an older cached body. Returns true
+   (apply the fetch) or false (keep the stored stricter value). */
+const _applyNavFetch=(fetched,stored)=>{
+  if(!stored||!fetched)return true;
+  const f=(fetched.navDateISO)||"";
+  const s=(stored.navDateISO)||"";
+  if(s&&f){
+    if(f<s)return false;                          /* fetched dated older — never regress */
+    if(f===s&&(+stored.nav||0)>0&&+stored.nav!==+fetched.nav)return false; /* same date, different value */
+  }
+  return true;
+};
+/* Same-date bucket guard: for a given bucket date, keep the value already
+   stored for a fund (NAV per published date is immutable) and only top up
+   funds missing from that bucket. */
+const _navTopUpByDate=(existing,byDate)=>{ // byDate: {[iso]:{code:nav}}
+  const _top={};
+  Object.keys(byDate||{}).forEach(c=>{if(!((existing||{})[c]>0))_top[c]=byDate[c];});
+  return _top;
+};
 
 /* ══════════════════════════════════════════════════════════════════════════
    SHARED MF NAV FETCHER
@@ -882,6 +1049,7 @@ const EMPTY_STATE=()=>({
   soldShareSnapshots:{},
   eodPrices:{},
   eodNavs:{},
+  navLatest:{},
   eodIndices:{},
   historyCache:{},
   mfHistNavs:{},
@@ -994,7 +1162,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.19.37";
+ const APP_VERSION="7.19.47";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1357,12 +1525,12 @@ const xirrSingleBuy=(invested,currentValue,buyDate)=>{
              stcgTax, ltcgTax, totalTax, details[], skippedMF }
    "details" = one row per holding with classification.
    ══════════════════════════════════════════════════════════════════════════ */
-const computeCapitalGains=(shares,mf)=>{
+const computeCapitalGains=(shares,mf,eodNavs,navLatest)=>{
   const today=TODAY();
   const details=[];
   let stcgGain=0,ltcgGain=0;
   let stcgLoss=0,ltcgLoss=0;
-  let skippedMF=0;
+  let skippedMF=0,skippedMFNoNav=0;
 
   /* ── Equity shares (always equity rules: 12-month threshold) ── */
   shares.forEach(sh=>{
@@ -1381,17 +1549,24 @@ const computeCapitalGains=(shares,mf)=>{
 
   /* ── Mutual Funds: respect fundType field ──
      fundType="debt" → 36-month LTCG threshold (debt-oriented funds)
-     fundType="equity" or unset → 12-month LTCG threshold (equity-oriented funds) */
+     fundType="equity" or unset → 12-month LTCG threshold (equity-oriented funds)
+     Valuation uses mfLiveVal (m.nav → per-code eodNavs walk-back → currentValue
+     → invested) so funds with a stale/gap m.nav are still valued, not dropped;
+     skippedMF = missing Start Date/cost basis, skippedMFNoNav = live NAV is
+     genuinely absent (no m.nav and no eodNavs entry for the scheme). */
   mf.forEach(m=>{
-    if(!m.startDate||!m.nav||!m.units||!m.avgNav){skippedMF++;return;}
+    if(!m.startDate||!m.avgNav){skippedMF++;return;}
+    if(!m.units||!(+m.units>0)){skippedMF++;return;}
+    const _liveNav=+(m.nav&&+m.nav>0?m.nav:latestNavByCode(eodNavs,m.schemeCode))||0;
+    if(!(_liveNav>0)){skippedMFNoNav++;return;}
     const buyD=new Date(m.startDate+"T12:00:00");
     const todD=new Date(today+"T12:00:00");
     const daysHeld=Math.floor((todD-buyD)/86400000);
     const isDebt=(m.fundType||"equity")==="debt";
     const ltcgThreshold=isDebt?365*3:365; /* debt: 36 months, equity: 12 months */
     const isLT=daysHeld>ltcgThreshold;
-    const cost=m.units*(m.avgNav||0);
-    const curVal=m.units*(m.nav||0);
+    const cost=mfValUnits(m)*(+m.avgNav||0);
+    const curVal=mfLiveVal(m,eodNavs,navLatest);
     const gain=curVal-cost;
     if(gain>=0){if(isLT)ltcgGain+=gain;else stcgGain+=gain;}
     else{if(isLT)ltcgLoss+=Math.abs(gain);else stcgLoss+=Math.abs(gain);}
@@ -1410,7 +1585,7 @@ const computeCapitalGains=(shares,mf)=>{
   const crossLtcg=Math.max(0,netLtcg-stcgRemLoss); /* LTCG after STCG loss offset */
   const stcgTax=crossStcg*0.20;
   const ltcgTax=crossLtcg*0.125;
-  return{stcgGain,stcgLoss,ltcgGain,ltcgLoss,ltcgExempt,ltcgTaxable,stcgTax,ltcgTax,totalTax:stcgTax+ltcgTax,details,skippedMF};
+  return{stcgGain,stcgLoss,ltcgGain,ltcgLoss,ltcgExempt,ltcgTaxable,stcgTax,ltcgTax,totalTax:stcgTax+ltcgTax,details,skippedMF,skippedMFNoNav};
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -1460,6 +1635,40 @@ const applyCatRule=(rules,tx)=>{
    existing MF metadata (schemeCode, nav, currentValue, navDate, manualXirr).
    invested = netUnits × avgNav (cost of currently held units = CoA),
    NOT total historical buy amount (which inflates after partial sells). ── */
+/* Units currently held that arrived via switch-in buys (isSwitch). Walks txns
+   chronologically; sells consume fresh units first and switch units only shrink
+   once total units drop below them — the SAME convention MFPortfolioEvolutionChart
+   already uses, so the chart and the holdings always agree. */
+const _mfSwitchUnits=(fundTxns)=>{
+  let run=0,sw=0;
+  (fundTxns||[]).map((t,i)=>({t,i}))
+    .sort((a,b)=>((a.t.date||"").trim().localeCompare((b.t.date||"").trim()))||(a.i-b.i))
+    .forEach(({t})=>{
+      const u=+t.units||0;
+      if(t.orderType==="buy"){run+=u;if(t.isSwitch)sw+=u;}
+      else if(t.orderType==="sell"){run=Math.max(0,run-u);sw=Math.max(0,Math.min(sw,run));}
+    });
+  return parseFloat(sw.toFixed(4));
+};
+/* Re-stamp switchUnits/holdUnits on already-persisted mf[] (localStorage load and
+   cloud restore) so existing users get corrected values without touching a txn. */
+const _syncHoldUnits=(mfList,txns)=>{
+  if(!Array.isArray(mfList)||!Array.isArray(txns)||!txns.length)return mfList;
+  const byFund={};
+  txns.forEach(t=>{if(t&&t.fundName)(byFund[t.fundName]=byFund[t.fundName]||[]).push(t);});
+  let changed=false;
+  const out=mfList.map(m=>{
+    if(!m||!byFund[m.name])return m;
+    const sw=_mfSwitchUnits(byFund[m.name]);
+    const hu=sw>0?parseFloat(Math.max(0,(+m.units||0)-sw).toFixed(4)):undefined;
+    if((m.holdUnits==null?undefined:m.holdUnits)===hu&&(+m.switchUnits||0)===sw)return m;
+    changed=true;
+    const n={...m,switchUnits:sw};
+    if(hu===undefined)delete n.holdUnits;else n.holdUnits=hu;
+    return n;
+  });
+  return changed?out:mfList;
+};
 const _deriveMfHoldings=(txns,existingMf,removedMf)=>{
   const _removed=new Set(removedMf||[]);
   const byFund={};
@@ -1484,6 +1693,11 @@ const _deriveMfHoldings=(txns,existingMf,removedMf)=>{
     const allDates=g.txns.map(t=>t.date).filter(Boolean).sort();
     const startDate=allDates[0]||"";
     const folioList=[...g.folios].join(", ");
+    /* Switch-in units stay in units/invested/avgNav (cost side) but are excluded
+       from the units used to VALUE the holding (holdUnits). Only stored when a
+       switch is actually present, so untouched funds behave exactly as before. */
+    const switchUnits=_mfSwitchUnits(g.txns);
+    const holdUnits=switchUnits>0?parseFloat(Math.max(0,netUnits-switchUnits).toFixed(4)):undefined;
     /* Fix ①: preserve existing metadata from live MF entry */
     const existing=existingMf.find(m=>m.name===g.fundName);
     return{
@@ -1491,11 +1705,15 @@ const _deriveMfHoldings=(txns,existingMf,removedMf)=>{
       name:g.fundName,
       schemeCode:existing?existing.schemeCode:"",
       units:netUnits,
+      switchUnits,
+      holdUnits,
       invested,
       avgNav,
       nav:existing?existing.nav:0,
       currentValue:existing?existing.currentValue:0,
       navDate:existing?existing.navDate:"",
+      navDateISO:existing?existing.navDateISO:"",
+      fundType:existing?existing.fundType:"",
       manualXirr:existing?existing.manualXirr:undefined,
       startDate,
       notes:folioList?"Folio: "+folioList:"",
@@ -1635,7 +1853,7 @@ const reducer=(s,a)=>{
          mfTxns are intentionally preserved per user requirement. */
       const _removed=(s.removedMf||[]).slice();
       if(_del.name&&_removed.indexOf(_del.name)<0)_removed.push(_del.name);
-      return{...s,mf:s.mf.filter(m=>m.id!==a.id),removedMf:_removed,eodNavs:_cleanNavs};
+      return{...s,mf:s.mf.filter(m=>m.id!==a.id),removedMf:_removed,eodNavs:_cleanNavs,navLatest:_delCode?Object.fromEntries(Object.entries(s.navLatest||{}).filter(([k])=>k!==_delCode)):s.navLatest};
     }
     /* ── MF EOD NAV snapshots ── */
     case"SET_EOD_NAVS":{
@@ -1645,10 +1863,17 @@ const reducer=(s,a)=>{
          partial fetch can top up funds that had already been filed here. */
       const _norm=normalizeEodNavKeys(s.eodNavs||{});
       const updated={..._norm,[_isoDate]:{...(_norm[_isoDate]||{}),...a.navs}};
-      /* Prune to last 90 days */
+      /* Prune anything older than 90 CALENDAR days. Bucket count is no longer
+         a safe proxy for this: funds file under their own published date, so
+         multiple buckets can land on the same calendar day. Pruning by count
+         (slice(-90)) can evict a lagging fund's last known-good NAV well before
+         90 real days pass, permanently stranding it on currentValue/cost — a
+         refresh can't fix that because the fetch that's failing for that fund
+         is exactly why it fell behind in the first place. */
       const keys=Object.keys(updated).sort();
+      const _cutoff=new Date(Date.now()-90*864e5).toISOString().slice(0,10);
       const pruned={};
-      keys.slice(-90).forEach(k=>{pruned[k]=updated[k];});
+      keys.forEach(k=>{if(k>=_cutoff)pruned[k]=updated[k];});
       /* Sync currentValue for each fund using its OWN most-recent snapshot
          (funds publish on different days). NOTE: Only update currentValue when
          it is missing or zero — never overwrite a fresh live value. */
@@ -1666,9 +1891,12 @@ const reducer=(s,a)=>{
     case"SET_EOD_INDICES":{
       const _isoIdxDate=mfNavDateToISO(a.date)||a.date;
       const updatedIdx={...normalizeEodNavKeys(s.eodIndices||{}),[_isoIdxDate]:a.indices};
+      /* Same calendar-day cutoff as SET_EOD_NAVS — bucket count is not a day
+         count. Keeps index history / lagging funds consistent. */
       const idxKeys=Object.keys(updatedIdx).sort();
+      const _idxCutoff=new Date(Date.now()-90*864e5).toISOString().slice(0,10);
       const prunedIdx={};
-      idxKeys.slice(-90).forEach(k=>{prunedIdx[k]=updatedIdx[k];});
+      idxKeys.forEach(k=>{if(k>=_idxCutoff)prunedIdx[k]=updatedIdx[k];});
       return{...s,eodIndices:prunedIdx};
     }
     /* ── Historical NAV series cache (per scheme code):
@@ -2179,7 +2407,7 @@ const reducer=(s,a)=>{
         banks:Array.isArray(d.banks)?d.banks:[],
         cards:Array.isArray(d.cards)?d.cards:[],
         cash:d.cash&&typeof d.cash==="object"?d.cash:{balance:0,transactions:[]},
-        mf:Array.isArray(d.mf)?d.mf:[],
+        mf:_syncHoldUnits(Array.isArray(d.mf)?d.mf:[],d.mfTxns),
         shares:Array.isArray(d.shares)?d.shares:[],
         fd:Array.isArray(d.fd)?d.fd:[],
         re:Array.isArray(d.re)?d.re:[],
@@ -2190,6 +2418,7 @@ const reducer=(s,a)=>{
         categories:Array.isArray(d.categories)?d.categories:[],
         payees:Array.isArray(d.payees)?d.payees:[],
         historyCache:d.historyCache&&typeof d.historyCache==="object"?d.historyCache:{},
+        navLatest:d.navLatest&&typeof d.navLatest==="object"?d.navLatest:{},
       };
       /* Merge the local tombstone into the restored state and drop any fund the
          user has deleted — so a stale Drive/sync restore can never resurrect it. */
@@ -2303,10 +2532,13 @@ const reducer=(s,a)=>{
     case"SET_EOD_PRICES":{
       /* Merge new prices for the given date */
       const updated={...(s.eodPrices||{}),[a.date]:a.prices};
-      /* Prune to last 30 calendar days to keep localStorage lean */
+      /* Prune to last 30 CALENDAR days. Bucket count is not a day count — a
+         blocked/delisted ticker falls behind while siblings keep filing, and
+         count-pruning would evict its last known-good price early too. */
       const keys=Object.keys(updated).sort();
+      const _priceCutoff=new Date(Date.now()-30*864e5).toISOString().slice(0,10);
       const pruned={};
-      keys.slice(-30).forEach(k=>{pruned[k]=updated[k];});
+      keys.forEach(k=>{if(k>=_priceCutoff)pruned[k]=updated[k];});
       return{...s,eodPrices:pruned};
     }
     case"SET_HISTORY_CACHE":{
@@ -2364,18 +2596,81 @@ const reducer=(s,a)=>{
     case"PRUNE_EOD_PRICES":{
       /* Keep only the most recent N days (default 7) */
       const _keepDays=a.days||7;
+      /* Calendar-day cutoff, not bucket count (see SET_EOD_PRICES note) */
+      const _eCutoff=new Date(Date.now()-_keepDays*864e5).toISOString().slice(0,10);
       const _eKeys=Object.keys(s.eodPrices||{}).sort();
       const _ePruned={};
-      _eKeys.slice(-_keepDays).forEach(k=>{_ePruned[k]=(s.eodPrices||{})[k];});
+      _eKeys.forEach(k=>{if(k>=_eCutoff)_ePruned[k]=(s.eodPrices||{})[k];});
       return{...s,eodPrices:_ePruned};
     }
     case"PRUNE_EOD_NAVS":{
       /* Keep only the most recent N days (default 14) */
       const _keepNavDays=a.days||14;
+      /* Calendar-day cutoff, not bucket count (see SET_EOD_NAVS note) */
+      const _nCutoff=new Date(Date.now()-_keepNavDays*864e5).toISOString().slice(0,10);
       const _nKeys=Object.keys(s.eodNavs||{}).sort();
       const _nPruned={};
-      _nKeys.slice(-_keepNavDays).forEach(k=>{_nPruned[k]=(s.eodNavs||{})[k];});
+      _nKeys.forEach(k=>{if(k>=_nCutoff)_nPruned[k]=(s.eodNavs||{})[k];});
       return{...s,eodNavs:_nPruned};
+    }
+    /* ── APPLY_MF_NAVS: single atomic write for all NAV refresh paths ─────
+       Replaces the old UPD_MF_NAV + SET_EOD_NAVS two-dispatch pattern.
+       a.p = [{fund:m, nav, navDate, navDateISO}, …]  (raw fetch results).
+       The reducer applies _applyNavFetch internally — callers just fetch and
+       dispatch, no pre-filtering needed. Every call also tops up eodNavs and
+       writes to the never-pruned navLatest map so mfResolve can always
+       find the freshest NAV regardless of bucket pruning. */
+    case"APPLY_MF_NAVS":{
+      const _raw=a.p||[];
+      /* 1. Stale-safe filter: only apply funds that pass _applyNavFetch */
+      const _curByCode={};
+      (s.mf||[]).forEach(m=>{_curByCode[m.schemeCode]=m;});
+      const _p=_raw.filter(r=>{
+        if(!r||!r.fund||!(r.nav>0))return false;
+        const _stored=_curByCode[r.fund.schemeCode];
+        if(!_stored)return true;
+        return _applyNavFetch(r,_stored);
+      });
+      if(!_p.length){
+        /* Nothing passed the guard — still update navLatest for any
+           fund that has a newer date than what's stored (can happen when
+           a fund's m.nav was never set but eodNavs has a bucket). */
+        const _newLatest={...(s.navLatest||{})};
+        let _changed=false;
+        _raw.forEach(r=>{
+          if(!r||!r.fund||!(r.nav>0)||!r.fund.schemeCode)return;
+          const _old=_newLatest[r.fund.schemeCode];
+          if(!_old||r.navDateISO>_old.dateISO){_newLatest[r.fund.schemeCode]={nav:r.nav,dateISO:r.navDateISO};_changed=true;}
+        });
+        return _changed?{...s,navLatest:_newLatest}:s;
+      }
+      /* 2. Write nav/navDate/navDateISO into mf[] (atomic — no drift) */
+      const _navMap=new Map(_p.map(r=>[r.fund.id,r]));
+      const _newMf=s.mf.map(m=>{
+        const r=_navMap.get(m.id);
+        if(!r)return m;
+        return{...m,nav:r.nav,navDate:r.navDate,navDateISO:r.navDateISO,currentValue:parseFloat((r.nav*(m.units||0)).toFixed(2))};
+      });
+      /* 3. Top up eodNavs: same-date immutable — only add missing funds */
+      const _norm=normalizeEodNavKeys(s.eodNavs||{});
+      const _newEod={..._norm};
+      _p.forEach(r=>{
+        if(!r.navDateISO||!(r.nav>0))return;
+        const _bucket=_newEod[r.navDateISO]||{};
+        if(!(_bucket[r.fund.schemeCode]>0)){
+          _newEod[r.navDateISO]={..._bucket,[r.fund.schemeCode]:r.nav};
+        }
+      });
+      /* 4. navLatest: never-pruned per-schemeCode map (freshest NAV always) */
+      const _newLatest={...(s.navLatest||{})};
+      _p.forEach(r=>{
+        if(!(r.nav>0)||!r.fund.schemeCode)return;
+        const _old=_newLatest[r.fund.schemeCode];
+        if(!_old||r.navDateISO>_old.dateISO){
+          _newLatest[r.fund.schemeCode]={nav:r.nav,dateISO:r.navDateISO};
+        }
+      });
+      return{...s,mf:_newMf,eodNavs:_newEod,navLatest:_newLatest};
     }
     case"PURGE_OLD_TRANSACTIONS":{
       /* Permanently delete all bank/card/cash transactions strictly before a.beforeDate.
@@ -7116,9 +7411,9 @@ window.CloudBackupPanel = CloudBackupPanel;
 /* Local-date formatter — avoids toISOString() UTC shift in IST */
 var _fmtLS=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 /* ── MFXirrRow — extracted so useState is never called inside .map() ── */
-var MFXirrRow=({m,dispatch,askDelete})=>{
-  const trueCoA=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;
-  const currentVal=mfLiveVal(m,null);
+var MFXirrRow=({m,dispatch,askDelete,eodNavs,navLatest})=>{
+  const trueCoA=mfValCost(m);
+  const currentVal=mfLiveVal(m,eodNavs,navLatest);
   const autoXirr=m.startDate&&trueCoA>0&&currentVal>0?xirrSingleBuy(trueCoA,currentVal,m.startDate):null;
   const manualXirrVal=m.manualXirr!=null&&m.manualXirr!==""?+m.manualXirr:null;
   const displayXirr=autoXirr!==null?autoXirr:manualXirrVal;
@@ -8024,7 +8319,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
               React.createElement("span",{style:{whiteSpace:"nowrap"}},"XIRR (% p.a.)"),
               React.createElement("span",{style:{whiteSpace:"nowrap"}},"")),
             state.mf.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"chart",size:18}),text:"No mutual funds"}),
-            state.mf.map(m=>React.createElement(MFXirrRow,{key:m.id,m,dispatch,askDelete}))
+            state.mf.map(m=>React.createElement(MFXirrRow,{key:m.id,m,dispatch,askDelete,eodNavs:state.eodNavs,navLatest:state.navLatest}))
           )
         ),
         /* Shares */
@@ -8487,6 +8782,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                     soldShareSnapshots:state.soldShareSnapshots||{},
                     eodPrices:state.eodPrices||{},
                     eodNavs:state.eodNavs||{},
+                    navLatest:state.navLatest||{},
                     historyCache:state.historyCache||{},
                     taxData:state.taxData||null,
                     taxData2627:state.taxData2627||null,
@@ -10246,7 +10542,7 @@ var loadState=()=>{
       banks:(parsed.banks||def.banks),
       cards:(parsed.cards||def.cards),
       cash:(parsed.cash||def.cash),
-      mf:(parsed.mf||def.mf),
+      mf:_syncHoldUnits(parsed.mf||def.mf,parsed.mfTxns),
       removedMf:(parsed.removedMf||[]),
       shares:(parsed.shares||def.shares),
       brokerCashBalance:(parsed.brokerCashBalance||def.brokerCashBalance||0),
@@ -10396,14 +10692,16 @@ var _emergencyCompact=(s)=>{
   }))(s);
   const p1={..._base,historyCache:{}};
   try{localStorage.setItem(LS_KEY,JSON.stringify(p1));console.warn("[MM] Storage: historyCache cleared to recover space.");return"historyCache";}catch{}
-  /* Pass 2: shrink EOD prices to last 7 days */
+  /* Pass 2: shrink EOD prices to last 7 calendar days */
   const eodKeys=Object.keys(s.eodPrices||{}).sort();
-  const eodPruned={};eodKeys.slice(-7).forEach(k=>{eodPruned[k]=s.eodPrices[k];});
+  const eodCutoff=new Date(Date.now()-7*864e5).toISOString().slice(0,10);
+  const eodPruned={};eodKeys.forEach(k=>{if(k>=eodCutoff)eodPruned[k]=s.eodPrices[k];});
   const p2={...p1,eodPrices:eodPruned};
   try{localStorage.setItem(LS_KEY,JSON.stringify(p2));console.warn("[MM] Storage: eodPrices pruned to 7 days to recover space.");return"eodPrices";}catch{}
-  /* Pass 3: shrink EOD NAVs to last 14 days */
+  /* Pass 3: shrink EOD NAVs to last 14 calendar days */
   const navKeys=Object.keys(s.eodNavs||{}).sort();
-  const navPruned={};navKeys.slice(-14).forEach(k=>{navPruned[k]=s.eodNavs[k];});
+  const navCutoff=new Date(Date.now()-14*864e5).toISOString().slice(0,10);
+  const navPruned={};navKeys.forEach(k=>{if(k>=navCutoff)navPruned[k]=s.eodNavs[k];});
   const p3={...p2,eodNavs:navPruned};
   try{localStorage.setItem(LS_KEY,JSON.stringify(p3));console.warn("[MM] Storage: eodNavs pruned to 14 days to recover space.");return"eodNavs";}catch{}
   /* All passes failed */
@@ -11773,16 +12071,35 @@ var usePersistentReducer=(reducer,init)=>{
           const writeAge=Date.now()-(+lastWrite);
           if(writeAge<15000)return; /* we wrote <15s ago — likely our own write */
         }
+        /* Local-first guard (matches the documented "pull if Drive's exportedAt
+           > local" contract that was never actually enforced): if this device
+           edited locally AFTER the remote was exported, Drive is stale — never
+           let a boot pull regress freshly fetched NAVs / eodNavs to an older
+           copy. Every local edit and NAV refresh stamps LS_LAST_LOCAL_EDIT, so
+           the remote must be strictly newer to win. */
+        const localEditAt=localStorage.getItem(LS_LAST_LOCAL_EDIT)||"0";
+        if(remoteTime<=localEditAt){
+          console.log("[GDrive] Local state is newer than Drive (local",localEditAt,"≥ remote",remoteTime,") — skipping pull.");
+          return;
+        }
         console.log("[GDrive] Found newer state on Drive (",remoteTime,") — applying…");
         _lastPulledAt=remoteTime;
         const remote_state = remote.state;
         /* Merge this device's MF-deletion tombstone into the pulled state BEFORE
            persisting, so a stale Drive copy can never resurrect a deleted fund. */
         const _mergedState = _mergeRemovedMf(remote_state, stateRef.current && stateRef.current.removedMf);
+        /* eodPrices/eodNavs are dense date-bucketed caches: UNION local + remote
+           per date so a pull can never erase a bucket that exists only on this
+           device — exactly the condition that stranded funds on currentValue/cost
+           (last known-good NAV pruned → refresh can't heal it). */
+        const _localEodPrices=(stateRef.current&&stateRef.current.eodPrices)||{};
+        const _mergedEodPrices={...normalizeEodNavKeys(_localEodPrices),...normalizeEodNavKeys(remote_state.eodPrices||{})};
+        const _localEodNavs=(stateRef.current&&stateRef.current.eodNavs)||{};
+        const _mergedEodNavs={...normalizeEodNavKeys(_localEodNavs),...normalizeEodNavKeys(remote_state.eodNavs||{})};
         try {
-          saveState({ ...EMPTY_STATE(), ..._mergedState });
-          localStorage.setItem(LS_EOD_PRICES, JSON.stringify(remote_state.eodPrices || {}));
-          localStorage.setItem(LS_EOD_NAVS,   JSON.stringify(remote_state.eodNavs   || {}));
+          saveState({ ...EMPTY_STATE(), ..._mergedState, eodPrices:_mergedEodPrices, eodNavs:_mergedEodNavs });
+          localStorage.setItem(LS_EOD_PRICES, JSON.stringify(_mergedEodPrices));
+          localStorage.setItem(LS_EOD_NAVS,   JSON.stringify(_mergedEodNavs));
           if(remote_state.chatbotTraining)
             localStorage.setItem("mm_v7_chatbot_training",JSON.stringify(remote_state.chatbotTraining));
           if(remote_state.avApiKey)
@@ -11800,7 +12117,7 @@ var usePersistentReducer=(reducer,init)=>{
         } catch {}
         try { await clearTxIDB(); } catch {}
         try { await saveTxToIDB(_mergedState); } catch {}
-        dispatch({type:"RESTORE_ALL",data:_mergedState});
+        dispatch({type:"RESTORE_ALL",data:{..._mergedState,eodPrices:_mergedEodPrices,eodNavs:_mergedEodNavs}});
         /* Force a clean debounced save after pull to prevent stale local state overwrite */
         if(timerRef.current)clearTimeout(timerRef.current);
         window.dispatchEvent(new CustomEvent("gdrive:pulled",{detail:{time:remoteTime}}));
@@ -14320,7 +14637,7 @@ const ShareSummaryModal=({data,allBankTx,thisMonth,onClose})=>{
   const curNW2=(()=>{
     const b=data.banks.reduce((s,b2)=>s+b2.balance,0);
     const c=data.cash.balance;
-    const m=mfPortVal(data.mf,data.eodNavs);
+    const m=mfPortVal(data.mf,data.eodNavs,data.navLatest||{});
     const sh=data.shares.reduce((s,s2)=>s+s2.qty*s2.currentPrice,0)+(data.brokerCashBalance||0);
     const fd=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
     const re=(data.re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
@@ -15702,7 +16019,7 @@ const Dashboard=React.memo(({data,isMobile,onJumpToTx})=>{
       const snaps=data.nwSnapshots||{};
       const bTotal=data.banks.reduce((s,b)=>s+b.balance,0);
       const cashBal=data.cash.balance;
-      const mfVal=data.mf.reduce((s,m)=>s+mfLiveVal(m,latestNavSnap(data.eodNavs)),0);
+      const mfVal=data.mf.reduce((s,m)=>s+mfLiveVal(m,data.eodNavs,data.navLatest||{}),0);
       const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
       const fdVal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
       const reVal=(data.re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
@@ -16131,7 +16448,7 @@ const Dashboard=React.memo(({data,isMobile,onJumpToTx})=>{
     W("nwdonut")&&(()=>{
       const bV=data.banks.reduce((s,b)=>s+b.balance,0);
       const cV=data.cash.balance;
-      const mfV=data.mf.reduce((s,m)=>s+mfLiveVal(m,latestNavSnap(data.eodNavs)),0);
+      const mfV=data.mf.reduce((s,m)=>s+mfLiveVal(m,data.eodNavs,data.navLatest||{}),0);
       const shV=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
       const fdV=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
       const reV=(data.re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
@@ -16409,9 +16726,8 @@ const Dashboard=React.memo(({data,isMobile,onJumpToTx})=>{
 
     /* ══ M2: INVESTMENT PULSE ═══════════════════════════════════ */
     W("invpulse")&&(()=>{
-      const _ipNavSnap=latestNavSnap(data.eodNavs);
-      const mfV=data.mf.reduce((s,m)=>s+mfLiveVal(m,_ipNavSnap),0);
-      const mfCost=data.mf.filter(m=>m.units>0).reduce((s,m)=>s+(m.invested||0),0);
+      const mfV=data.mf.reduce((s,m)=>s+mfLiveVal(m,data.eodNavs,data.navLatest||{}),0);
+      const mfCost=data.mf.filter(m=>m.units>0).reduce((s,m)=>s+(mfValInvested(m)||0),0);
       const shV=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
       const shCost=data.shares.reduce((s,sh)=>s+sh.qty*sh.buyPrice,0);
       const fdV=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
@@ -16457,7 +16773,7 @@ const Dashboard=React.memo(({data,isMobile,onJumpToTx})=>{
 
     /* ══ M3: CAPITAL GAINS / TAX WATCH ═════════════════════════ */
     W("taxwatch")&&(()=>{
-      const cg=computeCapitalGains(data.shares||[],data.mf||[]);
+       const cg=computeCapitalGains(data.shares||[],data.mf||[],data.eodNavs,data.navLatest||{});
       const near=(data.shares||[]).filter(sh=>sh.buyDate).map(sh=>{
         const days=Math.floor((new Date(todayStr+"T12:00:00")-new Date(sh.buyDate+"T12:00:00"))/86400000);
         return{...sh,days,toLtcg:366-days,gain:sh.qty*(sh.currentPrice-sh.buyPrice)};
@@ -17694,8 +18010,8 @@ const ImportFDModal=({onImport,onClose})=>{
    INVESTMENT DASHBOARD
    ══════════════════════════════════════════════════════════════════════════ */
 /* ── CapitalGainsCard — shown in InvestDashboard between XIRR strip and allocation row ── */
-const CapitalGainsCard=({shares,mf,dispatch})=>{
-  const cg=React.useMemo(()=>computeCapitalGains(shares,mf),[shares,mf]);
+const CapitalGainsCard=({shares,mf,dispatch,eodNavs={},navLatest={}})=>{
+  const cg=React.useMemo(()=>computeCapitalGains(shares,mf,eodNavs,navLatest),[shares,mf,eodNavs,navLatest]);
   const[prefilled,setPrefilled]=useState(false);
   if(!cg.details.length)return null;
   const ltcgPct=Math.min(100,cg.ltcgGain>0?Math.round(cg.ltcgExempt/cg.ltcgGain*100):0);
@@ -17744,9 +18060,13 @@ const CapitalGainsCard=({shares,mf,dispatch})=>{
       ),
       ltcgPct>=100&&React.createElement("div",{style:{fontSize:10,color:"#ef4444",marginTop:4,fontWeight:600}},"⚠ Exemption fully used — all further LTCG is taxable at 12.5%.")
     ),
-    cg.skippedMF>0&&React.createElement("div",{style:{marginTop:10,padding:"7px 12px",borderRadius:8,background:"rgba(202,138,4,.09)",border:"1px solid rgba(202,138,4,.28)",fontSize:11,color:"#a16207",display:"flex",alignItems:"center",gap:7}},
+    (cg.skippedMF>0||cg.skippedMFNoNav>0)&&React.createElement("div",{style:{marginTop:10,padding:"7px 12px",borderRadius:8,background:"rgba(202,138,4,.09)",border:"1px solid rgba(202,138,4,.28)",fontSize:11,color:"#a16207",display:"flex",alignItems:"center",gap:7}},
       React.createElement("span",null,React.createElement(Icon,{n:"warning",size:16})),
-      React.createElement("span",null,cg.skippedMF+" mutual fund"+(cg.skippedMF>1?"s":"")+" excluded from capital gains — please add a Start Date (purchase date) to each fund in the Mutual Funds tab.")
+      React.createElement("span",null,
+        (cg.skippedMF>0?cg.skippedMF+" mutual fund"+(cg.skippedMF>1?"s":"")+" excluded from capital gains — please add a Start Date (purchase date) in the Mutual Funds tab.":"")+
+        (cg.skippedMF>0&&cg.skippedMFNoNav>0?" ":"")+
+        (cg.skippedMFNoNav>0?cg.skippedMFNoNav+" mutual fund"+(cg.skippedMFNoNav>1?"s":"")+" excluded — no NAV available for valuation (refreshing NAVs may help).":"")
+      )
     )
   );
 };
@@ -17788,15 +18108,15 @@ const RecentTxnList=React.memo(({txns,onJumpToTx})=>{
   );
 });
 
-const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobile,eodPrices={},eodNavs={},brokerCashBalance=0})=>{
+const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobile,eodPrices={},eodNavs={},navLatest={},brokerCashBalance=0})=>{
   const[refreshing,setRefreshing]=useState(false);
   const[refreshStatus,setRefreshStatus]=useState(null); /* {ok,msg,ts,navOk,sharesOk} */
+  const _mfLiveVal=(m)=>mfLiveVal(m,eodNavs,navLatest);
 
   /* ── Totals — derived live from props so re-renders automatically after dispatch ── */
   const mfActive=mf.filter(m=>m.units>0); /* hide fully sold funds */
-  const _idNavSnap=latestNavSnap(eodNavs);
-  const mfVal   = mfActive.reduce((s,m)=>s+mfLiveVal(m,_idNavSnap),0);
-  const mfCost  = mfActive.reduce((s,m)=>s+(m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested),0);
+  const mfVal   = mfActive.reduce((s,m)=>s+_mfLiveVal(m),0);
+  const mfCost  = mfActive.reduce((s,m)=>s+mfValCost(m),0);
   const mfInv   = mfActive.reduce((s,m)=>s+m.invested,0);
   const shVal   = shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+brokerCashBalance;
   const shCost  = shares.reduce((s,sh)=>s+sh.qty*sh.buyPrice,0);
@@ -17863,17 +18183,11 @@ const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobil
       /* Only use txns for funds that still have active holdings */
       const activeFundNames=new Set(activeMfD.map(m=>m.name));
       let hasTxnData=false;
-      (mfTxns||[]).forEach(t=>{
-        if(!t.date)return;
-        const nav=+t.nav||0;
-        const units=+t.units>0?+t.units:(nav>0&&+t.amount>0?+t.amount/nav:0);
-        const amount=+t.amount>0?+t.amount:units*nav;
-        if(!amount)return;
-        if(t.orderType==="buy"){cfs.push(-amount);dts.push(t.date);hasTxnData=true;}
-        else{cfs.push(+amount);dts.push(t.date);hasTxnData=true;}
-      });
+      /* Fresh-money flows only — switch-in buys are reallocations whose units are
+         not valued, so they are not cash outflows (see _mfFreshFlows). */
+      _mfFreshFlows(mfTxns).forEach(f=>{cfs.push(f.cf);dts.push(f.date);hasTxnData=true;});
       if(hasTxnData&&cfs.length>=1){
-        const totalCurr=activeMfD.reduce((s,m)=>s+mfLiveVal(m,_idNavSnap),0);
+        const totalCurr=activeMfD.reduce((s,m)=>s+_mfLiveVal(m),0);
         if(totalCurr>0){
           cfs.push(totalCurr);dts.push(_today);
           const xirr=computeXIRR(cfs,dts);
@@ -17883,14 +18197,14 @@ const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobil
     }
 
     /* TIER 2: Cashflow XIRR from startDate per fund */
-    const withDate=mf.filter(m=>m.startDate&&m.units>0&&(m.avgNav>0||m.invested>0)&&mfLiveVal(m,_idNavSnap)>0);
+    const withDate=mf.filter(m=>m.startDate&&m.units>0&&(m.avgNav>0||m.invested>0)&&_mfLiveVal(m)>0);
     if(withDate.length>=1){
       const cfs=[],dts=[];
       withDate.forEach(m=>{
-        const cost=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;
+        const cost=mfValCost(m);
         cfs.push(-cost); dts.push(m.startDate);
       });
-      const totalCurr=withDate.reduce((s,m)=>s+mfLiveVal(m,_idNavSnap),0);
+      const totalCurr=withDate.reduce((s,m)=>s+_mfLiveVal(m),0);
       cfs.push(totalCurr); dts.push(_today);
       const xirr=computeXIRR(cfs,dts);
       if(xirr!==null)return{xirr,isManual:false,source:"Auto",partial:withDate.length<mf.length};
@@ -17899,10 +18213,10 @@ const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobil
     /* TIER 3: Weighted average of manual XIRRs */
     const withManual=mf.filter(m=>m.manualXirr!=null&&m.manualXirr!=="");
     if(!withManual.length)return null;
-    const totalVal=withManual.reduce((s,m)=>s+mfLiveVal(m,_idNavSnap),0);
+    const totalVal=withManual.reduce((s,m)=>s+_mfLiveVal(m),0);
     if(totalVal<=0)return null;
     const wtdXirr=withManual.reduce((s,m)=>{
-      const v=mfLiveVal(m,_idNavSnap);
+      const v=_mfLiveVal(m);
       return s+(+m.manualXirr*(v/totalVal));
     },0);
     return{xirr:wtdXirr,isManual:true,source:"Manual",partial:withManual.length<mf.length};
@@ -17932,8 +18246,8 @@ const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobil
 
   /* ── MF top performers by % return ── */
   const mfPerf=mf.map(m=>{
-    const cost=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;
-    const cur=mfLiveVal(m,_idNavSnap);
+    const cost=mfValCost(m);
+    const cur=_mfLiveVal(m);
     const pnl=cur-cost;
     return{...m,pnl,pnlPct:cost>0?(pnl/cost)*100:0};
   }).sort((a,b)=>b.pnlPct-a.pnlPct);
@@ -17962,32 +18276,18 @@ const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobil
   const refreshMFNav=async()=>{
     if(!mf.length)return{ok:true,updated:0};
     try{
-      const upd=await Promise.all(mf.map(async m=>{
+      const navResults=await Promise.all(mf.map(async m=>{
         try{
           const res=await fetchOneNav(m.schemeCode);
-          if(!res)return m;
-          return{...m,nav:res.nav,navDate:res.navDate,navDateISO:res.navDateISO,currentValue:res.nav*m.units};
-        }catch{return m;}
+          if(!res)return null;
+          return{fund:m,nav:res.nav,navDate:res.navDate,navDateISO:res.navDateISO||mfNavDateToISO(res.navDate)};
+        }catch{return null;}
       }));
-      dispatch({type:"UPD_MF_NAV",p:upd});
-      /* Save EOD NAV snapshots keyed by each fund's OWN published NAV date —
-         identical to InvestSection and the auto EOD task. */
-      const byDate={};
-      upd.forEach(m=>{
-        if(m.nav>0&&m.navDate){
-          const iso=m.navDateISO||mfNavDateToISO(m.navDate);
-          if(iso){
-            byDate[iso]=byDate[iso]||{};
-            byDate[iso][m.schemeCode]=m.nav;
-          }
-        }
-      });
-      Object.keys(byDate).sort().forEach(iso=>dispatch({type:"SET_EOD_NAVS",date:iso,navs:byDate[iso]}));
-      const updatedCount=upd.filter(m=>m.nav>0&&m.navDate).length;
-      /* Stamp local-edit time so a stale Drive copy is never treated as newer
-         than these freshly fetched NAVs (protects boot-pull on fresh installs). */
+      const _valid=navResults.filter(r=>r&&r.nav>0);
+      dispatch({type:"APPLY_MF_NAVS",p:_valid});
+      const updatedCount=_valid.length;
       if(updatedCount>0)_syncSaveLocalEdit(new Date().toISOString());
-      return{ok:updatedCount>0,updated:updatedCount,failed:upd.length-updatedCount};
+      return{ok:updatedCount>0,updated:updatedCount,failed:mf.length-updatedCount};
     }catch{return{ok:false,updated:0,failed:mf.length};}
   };
   /* "Refresh NAV Everywhere" — NAV-only: re-fetches every fund's Latest NAV so
@@ -18147,8 +18447,8 @@ const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobil
       const _prevNavDate=_eodAllDates.slice(-2,-1)[0];
       let mfDayChgPct=null;
       if(_latestNavDate&&_prevNavDate){
-        const latestTotal=mf.reduce((s,m)=>{const n=m.units>0?navAsOf(_normDashNavs,m.schemeCode,_latestNavDate):0;return s+(n?n*(+m.units):0);},0);
-        const prevTotal=mf.reduce((s,m)=>{const n=m.units>0?navAsOf(_normDashNavs,m.schemeCode,_prevNavDate):0;return s+(n?n*(+m.units):0);},0);
+        const latestTotal=mf.reduce((s,m)=>{const n=m.units>0?navAsOf(_normDashNavs,m.schemeCode,_latestNavDate):0;return s+(n?n*mfValUnits(m):0);},0);
+        const prevTotal=mf.reduce((s,m)=>{const n=m.units>0?navAsOf(_normDashNavs,m.schemeCode,_prevNavDate):0;return s+(n?n*mfValUnits(m):0);},0);
         if(prevTotal>0&&latestTotal>0)mfDayChgPct=((latestTotal-prevTotal)/prevTotal*100);
       }
       return React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
@@ -18210,7 +18510,7 @@ const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobil
     ),
 
     /* ── Capital Gains Summary card */
-    React.createElement(CapitalGainsCard,{shares,mf,dispatch}),
+    React.createElement(CapitalGainsCard,{shares,mf,dispatch,eodNavs,navLatest}),
 
     /* ── Allocation donut (standalone — MF performance chart removed) */
     React.createElement("div",{style:{marginBottom:14}},
@@ -19258,7 +19558,7 @@ const fetchNiftyLive=async()=>{
   return _niftyLivePromise;
 };
 
-const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
+const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,navLatest,mfHistNavs})=>{
   const svgRef=React.useRef(null);
   const[hoverIdx,setHoverIdx]=React.useState(null);
   const[niftyLive,setNiftyLive]=React.useState(_niftyLiveCache);
@@ -19383,8 +19683,11 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
          correct unit counts for the period starting after this transaction. */
       const stateSnap={};
       Object.entries(fundState).forEach(([fn,fs])=>{stateSnap[fn]={units:fs.units,switchUnits:fs.switchUnits};});
-      if(runningCost>0)pts.push({
-        date:toLabel(date),rawDate:date,cost:runningCost,value:holdingVal,
+      /* cost of the VALUED units only: strip the (avg-cost) cost of switch-in units
+         still held, so the cost line pairs with the value line. No switches → 0. */
+      const _adjCost=Math.max(0,runningCost-Object.values(fundState).reduce((s,fs)=>s+(fs.avgCostPerUnit||0)*(fs.switchUnits||0),0));
+      if(_adjCost>0)pts.push({
+        date:toLabel(date),rawDate:date,cost:_adjCost,value:holdingVal,
         fundVals:fundVals,stateSnap:stateSnap,
         txns:byDate[date].map(t=>({type:t.orderType,fund:t.fundName,amount:+t.amount||0,nav:+t.nav||0,isSwitch:!!t.isSwitch}))
       });
@@ -19421,23 +19724,19 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
     }
     if(mf&&mf.length>0&&pts.length>0){
       const activeMf=(mf||[]).filter(m=>m.units>0);
-      const curCost=activeMf.reduce((s,m)=>s+(m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested),0);
+      const curCost=activeMf.reduce((s,m)=>s+mfValCost(m),0);
       const now=new Date();
       const todayLabel=now.getDate()+"-"+MON[now.getMonth()]+"-"+now.getFullYear();
       const todayRaw=_localIso(now);
-      /* Use latest eodNavs snapshot (same source as the hero card) to avoid stale
-         m.currentValue after gap days without opening the app. */
-      const _latestNavDate=Object.keys(_normEodNavs).sort().slice(-1)[0];
-      const curVal=_latestNavDate?activeMf.reduce((s,m)=>{
-        const nav=m.units>0?navAsOf(_normEodNavs,m.schemeCode,_latestNavDate):0;
-        return s+(nav?nav*m.units:0);
-      },0):activeMf.reduce((s,m)=>s+mfLiveVal(m,latestNavSnap(eodNavs)),0);
+      /* Same valuation chain as the fund cards / hero: m.nav first, then the
+         fund's OWN newest eodNavs bucket (per-code walk-back), then
+         currentValue, then invested (cost) — consistent everywhere. */
+      const curVal=activeMf.reduce((s,m)=>s+mfLiveVal(m,eodNavs,navLatest),0);
       const lastPt=pts[pts.length-1];
       if(curVal>0&&curCost>0){
         const fundVals={};
         activeMf.forEach(m=>{
-          const nav=_latestNavDate?navAsOf(_normEodNavs,m.schemeCode,_latestNavDate):null;
-          const fv=(nav&&nav>0)?m.units*nav:(m.nav&&m.nav>0?m.nav*m.units:(m.currentValue&&m.currentValue>0?m.currentValue:0));
+          const fv=mfLiveVal(m,eodNavs,navLatest);
           if(fv>0)fundVals[m.name]=fv;
         });
         const todayTxn=byDate[todayRaw]||[];
@@ -19751,7 +20050,7 @@ const MFPortfolioEvolutionChart=React.memo(({mfTxns,mf,eodNavs,mfHistNavs})=>{
        Using it — dated at the range's `to` — keeps returns/CAGR stable whether the
        user picks to=yesterday or to=today, instead of swinging on a stale point. */
     const activeMf=(mf||[]).filter(m=>m.units>0);
-    const liveTotal=activeMf.reduce((s,m)=>s+mfLiveVal(m,latestNavSnap(eodNavs)),0);
+    const liveTotal=activeMf.reduce((s,m)=>s+mfLiveVal(m,eodNavs,navLatest),0);
     const _toISO=ds=>mfNavDateToISO(ds)||ds;
     const toTs=dateTo?_t(_toISO(dateTo)):0;
     const inTail=toTs>0&&toTs>_t(end.rawDate);
@@ -21298,7 +21597,7 @@ const MFPerformanceTables=React.memo(({mf,mfHistNavs={},dispatch})=>{
   );
 });
 
-const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},eodIndices={},historyCache={},soldShareSnapshots={},mfHistNavs={},brokerCashBalance=0,banks=[],scheduled=[],isMobile})=>{
+const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,defaultTab="mf",eodPrices={},eodNavs={},navLatest={},eodIndices={},historyCache={},soldShareSnapshots={},mfHistNavs={},brokerCashBalance=0,banks=[],scheduled=[],isMobile})=>{
   const[ready,setReady]=useState(false);
   React.useEffect(()=>{const t=setTimeout(()=>setReady(true),120);return()=>clearTimeout(t);},[]);
   const[tab,setTab]=useState(defaultTab);const[open,setOpen]=useState(false);const[navLoad,setNavLoad]=useState(false);
@@ -21327,37 +21626,22 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
   const[brokerCashEdit,setBrokerCashEdit]=useState(false);
   const[brokerCashInput,setBrokerCashInput]=useState("");
   const[expandedTech,setExpandedTech]=useState({}); /* {shareId: true} for expanded technicals */
+  const _mfLiveVal=(m)=>mfLiveVal(m,eodNavs,navLatest);
 
   const fetchNAV=async()=>{
     setNavLoad(true);
-    const upd=await Promise.all(mf.map(async m=>{
+    const navResults=await Promise.all(mf.map(async m=>{
       try{
         const res=await fetchOneNav(m.schemeCode);
-        if(!res)return m;
-        return{...m,nav:res.nav,navDate:res.navDate,navDateISO:res.navDateISO,currentValue:res.nav*m.units};
-      }catch{return m;}
+        if(!res)return null;
+        return{fund:m,nav:res.nav,navDate:res.navDate,navDateISO:res.navDateISO||mfNavDateToISO(res.navDate)};
+      }catch{return null;}
     }));
-    dispatch({type:"UPD_MF_NAV",p:upd});
-    /* Save EOD NAV snapshots keyed by each fund's OWN published NAV date
-       (YYYY-MM-DD) — funds that publish on different days are never mis-filed
-       under a single date. */
+    const _valid=navResults.filter(r=>r&&r.nav>0);
+    dispatch({type:"APPLY_MF_NAVS",p:_valid});
     let navDateISO_FK="";
-    const byDate={};
-    upd.forEach(m=>{
-      if(m.nav>0&&m.navDate){
-        const iso=m.navDateISO||mfNavDateToISO(m.navDate);
-        if(iso){
-          byDate[iso]=byDate[iso]||{};
-          byDate[iso][m.schemeCode]=m.nav;
-        }
-      }
-    });
-    const datesFK=Object.keys(byDate).sort();
-    if(datesFK.length>0){
-      /* Index snapshot is keyed to the NEWEST fund NAV date so the "NAV Change
-         vs Nifty Benchmarks" card can anchor benchmarks to the fund NAV dates. */
-      navDateISO_FK=datesFK[datesFK.length-1];
-      datesFK.forEach(iso=>dispatch({type:"SET_EOD_NAVS",date:iso,navs:byDate[iso]}));
+    if(_valid.length){
+      navDateISO_FK=_valid.map(r=>r.navDateISO).sort().pop();
     }
     setNavLoad(false);
     /* ── Fetch market indices EOD snapshot (runs after spinner clears) ── */
@@ -21469,9 +21753,9 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
     if(!found)setResults([]);
     setSearching(false);
   };
-  const mfTotal=mf.filter(m=>m.units>0).reduce((s,m)=>s+mfLiveVal(m,latestNavSnap(eodNavs)),0);
+  const mfTotal=mf.filter(m=>m.units>0).reduce((s,m)=>s+_mfLiveVal(m),0);
   const mfInv=mf.filter(m=>m.units>0).reduce((s,m)=>s+m.invested,0);
-  const mfCoA=mf.filter(m=>m.units>0).reduce((s,m)=>s+(m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested),0);
+  const mfCoA=mf.filter(m=>m.units>0).reduce((s,m)=>s+mfValCost(m),0);
   const shVal=shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0);
   const shCost=shares.reduce((s,sh)=>s+sh.qty*sh.buyPrice,0);
   const fdTotal=fd.reduce((s,f)=>s+f.amount,0);
@@ -21540,7 +21824,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
       React.createElement(StatCard,{label:"Market Value",val:INR(shVal),sub:shares.length+" holdings",col:"#16a34a",icon:React.createElement(Icon,{n:"invest",size:18})}),
       React.createElement(StatCard,{label:"Cost Basis",val:INR(shCost),sub:"Total invested",col:"#0e7490",icon:React.createElement(Icon,{n:"money",size:15})}),
       React.createElement(StatCard,{label:"Total P&L",val:(shVal-shCost>=0?"+":"")+INR(shVal-shCost),sub:pct(shVal,shCost)+"% return",col:shVal>=shCost?"#16a34a":"#ef4444",icon:shVal>=shCost?"▲":"▼"}),
-      (()=>{const cg=computeCapitalGains(shares,[]);return(cg.stcgGain>0||cg.ltcgGain>0)?React.createElement(StatCard,{label:"Est. Capital Gains Tax",val:INR(Math.round(cg.totalTax)),sub:"STCG "+INR(Math.round(cg.stcgGain))+" · LTCG "+INR(Math.round(cg.ltcgGain)),col:"#4f46e5",icon:React.createElement(Icon,{n:"report",size:22})}):null;})()
+      (()=>{const cg=computeCapitalGains(shares,[],eodNavs,navLatest);return(cg.stcgGain>0||cg.ltcgGain>0)?React.createElement(StatCard,{label:"Est. Capital Gains Tax",val:INR(Math.round(cg.totalTax)),sub:"STCG "+INR(Math.round(cg.stcgGain))+" · LTCG "+INR(Math.round(cg.ltcgGain)),col:"#4f46e5",icon:React.createElement(Icon,{n:"report",size:22})}):null;})()
     ),
     /* ── Cash Balance in Broker Account hero card (Shares tab only) ── */
     tab==="shares"&&React.createElement("div",{style:{marginBottom:20}},
@@ -21670,7 +21954,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         const _heroYesterdayISO=(new Date(Date.now()-864e5)).toISOString().slice(0,10);
         /* Compute total portfolio value for each recorded date (chart) */
         const chartPts=allDates.map(date=>{
-          const val=mf.reduce((s,m)=>{const n=m.units>0?navAsOf(_normHeroNavs,m.schemeCode,date):0;return s+(n?n*(+m.units):0);},0);
+          const val=mf.reduce((s,m)=>{const n=m.units>0?navAsOf(_normHeroNavs,m.schemeCode,date):0;return s+(n?n*mfValUnits(m):0);},0);
           /* date is ISO YYYY-MM-DD — convert to short DD-MMM label */
           const parts=date.split("-"); // [YYYY, MM, DD]
           const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -21682,14 +21966,24 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         /* Day change: latest snapshot vs the one before it */
         /* Day change: each fund's newest snapshot ≤ the date (navAsOf), so funds
            that publish on different days are never wrongly counted as 0. */
-        const latestTotal=latestDate?mf.reduce((s,m)=>{const n=m.units>0?navAsOf(_normHeroNavs,m.schemeCode,latestDate):0;return s+(n?n*(+m.units):0);},0):null;
-        const prevTotal=prevDate?mf.reduce((s,m)=>{const n=m.units>0?navAsOf(_normHeroNavs,m.schemeCode,prevDate):0;return s+(n?n*(+m.units):0);},0):null;
-        const dayChgAbs=latestTotal&&prevTotal&&prevTotal>0?latestTotal-prevTotal:null;
-        const dayChgPct=latestTotal&&prevTotal&&prevTotal>0?((latestTotal-prevTotal)/prevTotal*100):null;
-        /* Hero value driven by eodNavs latest snapshot for consistency with badge */
+        /* Headline = shared value (same as header / fund cards / chart) */
         const mfActive=mf.filter(m=>m.units>0);
-        const mfTotalNow=latestTotal!==null?latestTotal:mfActive.reduce((s,m)=>s+mfLiveVal(m,latestNavSnap(eodNavs)),0);
-        const mfCoANow=mfActive.reduce((s,m)=>s+(m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested),0);
+        const mfTotalNow=mfPortVal(mfActive,eodNavs,navLatest);
+        /* Day-change: only count funds that have BOTH dates — prevents a
+           newly added fund (only in the latest bucket) from showing as
+           phantom gain. navAsOf returns the fund's own snapshot for that
+           date or the nearest prior one. */
+        let dayChgAbs=null,dayChgPct=null;
+        if(latestDate&&prevDate){
+          let cur=0,prev=0;
+          mfActive.forEach(m=>{
+            const a=navAsOf(_normHeroNavs,m.schemeCode,latestDate);
+            const b=navAsOf(_normHeroNavs,m.schemeCode,prevDate);
+            if(a&&b){cur+=a*mfValUnits(m);prev+=b*mfValUnits(m);}
+          });
+          if(prev>0){dayChgAbs=cur-prev;dayChgPct=(dayChgAbs/prev)*100;}
+        }
+        const mfCoANow=mfActive.reduce((s,m)=>s+mfValCost(m),0);
         const overallGain=mfTotalNow-mfCoANow;
         const showHero=chartPts.length>=1||latestDate;
         if(!showHero||!mfActive.length)return null;
@@ -21718,7 +22012,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
               /* TODAY column */
               React.createElement("div",{style:{padding:"12px 16px"}},
                 React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"#6d28d9",textTransform:"uppercase",letterSpacing:1.1,marginBottom:4}},(latestDate===_heroTodayISO?"Today":"Latest NAV")+(latestDate?" · "+fmtDateLabel(latestDate):"")),
-                React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:20,color:"#6d28d9"}},latestTotal!==null?INR(latestTotal):"--"),
+                React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:20,color:"#6d28d9"}},INR(mfTotalNow)),
                 dayChgAbs!==null&&React.createElement("div",{style:{fontSize:11,color:dayChgAbs>=0?"#16a34a":"#ef4444",marginTop:3,fontWeight:600}},
                   (dayChgAbs>=0?"▲ +":"▼ ")+INR(Math.abs(dayChgAbs))+" vs prev NAV"
                 )
@@ -21741,7 +22035,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
               /* YESTERDAY column */
               prevDate&&React.createElement("div",{style:{padding:"12px 16px",opacity:.85}},
                 React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:1.1,marginBottom:4}},(prevDate===_heroYesterdayISO?"Yesterday":"Prev NAV")+" · "+fmtDateLabel(prevDate)),
-                React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:20,color:"var(--text3)"}},prevTotal!==null?INR(prevTotal):"--"),
+                React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:20,color:"var(--text3)"}},dayChgAbs!==null?INR(mfTotalNow-dayChgAbs):"--"),
                 React.createElement("div",{style:{fontSize:11,color:"var(--text6)",marginTop:3}},prevDate?"Prev NAV snapshot":"")
               )
             ),
@@ -21846,8 +22140,8 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
               _ah.forEach(m=>{
                 const l=(_normTbl[_navD1]||{})[m.schemeCode];
                 const p=(_normTbl[_navD2]||{})[m.schemeCode];
-                if(l&&l>0)v1+=m.units*l;
-                if(p&&p>0)v2+=m.units*p;
+                if(l&&l>0)v1+=mfValUnits(m)*l;
+                if(p&&p>0)v2+=mfValUnits(m)*p;
               });
               return{v1,v2};
             };
@@ -21932,7 +22226,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
             (mfTxns||[]).length+" txns · "+(new Set((mfTxns||[]).map(t=>t.fundName))).size+" fund"+((new Set((mfTxns||[]).map(t=>t.fundName))).size!==1?"s":"")
           )
         ),
-        React.createElement(MFPortfolioEvolutionChart,{mfTxns:mfTxns,mf:mf.filter(m=>m.units>0),eodNavs:eodNavs,mfHistNavs:mfHistNavs})
+        React.createElement(MFPortfolioEvolutionChart,{mfTxns:mfTxns,mf:mf.filter(m=>m.units>0),eodNavs:eodNavs,navLatest:navLatest,mfHistNavs:mfHistNavs})
       ),
 
       /* Filter out zero-unit (fully sold) holdings */
@@ -21942,11 +22236,13 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         if(!activeMf.length)return React.createElement(Empty,{icon:React.createElement(Icon,{n:"chart",size:18}),text:"All holdings sold — import transactions to see history"});
         return React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}},
         activeMf.map(m=>{
-          const trueCoA=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;
-          const currentVal=m.nav&&m.nav>0?parseFloat((m.nav*m.units).toFixed(2)):(m.currentValue&&m.currentValue>0?m.currentValue:m.invested);
-          const gain=currentVal-trueCoA;
+          const trueCoA=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested; /* total cost incl. switch-in — shown as Cost of Acquisition */
+          const valCoA=mfValCost(m);                                       /* cost of the VALUED units — basis for gain / % / XIRR */
+          const resolved=mfResolve(m,eodNavs,navLatest);
+          const currentVal=resolved.value;
+          const gain=currentVal-valCoA;
           const hasTxns=(mfTxns||[]).some(t=>t.fundName===m.name);
-          const gp=trueCoA>0?(((currentVal-trueCoA)/trueCoA)*100).toFixed(1):"0.0";
+          const gp=valCoA>0?(((currentVal-valCoA)/valCoA)*100).toFixed(1):"0.0";
           /* Per-fund day-change from eodNavs — D-2 vs D-1 (matches hero card logic).
              MF NAVs are published after market close, so comparing live m.nav (which may
              not have updated yet today) against D-1 produces a misleading figure.
@@ -21975,9 +22271,9 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                 React.createElement("div",{style:{fontWeight:600,color:"#6d28d9",fontFamily:"'Sora',sans-serif"}},m.avgNav&&m.avgNav>0?"₹"+Number(m.avgNav).toFixed(2):"--")
               ),
               React.createElement("div",null,
-                React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},m.navDate?"Today's NAV ("+m.navDate+")":"Today's NAV"),
+                React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},resolved.dateISO?"NAV ("+resolved.dateISO+")":"NAV"),
                 React.createElement("div",null,
-                  React.createElement("div",{style:{fontWeight:600,color:m.nav?"#0e7490":"var(--text5)"}},m.nav?"₹"+m.nav.toFixed(2):"--"),
+                  React.createElement("div",{style:{fontWeight:600,color:resolved.nav>0?"#0e7490":"var(--text5)"}},resolved.nav>0?"₹"+resolved.nav.toFixed(2):"--"),
                   navDayChgPct!==null&&React.createElement("div",{style:{fontSize:10,fontWeight:700,marginTop:2,color:navDayChgPct>=0?"#16a34a":"#ef4444"}},
                     (navDayChgPct>=0?"▲ +":"▼ ")+Math.abs(navDayChgPct).toFixed(2)+"% prev day"
                   )
@@ -21997,8 +22293,11 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                 ):React.createElement("span",{style:{color:"var(--text6)",fontWeight:400,fontSize:11}}," (invested amount)")
               )
             ),
+            /* Switch-in note: cost / avg NAV include reallocated units; value, P&L and XIRR do not */
+            (mfValUnits(m)<(+m.units||0))&&React.createElement("div",{style:{fontSize:10,color:"#0e7490",padding:"0 10px",marginTop:-4,marginBottom:8,lineHeight:1.4}},
+              "Incl. "+((+m.units||0)-mfValUnits(m)).toFixed(3)+" switch-in units ("+INR(trueCoA-valCoA)+") — counted in cost & avg NAV; excluded from value, P&L and XIRR"),
             /* P&L badge */
-            (m.currentValue>0||m.avgNav>0)&&React.createElement("div",{style:{background:gain>=0?"rgba(22,163,74,.09)":"rgba(239,68,68,.09)",border:"1px solid "+(gain>=0?"rgba(22,163,74,.2)":"rgba(239,68,68,.2)"),borderRadius:8,padding:"7px 12px",fontSize:13,color:gain>=0?"#16a34a":"#ef4444",fontWeight:600,display:"flex",justifyContent:"space-between",alignItems:"center"}},
+            (currentVal>0&&valCoA>0)&&React.createElement("div",{style:{background:gain>=0?"rgba(22,163,74,.09)":"rgba(239,68,68,.09)",border:"1px solid "+(gain>=0?"rgba(22,163,74,.2)":"rgba(239,68,68,.2)"),borderRadius:8,padding:"7px 12px",fontSize:13,color:gain>=0?"#16a34a":"#ef4444",fontWeight:600,display:"flex",justifyContent:"space-between",alignItems:"center"}},
               React.createElement("span",null,(gain>=0?"▲ Gain":"▼ Loss")+" "+INR(Math.abs(gain))),
               React.createElement("span",{style:{fontSize:12,opacity:.85}},Math.abs(gp)+"%")
             ),
@@ -22009,14 +22308,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
               let txnXirr=null;
               if(fundTxns.length>=1&&currentVal>0){
                 const cfs=[],dts=[];
-                fundTxns.forEach(t=>{
-                  const nav=+t.nav||0;
-                  const units=+t.units>0?+t.units:(nav>0&&+t.amount>0?+t.amount/nav:0);
-                  const amount=+t.amount>0?+t.amount:units*nav;
-                  if(!amount||!t.date)return;
-                  if(t.orderType==="buy"){cfs.push(-amount);dts.push(t.date);}
-                  else{cfs.push(+amount);dts.push(t.date);}
-                });
+                _mfFreshFlows(fundTxns).forEach(f=>{cfs.push(f.cf);dts.push(f.date);});
                 if(cfs.length>=1){
                   cfs.push(currentVal);dts.push(TODAY());
                   txnXirr=computeXIRR(cfs,dts);
@@ -22024,7 +22316,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
               }
               /* ── TIER 2: Single-buy XIRR from startDate ── */
               const startDate=m.startDate||(m.notes&&m.notes.match&&m.notes.match(/\b(\d{4}-\d{2}-\d{2})\b/)&&m.notes.match(/\b(\d{4}-\d{2}-\d{2})\b/)[1]);
-              const autoXirr=txnXirr===null&&startDate&&trueCoA>0&&currentVal>0?xirrSingleBuy(trueCoA,currentVal,startDate):null;
+              const autoXirr=txnXirr===null&&startDate&&valCoA>0&&currentVal>0?xirrSingleBuy(valCoA,currentVal,startDate):null;
               /* ── TIER 3: Manual override ── */
               const manualXirrVal=txnXirr===null&&autoXirr===null&&m.manualXirr!=null&&m.manualXirr!==""?+m.manualXirr:null;
 
@@ -23073,13 +23365,13 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
               :"No start date set — this manual XIRR will be displayed on the fund card. Auto-calculation kicks in once you add a start date."
           )
         ),
-        React.createElement(Field,{label:"Current NAV (₹)"},
+        React.createElement(Field,{label:"Current NAV (₹) — leave blank to use latest fetched NAV"},
           React.createElement("input",{className:"inp",type:"number",step:"0.01",min:"0",
             value:editMf.nav,
             onChange:e=>setEditMf(p=>({...p,nav:e.target.value})),
-            placeholder:"Leave blank — updated by Refresh NAV"})
+            placeholder:"Leave blank — auto from Refresh NAV"})
         ),
-        React.createElement(Field,{label:"Current Value (₹)"},
+        React.createElement(Field,{label:"Fallback Value (₹) — used when no NAV is available"},
           React.createElement("input",{className:"inp",type:"number",min:"0",
             value:editMf.currentValue,
             onChange:e=>setEditMf(p=>({...p,currentValue:e.target.value})),
@@ -23109,6 +23401,8 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
               avgNav:avgNav||null,
               invested,
               nav:parseFloat(editMf.nav)||editMf.nav||null,
+              navDate:editMf.nav?null:"",
+              navDateISO:editMf.nav?null:"",
               currentValue:parseFloat(editMf.currentValue)||null,
               startDate:editMf.startDate||null,
               notes:editMf.notes||"",
@@ -26548,7 +26842,7 @@ const RptSummary=({data,onExportPDF})=>{
   const lTotal=data.loans.reduce((s,l)=>s+l.outstanding,0);
   const fdTotal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
   const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
-  const mfVal=mfPortVal(data.mf,data.eodNavs);
+  const mfVal=mfPortVal(data.mf,data.eodNavs,data.navLatest||{});
   const totalAssets=bTotal+data.cash.balance+fdTotal+shVal+mfVal;
   const totalLiab=cDebt+lTotal;
   const netW=totalAssets-totalLiab;
@@ -26557,7 +26851,7 @@ const RptSummary=({data,onExportPDF})=>{
     {title:"Cash",rows:[{name:"Cash Account",sub:"Physical cash",val:data.cash.balance,col:"var(--accent)",txns:data.cash.transactions.length}],total:data.cash.balance,colTotal:"var(--accent)"},
     {title:"Credit Cards",rows:data.cards.map(c=>({name:c.name,sub:c.bank+" · Limit "+INR(c.limit),val:c.outstanding,col:"#c2410c",txns:(c.transactions||[]).length,neg:true})),total:cDebt,colTotal:"#c2410c"},
     {title:"Loans",rows:data.loans.map(l=>({name:l.name,sub:l.bank+" · "+l.rate+"% · EMI "+INR(l.emi),val:l.outstanding,col:"#ef4444",neg:true})),total:lTotal,colTotal:"#ef4444"},
-    {title:"Investments",rows:[...data.mf.map(m=>({name:m.name,sub:"Mutual Fund",val:mfLiveVal(m,latestNavSnap(data.eodNavs)),col:"#6d28d9"})),...data.shares.map(s=>({name:s.company,sub:s.ticker+" · "+s.qty+" shares",val:s.qty*s.currentPrice,col:"#16a34a"})),...((data.brokerCashBalance||0)>0?[{name:"Cash in Broker Account",sub:"Liquid funds",val:data.brokerCashBalance,col:"#0891b2"}]:[]),...data.fd.map(f=>({name:f.bank+" FD",sub:f.rate+"% · "+f.maturityDate,val:calcFDValueToday(f),col:"var(--accent)"}))],total:fdTotal+shVal+mfVal,colTotal:"#16a34a"}
+    {title:"Investments",rows:[...data.mf.map(m=>({name:m.name,sub:"Mutual Fund",val:mfLiveVal(m,data.eodNavs,data.navLatest||{}),col:"#6d28d9"})),...data.shares.map(s=>({name:s.company,sub:s.ticker+" · "+s.qty+" shares",val:s.qty*s.currentPrice,col:"#16a34a"})),...((data.brokerCashBalance||0)>0?[{name:"Cash in Broker Account",sub:"Liquid funds",val:data.brokerCashBalance,col:"#0891b2"}]:[]),...data.fd.map(f=>({name:f.bank+" FD",sub:f.rate+"% · "+f.maturityDate,val:calcFDValueToday(f),col:"var(--accent)"}))],total:fdTotal+shVal+mfVal,colTotal:"#16a34a"}
   ];
   const allItems=sections.flatMap(sec=>sec.rows.map(r=>({...r,section:sec.title}))).sort((a,b)=>b.val-a.val);
   return React.createElement("div",{className:"fu"},
@@ -26604,8 +26898,8 @@ const RptSummary=({data,onExportPDF})=>{
 /* ══ 12. INVESTMENTS REPORT ══════════════════════════════════════════════════ */
 const RptInvestments=({data,onExportPDF})=>{
   const[view,setView]=useState("snapshot");
-  const mfInv=data.mf.reduce((s,m)=>s+m.invested,0);
-  const mfVal=mfPortVal(data.mf,data.eodNavs);
+  const mfInv=data.mf.reduce((s,m)=>s+mfValInvested(m),0);
+  const mfVal=mfPortVal(data.mf,data.eodNavs,data.navLatest||{});
   const shInv=data.shares.reduce((s,sh)=>s+sh.qty*sh.buyPrice,0);
   const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
   const fdPrinc=data.fd.reduce((s,f)=>s+f.amount,0);
@@ -26641,9 +26935,9 @@ const RptInvestments=({data,onExportPDF})=>{
           React.createElement("div",{style:{fontSize:12,color:"var(--text2)",fontWeight:500}},m.name),
           React.createElement("div",{style:{fontSize:11,color:"var(--text5)",textAlign:"right"}},m.units.toFixed(3)+" u"),
           React.createElement("div",{style:{fontSize:12,color:"#0e7490",textAlign:"right"}},INR(m.invested)),
-          React.createElement("div",{style:{fontSize:12,color:"var(--accent)",fontWeight:600,textAlign:"right"}},INR(mfLiveVal(m,latestNavSnap(data.eodNavs)))),
-          React.createElement("div",{style:{fontSize:12,fontWeight:700,textAlign:"right",color:mfLiveVal(m,latestNavSnap(data.eodNavs))-m.invested>=0?"#16a34a":"#ef4444"}},
-            INR(mfLiveVal(m,latestNavSnap(data.eodNavs))-m.invested)
+          React.createElement("div",{style:{fontSize:12,color:"var(--accent)",fontWeight:600,textAlign:"right"}},INR(mfLiveVal(m,data.eodNavs,data.navLatest||{}))),
+          React.createElement("div",{style:{fontSize:12,fontWeight:700,textAlign:"right",color:mfLiveVal(m,data.eodNavs,data.navLatest||{})-mfValInvested(m)>=0?"#16a34a":"#ef4444"}},
+            INR(mfLiveVal(m,data.eodNavs,data.navLatest||{})-mfValInvested(m))
           )
         ))
       ),
@@ -26673,7 +26967,7 @@ const RptInvestments=({data,onExportPDF})=>{
     view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflowY:"hidden",overflowX:"auto"}},
       React.createElement("div",{style:{display:"grid",gridTemplateColumns:"2fr 80px 90px 90px 90px",padding:"8px 14px",borderBottom:"1px solid var(--border)",fontSize:10,color:"var(--text6)",fontWeight:700,textTransform:"uppercase",background:"var(--bg4)"}},React.createElement("span",{style:{whiteSpace:"nowrap"}},"Asset"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Type"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Invested"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"Current"),React.createElement("span",{style:{whiteSpace:"nowrap"}},"P&L")),
       [
-        ...data.mf.map(m=>({name:m.name,type:"MF",inv:m.invested,cur:mfLiveVal(m,latestNavSnap(data.eodNavs)),pnl:mfLiveVal(m,latestNavSnap(data.eodNavs))-m.invested,col:"#6d28d9"})),
+        ...data.mf.map(m=>({name:m.name,type:"MF",inv:m.invested,cur:mfLiveVal(m,data.eodNavs,data.navLatest||{}),pnl:mfLiveVal(m,data.eodNavs,data.navLatest||{})-mfValInvested(m),col:"#6d28d9"})),
         ...data.shares.map(s=>({name:s.company+" ("+s.ticker+")",type:"Share",inv:s.qty*s.buyPrice,cur:s.qty*s.currentPrice,pnl:s.qty*(s.currentPrice-s.buyPrice),col:"#16a34a"})),
         ...data.fd.map(f=>({name:f.bank+" FD",type:"FD",inv:f.amount,cur:f.amount,pnl:f.maturityAmount-f.amount,col:"#b45309"}))
       ].sort((a,b)=>b.cur-a.cur).map((r,i)=>React.createElement("div",{key:i,className:"tr",style:{display:"grid",gridTemplateColumns:"2fr 80px 90px 90px 90px",padding:"10px 14px",borderBottom:"1px solid var(--border2)"}},
@@ -26792,7 +27086,7 @@ const RptNetWorth=({data,onExportPDF})=>{
   const bankBal=data.banks.reduce((s,b)=>s+b.balance,0);
   const cashBal=data.cash.balance;
   const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
-  const mfVal=mfPortVal(data.mf,data.eodNavs);
+  const mfVal=mfPortVal(data.mf,data.eodNavs,data.navLatest||{});
   const fdVal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
   const reVal=(data.re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
   const cDebt=data.cards.reduce((s,c)=>s+c.outstanding,0);
@@ -26978,7 +27272,7 @@ const ExportReportModal=({data,onClose})=>{
       cashBal+=(t.type==="credit")?-t.amount:t.amount;
     });
     const shVal=data.shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(data.brokerCashBalance||0);
-    const mfVal=mfPortVal(data.mf,data.eodNavs);
+  const mfVal=mfPortVal(data.mf,data.eodNavs,data.navLatest||{});
     const fdVal=data.fd.reduce((s,f)=>s+calcFDValueToday(f),0);
     const reVal=data.re.reduce((s,r)=>s+(r.currentValue||r.acquisitionCost),0);
     const cDebt=data.cards.reduce((s,c)=>{
@@ -27090,16 +27384,16 @@ const ExportReportModal=({data,onClose})=>{
       addSheet("Mutual Funds",[
         ["Fund Name","Scheme Code","Units","Avg NAV (₹)","Amount Invested (₹)","Current NAV (₹)","Current Value (₹)","P&L (₹)","Return (%)","Last Updated"],
         ...data.mf.map(m=>{
-          const coa=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;
-          const cur=mfLiveVal(m,latestNavSnap(data.eodNavs));
+          const coa=mfValCost(m);
+          const cur=mfLiveVal(m,data.eodNavs,data.navLatest||{});
           return[m.name,m.schemeCode,m.units,fmt(m.avgNav),fmt(m.invested),fmt(m.nav||0),fmt(cur),fmt(cur-coa),
             coa>0?+(((cur-coa)/coa)*100).toFixed(2):0,m.navDate||""];
         }),
         ["","","","","","","","","",""],
         ["TOTALS","","",
           "",data.mf.reduce((s,m)=>s+m.invested,0),"",
-          mfPortVal(data.mf,data.eodNavs),
-          data.mf.reduce((s,m)=>{const coa=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;return s+mfLiveVal(m,latestNavSnap(data.eodNavs))-coa;},0),"",""],
+          mfPortVal(data.mf,data.eodNavs,data.navLatest||{}),
+          data.mf.reduce((s,m)=>{const coa=mfValCost(m);return s+mfLiveVal(m,data.eodNavs,data.navLatest||{})-coa;},0),"",""],
       ]);
 
       /* ── Sheet 6: Shares ── */
@@ -27225,9 +27519,9 @@ const ExportReportModal=({data,onClose})=>{
       var mfSection="";
       var mfActive=(data.mf||[]).filter(function(m){return m.units&&m.units>0;});
       if(mfActive.length>0){
-        var mfInvTot=mfActive.reduce(function(s,m){return s+m.invested;},0);
-        var mfCurTot=mfActive.reduce(function(s,m){return s+mfLiveVal(m,latestNavSnap(data.eodNavs));},0);
-        var mfPLTot=mfActive.reduce(function(s,m){var coa=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;return s+mfLiveVal(m,latestNavSnap(data.eodNavs))-coa;},0);
+        var mfInvTot=mfActive.reduce(function(s,m){return s+mfValInvested(m);},0);
+        var mfCurTot=mfActive.reduce(function(s,m){return s+mfLiveVal(m,data.eodNavs,data.navLatest||{});},0);
+        var mfPLTot=mfActive.reduce(function(s,m){var coa=mfValCost(m);return s+mfLiveVal(m,data.eodNavs,data.navLatest||{})-coa;},0);
         mfSection="<p class=\"section-title\">Mutual Fund Portfolio</p>"+
           "<div style=\"display:flex;gap:12px;margin-bottom:12px;\">"+
             "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">Invested</div><div class=\"card-val\" style=\"color:#7c3aed;\">₹"+f2(mfInvTot)+"</div></div>"+
@@ -27235,7 +27529,7 @@ const ExportReportModal=({data,onClose})=>{
             "<div class=\"card\" style=\"flex:1;\"><div class=\"card-label\">P&L</div><div class=\"card-val\" style=\"color:"+(mfPLTot>=0?"#16a34a":"#dc2626")+";\">₹"+f2(mfPLTot)+"</div></div>"+
           "</div>"+
           table(th("Fund Name")+th("Units","right")+th("Invested (₹)","right")+th("Current Value (₹)","right")+th("P&L (₹)","right")+th("Return %","right"),
-            mfActive.map(function(m){var coa=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;var cur=mfLiveVal(m,latestNavSnap(data.eodNavs));var pl=cur-coa;var ret=coa>0?((pl/coa)*100).toFixed(1)+"%":"--";
+            mfActive.map(function(m){var coa=mfValCost(m);var cur=mfLiveVal(m,data.eodNavs,data.navLatest||{});var pl=cur-coa;var ret=coa>0?((pl/coa)*100).toFixed(1)+"%":"--";
               return[td(m.name,"left",true),td(f2(m.units),"right"),td("₹"+f2(m.invested),"right"),td("₹"+f2(cur),"right"),td("₹"+f2(pl),"right",false,pl>=0?"#16a34a":"#dc2626"),td(ret,"right",false,pl>=0?"#16a34a":"#dc2626")].join("");}));
       }
 
@@ -31873,7 +32167,7 @@ const resolveGoalIcon=(ic,sz=18)=>React.createElement(Icon,{n:typeof ic==="strin
 const GOAL_ICONS=GOAL_ICON_NAMES.map(n=>React.createElement(Icon,{n,size:18}));
 const GOAL_COLORS=["#0e7490","#16a34a","#b45309","#6d28d9","#c2410c","#be185d","#1d4ed8","#059669"];
 
-const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],cards=[],cash={transactions:[]},mf=[],shares=[],fd=[],re=[],brokerCashBalance=0})=>{
+const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],cards=[],cash={transactions:[]},mf=[],shares=[],fd=[],re=[],brokerCashBalance=0,eodNavs={},navLatest={}})=>{
   const[addOpen,setAddOpen]=useState(false);
   const[editGoal,setEditGoal]=useState(null);
   const[fundsGoal,setFundsGoal]=useState(null);
@@ -31887,7 +32181,7 @@ const GoalsSection=React.memo(({goals,dispatch,isMobile,scheduled=[],banks=[],ca
 
   /* ── Investment Pool Calculation (liquid assets only; RE excluded) ── */
   const bankBal=banks.reduce((s,b)=>s+(b.balance||0),0);
-  const mfVal=mf.reduce((s,m)=>s+mfLiveVal(m,latestNavSnap(eodNavs)),0);
+  const mfVal=mf.reduce((s,m)=>s+mfLiveVal(m,eodNavs,navLatest),0);
   const sharesVal=shares.reduce((s,sh)=>s+(sh.qty||0)*(sh.currentPrice||0),0)+(brokerCashBalance||0);
   const fdVal=fd.reduce((s,f)=>s+calcFDValueToday(f),0);
   const totalInvestmentPool=bankBal+mfVal+sharesVal+fdVal;
@@ -32384,8 +32678,7 @@ const NetWorthInsightTab=({banks,cards,cash,mf,shares,fd,re,loans,categories,pre
   /* ── Current snapshot ── */
   const bankBal=banks.reduce((s,b)=>s+b.balance,0);
   const cashBal=cash.balance;
-  const _nwNavSnap=latestNavSnap(eodNavs);
-  const mfVal=mf.reduce((s,m)=>s+mfLiveVal(m,_nwNavSnap),0);
+  const mfVal=mf.reduce((s,m)=>s+mfLiveVal(m,eodNavs,navLatest),0);
   const sharesVal=shares.reduce((s,sh)=>s+sh.qty*sh.currentPrice,0)+(brokerCashBalance||0);
   const fdVal=fd.reduce((s,f)=>s+calcFDValueToday(f),0);
   const reVal=(re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
@@ -32908,7 +33201,7 @@ const NetWorthInsightTab=({banks,cards,cash,mf,shares,fd,re,loans,categories,pre
 
 
 
-const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile,goals,mf,mfTxns,shares,fd,re,loans,prefs,onJumpToLedger,nwSnapshots,eodNavs={},brokerCashBalance=0})=>{
+const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile,goals,mf,mfTxns,shares,fd,re,loans,prefs,onJumpToLedger,nwSnapshots,eodNavs={},navLatest={},brokerCashBalance=0})=>{
   const P=prefs||{};
   const[stab,setStab]=useState("pulse");
   const[schedConfirm,setSchedConfirm]=useState(null);
@@ -35051,7 +35344,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     // Current investable net worth
     const bankBal=(banks||[]).reduce((s,b)=>s+(b.balance||0),0);
     const cashBal=(cash.balance)||0;
-    const mfVal=(mf||[]).reduce((s,m)=>s+mfLiveVal(m,latestNavSnap(eodNavs||{})),0);
+    const mfVal=(mf||[]).reduce((s,m)=>s+mfLiveVal(m,eodNavs||{},navLatest||{}),0);
     const sharesVal=(shares||[]).reduce((s,s2)=>s+(s2.qty||0)*(s2.currentPrice||s2.buyPrice||0),0);
     const fdVal=(fd||[]).reduce((s,f)=>s+calcFDValueToday(f),0);
     const reVal=(re||[]).reduce((s,r)=>s+(r.currentValue||r.acquisitionCost||0),0);
@@ -35108,7 +35401,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     const delayMonths=avgMonthlySavings>0?Math.round(expInflationAmt/avgMonthlySavings*12*25/12):0;
 
     // Investment return vs benchmark
-    const totalInvested=(mf||[]).reduce((s,m)=>s+(m.invested||0),0)+(shares||[]).reduce((s,s2)=>s+(s2.qty||0)*(s2.buyPrice||0),0);
+    const totalInvested=(mf||[]).reduce((s,m)=>s+(mfValInvested(m)||0),0)+(shares||[]).reduce((s,s2)=>s+(s2.qty||0)*(s2.buyPrice||0),0);
     const totalCurrentVal=mfVal+sharesVal;
     const actualReturn=totalInvested>0?(totalCurrentVal-totalInvested)/totalInvested*100:null;
     const benchR=(P.benchmarkReturnPct||12)/100;
@@ -35121,7 +35414,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
       equityPct,debtPct,realEstatePct,mfVal,sharesVal,fdVal,reVal,bankBal,cashBal,cardDebt,loanDebt,
       lifestyleInflation,expInflationAmt,delayMonths,totalInvested,totalCurrentVal,actualReturn,yourGain,niftyBenchmark
     };
-  },[allTxns,banks,cards,cash,mf,shares,fd,re,loans]);
+  },[allTxns,banks,cards,cash,mf,shares,fd,re,loans,eodNavs,navLatest,categories,P]);
 
   /* ══ FIRE TAB ══ */
   const FireTab=React.createElement("div",{style:{paddingBottom:20}},
@@ -35547,7 +35840,7 @@ const InsightsSection=React.memo(({banks,cards,cash,categories,dispatch,isMobile
     stab==="subscriptions" &&SubsTab,
     stab==="fire"          &&FireTab,
     stab==="networth"      &&React.createElement(NetWorthInsightTab,{banks,cards,cash,mf,shares,fd,re:re||[],loans,categories,prefs:P,isMobile,dispatch,nwSnapshots:nwSnapshots||{},eodNavs:eodNavs||{},brokerCashBalance}),
-    stab==="capgains"      &&React.createElement(CapGainsTab,{shares,mf,mfTxns:mfTxns||[],isMobile}),
+    stab==="capgains"      &&React.createElement(CapGainsTab,{shares,mf,mfTxns:mfTxns||[],isMobile,eodNavs:eodNavs||{},navLatest:navLatest||{}}),
     stab==="commitments"   &&CommitmentsTab,
     stab==="health"        &&HealthScoreTab,
     stab==="healthintel"   &&HealthIntelTab,
@@ -36183,7 +36476,7 @@ const CapGainsFundCard=React.memo(({f,fmt,fmtD})=>{
   );
 });
 
-const CapGainsTab=({shares=[],mf=[],mfTxns=[],isMobile})=>{
+const CapGainsTab=({shares=[],mf=[],mfTxns=[],isMobile,eodNavs={},navLatest={}})=>{
   const today=new Date();
   const todayStr=TODAY();
 
@@ -36196,6 +36489,7 @@ const CapGainsTab=({shares=[],mf=[],mfTxns=[],isMobile})=>{
      ─────────────────────────────────────────────────────────────────── */
   const lotData=React.useMemo(()=>{
     let stcgGain=0,stcgLoss=0,ltcgGain=0,ltcgLoss=0;
+    let noNavMF=0;
     const details=[];
     const fundLots={};
 
@@ -36230,9 +36524,19 @@ const CapGainsTab=({shares=[],mf=[],mfTxns=[],isMobile})=>{
       const name=m.name;
       const isDebt=(m.fundType||"equity")==="debt";
       const ltcgThresholdDays=isDebt?365*3:365;
-      const currentNav=m.nav||0;
-      const currentUnits=m.units||0;
-      if(currentUnits<=0||currentNav<=0)return;
+      const currentUnits=+m.units||0;
+      if(currentUnits<=0)return;
+      /* Live NAV = per-code walk-back (latestNavByCode) so a fund with stale
+         m.nav is still valued from its own newest eodNavs bucket. When NO NAV
+         exists anywhere (and no currentValue either), mfLiveVal falls back to
+         invested (cost) → flat lot, gain 0. Track those funds so they are
+         visible, not silently dropped. */
+      const _hasLiveNav=(m.nav&&+m.nav>0)||!!latestNavByCode(eodNavs,m.schemeCode);
+      if(!_hasLiveNav)noNavMF++;
+      /* per-unit price on the full unit count (mfLiveVal/units would be diluted
+         by switch units now that value excludes them) */
+      const currentNav=currentUnits>0?mfResolve(m,eodNavs,navLatest).unitPrice:0;
+      if(!(currentNav>0))return;
 
       const fundTxns=txnByFund[name];
       const lots=[];
@@ -36328,9 +36632,9 @@ const CapGainsTab=({shares=[],mf=[],mfTxns=[],isMobile})=>{
     const stcgTax=crossStcg*0.20;
     const ltcgTax=crossLtcg*0.125;
     return{stcgGain,stcgLoss,ltcgGain,ltcgLoss,ltcgExempt,ltcgTaxable,
-      stcgTax,ltcgTax,totalTax:stcgTax+ltcgTax,details,
+      stcgTax,ltcgTax,totalTax:stcgTax+ltcgTax,details,noNavMF,
       fundLots:Object.values(fundLots).sort((a,b)=>Math.abs(b.fundGain)-Math.abs(a.fundGain))};
-  },[shares,mf,mfTxns,todayStr]);
+  },[shares,mf,mfTxns,todayStr,eodNavs]);
 
   const missingDates=lotData.details.filter(d=>d.type!=="Share"&&!d.buyDate).length;
   const totalLots=lotData.fundLots.reduce((s,f)=>s+f.lotCount,0);
@@ -36379,7 +36683,8 @@ const CapGainsTab=({shares=[],mf=[],mfTxns=[],isMobile})=>{
       React.createElement("span",null,React.createElement("strong",null,totalLots)," total lots across "),
       React.createElement("span",null,React.createElement("strong",null,lotData.fundLots.length)," funds + "),
       React.createElement("span",null,React.createElement("strong",null,lotData.details.filter(d=>d.type==="Share").length)," shares"),
-      missingDates>0&&React.createElement("span",{style:{color:"#b45309"}},"\u00B7 "+missingDates+" fund"+(missingDates===1?"":"s")+" missing buy dates")
+      missingDates>0&&React.createElement("span",{style:{color:"#b45309"}},"\u00B7 "+missingDates+" fund"+(missingDates===1?"":"s")+" missing buy dates"),
+      lotData.noNavMF>0&&React.createElement("span",{style:{color:"#b45309"}},"\u00B7 "+lotData.noNavMF+" fund"+(lotData.noNavMF===1?"":"s")+" valued at cost (no NAV available)")
     ),
     /* Fund cards */
     React.createElement("div",{style:{marginBottom:16}},
@@ -38951,58 +39256,30 @@ function App(){
         }
 
         /* ── MF NAV EOD snapshot ──
-           Writes BOTH stores from the same fetch so they cannot drift apart:
-           • UPD_MF_NAV keeps m.nav (Store A — chips/cards) fresh.
-           • SET_EOD_NAVS files each fund under ITS OWN published NAV date
-             (Store B — hero/history), merged into any existing bucket so
-             partial days get topped up. */
+           Single atomic write via APPLY_MF_NAVS. The reducer applies
+           _applyNavFetch internally, writes mf[], tops up eodNavs, and
+           updates navLatest — all in one state update. */
         const mf=_mfRef.current;
         if(mf&&mf.length){
-          /* Fetch all NAVs in parallel — was sequential (one await per scheme) */
+          /* Mirror the share-price freshness guard: if every held fund already
+             has its NAV recorded for today, nothing more can appear for that
+             date — skip the re-fetch entirely. */
+          const _held=mf.filter(m=>m.schemeCode);
+          const _navStore=normalizeEodNavKeys(_eodNavsRef.current||{});
+          const _todayBucket=_navStore[today]||{};
+          const _todayComplete=_held.length>0&&_held.every(m=>(_todayBucket[m.schemeCode]||0)>0);
+          if(!_todayComplete){
           const navResults=await Promise.all(
             mf.filter(m=>m.schemeCode).map(async m=>{
               const res=await fetchOneNav(m.schemeCode);
               return(res&&res.nav>0)?{fund:m,nav:res.nav,navDate:res.navDate,navDateISO:res.navDateISO||mfNavDateToISO(res.navDate)}:null;
             })
           );
-          /* Store A: keep m.nav/navDate/currentValue in lockstep (change-gated
-             so identical 5-min re-fetches do not churn state or storage). */
-          const mfUpd=navResults.filter(r=>r).map(r=>{
-            const m=r.fund;
-            return{...m,nav:r.nav,navDate:r.navDate,navDateISO:r.navDateISO,currentValue:parseFloat((r.nav*(m.units||0)).toFixed(2))};
-          });
-          if(mfUpd.length){
-            const curByCode={};
-            (_mfRef.current||[]).forEach(m=>{curByCode[m.schemeCode]=m;});
-            const changed=mfUpd.filter(m=>{
-              const p=curByCode[m.schemeCode];
-              if(!p)return true;
-              /* Value compares only (temp fetch objects are rebuilt every run):
-                 numeric NAV, plus navDate/navDateISO string equality. */
-              const pNav=+p.nav||0;
-              return pNav!==+m.nav||(p.navDateISO||"")!==(m.navDateISO||"")||(p.navDate||"")!==(m.navDate||"");
-            });
-            if(changed.length)dispatch({type:"UPD_MF_NAV",p:changed});
+          const _valid=navResults.filter(Boolean);
+          if(_valid.length){
+            dispatch({type:"APPLY_MF_NAVS",p:_valid});
+            _snapIdxDate=_valid.map(r=>r.navDateISO).sort().pop()||"";
           }
-          /* Store B: group by each fund's own published date, then merge buckets */
-          const byDate={};
-          navResults.forEach(r=>{
-            if(!r||!r.navDateISO)return;
-            byDate[r.navDateISO]=byDate[r.navDateISO]||{};
-            byDate[r.navDateISO][r.fund.schemeCode]=r.nav;
-          });
-          const navDates=Object.keys(byDate).sort();
-          if(navDates.length>0){
-            _snapIdxDate=navDates[navDates.length-1]; /* newest fund NAV date anchors the index snapshot */
-            navDates.forEach(iso=>{
-              const existing=(_eodNavsRef.current&&normalizeEodNavKeys(_eodNavsRef.current)[iso])||{};
-              const merged={...existing,...byDate[iso]};
-              const keys=Object.keys(merged);
-              const same=keys.length===Object.keys(existing).length&&keys.every(c=>(existing[c]===merged[c]));
-              if(!same){
-                dispatch({type:"SET_EOD_NAVS",date:iso,navs:byDate[iso]});
-              }
-            });
           }
         }
         /* ── Market index EOD snapshot ── */
@@ -39925,28 +40202,28 @@ function App(){
           React.createElement(CashSection,{cash:state.cash,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,loans:state.loans||_EA,isMobile,jumpTxId:txJump?.accType==="cash"?txJump.txId:null,jumpSerial:txJump?.accType==="cash"?txJump.serial:null}))),
       React.createElement("div",{style:{display:tab==="inv_dash"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Investments"},
-          React.createElement(InvestDashboard,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,dispatch,isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,brokerCashBalance:state.brokerCashBalance||0}))),
+          React.createElement(InvestDashboard,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,dispatch,isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,navLatest:state.navLatest||_EO,brokerCashBalance:state.brokerCashBalance||0}))),
       /* InvestSection: five sub-tabs reuse the same component with different
          defaultTab — keep the && pattern so each sub-tab mounts independently */
       tab==="inv_mf"&&React.createElement(ErrorBoundary,{name:"Mutual Funds"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,mfHistNavs:state.mfHistNavs||_EO,brokerCashBalance:state.brokerCashBalance||0,banks:state.banks,scheduled:state.scheduled||[]})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"mf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,navLatest:state.navLatest||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,mfHistNavs:state.mfHistNavs||_EO,brokerCashBalance:state.brokerCashBalance||0,banks:state.banks,scheduled:state.scheduled||[]})),
       tab==="inv_shares"&&React.createElement(ErrorBoundary,{name:"Shares"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"shares",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"shares",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,navLatest:state.navLatest||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       tab==="inv_fd"&&React.createElement(ErrorBoundary,{name:"Fixed Deposits"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"fd",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"fd",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,navLatest:state.navLatest||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       tab==="inv_re"&&React.createElement(ErrorBoundary,{name:"Real Estate"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"re",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"re",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,navLatest:state.navLatest||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       tab==="inv_pf"&&React.createElement(ErrorBoundary,{name:"Provident Fund"},
-        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"pf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
+        React.createElement(InvestSection,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,pf:state.pf||_EA,dispatch,defaultTab:"pf",isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,navLatest:state.navLatest||_EO,eodIndices:state.eodIndices||_EO,historyCache:state.historyCache||_EO,soldShareSnapshots:state.soldShareSnapshots||_EO,brokerCashBalance:state.brokerCashBalance||0})),
       React.createElement("div",{style:{display:tab==="loans"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Loans"},
           React.createElement(LoanSection,{loans:state.loans,dispatch,allBanks:state.banks,allCards:state.cards,cash:state.cash,categories:state.categories,payees:state.payees,isMobile}))),
       React.createElement("div",{style:{display:tab==="goals"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Goals"},
-          React.createElement(GoalsSection,{goals:state.goals||_EA,dispatch,isMobile,scheduled:state.scheduled||_EA,banks:state.banks,cards:state.cards,cash:state.cash,mf:state.mf||_EA,shares:state.shares||_EA,fd:state.fd||_EA,re:state.re||_EA,brokerCashBalance:state.brokerCashBalance||0}))),
+          React.createElement(GoalsSection,{goals:state.goals||_EA,dispatch,isMobile,scheduled:state.scheduled||_EA,banks:state.banks,cards:state.cards,cash:state.cash,mf:state.mf||_EA,shares:state.shares||_EA,fd:state.fd||_EA,re:state.re||_EA,brokerCashBalance:state.brokerCashBalance||0,eodNavs:state.eodNavs||_EO,navLatest:state.navLatest||_EO}))),
       React.createElement("div",{style:{display:tab==="insights"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Insights"},
-          React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,mfTxns:state.mfTxns||[],shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs,onJumpToLedger,nwSnapshots:state.nwSnapshots||_EO,eodNavs:state.eodNavs||_EO,brokerCashBalance:state.brokerCashBalance||0}))),
+          React.createElement(InsightsSection,{banks:state.banks,cards:state.cards,cash:state.cash,categories:state.categories,dispatch,isMobile,goals:state.goals,mf:state.mf,mfTxns:state.mfTxns||[],shares:state.shares,fd:state.fd,re:state.re,loans:state.loans,prefs:state.insightPrefs,onJumpToLedger,nwSnapshots:state.nwSnapshots||_EO,eodNavs:state.eodNavs||_EO,navLatest:state.navLatest||_EO,brokerCashBalance:state.brokerCashBalance||0}))),
       React.createElement("div",{style:{display:tab==="notes"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Notes"},
           React.createElement(NotesSection,{notes:state.notes||_EA,dispatch}))),
