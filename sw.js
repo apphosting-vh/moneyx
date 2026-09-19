@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════════════
-   finsight — Service Worker  (v7.19.47 — full offline support + push notifications)
+   finsight — Service Worker  (v7.19.28 — full offline support + push notifications)
    ══════════════════════════════════════════════════════════════════════════
    Strategies:
    • Navigation / HTML  → network-first, fallback to cache, fallback to /
@@ -14,7 +14,7 @@
    • Pending actions written to IDB so the app can reconcile on next open
    ══════════════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'finsights-v7-19-48';
+const CACHE_NAME = 'finsights-v7-19-28';
 const MAX_RUNTIME_CACHE_ENTRIES = 80;
 const MAX_CACHE_AGE_MS = 30 * 24 * 3600 * 1000; // 30 days
 
@@ -584,32 +584,25 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  /* Same-origin static assets → network-first with cache fallback.
-     This is a deliberate change from the old cache-first rule: app-bundle.js
-     and the other local scripts were being served from the precache forever
-     after the very first install (the cache name never changed and static
-     assets were never revalidated), so every code edit to the bundle was
-     invisible to the running app. Network-first guarantees updated files are
-     delivered on the next online load while the cached copy still covers
-     offline use. */
+  /* Same-origin static assets → cache-first */
   event.respondWith(
-    fetch(event.request).then(response => {
-      if (response && response.ok) {
-        const clone = stampedClone(response.clone());
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, clone);
-          trimCache(CACHE_NAME, MAX_RUNTIME_CACHE_ENTRIES);
-        });
-      }
-      return response;
-    }).catch(() =>
-      caches.match(event.request).then(cached => {
-        if (cached) return cached;
+    caches.match(event.request).then(cached => {
+      if (cached) return cached;
+      return fetch(event.request).then(response => {
+        if (response && response.ok) {
+          const clone = stampedClone(response.clone());
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, clone);
+            trimCache(CACHE_NAME, MAX_RUNTIME_CACHE_ENTRIES);
+          });
+        }
+        return response;
+      }).catch(() => {
         if (event.request.destination === 'image') {
           return new Response('', { status: 503, headers: { 'Content-Type': 'image/svg+xml' } });
         }
         return new Response('', { status: 503, statusText: 'Offline' });
-      })
-    )
+      });
+    })
   );
 });
