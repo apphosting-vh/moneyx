@@ -614,6 +614,64 @@ const mfLiveVal=(m,eodNavs,navLatest)=>mfResolve(m,eodNavs,navLatest).value;
 /* Aggregate mutual-fund portfolio value, for reports/exports/etc. */
 const mfPortVal=(mf,eodNavs,navLatest)=>(mf||[]).reduce((s,m)=>s+mfLiveVal(m,eodNavs,navLatest),0);
 
+/* ── True day-over-day NAV change helpers ─────────────────────────────────
+   eodNavs only records a fund's NAV on days the app actually fetched it. When
+   the app is not opened on some days (a gap), the two most recent eodNavs
+   buckets are several trading days apart, so "latest bucket vs previous bucket"
+   mislabels a multi-day move as a single-day change and the "Prev NAV"
+   baseline is wrong. These helpers merge the fund's own eodNavs entries with
+   the authoritative full daily series in mfHistNavs (every officially
+   published NAV, INCLUDING the skipped days) so the "previous day" is the
+   fund's genuine preceding published day. mfHistNavs wins for any date it
+   covers; eodNavs only fills dates history does not yet have. */
+const fundNavSeries=(m,eodNavs,mfHistNavs)=>{
+  const by={};
+  const hist=(mfHistNavs&&m&&m.schemeCode)?(mfHistNavs[m.schemeCode]||null):null;
+  if(Array.isArray(hist))hist.forEach(p=>{if(p&&p.date&&+p.nav>0)by[p.date]=+p.nav;});
+  const norm=normalizeEodNavKeys(eodNavs||{});
+  Object.keys(norm).forEach(d=>{const v=norm[d]&&norm[d][m.schemeCode];if(v&&+v>0&&by[d]==null)by[d]=+v;});
+  return Object.keys(by).sort().map(d=>({date:d,nav:by[d]}));
+};
+/* True previous published NAV {date,nav} for a fund, relative to the published
+   date of the NAV currently shown (mfResolve). null when unavailable. */
+const fundNavPrevNav=(m,eodNavs,navLatest,mfHistNavs)=>{
+  const resolved=mfResolve(m,eodNavs,navLatest);
+  if(!resolved||!(resolved.nav>0)||!resolved.dateISO)return null;
+  const series=fundNavSeries(m,eodNavs,mfHistNavs);
+  for(let i=series.length-1;i>=0;i--){
+    if(series[i].date<resolved.dateISO&&series[i].nav>0)return{date:series[i].date,nav:series[i].nav};
+  }
+  return null;
+};
+/* Per-fund day-over-day % change (latest published NAV vs its TRUE previous
+   published NAV). null when the fund can't be measured. */
+const fundNavDayChgPct=(m,eodNavs,navLatest,mfHistNavs)=>{
+  const resolved=mfResolve(m,eodNavs,navLatest);
+  const prev=fundNavPrevNav(m,eodNavs,navLatest,mfHistNavs);
+  if(!resolved||!(resolved.nav>0)||!resolved.dateISO||!prev||!(prev.nav>0))return null;
+  return((resolved.nav-prev.nav)/prev.nav)*100;
+};
+/* Aggregate portfolio day-change vs the true previous published day.
+   Returns {abs,pct,prevValue,prevDate} (prevDate = latest true-prev date seen)
+   or null. Only funds measurable on BOTH the latest and the true-previous day
+   contribute, so a newly added fund never shows as phantom change. */
+const mfPortfolioNavDayChg=(mf,eodNavs,navLatest,mfHistNavs)=>{
+  let cur=0,prev=0,prevDate=null;
+  (mf||[]).forEach(m=>{
+    if(!m||!(+m.units>0))return;
+    const resolved=mfResolve(m,eodNavs,navLatest);
+    if(!resolved||!(resolved.nav>0)||!resolved.dateISO)return;
+    const p=fundNavPrevNav(m,eodNavs,navLatest,mfHistNavs);
+    if(!p||!(p.nav>0))return;
+    cur+=resolved.nav*mfValUnits(m);
+    prev+=p.nav*mfValUnits(m);
+    if(!prevDate||p.date>prevDate)prevDate=p.date;
+  });
+  if(prev<=0)return null;
+  const abs=cur-prev;
+  return{abs,pct:(abs/prev)*100,prevValue:prev,prevDate};
+};
+
 /* ── useMfValuation: memoized per-fund NAV/value/cost/pnl + totals ──
    Usage: const {funds, totalValue, totalCost, totalPnl} = useMfValuation(mf, eodNavs, navLatest);
    Each entry in `funds` is keyed by m.id and contains:
@@ -6939,6 +6997,9 @@ var CloudBackupPanel = ({ state, dispatch }) => {
       _syncSaveLocalEdit(remote.modifiedTime);
       setLastSync(remote.modifiedTime);
 
+      /* Restored data is a stale snapshot — force a live NAV refresh on boot */
+      markForceMfRefresh();
+
       dispatch({ type: "RESTORE_ALL", data: _restoreDataMerged });
       setPullMsg("✓ Restored from Drive (" + fmtTs(remote.modifiedTime) + "). Refreshing…");
       setTimeout(() => window.location.reload(), 1800);
@@ -8906,6 +8967,8 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                          and does not silently overwrite the freshly restored data. ── */
                       try { localStorage.setItem(LS_LAST_LOCAL_EDIT, new Date().toISOString()); } catch {}
                       try { localStorage.removeItem(LS_GDRIVE_LAST_SYNC); } catch {}
+                      /* ── Restored data is a stale snapshot — force a live NAV refresh on the next boot ── */
+                      markForceMfRefresh();
                       /* ── Update in-memory React state for the 1.8s before reload ── */
                       dispatch({type:"RESTORE_ALL",data:_restoreData});
                       const s=payload.summary;
@@ -10451,6 +10514,15 @@ var ScheduledSection=React.memo(({scheduled=_EA,banks,cards,cash,categories,paye
 var LS_KEY="mm_v7_state";
 var LS_EOD_PRICES="mm_v7_eodPrices";
 var LS_EOD_NAVS="mm_v7_eodNavs";
+/* ── Post-restore force-NAV-refresh marker ────────────────────────────────
+   Set by every restore flow (JSON file, FSA file, Drive pull & boot pull)
+   so the background EOD snapshot knows the restored navLatest / eodNavs /
+   m.nav are a STALE snapshot from the backed-up file and must be re-fetched
+   from the live source instead of trusting the "today is already complete"
+   shortcut. Cleared once a live NAV refresh actually lands. */
+var LS_FORCE_MF_REFRESH="mm_v7_forceMfRefresh";
+var markForceMfRefresh=()=>{try{localStorage.setItem(LS_FORCE_MF_REFRESH,"1");}catch{}};
+var consumeForceMfRefresh=()=>{try{localStorage.removeItem(LS_FORCE_MF_REFRESH);}catch{}};
 /* ── Reset guard: set to true just before window.location.reload() inside the
    "Yes, Delete Everything" handler so the beforeunload/pagehide flush skips
    saving stale (pre-reset) state back to localStorage and IndexedDB, which
@@ -10596,6 +10668,7 @@ var MM_LS_KEYS=[
   {key:LS_KEY,         label:"App State (transactions, accounts, investments)"},
   {key:LS_EOD_PRICES,  label:"EOD share prices cache (separate)"},
   {key:LS_EOD_NAVS,    label:"EOD mutual fund NAVs cache (separate)"},
+  {key:LS_FORCE_MF_REFRESH, label:"Post-restore NAV refresh marker"},
   {key:LS_THEME,       label:"Theme preference"},
   {key:LS_FONT,        label:"Font preference"},
   {key:"mm_v7_pin",    label:"PIN hash"},
@@ -12118,6 +12191,8 @@ var usePersistentReducer=(reducer,init)=>{
         try { await clearTxIDB(); } catch {}
         try { await saveTxToIDB(_mergedState); } catch {}
         dispatch({type:"RESTORE_ALL",data:{..._mergedState,eodPrices:_mergedEodPrices,eodNavs:_mergedEodNavs}});
+        /* Pulled data is a stale snapshot — force a live NAV refresh on the next EOD cycle */
+        markForceMfRefresh();
         /* Force a clean debounced save after pull to prevent stale local state overwrite */
         if(timerRef.current)clearTimeout(timerRef.current);
         window.dispatchEvent(new CustomEvent("gdrive:pulled",{detail:{time:remoteTime}}));
@@ -18108,7 +18183,7 @@ const RecentTxnList=React.memo(({txns,onJumpToTx})=>{
   );
 });
 
-const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobile,eodPrices={},eodNavs={},navLatest={},brokerCashBalance=0})=>{
+const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobile,eodPrices={},eodNavs={},navLatest={},mfHistNavs={},brokerCashBalance=0})=>{
   const[refreshing,setRefreshing]=useState(false);
   const[refreshStatus,setRefreshStatus]=useState(null); /* {ok,msg,ts,navOk,sharesOk} */
   const _mfLiveVal=(m)=>mfLiveVal(m,eodNavs,navLatest);
@@ -18436,21 +18511,13 @@ const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobil
 
     /* ── Per-asset stat row */
     (()=>{
-      /* Compute aggregate MF day-change from eodNavs.
-         Use the two most recent EOD snapshot dates — no "before today" filter.
-         eodNavs only stores officially published NAV dates so the latest entry
-         IS the most recent completed trading day regardless of calendar date.
-         latestDate = most recent published NAV; prevDate = the one before it. */
-      const _normDashNavs=normalizeEodNavKeys(eodNavs||{});
-      const _eodAllDates=Object.keys(_normDashNavs).sort();
-      const _latestNavDate=_eodAllDates.slice(-1)[0];
-      const _prevNavDate=_eodAllDates.slice(-2,-1)[0];
-      let mfDayChgPct=null;
-      if(_latestNavDate&&_prevNavDate){
-        const latestTotal=mf.reduce((s,m)=>{const n=m.units>0?navAsOf(_normDashNavs,m.schemeCode,_latestNavDate):0;return s+(n?n*mfValUnits(m):0);},0);
-        const prevTotal=mf.reduce((s,m)=>{const n=m.units>0?navAsOf(_normDashNavs,m.schemeCode,_prevNavDate):0;return s+(n?n*mfValUnits(m):0);},0);
-        if(prevTotal>0&&latestTotal>0)mfDayChgPct=((latestTotal-prevTotal)/prevTotal*100);
-      }
+      /* Compute aggregate MF day-change vs each fund's TRUE previous published
+         day (merged eodNavs + full mfHistNavs history). After the app is not
+         opened for some days, the two most recent eodNavs buckets are real
+         calendar days apart and the "vs prev NAV" figure would use a stale,
+         multi-day baseline — the history series fills exactly those skipped days. */
+      const _dayChgDash=mfPortfolioNavDayChg(mf,eodNavs,navLatest,mfHistNavs||{});
+      const mfDayChgPct=_dayChgDash?_dayChgDash.pct:null;
       return React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
         React.createElement(StatCard,{label:"Mutual Funds",val:INR(mfVal),
           sub:mfDayChgPct!==null
@@ -21441,7 +21508,7 @@ const _SCREENER_SNAPS_KEY="finsight-screener-snapshots";
    state.mfHistNavs (per schemeCode). Falls back gracefully when history is
    not yet loaded by offering a "Fetch History" action.
    ────────────────────────────────────────────────────────────────────────── */
-const MFPerformanceTables=React.memo(({mf,mfHistNavs={},dispatch})=>{
+const MFPerformanceTables=React.memo(({mf,mfHistNavs={},navLatest={},dispatch})=>{
   const active=(mf||[]).filter(m=>m.units>0&&m.schemeCode);
   const [loading,setLoading]=useState({});
   const [fired,setFired]=useState(false);
@@ -21466,8 +21533,12 @@ const MFPerformanceTables=React.memo(({mf,mfHistNavs={},dispatch})=>{
   })();
   const hasHistory=m=>Array.isArray(mfHistNavs[m.schemeCode])&&mfHistNavs[m.schemeCode].length>1;
   /* Stale = no usable history, OR cache built with an older layout (pre-10-year
-     version), OR latest cached NAV older than ~4 days — in all cases re-fetch
-     so the tables stay complete and current whenever the section is revisited. */
+     version), OR latest cached NAV older than ~4 days, OR the fund's most recent
+     published NAV (navLatest — fetched by the auto-EOD refresh even on days the
+     app was not opened) is NEWER than the cached history tail. The last case is
+     the gap-day bug: when the app misses some days the bucket pair skips them,
+     so the true previous NAV must come from an up-to-date full history series —
+     force a re-fetch so day-over-day baselines are exact. */
   const isStale=m=>{
     if((mfHistNavs._v||0)!==3)return true;
     if(!hasHistory(m))return true;
@@ -21475,7 +21546,11 @@ const MFPerformanceTables=React.memo(({mf,mfHistNavs={},dispatch})=>{
     const last=s[s.length-1]&&s[s.length-1].date;
     if(!last)return true;
     const cutoff=new Date(Date.now()-4*864e5).toISOString().slice(0,10);
-    return last<cutoff;
+    if(last<cutoff)return true;
+    const _nl=navLatest&&navLatest[m.schemeCode];
+    const latestPub=(_nl&&_nl.dateISO||"").slice(0,10);
+    if(latestPub&&last<latestPub)return true;
+    return false;
   };
   const missing=active.filter(m=>isStale(m));
 
@@ -21963,26 +22038,27 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
           const fullDate=parts.length===3?parts[2]+"-"+MON[parseInt(parts[1],10)-1]+"-"+parts[0]:date;
           return{value:val,label,fullDate};
         }).filter(p=>p.value>0);
-        /* Day change: latest snapshot vs the one before it */
-        /* Day change: each fund's newest snapshot ≤ the date (navAsOf), so funds
-           that publish on different days are never wrongly counted as 0. */
+        /* Day change: latest snapshot vs the true previous published day.
+           eodNavs only stores days the app fetched. After a gap (app not
+           opened on some days) the two most recent eodNavs buckets are calendar
+           days apart, so comparing them would count a multi-day move as one day
+           and the "Prev NAV" baseline would be stale. Merging each fund's
+           eodNavs entries with the full mfHistNavs published-NAV history fills
+           exactly those skipped days — the previous day is the fund's genuine
+           preceding published day and the % is single-day precise. */
         /* Headline = shared value (same as header / fund cards / chart) */
         const mfActive=mf.filter(m=>m.units>0);
         const mfTotalNow=mfPortVal(mfActive,eodNavs,navLatest);
-        /* Day-change: only count funds that have BOTH dates — prevents a
-           newly added fund (only in the latest bucket) from showing as
-           phantom gain. navAsOf returns the fund's own snapshot for that
-           date or the nearest prior one. */
-        let dayChgAbs=null,dayChgPct=null;
-        if(latestDate&&prevDate){
-          let cur=0,prev=0;
-          mfActive.forEach(m=>{
-            const a=navAsOf(_normHeroNavs,m.schemeCode,latestDate);
-            const b=navAsOf(_normHeroNavs,m.schemeCode,prevDate);
-            if(a&&b){cur+=a*mfValUnits(m);prev+=b*mfValUnits(m);}
-          });
-          if(prev>0){dayChgAbs=cur-prev;dayChgPct=(dayChgAbs/prev)*100;}
-        }
+        /* Day-change: only count funds measurable on BOTH the latest and its
+           true previous published day — a newly added fund (only in the latest
+           bucket) is never shown as phantom gain. */
+        const _dayChgHero=mfPortfolioNavDayChg(mfActive,eodNavs,navLatest,mfHistNavs||{});
+        const dayChgAbs=_dayChgHero?_dayChgHero.abs:null;
+        const dayChgPct=_dayChgHero?_dayChgHero.pct:null;
+        /* Representative "previous" date for the pill labels: the true previous
+           published day; falls back to the shared previous bucket. */
+        const prevDateShown=_dayChgHero&&_dayChgHero.prevDate?_dayChgHero.prevDate:prevDate;
+        const _dayChgPrevVal=_dayChgHero?_dayChgHero.prevValue:null;
         const mfCoANow=mfActive.reduce((s,m)=>s+mfValCost(m),0);
         const overallGain=mfTotalNow-mfCoANow;
         const showHero=chartPts.length>=1||latestDate;
@@ -21999,9 +22075,9 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
             /* ── Big bold current value ── */
             React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:800,fontSize:36,color:"#6d28d9",lineHeight:1.1,marginBottom:16}},INR(mfTotalNow)),
             /* ── Day-change pill: Today vs Yesterday ── */
-            (latestDate||prevDate)&&React.createElement("div",{style:{
+            (latestDate||prevDateShown)&&React.createElement("div",{style:{
               display:"grid",
-              gridTemplateColumns:prevDate?"1fr auto 1fr":"1fr",
+              gridTemplateColumns:prevDateShown?"1fr auto 1fr":"1fr",
               alignItems:"stretch",
               background:"rgba(109,40,217,.07)",
               border:"1px solid rgba(109,40,217,.18)",
@@ -22018,7 +22094,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                 )
               ),
               /* Centre badge — only when both dates exist */
-              prevDate&&React.createElement("div",{style:{
+              prevDateShown&&React.createElement("div",{style:{
                 display:"flex",alignItems:"center",justifyContent:"center",
                 padding:"0 4px",
                 borderLeft:"1px solid rgba(109,40,217,.15)",
@@ -22033,10 +22109,10 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                   :React.createElement("div",{style:{padding:"10px 8px",fontSize:11,color:"var(--text5)"}},"–")
               ),
               /* YESTERDAY column */
-              prevDate&&React.createElement("div",{style:{padding:"12px 16px",opacity:.85}},
-                React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:1.1,marginBottom:4}},(prevDate===_heroYesterdayISO?"Yesterday":"Prev NAV")+" · "+fmtDateLabel(prevDate)),
-                React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:20,color:"var(--text3)"}},dayChgAbs!==null?INR(mfTotalNow-dayChgAbs):"--"),
-                React.createElement("div",{style:{fontSize:11,color:"var(--text6)",marginTop:3}},prevDate?"Prev NAV snapshot":"")
+              prevDateShown&&React.createElement("div",{style:{padding:"12px 16px",opacity:.85}},
+                React.createElement("div",{style:{fontSize:9,fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:1.1,marginBottom:4}},(prevDateShown===_heroYesterdayISO?"Yesterday":"Prev NAV")+" · "+fmtDateLabel(prevDateShown)),
+                React.createElement("div",{style:{fontFamily:"'Sora',sans-serif",fontWeight:700,fontSize:20,color:"var(--text3)"}},_dayChgPrevVal!==null?INR(_dayChgPrevVal):"--"),
+                React.createElement("div",{style:{fontSize:11,color:"var(--text6)",marginTop:3}},prevDateShown?"Prev NAV snapshot":"")
               )
             ),
             /* ── Bottom stats: CoA + Total Gain/Loss ── */
@@ -22073,10 +22149,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
             const _idxDates=Object.keys(_normIdx).sort();
             const _normTbl=normalizeEodNavKeys(eodNavs||{});
             const _tblDates=Object.keys(_normTbl).sort();
-            const _navD1=_tblDates.slice(-1)[0];
-            const _navD2=_tblDates.slice(-2,-1)[0];
             const _fundCount=mf.filter(m=>m.units>0).length;
-            const _hasNavPair=_navD1&&_navD2&&!!_fundCount;
             const _idxKeys=["NIFTY 50","NIFTY 100","NIFTY MIDCAP 50","NIFTY MIDCAP 100","NIFTY MIDCAP 150","NIFTY SMLCAP 100","NIFTY BANK","NIFTY AUTO","NIFTY IT","NIFTY PHARMA"];
             const _idxLabels=["Nifty 50","Nifty 100","Midcap 50","Midcap 100","Midcap 150","Smallcap 100","Bank","Auto","IT","Pharma"];
             /* Index value as of the market close on/before a given date — indices are
@@ -22100,54 +22173,60 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
               }
               return null;
             };
-            let _idxUsedFallback=false;
-            const _idxChgs=_idxKeys.map((k,i)=>{
-              let chgPct=null;
-              if(_navD1&&_navD2){
-                const c1=_idxValOnOrBefore(_navD1,k);
-                const c2=_idxValOnOrBefore(_navD2,k);
-                if(c1&&c2&&c2>0)chgPct=((c1-c2)/c2*100);
-              }
-              /* Fallback: the date-pair anchoring needs index history on BOTH NAV
-                 dates. When that is missing (sparse capture, or NAVs published on
-                 later days than the index buckets), value each benchmark from the
-                 latest snapshot's own close vs prevClose (_pc), else vs the
-                 previous snapshot's close — so benchmarks always render once any
-                 index data exists (the documented single-snapshot design). */
-              if(chgPct===null&&_latestIdxSnap){
-                const c=+_latestIdxSnap[k];
-                const pc=+_latestIdxSnap[k+"_pc"]||0;
-                const base=pc>0?pc:_prevIdxVal(k);
-                if(c>0&&base>0){chgPct=((c-base)/base*100);_idxUsedFallback=true;}
-              }
-              return{label:_idxLabels[i],chgPct:chgPct!==null?Math.round(chgPct*100)/100:null};
-            });
-            /* Build fund rows only when we have 2+ NAV dates */
-            const _fundChgs=_hasNavPair?(function(){
-              const _ah=mf.filter(m=>m.units>0);
-              return _ah.map(m=>{
-                const l=(_normTbl[_navD1]||{})[m.schemeCode];
-                const p=(_normTbl[_navD2]||{})[m.schemeCode];
-                if(!l||!p||p<=0)return null;
-                return{name:m.name,chgPct:((l-p)/p*100)};
-              }).filter(Boolean).sort((a,b)=>b.chgPct-a.chgPct);
-            })():[];
-            /* Net portfolio value change over the SAME navD2 → navD1 period.
-               Sum units × NAV for every active fund at each date. */
-            const _netPort=()=>{
-              const _ah=mf.filter(m=>m.units>0);
-              let v1=0,v2=0;
-              _ah.forEach(m=>{
-                const l=(_normTbl[_navD1]||{})[m.schemeCode];
-                const p=(_normTbl[_navD2]||{})[m.schemeCode];
-                if(l&&l>0)v1+=mfValUnits(m)*l;
-                if(p&&p>0)v2+=mfValUnits(m)*p;
+            /* Benchmark changes over a given latest→prev date pair. The fallback
+               value each benchmark from the latest snapshot's own close vs
+               prevClose (_pc), else vs the previous snapshot's close — used only
+               for the shared header row; per-fund rows anchor strictly to the
+               fund's own true NAV date pair. */
+            const _idxChgsFor=(iso1,iso2,allowFallback)=>{
+              let fallbackUsed=false;
+              const arr=_idxKeys.map((k,i)=>{
+                let chgPct=null;
+                if(iso1&&iso2){
+                  const c1=_idxValOnOrBefore(iso1,k);
+                  const c2=_idxValOnOrBefore(iso2,k);
+                  if(c1&&c2&&c2>0)chgPct=((c1-c2)/c2*100);
+                }
+                if(chgPct===null&&allowFallback&&_latestIdxSnap){
+                  const c=+_latestIdxSnap[k];
+                  const pc=+_latestIdxSnap[k+"_pc"]||0;
+                  const base=pc>0?pc:_prevIdxVal(k);
+                  if(c>0&&base>0){chgPct=((c-base)/base*100);fallbackUsed=true;}
+                }
+                return{label:_idxLabels[i],chgPct:chgPct!==null?Math.round(chgPct*100)/100:null};
               });
-              return{v1,v2};
+              return{arr,fallbackUsed};
             };
-            const _net=_hasNavPair?_netPort():{v1:0,v2:0};
-            const _netChgAbs=_net.v1-_net.v2;
-            const _netChgPct=_net.v2>0?(_netChgAbs/_net.v2*100):null;
+            /* TRUE day-over-day period per fund: latest published NAV vs its genuine
+               preceding published day. After days the app was not opened the two most
+               recent eodNavs buckets are calendar days apart — anchoring to those would
+               compare a multi-day move with a benchmark captured on a different day and
+               use a stale "Prev NAV" baseline. Merging each fund's eodNavs entries with
+               the full daily published-NAV series (mfHistNavs) fills the skipped days,
+               so NAV % and Nifty % both cover ONE genuine trading day. */
+            const _fundPairs=mf.filter(m=>m.units>0).map(m=>{
+              const resolved=mfResolve(m,eodNavs||{},navLatest||{});
+              const prev=fundNavPrevNav(m,eodNavs||{},navLatest||{},mfHistNavs||{});
+              if(!resolved||!(resolved.nav>0)||!resolved.dateISO||!prev||!(prev.nav>0))return null;
+              return{fund:m,name:m.name,latest:resolved,prev};
+            }).filter(Boolean);
+            const _fundPairsSorted=_fundPairs.slice().sort((a,b)=>((b.latest.nav-b.prev.nav)/b.prev.nav)-((a.latest.nav-a.prev.nav)/a.prev.nav));
+            const _fundChgs=_fundPairsSorted.map(fp=>{
+              const chgPct=((fp.latest.nav-fp.prev.nav)/fp.prev.nav*100);
+              return{name:fp.name,chgPct,latestDate:fp.latest.dateISO,prevDate:fp.prev.date,idx:_idxChgsFor(fp.prev.date,fp.latest.dateISO,false).arr};
+            });
+            /* Net Portfolio value change over the same TRUE prev → latest period. */
+            const _netChgAbs=_fundPairs.reduce((s,fp)=>s+((fp.latest.nav-fp.prev.nav)*mfValUnits(fp.fund)),0);
+            const _netBase=_fundPairs.reduce((s,fp)=>s+(fp.prev.nav*mfValUnits(fp.fund)),0);
+            const _netChgPct=_netBase>0?(_netChgAbs/_netBase*100):null;
+            /* Shared header/reference dates = the true prev → latest published
+               period; falls back to the two most recent eodNavs buckets. */
+            const _navD1=(_fundPairs.length?_fundPairsSorted[0].latest.dateISO:null)||(_tblDates.slice(-1)[0]);
+            const _navD2=(()=>{let mx=null;(_fundPairs||[]).forEach(fp=>{if(!mx||fp.prev.date>mx)mx=fp.prev.date;});return mx;})()||(_tblDates.slice(-2,-1)[0]);
+            const _hasNavPair=_navD1&&_navD2&&_fundCount>0;
+            const _idxRes=_idxChgsFor(_navD1,_navD2,true);
+            const _idxChgs=_idxRes.arr;
+            let _idxUsedFallback=_idxRes.fallbackUsed;
             const _fmtD=(iso)=>{if(!iso)return"--";const p=iso.split("-");const M=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return p.length===3?p[2]+" "+M[parseInt(p[1],10)-1]+" "+p[0]:iso;};
             const _col=(v)=>v!==null&&v!==undefined?(v>=0?"#16a34a":"#ef4444"):"var(--text5)";
             const _pct=(v)=>v!==null&&v!==undefined?(v>=0?"▲ +":"▼ ")+Math.abs(v).toFixed(2)+"%":"—";
@@ -22192,7 +22271,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                   _fundChgs.length>0?_fundChgs.map((f,fi)=>React.createElement("div",{key:fi,style:{display:"grid",gridTemplateColumns:"2fr 1fr repeat(10,1fr)",gap:0,borderBottom:"1px solid var(--border2)",fontSize:10,":last-child":{borderBottom:"none"}}},
                     React.createElement("div",{style:{padding:"7px 10px",color:"var(--text2)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},_sn(f.name)),
                     React.createElement("div",{style:{padding:"7px 10px",textAlign:"right",color:_col(f.chgPct),fontWeight:600}},(f.chgPct>=0?"▲ +":"▼ ")+Math.abs(f.chgPct).toFixed(2)+"%"),
-                    _idxChgs.map((idx,ii)=>React.createElement("div",{key:ii,style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
+                    (f.idx||[]).map((idx,ii)=>React.createElement("div",{key:ii,style:{padding:"7px 10px",textAlign:"right",color:_col(idx.chgPct)}},idx.chgPct!==null?_pct(idx.chgPct):"—"))
                   )):_hasNavPair||!_fundCount?null:React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr",gap:0,padding:"16px 10px",fontSize:10,color:"var(--text6)",textAlign:"center",fontStyle:"italic"}},
                     "Refresh NAV again tomorrow to see per-fund day-over-day changes.")
                   ),
@@ -22214,7 +22293,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
               )
             );
           })(),
-      React.createElement(MFPerformanceTables,{mf,mfHistNavs:mfHistNavs||{},dispatch}),
+      React.createElement(MFPerformanceTables,{mf,mfHistNavs:mfHistNavs||{},navLatest:navLatest||{},dispatch}),
       /* ── Portfolio Evolution Chart — always visible when txns are imported ── */
       (mfTxns||[]).length>=2&&React.createElement(Card,{sx:{marginBottom:14}},
         React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,flexWrap:"wrap",gap:8}},
@@ -22247,14 +22326,13 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
              MF NAVs are published after market close, so comparing live m.nav (which may
              not have updated yet today) against D-1 produces a misleading figure.
              Instead compare the two most recent completed trading days from eodNavs. */
-          const todayIST2=getISTDateStr();
-          const _normFundNavs=normalizeEodNavKeys(eodNavs||{});
-          const _fundDatesBeforeToday=Object.keys(_normFundNavs).filter(d=>d<todayIST2).sort();
-          const _fundD1Dt=_fundDatesBeforeToday.slice(-1)[0];   // most recent completed day
-          const _fundD2Dt=_fundDatesBeforeToday.slice(-2,-1)[0]; // day before that
-          const _fundD1Nav=_fundD1Dt?((_normFundNavs[_fundD1Dt]||{})[m.schemeCode]||null):null;
-          const _fundD2Nav=_fundD2Dt?((_normFundNavs[_fundD2Dt]||{})[m.schemeCode]||null):null;
-          const navDayChgPct=_fundD1Nav&&_fundD2Nav&&_fundD2Nav>0?((_fundD1Nav-_fundD2Nav)/_fundD2Nav*100):null;
+          /* Per-fund day-change: latest published NAV vs the fund's TRUE previous
+             published day (merged eodNavs + full mfHistNavs history). After a gap
+             (app not opened on some days) the two most recent eodNavs buckets are
+             calendar days apart, which made this badge show a multi-day move as a
+             single day with a stale baseline — the published-NAV history series
+             fills exactly those skipped days. */
+          const navDayChgPct=fundNavDayChgPct(m,eodNavs||{},navLatest||{},mfHistNavs||{});
           return React.createElement(Card,{key:m.id,sx:hasTxns?{cursor:"pointer",transition:"box-shadow .15s, border-color .15s","&:hover":{boxShadow:"0 4px 20px rgba(109,40,217,.15)",borderColor:"rgba(109,40,217,.3)"}}:{},onClick:hasTxns?()=>setViewTxnsFund(m.name):undefined},
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,gap:8}},
               React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text2)",lineHeight:1.45,flex:1}},m.name),
@@ -30228,6 +30306,8 @@ const FSAStoragePanel=({state,dispatch})=>{
          and does not silently overwrite the freshly restored data. ── */
       try { localStorage.setItem(LS_LAST_LOCAL_EDIT, new Date().toISOString()); } catch {}
       try { localStorage.removeItem(LS_GDRIVE_LAST_SYNC); } catch {}
+      /* ── Restored data is a stale snapshot — force a live NAV refresh on the next boot ── */
+      markForceMfRefresh();
       /* ── Update in-memory React state ── */
       dispatch({type:"RESTORE_ALL",data:_restoreData});
       /* ── Request read-write permission (we're inside a user-gesture chain) ── */
@@ -39268,7 +39348,15 @@ function App(){
           const _navStore=normalizeEodNavKeys(_eodNavsRef.current||{});
           const _todayBucket=_navStore[today]||{};
           const _todayComplete=_held.length>0&&_held.every(m=>(_todayBucket[m.schemeCode]||0)>0);
-          if(!_todayComplete){
+          /* ── Post-restore force refresh ── After a restore, the restored
+             navLatest / eodNavs / m.nav are a snapshot from the backed-up file
+             (e.g. day-before-yesterday) and are therefore stale. Skip the
+             "today is already complete" shortcut so every fund is re-fetched
+             from the LIVE source instead of trusting whatever NAV the backup
+             carried. The marker is cleared only once real live NAVs land. */
+          let _forceNav=false;
+          try{_forceNav=(localStorage.getItem(LS_FORCE_MF_REFRESH)==="1");}catch{}
+          if(_forceNav||!_todayComplete){
           const navResults=await Promise.all(
             mf.filter(m=>m.schemeCode).map(async m=>{
               const res=await fetchOneNav(m.schemeCode);
@@ -39279,6 +39367,11 @@ function App(){
           if(_valid.length){
             dispatch({type:"APPLY_MF_NAVS",p:_valid});
             _snapIdxDate=_valid.map(r=>r.navDateISO).sort().pop()||"";
+            /* Only clear the forced-refresh marker once every held fund produced
+               a (stale-safe approved) live NAV — otherwise keep retrying. */
+            const _fetchedCodes=new Set(_valid.map(r=>r.fund&&r.fund.schemeCode));
+            const _allFetched=_held.every(m=>_fetchedCodes.has(m.schemeCode));
+            if(_forceNav&&_allFetched)consumeForceMfRefresh();
           }
           }
         }
@@ -40202,7 +40295,7 @@ function App(){
           React.createElement(CashSection,{cash:state.cash,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,loans:state.loans||_EA,isMobile,jumpTxId:txJump?.accType==="cash"?txJump.txId:null,jumpSerial:txJump?.accType==="cash"?txJump.serial:null}))),
       React.createElement("div",{style:{display:tab==="inv_dash"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Investments"},
-          React.createElement(InvestDashboard,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,dispatch,isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,navLatest:state.navLatest||_EO,brokerCashBalance:state.brokerCashBalance||0}))),
+          React.createElement(InvestDashboard,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,dispatch,isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,navLatest:state.navLatest||_EO,mfHistNavs:state.mfHistNavs||_EO,brokerCashBalance:state.brokerCashBalance||0}))),
       /* InvestSection: five sub-tabs reuse the same component with different
          defaultTab — keep the && pattern so each sub-tab mounts independently */
       tab==="inv_mf"&&React.createElement(ErrorBoundary,{name:"Mutual Funds"},
