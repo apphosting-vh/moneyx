@@ -699,19 +699,17 @@ const useMfValuation=(mf,eodNavs,navLatest)=>{
 /* Stale-safe NAV application rule (shared by the auto EOD task, Refresh NAV
    Everywhere and InvestSection's Refresh All): a freshly fetched NAV may only
    move a fund FORWARD (newer published date) or fill a gap. It must never
-   regress a stored value, and any DIFFERENT value for the SAME published date
-   is proxy staleness — a scheme's NAV for a given date is immutable, and
-   several fallback proxies (corsproxy.io, allorigins.win, …) cache
-   aggressively, so a re-fetch can return an older cached body. Returns true
-   (apply the fetch) or false (keep the stored stricter value). */
+   regress a stored value. A re-fetch for the SAME published date is treated
+   as authoritative: after a backup restore the stored same-date NAV can be a
+   stale snapshot, and NAVs are never re-published with new values by the fund
+   house, so the fetched live value (direct mfapi.in first, proxies second)
+   is taken — an older cached proxy body is still rejected by the date guard
+   below. Returns true (apply the fetch) or false (keep the stored value). */
 const _applyNavFetch=(fetched,stored)=>{
   if(!stored||!fetched)return true;
   const f=(fetched.navDateISO)||"";
   const s=(stored.navDateISO)||"";
-  if(s&&f){
-    if(f<s)return false;                          /* fetched dated older — never regress */
-    if(f===s&&(+stored.nav||0)>0&&+stored.nav!==+fetched.nav)return false; /* same date, different value */
-  }
+  if(s&&f&&f<s)return false;                          /* fetched dated older — never regress */
   return true;
 };
 /* Same-date bucket guard: for a given bucket date, keep the value already
@@ -1220,7 +1218,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.19.47";
+ const APP_VERSION="7.19.48";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -2698,7 +2696,7 @@ const reducer=(s,a)=>{
         _raw.forEach(r=>{
           if(!r||!r.fund||!(r.nav>0)||!r.fund.schemeCode)return;
           const _old=_newLatest[r.fund.schemeCode];
-          if(!_old||r.navDateISO>_old.dateISO){_newLatest[r.fund.schemeCode]={nav:r.nav,dateISO:r.navDateISO};_changed=true;}
+          if(!_old||r.navDateISO>=_old.dateISO){_newLatest[r.fund.schemeCode]={nav:r.nav,dateISO:r.navDateISO};_changed=true;}
         });
         return _changed?{...s,navLatest:_newLatest}:s;
       }
@@ -2709,22 +2707,22 @@ const reducer=(s,a)=>{
         if(!r)return m;
         return{...m,nav:r.nav,navDate:r.navDate,navDateISO:r.navDateISO,currentValue:parseFloat((r.nav*(m.units||0)).toFixed(2))};
       });
-      /* 3. Top up eodNavs: same-date immutable — only add missing funds */
+      /* 3. Write into eodNavs. A freshly fetched value for a date already in the
+         bucket (e.g. restored from a backup) OVERWRITES the stale one — the
+         fetched live NAV is authoritative (see _applyNavFetch) and the bucket
+         must reflect it for charts / day-change / reports. */
       const _norm=normalizeEodNavKeys(s.eodNavs||{});
       const _newEod={..._norm};
       _p.forEach(r=>{
         if(!r.navDateISO||!(r.nav>0))return;
-        const _bucket=_newEod[r.navDateISO]||{};
-        if(!(_bucket[r.fund.schemeCode]>0)){
-          _newEod[r.navDateISO]={..._bucket,[r.fund.schemeCode]:r.nav};
-        }
+        _newEod[r.navDateISO]={...(_newEod[r.navDateISO]||{}),[r.fund.schemeCode]:r.nav};
       });
       /* 4. navLatest: never-pruned per-schemeCode map (freshest NAV always) */
       const _newLatest={...(s.navLatest||{})};
       _p.forEach(r=>{
         if(!(r.nav>0)||!r.fund.schemeCode)return;
         const _old=_newLatest[r.fund.schemeCode];
-        if(!_old||r.navDateISO>_old.dateISO){
+        if(!_old||r.navDateISO>=_old.dateISO){
           _newLatest[r.fund.schemeCode]={nav:r.nav,dateISO:r.navDateISO};
         }
       });
