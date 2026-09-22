@@ -1,0 +1,6 @@
+name = "stop-proxy"
+main = "index.js"
+compatibility_date = "2024-11-01"
+
+# Deploys to: https://stop-proxy.lenovotabpro99.workers.dev
+# (workers.dev subdomain = <name>.<account-subdomain>.workers.dev)

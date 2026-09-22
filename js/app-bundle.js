@@ -420,7 +420,7 @@ const fetchMarketIndices=async()=>{
    ══════════════════════════════════════════════════════════════════════════ */
 const _MON_MAP={Jan:"01",Feb:"02",Mar:"03",Apr:"04",May:"05",Jun:"06",
                 Jul:"07",Aug:"08",Sep:"09",Oct:"10",Nov:"11",Dec:"12"};
-/* Convert "DD-MMM-YYYY" → "YYYY-MM-DD". Passes through already-ISO dates. */
+/* Convert AMFI / mfapi "DD-MMM-YYYY" → ISO "YYYY-MM-DD". Passes through already-ISO dates. */
 const mfNavDateToISO=(s)=>{
   if(!s)return"";
   /* Already ISO: YYYY-MM-DD (10 chars, digit at position 0) */
@@ -435,6 +435,16 @@ const mfNavDateToISO=(s)=>{
     return p[2]+"-"+p[1]+"-"+p[0].padStart(2,"0");
   }
   return s; /* unknown format — return as-is */
+};
+/* Convert ISO "YYYY-MM-DD" → "DD-MMM-YYYY" (mfapi/AMFI display style).
+   Used when mfnav.in (ISO-native) supplies the freshest NAV so per-fund
+   cards show "21-Sep-2026" like every other source. Passes through others. */
+const isoToMfNavDate=(s)=>{
+  if(!s)return"";
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if(!m)return s;
+  const _REV=[,"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return m[3]+"-"+_REV[+m[2]]+"-"+m[1];
 };
 /* Migrate a legacy eodNavs object whose keys may be DD-MMM-YYYY → ISO keys */
 const normalizeEodNavKeys=(navs)=>{
@@ -453,20 +463,32 @@ const normalizeEodNavKeys=(navs)=>{
    Returns { nav: number, navDate: "DD-MMM-YYYY", navDateISO: "YYYY-MM-DD" }
    or null.
 
-   Strategy (v3.38.3):
-   • Direct mfapi.in fetch is tried FIRST — works from proper HTTPS origins
-     (GitHub Pages, Netlify, custom domains). Fails silently from null/file://
-     origins where mfapi.in returns 403.
-   • 6 proxy attempts against mfapi.in (8 s each) in reliability order:
-       1. corsproxy.io       — most reliable free CORS proxy
-       2. cors.eu.org        — European proxy, stable CORS headers
-       3. codetabs.com       — works but rate-limited (5 req/min)
-       4. thingproxy         — fallback for small payloads
-       5. allorigins raw     — last resort; blocks some GitHub Pages origins
-       6. allorigins get     — JSON-wrapped variant of allorigins
+   Strategy (v3.39):
+   • Our dedicated Cloudflare Worker stop-proxy is tried FIRST. It fetches
+     server-side (no CORS), appends a cache-busting "_cb" query param and
+     returns Cache-Control: no-store, so we always get the newest published
+     NAV instead of a stale shared-proxy cache.
+   • Direct mfapi.in fetch next — works from proper HTTPS origins (GitHub
+     Pages, Netlify, custom domains). Fails silently from null/file:// origins
+     where mfapi.in returns 403.
+   • 6 shared proxy attempts against mfapi.in (8 s each) in reliability order:
+        1. corsproxy.io       — most reliable free CORS proxy
+        2. cors.eu.org        — European proxy, stable CORS headers
+        3. codetabs.com       — works but rate-limited (5 req/min)
+        4. thingproxy         — fallback for small payloads
+        5. allorigins raw     — last resort; blocks some GitHub Pages origins
+        6. allorigins get     — JSON-wrapped variant of allorigins
    • Final fallback: AMFI NAVAll.txt — official government source, never
      blocked, always current. Parsed for the specific scheme code.
    ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Dedicated Cloudflare Worker proxy ─────────────────────────────────────
+   Routes mfapi.in / AMFI through our own worker (stop-proxy) which appends
+   a _cb=<timestamp> cache-buster and emits Cache-Control: no-store, so the
+   NAV can never be a stale cached copy from a shared public proxy. Falls
+   through to the direct/CDN/proxy chain only if the worker is unreachable. */
+const CF_WORKER="https://stop-proxy.lenovotabpro99.workers.dev/";
+const cfProxied=u=>CF_WORKER+"?url="+encodeURIComponent(u);
 
 /* Unwrap either a plain mfapi.in JSON body or an allorigins {contents:"..."} wrapper */
 const _unwrapMfapi=(raw)=>{
@@ -482,6 +504,7 @@ const _unwrapMfapi=(raw)=>{
 const fetchNavFromAMFI=async(code)=>{
   const amfiUrl="https://www.amfiindia.com/spages/NAVAll.txt";
   const proxies=[
+    cfProxied(amfiUrl),
     "https://api.cors.lol/?url="+encodeURIComponent(amfiUrl),
     "https://corsproxy.io/?"+encodeURIComponent(amfiUrl),
     "https://cors.eu.org/"+amfiUrl,
@@ -509,12 +532,41 @@ const fetchNavFromAMFI=async(code)=>{
   return null;
 };
 
+/* ── mfnav.in — free AMFI-sourced JSON NAV API (no key, 120 req/min).
+   Drop-in alternative to mfapi.in. GET /api/funds/{schemeCode} →
+   { latest_nav, latest_nav_date:"YYYY-MM-DD", source:"AMFI" }.
+   Route: our Cloudflare Worker first (fresh, no-CORS), then direct. */
+const fetchOneNavFromMfnav=async(code)=>{
+  const mfnavUrl="https://mfnav.in/api/funds/"+encodeURIComponent(String(code));
+  const srcs=[cfProxied(mfnavUrl),mfnavUrl];
+  for(const u of srcs){
+    try{
+      const r=await _fetchX(u,{},8000);if(!r.ok)continue;
+      const txt=await _readBody(r,6000);
+      let j;try{j=JSON.parse(txt);}catch{continue;}
+      const nav=parseFloat(j?.latest_nav);
+      const iso=String(j?.latest_nav_date||"").trim();
+      if(nav>0&&/^\d{4}-\d{2}-\d{2}$/.test(iso)){
+        return{nav,navDate:isoToMfNavDate(iso),navDateISO:iso};
+      }
+    }catch{}
+  }
+  return null;
+};
+
 const fetchOneNav=async(code)=>{
-  /* ── mfapi.in: try direct first (works from HTTPS origins like GitHub Pages),
-     then proxies in reliability order. allorigins.win kept as last resort only —
-     it has been blocking certain GitHub Pages origins (no CORS header returned). ── */
+  /* Fetch strategy:
+     1. AMFI NAVAll.txt (authoritative) AND mfnav.in (AMFI-sourced JSON) are
+        consulted IN PARALLEL with the mfapi chain. Both return ISO dates and
+        are always current.
+     2. mfapi.in via our Cloudflare Worker (fresh, no-CORS), then direct, then
+        shared proxies in reliability order. allorigins.win kept as last resort
+        only — it has been blocking certain GitHub Pages origins.
+     Every successful candidate is compared by navDate and the NEWEST date wins,
+     so a stale-but-valid mfapi copy can never shadow the fresher published NAV. */
   const base="https://api.mfapi.in/mf/"+code;
   const mfProxies=[
+    cfProxied(base),  /* our Cloudflare Worker — fresh, no-CORS NAV */
     base,  /* direct — works from proper HTTPS origins; fails silently from null/file:// */
     "https://api.cors.lol/?url="+encodeURIComponent(base),
     "https://corsproxy.io/?"+encodeURIComponent(base),
@@ -524,6 +576,17 @@ const fetchOneNav=async(code)=>{
     "https://api.allorigins.win/raw?url="+encodeURIComponent(base),
     "https://api.allorigins.win/get?url="+encodeURIComponent(base),
   ];
+  let best=null;
+  const consider=r=>{if(r&&r.nav>0&&(!best||String(r.navDateISO||"")>String(best.navDateISO||"")))best=r;};
+  /* Authoritative AMFI + mfnav.in run in parallel with the mfapi chain,
+     hard-capped at 8s so the common (fast worker) case is not slowed down. */
+  const freshP=Promise.race([
+    Promise.all([
+      fetchNavFromAMFI(code).then(r=>{consider(r);return true;}).catch(()=>false),
+      fetchOneNavFromMfnav(code).then(r=>{consider(r);return true;}).catch(()=>false),
+    ]).then(()=>true),
+    new Promise(r=>setTimeout(()=>r(false),8000)),
+  ]).catch(()=>false);
   for(const url of mfProxies){
     try{
       const r=await _fetchX(url,{},8000);if(!r.ok)continue;
@@ -531,11 +594,12 @@ const fetchOneNav=async(code)=>{
       let json;try{json=JSON.parse(txt);}catch{continue;}
       const d=_unwrapMfapi(json);
       const nav=parseFloat(d?.data?.[0]?.nav);
-      if(nav>0){const nd=d.data[0].date;return{nav,navDate:nd,navDateISO:mfNavDateToISO(nd)};}
+      if(nav>0){const nd=d.data[0].date;consider({nav,navDate:nd,navDateISO:mfNavDateToISO(nd)});break;}
     }catch{}
   }
-  /* ── Last resort: AMFI NAVAll.txt (government source, always available) ── */
-  return fetchNavFromAMFI(code);
+  /* Always let the fresh sources finish before deciding — freshest wins */
+  await freshP;
+  return best;
 };
 
 /* ── HISTORICAL NAV FETCHER ────────────────────────────────────────────────
@@ -548,6 +612,7 @@ const fetchOneNav=async(code)=>{
 const fetchNavHistory=async(code)=>{
   const base="https://api.mfapi.in/mf/"+code;
   const proxies=[
+    cfProxied(base),
     base,
     "https://api.cors.lol/?url="+encodeURIComponent(base),
     "https://corsproxy.io/?"+encodeURIComponent(base),
@@ -577,6 +642,37 @@ const fetchNavHistory=async(code)=>{
       }
     }catch{}
   }
+  /* ── Fallback: mfnav.in history API (AMFI-sourced, ISO dates, newest first,
+     paginated at 250/page). Pulls up to 14 pages (~3500 pts) then trims to
+     the latest 2600 like every other source. ── */
+  try{
+    const histBase="https://mfnav.in/api/nav/"+encodeURIComponent(String(code));
+    const pts=[];
+    for(let page=1;page<=14;page++){
+      const u=histBase+"?page="+page+"&page_size=250";
+      let pageData=null;
+      for(const urlN of[cfProxied(u),u]){
+        try{
+          const rN=await _fetchX(urlN,{},8000);if(!rN.ok)continue;
+          const txtN=await _readBody(rN,6000);
+          let jN;try{jN=JSON.parse(txtN);}catch{continue;}
+          const arr=Array.isArray(jN?.data)?jN.data:[];
+          if(arr.length){pageData=arr;break;}
+        }catch{}
+      }
+      if(!pageData)break;
+      for(const ent of pageData){
+        const nav=parseFloat(ent?.nav);
+        const iso=String(ent?.nav_date||"");
+        if(nav>0&&/^\d{4}-\d{2}-\d{2}$/.test(iso))pts.push({date:iso,nav});
+      }
+      if(pageData.length<250)break; /* last page reached */
+    }
+    if(pts.length){
+      pts.sort((x,y)=>x.date<y.date?-1:1);
+      return pts.slice(-2600);
+    }
+  }catch{}
   return[];
 };
 
@@ -940,7 +1036,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.19.28";
+ const APP_VERSION="7.19.30";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -21350,6 +21446,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
     const q=encodeURIComponent(srch);
     const searchBase="https://api.mfapi.in/mf/search?q="+q;
     const proxies=[
+      cfProxied(searchBase),
       "https://api.cors.lol/?url="+encodeURIComponent(searchBase),
       "https://corsproxy.io/?"+encodeURIComponent(searchBase),
       "https://api.allorigins.win/raw?url="+encodeURIComponent(searchBase),
@@ -21367,6 +21464,23 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         const d=json?.contents?JSON.parse(json.contents):json;
         if(Array.isArray(d)&&d.length>=0){setResults(d.slice(0,8));found=true;break;}
       }catch{}
+    }
+    if(!found){
+      /* Fallback: mfnav.in free search API (AMFI-sourced JSON, same scheme codes) */
+      const mfq="https://mfnav.in/api/funds/search?q="+q+"&page_size=8";
+      for(const u of[cfProxied(mfq),mfq]){
+        try{
+          const r=await _fetchX(u,{},8000);if(!r.ok)continue;
+          const txt=await _readBody(r,6000);
+          let j;try{j=JSON.parse(txt);}catch{continue;}
+          const arr=Array.isArray(j?.results)?j.results:[];
+          if(arr.length){
+            setResults(arr.map(x=>({schemeCode:String(x.scheme_code),schemeName:x.scheme_name||""})).filter(x=>x.schemeName));
+            found=true;
+            break;
+          }
+        }catch{}
+      }
     }
     if(!found)setResults([]);
     setSearching(false);
