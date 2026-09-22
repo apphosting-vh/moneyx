@@ -555,15 +555,25 @@ const fetchOneNavFromMfnav=async(code)=>{
 };
 
 const fetchOneNav=async(code)=>{
-  /* Fetch strategy:
-     1. AMFI NAVAll.txt (authoritative) AND mfnav.in (AMFI-sourced JSON) are
-        consulted IN PARALLEL with the mfapi chain. Both return ISO dates and
-        are always current.
-     2. mfapi.in via our Cloudflare Worker (fresh, no-CORS), then direct, then
-        shared proxies in reliability order. allorigins.win kept as last resort
-        only — it has been blocking certain GitHub Pages origins.
-     Every successful candidate is compared by navDate and the NEWEST date wins,
-     so a stale-but-valid mfapi copy can never shadow the fresher published NAV. */
+  /* ── PRIMARY (parallel, hard-capped 8s): mfnav.in + AMFI NAVAll.txt.
+     Both are AMFI-sourced and carry the authoritative freshest NAV (ISO
+     dates). If either succeeds, mfapi.in is NOT consulted at all — mfapi has
+     been known to lag/publish stale bodies, and a stale-but-valid mfapi copy
+     would otherwise shadow the fresher date. The NEWEST navDate wins. ── */
+  let best=null;
+  const consider=r=>{if(r&&r.nav>0&&(!best||String(r.navDateISO||"")>String(best.navDateISO||"")))best=r;};
+  await Promise.race([
+    Promise.all([
+      fetchOneNavFromMfnav(code).then(r=>{consider(r);}).catch(()=>{}),
+      fetchNavFromAMFI(code).then(r=>{consider(r);}).catch(()=>{}),
+    ]),
+    new Promise(r=>setTimeout(r,8000)),
+  ]);
+  if(best)return best;
+
+  /* ── FALLBACK ONLY — mfapi.in via our Cloudflare Worker, direct, then
+     shared proxies. Used solely when BOTH fresh sources failed, so its
+     lagging copy can never shadow a fresher authoritative NAV. ── */
   const base="https://api.mfapi.in/mf/"+code;
   const mfProxies=[
     cfProxied(base),  /* our Cloudflare Worker — fresh, no-CORS NAV */
@@ -576,17 +586,6 @@ const fetchOneNav=async(code)=>{
     "https://api.allorigins.win/raw?url="+encodeURIComponent(base),
     "https://api.allorigins.win/get?url="+encodeURIComponent(base),
   ];
-  let best=null;
-  const consider=r=>{if(r&&r.nav>0&&(!best||String(r.navDateISO||"")>String(best.navDateISO||"")))best=r;};
-  /* Authoritative AMFI + mfnav.in run in parallel with the mfapi chain,
-     hard-capped at 8s so the common (fast worker) case is not slowed down. */
-  const freshP=Promise.race([
-    Promise.all([
-      fetchNavFromAMFI(code).then(r=>{consider(r);return true;}).catch(()=>false),
-      fetchOneNavFromMfnav(code).then(r=>{consider(r);return true;}).catch(()=>false),
-    ]).then(()=>true),
-    new Promise(r=>setTimeout(()=>r(false),8000)),
-  ]).catch(()=>false);
   for(const url of mfProxies){
     try{
       const r=await _fetchX(url,{},8000);if(!r.ok)continue;
@@ -597,8 +596,6 @@ const fetchOneNav=async(code)=>{
       if(nav>0){const nd=d.data[0].date;consider({nav,navDate:nd,navDateISO:mfNavDateToISO(nd)});break;}
     }catch{}
   }
-  /* Always let the fresh sources finish before deciding — freshest wins */
-  await freshP;
   return best;
 };
 
@@ -1036,7 +1033,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.19.30";
+ const APP_VERSION="7.19.31";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
