@@ -444,6 +444,32 @@ const normalizeEodNavKeys=(navs)=>{
   return out;
 };
 
+/* ── Per-fund NAV snapshot bucketing ──────────────────────────────────────
+   Fix: previously every fund's NAV was stuffed into ONE date bucket keyed by
+   the FIRST fund's navDateISO, so a fund that failed to fetch (stale nav) or
+   that reported a different publication date corrupted the "latest" day with
+   foreign values — making the Latest/Prev NAV hero pills look interchanged
+   and day-change figures wrong.
+   Now each fund's NAV is stored under EXACTLY its own published navDate. A
+   failed fetch returns the fund untouched, so its unchanged value simply
+   re-confirms its existing bucket instead of contaminating another date.  ── */
+const buildEodNavBuckets=(upd)=>{
+  const byDate={};
+  (upd||[]).forEach(m=>{
+    const nav=parseFloat(m&&m.nav);
+    if(!m||!(nav>0))return;
+    const iso=(m.navDateISO&&mfNavDateToISO(m.navDateISO))||mfNavDateToISO(m.navDate||"");
+    if(!iso)return;
+    if(!byDate[iso])byDate[iso]={};
+    byDate[iso][m.schemeCode]=nav;
+  });
+  return byDate;
+};
+const dispatchNavBuckets=(dispatch,upd)=>{
+  const buckets=buildEodNavBuckets(upd);
+  Object.keys(buckets).forEach(iso=>dispatch({type:"SET_EOD_NAVS",date:iso,navs:buckets[iso]}));
+};
+
 /* ══════════════════════════════════════════════════════════════════════════
    SHARED MF NAV FETCHER
    Single source of truth for mfapi.in NAV fetch — used by:
@@ -482,6 +508,7 @@ const _unwrapMfapi=(raw)=>{
 const fetchNavFromAMFI=async(code)=>{
   const amfiUrl="https://www.amfiindia.com/spages/NAVAll.txt";
   const proxies=[
+    amfiUrl, /* direct first — works when AMFI allows the origin; otherwise fails fast (CORS) */
     "https://api.cors.lol/?url="+encodeURIComponent(amfiUrl),
     "https://corsproxy.io/?"+encodeURIComponent(amfiUrl),
     "https://cors.eu.org/"+amfiUrl,
@@ -489,11 +516,13 @@ const fetchNavFromAMFI=async(code)=>{
     "https://thingproxy.freeboard.io/fetch/"+amfiUrl,
     "https://api.allorigins.win/raw?url="+encodeURIComponent(amfiUrl),
   ];
+  const _amfiDeadline=Date.now()+40000; /* hard cap — never hang the Refresh button */
   for(const proxy of proxies){
+    if(Date.now()>_amfiDeadline)break;
     try{
-      const r=await _fetchX(proxy,{},12000);
+      const r=await _fetchX(proxy,{},8000);
       if(!r.ok)continue;
-      const txt=_unwrap(await _readBody(r,15000));
+      const txt=_unwrap(await _readBody(r,10000));
       /* Each data line: SchemeCode;ISINDiv;ISINGrowth;SchemeName;NAV;Date */
       const lines=txt.split("\n");
       for(const line of lines){
@@ -524,10 +553,12 @@ const fetchOneNav=async(code)=>{
     "https://api.allorigins.win/raw?url="+encodeURIComponent(base),
     "https://api.allorigins.win/get?url="+encodeURIComponent(base),
   ];
+  const _mfDeadline=Date.now()+35000; /* hard cap — never hang the Refresh button */
   for(const url of mfProxies){
+    if(Date.now()>_mfDeadline)break;
     try{
-      const r=await _fetchX(url,{},8000);if(!r.ok)continue;
-      const txt=await _readBody(r,6000);
+      const r=await _fetchX(url,{},7000);if(!r.ok)continue;
+      const txt=await _readBody(r,5000);
       let json;try{json=JSON.parse(txt);}catch{continue;}
       const d=_unwrapMfapi(json);
       const nav=parseFloat(d?.data?.[0]?.nav);
@@ -940,7 +971,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.19.28";
+ const APP_VERSION="7.19.29";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -1442,6 +1473,7 @@ const _deriveMfHoldings=(txns,existingMf,removedMf)=>{
       nav:existing?existing.nav:0,
       currentValue:existing?existing.currentValue:0,
       navDate:existing?existing.navDate:"",
+      navDateISO:existing?existing.navDateISO:"",
       manualXirr:existing?existing.manualXirr:undefined,
       startDate,
       notes:folioList?"Folio: "+folioList:"",
@@ -11995,6 +12027,7 @@ const useKbdList=(count,onEnter)=>{
 const StickyHd=({children,style={}})=>React.createElement("div",{className:"mm-sticky-hd",style},children);
 
 const WHATS_NEW=[
+  {icon:"chart",t:"Fix: Refresh NAV (Live)",d:"NAV snapshots are now stored under each fund's own published date, so the Latest NAV / Prev NAV pills and day-change figures no longer mix days or look interchanged. The button also reports exactly how many NAVs updated (or why it failed)."},
   {icon:"star",t:"Star transactions",d:"Mark important transactions with a golden star in Bank, Card, and Cash ledgers."},
   {icon:"sparkles",t:"Hero card animations",d:"Dashboard hero cards now fade in with a subtle staggered entrance animation."},
   {icon:"sparkles",t:"Redesigned navigation icons",d:"All 22 nav items got cohesive line-style icons."},
@@ -17918,14 +17951,10 @@ const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobil
           }catch{return m;}
         }));
         dispatch({type:"UPD_MF_NAV",p:upd});
-        /* Save EOD NAV snapshot keyed by ISO navDate — identical to InvestSection */
-        const navsByCode={};
-        upd.forEach(m=>{if(m.nav>0&&m.navDate)navsByCode[m.schemeCode]=m.nav;});
-        if(Object.keys(navsByCode).length>0){
-          const navDateISO=upd.find(m=>m.navDateISO)?.navDateISO||mfNavDateToISO(upd.find(m=>m.navDate)?.navDate||"");
-          if(navDateISO)dispatch({type:"SET_EOD_NAVS",date:navDateISO,navs:navsByCode});
-        }
-        const updatedCount=upd.filter(m=>m.nav>0&&m.navDate).length;
+        /* Save EOD NAV snapshot — each fund under its OWN published navDate
+           (identical logic to InvestSection fetchNAV) */
+        dispatchNavBuckets(dispatch,upd);
+        const updatedCount=upd.filter(m=>m.nav>0&&(m.navDate||m.navDateISO)).length;
         return{ok:updatedCount>0,updated:updatedCount};
       }catch{return{ok:false,updated:0};}
     })();
@@ -21218,6 +21247,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
   const[ready,setReady]=useState(false);
   React.useEffect(()=>{const t=setTimeout(()=>setReady(true),120);return()=>clearTimeout(t);},[]);
   const[tab,setTab]=useState(defaultTab);const[open,setOpen]=useState(false);const[navLoad,setNavLoad]=useState(false);
+  const[navStatus,setNavStatus]=useState(null); /* {ok:bool, msg:string, ts:Date} for Refresh NAV feedback */
   const[sharesSubTab,setSharesSubTab]=useState("holdings");
   React.useEffect(()=>{setTab(defaultTab);},[defaultTab]);
   React.useEffect(()=>{if(tab!=="shares")setSharesSubTab("holdings");},[tab]);
@@ -21245,7 +21275,8 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
   const[expandedTech,setExpandedTech]=useState({}); /* {shareId: true} for expanded technicals */
 
   const fetchNAV=async()=>{
-    setNavLoad(true);
+    setNavLoad(true);setNavStatus(null);
+    const t0=Date.now();
     const upd=await Promise.all(mf.map(async m=>{
       try{
         const res=await fetchOneNav(m.schemeCode);
@@ -21253,14 +21284,18 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         return{...m,nav:res.nav,navDate:res.navDate,navDateISO:res.navDateISO,currentValue:res.nav*m.units};
       }catch{return m;}
     }));
+    const updated=upd.filter(m=>m.nav>0&&(m.navDate||m.navDateISO));
+    const failed=upd.length-updated.length;
     dispatch({type:"UPD_MF_NAV",p:upd});
-    /* Save EOD NAV snapshot keyed by ISO navDate (YYYY-MM-DD) */
-    const navsByCode={};
-    upd.forEach(m=>{if(m.nav>0&&m.navDate)navsByCode[m.schemeCode]=m.nav;});
-    if(Object.keys(navsByCode).length>0){
-      const navDateISO=upd.find(m=>m.navDateISO)?.navDateISO||mfNavDateToISO(upd.find(m=>m.navDate)?.navDate||"");
-      if(navDateISO)dispatch({type:"SET_EOD_NAVS",date:navDateISO,navs:navsByCode});
-    }
+    /* Save EOD NAV snapshot — each fund under its OWN published navDate
+       (fixes days being overwritten with foreign/stale NAV values) */
+    dispatchNavBuckets(dispatch,upd);
+    const ts=new Date();
+    const secs=((Date.now()-t0)/1000).toFixed(0);
+    if(updated.length===0)
+      setNavStatus({ok:false,ts,msg:"Could not fetch NAVs. Check your internet connection — NAV sources may be temporarily down or rate-limited. Try again in a moment."});
+    else
+      setNavStatus({ok:true,ts,msg:`Updated ${updated.length} fund${updated.length!==1?"s":""}${failed>0?` · ${failed} fund${failed!==1?"s":""} could not be fetched`:""} · took ${secs}s`});
     setNavLoad(false);
     /* ── Fetch market indices EOD snapshot (runs after spinner clears) ── */
     setTimeout(async()=>{
@@ -21555,6 +21590,9 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
       React.createElement("div",{style:{display:"flex",justifyContent:"flex-end",marginBottom:12}},
         React.createElement(Btn,{v:"success",sz:"sm",onClick:fetchNAV,disabled:navLoad},navLoad?React.createElement(React.Fragment,null,React.createElement("span",{className:"spinr"},"⟳")," Fetching…"):"⟳ Refresh NAV (Live)")
       ),
+      navStatus&&React.createElement("div",{style:{fontSize:11,color:navStatus.ok?"var(--text5)":"#ef4444",fontWeight:navStatus.ok?400:600,textAlign:"right",marginTop:-8,marginBottom:12}},
+        (navStatus.ts?new Date(navStatus.ts).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})+" · ":"")+navStatus.msg
+      ),
       /* ── MF day-change hero card + portfolio value chart ── */
       (()=>{
         /* All eodNavs dates sorted ascending — normalise keys to ISO first so that
@@ -21562,14 +21600,10 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
            to ISO keys instead of landing at the wrong position lexicographically. */
         const _normHeroNavs=normalizeEodNavKeys(eodNavs||{});
         const allDates=Object.keys(_normHeroNavs).sort();
-        /* Use the two most recent EOD snapshot dates for day-change.
-           eodNavs only stores officially published NAV dates, so the latest
-           entry IS the most recent completed trading day — no need to filter
-           by "before today". latestDate drives both the hero value and the badge. */
-        const latestDate=allDates.slice(-1)[0];
-        const prevDate=allDates.slice(-2,-1)[0];
         const _heroTodayISO=TODAY();
-        const _heroYesterdayISO=(new Date(Date.now()-864e5)).toISOString().slice(0,10);
+        /* Yesterday in IST (UTC+5:30), NOT UTC — keeps the "Yesterday" label
+           correct during the 00:00–05:30 IST window. */
+        const _heroYesterdayISO=(new Date(Date.now()+198e5-864e5)).toISOString().slice(0,10);
         /* Compute total portfolio value for each recorded date (chart) */
         const chartPts=allDates.map(date=>{
           const navSnap=_normHeroNavs[date]||{};
@@ -21582,13 +21616,54 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
           const fullDate=parts.length===3?parts[2]+"-"+MON[parseInt(parts[1],10)-1]+"-"+parts[0]:date;
           return{value:val,label,fullDate};
         }).filter(p=>p.value>0);
-        /* Day change: latest snapshot vs the one before it */
-        const latestTotal=latestDate?mf.reduce((s,m)=>{const n=(_normHeroNavs[latestDate]||{})[m.schemeCode];return s+(n?n*m.units:0);},0):null;
-        const prevTotal=prevDate?mf.reduce((s,m)=>{const n=(_normHeroNavs[prevDate]||{})[m.schemeCode];return s+(n?n*m.units:0);},0):null;
-        const dayChgAbs=latestTotal&&prevTotal&&prevTotal>0?latestTotal-prevTotal:null;
-        const dayChgPct=latestTotal&&prevTotal&&prevTotal>0?((latestTotal-prevTotal)/prevTotal*100):null;
-        /* Hero value driven by eodNavs latest snapshot for consistency with badge */
+        /* ── Per-fund "latest" + "previous" NAVs ──
+           eodNavs snapshots are bucketed under each fund's OWN navDate, and "Latest"
+           must reflect each fund's freshest published NAV (m.nav from the last
+           successful Refresh). A fund that failed to refetch today keeps its prior
+           NAV under its prior DATE — it is picked up as the prev-day value, and
+           can never masquerade as today's, which is what made the two pills look
+           interchanged before. */
         const mfActive=mf.filter(m=>m.units>0);
+        const _fundRows=mfActive.map(m=>{
+          const _mISO=m.navDateISO||mfNavDateToISO(m.navDate||"");
+          let curNav=(m.nav&&m.nav>0)?m.nav:null;
+          let curISO=curNav?_mISO:null;
+          /* Freshest published value from EOD buckets may outdate m.nav when the
+             last successful fetch for this scheme came via dashboard/EOD instead */
+          for(let i=allDates.length-1;i>=0;i--){
+            const bv=(_normHeroNavs[allDates[i]]||{})[m.schemeCode];
+            if(bv&&bv>0){
+              if(!curISO||allDates[i]>curISO){curNav=bv;curISO=allDates[i];}
+              break;
+            }
+          }
+          let prevNav=null,prevISO=null;
+          if(curISO){
+            for(let i=allDates.length-1;i>=0;i--){
+              if(allDates[i]<curISO){
+                const pv=(_normHeroNavs[allDates[i]]||{})[m.schemeCode];
+                if(pv&&pv>0){prevNav=pv;prevISO=allDates[i];break;}
+              }
+            }
+          }
+          return{m,curNav,curISO,prevNav,prevISO};
+        });
+        const _withPrev=_fundRows.filter(f=>f.curNav&&f.prevNav);
+        /* Latest total: published NAV × units; fall back to currentValue/invested
+           only for funds whose NAV has never been fetched yet. */
+        const latestTotal=mfActive.length?_fundRows.reduce((s,f)=>s+(f.curNav?f.curNav*f.m.units:(f.m.currentValue&&f.m.currentValue>0?f.m.currentValue:f.m.invested)),0):null;
+        /* Prev total + day change computed over funds that have BOTH values, so a
+           fund with no prior snapshot can't fake a day change. */
+        const prevTotal=_withPrev.length?_withPrev.reduce((s,f)=>s+f.prevNav*f.m.units,0):null;
+        const _chgBase=_withPrev.reduce((s,f)=>s+f.prevNav*f.m.units,0);
+        const _chgAbs=_withPrev.reduce((s,f)=>s+(f.curNav-f.prevNav)*f.m.units,0);
+        const showDayChg=_withPrev.length>0&&_chgBase>0;
+        const dayChgAbs=showDayChg?_chgAbs:null;
+        const dayChgPct=showDayChg?(_chgAbs/_chgBase*100):null;
+        /* Dates shown on the pills: the newest NAV date displayed and the newest
+           prev-day snapshot actually used in the comparison. */
+        const latestDate=_fundRows.reduce((mx,f)=>f.curISO&&(!mx||f.curISO>mx)?f.curISO:mx,null)||allDates.slice(-1)[0]||null;
+        const prevDate=_withPrev.reduce((mx,f)=>f.prevISO&&(!mx||f.prevISO>mx)?f.prevISO:mx,null)||null;
         const mfTotalNow=latestTotal||mfActive.reduce((s,m)=>s+(m.currentValue&&m.currentValue>0?m.currentValue:m.invested),0);
         const mfCoANow=mfActive.reduce((s,m)=>s+(m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested),0);
         const overallGain=mfTotalNow-mfCoANow;
@@ -21820,22 +21895,41 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         return React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}},
         activeMf.map(m=>{
           const trueCoA=m.avgNav&&m.avgNav>0?m.units*m.avgNav:m.invested;
-          const currentVal=m.currentValue&&m.currentValue>0?m.currentValue:m.invested;
-          const gain=currentVal-trueCoA;
           const hasTxns=(mfTxns||[]).some(t=>t.fundName===m.name);
-          const gp=trueCoA>0?(((currentVal-trueCoA)/trueCoA)*100).toFixed(1):"0.0";
-          /* Per-fund day-change from eodNavs — D-2 vs D-1 (matches hero card logic).
-             MF NAVs are published after market close, so comparing live m.nav (which may
-             not have updated yet today) against D-1 produces a misleading figure.
-             Instead compare the two most recent completed trading days from eodNavs. */
-          const todayIST2=getISTDateStr();
+          /* ── Freshest known NAV for THIS fund ──
+             Prefer the most recently published value across the live snapshot
+             (m.nav) and the per-date eodNavs buckets, so a fund whose live
+             fetch failed still shows its latest stored published NAV instead of
+             a stale stored currentValue. The Today's NAV / Latest NAV label,
+             Current Value, day-change and XIRR are all derived from this. */
           const _normFundNavs=normalizeEodNavKeys(eodNavs||{});
-          const _fundDatesBeforeToday=Object.keys(_normFundNavs).filter(d=>d<todayIST2).sort();
-          const _fundD1Dt=_fundDatesBeforeToday.slice(-1)[0];   // most recent completed day
-          const _fundD2Dt=_fundDatesBeforeToday.slice(-2,-1)[0]; // day before that
-          const _fundD1Nav=_fundD1Dt?((_normFundNavs[_fundD1Dt]||{})[m.schemeCode]||null):null;
-          const _fundD2Nav=_fundD2Dt?((_normFundNavs[_fundD2Dt]||{})[m.schemeCode]||null):null;
-          const navDayChgPct=_fundD1Nav&&_fundD2Nav&&_fundD2Nav>0?((_fundD1Nav-_fundD2Nav)/_fundD2Nav*100):null;
+          const _fundDates=Object.keys(_normFundNavs).sort();
+          const _mfNavISO=m.navDateISO||mfNavDateToISO(m.navDate||"");
+          let _curNav=(m.nav&&m.nav>0)?m.nav:null;
+          let _curISO=_curNav?_mfNavISO:null;
+          for(let i=_fundDates.length-1;i>=0;i--){
+            const bv=(_normFundNavs[_fundDates[i]]||{})[m.schemeCode];
+            if(bv&&bv>0){
+              if(!_curISO||_fundDates[i]>_curISO){_curNav=bv;_curISO=_fundDates[i];}
+              break;
+            }
+          }
+          /* Prev-day snapshot = most recent bucket strictly before the shown NAV */
+          let _prevNav=null;
+          if(_curISO){
+            for(let i=_fundDates.length-1;i>=0;i--){
+              if(_fundDates[i]<_curISO){
+                const pv=(_normFundNavs[_fundDates[i]]||{})[m.schemeCode];
+                if(pv&&pv>0){_prevNav=pv;break;}
+              }
+            }
+          }
+          const navDayChgPct=_prevNav&&_prevNav>0&&_curNav>0?((_curNav-_prevNav)/_prevNav*100):null;
+          const _curUnitsVal=_curNav&&_curNav>0?parseFloat((_curNav*m.units).toFixed(2)):null;
+          const currentVal=_curUnitsVal!==null?_curUnitsVal:(m.currentValue&&m.currentValue>0?m.currentValue:m.invested);
+          const gain=currentVal-trueCoA;
+          const gp=trueCoA>0?(((currentVal-trueCoA)/trueCoA)*100).toFixed(1):"0.0";
+          const _fmtNavDate=(iso)=>{if(!iso)return"";const p=iso.split("-");const M=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return p.length===3?p[2]+"-"+M[parseInt(p[1],10)-1]+"-"+p[0]:iso;};
           return React.createElement(Card,{key:m.id,sx:hasTxns?{cursor:"pointer",transition:"box-shadow .15s, border-color .15s","&:hover":{boxShadow:"0 4px 20px rgba(109,40,217,.15)",borderColor:"rgba(109,40,217,.3)"}}:{},onClick:hasTxns?()=>setViewTxnsFund(m.name):undefined},
             React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,gap:8}},
               React.createElement("div",{style:{fontSize:13,fontWeight:600,color:"var(--text2)",lineHeight:1.45,flex:1}},m.name),
@@ -21852,9 +21946,9 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
                 React.createElement("div",{style:{fontWeight:600,color:"#6d28d9",fontFamily:"'Sora',sans-serif"}},m.avgNav&&m.avgNav>0?"₹"+Number(m.avgNav).toFixed(2):"--")
               ),
               React.createElement("div",null,
-                React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},m.navDate?"Today's NAV ("+m.navDate+")":"Today's NAV"),
+                React.createElement("div",{style:{fontSize:11,color:"var(--text5)"}},(_curISO===TODAY()?"Today's NAV":"Latest NAV")+(_curISO?(" ("+_fmtNavDate(_curISO)+")"):"")),
                 React.createElement("div",null,
-                  React.createElement("div",{style:{fontWeight:600,color:m.nav?"#0e7490":"var(--text5)"}},m.nav?"₹"+m.nav.toFixed(2):"--"),
+                  React.createElement("div",{style:{fontWeight:600,color:_curNav?"#0e7490":"var(--text5)"}},_curNav?"₹"+_curNav.toFixed(2):"--"),
                   navDayChgPct!==null&&React.createElement("div",{style:{fontSize:10,fontWeight:700,marginTop:2,color:navDayChgPct>=0?"#16a34a":"#ef4444"}},
                     (navDayChgPct>=0?"▲ +":"▼ ")+Math.abs(navDayChgPct).toFixed(2)+"% prev day"
                   )
@@ -38827,22 +38921,18 @@ function App(){
           const navResults=await Promise.all(
             mf.filter(m=>m.schemeCode).map(async m=>{
               const res=await fetchOneNav(m.schemeCode);
-              return(res&&res.nav>0)?{code:m.schemeCode,nav:res.nav,navDate:res.navDate}:null;
+              return(res&&res.nav>0)?{code:m.schemeCode,nav:res.nav,navDate:res.navDate,navDateISO:res.navDateISO}:null;
             })
           );
-          const navsByCode={};
-          let navDate="";let navDateISO="";
-          navResults.forEach(r=>{
-            if(!r)return;
-            navsByCode[r.code]=r.nav;
-            if(!navDate){navDate=r.navDate;navDateISO=r.navDateISO||mfNavDateToISO(r.navDate);}
-          });
-          if(navDateISO&&Object.keys(navsByCode).length>0){
-            /* Only store if we don't already have this ISO navDate */
-            if(!(_eodNavsRef.current&&_eodNavsRef.current[navDateISO])){
-              dispatch({type:"SET_EOD_NAVS",date:navDateISO,navs:navsByCode});
+          /* Bucket each fund under its OWN published navDate (never mix dates) */
+          const byDate=buildEodNavBuckets(navResults.map(r=>r?{schemeCode:r.code,nav:r.nav,navDate:r.navDate,navDateISO:r.navDateISO}:r).filter(Boolean));
+          const _eodRef=()=>_eodNavsRef.current||{};
+          Object.keys(byDate).forEach(iso=>{
+            /* Only store a date bucket we don't already have */
+            if(!_eodRef()[iso]){
+              dispatch({type:"SET_EOD_NAVS",date:iso,navs:byDate[iso]});
             }
-          }
+          });
         }
         /* ── Market index EOD snapshot ── */
         try{
