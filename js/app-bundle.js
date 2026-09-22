@@ -971,7 +971,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.19.29";
+ const APP_VERSION="7.19.30";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -18081,21 +18081,39 @@ const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobil
 
     /* ── Per-asset stat row */
     (()=>{
-      /* Compute aggregate MF day-change from eodNavs.
-         Use the two most recent EOD snapshot dates — no "before today" filter.
-         eodNavs only stores officially published NAV dates so the latest entry
-         IS the most recent completed trading day regardless of calendar date.
-         latestDate = most recent published NAV; prevDate = the one before it. */
+      /* Compute aggregate MF day-change PER-FUND (same rule as the mf-tab hero and
+         cards): each fund uses the freshest published NAV it has (live m.nav or
+         its own EOD bucket), compared against ITS bucket entry strictly before
+         that date. Never compare two GLOBAL buckets — with per-date per-fund
+         buckets the newest day may hold only some funds, which previously made
+         the "prev day chg" total collapse or look interchanged. */
       const _normDashNavs=normalizeEodNavKeys(eodNavs||{});
-      const _eodAllDates=Object.keys(_normDashNavs).sort();
-      const _latestNavDate=_eodAllDates.slice(-1)[0];
-      const _prevNavDate=_eodAllDates.slice(-2,-1)[0];
+      const _dashDates=Object.keys(_normDashNavs).sort();
+      let dashLatest=null,dashPrev=null,dashBase=0,dashCnt=0;
+      mf.filter(m=>m.units>0).forEach(m=>{
+        const _mISO=m.navDateISO||mfNavDateToISO(m.navDate||"");
+        let cur=(m.nav&&m.nav>0)?m.nav:null;
+        let curISO=cur?_mISO:null;
+        for(let i=_dashDates.length-1;i>=0;i--){
+          const bv=(_normDashNavs[_dashDates[i]]||{})[m.schemeCode];
+          if(bv&&bv>0){if(!curISO||_dashDates[i]>curISO){cur=bv;curISO=_dashDates[i];}break;}
+        }
+        let prev=null;
+        if(curISO&&cur>0){
+          for(let i=_dashDates.length-1;i>=0;i--){
+            if(_dashDates[i]<curISO){
+              const pv=(_normDashNavs[_dashDates[i]]||{})[m.schemeCode];
+              if(pv&&pv>0){prev=pv;break;}
+            }
+          }
+        }
+        if(cur&&cur>0)dashLatest=(dashLatest||0)+cur*m.units;
+        if(prev&&prev>0){dashPrev=(dashPrev||0)+m.units*prev;dashBase+=m.units*prev;dashCnt++;}
+      });
+      const latestTotal=dashLatest!==null?dashLatest:mf.reduce((s,m)=>s+(m.currentValue&&m.currentValue>0?m.currentValue:m.invested),0);
+      const prevTotal=dashPrev;
       let mfDayChgPct=null;
-      if(_latestNavDate&&_prevNavDate){
-        const latestTotal=mf.reduce((s,m)=>{const n=(_normDashNavs[_latestNavDate]||{})[m.schemeCode];return s+(n?n*m.units:0);},0);
-        const prevTotal=mf.reduce((s,m)=>{const n=(_normDashNavs[_prevNavDate]||{})[m.schemeCode];return s+(n?n*m.units:0);},0);
-        if(prevTotal>0&&latestTotal>0)mfDayChgPct=((latestTotal-prevTotal)/prevTotal*100);
-      }
+      if(dashCnt>0&&prevTotal>0&&latestTotal>0)mfDayChgPct=((latestTotal-prevTotal)/prevTotal*100);
       return React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
         React.createElement(StatCard,{label:"Mutual Funds",val:INR(mfVal),
           sub:mfDayChgPct!==null
