@@ -538,7 +538,17 @@ const fetchNavFromAMFI=async(code)=>{
    Route: our Cloudflare Worker first (fresh, no-CORS), then direct. */
 const fetchOneNavFromMfnav=async(code)=>{
   const mfnavUrl="https://mfnav.in/api/funds/"+encodeURIComponent(String(code));
-  const srcs=[cfProxied(mfnavUrl),mfnavUrl];
+  /* Worker first (fresh, no-CORS). Direct mfnav.in carries NO Access-Control-Allow-Origin
+     header so it only works through a proxy or our worker — hence generic CORS proxies
+     as redundancy when the worker domain is unreachable from a given origin. */
+  const srcs=[
+    cfProxied(mfnavUrl),
+    "https://api.cors.lol/?url="+encodeURIComponent(mfnavUrl),
+    "https://corsproxy.io/?"+encodeURIComponent(mfnavUrl),
+    "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(mfnavUrl),
+    "https://api.allorigins.win/raw?url="+encodeURIComponent(mfnavUrl),
+    mfnavUrl,
+  ];
   for(const u of srcs){
     try{
       const r=await _fetchX(u,{},8000);if(!r.ok)continue;
@@ -1033,7 +1043,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.19.31";
+ const APP_VERSION="7.19.32";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -18015,7 +18025,7 @@ const InvestDashboard=React.memo(({mf,mfTxns=[],shares,fd,re=[],dispatch,isMobil
         const navsByCode={};
         upd.forEach(m=>{if(m.nav>0&&m.navDate)navsByCode[m.schemeCode]=m.nav;});
         if(Object.keys(navsByCode).length>0){
-          const navDateISO=upd.find(m=>m.navDateISO)?.navDateISO||mfNavDateToISO(upd.find(m=>m.navDate)?.navDate||"");
+          const navDateISO=(upd.map(m=>m.navDateISO).filter(Boolean).sort().pop())||mfNavDateToISO(upd.find(m=>m.navDate)?.navDate||"");
           if(navDateISO)dispatch({type:"SET_EOD_NAVS",date:navDateISO,navs:navsByCode});
         }
         const updatedCount=upd.filter(m=>m.nav>0&&m.navDate).length;
@@ -21351,7 +21361,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
     const navsByCode={};
     upd.forEach(m=>{if(m.nav>0&&m.navDate)navsByCode[m.schemeCode]=m.nav;});
     if(Object.keys(navsByCode).length>0){
-      const navDateISO=upd.find(m=>m.navDateISO)?.navDateISO||mfNavDateToISO(upd.find(m=>m.navDate)?.navDate||"");
+      const navDateISO=(upd.map(m=>m.navDateISO).filter(Boolean).sort().pop())||mfNavDateToISO(upd.find(m=>m.navDate)?.navDate||"");
       if(navDateISO)dispatch({type:"SET_EOD_NAVS",date:navDateISO,navs:navsByCode});
     }
     setNavLoad(false);
