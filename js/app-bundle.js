@@ -212,7 +212,7 @@ const fetchTickerPrice=async(rawTicker)=>{
     const stooqUrl="https://stooq.com/q/l/?s="+encodeURIComponent(ticker.toLowerCase()+".in")+"&f=sd2t2ohlcv&h&e=csv";
     for(const proxyUrl of[
       "https://api.cors.lol/?url="+encodeURIComponent(stooqUrl),
-      "https://corsproxy.io/?"+encodeURIComponent(stooqUrl),
+      "https://corsproxy.io/?url="+encodeURIComponent(stooqUrl),
       "https://cors.eu.org/"+stooqUrl,
       "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(stooqUrl),
     ]){
@@ -230,7 +230,7 @@ const fetchTickerPrice=async(rawTicker)=>{
     const yHosts=["query1.finance.yahoo.com","query2.finance.yahoo.com"];
     const yProxyFns=[
       u=>"https://api.cors.lol/?url="+encodeURIComponent(u),
-      u=>"https://corsproxy.io/?"+encodeURIComponent(u),
+      u=>"https://corsproxy.io/?url="+encodeURIComponent(u),
       u=>"https://cors.eu.org/"+u,
       u=>"https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(u),
     ];
@@ -258,7 +258,7 @@ const fetchTickerPrice=async(rawTicker)=>{
         encodeURIComponent(ticker+".NS,"+ticker+".BO")+"&fields=regularMarketPrice,previousClose";
       for(const proxy of[
         "https://api.cors.lol/?url="+encodeURIComponent(v7url),
-        "https://corsproxy.io/?"+encodeURIComponent(v7url),
+        "https://corsproxy.io/?url="+encodeURIComponent(v7url),
         "https://cors.eu.org/"+v7url,
         "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(v7url),
       ]){
@@ -326,7 +326,7 @@ const fetchMarketIndices=async()=>{
     /* ── 1. NSE India API for all Indian indexes (single request) ── */
     const nseUrl="https://www.nseindia.com/api/allIndices";
     const nseProxies=[
-      "https://corsproxy.io/?"+encodeURIComponent(nseUrl),
+      "https://corsproxy.io/?url="+encodeURIComponent(nseUrl),
       "https://api.cors.lol/?url="+encodeURIComponent(nseUrl),
       "https://cors.eu.org/"+nseUrl,
       "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(nseUrl),
@@ -541,7 +541,7 @@ const _NAVALL_TTL=15*60*1000;
 const _corsChain=u=>[
   u,
   "https://api.cors.lol/?url="+encodeURIComponent(u),
-  "https://corsproxy.io/?"+encodeURIComponent(u),
+  "https://corsproxy.io/?url="+encodeURIComponent(u),
   "https://cors.eu.org/"+u,
   "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(u),
   "https://thingproxy.freeboard.io/fetch/"+u,
@@ -566,17 +566,25 @@ const _getTextWithFallback=async(urls,deadline)=>{
   return null;
 };
 
-/* Parse AMFI NAVAll.txt into Map<code,{nav,navDate,navDateISO}>.
-   Rows: SchemeCode;ISINGrowth;ISINReinv;ISINPayout;SchemeName;NAV;Date
-   (6-col legacy rows also handled). Month case normalized to "Jan" style. */
+/* Parse AMFI NAVAll.txt into Map<code,{nav,navDate,navDateISO,isin}>.
+   Rows: SchemeCode;ISINGrowth;ISINReinv;SchemeName;NAV;Date
+   (6-col legacy rows also handled). Month case normalized to "Jan" style.
+   The ISIN (growth column, falling back to reinvestment) is captured purely
+   to unlock the mf.captnemo.in historical-NAV fallback — harmless when
+   absent/blank, and costs nothing extra since this file is already fetched
+   for live NAVs. */
 const _parseNavAll=(txt)=>{
   const map=new Map();
+  const isinRe=/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/;
   const lines=String(txt||"").split(/\r?\n/);
   for(const line of lines){
     if(!line||line.indexOf(";")<0)continue;
     const p=line.split(";");
     const code=(p[0]||"").trim();
     if(!/^\d+$/.test(code))continue;
+    const isinG=(p[1]||"").trim();
+    const isinR=(p[2]||"").trim();
+    const isin=isinRe.test(isinG)?isinG:(isinRe.test(isinR)?isinR:"");
     for(let j=p.length-1;j>=1;j--){
       const ds=(p[j]||"").trim();
       const mm=/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/.exec(ds);
@@ -586,7 +594,7 @@ const _parseNavAll=(txt)=>{
       const iso=mfNavDateToISO(norm);
       const nav=parseFloat((p[j-1]||"").replace(/,/g,""));
       if(nav>0&&iso){
-        map.set(code,{nav,navDate:norm,navDateISO:iso});
+        map.set(code,{nav,navDate:norm,navDateISO:iso,isin});
         break;
       }
       break; /* date field found but invalid — stop scanning this row */
@@ -642,46 +650,105 @@ const fetchOneNav=async(code)=>{
   return null;
 };
 
+/* Resolve a scheme code → ISIN using the (shared, cached) AMFI NAVAll.txt map,
+   downloading it if not already warm. Used only to unlock the mf.captnemo.in
+   historical-NAV fallback below; returns null if unresolvable. */
+const _isinForCode=async(code)=>{
+  const key=String(code);
+  if(_navAllCache&&(Date.now()-_navAllCache.fetchedAt)<_NAVALL_TTL){
+    const hit=_navAllCache.map.get(key);
+    if(hit&&hit.isin)return hit.isin;
+  }
+  const map=await _fetchNavAllMap(Date.now()+20000);
+  const hit=map&&map.get(key);
+  return (hit&&hit.isin)||null;
+};
+
 /* ── HISTORICAL NAV FETCHER ────────────────────────────────────────────────
-   Fetches the full daily NAV history for a scheme from mfapi.in (its response
-   `data[]` is the full chronological series, newest-first). Reduces it to an
-   ascending array of {date:"YYYY-MM-DD", nav:number} keeping the most recent
-   ~2600 trading points (≈10.4 years — covers the 10-year yearly view with
-   buffer). Used to power the MF Performance tables (30D / 90D / 6M / 1Y /
-   2Y / 3Y / 4Y / 5Y / 10Y). Returns [] on failure. */
+   Two independent sources, tried in order:
+     1. mf.captnemo.in/nav/:isin — genuinely CORS-enabled (no proxy needed),
+        independent data pipeline (Kuvera + AMFI). Needs the fund's ISIN,
+        resolved for free from the AMFI NAVAll.txt already fetched for live
+        NAVs. Tried first: it's a single direct request, not a walk through
+        several free CORS-proxy services, and being a different backend it
+        isn't affected by an mfapi.in-side outage or rate limit.
+     2. api.mfapi.in/mf/:code — its response `data[]` is the full
+        chronological series, newest-first. Reduces it to an ascending array
+        of {date:"YYYY-MM-DD", nav:number} keeping the most recent ~2600
+        trading points (≈10.4 years — covers the 10-year yearly view with
+        buffer). Tried direct first, then through a chain of CORS proxies.
+   Used to power the MF Performance tables (30D / 90D / 6M / 1Y / 2Y / 3Y /
+   4Y / 5Y / 10Y). Returns [] only if both sources fail. */
+const _sortNavAsc=arr=>{arr.sort((x,y)=>x.date<y.date?-1:1);return arr.slice(-2600);};
+
+const _fetchNavHistoryCaptnemo=async code=>{
+  try{
+    const isin=await _isinForCode(code);
+    if(!isin)return[];
+    const r=await _fetchX("https://mf.captnemo.in/nav/"+isin,{},10000);
+    if(!r.ok)return[];
+    const txt=await _readBody(r,8000);
+    let json;try{json=JSON.parse(txt);}catch{return[];}
+    const rows=Array.isArray(json?.historical_nav)?json.historical_nav:[];
+    if(!rows.length)return[];
+    const out=[];
+    for(const row of rows){
+      const iso=String(row?.[0]||"");
+      const nav=parseFloat(row?.[1]);
+      if(nav>0&&/^\d{4}-\d{2}-\d{2}$/.test(iso))out.push({date:iso,nav});
+    }
+    return out.length?_sortNavAsc(out):[];
+  }catch{return[];}
+};
+
 const fetchNavHistory=async(code)=>{
   const base="https://api.mfapi.in/mf/"+code;
   const proxies=[
     base,
     "https://api.cors.lol/?url="+encodeURIComponent(base),
-    "https://corsproxy.io/?"+encodeURIComponent(base),
+    "https://corsproxy.io/?url="+encodeURIComponent(base),
     "https://cors.eu.org/"+base,
     "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(base),
     "https://thingproxy.freeboard.io/fetch/"+base,
     "https://api.allorigins.win/raw?url="+encodeURIComponent(base),
     "https://api.allorigins.win/get?url="+encodeURIComponent(base),
   ];
-  for(const url of proxies){
-    try{
-      const r=await _fetchX(url,{},10000);if(!r.ok)continue;
-      const txt=await _readBody(r,8000);
-      let json;try{json=JSON.parse(txt);}catch{continue;}
-      const d=_unwrapMfapi(json);
-      const arr=Array.isArray(d?.data)?d.data:[];
-      if(!arr.length)continue;
-      const out=[];
-      for(const ent of arr){
-        const nav=parseFloat(ent?.nav);
-        const iso=mfNavDateToISO(ent?.date||"");
-        if(nav>0&&/^\d{4}-\d{2}-\d{2}$/.test(iso))out.push({date:iso,nav});
-      }
-      if(out.length){
-        out.sort((x,y)=>x.date<y.date?-1:1);
-        return out.slice(-2600);
-      }
-    }catch{}
-  }
-  return[];
+  const _sleep=ms=>new Promise(res=>setTimeout(res,ms));
+  const _attemptChain=async()=>{
+    for(const url of proxies){
+      try{
+        const r=await _fetchX(url,{},10000);
+        /* 429 = upstream/proxy rate limit — back off briefly rather than
+           burning straight through the rest of the chain */
+        if(r.status===429){await _sleep(600);continue;}
+        if(!r.ok)continue;
+        const txt=await _readBody(r,8000);
+        let json;try{json=JSON.parse(txt);}catch{continue;}
+        const d=_unwrapMfapi(json);
+        const arr=Array.isArray(d?.data)?d.data:[];
+        if(!arr.length)continue;
+        const out=[];
+        for(const ent of arr){
+          const nav=parseFloat(ent?.nav);
+          const iso=mfNavDateToISO(ent?.date||"");
+          if(nav>0&&/^\d{4}-\d{2}-\d{2}$/.test(iso))out.push({date:iso,nav});
+        }
+        if(out.length)return _sortNavAsc(out);
+      }catch{}
+    }
+    return[];
+  };
+
+  /* 1. Fast, proxy-free path via mf.captnemo.in */
+  const viaCaptnemo=await _fetchNavHistoryCaptnemo(code);
+  if(viaCaptnemo.length)return viaCaptnemo;
+
+  /* 2. mfapi.in direct + proxy chain; if every link failed (common when
+     several funds fetch in parallel and trip a shared rate limit), wait for
+     it to clear and try the chain once more before giving up on this fund. */
+  let result=await _attemptChain();
+  if(!result.length){await _sleep(1500);result=await _attemptChain();}
+  return result;
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -710,7 +777,7 @@ const fetchHistoricalPrices=async(rawTicker,fromDate)=>{
     /* NOTE: allorigins.win intentionally omitted — it blocklists finance.yahoo.com */
     const proxyFns=[
       u=>"https://api.cors.lol/?url="+encodeURIComponent(u),
-      u=>"https://corsproxy.io/?"+encodeURIComponent(u),
+      u=>"https://corsproxy.io/?url="+encodeURIComponent(u),
       u=>"https://cors.eu.org/"+u,
       u=>"https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(u),
     ];
@@ -1740,7 +1807,7 @@ const reducer=(s,a)=>{
       }else{
         delete _hist[a.code];
       }
-      _hist._v=3;
+      _hist._v=5;
       return{...s,mfHistNavs:_hist};
     }
     case"SET_BROKER_CASH":return{...s,brokerCashBalance:a.amount};
@@ -19276,7 +19343,7 @@ const fetchNiftyLive=async()=>{
       const yUrl="https://query1.finance.yahoo.com/v8/finance/chart/"+td.sym+"?period1="+period1+"&period2="+period2+"&interval=1d";
       const proxies=[
         "https://api.cors.lol/?url="+encodeURIComponent(yUrl),
-        "https://corsproxy.io/?"+encodeURIComponent(yUrl),
+        "https://corsproxy.io/?url="+encodeURIComponent(yUrl),
         "https://cors.eu.org/"+yUrl,
         "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(yUrl),
       ];
@@ -21207,6 +21274,8 @@ const MFPerformanceTables=React.memo(({mf,mfHistNavs={},dispatch})=>{
   const active=(mf||[]).filter(m=>m.units>0&&m.schemeCode);
   const [loading,setLoading]=useState({});
   const [fired,setFired]=useState(false);
+  const [failed,setFailed]=useState({});   /* {schemeCode:true} last attempt for this fund failed */
+  const [lastRunFailCount,setLastRunFailCount]=useState(0); /* how many funds failed on the most recent fetchAll */
   const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const parseISO=iso=>new Date(iso+"T12:00:00");
   const fmtD=iso=>{if(!iso)return"--";const p=iso.split("-");return p[2]+" "+MON[parseInt(p[1],10)-1];};
@@ -21231,7 +21300,7 @@ const MFPerformanceTables=React.memo(({mf,mfHistNavs={},dispatch})=>{
      version), OR latest cached NAV older than ~4 days — in all cases re-fetch
      so the tables stay complete and current whenever the section is revisited. */
   const isStale=m=>{
-    if((mfHistNavs._v||0)!==3)return true;
+    if((mfHistNavs._v||0)!==5)return true;
     if(!hasHistory(m))return true;
     const s=mfHistNavs[m.schemeCode];
     const last=s[s.length-1]&&s[s.length-1].date;
@@ -21242,19 +21311,40 @@ const MFPerformanceTables=React.memo(({mf,mfHistNavs={},dispatch})=>{
   const missing=active.filter(m=>isStale(m));
 
   const fetchOne=async m=>{
-    if(loading[m.schemeCode])return;
+    if(loading[m.schemeCode])return false;
     setLoading(p=>({...p,[m.schemeCode]:true}));
+    setFailed(p=>({...p,[m.schemeCode]:false}));
     const series=await fetchNavHistory(m.schemeCode);
-    if(series.length)dispatch({type:"SET_MF_HIST",code:m.schemeCode,series});
+    const ok=series.length>0;
+    if(ok)dispatch({type:"SET_MF_HIST",code:m.schemeCode,series});
+    else setFailed(p=>({...p,[m.schemeCode]:true}));
     setLoading(p=>({...p,[m.schemeCode]:false}));
+    return ok;
   };
-  const fetchAll=()=>Promise.all(active.filter(isStale).map(fetchOne));
+  /* Fetch funds a few at a time (not all-at-once) — mfapi.in and the free CORS
+     proxies both rate-limit, so firing every holding in parallel is what
+     makes a whole "Fetch NAV History" run come back empty-handed. */
+  const fetchAll=async()=>{
+    const targets=active.filter(isStale);
+    const BATCH=3;
+    let failCount=0;
+    for(let i=0;i<targets.length;i+=BATCH){
+      const batch=targets.slice(i,i+BATCH);
+      const results=await Promise.all(batch.map(fetchOne));
+      failCount+=results.filter(ok=>!ok).length;
+      if(i+BATCH<targets.length)await new Promise(r=>setTimeout(r,300));
+    }
+    setLastRunFailCount(failCount);
+  };
 
   React.useEffect(()=>{
     if(fired||!active.length)return;
-    setFired(true);
-    if(active.some(isStale)){const t=setTimeout(()=>{fetchAll();},550);return()=>clearTimeout(t);}
-  },[fired]);
+    if(active.some(isStale)){
+      setFired(true);
+      const t=setTimeout(()=>{fetchAll();},550);
+      return()=>clearTimeout(t);
+    }
+  },[fired,active.length]);
 
   /* Column buckets built from the merged grid (all funds publish on the same trading days) */
   const bucketize=(grid,count,keyFn,labelFn)=>{const by={};grid.forEach(d=>{const k=keyFn(d);(by[k]=by[k]||[]).push(d);});return Object.keys(by).sort().slice(-count).map(k=>({key:k,label:labelFn?labelFn(k,by[k][0]):fmtM(by[k][0]),dates:by[k]}));};
@@ -21344,7 +21434,10 @@ const MFPerformanceTables=React.memo(({mf,mfHistNavs={},dispatch})=>{
         Object.values(loading).some(Boolean)?React.createElement(React.Fragment,null,React.createElement("span",{className:"spinr"},"⟳")," Loading…"):(missing.length?"⭳ Fetch NAV History":"⭳ History Up-to-date")
       )
     ),
-    missing.length>0&&React.createElement("div",{style:{marginBottom:12,padding:"8px 14px",borderRadius:9,fontSize:12,display:"flex",alignItems:"center",gap:8,background:"rgba(109,40,217,.07)",border:"1px solid rgba(109,40,217,.2)",color:"#6d28d9"}},
+    missing.length>0&&!Object.values(loading).some(Boolean)&&lastRunFailCount>0&&React.createElement("div",{style:{marginBottom:12,padding:"8px 14px",borderRadius:9,fontSize:12,display:"flex",alignItems:"center",gap:8,background:"rgba(239,68,68,.07)",border:"1px solid rgba(239,68,68,.25)",color:"#ef4444"}},
+      React.createElement("span",null,"Couldn't reach the NAV history source for "+lastRunFailCount+" fund"+(lastRunFailCount===1?"":"s")+" (network/proxy issue) — tap \"Fetch NAV History\" to retry.")
+    ),
+    missing.length>0&&(Object.values(loading).some(Boolean)||!lastRunFailCount)&&React.createElement("div",{style:{marginBottom:12,padding:"8px 14px",borderRadius:9,fontSize:12,display:"flex",alignItems:"center",gap:8,background:"rgba(109,40,217,.07)",border:"1px solid rgba(109,40,217,.2)",color:"#6d28d9"}},
       React.createElement("span",null,"Fetching NAV history for "+missing.length+" fund"+((missing.length===1)?"":"s")+" to build these tables.")
     ),
     tableCard("Last 30 Days","Daily NAV % change",dailyCols.map(d=>fmtD(d)),dailyRows,740),
@@ -21464,7 +21557,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
         const ySymToKey={"^NSEI":"NIFTY 50","^CNX100":"NIFTY 100","^NSEMDCP50":"NIFTY MIDCAP 50","^NSEMDCP100":"NIFTY MIDCAP 100","^CRSLDX":"NIFTY MIDCAP 150","^CNXSMALL":"NIFTY SMLCAP 100","^NSEBANK":"NIFTY BANK","^CNXAUTO":"NIFTY AUTO","^CNXIT":"NIFTY IT","^CNXPHARMA":"NIFTY PHARMA"};
         const yTickers=Object.keys(ySymToKey).join(",");
         const yProxies=[
-          u=>"https://corsproxy.io/?"+encodeURIComponent(u),
+          u=>"https://corsproxy.io/?url="+encodeURIComponent(u),
           u=>"https://api.cors.lol/?url="+encodeURIComponent(u),
         ];
         const yHosts=["query1.finance.yahoo.com","query2.finance.yahoo.com"];
@@ -21553,7 +21646,7 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
     const searchBase="https://api.mfapi.in/mf/search?q="+q;
     const proxies=[
       "https://api.cors.lol/?url="+encodeURIComponent(searchBase),
-      "https://corsproxy.io/?"+encodeURIComponent(searchBase),
+      "https://corsproxy.io/?url="+encodeURIComponent(searchBase),
       "https://api.allorigins.win/raw?url="+encodeURIComponent(searchBase),
       "https://api.allorigins.win/get?url="+encodeURIComponent(searchBase),
       "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(searchBase),
@@ -39122,7 +39215,7 @@ function App(){
           const ySymToKey={"^NSEI":"NIFTY 50","^CNX100":"NIFTY 100","^NSEMDCP50":"NIFTY MIDCAP 50","^NSEMDCP100":"NIFTY MIDCAP 100","^CRSLDX":"NIFTY MIDCAP 150","^CNXSMALL":"NIFTY SMLCAP 100","^NSEBANK":"NIFTY BANK","^CNXAUTO":"NIFTY AUTO","^CNXIT":"NIFTY IT","^CNXPHARMA":"NIFTY PHARMA"};
           const yTickers=Object.keys(ySymToKey).join(",");
           const yProxies=[
-            u=>"https://corsproxy.io/?"+encodeURIComponent(u),
+            u=>"https://corsproxy.io/?url="+encodeURIComponent(u),
             u=>"https://api.cors.lol/?url="+encodeURIComponent(u),
           ];
           const yHosts=["query1.finance.yahoo.com","query2.finance.yahoo.com"];
