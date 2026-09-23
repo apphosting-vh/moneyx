@@ -436,6 +436,14 @@ const mfNavDateToISO=(s)=>{
   }
   return s; /* unknown format — return as-is */
 };
+/* Convert ISO "YYYY-MM-DD" → "DD-MMM-YYYY" (AMFI / display convention). */
+const isoToNavDate=(iso)=>{
+  if(!iso)return"";
+  const p=String(iso).split("-");
+  if(p.length===3&&/^\d{4}$/.test(p[0])&&/^\d{2}$/.test(p[1])&&/^\d{2}$/.test(p[2]))
+    return p[2]+"-"+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][parseInt(p[1],10)-1]+"-"+p[0];
+  return String(iso);
+};
 /* Migrate a legacy eodNavs object whose keys may be DD-MMM-YYYY → ISO keys */
 const normalizeEodNavKeys=(navs)=>{
   if(!navs)return{};
@@ -510,18 +518,21 @@ const dispatchNavBuckets=(dispatch,upd)=>{
    Returns { nav: number, navDate: "DD-MMM-YYYY", navDateISO: "YYYY-MM-DD" }
    or null.
 
-   Strategy (v7.19.36):
+   Strategy (v7.19.38):
    • PRIMARY source: AMFI NAVAll.txt (portal.amfiindia.com/spages/NAVAll.txt)
      — one download per ~15 min parsed into a scheme-code map, so refreshing
      N funds is ONE file fetch and per-fund ⟳ reuses the same cache.
-   • FALLBACK source: https://mfnav.in/api/funds/{scheme_code} (tiny JSON).
-   • CORS reality (verified against both hosts 2026-09-22): neither
-     portal.amfiindia.com nor mfnav.in sends an Access-Control-Allow-Origin
-     header, so a DIRECT browser fetch of either ALWAYS fails with a CORS
-     error from the PWA. Every source is therefore attempted direct-first
-     (cheap, fails in <1s) then through a chain of CORS proxies until one
-     returns usable data — without that chain every card showed
-     "Refresh failed · showing last known".
+   • FALLBACK source: api.tigzig.com/mf/v1/nav — full-history AMFI mirror;
+     rows are ascending {date,nav}, so the LAST row is the latest published
+     NAV. Genuinely CORS-enabled (Access-Control-Allow-Origin: *), so a
+     DIRECT browser fetch works with NO proxy.
+   • LAST-RESORT source: https://mfnav.in/api/funds/{scheme_code} (tiny JSON).
+   • CORS reality (verified 2026-09-22): neither portal.amfiindia.com nor
+     mfnav.in sends an Access-Control-Allow-Origin header, so a DIRECT browser
+     fetch of either ALWAYS fails with a CORS error from the PWA. Those two
+     are therefore attempted direct-first (cheap, fails in <1s) then through
+     a chain of CORS proxies until one returns usable data — without that
+     chain every card showed "Refresh failed · showing last known".
    ══════════════════════════════════════════════════════════════════════════ */
 
 /* Unwrap either a plain mfapi.in JSON body or an allorigins {contents:"..."} wrapper */
@@ -532,9 +543,12 @@ const _unwrapMfapi=(raw)=>{
 
 const NAVALL_URL="https://portal.amfiindia.com/spages/NAVAll.txt";
 const MFNAV_API="https://mfnav.in/api/funds/";
+const TIGZIG_NAV_URL="https://api.tigzig.com/mf/v1/nav?scheme=";
 let _navAllCache=null; /* {fetchedAt:number, map:Map<code,{nav,navDate,navDateISO}>} */
 let _navAllInflight=null; /* shared promise — a global refresh must NOT fire 9 parallel 1.5MB downloads */
+let _tigzigNavCache=null; /* {fetchedAt:number, map:Map<code,{nav,navDate,navDateISO}>} — short TTL, used only when AMFI fails */
 const _NAVALL_TTL=15*60*1000;
+const _TIGZIG_TTL=10*60*1000;
 
 /* Direct URL first (fails fast on CORS), then proxies in reliability order.
    allorigins /get wraps the body in {contents:"..."} — _unwrap() peels it. */
@@ -623,6 +637,36 @@ const _fetchNavAllMap=deadline=>{
   return _navAllInflight;
 };
 
+/* tigzig /mf/v1/nav returns FULL history, ascending {date:"YYYY-MM-DD",nav},
+   so the last row is the latest NAV. CORS-enabled, so fetched DIRECT with no
+   proxy. Short-lived cache prevents re-hitting tigzig per fund when AMFI is
+   down — the first fund's call warms the cache for the rest of that refresh.
+   navDateISO keeps the fund's OWN published date (never "today"), so EOD
+   snapshot bucketing and day-change % stay consistent regardless of source. */
+const _fetchTigzigNav=async code=>{
+  if(_tigzigNavCache&&(Date.now()-_tigzigNavCache.fetchedAt)<_TIGZIG_TTL){
+    const hit=_tigzigNavCache.map.get(code);
+    if(hit)return hit;
+  }
+  try{
+    const r=await _fetchX(TIGZIG_NAV_URL+code,{},10000);
+    if(!r.ok)return null;
+    const j=JSON.parse(await _readBody(r,8000));
+    const arr=Array.isArray(j&&j.data)?j.data:[];
+    const last=arr[arr.length-1];
+    const nav=parseFloat(last&&last.nav);
+    const dateStr=last&&last.date;
+    if(nav>0&&/^\d{4}-\d{2}-\d{2}$/.test(dateStr||"")){
+      const hit={nav,navDate:isoToNavDate(dateStr),navDateISO:dateStr};
+      if(!_tigzigNavCache)_tigzigNavCache={fetchedAt:0,map:new Map()};
+      _tigzigNavCache.map.set(code,hit);
+      _tigzigNavCache.fetchedAt=Date.now();
+      return hit;
+    }
+  }catch{}
+  return null;
+};
+
 const fetchOneNav=async(code)=>{
   if(!code)return null;
   const key=String(code);
@@ -636,9 +680,12 @@ const fetchOneNav=async(code)=>{
   if(map){
     const hit=map.get(key);
     if(hit)return hit;
-    /* scheme not in file (rare) — fall through to the mfnav.in fallback */
+    /* scheme not in file (rare) — fall through to the fallbacks below */
   }
-  /* ── 3. Fallback: mfnav.in tiny JSON (direct → same proxy chain) ── */
+  /* ── 3. Fallback: tigzig full-history feed (CORS-enabled → direct, no proxy) ── */
+  const tig=await _fetchTigzigNav(key);
+  if(tig)return tig;
+  /* ── 4. Last-resort: mfnav.in tiny JSON (direct → same proxy chain) ── */
   const txt=await _getTextWithFallback(_corsChain(MFNAV_API+key),Date.now()+25000);
   if(!txt)return null;
   try{
@@ -1177,7 +1224,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.19.37";
+ const APP_VERSION="7.19.38";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
