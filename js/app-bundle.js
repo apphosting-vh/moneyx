@@ -665,21 +665,71 @@ const _isinForCode=async(code)=>{
 };
 
 /* ── HISTORICAL NAV FETCHER ────────────────────────────────────────────────
-   Two independent sources, tried in order:
-     1. mf.captnemo.in/nav/:isin — genuinely CORS-enabled (no proxy needed),
-        independent data pipeline (Kuvera + AMFI). Needs the fund's ISIN,
-        resolved for free from the AMFI NAVAll.txt already fetched for live
-        NAVs. Tried first: it's a single direct request, not a walk through
-        several free CORS-proxy services, and being a different backend it
-        isn't affected by an mfapi.in-side outage or rate limit.
-     2. api.mfapi.in/mf/:code — its response `data[]` is the full
-        chronological series, newest-first. Reduces it to an ascending array
-        of {date:"YYYY-MM-DD", nav:number} keeping the most recent ~2600
-        trading points (≈10.4 years — covers the 10-year yearly view with
-        buffer). Tried direct first, then through a chain of CORS proxies.
-   Used to power the MF Performance tables (30D / 90D / 6M / 1Y / 2Y / 3Y /
-   4Y / 5Y / 10Y). Returns [] only if both sources fail. */
+   Multiple independent public sources, tried in order (mfapi.in is
+   frequently down, so the app leans on these ALTERNATIVES):
+     1. api.tigzig.com/mf/v1/nav?scheme=:code — AMFI mirror, genuinely
+        CORS-enabled (Access-Control-Allow-Origin: *), no auth, ~300 req/min.
+        Returns the FULL scheme history (back to 2006) in ONE call, ascending
+        ISO rows — no pagination, no proxy needed. Refreshed daily (verified
+        serving current NAVs). PRIMARY SOURCE.
+     2. mf.captnemo.in/nav/:isin — genuinely CORS-enabled (no proxy needed),
+        independent Kuvera+AMFI pipeline. Needs the fund's ISIN, resolved for
+        free from the AMFI NAVAll.txt already fetched for live NAVs. Skipped
+        when its feed has gone stale (frozen since ~2025-08) so a fresher
+        source below can win.
+     3. mfnav.in/api/nav/:code — daily-updated AMFI mirror, full history back
+        to 2006 in one call (page_size max 10000). Not CORS-enabled, so it is
+        fetched direct-first then through the shared CORS-proxy chain.
+     4. api.mfapi.in/mf/:code — last resort; its response `data[]` is the full
+        chronological series, newest-first. Frequently down / rate-limited,
+        only used when sources 1-3 all fail.
+   Each source is reduced to an ascending array of {date:"YYYY-MM-DD",
+   nav:number} keeping the most recent ~2600 trading points (≈10.4 years —
+   covers the 10-year yearly view with buffer). Used to power the MF
+   Performance tables (30D / 90D / 6M / 1Y / 2Y / 3Y / 4Y / 5Y / 10Y).
+   Returns [] only if every source fails. */
 const _sortNavAsc=arr=>{arr.sort((x,y)=>x.date<y.date?-1:1);return arr.slice(-2600);};
+/* A source whose newest point is older than this is treated as a dead/stale
+   feed (mf.captnemo.in has been frozen since ~Aug 2025). */
+const _HIST_STALE_SKIP_MS=45*24*3600*1000;
+
+/* 1. api.tigzig.com — CORS-enabled direct AMFI mirror, full history, ascending */
+const _fetchNavHistoryTigzig=async code=>{
+  try{
+    const r=await _fetchX("https://api.tigzig.com/mf/v1/nav?scheme="+code,{},12000);
+    if(!r.ok)return[];
+    const txt=await _readBody(r,10000);
+    let j;try{j=JSON.parse(txt);}catch{return[];}
+    const arr=Array.isArray(j?.data)?j.data:[];
+    if(!arr.length)return[];
+    const out=[];
+    for(const ent of arr){
+      const nav=parseFloat(ent?.nav);
+      const iso=String(ent?.date||"");
+      if(nav>0&&/^\d{4}-\d{2}-\d{2}$/.test(iso))out.push({date:iso,nav});
+    }
+    return out.length?_sortNavAsc(out):[];
+  }catch{return[];}
+};
+
+/* mfnav.in — fresh AMFI mirror, full history in one call; needs a CORS proxy */
+const _fetchNavHistoryMfnav=async code=>{
+  const base="https://mfnav.in/api/nav/"+code+"?page=1&page_size=10000";
+  const txt=await _getTextWithFallback(_corsChain(base),Date.now()+30000);
+  if(!txt)return[];
+  try{
+    const d=_unwrapMfapi(JSON.parse(txt));
+    const arr=Array.isArray(d?.data)?d.data:[];
+    if(!arr.length)return[];
+    const out=[];
+    for(const ent of arr){
+      const nav=parseFloat(ent?.nav);
+      const iso=mfNavDateToISO(ent?.nav_date||"");
+      if(nav>0&&/^\d{4}-\d{2}-\d{2}$/.test(iso))out.push({date:iso,nav});
+    }
+    return out.length?_sortNavAsc(out):[];
+  }catch{return[];}
+};
 
 const _fetchNavHistoryCaptnemo=async code=>{
   try{
@@ -697,7 +747,15 @@ const _fetchNavHistoryCaptnemo=async code=>{
       const nav=parseFloat(row?.[1]);
       if(nav>0&&/^\d{4}-\d{2}-\d{2}$/.test(iso))out.push({date:iso,nav});
     }
-    return out.length?_sortNavAsc(out):[];
+    if(!out.length)return[];
+    const asc=_sortNavAsc(out);
+    /* captnemo's feed is currently frozen (~Aug 2025) — when its newest point
+       is ancient, refuse it so a fresher source further down the chain can
+       win. A fund that legitimately stopped publishing still gets served its
+       (correct) final NAV by the next sources. */
+    const last=asc[asc.length-1]?.date||"";
+    if(last&&new Date(last+"T00:00:00").getTime()<Date.now()-_HIST_STALE_SKIP_MS)return[];
+    return asc;
   }catch{return[];}
 };
 
@@ -739,11 +797,19 @@ const fetchNavHistory=async(code)=>{
     return[];
   };
 
-  /* 1. Fast, proxy-free path via mf.captnemo.in */
+  /* 1. Fresh, CORS-enabled, single-call source: api.tigzig.com AMFI mirror */
+  const viaTigzig=await _fetchNavHistoryTigzig(code);
+  if(viaTigzig.length)return viaTigzig;
+
+  /* 2. Proxy-free fallback: mf.captnemo.in (skipped when its feed is stale) */
   const viaCaptnemo=await _fetchNavHistoryCaptnemo(code);
   if(viaCaptnemo.length)return viaCaptnemo;
 
-  /* 2. mfapi.in direct + proxy chain; if every link failed (common when
+  /* 3. Daily-updated AMFI mirror via CORS proxy: mfnav.in */
+  const viaMfnav=await _fetchNavHistoryMfnav(code);
+  if(viaMfnav.length)return viaMfnav;
+
+  /* 4. Last resort: mfapi.in direct + proxy chain; if every link failed (common when
      several funds fetch in parallel and trip a shared rate limit), wait for
      it to clear and try the chain once more before giving up on this fund. */
   let result=await _attemptChain();
@@ -1807,7 +1873,7 @@ const reducer=(s,a)=>{
       }else{
         delete _hist[a.code];
       }
-      _hist._v=5;
+      _hist._v=6;
       return{...s,mfHistNavs:_hist};
     }
     case"SET_BROKER_CASH":return{...s,brokerCashBalance:a.amount};
@@ -21259,16 +21325,21 @@ const _SCREENER_KEY="finsight-screener-data";
 const _SCREENER_SNAPS_KEY="finsight-screener-snapshots";
 
 /* ──────────────────────────────────────────────────────────────────────────
-   MF PERFORMANCE TABLES  (Last 30 Days / 90 Days / 6 Months / 1 Year)
+   MF PERFORMANCE TABLES  (Last 30 Days / 90 Days / 6 Months / 1 Year /
+   2 Years / 3 Years / 4 Years / 5 Years / 10 Years)
    Rows   = each held mutual fund
    Columns= NAV % change buckets:
      • Last 30 Days  → daily % change, one column per trading day
      • Last 90 Days  → weekly % change (per ISO week), last 13 weeks
      • Last 6 Months → month-on-month % change, last 6 months
      • Last 1 Year   → month-on-month % change, last 12 months
-   Powered by the full daily NAV history fetched from mfapi.in and cached in
-   state.mfHistNavs (per schemeCode). Falls back gracefully when history is
-   not yet loaded by offering a "Fetch History" action.
+     • Last 2/3 Years→ quarterly % change, last 8/12 quarters
+     • Last 4/5/10 Y → yearly % change
+   Powered by the full daily NAV history cached in state.mfHistNavs (per
+   schemeCode), fetched from multiple public sources in order — api.tigzig.com
+   (primary, CORS-enabled), mf.captnemo.in, mfnav.in, then mfapi.in as last
+   resort. Falls back gracefully when history is not yet loaded by offering a
+   "Fetch History" action.
    ────────────────────────────────────────────────────────────────────────── */
 const MFPerformanceTables=React.memo(({mf,mfHistNavs={},dispatch})=>{
   const active=(mf||[]).filter(m=>m.units>0&&m.schemeCode);
@@ -21300,7 +21371,7 @@ const MFPerformanceTables=React.memo(({mf,mfHistNavs={},dispatch})=>{
      version), OR latest cached NAV older than ~4 days — in all cases re-fetch
      so the tables stay complete and current whenever the section is revisited. */
   const isStale=m=>{
-    if((mfHistNavs._v||0)!==5)return true;
+    if((mfHistNavs._v||0)!==6)return true;
     if(!hasHistory(m))return true;
     const s=mfHistNavs[m.schemeCode];
     const last=s[s.length-1]&&s[s.length-1].date;
@@ -21321,9 +21392,9 @@ const MFPerformanceTables=React.memo(({mf,mfHistNavs={},dispatch})=>{
     setLoading(p=>({...p,[m.schemeCode]:false}));
     return ok;
   };
-  /* Fetch funds a few at a time (not all-at-once) — mfapi.in and the free CORS
-     proxies both rate-limit, so firing every holding in parallel is what
-     makes a whole "Fetch NAV History" run come back empty-handed. */
+  /* Fetch funds a few at a time (not all-at-once) — the NAV-history sources and
+     the free CORS proxies both rate-limit, so firing every holding in parallel
+     is what makes a whole "Fetch NAV History" run come back empty-handed. */
   const fetchAll=async()=>{
     const targets=active.filter(isStale);
     const BATCH=3;
@@ -21642,7 +21713,23 @@ const InvestSection=React.memo(({mf,mfTxns=[],shares,fd,re=[],pf=[],dispatch,def
   const searchMF=async()=>{
     if(!srch.trim())return;
     setSearching(true);
-    const q=encodeURIComponent(srch);
+    const q=encodeURIComponent(srch.trim());
+    /* 1. CORS-enabled public AMFI mirror (api.tigzig.com) — proxy-free search.
+       mfapi.in (below) is frequently down, so this runs first. */
+    try{
+      const r=await _fetchX("https://api.tigzig.com/mf/v1/search?q="+q,{},10000);
+      if(r.ok){
+        const txt=await _readBody(r,8000);
+        const j=JSON.parse(txt);
+        const arr=Array.isArray(j?.results)?j.results:[];
+        if(arr.length){
+          setResults(arr.slice(0,8).map(x=>({schemeCode:String(x.scheme_code||""),schemeName:x.scheme_name||""})));
+          setSearching(false);
+          return;
+        }
+      }
+    }catch{}
+    /* 2. Fallback: mfapi.in search via proxy chain */
     const searchBase="https://api.mfapi.in/mf/search?q="+q;
     const proxies=[
       "https://api.cors.lol/?url="+encodeURIComponent(searchBase),
