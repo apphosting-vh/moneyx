@@ -1224,7 +1224,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.19.38";
+ const APP_VERSION="7.20.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -21441,9 +21441,11 @@ const MFPerformanceTables=React.memo(({mf,mfHistNavs={},dispatch})=>{
   };
   /* Fetch funds a few at a time (not all-at-once) — the NAV-history sources and
      the free CORS proxies both rate-limit, so firing every holding in parallel
-     is what makes a whole "Fetch NAV History" run come back empty-handed. */
-  const fetchAll=async()=>{
-    const targets=active.filter(isStale);
+     is what makes a whole "Fetch NAV History" run come back empty-handed.
+     force=true re-downloads EVERY fund (manual ⟳ Refresh History) even though
+     none are marked stale — a plain run only retries funds that truly need it. */
+  const fetchAll=async(force)=>{
+    const targets=force?active.slice():active.filter(isStale);
     const BATCH=3;
     let failCount=0;
     for(let i=0;i<targets.length;i+=BATCH){
@@ -21548,12 +21550,12 @@ const MFPerformanceTables=React.memo(({mf,mfHistNavs={},dispatch})=>{
         React.createElement("div",{style:{fontSize:13,fontWeight:700,color:"var(--text)",fontFamily:"'Sora',sans-serif"}},"Mutual Fund Performance"),
         React.createElement("div",{style:{fontSize:10,color:"var(--text6)",marginTop:1}},"Daily · Weekly · Monthly · Quarterly · Yearly NAV movement across your holdings")
       ),
-      React.createElement(Btn,{v:"secondary",sz:"sm",onClick:fetchAll,disabled:!missing.length||Object.values(loading).some(Boolean),sx:{fontSize:12}},
-        Object.values(loading).some(Boolean)?React.createElement(React.Fragment,null,React.createElement("span",{className:"spinr"},"⟳")," Loading…"):(missing.length?"⭳ Fetch NAV History":"⭳ History Up-to-date")
+      React.createElement(Btn,{v:"secondary",sz:"sm",onClick:()=>fetchAll(missing.length?undefined:true),disabled:Object.values(loading).some(Boolean),sx:{fontSize:12}},
+        Object.values(loading).some(Boolean)?React.createElement(React.Fragment,null,React.createElement("span",{className:"spinr"},"⟳")," Loading…"):(missing.length?"⭳ Fetch NAV History":"⟳ Refresh History")
       )
     ),
-    missing.length>0&&!Object.values(loading).some(Boolean)&&lastRunFailCount>0&&React.createElement("div",{style:{marginBottom:12,padding:"8px 14px",borderRadius:9,fontSize:12,display:"flex",alignItems:"center",gap:8,background:"rgba(239,68,68,.07)",border:"1px solid rgba(239,68,68,.25)",color:"#ef4444"}},
-      React.createElement("span",null,"Couldn't reach the NAV history source for "+lastRunFailCount+" fund"+(lastRunFailCount===1?"":"s")+" (network/proxy issue) — tap \"Fetch NAV History\" to retry.")
+    !Object.values(loading).some(Boolean)&&lastRunFailCount>0&&React.createElement("div",{style:{marginBottom:12,padding:"8px 14px",borderRadius:9,fontSize:12,display:"flex",alignItems:"center",gap:8,background:"rgba(239,68,68,.07)",border:"1px solid rgba(239,68,68,.25)",color:"#ef4444"}},
+      React.createElement("span",null,"Couldn't reach the NAV history source for "+lastRunFailCount+" fund"+(lastRunFailCount===1?"":"s")+" (network/proxy issue) — tap the refresh button to retry.")
     ),
     missing.length>0&&(Object.values(loading).some(Boolean)||!lastRunFailCount)&&React.createElement("div",{style:{marginBottom:12,padding:"8px 14px",borderRadius:9,fontSize:12,display:"flex",alignItems:"center",gap:8,background:"rgba(109,40,217,.07)",border:"1px solid rgba(109,40,217,.2)",color:"#6d28d9"}},
       React.createElement("span",null,"Fetching NAV history for "+missing.length+" fund"+((missing.length===1)?"":"s")+" to build these tables.")
