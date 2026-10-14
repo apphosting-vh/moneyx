@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════════════
-   finsight — Service Worker  (v7.20.0 — full offline support + push notifications)
+   finsight — Service Worker  (v7.21.0 — full offline support + push notifications)
    ══════════════════════════════════════════════════════════════════════════
    Strategies:
    • Navigation / HTML  → network-first, fallback to cache, fallback to /
@@ -14,7 +14,7 @@
    • Pending actions written to IDB so the app can reconcile on next open
    ══════════════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'finsights-v7-20-0';
+const CACHE_NAME = 'finsights-v7-21-0';
 const MAX_RUNTIME_CACHE_ENTRIES = 80;
 const MAX_CACHE_AGE_MS = 30 * 24 * 3600 * 1000; // 30 days
 
@@ -36,10 +36,7 @@ const PRECACHE_ASSETS = [
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
-   './js/app-bundle.js',
-   './js/indicators.js',
-   './js/data-fetcher.js',
-   './js/technical-panel.js',
+  './js/app-bundle.js',
 ];
 
 const PRECACHE_CDN = [

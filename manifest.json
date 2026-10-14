@@ -3,7 +3,7 @@
   "short_name": "finsight",
   "description": "Offline personal finance management — banks, cards, investments, loans, and more. 100% on-device, zero cloud.",
   "id": "com.vivekhh.finsight",
-  "version": "7.20.0",
+  "version": "7.21.0",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -99,7 +99,7 @@
       "name": "Investments",
       "short_name": "Invest",
       "description": "View investment portfolio",
-      "url": "./#/inv_overview",
+      "url": "./#/inv_dash",
       "icons": [{ "src": "icons/icon-96x96.png", "sizes": "96x96" }]
     },
     {

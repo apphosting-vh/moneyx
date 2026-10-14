@@ -233,10 +233,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.29.7/babel.min.js" defer></script>
 <!-- Preload Babel so it downloads in parallel with React without delaying FCP -->
 <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.29.7/babel.min.js" as="script" crossorigin/>
-<!-- Technical indicators: calculation engine, OHLCV data fetcher, and UI panel -->
-<script src="./js/indicators.js" defer></script>
-<script src="./js/data-fetcher.js" defer></script>
-<script src="./js/technical-panel.js" defer></script>
+<!-- Technical indicators / OHLCV fetcher were merged into the app bundle
+     (see js/app-bundle.js; window.OHLCVFetcher / TI_ guards degrade gracefully). -->
 <!-- Google Identity Services — for Google Drive cloud sync (token-only, no sign-in) -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <!-- xlsx (~1.0 MB) + jsPDF (~700 KB) are intentionally absent here.
@@ -286,6 +284,18 @@ body{
 :root{
   --font-body: 'DM Sans', sans-serif;
   --fs-xs:10px;--fs-sm:12px;--fs-base:14px;--fs-lg:18px;--fs-xl:24px;--fs-2xl:32px;
+  /* ── Numeric type scale (maps inline fontSize:N → var(--fs-N)) ── */
+  --fs-7:7px;--fs-7-5:7.5px;--fs-8:8px;--fs-8-5:8.5px;--fs-9:9px;--fs-9-5:9.5px;
+  --fs-10:10px;--fs-10-5:10.5px;--fs-11:11px;--fs-11-5:11.5px;--fs-12:12px;--fs-12-5:12.5px;
+  --fs-13:13px;--fs-13-5:13.5px;--fs-14:14px;--fs-15:15px;--fs-16:16px;--fs-17:17px;
+  --fs-18:18px;--fs-19:19px;--fs-20:20px;--fs-21:21px;--fs-22:22px;--fs-23:23px;--fs-24:24px;
+  --fs-26:26px;--fs-28:28px;--fs-30:30px;--fs-32:32px;--fs-34:34px;--fs-36:36px;--fs-38:38px;
+  --fs-40:40px;--fs-42:42px;--fs-44:44px;--fs-48:48px;--fs-52:52px;--fs-80:80px;--fs-100:100px;
+  /* ── Semantic status colors (shared across all modules) ── */
+  --ok:#16a34a;--ok-bg:rgba(22,163,74,.10);--ok-bd:rgba(22,163,74,.30);
+  --warn:#d97706;--warn-bg:rgba(217,119,6,.10);--warn-bd:rgba(217,119,6,.30);
+  --danger:#dc2626;--danger-bg:rgba(220,38,38,.08);--danger-bd:rgba(220,38,38,.28);
+  --info:#2563eb;--info-bg:rgba(37,99,235,.10);--info-bd:rgba(37,99,235,.28);
   --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:24px;--sp-6:32px;
   --r-sm:8px;--r-md:10px;--r-lg:14px;--r-xl:18px;--r-pill:999px;
 }
@@ -494,7 +504,7 @@ html[data-theme="yellow-dark"]{
   --accentbg:rgba(250,204,21,.15);  --accentbg2:rgba(250,204,21,.08);  --accentbg3:rgba(250,204,21,.10);  --accentbg4:rgba(250,204,21,.06);  --accentbg5:rgba(250,204,21,.20);
   --sidebar:linear-gradient(180deg,#241e0e,#0e0c04);
   --card:#221c0e;  --card2:#2e2818;  --inp-bg:#221c0e;  --inp-opt:#2e2818;
-  --scrollbar:#4e4630;  --scrollbar:#625840;  --scrolltrack:#221c0e;
+  --scrollbar:#4e4630;  --scrollbar2:#625840;  --scrolltrack:#221c0e;
   --mr-hover:#2e2818;  --modal-bg:#221c0e;  --networth-bg:#221c0e;
   --subnav-bg:linear-gradient(90deg,rgba(250,204,21,.12),rgba(250,204,21,.03));
   --overlay:rgba(0,0,0,.72);
@@ -745,9 +755,21 @@ textarea.inp{resize:vertical}
   border-left:3px solid var(--accent)!important;
   box-shadow:inset 3px 0 12px var(--accentbg5)!important;
 }
+/* ── Ledger density: compact rows (toggle in ledger toolbar) ── */
+.mm-ledger-compact .ldg-row > div{padding-top:1px!important;padding-bottom:1px!important}
+.mm-ledger-compact .ldg-row{line-height:1.25}
+.mm-ledger-compact .ldg-row .ldg-notes{display:none}
+.mm-ledger-compact .ldg-row.ldg-sel .ldg-notes{display:block}
 /* ── Modal backdrop with frosted glass effect ── */
 .modal-bd{position:fixed;top:0;right:0;bottom:0;left:0;background:var(--overlay);z-index:1000;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;animation:fadeUp .3s ease both}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 .modal-bd > .fu{will-change:transform,opacity}
+/* ── Pane-aware modal centering: on desktop, keep the dialog centered within
+   the content area rather than the full viewport (which includes the sidebar) ── */
+@media (min-width:769px){
+  .mm-modal-center{ padding-left: calc(12px + var(--mm-nav-w, 0px)) !important; }
+}
+/* ── Tooltips also reveal for keyboard users, not just hover ── */
+.nb-tip:focus-within .nb-tooltip{ opacity:1 }
 .tb-btn{padding:5px 12px;border-radius:7px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;transition:all .15s;white-space:nowrap}
 .tb-btn:disabled{opacity:.38;cursor:not-allowed}
 
@@ -899,15 +921,15 @@ textarea.inp{resize:vertical}
   --itr-navy2:     var(--accent);
   --itr-navy-lt:   var(--accentbg);
   /* ── Semantic colors — fixed regardless of theme ── */
-  --itr-saffron:   #d97706;
-  --itr-saffron-lt:rgba(217,119,6,.10);
-  --itr-saffron-bd:rgba(217,119,6,.30);
-  --itr-green:     #16a34a;
-  --itr-green-lt:  rgba(22,163,74,.10);
-  --itr-green-bd:  rgba(22,163,74,.30);
-  --itr-red:       #dc2626;
-  --itr-red-lt:    rgba(220,38,38,.08);
-  --itr-red-bd:    rgba(220,38,38,.28);
+  --itr-saffron:   var(--warn);
+  --itr-saffron-lt:var(--warn-bg);
+  --itr-saffron-bd:var(--warn-bd);
+  --itr-green:     var(--ok);
+  --itr-green-lt:  var(--ok-bg);
+  --itr-green-bd:  var(--ok-bd);
+  --itr-red:       var(--danger);
+  --itr-red-lt:    var(--danger-bg);
+  --itr-red-bd:    var(--danger-bd);
   --itr-orange:    #c2500a;
   --itr-orange-lt: rgba(194,80,10,.09);
   /* ── Blue info notes → MM accent ── */
@@ -962,7 +984,7 @@ textarea.inp{resize:vertical}
 .tax-wrap .ci-orange {background:var(--itr-orange-lt);border:1px solid #f5c8a0}
 .tax-wrap .c-ttl {font-size:13px;font-weight:600;color:var(--text);font-family:'DM Sans',sans-serif}
 .tax-wrap .c-sub {font-size:10px;color:var(--text6);margin-top:2px;font-family:'DM Sans',sans-serif}
-.tax-wrap .ctag {font-size:9px;font-family:'DM Mono',monospace;font-weight:600;padding:2px 8px;border-radius:4px;margin-left:auto;white-space:nowrap;letter-spacing:0.3px}
+.tax-wrap .ctag {font-size:9px;font-family:var(--font-body);font-weight:600;padding:2px 8px;border-radius:4px;margin-left:auto;white-space:nowrap;letter-spacing:0.3px}
 .tax-wrap .ct-navy {background:var(--itr-navy-lt);color:var(--itr-navy);border:1px solid var(--accentbg5)}
 .tax-wrap .ct-saffron {background:var(--itr-saffron-lt);color:var(--itr-saffron);border:1px solid var(--itr-saffron-bd)}
 .tax-wrap .ct-green {background:var(--itr-green-lt);color:var(--itr-green);border:1px solid var(--itr-green-bd)}
@@ -1001,7 +1023,7 @@ textarea.inp{resize:vertical}
 .tax-wrap .nb-green strong {color:var(--itr-green)}
 
 .tax-wrap .ibar {display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
-.tax-wrap .pill {font-size:10px;font-family:'DM Mono',monospace;padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center;font-weight:500}
+.tax-wrap .pill {font-size:10px;font-family:var(--font-body);padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center;font-weight:500}
 .tax-wrap .p-navy {background:var(--itr-navy-lt);color:var(--itr-navy);border:1px solid var(--accentbg5)}
 .tax-wrap .p-saffron {background:var(--itr-saffron-lt);color:var(--itr-saffron);border:1px solid var(--itr-saffron-bd)}
 .tax-wrap .p-green {background:var(--itr-green-lt);color:var(--itr-green);border:1px solid var(--itr-green-bd)}
@@ -1039,7 +1061,7 @@ textarea.inp{resize:vertical}
 .tax-wrap .pen-row {display:flex;justify-content:space-between;font-size:11px;padding:5px 0;border-bottom:1px dashed var(--itr-red-bd)}
 .tax-wrap .pen-row:last-child {border-bottom:none;font-weight:700;color:var(--itr-red);padding-top:8px;font-size:12px}
 .tax-wrap .pen-row .pl {color:var(--itr-text2);font-family:'DM Sans',sans-serif;font-size:11px}
-.tax-wrap .pen-row .pv {color:var(--itr-red);font-family:'DM Mono',monospace}
+.tax-wrap .pen-row .pv {color:var(--itr-red);font-family:var(--font-body)}
 
 .tax-wrap .sum-card {background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
 .tax-wrap .sum-hdr {background:var(--sidebar);padding:15px 18px;border-bottom:1px solid var(--border2)}
@@ -1068,10 +1090,10 @@ textarea.inp{resize:vertical}
 .tax-wrap .big-tax {background:var(--sidebar);border-radius:12px;padding:20px;text-align:center;margin-top:8px;color:#fff}
 .tax-wrap .bt-lbl {font-size:10px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;font-family:'DM Sans',sans-serif}
 .tax-wrap .bt-amt {font-size:28px;font-weight:800;font-family:'Sora',sans-serif;line-height:1.1;margin:5px 0;color:rgba(255,255,255,.95)}
-.tax-wrap .bt-eff {font-size:11px;color:rgba(255,255,255,0.55);font-family:'DM Mono',monospace}
+.tax-wrap .bt-eff {font-size:11px;color:rgba(255,255,255,0.55);font-family:var(--font-body)}
 .tax-wrap .rebate-note {font-size:11px;color:var(--itr-green);background:var(--itr-green-lt);border:1px solid var(--itr-green-bd);border-radius:8px;padding:8px 12px;margin-top:8px;text-align:center;font-weight:500}
 .tax-wrap .marginal-note {font-size:11px;color:var(--itr-saffron);background:var(--itr-saffron-lt);border:1px solid var(--itr-saffron-bd);border-radius:8px;padding:8px 12px;margin-top:6px;text-align:center;font-weight:500}
-.tax-wrap .cess-note {font-size:10px;color:var(--itr-text3);text-align:center;margin-top:5px;font-family:'DM Mono',monospace}
+.tax-wrap .cess-note {font-size:10px;color:var(--itr-text3);text-align:center;margin-top:5px;font-family:var(--font-body)}
 .tax-wrap .coll-sec {margin-top:10px;padding-top:10px;border-top:1px solid var(--itr-border)}
 .tax-wrap .coll-btn {background:none;border:none;color:var(--accent2);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 0;font-weight:600;transition:color 0.15s}
 .tax-wrap .coll-btn:hover {color:var(--accent)}
@@ -1086,7 +1108,7 @@ textarea.inp{resize:vertical}
 .tax-wrap .disc strong {color:var(--accent2)}
 
 .tax-wrap .save-bar {display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--bg5);border:1px solid var(--border2);border-radius:9px;padding:8px 14px;font-size:11px;color:var(--text4)}
-.tax-wrap .save-indicator {display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:10px;transition:all 0.3s}
+.tax-wrap .save-indicator {display:flex;align-items:center;gap:6px;font-family:var(--font-body);font-size:10px;transition:all 0.3s}
 .tax-wrap .save-dot {width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background 0.3s}
 .tax-wrap .sd-idle {background:var(--itr-border2)}
 .tax-wrap .sd-saved {background:var(--itr-green);animation:itr-pulse 0.4s ease}
@@ -1102,10 +1124,10 @@ textarea.inp{resize:vertical}
 .tax-wrap .comp-item.better {border-color:var(--itr-green-bd);background:var(--itr-green-lt)}
 .tax-wrap .comp-item .ci-lbl {font-size:10px;color:var(--itr-text3);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
 .tax-wrap .comp-item.better .ci-lbl {color:var(--itr-green)}
-.tax-wrap .comp-item .ci-amt {font-size:15px;font-weight:700;font-family:'DM Mono',monospace;color:var(--itr-text)}
+.tax-wrap .comp-item .ci-amt {font-size:15px;font-weight:700;font-family:var(--font-body);color:var(--itr-text)}
 .tax-wrap .comp-item.better .ci-amt {color:var(--itr-green)}
-.tax-wrap .comp-item .ci-save {font-size:10px;color:var(--itr-green);font-family:'DM Mono',monospace;margin-top:2px;font-weight:600}
-.tax-wrap .comp-footer {padding:8px 14px;border-top:1px solid var(--itr-border);font-size:10px;color:var(--itr-text3);text-align:center;font-family:'DM Mono',monospace}
+.tax-wrap .comp-item .ci-save {font-size:10px;color:var(--itr-green);font-family:var(--font-body);margin-top:2px;font-weight:600}
+.tax-wrap .comp-footer {padding:8px 14px;border-top:1px solid var(--itr-border);font-size:10px;color:var(--itr-text3);text-align:center;font-family:var(--font-body)}
 
     .export-bar {display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:2px}
 .tax-wrap .exp-btn {display:flex;align-items:center;justify-content:center;gap:7px;border:none;border-radius:10px;padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.18s;letter-spacing:0.1px;position:relative;overflow:hidden}
