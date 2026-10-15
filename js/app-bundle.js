@@ -1161,8 +1161,8 @@ const THEMES=[
   {id:"yellow-dark", name:"Yellow Dark",   desc:"Dark amber glow",      dark:true,  preview:["#100c04","#facc15","#4e462a","#eab308"]},
   {id:"orange-dark", name:"Orange Dark",   desc:"Ember orange night",   dark:true,  preview:["#120a04","#fb923c","#523e24","#f97316"]},
   {id:"red-dark",    name:"Red Dark",      desc:"Dark blood red",       dark:true,  preview:["#140606","#f87171","#582828","#ef4444"]},
-  {id:"golden-gate",      name:"macOS Light",      desc:"Apple glass · blue accent",  dark:false, preview:["#f5f5f7","#0071e3","#d9d9de","#0062c4"]},
-  {id:"golden-gate-dark", name:"macOS Dark",       desc:"Apple glass · blue night",   dark:true,  preview:["#1c1c1e","#0a84ff","#48484a","#0060df"]},
+  {id:"golden-gate",      name:"macOS Light",      desc:"Apple glass · blue accent",  dark:false, preview:["#eff3fa","#0071e3","#d3ddef","#0062c4"]},
+  {id:"golden-gate-dark", name:"macOS Dark",       desc:"Apple glass · blue night",   dark:true,  preview:["#161922","#0a84ff","#3a4353","#0060df"]},
 ];
 const loadTheme=()=>{try{const t=localStorage.getItem(LS_THEME);if(t&&THEMES.find(th=>th.id===t))return t;}catch{}return "golden-gate";};
 const saveTheme=id=>{try{localStorage.setItem(LS_THEME,id);}catch{}};
