@@ -1161,10 +1161,23 @@ const THEMES=[
   {id:"yellow-dark", name:"Yellow Dark",   desc:"Dark amber glow",      dark:true,  preview:["#100c04","#facc15","#4e462a","#eab308"]},
   {id:"orange-dark", name:"Orange Dark",   desc:"Ember orange night",   dark:true,  preview:["#120a04","#fb923c","#523e24","#f97316"]},
   {id:"red-dark",    name:"Red Dark",      desc:"Dark blood red",       dark:true,  preview:["#140606","#f87171","#582828","#ef4444"]},
+  {id:"golden-gate",      name:"macOS Light",      desc:"Apple glass · blue accent",  dark:false, preview:["#f5f5f7","#0071e3","#d9d9de","#0062c4"]},
+  {id:"golden-gate-dark", name:"macOS Dark",       desc:"Apple glass · blue night",   dark:true,  preview:["#1c1c1e","#0a84ff","#48484a","#0060df"]},
 ];
-const loadTheme=()=>{try{const t=localStorage.getItem(LS_THEME);if(t&&THEMES.find(th=>th.id===t))return t;}catch{}return "blue";};
+const loadTheme=()=>{try{const t=localStorage.getItem(LS_THEME);if(t&&THEMES.find(th=>th.id===t))return t;}catch{}return "golden-gate";};
 const saveTheme=id=>{try{localStorage.setItem(LS_THEME,id);}catch{}};
-const applyTheme=id=>{document.documentElement.setAttribute("data-theme",id);if(id.endsWith("-dark")){document.documentElement.style.setProperty("color-scheme","dark");}else{document.documentElement.style.removeProperty("color-scheme");}setTimeout(syncPAL,0);};
+/* ── macOS theme signal ────────────────────────────────────────────────────
+   Lets any component react to the macOS ("golden-gate") themes activating so
+   it can render SF-Symbols icons and macOS chrome ONLY on those themes. */
+const MAC_THEME_IDS=["golden-gate","golden-gate-dark"];
+const isMacThemeId=id=>MAC_THEME_IDS.indexOf(id)>=0;
+let _curThemeId="blue";
+try{const _a=document.documentElement.getAttribute("data-theme");if(_a)_curThemeId=_a;}catch{}
+const _themeSubs=new Set();
+const _notifyTheme=()=>{_themeSubs.forEach(f=>{try{f();}catch{}});};
+const isMacTheme=()=>isMacThemeId(_curThemeId);
+const useMacTheme=()=>{const[,force]=React.useReducer(x=>x+1,0);React.useEffect(()=>{_themeSubs.add(force);return()=>{_themeSubs.delete(force);};},[]);return isMacThemeId(_curThemeId);};
+const applyTheme=id=>{document.documentElement.setAttribute("data-theme",id);if(_curThemeId!==id){_curThemeId=id;_notifyTheme();}if(id.endsWith("-dark")){document.documentElement.style.setProperty("color-scheme","dark");}else{document.documentElement.style.removeProperty("color-scheme");}setTimeout(syncPAL,0);};
 
 /* ── FONT SYSTEM ─────────────────────────────────────────────────────────
    5 most popular fonts for financial apps in 2026.
@@ -1217,6 +1230,54 @@ const applyFont=id=>{
   document.documentElement.style.setProperty("--font-body",font.stack);
 };
 
+/* ── Motion preference (mirrors theme/font persistence) ─────────────────────
+   Defaults to the OS `prefers-reduced-motion` value; the in-app toggle
+   writes an explicit "1"/"0" so the choice sticks across sessions. */
+const LS_REDUCE_MOTION="mm_reduce_motion";
+const loadReduceMotion=()=>{try{const v=localStorage.getItem(LS_REDUCE_MOTION);if(v==="1")return true;if(v==="0")return false;}catch{}return !!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);};
+const saveReduceMotion=on=>{try{localStorage.setItem(LS_REDUCE_MOTION,on?"1":"0");}catch{}};
+const applyReduceMotion=on=>{try{document.documentElement.classList.toggle("mm-reduce-motion",!!on);}catch{}};
+
+/* Scroll-reveal hook: adds .mm-in once the element enters the viewport. */
+const useReveal=()=>{
+  const ref=React.useRef(null);
+  React.useEffect(()=>{
+    const el=ref.current;if(!el)return;
+    if(typeof IntersectionObserver==="undefined"){el.classList.add("mm-in");return;}
+    const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("mm-in");io.unobserve(e.target);}});},{rootMargin:"0px 0px -8% 0px",threshold:.08});
+    io.observe(el);
+    return()=>io.disconnect();
+  },[]);
+  return ref;
+};
+
+/* Celebration burst — lightweight, self-cleaning DOM confetti. */
+const mmCelebrate=(opts={})=>{
+  try{
+    if(document.documentElement.classList.contains("mm-reduce-motion"))return;
+    if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+    const layer=document.createElement("div");
+    layer.className="mm-confetti-layer";layer.setAttribute("aria-hidden","true");
+    const cols=opts.colors||["#f59e0b","#0ea5e9","#16a34a","#ec4899","#8b5cf6","#ef4444"];
+    const N=opts.count||34;
+    for(let i=0;i<N;i++){
+      const b=document.createElement("i");b.className="mm-confetti-bit";
+      b.style.left=(8+Math.random()*84).toFixed(2)+"vw";
+      b.style.top=(opts.y!=null?opts.y:10)+"%";
+      b.style.background=cols[i%cols.length];
+      b.style.borderRadius=Math.random()<.4?"50%":"2px";
+      b.style.setProperty("--cx",(Math.random()*280-140).toFixed(0)+"px");
+      b.style.setProperty("--cy",(120+Math.random()*260).toFixed(0)+"px");
+      b.style.setProperty("--cr",(Math.random()*720-360).toFixed(0)+"deg");
+      b.style.setProperty("--dur",(900+Math.random()*600).toFixed(0)+"ms");
+      b.style.animationDelay=(Math.random()*120).toFixed(0)+"ms";
+      layer.appendChild(b);
+    }
+    document.body.appendChild(layer);
+    setTimeout(()=>{try{layer.remove();}catch{}},2200);
+  }catch{}
+};
+
 let PAL=["#b45309","#0e7490","#16a34a","#6d28d9","#c2410c","#be185d","#1d4ed8","#059669"];
 const syncPAL=()=>{const g=getComputedStyle(document.documentElement);const c=[1,2,3,4,5,6].map(i=>g.getPropertyValue(`--chart-${i}`).trim()).filter(Boolean);if(c.length)PAL=c;};
 const CAT_C={Income:"#16a34a",Housing:"#0e7490",Insurance:"#6d28d9",Food:"#c2410c",Transport:"#1d4ed8",Utilities:"#be185d",Shopping:"#b45309",Entertainment:"#059669",Investment:"#16a34a",Travel:"#0e7490",Payment:"#0891b2",Transfer:"#1d4ed8",Others:"#475569"};
@@ -1224,7 +1285,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.21.0";
+ const APP_VERSION="7.22.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -2708,7 +2769,7 @@ const DonutChart=({data,size=170})=>{
     angle+=sweep;
     return React.createElement("path",{key:i,d:path,fill:PAL[i%PAL.length],opacity:.9});
   });
-  return React.createElement("svg",{width:size,height:size,viewBox:`0 0 ${size} ${size}`,style:{display:"block",margin:"0 auto"}},
+  return React.createElement("svg",{className:"mm-chart",width:size,height:size,viewBox:`0 0 ${size} ${size}`,style:{display:"block",margin:"0 auto"}},
     ...slices,React.createElement("circle",{cx,cy,r:ir-2,fill:"var(--bg3)"})
   );
 };
@@ -2716,7 +2777,7 @@ const SvgBar=({data,h=155})=>{
   if(!data.length)return null;
   const max=Math.max(...data.map(d=>d.amount),1);
   const W=300,pad=28,bW=Math.min(26,(W-pad*2)/data.length-6),gap=(W-pad*2)/data.length;
-  return React.createElement("svg",{width:"100%",viewBox:`0 0 300 ${h+28}`,style:{display:"block"}},
+  return React.createElement("svg",{className:"mm-chart",width:"100%",viewBox:`0 0 300 ${h+28}`,style:{display:"block"}},
     ...data.map((d,i)=>{
       const bh=Math.max(((d.amount/max)*(h-8)),2),x=pad+i*gap+gap/2-bW/2,y=h-bh;
       return React.createElement("g",{key:i},
@@ -4002,7 +4063,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
             ),
             /* Row 2: date + badges */
             React.createElement("div",{style:{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}},
-              tx._starred&&React.createElement("span",{style:{fontSize:"var(--fs-12)",color:"#d97706",display:"inline-flex",alignItems:"center",gap:2}},React.createElement(Icon,{n:"star",size:12,col:"#d97706"})),
+              tx._starred&&React.createElement("span",{className:"mm-star-pop",style:{fontSize:"var(--fs-12)",color:"#d97706",display:"inline-flex",alignItems:"center",gap:2}},React.createElement(Icon,{n:"star",size:12,col:"#d97706"})),
               React.createElement("span",{style:{fontSize:"var(--fs-11)",color:"var(--text5)"}},dmyFmt(tx.date)),
               tx.cat&&React.createElement("span",{style:{fontSize:"var(--fs-10)",color:catCol,background:catCol+"18",borderRadius:10,padding:"1px 7px",fontWeight:500}},catDisplayName(tx.cat)),
               tx.status&&tx.status!=="Unreconciled"&&React.createElement("span",{style:{fontSize:"var(--fs-10)",color:STATUS_C[tx.status],background:STATUS_C[tx.status]+"22",borderRadius:10,padding:"1px 7px"}},(STATUS_ICON[tx.status]||"")+" "+tx.status),
@@ -7004,6 +7065,7 @@ var CloudBackupPanel = ({ state, dispatch }) => {
         setAbStatus("ok");
         setAbFile(_autoBackupGetFile());
         setAbMsg("✓ Backup created successfully!");
+        mmCelebrate();
       } else {
         /* Restore previous guard so we do not break the daily schedule */
         try { if (savedDate) localStorage.setItem(LS_AUTO_BACKUP_DATE, savedDate); } catch {}
@@ -7983,7 +8045,7 @@ const PayeeEditModal=({p,onClose,dispatch})=>{
   );
 };
 
-var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,onResetAll,isMobile})=>{
+var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,reduceMotion,setReduceMotion,onResetAll,isMobile})=>{
   const[stab,setStab]=useState("appearance");
   const[confirm,setConfirm]=useState(null);
   const[editBank,setEditBank]=useState(null);
@@ -8113,7 +8175,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
             React.createElement("div",{style:{fontSize:"var(--fs-11)",color:"var(--text5)",textTransform:"uppercase",letterSpacing:1,fontWeight:600}},"Choose Theme"),
             React.createElement("div",{style:{flex:1,height:1,background:"var(--border2)"}})
           ),
-          React.createElement("div",{style:{display:"flex",gap:14,flexWrap:"wrap"}},
+          React.createElement("div",{className:"mm-stagger",style:{display:"flex",gap:14,flexWrap:"wrap"}},
             THEMES.map(t=>{
               const active=themeId===t.id;
               return React.createElement("div",{key:t.id,onClick:()=>setTheme(t.id),style:{
@@ -8149,7 +8211,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
             React.createElement("div",{style:{flex:1,height:1,background:"var(--border2)"}}),
             React.createElement("div",{style:{fontSize:"var(--fs-11)",color:"var(--text6)"}},FONTS.find(f=>f.id===fontId)?.name||"DM Sans")
           ),
-          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:10,alignItems:"start"}},
+          React.createElement("div",{className:"mm-stagger",style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:10,alignItems:"start"}},
             FONTS.map(f=>{
               const active=fontId===f.id;
               return React.createElement("div",{
@@ -8188,6 +8250,26 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
               );
             })
           )
+        ),
+        /* ── Motion ── */
+        React.createElement("div",{style:{marginTop:32}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:16}},
+            React.createElement("div",{style:{fontSize:"var(--fs-11)",color:"var(--text5)",textTransform:"uppercase",letterSpacing:1,fontWeight:600}},"Motion"),
+            React.createElement("div",{style:{flex:1,height:1,background:"var(--border2)"}})
+          ),
+          React.createElement(Card,{sx:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:16}},
+            React.createElement("div",null,
+              React.createElement("div",{style:{fontSize:"var(--fs-14)",fontWeight:600,color:"var(--text)"}},"Reduce motion"),
+              React.createElement("div",{style:{fontSize:"var(--fs-12)",color:"var(--text5)",marginTop:3,lineHeight:1.5,maxWidth:460}},"Minimise animations and transitions across the app — useful for motion sensitivity or maximum performance.")
+            ),
+            React.createElement("button",{
+              type:"button",role:"switch","aria-checked":!!reduceMotion,"aria-label":"Reduce motion",
+              onClick:()=>setReduceMotion(!reduceMotion),
+              style:{flexShrink:0,width:52,height:30,borderRadius:999,border:"1px solid "+(reduceMotion?"var(--accent)":"var(--border2)"),background:reduceMotion?"var(--accent)":"var(--bg4)",cursor:"pointer",position:"relative",transition:"background var(--dur-2),border-color var(--dur-2)",padding:0}
+            },
+              React.createElement("span",{style:{position:"absolute",top:2,left:reduceMotion?24:2,width:24,height:24,borderRadius:"50%",background:"#fff",boxShadow:"0 1px 4px rgba(0,0,0,.35)",transition:"left var(--dur-2) var(--ease-spring)"}})
+            )
+          )
         )
       ),
 
@@ -8198,7 +8280,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
           React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
             React.createElement("div",null,
               React.createElement("h3",{style:{fontFamily:"'Sora',sans-serif",fontSize:"var(--fs-18)",fontWeight:700,color:"var(--text)"}},"Bank Accounts"),
-              React.createElement("p",{style:{color:"var(--text5)",fontSize:"var(--fs-12)",marginTop:3}},state.banks.length+" account(s) · Total: ",React.createElement("span",{style:{color:"#0e7490"}},INR(state.banks.reduce((s,b)=>s+b.balance,0))),state.banks.some(b=>b.hidden)?React.createElement("span",{style:{color:"#d97706",marginLeft:8}},"· "+state.banks.filter(b=>b.hidden).length+" hidden"):null)
+              React.createElement("p",{style:{color:"var(--text5)",fontSize:"var(--fs-12)",marginTop:3}},state.banks.length+" account(s) · Total: ",React.createElement("span",{style:{color:"#0e7490"}},React.createElement(CountUp,{value:state.banks.reduce((s,b)=>s+b.balance,0),dur:600,fmt:v=>INR(v)})),state.banks.some(b=>b.hidden)?React.createElement("span",{style:{color:"#d97706",marginLeft:8}},"· "+state.banks.filter(b=>b.hidden).length+" hidden"):null)
             )
           )
         ),
@@ -8247,7 +8329,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
         React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}},
           React.createElement("div",null,
             React.createElement("h3",{style:{fontFamily:"'Sora',sans-serif",fontSize:"var(--fs-18)",fontWeight:700,color:"var(--text)"}},"Credit Cards"),
-            React.createElement("p",{style:{color:"var(--text5)",fontSize:"var(--fs-12)",marginTop:3}},state.cards.length+" card(s) · Outstanding: ",React.createElement("span",{style:{color:"#c2410c"}},INR(state.cards.reduce((s,c)=>s+c.outstanding,0))),state.cards.some(c=>c.hidden)?React.createElement("span",{style:{color:"#d97706",marginLeft:8}},"· "+state.cards.filter(c=>c.hidden).length+" hidden"):null)
+            React.createElement("p",{style:{color:"var(--text5)",fontSize:"var(--fs-12)",marginTop:3}},state.cards.length+" card(s) · Outstanding: ",React.createElement("span",{style:{color:"#c2410c"}},React.createElement(CountUp,{value:state.cards.reduce((s,c)=>s+c.outstanding,0),dur:600,fmt:v=>INR(v)})),state.cards.some(c=>c.hidden)?React.createElement("span",{style:{color:"#d97706",marginLeft:8}},"· "+state.cards.filter(c=>c.hidden).length+" hidden"):null)
           )
         ),
         React.createElement(Card,{sx:{padding:0,overflowY:"hidden",overflowX:"auto"}},
@@ -8324,7 +8406,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
         React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}},
           React.createElement("div",null,
             React.createElement("h3",{style:{fontFamily:"'Sora',sans-serif",fontSize:"var(--fs-18)",fontWeight:700,color:"var(--text)"}},"Loan Accounts"),
-            React.createElement("p",{style:{color:"var(--text5)",fontSize:"var(--fs-12)",marginTop:3}},state.loans.length+" loan(s) · Outstanding: ",React.createElement("span",{style:{color:"#ef4444"}},INR(state.loans.reduce((s,l)=>s+l.outstanding,0))))
+            React.createElement("p",{style:{color:"var(--text5)",fontSize:"var(--fs-12)",marginTop:3}},state.loans.length+" loan(s) · Outstanding: ",React.createElement("span",{style:{color:"#ef4444"}},React.createElement(CountUp,{value:state.loans.reduce((s,l)=>s+l.outstanding,0),dur:600,fmt:v=>INR(v)})))
           )
         ),
         React.createElement(Card,{sx:{padding:0,overflowY:"hidden",overflowX:"auto"}},
@@ -8854,6 +8936,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
                 URL.revokeObjectURL(url);
                 recordBackupDate();
                 setBackupMsg("✓ Backup downloaded successfully!");
+                mmCelebrate();
                 setTimeout(()=>setBackupMsg(""),4000);
               }catch(e){setBackupMsg("✗ Export failed: "+e.message);}
             },v:"success",sx:{gap:8}},"⬇ Download Backup"),
@@ -12366,7 +12449,8 @@ const ToastHost=({toasts,onUndo,onClose})=>React.createElement("div",{className:
   toasts.map(t=>React.createElement("div",{key:t.id,className:"mm-toast",role:"alert"},
     React.createElement("div",{className:"mm-toast-msg"},t.msg),
     t.undo&&React.createElement("button",{className:"mm-toast-undo",onClick:()=>onUndo(t.id)},"Undo"),
-    React.createElement("button",{className:"mm-toast-close",onClick:()=>onClose(t.id),"aria-label":"Dismiss"},"×")
+    React.createElement("button",{className:"mm-toast-close",onClick:()=>onClose(t.id),"aria-label":"Dismiss"},"×"),
+    React.createElement("span",{className:"mm-toast-bar","aria-hidden":"true",style:{animationDuration:(t.dur||(t.undo?6000:3200))+"ms"}})
   ))
 );
 /* Sticky subheader */
@@ -12422,8 +12506,90 @@ const WhatsNewModal=({onClose})=>{
   );
 };
 
-/* ── NAV ICONS -- pixel-perfect 16×16 stroke SVGs, inherit color via currentColor ── */
-var NavIcon=({id,size=16})=>{
+/* ── SF-Symbols-inspired 24×24 monoline glyphs (used on macOS themes) ── */
+var NavIconSF=({id,size=16})=>{
+  const s={width:size,height:size,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round",display:"block",flexShrink:0};
+  const g=(...k)=>React.createElement("svg",s,...k);
+  const P=d=>React.createElement("path",{d});
+  const L=(x1,y1,x2,y2)=>React.createElement("line",{x1,y1,x2,y2});
+  const C=(cx,cy,r,f)=>React.createElement("circle",{cx,cy,r,...(f?{fill:"currentColor",stroke:"none"}:{})});
+  const R=(x,y,w,h,rx)=>React.createElement("rect",{x,y,width:w,height:h,rx:rx==null?1.8:rx});
+  const PL=(pts,extra)=>React.createElement("polyline",{points:pts,...(extra||{})});
+  const T=t=>React.createElement("text",{x:12,y:16.4,textAnchor:"middle",fontSize:9,fontWeight:600,fill:"currentColor",stroke:"none",fontFamily:"sans-serif"},t);
+  switch(id){
+    /* ── Dashboard: one tall panel + two stacked tiles ── */
+    case"dashboard":
+      return g(R(3,4,9,16,2.5),R(15,4,6,7,2),R(15,13,6,7,2));
+    /* ── Banks: classical building.columns ── */
+    case"banks":
+      return g(P("M3 9.4 12 4l9 5.4"),L(5.6,10.6,5.6,18.2),L(12,10.6,12,18.2),L(18.4,10.6,18.4,18.2),L(3.4,19.6,20.6,19.6));
+    /* ── Cards: credit card + magstripe + chip ── */
+    case"cards":
+      return g(R(2.5,5,19,14,3),L(2.5,10,21.5,10),R(5.5,13.5,4,2.4,0.8));
+    /* ── Cash: wallet.pass ── */
+    case"cash":
+      return g(R(3,5.5,18,13,3),P("M21 10.5h-4.5a2.5 2.5 0 000 5H21"),C(16.5,13,1,true));
+    /* ── Loans: percent in a ring ── */
+    case"loans":
+      return g(C(12,12,9),L(8.6,15.4,15.4,8.6),C(9.7,9.7,1.45,true),C(14.3,14.3,1.45,true));
+    /* ── Scheduled: calendar + clock ── */
+    case"scheduled":
+      return g(R(2.7,4.6,18.6,16.4,2.4),L(7.6,2.5,7.6,6.5),L(16.4,2.5,16.4,6.5),L(2.7,10.2,21.3,10.2),C(12,15.7,3.7),PL("12,13.88 12,15.7 14.15,16.7"));
+    /* ── All Transactions: up/down flow arrows ── */
+    case"unified_ledger":
+      return g(P("M8 19.5V4.5"),PL("4.5,8 8,4.5 11.5,8"),P("M16 4.5v15"),PL("12.5,16 16,19.5 19.5,16"));
+    /* ── Investments overview: rising trend over axes ── */
+    case"inv_dash":
+      return g(P("M3.6 3.4v17h17"),PL("7,15.6 11.5,10.5 14.5,13 19.6,6.6"),PL("16.1,6.6 19.6,6.6 19.6,10.1"));
+    /* ── Mutual Funds: donut allocation ── */
+    case"inv_mf":
+      return g(C(12,12,8.5),C(12,12,3.4),L(12,3.5,12,8.6),L(19.4,14.9,13.4,12.6));
+    /* ── Shares: candlestick chart ── */
+    case"inv_shares":
+      return g(L(6,3,6,21),R(4,7,4,8,1),L(12,5,12,18),R(10,8,4,6,1),L(18,2.5,18,15),R(16,5,4,5,1));
+    /* ── Fixed Deposit: padlock ── */
+    case"inv_fd":
+      return g(P("M8.5 10.8V8.6a3.5 3.5 0 017 0v2.2"),R(5.2,10.8,13.6,9.7,2.6),C(12,14.4,1.4),L(12,15.6,12,17.2));
+    /* ── Real Estate: house with door ── */
+    case"inv_re":
+      return g(P("M3.2 11.6 12 4l8.8 7.6"),P("M5.6 10.4V20h12.8v-9.6"),R(9.6,14.6,4.8,5.4,0.6),L(2.8,20.6,21.2,20.6));
+    /* ── Provident Fund: shield + rupee ── */
+    case"inv_pf":
+      return g(P("M12 3 5.2 5.6v6.4c0 4 2.8 6.9 6.8 8.2 4-1.3 6.8-4.2 6.8-8.2V5.6L12 3Z"),T("\u20B9"));
+    /* ── Calendar: grid + highlighted day ── */
+    case"calendar":
+      return g(R(3,5,18,16,3),L(8,3,8,6.5),L(16,3,16,6.5),L(3,9.5,21,9.5),C(12,15.8,1.9,true));
+    /* ── Goals: concentric target ── */
+    case"goals":
+      return g(C(12,12,9),C(12,12,5),C(12,12,1.5,true));
+    /* ── Insights: lightbulb ── */
+    case"insights":
+      return g(P("M12 3.5a5.5 5.5 0 00-3 10.1c.7.5 1.1 1.2 1.2 2.1h3.6c.1-.9.5-1.6 1.2-2.1A5.5 5.5 0 0012 3.5Z"),L(10.5,19,13.5,19),L(11,21.5,13,21.5));
+    /* ── Notes: document + folded corner + lines ── */
+    case"notes":
+      return g(P("M14.5 3H7a2.5 2.5 0 00-2.5 2.5v13A2.5 2.5 0 007 21h10a2.5 2.5 0 002.5-2.5V8Z"),PL("14.5,3 14.5,8 19.5,8"),L(8,13,15.5,13),L(8,16.5,12.5,16.5));
+    /* ── Calculator: body + display + keys ── */
+    case"calculator":
+      return g(R(4.5,2.5,15,19,3),R(7,5,10,4,1),C(8.5,13.5,1.15,true),C(12,13.5,1.15,true),C(15.5,13.5,1.15,true),C(8.5,17.5,1.15,true),C(12,17.5,1.15,true),C(15.5,17.5,1.15,true));
+    /* ── Reports: document + bar chart ── */
+    case"reports":
+      return g(P("M14.5 3H7a2.5 2.5 0 00-2.5 2.5v13A2.5 2.5 0 007 21h10a2.5 2.5 0 002.5-2.5V8Z"),PL("14.5,3 14.5,8 19.5,8"),R(7.5,14,2,4,0.6),R(11,11.5,2,6.5,0.6),R(14.5,9,2,9,0.6));
+    /* ── Settings: gear ── */
+    case"settings":
+      return g(P("M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"),C(12,12,3));
+    /* ── Info: circled i ── */
+    case"info":
+      return g(C(12,12,9),L(12,11,12,16.5),C(12,7.8,1.15,true));
+    /* ── Tax Estimator: receipt + percent ── */
+    case"tax_est":
+      return g(P("M6 3h12v18l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4Z"),L(9,8,15,8),L(9.5,15,14.5,10),C(10.3,10.8,1),C(13.7,14.2,1));
+    default:
+      return g(C(12,12,7));
+  }
+};
+
+/* ── NAV ICONS (default) -- 16×16 stroke SVGs, inherit color via currentColor ── */
+var NavIconBase=({id,size=16})=>{
   const s={width:size,height:size,viewBox:"0 0 16 16",fill:"none",stroke:"currentColor",strokeWidth:1.5,strokeLinecap:"round",strokeLinejoin:"round",display:"block",flexShrink:0};
   const g=(...k)=>React.createElement("svg",s,...k);
   const P=d=>React.createElement("path",{d});
@@ -12433,76 +12599,57 @@ var NavIcon=({id,size=16})=>{
   const PL=(pts,extra)=>React.createElement("polyline",{points:pts,...(extra||{})});
   const T=t=>React.createElement("text",{x:8,y:10.8,textAnchor:"middle",fontSize:6.5,fontWeight:700,fill:"currentColor",stroke:"none",fontFamily:"sans-serif"},t);
   switch(id){
-    /* ── Dashboard: one large panel + two stacked tiles ── */
     case"dashboard":
       return g(R(2,2,5.5,12,1.5),R(9,2,5,5,1.5),R(9,8.5,5,5.5,1.5));
-    /* ── Banks: roof + three columns + base ── */
     case"banks":
       return g(P("M2 6.3 8 2.3 14 6.3"),L(4,7,4,12.2),L(8,7,8,12.2),L(12,7,12,12.2),L(2.2,12.6,13.8,12.6));
-    /* ── Cards: rounded card + magstripe + chip ── */
     case"cards":
       return g(R(1.5,3.5,13,9,1.9),L(1.5,6.9,14.5,6.9),R(3.4,9.2,3,2,0.6));
-    /* ── Cash: modern wallet + button pocket ── */
     case"cash":
       return g(R(1.5,3.8,13,8.6,2),P("M14.5 7.6H11.4a1.5 1.5 0 000 3h3.1"),C(11.9,9.1,0.7,true));
-    /* ── Loans: percent in a circle (interest) ── */
     case"loans":
       return g(C(8,8,6),L(5.6,10.4,10.4,5.6),C(6.2,6.2,0.95),C(9.8,9.8,0.95));
-    /* ── Scheduled: calendar + clock ── */
     case"scheduled":
       return g(R(1.8,3,12.4,11,1.6),L(5,1.6,5,4.2),L(11,1.6,11,4.2),L(1.8,6.8,14.2,6.8),C(8,10.6,2.5),PL("8,9.3 8,10.6 9.5,11.3"));
-    /* ── All Transactions: up/down flow arrows ── */
     case"unified_ledger":
       return g(P("M5 13.2V4.2"),PL("2.6,6.6 5,4.2 7.4,6.6"),P("M11 2.8v9"),PL("8.6,9.4 11,11.8 13.4,9.4"));
-    /* ── Investments overview: rising trend + arrow ── */
     case"inv_dash":
       return g(PL("1.8,11.5 5.6,7.6 8.6,9.6 14,4.2"),PL("10.6,4.2 14,4.2 14,7.6"));
-    /* ── Mutual Funds: donut allocation ── */
     case"inv_mf":
       return g(C(8,8,5.4),C(8,8,2.1),L(8,2.6,8,5.9),L(12.9,9.4,10.2,8.5));
-    /* ── Shares: candlestick chart ── */
     case"inv_shares":
       return g(L(4,2.6,4,13.4),R(2.7,5,2.6,5,0.5),L(9,2,9,12),R(7.7,4.4,2.6,4,0.5),L(13,4,13,14),R(11.7,6.4,2.6,5,0.5));
-    /* ── Fixed Deposit: padlock (locked-in) ── */
     case"inv_fd":
       return g(P("M5.5 7V5.2a2.5 2.5 0 015 0V7"),R(3.6,7,8.8,6.4,1.6),C(8,9.7,0.95),L(8,10.5,8,11.5));
-    /* ── Real Estate: house with door ── */
     case"inv_re":
       return g(P("M2.2 8 8 2.6 13.8 8"),P("M3.6 7.1V13.4H12.4V7.1"),R(6.7,9.6,2.6,3.8,0.4),L(2.2,13.6,13.8,13.6));
-    /* ── Provident Fund: shield + rupee ── */
     case"inv_pf":
       return g(P("M8 1.8 2.6 4v4.6c0 3 2.3 5.2 5.4 6 3.1-.8 5.4-3 5.4-6V4L8 1.8Z"),T("\u20B9"));
-    /* ── Calendar: grid + highlighted day ── */
     case"calendar":
       return g(R(1.8,3,12.4,11.5,1.6),L(5,1.6,5,4.3),L(11,1.6,11,4.3),L(1.8,7,14.2,7),C(8,10.7,1.3,true));
-    /* ── Goals: concentric target ── */
     case"goals":
       return g(C(8,8,6),C(8,8,3.3),C(8,8,1,true));
-    /* ── Insights: lightbulb (ideas) ── */
     case"insights":
       return g(P("M5.2 10a4 4 0 116 0c-.5.5-.9 1-1 1.8H6.2c-.1-.8-.5-1.3-1-1.8Z"),L(6.5,13,9.5,13),L(7,14.2,9,14.2));
-    /* ── Notes: document + folded corner + lines ── */
     case"notes":
       return g(P("M10.3 2H4.2a1.3 1.3 0 00-1.3 1.3v9.4a1.3 1.3 0 001.3 1.3h7.6a1.3 1.3 0 001.3-1.3V4.7Z"),PL("10.3,2 10.3,4.7 13,4.7"),L(5,8,11,8),L(5,10.5,8.5,10.5));
-    /* ── Calculator: body + display + keys ── */
     case"calculator":
       return g(R(2.7,1.6,10.6,12.8,1.8),R(4.4,3.2,7.2,2.6,0.6),C(5.6,8.6,0.85,true),C(8,8.6,0.85,true),C(10.4,8.6,0.85,true),C(5.6,11.4,0.85,true),C(8,11.4,0.85,true),C(10.4,11.4,0.85,true));
-    /* ── Reports: document + bar chart ── */
     case"reports":
       return g(P("M9.5 2H4.2a1.3 1.3 0 00-1.3 1.3v9.4a1.3 1.3 0 001.3 1.3h7.6a1.3 1.3 0 001.3-1.3V5.2Z"),PL("9.5,2 9.5,5.2 12.8,5.2"),R(5,9.5,1.4,3,0.4),R(7.6,8,1.4,4.5,0.4),R(10.2,6.8,1.4,5.7,0.4));
-    /* ── Settings: gear ── */
     case"settings":
       return g(C(8,8,2.3),P("M8 1.4v1.4M8 13.2v1.4M1.4 8h1.4M13.2 8h1.4M3.3 3.3l1 1M11.7 11.7l1 1M3.3 12.7l1-1M11.7 4.3l1-1"));
-    /* ── Info: circled i ── */
     case"info":
       return g(C(8,8,6.2),L(8,7.2,8,11.4),C(8,4.9,0.85,true));
-    /* ── Tax Estimator: receipt + percent ── */
     case"tax_est":
       return g(P("M4 2h8v11.6l-1.3-.9-1.3.9-1.3-.9-1.3.9-1.3-.9-1.3.9Z"),L(5.8,4.8,10.2,4.8),L(6.2,9.6,9.8,6.4),C(6.7,7,0.7),C(9.3,9.4,0.7));
     default:
       return g(C(8,8,5));
   }
 };
+
+/* ── NavIcon dispatcher — SF-Symbols set on macOS themes, classic set otherwise ── */
+var NavIcon=({id,size=16})=>useMacTheme()?React.createElement(NavIconSF,{id,size}):React.createElement(NavIconBase,{id,size});
 
 /* ══════════════════════════════════════════════════════════════════════════
    UNIFIED TRANSACTION LEDGER — all bank + card + cash transactions combined
@@ -14484,7 +14631,7 @@ const PayeeAnalyticsModal=({allTx,categories,onClose,isMobile})=>{
     const vals=months.map(m=>monthly[m]||0);
     const maxV=Math.max(...vals,1);
     const W=72,H=24,bW=8,gap=3;
-    return React.createElement("svg",{width:W,height:H,viewBox:`0 0 ${W} ${H}`,style:{display:"block",flexShrink:0}},
+    return React.createElement("svg",{className:"mm-chart",width:W,height:H,viewBox:`0 0 ${W} ${H}`,style:{display:"block",flexShrink:0}},
       vals.map((v,i)=>{
         const bH=Math.max((v/maxV)*(H-2),v>0?2:0);
         return React.createElement("rect",{key:i,x:i*(bW+gap),y:H-bH,width:bW,height:bH,rx:2,fill:v>0?"var(--accent)":"var(--border2)"});
@@ -15001,7 +15148,7 @@ const Dashboard=React.memo(({data,isMobile,onJumpToTx})=>{
     }
     const maxV=Math.max(...out,1);
     const W=52,H=20,bW=4,gap=3;
-    return React.createElement("svg",{width:W,height:H,viewBox:`0 0 ${W} ${H}`,style:{display:"block",flexShrink:0}},
+    return React.createElement("svg",{className:"mm-chart",width:W,height:H,viewBox:`0 0 ${W} ${H}`,style:{display:"block",flexShrink:0}},
       out.map((v,i)=>{
         const bH=Math.max((v/maxV)*(H-2),v>0?2:1);
         return React.createElement("rect",{key:i,x:i*(bW+gap),y:H-bH,width:bW,height:bH,rx:1.5,fill:v>0?col+"cc":"var(--border2)"});
@@ -15882,8 +16029,8 @@ const Dashboard=React.memo(({data,isMobile,onJumpToTx})=>{
             const filled=(pct/100)*circ,col=pct>=30?"#16a34a":pct>=15?"#b45309":"#ef4444",C=40;
             return React.createElement("svg",{width:80,height:80,viewBox:"0 0 80 80",flexShrink:0},
               React.createElement("circle",{cx:C,cy:C,r,fill:"none",stroke:"var(--border)",strokeWidth:7}),
-              React.createElement("circle",{cx:C,cy:C,r,fill:"none",stroke:col,strokeWidth:7,
-                strokeDasharray:`${filled} ${circ}`,strokeLinecap:"round",transform:`rotate(-90 ${C} ${C})`}),
+              React.createElement("circle",{cx:C,cy:C,r,fill:"none",stroke:col,strokeWidth:7,className:"mm-ring2",
+                strokeDasharray:`${filled} ${circ}`,strokeLinecap:"round",transform:`rotate(-90 ${C} ${C})`,style:{"--ring-filled":`${filled} ${circ}`,"--ring-circ":String(circ)}}),
               React.createElement("text",{x:C,y:C-4,dominantBaseline:"middle",textAnchor:"middle",fill:col,fontSize:14,fontWeight:800,fontFamily:"'Sora',sans-serif"},pct.toFixed(0)+"%"),
               React.createElement("text",{x:C,y:C+12,dominantBaseline:"middle",textAnchor:"middle",fill:"var(--text5)",fontSize:7,fontFamily:"'DM Sans',sans-serif"},"SAVED")
             );
@@ -24295,16 +24442,25 @@ const ConfirmModal=({msg,onConfirm,onCancel,title,confirmLabel,btnVariant,detail
     )
   );
 
-const SectionTab=({id,active,label,icon,onClick})=>React.createElement("button",{
+const SectionTab=({id,active,label,icon,onClick})=>{
+  const mac=useMacTheme();
+  const macStyle=mac?{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"9px 12px",borderRadius:8,border:"none",cursor:"pointer",
+    fontFamily:"var(--font-body)",fontSize:"var(--fs-13)",fontWeight:active?600:500,
+    background:active?"var(--accent)":"transparent",
+    color:active?"#fff":"var(--text3)",
+    boxShadow:active?"0 1px 2px rgba(0,0,0,.20)":"none",
+    transition:"background .15s,color .15s",marginBottom:3,textAlign:"left"}:null;
+  return React.createElement("button",{
   onClick:()=>onClick(id),
-  style:{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"10px 14px",borderRadius:10,border:"none",cursor:"pointer",
+  style:macStyle||{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"10px 14px",borderRadius:10,border:"none",cursor:"pointer",
     fontFamily:"'DM Sans',sans-serif",fontSize:"var(--fs-13)",fontWeight:active?700:400,
     background:active?"linear-gradient(90deg,var(--accentbg),var(--accentbg2) 60%,transparent 100%)":"transparent",
     color:active?"var(--accent)":"var(--text5)",
     borderLeft:active?"3px solid var(--accent)":"3px solid transparent",
     boxShadow:active?"inset 3px 0 10px var(--accentbg5)":"none",
     transition:"all .2s",marginBottom:3,textAlign:"left"}
-},React.createElement("span",{style:{display:"flex",alignItems:"center",opacity:active?1:0.65,filter:active?"drop-shadow(0 0 4px var(--accentbg5))":"none"}},icon),label);
+},React.createElement("span",{style:mac?{display:"flex",alignItems:"center",opacity:active?1:0.72}:{display:"flex",alignItems:"center",opacity:active?1:0.65,filter:active?"drop-shadow(0 0 4px var(--accentbg5))":"none"}},icon),label);
+};
 
 /* ── INLINE PAYEE PICKER ──────────────────────────────────────────────────
    Defined at TOP LEVEL (not inside CategoriesPanel) so its identity is
@@ -24942,7 +25098,12 @@ const DateFilter=({from,to,onFrom,onTo,presets})=>
 const MONTH_NAMES=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const VIEWS_3=[{id:"snapshot",label:"Snapshot",icon:React.createElement(Icon,{n:"chart",size:18})},{id:"detailed",label:"Detailed",icon:React.createElement(Icon,{n:"report",size:18})},{id:"heatmap",label:"Heatmap",icon:React.createElement(Icon,{n:"fire",size:18})}];
 const VIEWS_2=[{id:"snapshot",label:"Snapshot",icon:React.createElement(Icon,{n:"chart",size:18})},{id:"detailed",label:"Detailed",icon:React.createElement(Icon,{n:"report",size:18})}];
-const ViewToggle=({views=VIEWS_3,value,onChange})=>React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
+const ViewToggle=({views=VIEWS_3,value,onChange})=>{
+  const mac=useMacTheme();
+  if(mac)return React.createElement("div",{className:"mm-seg",role:"tablist","aria-label":"View"},
+    views.map(v=>React.createElement("button",{key:v.id,onClick:()=>onChange(v.id),role:"tab","aria-selected":value===v.id,className:"mm-seg-btn"+(value===v.id?" mm-seg-on":"")},v.icon," ",v.label))
+  );
+  return React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
   views.map(v=>React.createElement("button",{key:v.id,onClick:()=>onChange(v.id),style:{
     padding:"6px 14px",borderRadius:20,
     border:"1.5px solid "+(value===v.id?"var(--accent)":"var(--border)"),
@@ -24952,7 +25113,8 @@ const ViewToggle=({views=VIEWS_3,value,onChange})=>React.createElement("div",{st
     cursor:"pointer",fontSize:"var(--fs-12)",fontFamily:"'DM Sans',sans-serif",fontWeight:value===v.id?700:400,
     display:"flex",alignItems:"center",gap:5,transition:"all .15s"
   }},v.icon," ",v.label))
-);
+  );
+};
 
 /* Controls strip that houses AccFilter + ViewToggle */
 const RptCtrlBar=({children,onExportPDF})=>React.createElement("div",{className:"no-print",style:{
@@ -25373,7 +25535,7 @@ const CatDonut=({data,size=140})=>{
     angle+=sweep;
     return React.createElement("path",{key:i,d:path,fill:d.color||PAL[i%PAL.length],opacity:.9});
   });
-  return React.createElement("svg",{width:size,height:size,viewBox:`0 0 ${size} ${size}`,style:{display:"block",margin:"0 auto"}},
+  return React.createElement("svg",{className:"mm-chart",width:size,height:size,viewBox:`0 0 ${size} ${size}`,style:{display:"block",margin:"0 auto"}},
     ...slices,React.createElement("circle",{cx,cy,r:ir-2,fill:"var(--bg3)"})
   );
 };
@@ -25386,7 +25548,7 @@ const TrendLine=({incData,expData,h=120})=>{
   const W=500,pad=32,xStep=(W-pad*2)/Math.max(n-1,1);
   const y=v=>pad+(1-(v/max))*(h-pad);
   const mkPts=(arr)=>arr.map((d,i)=>`${pad+i*xStep},${y(d.v)}`).join(" ");
-  return React.createElement("svg",{width:"100%",viewBox:`0 0 ${W} ${h+16}`,style:{display:"block"}},
+  return React.createElement("svg",{className:"mm-chart",width:"100%",viewBox:`0 0 ${W} ${h+16}`,style:{display:"block"}},
     React.createElement("line",{x1:pad,y1:h,x2:W-pad,y2:h,stroke:"var(--border)",strokeWidth:1}),
     incData.length>1&&React.createElement("polyline",{points:mkPts(incData)+` ${pad+(incData.length-1)*xStep},${h} ${pad},${h}`,fill:"#22c55e22",stroke:"none"}),
     expData.length>1&&React.createElement("polyline",{points:mkPts(expData)+` ${pad+(expData.length-1)*xStep},${h} ${pad},${h}`,fill:"#ef444422",stroke:"none"}),
@@ -37398,7 +37560,7 @@ const InsightCalculators=({isMobile})=>{
 /* ── InfoSection, TaxEstimatorSection, App, ReactDOM.createRoot ── */
 const InfoSection=React.memo(({isMobile})=>{
   const YEAR=new Date().getFullYear();
-  const Block=({icon,title,children,accent="#0284c7"})=>React.createElement("div",{style:{
+  const Block=({icon,title,children,accent="#0284c7"})=>React.createElement("div",{className:"mm-reveal",style:{
     background:"var(--card)",border:"1px solid var(--border)",borderRadius:14,
     padding:"20px 22px",marginBottom:16,
   }},
@@ -39344,8 +39506,8 @@ function App(){
   const toastIdRef=React.useRef(1);
   const pushToast=React.useCallback((msg,opts={})=>{
     const id=toastIdRef.current++;
-    setToasts(ts=>[...ts,{id,msg,undo:!!opts.undo}]);
     const ttl=opts.ttl||(opts.undo?6000:3200);
+    setToasts(ts=>[...ts,{id,msg,undo:!!opts.undo,dur:ttl}]);
     setTimeout(()=>setToasts(ts=>ts.filter(x=>x.id!==id)),ttl);
     return id;
   },[]);
@@ -39367,6 +39529,29 @@ function App(){
   const[fontId,setFontId]=useState(loadFont);
   const setFont=id=>{setFontId(id);applyFont(id);saveFont(id);};
   React.useEffect(()=>{applyFont(fontId);},[fontId]);
+  const[reduceMotion,setReduceMotionId]=useState(loadReduceMotion);
+  const setReduceMotion=on=>{setReduceMotionId(on);applyReduceMotion(on);saveReduceMotion(on);};
+  React.useEffect(()=>{applyReduceMotion(reduceMotion);},[reduceMotion]);
+  /* ── Panel enter animation: re-run .mm-panel-in on the scroll container
+        whenever the active tab changes (keep-alive panels can't animate
+        themselves — they use display:contents and generate no box). ── */
+  const contentRef=React.useRef(null);
+  React.useEffect(()=>{
+    const el=contentRef.current;if(!el)return;
+    el.classList.remove("mm-panel-in");
+    void el.offsetWidth;
+    el.classList.add("mm-panel-in");
+  },[tab]);
+  /* ── Scroll reveal: reveal .mm-reveal elements of the active panel as they
+        enter the viewport (re-armed whenever the tab changes). ── */
+  React.useEffect(()=>{
+    const root=contentRef.current;if(!root)return;
+    const els=root.querySelectorAll(".mm-reveal:not(.mm-in)");
+    if(typeof IntersectionObserver==="undefined"){els.forEach(e=>e.classList.add("mm-in"));return;}
+    const io=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add("mm-in");io.unobserve(e.target);}});},{rootMargin:"0px 0px -8% 0px",threshold:.06});
+    els.forEach(e=>io.observe(e));
+    return()=>io.disconnect();
+  },[tab]);
   /* ── Backup age monitor ── */
   const[backupBanner,setBackupBanner]=useState(null); /* {ageDays,lastDate} or null */
   /* ── Keyboard shortcuts: Ctrl/Cmd+K = global search, Ctrl/Cmd+Z = undo,
@@ -40377,9 +40562,11 @@ function App(){
   if(locked)return React.createElement(PinLockScreen,{onUnlock});
 
   return React.createElement(React.Fragment,null,
-    React.createElement("div",{style:{display:"flex",height:"100vh",background:"var(--bg)"}},
+    React.createElement("div",{style:{display:"flex",flexDirection:"column",height:"100vh",background:"var(--bg)"}},
+    React.createElement("div",{style:{display:"flex",flex:1,minHeight:0}},
     isMobile?React.createElement(SidebarCollapsed):(navCollapsed?React.createElement(SidebarCollapsed):React.createElement(SidebarFull)),
     React.createElement("div",{
+      ref:contentRef,
       className:isMobile?"mobile-content-panel mm-has-botnav":"",
       style:{
         flex:1,overflowY:"auto",
@@ -40454,13 +40641,14 @@ function App(){
           React.createElement(ReportsSection,{data:state,isMobile,onJumpToLedger}))),
       React.createElement("div",{style:{display:tab==="settings"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Settings"},
-          React.createElement(SettingsSection,{state,dispatch,themeId,setTheme,fontId,setFont,isMobile,onResetAll:async()=>{_mmResetting=true;dispatch({type:"RESET_ALL"});try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_EOD_PRICES);localStorage.removeItem(LS_EOD_NAVS);localStorage.removeItem(LS_THEME);localStorage.removeItem(TAX_LS_KEY);localStorage.removeItem(CALC_LS_KEY);localStorage.removeItem("mm_v7_chatbot_training");localStorage.removeItem(LS_ENTRY_SCORES);localStorage.removeItem(LS_ENTRY_SNAPSHOTS);/* Stamp reset time so Drive boot pull cannot undo the reset */localStorage.setItem(LS_LAST_LOCAL_EDIT,new Date().toISOString());localStorage.removeItem(LS_GDRIVE_LAST_SYNC);}catch{}/* Clear transactions from IndexedDB so no stale data survives reload */try{await clearTxIDB();}catch{}setTimeout(()=>window.location.reload(),100);}}))),
+          React.createElement(SettingsSection,{state,dispatch,themeId,setTheme,fontId,setFont,reduceMotion,setReduceMotion,isMobile,onResetAll:async()=>{_mmResetting=true;dispatch({type:"RESET_ALL"});try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_EOD_PRICES);localStorage.removeItem(LS_EOD_NAVS);localStorage.removeItem(LS_THEME);localStorage.removeItem(TAX_LS_KEY);localStorage.removeItem(CALC_LS_KEY);localStorage.removeItem("mm_v7_chatbot_training");localStorage.removeItem(LS_ENTRY_SCORES);localStorage.removeItem(LS_ENTRY_SNAPSHOTS);/* Stamp reset time so Drive boot pull cannot undo the reset */localStorage.setItem(LS_LAST_LOCAL_EDIT,new Date().toISOString());localStorage.removeItem(LS_GDRIVE_LAST_SYNC);}catch{}/* Clear transactions from IndexedDB so no stale data survives reload */try{await clearTxIDB();}catch{}setTimeout(()=>window.location.reload(),100);}}))),
       React.createElement("div",{style:{display:tab==="info"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"About"},
           React.createElement(InfoSection,{isMobile}))),
       React.createElement("div",{style:{display:tab==="tax_est"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Tax Estimator"},
           React.createElement(TaxEstimatorWrapper,{taxData:state.taxData||null,taxData2627:state.taxData2627||null,hiddenTabIds:state.taxHiddenTabs||[],dispatch})))
+    )
     )
   ),
     FsaPermCard,
