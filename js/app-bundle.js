@@ -1285,7 +1285,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
- const APP_VERSION="7.22.0";
+  const APP_VERSION="7.23.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -12472,6 +12472,7 @@ const useKbdList=(count,onEnter)=>{
 const StickyHd=({children,style={}})=>React.createElement("div",{className:"mm-sticky-hd",style},children);
 
 const WHATS_NEW=[
+  {icon:"calendar",t:"Net Liquid Position · Next 60 Days",d:"A new dashboard hero card projects your liquid position over the next 60 days: Bank + Cash, minus scheduled outflows, plus scheduled inflows — with a Solvent / Shortfall badge and a count of the obligations landing in that window. It sits alongside the existing 30 / 90 / 180-day views and can be toggled from Customize Dashboard."},
   {icon:"chart",t:"Fix: NAV refresh actually works now — and its status tells the truth",d:"AMFI's NAVAll.txt and the mfnav.in fallback don't allow cross-origin requests, so every refresh silently failed while the button claimed 'Updated 9 funds'. NAVs now load through a CORS proxy chain (one shared download for all funds), per-fund ⟳ reuses it, and 'Updated X funds' is counted only from funds genuinely refetched — a total failure now shows the red 'could not fetch' error, not a fake success."},
   {icon:"chart",t:"Fix: fund NAV history no longer wipes itself",d:"Per-fund ⟳ refresh (and any single-fund NAV update) previously replaced that day's whole snapshot, deleting other funds' NAVs for the date — breaking day-change %, Prev NAV pills and the value chart. Snapshot days now merge per-fund, and auto-fetch completes any partially-filled day."},
   {icon:"chart",t:"Fix: value chart's today point matches the real total",d:"The portfolio-value chart's latest point used only the snapshot bucket, silently valuing funds missing from it at ₹0. It now uses the same live-NAV rule as the dashboard, hero and cards, and always equals the sum of its own per-fund tooltip."},
@@ -15003,6 +15004,29 @@ const Dashboard=React.memo(({data,isMobile,onJumpToTx})=>{
 
   const netLiquidPostSched = bTotal + cashBal + scheduledInflowThisMonth - scheduledOutflowThisMonth;
 
+  /* ━━ NET LIQUID POSITION (NEXT 60 DAYS) ━━━━━━━━━━━━━━━━━━━━━ */
+  const next60Date = React.useMemo(()=>{
+    const d=new Date(todayStr+"T12:00:00");
+    d.setDate(d.getDate()+60);
+    return d.toISOString().split("T")[0];
+  },[todayStr]);
+  const scheduledNext60=React.useMemo(()=>
+    (data.scheduled||[]).filter(sc=>
+      sc.status==="active"&&sc.nextDate&&sc.nextDate>=todayStr&&sc.nextDate<=next60Date
+    )
+  ,[data.scheduled,todayStr,next60Date]);
+  const scheduledOutflowNext60=React.useMemo(()=>
+    scheduledNext60
+      .filter(sc=>sc.ledgerType==="debit")
+      .reduce((s,sc)=>s+sc.amount,0)
+  ,[scheduledNext60]);
+  const scheduledInflowNext60=React.useMemo(()=>
+    scheduledNext60
+      .filter(sc=>sc.ledgerType==="credit")
+      .reduce((s,sc)=>s+sc.amount,0)
+  ,[scheduledNext60]);
+  const netLiquidPostSched60 = bTotal + cashBal + scheduledInflowNext60 - scheduledOutflowNext60;
+
   /* ━━ NET LIQUID POSITION (NEXT 90 DAYS) ━━━━━━━━━━━━━━━━━━━━━ */
   const next90Date = React.useMemo(()=>{
     const d=new Date(todayStr+"T12:00:00");
@@ -15263,6 +15287,7 @@ const Dashboard=React.memo(({data,isMobile,onJumpToTx})=>{
         [
           {id:"accounts",   label:"Account Cards"},
           {id:"netliquid",  label:"Net Liquid Position — This Month"},
+          {id:"netliquid60",label:"Net Liquid Position — Next 60 Days"},
           {id:"netliquid3", label:"Net Liquid Position — Next 90 Days"},
           {id:"netliquid6", label:"Net Liquid Position — Next 180 Days"},
           {id:"kpi",        label:"KPI Strip (Income / Expenses)"},
@@ -15760,7 +15785,76 @@ const Dashboard=React.memo(({data,isMobile,onJumpToTx})=>{
       })()
     ),
 
-    /* ══ B3: NET LIQUID POSITION — NEXT 90 DAYS ═════════════════ */
+    /* ══ B3: NET LIQUID POSITION — NEXT 60 DAYS ═════════════════ */
+    W("netliquid60")&&React.createElement("div",{className:"db-card",style:{
+      padding:isMobile?"14px 16px":"18px 24px",
+      position:"relative",overflow:"hidden",
+      background:"var(--card)",border:"1px solid var(--border)",borderRadius:16,
+    }},
+      React.createElement("div",{style:{position:"absolute",top:-40,right:-40,width:140,height:140,borderRadius:"50%",background:netLiquidPostSched60>=0?"rgba(16,185,129,.08)":"rgba(239,68,68,.07)",pointerEvents:"none"}}),
+      React.createElement("div",{style:{position:"absolute",bottom:-30,left:"30%",width:100,height:100,borderRadius:"50%",background:"rgba(99,102,241,.05)",pointerEvents:"none"}}),
+
+      React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14,zIndex:1,position:"relative"}},
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:"var(--fs-9)",fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:1,marginBottom:4}},
+            "Net Liquid Position · Next 60 Days"
+          ),
+          React.createElement("div",{style:{display:"flex",alignItems:"baseline",gap:10,flexWrap:"wrap"}},
+            React.createElement("div",{style:{fontSize:isMobile?26:36,fontFamily:"'Sora',sans-serif",fontWeight:800,color:netLiquidPostSched60>=0?"var(--accent)":"#ef4444",lineHeight:1,letterSpacing:"-1px"}},
+              INR(netLiquidPostSched60)
+            ),
+            React.createElement("div",{style:{fontSize:"var(--fs-10)",color:"var(--text5)",fontWeight:500}},
+              "after scheduled obligations"
+            )
+          )
+        ),
+        React.createElement("div",{style:{
+          padding:"4px 10px",borderRadius:20,fontSize:"var(--fs-10)",fontWeight:700,letterSpacing:.3,flexShrink:0,
+          background:netLiquidPostSched60>=0?"rgba(16,185,129,.12)":"rgba(239,68,68,.12)",
+          color:netLiquidPostSched60>=0?"#10b981":"#ef4444",
+          border:`1px solid ${netLiquidPostSched60>=0?"rgba(16,185,129,.25)":"rgba(239,68,68,.25)"}`,
+        }},netLiquidPostSched60>=0?"✓ Solvent":"⚠ Shortfall")
+      ),
+
+      React.createElement("div",{style:{
+        display:"flex",flexWrap:"wrap",gap:isMobile?8:16,alignItems:"center",
+        padding:"10px 14px",borderRadius:10,
+        background:"var(--bg3)",border:"1px solid var(--border2)",
+        zIndex:1,position:"relative",
+      }},
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
+          React.createElement("div",{style:{fontSize:"var(--fs-8)",color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Bank + Cash"),
+          React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#0e7490"}},INR(bTotal+cashBal))
+        ),
+        React.createElement("div",{style:{fontSize:"var(--fs-18)",color:"var(--text5)",fontWeight:300,lineHeight:1}},"−"),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
+          React.createElement("div",{style:{fontSize:"var(--fs-8)",color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Scheduled Outflows"),
+          React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:scheduledOutflowNext60>0?"#ef4444":"var(--text4)"}},INR(scheduledOutflowNext60))
+        ),
+        React.createElement("div",{style:{fontSize:"var(--fs-18)",color:"var(--text5)",fontWeight:300,lineHeight:1}},"+"),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
+          React.createElement("div",{style:{fontSize:"var(--fs-8)",color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Scheduled Inflows"),
+          React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:scheduledInflowNext60>0?"#16a34a":"var(--text4)"}},INR(scheduledInflowNext60))
+        ),
+        React.createElement("div",{style:{fontSize:"var(--fs-18)",color:"var(--text5)",fontWeight:300,lineHeight:1}},"="),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2}},
+          React.createElement("div",{style:{fontSize:"var(--fs-8)",color:"var(--text5)",textTransform:"uppercase",letterSpacing:.7,fontWeight:700}},"Net Available"),
+          React.createElement("div",{style:{fontSize:isMobile?14:18,fontFamily:"'Sora',sans-serif",fontWeight:700,color:netLiquidPostSched60>=0?"var(--accent)":"#ef4444"}},INR(netLiquidPostSched60))
+        )
+      ),
+
+      React.createElement("div",{style:{zIndex:1,position:"relative",fontSize:"var(--fs-10)",color:"var(--text5)",paddingTop:8,display:"flex",alignItems:"center",gap:6}},
+        React.createElement(Icon,{n:"calendar",size:12,col:"var(--text5)"}),
+        scheduledNext60.filter(sc=>sc.ledgerType==="debit").length+" outflow"+
+        (scheduledNext60.filter(sc=>sc.ledgerType==="debit").length!==1?"s":"")+
+        (scheduledNext60.filter(sc=>sc.ledgerType==="credit").length
+          ?", "+scheduledNext60.filter(sc=>sc.ledgerType==="credit").length+" inflow"+(scheduledNext60.filter(sc=>sc.ledgerType==="credit").length!==1?"s":"")
+          :"")+
+        " within 60 days"
+      )
+    ),
+
+    /* ══ B4: NET LIQUID POSITION — NEXT 90 DAYS ═════════════════ */
     W("netliquid3")&&React.createElement("div",{className:"db-card",style:{
       padding:isMobile?"14px 16px":"18px 24px",
       position:"relative",overflow:"hidden",
@@ -15829,7 +15923,7 @@ const Dashboard=React.memo(({data,isMobile,onJumpToTx})=>{
       )
     ),
 
-    /* ══ B4: NET LIQUID POSITION — NEXT 180 DAYS ════════════════ */
+    /* ══ B5: NET LIQUID POSITION — NEXT 180 DAYS ════════════════ */
     W("netliquid6")&&React.createElement("div",{className:"db-card",style:{
       padding:isMobile?"14px 16px":"18px 24px",
       position:"relative",overflow:"hidden",
