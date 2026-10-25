@@ -977,6 +977,7 @@ const INIT=()=>({
     {id:"p9",name:"Employer"},
     {id:"p10",name:"LIC"},
   ],
+  fuelStations:[],
   banks:[
     {id:"b1",name:"HDFC Savings Account",bank:"HDFC Bank",type:"Savings",balance:125000,transactions:[
       {id:"t1",date:"2025-02-10",desc:"February Salary Credit",amount:85000,type:"credit",cat:"Income",status:"Reconciled",_sn:1},
@@ -1094,6 +1095,7 @@ const EMPTY_STATE=()=>({
   ],
   scheduled:[],
   payees:[],
+  fuelStations:[],
   banks:[],
   cards:[],
   cash:{balance:0,transactions:[]},
@@ -1285,7 +1287,7 @@ const BANKS=["HDFC Bank","State Bank of India","ICICI Bank","Axis Bank","Kotak M
 const CATS=["Income","Housing","Food","Transport","Shopping","Entertainment","Utilities","Insurance","Investment","Travel","Transfer","Others"];
 
 /* ── APP VERSIONING ──────────────────────────────────────────────────────── */
-  const APP_VERSION="7.23.0";
+  const APP_VERSION="7.24.0";
 
 /* ── SVG Icon Library (replaces all emoji icons) ─────────────────────── */
 const SVGI=(path,opts={})=>React.createElement("svg",{
@@ -2441,6 +2443,46 @@ const reducer=(s,a)=>{
       };
     }
     case"DEL_PAYEE":return{...s,payees:s.payees.filter(p=>p.id!==a.id)};
+    case"ADD_FUEL_STATION":{
+      const _fsName=normBunkName((a.p&&a.p.name)||a.name||"");
+      if(!_fsName)return s;
+      const _fsList=s.fuelStations||[];
+      const _fsKey=bunkKeyOf(_fsName);
+      /* Never allow two master rows that normalise to the same name */
+      if(_fsList.some(st=>bunkKeyOf(st.name)===_fsKey))return s;
+      return{...s,fuelStations:[..._fsList,{id:(a.p&&a.p.id)||uid(),name:_fsName}]};
+    }
+    case"EDIT_FUEL_STATION":{
+      const _fsOld=(s.fuelStations||[]).find(st=>st.id===a.p.id);
+      if(!_fsOld)return s;
+      const _fsOldName=normBunkName(_fsOld.name);
+      const _fsNewName=normBunkName(a.p.name!==undefined?a.p.name:_fsOldName);
+      if(!_fsNewName)return s;
+      const _fsNewKey=bunkKeyOf(_fsNewName);
+      /* Renaming onto an existing station merges the two master rows */
+      const _fsList=(s.fuelStations||[])
+        .filter(st=>st.id===_fsOld.id||bunkKeyOf(st.name)!==_fsNewKey)
+        .map(st=>st.id===_fsOld.id?{...st,name:_fsNewName}:st);
+      const _fsOldKey=bunkKeyOf(_fsOldName);
+      if(!_fsOldName||_fsOldKey===_fsNewKey)return{...s,fuelStations:_fsList};
+      /* Cascade rename: rewrite the raw bunk on every transaction that used the
+         old station name (case / whitespace tolerant). Historical spend, litres
+         and ODO are untouched — only the label changes. */
+      const _updTxBunk=t=>{
+        const b=t.bunk;
+        return b!=null&&bunkKeyOf(b)===_fsOldKey?{...t,bunk:_fsNewName}:t;
+      };
+      return{...s,fuelStations:_fsList,
+        banks:(s.banks||[]).map(b=>({...b,transactions:(b.transactions||[]).map(_updTxBunk)})),
+        cards:(s.cards||[]).map(c=>({...c,transactions:(c.transactions||[]).map(_updTxBunk)})),
+        cash:{...s.cash,transactions:(s.cash.transactions||[]).map(_updTxBunk)},
+        scheduled:(s.scheduled||[]).map(sc=>_updTxBunk(sc)),
+      };
+    }
+    case"DEL_FUEL_STATION":
+      /* Master-only delete. Existing transactions keep their bunk label so
+         historical mileage attribution is never destroyed. */
+      return{...s,fuelStations:(s.fuelStations||[]).filter(st=>st.id!==a.id)};
     case"MASS_UPDATE_STATUS":{
       const{accType:at,accId:aid,ids,status:st}=a;
       /* Balance delta helpers: compute effect of a tx being counted (positive) or not */
@@ -2487,6 +2529,7 @@ const reducer=(s,a)=>{
         notes:Array.isArray(d.notes)?d.notes:[],
         categories:Array.isArray(d.categories)?d.categories:[],
         payees:Array.isArray(d.payees)?d.payees:[],
+        fuelStations:Array.isArray(d.fuelStations)?d.fuelStations:[],
         historyCache:d.historyCache&&typeof d.historyCache==="object"?d.historyCache:{},
       };
       /* Merge the local tombstone into the restored state and drop any fund the
@@ -3713,7 +3756,7 @@ const VirtualList=React.memo(({items,getItemKey,itemHeight,overscan=5,className,
 });
 
 /* ── LEDGER TABLE VIEW ─────────────────────────────────────────────────── */
-const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport,onUpsert,onMassUpdateStatus,onMassCategorize,onMassDelete,categories,payees,txTypes,allAccounts,currentAccountId,accentColor,openBalance,accType="bank",accountName="",isMobile=false,jumpTxId=null,jumpSerial=null})=>{
+const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport,onUpsert,onMassUpdateStatus,onMassCategorize,onMassDelete,categories,payees,txTypes,allAccounts,currentAccountId,accentColor,openBalance,accType="bank",accountName="",isMobile=false,jumpTxId=null,jumpSerial=null,fuelStations=[]})=>{
   const[selId,setSelId]=useState(null);
   const jumpRowRef=React.useRef(null);
   const[jumpActive,setJumpActive]=useState(false); /* true = show ONLY the jumped-to tx */
@@ -4123,7 +4166,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
         })
       ,
       /* Edit modal */
-      editTx&&React.createElement(TxEditModal,{tx:editTx,categories,payees,txTypes,allAccounts:allAccounts||[],currentAccountId,onSave:(updated)=>{onEdit(updated,editTx);setEditTx(null);setSelId(updated.id);},onClose:()=>setEditTx(null)}),
+      editTx&&React.createElement(TxEditModal,{tx:editTx,categories,payees,txTypes,allAccounts:allAccounts||[],currentAccountId,fuelStations,onSave:(updated)=>{onEdit(updated,editTx);setEditTx(null);setSelId(updated.id);},onClose:()=>setEditTx(null)}),
       confirmDel&&React.createElement(ConfirmModal,{msg:`Delete "${confirmDel.desc||confirmDel.payee||"this transaction"}"? This will adjust your balance.`,onConfirm:()=>{onDelete(confirmDel);setConfirmDel(null);setSelId(null);},onCancel:()=>setConfirmDel(null)}),
       importOpen&&React.createElement(ImportTxModal,{accType,categories,existingTxns:transactions,onUpsert:updates=>{if(onUpsert)onUpsert(updates);},onMassUpdateStatus:(ids,status)=>{if(onMassUpdateStatus)onMassUpdateStatus(ids,status);},onImport:txns=>{if(onImport)onImport(txns);setImportOpen(false);},onClose:()=>setImportOpen(false)})
     );
@@ -4671,7 +4714,7 @@ const TxLedger=({transactions,onEdit,onDelete,onDuplicate,onSplit,onNew,onImport
     ),
     /* ── Edit modal */
     editTx&&React.createElement(TxEditModal,{
-      tx:editTx,categories,payees,txTypes,allAccounts:allAccounts||[],currentAccountId,
+      tx:editTx,categories,payees,txTypes,allAccounts:allAccounts||[],currentAccountId,fuelStations,
       onSave:(updated)=>{onEdit(updated,editTx);setEditTx(null);setSelId(updated.id);},
       onClose:()=>setEditTx(null)
     }),
@@ -8045,6 +8088,30 @@ const PayeeEditModal=({p,onClose,dispatch})=>{
   );
 };
 
+const FuelStationEditModal=({st,state,onClose,dispatch})=>{
+  const[f,setF]=useState({name:st?st.name:""});
+  const set=k=>e=>setF(prev=>({...prev,[k]:e.target.value}));
+  /* How many transactions carry this station right now? Shown so a rename's
+     blast radius is obvious before saving. */
+  const oldKey=bunkKeyOf(st?st.name:"");
+  const usedCount=[...(state.banks||[]),...(state.cards||[]),state.cash]
+    .reduce((n,a)=>n+((a&&a.transactions)||[]).filter(t=>bunkKeyOf(t.bunk)===oldKey&&normBunkName(t.bunk)).length,0);
+  const dupe=(state.fuelStations||[]).some(x=>x.id!==(st&&st.id)&&bunkKeyOf(x.name)===bunkKeyOf(f.name));
+  return React.createElement(Modal,{title:"Rename Fuel Station",onClose,w:400},
+    React.createElement(Field,{label:"Station Name"},React.createElement("input",{className:"inp",value:f.name,onChange:set("name"),placeholder:"e.g. HP Airport Road"})),
+    React.createElement("div",{style:{fontSize:"var(--fs-11)",color:"var(--text5)",lineHeight:1.6,marginBottom:12,padding:"8px 10px",borderRadius:8,background:"var(--bg4)",border:"1px solid var(--border2)"}},
+      React.createElement(Icon,{n:"emg",size:13}),
+      " Renaming updates the Fuel Bunk field on ",React.createElement("strong",null,String(usedCount))," existing transaction",usedCount===1?"":"s",
+      " so mileage history stays consistent.",
+      dupe&&React.createElement("div",{style:{marginTop:6,color:"#d97706",fontWeight:600}},"A station with this name already exists — the two entries will be merged.")
+    ),
+    React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:8,marginTop:4}},
+      React.createElement(Btn,{onClick:()=>{if(!f.name.trim())return;dispatch({type:"EDIT_FUEL_STATION",p:{id:st.id,name:f.name}});onClose();},sx:{flex:"1 1 120px",justifyContent:"center"},disabled:!f.name.trim()},"Save Changes"),
+      React.createElement(Btn,{v:"secondary",onClick:onClose,sx:{justifyContent:"center",minWidth:70}},"Cancel")
+    )
+  );
+};
+
 var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,reduceMotion,setReduceMotion,onResetAll,isMobile})=>{
   const[stab,setStab]=useState("appearance");
   const[confirm,setConfirm]=useState(null);
@@ -8057,6 +8124,8 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
   const[editPayee,setEditPayee]=useState(null);
   const[accAttachTarget,setAccAttachTarget]=useState(null); /* {id,name,type:'bank'|'card'} */
   const[newPayee,setNewPayee]=useState({name:""});
+  const[editStation,setEditStation]=useState(null);
+  const[newStation,setNewStation]=useState({name:""});
   const[cashBal,setCashBal]=useState(String(state.cash.balance));
   const[cashSaved,setCashSaved]=useState(false);
   const[backupMsg,setBackupMsg]=useState("");
@@ -8081,6 +8150,7 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
     {id:"investments",label:"Investments",icon:React.createElement(Icon,{n:"invest",size:16})},
     {id:"categories",label:"Categories",icon:React.createElement(Icon,{n:"tag",size:16})},
     {id:"payees",label:"Payees",icon:React.createElement(Icon,{n:"user",size:16})},
+    {id:"fuelstations",label:"Fuel Stations",icon:React.createElement(Icon,{n:"store",size:16})},
     {id:"insightprefs",label:"Insights Config",icon:React.createElement(Icon,{n:"target",size:16})},
     {id:"emailconfig",label:"Email Config",icon:React.createElement(Icon,{n:"mail",size:16})},
     {id:"tabmgmt",     label:"Tab Management",icon:React.createElement(Icon,{n:"tabs",size:16})},
@@ -8595,6 +8665,83 @@ var SettingsSection=React.memo(({state,dispatch,themeId,setTheme,fontId,setFont,
         ),
         editPayee&&React.createElement(PayeeEditModal,{p:editPayee,onClose:()=>setEditPayee(null),dispatch})
       ),
+
+      /* ══ FUEL STATIONS ══ */
+      stab==="fuelstations"&&(()=>{
+        const accounts=[...(state.banks||[]),...(state.cards||[]),state.cash];
+        const usage={};
+        accounts.forEach(a=>((a&&a.transactions)||[]).forEach(t=>{
+          const k=bunkKeyOf(t.bunk);
+          if(k)usage[k]=(usage[k]||0)+1;
+        }));
+        const master=state.fuelStations||[];
+        const masterKeys=new Set(master.map(x=>bunkKeyOf(x.name)));
+        /* Names that exist only on transactions — offer to promote them into
+           the master so they can be renamed/merged later. */
+        const detected=collectBunkOptions(accounts).filter(n=>!masterKeys.has(bunkKeyOf(n)));
+        const addStation=()=>{
+          const name=normBunkName(newStation.name);
+          if(!name)return;
+          dispatch({type:"ADD_FUEL_STATION",p:{id:uid(),name}});
+          setNewStation({name:""});
+        };
+        return React.createElement("div",{className:"fu"},
+          React.createElement("div",{style:{marginBottom:18}},
+            React.createElement("h3",{style:{fontFamily:"'Sora',sans-serif",fontSize:"var(--fs-18)",fontWeight:700,color:"var(--text)"}},"Fuel Stations"),
+            React.createElement("p",{style:{color:"var(--text5)",fontSize:"var(--fs-12)",marginTop:3}},"Master list of bunks used for mileage comparison. Renaming a station also updates the Fuel Bunk field on its existing transactions.")
+          ),
+          React.createElement("div",{style:{display:"flex",gap:14,flexWrap:"wrap",alignItems:"flex-start"}},
+            React.createElement("div",{style:{flex:"1 1 420px",minWidth:280}},
+              React.createElement(Card,{sx:{padding:0,overflowY:"hidden",overflowX:"auto"}},
+                React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 90px auto",gap:12,padding:"9px 16px",borderBottom:"1px solid var(--border)",fontSize:"var(--fs-11)",color:"var(--text6)",textTransform:"uppercase",letterSpacing:.5}},
+                  React.createElement("span",null,"Station"),
+                  React.createElement("span",{style:{textAlign:"right"}},"Fills"),
+                  React.createElement("span",null,"")
+                ),
+                master.length===0&&React.createElement(Empty,{icon:React.createElement(Icon,{n:"store",size:18}),text:"No stations in the master yet"}),
+                master.map(st=>React.createElement("div",{key:st.id,style:{display:"grid",gridTemplateColumns:"1fr 90px auto",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--border2)",alignItems:"center"},className:"tr"},
+                  React.createElement("div",{style:{minWidth:0}},
+                    React.createElement("div",{style:{fontSize:"var(--fs-13)",fontWeight:600,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},st.name),
+                    (usage[bunkKeyOf(st.name)]||0)===0&&React.createElement("div",{style:{fontSize:"var(--fs-10)",color:"var(--text6)",marginTop:2}},"not used on any transaction yet")
+                  ),
+                  React.createElement("div",{style:{textAlign:"right",fontSize:"var(--fs-12)",fontWeight:700,color:"var(--text4)",fontFamily:"'Sora',sans-serif"}},usage[bunkKeyOf(st.name)]||0),
+                  React.createElement(RowActions,{
+                    onEdit:()=>setEditStation(st),
+                    onDelete:()=>askDelete(`Remove "${st.name}" from the station master? Existing transactions keep their bunk label and mileage history.`,()=>dispatch({type:"DEL_FUEL_STATION",id:st.id}))
+                  })
+                )),
+                detected.length>0&&React.createElement("div",{style:{padding:"10px 16px",background:"var(--bg4)",borderTop:"1px solid var(--border)"}},
+                  React.createElement("div",{style:{fontSize:"var(--fs-10-5)",fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:8}},"Found on transactions — not in master"),
+                  React.createElement("div",{style:{display:"flex",flexWrap:"wrap",gap:6}},
+                    detected.map(n=>React.createElement("button",{
+                      key:n,
+                      onClick:()=>dispatch({type:"ADD_FUEL_STATION",p:{id:uid(),name:n}}),
+                      title:"Add to station master",
+                      style:{display:"flex",alignItems:"center",gap:5,padding:"4px 9px",borderRadius:14,border:"1px dashed var(--border)",background:"transparent",color:"var(--text4)",cursor:"pointer",fontSize:"var(--fs-11)",fontFamily:"'DM Sans',sans-serif"}
+                    },React.createElement("span",{style:{fontWeight:700,fontSize:"var(--fs-13)",lineHeight:1}},"+"),n)
+                  )
+                )
+              )
+            )),
+            React.createElement("div",{style:{flex:"0 0 260px",minWidth:240}},
+              React.createElement(Card,null,
+                React.createElement("div",{style:{fontSize:"var(--fs-12)",color:"var(--text5)",textTransform:"uppercase",letterSpacing:.6,marginBottom:14}},"Add Station"),
+                React.createElement(Field,{label:"Station Name"},React.createElement("input",{
+                  className:"inp",placeholder:"e.g. HP Airport Road",
+                  value:newStation.name,
+                  onChange:e=>setNewStation({name:e.target.value}),
+                  onKeyDown:e=>{if(e.key==="Enter")addStation();}
+                })),
+                React.createElement(Btn,{onClick:addStation,sx:{width:"100%",justifyContent:"center",marginTop:4},disabled:!newStation.name.trim()},"+ Add Station"),
+                React.createElement("div",{style:{fontSize:"var(--fs-10-5)",color:"var(--text6)",lineHeight:1.6,marginTop:12,paddingTop:10,borderTop:"1px dashed var(--border2)"}},
+                  "The Car Mileage report groups names case-insensitively, so “HP” and “hp ” already count as one station. Use Rename to merge genuinely different spellings such as “HP Airport” and “HP Airport Road”."
+                )
+              )
+            )
+          ),
+          editStation&&React.createElement(FuelStationEditModal,{st:editStation,state,onClose:()=>setEditStation(null),dispatch})
+        );
+      })(),
 
       /* ══ INSIGHTS CONFIG ══ */
       stab==="insightprefs"&&React.createElement(InsightPrefsPanel,{state,dispatch}),
@@ -10676,6 +10823,7 @@ var loadState=()=>{
       loans:(parsed.loans||def.loans),
       categories:(parsed.categories||def.categories).map(c=>({classType:"Expense",...c})),
       payees:(parsed.payees||def.payees),
+      fuelStations:(parsed.fuelStations||def.fuelStations||[]),
       scheduled:(parsed.scheduled||def.scheduled||[]),
       re:(parsed.re||def.re||[]),
       pf:(parsed.pf||def.pf||[]),
@@ -12472,6 +12620,8 @@ const useKbdList=(count,onEnter)=>{
 const StickyHd=({children,style={}})=>React.createElement("div",{className:"mm-sticky-hd",style},children);
 
 const WHATS_NEW=[
+  {icon:"store",t:"Fuel station mileage comparison",d:"Car Mileage has a new Stations tab. Each measured interval is credited to the bunk of the previous fill — the fuel actually burnt — and stations are ranked by distance-weighted km/L (Σ km ÷ Σ litres). Sort by mileage, fills, spend or name; partial top-ups are included and one-interval stations are marked provisional."},
+  {icon:"store",t:"Fuel Stations master in Settings",d:"Settings → Fuel Stations now keeps a managed list of bunk names, next to Payees. Add stations directly, adopt names already found on transactions, and rename to merge spelling variants — a rename ripples the Fuel Bunk field across all existing bank, card and cash transactions so history stays consistent. Deleting from the master never touches transactions."},
   {icon:"calendar",t:"Net Liquid Position · Next 60 Days",d:"A new dashboard hero card projects your liquid position over the next 60 days: Bank + Cash, minus scheduled outflows, plus scheduled inflows — with a Solvent / Shortfall badge and a count of the obligations landing in that window. It sits alongside the existing 30 / 90 / 180-day views and can be toggled from Customize Dashboard."},
   {icon:"chart",t:"Fix: NAV refresh actually works now — and its status tells the truth",d:"AMFI's NAVAll.txt and the mfnav.in fallback don't allow cross-origin requests, so every refresh silently failed while the button claimed 'Updated 9 funds'. NAVs now load through a CORS proxy chain (one shared download for all funds), per-fund ⟳ reuses it, and 'Updated X funds' is counted only from funds genuinely refetched — a total failure now shows the red 'could not fetch' error, not a fake success."},
   {icon:"chart",t:"Fix: fund NAV history no longer wipes itself",d:"Per-fund ⟳ refresh (and any single-fund NAV update) previously replaced that day's whole snapshot, deleting other funds' NAVs for the date — breaking day-change %, Prev NAV pills and the value chart. Snapshot days now merge per-fund, and auto-fetch completes any partially-filled day."},
@@ -12660,6 +12810,36 @@ var NavIcon=({id,size=16})=>useMacTheme()?React.createElement(NavIconSF,{id,size
    Month grid showing daily net spend. Click a day to see transactions.
    ══════════════════════════════════════════════════════════════════════════ */
 /* ── PayeeCombobox, CatCombobox, TxEditModal, BulkModals, TxModal, TxPanel ── */
+/* ── Fuel-bunk helpers ──────────────────────────────────────────────────────
+   `bunk` is free text on each fuel transaction. Normalise before grouping so
+   "HP", "hp " and "HP  Petrol Pump" are not counted as three different
+   stations. The raw value is never rewritten in storage. */
+const normBunkName=v=>String(v==null?"":v).trim().replace(/\s+/g," ");
+const bunkKeyOf=v=>normBunkName(v).toLowerCase();
+const collectBunkOptions=(accounts,masterStations)=>{
+  const seen={},out=[];
+  const add=(name,date,isMaster)=>{
+    name=normBunkName(name);
+    if(!name)return;
+    const k=bunkKeyOf(name);
+    if(!seen[k]){
+      seen[k]={name,date:date||"",master:!!isMaster};
+      out.push(seen[k]);
+    }else if(!seen[k].master&&date&&date>=(seen[k].date||"")){
+      /* Keep the most recent casing/date for each normalised station name */
+      seen[k].name=name;seen[k].date=date;
+    }
+  };
+  /* Managed master entries win over whatever spelling happens to sit on the
+     newest transaction, so the Settings list is the source of truth. */
+  (masterStations||[]).forEach(st=>add(st&&st.name,"",true));
+  (accounts||[]).forEach(a=>(a&&a.transactions||[]).forEach(t=>add(t.bunk,t.date||"",false)));
+  return out
+    .sort((a,b)=>a.master===b.master?(b.date||"").localeCompare(a.date||""):(a.master?-1:1))
+    .map(x=>x.name);
+};
+const bunkComboPayees=(options)=>(options||[]).map((name,i)=>({id:"bunk"+i,name}));
+
 /* ══════════════════════════════════════════════════════════════════════════
    PAYEE COMBOBOX  -- custom styled dropdown, consistent across all themes
    Props: value, onChange, payees (array of {id,name}), placeholder
@@ -13247,11 +13427,12 @@ const AccAttachPanel=({accId,attachments=[],onSave})=>{
   );
 };
 
-const TxEditModal=({tx,categories,payees,txTypes,onSave,onClose,allAccounts=[],currentAccountId=""})=>{
+const TxEditModal=({tx,categories,payees,txTypes,onSave,onClose,allAccounts=[],currentAccountId="",fuelStations=[]})=>{
   const[f,setF]=useState({...tx,amount:String(tx.amount),_receipts:tx._receipts||[],srcId:tx.srcId||currentAccountId||""});
   const[showTax,setShowTax]=useState(!!(tx.gstRate&&+tx.gstRate>0)||!!(tx.tdsRate&&+tx.tdsRate>0));
   const[showMileage,setShowMileage]=useState(!!(tx.odo||tx.liters||tx.bunk||tx.fuelPrice||tx.kmpl));
   const[activeTxTypes,setActiveTxTypes]=useState(txTypes); // tracks correct type list for selected account
+  const bunkOptions=collectBunkOptions(allAccounts,fuelStations);
   const isTransfer=f.txType==="Transfer";
   const set=k=>e=>setF(p=>({...p,[k]:e.target.value}));
   const lbl={display:"block",color:"var(--text5)",fontSize:"var(--fs-11)",textTransform:"uppercase",letterSpacing:.5,marginBottom:5};
@@ -13351,7 +13532,7 @@ const TxEditModal=({tx,categories,payees,txTypes,onSave,onClose,allAccounts=[],c
         ),
         React.createElement("div",null,
           React.createElement("label",{style:lbl},"Fuel Bunk"),
-          React.createElement("input",{className:"inp",placeholder:"Station name",value:f.bunk||"",onChange:set("bunk"),style:{fontSize:"var(--fs-13)"}})
+          React.createElement(PayeeCombobox,{value:f.bunk||"",onChange:val=>setF(p=>({...p,bunk:val})),payees:bunkComboPayees(bunkOptions),placeholder:"Station name…"})
         ),
         React.createElement("div",null,
           React.createElement("label",{style:lbl},"Fuel Price (₹/L)"),
@@ -13649,6 +13830,7 @@ const TxModal=({onAdd,onClose,categories,payees,txTypes,allAccounts,currentAccou
   const[f,setF]=useState(EMPTY);
   const[showTax,setShowTax]=useState(false);
   const[showMileage,setShowMileage]=useState(false);
+  const bunkOptions=collectBunkOptions(state?[...(state.banks||[]),...(state.cards||[]),state.cash]:[],state&&state.fuelStations);
   /* activeTxTypes tracks the currently-correct type list for whichever account is selected.
      Initialised from the prop; updated when the user switches account in the picker.
      Without this, the Type dropdown always showed the FAB's initial account type options
@@ -13859,7 +14041,7 @@ const TxModal=({onAdd,onClose,categories,payees,txTypes,allAccounts,currentAccou
         ),
         React.createElement("div",null,
           React.createElement("label",{style:lbl},"Fuel Bunk"),
-          React.createElement("input",{className:"inp",placeholder:"Station name",value:f.bunk||"",onChange:set("bunk"),style:{fontSize:"var(--fs-13)"}})
+          React.createElement(PayeeCombobox,{value:f.bunk||"",onChange:val=>setF(p=>({...p,bunk:val})),payees:bunkComboPayees(bunkOptions),placeholder:"Station name…"})
         ),
         React.createElement("div",null,
           React.createElement("label",{style:lbl},"Fuel Price (₹/L)"),
@@ -13965,6 +14147,7 @@ const TxPanel=({account,label,onAddTx,onEditTx,onDeleteTx,onDupTx,onSplitTx,onIm
       accentColor,
       openBalance:openBalance||0,
       categories,payees,txTypes,allAccounts,
+      fuelStations:(state&&state.fuelStations)||[],
       currentAccountId:account.id,
       accountName:account.name||"",
       accType,
@@ -13998,7 +14181,7 @@ const TxPanel=({account,label,onAddTx,onEditTx,onDeleteTx,onDupTx,onSplitTx,onIm
    ══════════════════════════════════════════════════════════════════════════ */
 /* ── BankSection, CardSection, CashSection ── */
 /* ── BANK SECTION ─ master-detail inline layout ──────────────────────── */
-const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCards=[],cash,loans=[],isMobile,jumpAccId=null,jumpTxId=null,jumpSerial=null,onClearAccountJump})=>{
+const BankSection=React.memo(({banks,dispatch,categories,payees,fuelStations=[],allBanks,allCards=[],cash,loans=[],isMobile,jumpAccId=null,jumpTxId=null,jumpSerial=null,onClearAccountJump})=>{
   const[sel,setSel]=useState((banks.find(b=>!b.hidden)||banks[0])?.id||null);
   const[addOpen,setAddOpen]=useState(false);
   const[f,setF]=useState({name:"",bank:"HDFC Bank",type:"Savings",balance:"",notes:""});
@@ -14195,7 +14378,7 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
           ...loans.map(l=>({...l,accType:"loan",accTypeLbl:"↳",name:l.name+" (Loan)"}))
         ],
         openBalance:selD?(selD.balance-(selD.transactions||[]).filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0)):0,
-        dispatch,state:{banks:allBanks,cards:allCards,cash},
+        dispatch,state:{banks:allBanks,cards:allCards,cash,fuelStations},
         onAddTx:tx=>{
           if(!selD)return;
           if(tx.isTransfer){dispatch({type:"TRANSFER_TX",srcType:tx.srcType,srcId:tx.srcId,tgtType:tx.tgtType,tgtId:tx.tgtId,tx:tx.tx});}
@@ -14232,7 +14415,7 @@ const BankSection=React.memo(({banks,dispatch,categories,payees,allBanks,allCard
 });
 
 /* ── CARD SECTION ─ master-detail inline layout ──────────────────────── */
-const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCards=[],cash,loans=[],isMobile,jumpAccId=null,jumpTxId=null,jumpSerial=null,onClearAccountJump})=>{
+const CardSection=React.memo(({cards,dispatch,categories,payees,fuelStations=[],allBanks,allCards=[],cash,loans=[],isMobile,jumpAccId=null,jumpTxId=null,jumpSerial=null,onClearAccountJump})=>{
   const[sel,setSel]=useState((cards.find(c=>!c.hidden)||cards[0])?.id||null);
   const[addOpen,setAddOpen]=useState(false);
   const[f,setF]=useState({name:"",bank:"",cardNumber:"",limit:"",outstanding:"",notes:"",billingDay:"",dueDay:""});
@@ -14455,7 +14638,7 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
           ...loans.map(l=>({...l,accType:"loan",accTypeLbl:"↳",name:l.name+" (Loan)"}))
         ],
         openBalance:selD?(selD.outstanding+(selD.transactions||[]).filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0)):0,
-        dispatch,state:{banks:allBanks,cards:allCards,cash},
+        dispatch,state:{banks:allBanks,cards:allCards,cash,fuelStations},
         onAddTx:tx=>{
           if(!selD)return;
           if(tx.isTransfer){dispatch({type:"TRANSFER_TX",srcType:tx.srcType,srcId:tx.srcId,tgtType:tx.tgtType,tgtId:tx.tgtId,tx:tx.tx});}
@@ -14495,7 +14678,7 @@ const CardSection=React.memo(({cards,dispatch,categories,payees,allBanks,allCard
 });
 
 /* ── CASH SECTION ────────────────────────────────────────────────────────── */
-const CashSection=React.memo(({cash,dispatch,categories,payees,allBanks,allCards=[],loans=[],isMobile,jumpTxId=null,jumpSerial=null})=>{
+const CashSection=React.memo(({cash,dispatch,categories,payees,fuelStations=[],allBanks,allCards=[],loans=[],isMobile,jumpTxId=null,jumpSerial=null})=>{
   const[addCashOpen,setAddCashOpen]=useState(false);
   const inc=cash.transactions.filter(t=>t.type==="credit").reduce((s,t)=>s+t.amount,0);
   const exp=cash.transactions.filter(t=>t.type==="debit").reduce((s,t)=>s+t.amount,0);
@@ -14533,7 +14716,7 @@ const CashSection=React.memo(({cash,dispatch,categories,payees,allBanks,allCards
           openBalance:cash.balance-cash.transactions.filter(t=>t.status==="Reconciled").reduce((s,t)=>s+(t.type==="credit"?t.amount:-t.amount),0),
           accType:"cash",
           accountName:"Cash",
-          categories,payees,
+          categories,payees,fuelStations,
           jumpTxId,
           jumpSerial,
           txTypes:TX_TYPES_CASH,
@@ -28749,9 +28932,13 @@ const RptGstTds=({data,from,to,onExportPDF})=>{
 /* ══ REPORT: CAR MILEAGE ════════════════════════════════════════════════════ */
 const RptCarMileage=({data,from,to,onExportPDF})=>{
   const[view,setView]=useState("snapshot");
+  const[stationSort,setStationSort]=useState("kmpl");
 
   /* ODO bookkeeping spans the full transaction history so the first fill inside
-     the selected window can still be measured against the fill before it */
+     the selected window can still be measured against the fill before it.
+     We also remember the previous fill's bunk/date/spend: mileage measured at
+     fill N was achieved on the fuel bought at fill N-1, so station stats must
+     attribute each interval to the PREVIOUS fill's station, not this one. */
   const allMileage=[
     ...data.banks.flatMap(b=>(b.transactions||[]).map(t=>({...t,accName:b.name}))),
     ...data.cards.flatMap(c=>(c.transactions||[]).map(t=>({...t,accName:c.name}))),
@@ -28759,8 +28946,13 @@ const RptCarMileage=({data,from,to,onExportPDF})=>{
   ]
     .filter(t=>t.odo!=null&&isFinite(+t.odo)&&+t.odo>0)
     .sort((a,b)=>a.date===b.date?(String(a._addedAt||"").localeCompare(String(b._addedAt||""))):(a.date<b.date?-1:1));
-  let _last=null;
-  allMileage.forEach(t=>{t._prevOdo=_last;_last=+t.odo;});
+  let _last=null,_lastBunk="",_lastDate="",_lastAmount=0,_lastLiters=0,_lastFuelPrice=0;
+  allMileage.forEach(t=>{
+    t._prevOdo=_last;t._prevBunk=_lastBunk;t._prevDate=_lastDate;
+    t._prevAmount=_lastAmount;t._prevLiters=_lastLiters;t._prevFuelPrice=_lastFuelPrice;
+    _last=+t.odo;_lastBunk=normBunkName(t.bunk);_lastDate=t.date||"";
+    _lastAmount=+t.amount||0;_lastLiters=+t.liters||0;_lastFuelPrice=+t.fuelPrice||0;
+  });
 
   const inRange=t=>(!from||t.date>=from)&&(!to||t.date<=to);
   const fills=allMileage.filter(inRange).map(t=>{
@@ -28775,6 +28967,12 @@ const RptCarMileage=({data,from,to,onExportPDF})=>{
   const estCost=fills.reduce((s,f)=>s+f._cost,0);
   const measured=fills.filter(f=>f._kmpl>0);
   const avgKmpl=measured.length?measured.reduce((s,f)=>s+f._kmpl,0)/measured.length:0;
+  /* Distance-weighted overall figure: Σ km ÷ Σ litres. Per-fill arithmetic
+     means over-weight tiny top-ups, so the headline stat uses this instead. */
+  const weightable=measured.filter(f=>f._prevOdo!=null&&f._odo>f._prevOdo&&f._liters>0);
+  const weightedKm=weightable.reduce((s,f)=>s+(f._odo-f._prevOdo),0);
+  const weightedLiters=weightable.reduce((s,f)=>s+f._liters,0);
+  const avgKmplW=weightedLiters>0?weightedKm/weightedLiters:avgKmpl;
   const lastOdoTx=allMileage[allMileage.length-1];
   const lastOdoVal=lastOdoTx?Number(lastOdoTx.odo).toLocaleString("en-IN"):"—";
 
@@ -28793,6 +28991,56 @@ const RptCarMileage=({data,from,to,onExportPDF})=>{
     fills:byMonth[m].fills,liters:byMonth[m].liters,amount:byMonth[m].amount
   }));
   const best=months.reduce((a,b)=>!a||b.kmpl>a.kmpl?b:a,null);
+
+  /* ── Per-station comparison ──────────────────────────────────────────────
+     Two accumulators per station, deliberately kept separate:
+       own  : fill-ups made at that station (count, litres bought, spend)
+       perf : measured intervals attributable to that station via the PREVIOUS
+              fill's bunk — the fuel burnt in the interval was bought there.
+     The last fill at a station has no measured interval yet, and the first
+     interval in the window may belong to a fill before the window, so the two
+     counters legitimately differ. Partial top-ups are included as-is. */
+  const stationMap={};
+  const stationRow=k=>{
+    if(!stationMap[k])stationMap[k]={key:k,name:"",fills:0,litres:0,amount:0,lastDate:"",
+      intervals:0,km:0,litresMeasured:0,kmpls:[],lastMeasured:""};
+    return stationMap[k];
+  };
+  fills.forEach(f=>{
+    const name=normBunkName(f.bunk);
+    const row=stationRow(bunkKeyOf(name));
+    if(name){row.name=name;row.lastDate=f.date||row.lastDate;}
+    row.fills++;row.litres+=f._liters;row.amount+=f._amount;
+  });
+  measured.forEach(f=>{
+    const prevName=normBunkName(f._prevBunk);
+    const row=stationRow(bunkKeyOf(prevName));
+    if(!row.name&&prevName)row.name=prevName;
+    if(!row.lastMeasured||f.date>row.lastMeasured)row.lastMeasured=f.date;
+    row.intervals++;row.kmpls.push(f._kmpl);
+    const dist=(f._prevOdo!=null&&f._odo>f._prevOdo)?(f._odo-f._prevOdo):(f._liters>0?f._kmpl*f._liters:0);
+    if(dist>0&&f._liters>0){row.km+=dist;row.litresMeasured+=f._liters;}
+  });
+  const stationRows=Object.values(stationMap).map(r=>{
+    const simple=r.kmpls.length?r.kmpls.reduce((s,k)=>s+k,0)/r.kmpls.length:0;
+    const kmpl=r.litresMeasured>0?r.km/r.litresMeasured:simple;
+    return{...r,name:r.name||"Unspecified",kmpl,simple,
+      best:r.kmpls.length?Math.max(...r.kmpls):0,
+      worst:r.kmpls.length?Math.min(...r.kmpls):0,
+      avgPrice:r.litres>0?r.amount/r.litres:0};
+  });
+  const sortedStations=stationRows.slice().sort((a,b)=>{
+    if(stationSort==="fills")return b.fills-a.fills||b.amount-a.amount;
+    if(stationSort==="spend")return b.amount-a.amount||b.fills-a.fills;
+    if(stationSort==="name")return a.name.localeCompare(b.name);
+    const ah=a.intervals>0?1:0,bh=b.intervals>0?1:0;
+    if(ah!==bh)return bh-ah;
+    return b.kmpl-a.kmpl;
+  });
+  const rankedStations=sortedStations.filter(r=>r.intervals>0);
+  const bestStation=rankedStations.length?rankedStations.slice().sort((a,b)=>b.kmpl-a.kmpl)[0]:null;
+  const worstStation=rankedStations.length?rankedStations.slice().sort((a,b)=>a.kmpl-b.kmpl)[0]:null;
+  const maxStationKmpl=rankedStations.reduce((m,r)=>Math.max(m,r.kmpl),1);
 
   const shortDate=iso=>{if(!iso)return"—";const p=iso.split("-");return parseInt(p[2],10)+" "+MONTH_NAMES[parseInt(p[1],10)-1];};
   const kmLabel=f=>f._manual?f._kmpl.toFixed(1):(f._kmpl>0?f._kmpl.toFixed(1)+" *":"—");
@@ -28831,6 +29079,7 @@ const RptCarMileage=({data,from,to,onExportPDF})=>{
   );
 
   const gc="80px 1.2fr 1fr 95px 75px 1.1fr 85px 90px 95px";
+  const sgc="1.6fr 56px 92px 92px 66px 70px 68px 90px";
   const tbH={padding:"9px 12px",fontSize:"var(--fs-10)",fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,background:"var(--bg4)",borderBottom:"1px solid var(--border)"};
   const tbD=(col="var(--text2)",al="left",extra={})=>({padding:"9px 12px",fontSize:"var(--fs-12)",color:col,borderBottom:"1px solid var(--border2)",verticalAlign:"middle",textAlign:al,...extra});
 
@@ -28840,7 +29089,7 @@ const RptCarMileage=({data,from,to,onExportPDF})=>{
       React.createElement("span",{style:{fontSize:"var(--fs-11)",color:"var(--text5)",fontWeight:600,textTransform:"uppercase",letterSpacing:.4}},"Fuel Fills:"),
       React.createElement("span",{style:{fontSize:"var(--fs-12)",color:"var(--text3)",fontWeight:700}},totalFills+" in period"),
       React.createElement("div",{style:{display:"flex",gap:5,marginLeft:"auto"}},
-        [{id:"snapshot",label:"Chart",icon:React.createElement(Icon,{n:"chart",size:18})},{id:"detailed",label:"Details",icon:React.createElement(Icon,{n:"receipt",size:18})}].map(v=>
+        [{id:"snapshot",label:"Chart",icon:React.createElement(Icon,{n:"chart",size:18})},{id:"stations",label:"Stations",icon:React.createElement(Icon,{n:"store",size:18})},{id:"detailed",label:"Details",icon:React.createElement(Icon,{n:"receipt",size:18})}].map(v=>
           React.createElement("button",{key:v.id,onClick:()=>setView(v.id),style:{
             padding:"6px 14px",borderRadius:20,
             border:"1.5px solid "+(view===v.id?"var(--accent)":"var(--border)"),
@@ -28854,7 +29103,7 @@ const RptCarMileage=({data,from,to,onExportPDF})=>{
       )
     ),
     React.createElement("div",{style:{display:"flex",gap:12,flexWrap:"wrap",marginBottom:16}},
-      React.createElement(StatCard,{label:"Average Mileage",val:avgKmpl>0?avgKmpl.toFixed(1)+" km/L":"—",col:avgKmpl>=16?"#16a34a":avgKmpl>0?"#6d28d9":"var(--text5)",sub:"across "+measured.length+" measured fill"+(measured.length===1?"":"s"),icon:React.createElement(Icon,{n:"vehicle",size:18})}),
+      React.createElement(StatCard,{label:"Average Mileage",val:avgKmplW>0?avgKmplW.toFixed(1)+" km/L":"—",col:avgKmplW>=16?"#16a34a":avgKmplW>0?"#6d28d9":"var(--text5)",sub:weightedLiters>0?("weighted · "+weightedKm.toLocaleString("en-IN")+" km / "+weightedLiters.toFixed(1)+" L"):("across "+measured.length+" measured fill"+(measured.length===1?"":"s")),icon:React.createElement(Icon,{n:"vehicle",size:18})}),
       React.createElement(StatCard,{label:"Total Fills",val:totalFills,col:"var(--accent)",sub:totalLiters.toFixed(1)+" litres consumed",icon:React.createElement(Icon,{n:"water",size:18})}),
       React.createElement(StatCard,{label:"Total Spend",val:INR(totalAmount),col:"#ef4444",sub:estCost>0?"fuel-only est. "+INR(estCost):"across "+totalFills+" transaction"+(totalFills===1?"":"s"),icon:React.createElement(Icon,{n:"coin",size:18})}),
       React.createElement(StatCard,{label:"Last ODO",val:lastOdoVal,col:"#0e7490",sub:best?("best "+best.label+" · "+best.kmpl.toFixed(1)+" km/L"):"no measurable month",icon:React.createElement(Icon,{n:"target",size:18})})
@@ -28882,6 +29131,79 @@ const RptCarMileage=({data,from,to,onExportPDF})=>{
           React.createElement("div",{style:{fontSize:"var(--fs-12)",fontWeight:600,color:"var(--text2)"}},f._liters>0?f._liters.toFixed(1)+" L":"—"),
           React.createElement("div",{style:{textAlign:"right",fontSize:"var(--fs-12)",fontFamily:"'Sora',sans-serif",fontWeight:700,color:"#6d28d9",minWidth:54}},kmLabel(f))
         ))
+      )
+    ),
+    view==="stations"&&React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:14}},
+      React.createElement(Card,null,
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:12}},
+          React.createElement("span",{style:{display:"flex",color:"var(--accent)"}},React.createElement(Icon,{n:"store",size:18})),
+          React.createElement("div",{style:{flex:1,minWidth:200}},
+            React.createElement("div",{style:{fontSize:"var(--fs-13)",fontWeight:700,color:"var(--text3)"}},"Mileage by Fuel Station"),
+            React.createElement("div",{style:{fontSize:"var(--fs-10-5)",color:"var(--text6)",lineHeight:1.5}},"Each interval is credited to the station of the previous fill — the fuel actually burnt. Weighted = total km ÷ total litres.")
+          ),
+          React.createElement("div",{style:{display:"flex",gap:4,flexWrap:"wrap"}},
+            [{id:"kmpl",label:"Mileage"},{id:"fills",label:"Fills"},{id:"spend",label:"Spend"},{id:"name",label:"A-Z"}].map(s=>
+              React.createElement("button",{key:s.id,onClick:()=>setStationSort(s.id),style:{
+                padding:"5px 10px",borderRadius:16,border:"1px solid "+(stationSort===s.id?"var(--accent)":"var(--border)"),
+                background:stationSort===s.id?"var(--accentbg)":"transparent",
+                color:stationSort===s.id?"var(--accent)":"var(--text5)",
+                cursor:"pointer",fontSize:"var(--fs-11)",fontFamily:"'DM Sans',sans-serif",fontWeight:stationSort===s.id?700:400
+              }},s.label)
+            )
+          )
+        ),
+        React.createElement("div",{style:{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}},
+          [
+            {l:"Overall",v:avgKmplW>0?avgKmplW.toFixed(1)+" km/L":"—",s:"distance-weighted"},
+            {l:"Best station",v:bestStation?bestStation.kmpl.toFixed(1)+" km/L":"—",s:bestStation?bestStation.name:"—"},
+            {l:"Weakest",v:worstStation?worstStation.kmpl.toFixed(1)+" km/L":"—",s:worstStation?worstStation.name:"—"},
+            {l:"Stations",v:String(stationRows.length),s:"in period"}
+          ].map((t,i)=>React.createElement("div",{key:i,style:{flex:"1 1 150px",minWidth:140,padding:"9px 12px",borderRadius:10,background:"var(--bg4)",border:"1px solid var(--border2)"}},
+            React.createElement("div",{style:{fontSize:"var(--fs-9-5)",fontWeight:700,color:"var(--text5)",textTransform:"uppercase",letterSpacing:.5,marginBottom:3}},t.l),
+            React.createElement("div",{style:{fontSize:"var(--fs-15)",fontWeight:800,color:"var(--text2)",fontFamily:"'Sora',sans-serif"}},t.v),
+            React.createElement("div",{style:{fontSize:"var(--fs-10)",color:"var(--text6)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},t.s)
+          ))
+        ),
+        React.createElement("div",{style:{overflowX:"auto",border:"1px solid var(--border2)",borderRadius:10}},
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:sgc,minWidth:840,background:"var(--bg4)",borderBottom:"1px solid var(--border)"}},
+            ["Station","Fills","Avg km/L","Best / Worst","Intervals","Litres","₹/L","Spend"].map((h,i)=>React.createElement("div",{key:h,style:{...tbH,textAlign:i===0?"left":"right"}},h))
+          ),
+          sortedStations.map(r=>{
+            const has=r.intervals>0;
+            const delta=avgKmplW>0&&has?((r.kmpl-avgKmplW)/avgKmplW)*100:0;
+            const col=!has?"var(--text5)":r.kmpl>=16?"#16a34a":r.kmpl>=12?"#6d28d9":"#f59e0b";
+            return React.createElement("div",{key:r.key||"__none__",style:{display:"grid",gridTemplateColumns:sgc,minWidth:840,borderBottom:"1px solid var(--border2)"}},
+              React.createElement("div",{style:{padding:"9px 12px"}},
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,minWidth:0}},
+                  React.createElement("span",{style:{fontSize:"var(--fs-12-5)",fontWeight:700,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},r.name),
+                  r.intervals===1&&React.createElement("span",{style:{fontSize:"var(--fs-8-5)",fontWeight:700,color:"#d97706",background:"rgba(217,119,6,.12)",border:"1px solid rgba(217,119,6,.3)",borderRadius:8,padding:"1px 5px",flexShrink:0}},"provisional")
+                ),
+                React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,marginTop:5}},
+                  React.createElement("div",{style:{height:4,flex:1,borderRadius:2,background:"var(--border)",overflow:"hidden",maxWidth:140}},
+                    React.createElement("div",{style:{height:"100%",width:has?Math.max(3,Math.round((r.kmpl/maxStationKmpl)*100))+"%":"0%",background:col,borderRadius:2,transition:"width .8s ease"}})
+                  ),
+                  React.createElement("span",{style:{fontSize:"var(--fs-9)",color:"var(--text6)",flexShrink:0}},r.lastDate?("last "+shortDate(r.lastDate)):(r.lastMeasured?"last fill not in range":""))
+                )
+              ),
+              React.createElement("div",{style:{...tbD("var(--text4)","right")}},r.fills),
+              React.createElement("div",{style:{...tbD(col,"right",{fontWeight:has?800:400,fontFamily:"'Sora',sans-serif",fontSize:"var(--fs-13)"})}},
+                has?r.kmpl.toFixed(1):"—",
+                has&&React.createElement("div",{style:{fontSize:"var(--fs-9)",fontWeight:600,color:delta>=0?"#16a34a":"#ef4444",fontFamily:"'DM Sans',sans-serif"}},(delta>=0?"+":"")+delta.toFixed(1)+"% vs avg")
+              ),
+              React.createElement("div",{style:{...tbD("var(--text5)","right",{fontSize:"var(--fs-11)"})}},has?(r.best.toFixed(1)+" / "+r.worst.toFixed(1)):"—"),
+              React.createElement("div",{style:{...tbD("var(--text4)","right")}},r.intervals),
+              React.createElement("div",{style:{...tbD("var(--text4)","right")}},r.litres>0?r.litres.toFixed(1):"—"),
+              React.createElement("div",{style:{...tbD("var(--text4)","right")}},r.avgPrice>0?"₹"+r.avgPrice.toFixed(2):"—"),
+              React.createElement("div",{style:{...tbD("var(--text3)","right",{fontFamily:"'Sora',sans-serif",fontWeight:700})}},INR(r.amount))
+            );
+          })
+        ),
+        React.createElement("div",{style:{fontSize:"var(--fs-10-5)",color:"var(--text6)",marginTop:10,paddingTop:8,borderTop:"1px dashed var(--border2)",lineHeight:1.6}},
+          "Attribution: the km/L recorded at a fill-up is matched to the bunk of the fill before it, because that is the fuel consumed over the interval. ",
+          "Weighted average = Σ interval km ÷ Σ interval litres, so a long run counts more than a short top-up. ",
+          "Stations with one measured interval are marked provisional. Partial fills are included; an interval after a top-up can read low and the following full fill correspondingly high. ",
+          "Name variants are grouped case-insensitively and whitespace-normalised."
+        )
       )
     ),
     view==="detailed"&&React.createElement(Card,{sx:{padding:0,overflowX:"auto"}},
@@ -40684,13 +41006,13 @@ function App(){
           React.createElement(Dashboard,{data:state,isMobile}))),
       React.createElement("div",{style:{display:tab==="banks"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Bank Accounts"},
-          React.createElement(BankSection,{banks:state.banks,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,cash:state.cash,loans:state.loans||_EA,isMobile,jumpAccId:txJump?.accType==="bank"?txJump.accId:null,jumpTxId:txJump?.accType==="bank"?txJump.txId:null,jumpSerial:txJump?.accType==="bank"?txJump.serial:null,onClearAccountJump:onClearTxJump}))),
+          React.createElement(BankSection,{banks:state.banks,dispatch,categories:state.categories,payees:state.payees,fuelStations:state.fuelStations||[],allBanks:state.banks,allCards:state.cards,cash:state.cash,loans:state.loans||_EA,isMobile,jumpAccId:txJump?.accType==="bank"?txJump.accId:null,jumpTxId:txJump?.accType==="bank"?txJump.txId:null,jumpSerial:txJump?.accType==="bank"?txJump.serial:null,onClearAccountJump:onClearTxJump}))),
       React.createElement("div",{style:{display:tab==="cards"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Cards"},
-          React.createElement(CardSection,{cards:state.cards,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,cash:state.cash,loans:state.loans||_EA,isMobile,jumpAccId:txJump?.accType==="card"?txJump.accId:null,jumpTxId:txJump?.accType==="card"?txJump.txId:null,jumpSerial:txJump?.accType==="card"?txJump.serial:null,onClearAccountJump:onClearTxJump}))),
+          React.createElement(CardSection,{cards:state.cards,dispatch,categories:state.categories,payees:state.payees,fuelStations:state.fuelStations||[],allBanks:state.banks,allCards:state.cards,cash:state.cash,loans:state.loans||_EA,isMobile,jumpAccId:txJump?.accType==="card"?txJump.accId:null,jumpTxId:txJump?.accType==="card"?txJump.txId:null,jumpSerial:txJump?.accType==="card"?txJump.serial:null,onClearAccountJump:onClearTxJump}))),
       React.createElement("div",{style:{display:tab==="cash"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Cash"},
-          React.createElement(CashSection,{cash:state.cash,dispatch,categories:state.categories,payees:state.payees,allBanks:state.banks,allCards:state.cards,loans:state.loans||_EA,isMobile,jumpTxId:txJump?.accType==="cash"?txJump.txId:null,jumpSerial:txJump?.accType==="cash"?txJump.serial:null}))),
+          React.createElement(CashSection,{cash:state.cash,dispatch,categories:state.categories,payees:state.payees,fuelStations:state.fuelStations||[],allBanks:state.banks,allCards:state.cards,loans:state.loans||_EA,isMobile,jumpTxId:txJump?.accType==="cash"?txJump.txId:null,jumpSerial:txJump?.accType==="cash"?txJump.serial:null}))),
       React.createElement("div",{style:{display:tab==="inv_dash"?"contents":"none"}},
         React.createElement(ErrorBoundary,{name:"Investments"},
           React.createElement(InvestDashboard,{mf:state.mf,mfTxns:state.mfTxns||_EA,shares:state.shares,fd:state.fd,re:state.re||_EA,dispatch,isMobile,eodPrices:state.eodPrices||_EO,eodNavs:state.eodNavs||_EO,brokerCashBalance:state.brokerCashBalance||0}))),
